@@ -1,0 +1,3 @@
+# AGENTS.md
+Contexto global del agente (reglas, estándares, metadatos)
+Añadir aquí las instrucciones y reglas generales del proyecto de desarrollo de software...

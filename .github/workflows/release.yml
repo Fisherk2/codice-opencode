@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract release body from CHANGELOG
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          awk -v ver="$VERSION" \
+            'index($0, "## [" ver "]") == 1 { found=1; next }
+             /^## \[/ && found { exit }
+             found' CHANGELOG.md > release-body.md
+          [ -s release-body.md ] || echo "No changelog section found for $VERSION" >&2
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v3
+        with:
+          body_path: release-body.md
+          make_latest: true
