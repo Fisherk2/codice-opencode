@@ -1,1 +1,0 @@
-# Script de configuración inicial
