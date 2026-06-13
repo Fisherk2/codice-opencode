@@ -225,6 +225,5 @@ src/
 - **Bun Documentation:** https://bun.sh/docs
 - **Clack Prompts:** https://www.clackjs.com/
 - **GitHub REST API:** https://docs.github.com/en/rest
-```
 
 ---
