@@ -1,4 +1,4 @@
-# Product Requirements Document – Códice: Opencode Workspace CLI v1.0.0 (MVP)
+# Product Requirements Document – Códice: Opencode Workspace Installer v1.0.0 (MVP)
 **Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Borrador (Pendiente de Aprobación)
 
 ## 0. Descripción General
