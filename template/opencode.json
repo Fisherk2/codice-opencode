@@ -1,0 +1,552 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "model": "opencode/deepseek-v4-flash-free",
+  "small_model": "openrouter/openrouter/free",
+
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 10000
+  },
+
+  "provider": {
+    "anthropic": {
+      "models": {
+        "claude-haiku-4-5": {
+          "options": {
+            "thinking": {
+              "type": "adaptive",
+              "budgetTokens": 4000,
+              "display": "summarized"
+            }
+          },
+          "variants": {
+            "deep-think": {
+              "thinking": {
+                "type": "enabled",
+                "budgetTokens": 8000
+              }
+            },
+            "economy": {
+              "thinking": {
+                "type": "adaptive",
+                "budgetTokens": 2000,
+                "display": "none"
+              }
+            }
+          }
+        },
+        "claude-opus-4-6": {
+          "options": {
+            "thinking": {
+              "type": "adaptive",
+              "display": "summarized"
+            }
+          },
+          "variants": {
+            "deep-think": {
+              "thinking": {
+                "type": "enabled",
+                "budgetTokens": 32000
+              }
+            },
+            "economy": {
+              "thinking": {
+                "type": "adaptive",
+                "display": "none"
+              }
+            }
+          }
+        },
+        "claude-sonnet-4": {
+          "options": {
+            "thinking": {
+              "type": "adaptive",
+              "budgetTokens": 8000,
+              "display": "summarized"
+            }
+          },
+          "variants": {
+            "deep-think": {
+              "thinking": {
+                "type": "enabled",
+                "budgetTokens": 16000
+              }
+            },
+            "economy": {
+              "thinking": {
+                "type": "adaptive",
+                "budgetTokens": 4000,
+                "display": "none"
+              }
+            }
+          }
+        },
+        "claude-sonnet-4-6": {
+          "options": {
+            "thinking": {
+              "type": "adaptive",
+              "budgetTokens": 8000,
+              "display": "summarized"
+            }
+          },
+          "variants": {
+            "deep-think": {
+              "thinking": {
+                "type": "enabled",
+                "budgetTokens": 16000
+              }
+            },
+            "economy": {
+              "thinking": {
+                "type": "adaptive",
+                "budgetTokens": 4000,
+                "display": "none"
+              }
+            }
+          }
+        }
+      }
+    },
+    "deepseek": {
+      "models": {
+        "deepseek-v4-flash": {
+          "options": {
+            "thinking": { "type": "enabled" },
+            "reasoningEffort": "medium"
+          },
+          "variants": {
+            "deep-think": {
+              "thinking": { "type": "enabled" },
+              "reasoningEffort": "high"
+            },
+            "economy": {
+              "thinking": { "type": "disabled" },
+              "reasoningEffort": "low"
+            }
+          }
+        },
+        "deepseek-v4-flash-free": {
+          "options": {
+            "thinking": { "type": "enabled" },
+            "reasoningEffort": "medium"
+          },
+          "variants": {
+            "deep-think": {
+              "thinking": { "type": "enabled" },
+              "reasoningEffort": "high"
+            },
+            "economy": {
+              "thinking": { "type": "disabled" },
+              "reasoningEffort": "low"
+            }
+          }
+        },
+        "deepseek-v4-pro": {
+          "options": {
+            "thinking": { "type": "enabled" },
+            "reasoningEffort": "high"
+          },
+          "variants": {
+            "deep-think": {
+              "thinking": { "type": "enabled" },
+              "reasoningEffort": "max"
+            },
+            "economy": {
+              "thinking": { "type": "disabled" },
+              "reasoningEffort": "low"
+            }
+          }
+        }
+      }
+    },
+    "google": {
+      "models": {
+        "gemini-3.1-pro": {
+          "options": {
+            "thinkingConfig": {
+              "includeThoughts": false,
+              "thinkingLevel": "medium"
+            }
+          },
+          "variants": {
+            "deep-think": {
+              "thinkingConfig": {
+                "includeThoughts": true,
+                "thinkingLevel": "high"
+              }
+            },
+            "economy": {
+              "thinkingConfig": {
+                "includeThoughts": false,
+                "thinkingLevel": "low"
+              }
+            }
+          }
+        },
+        "gemini-3.5-flash": {
+          "options": {
+            "thinkingConfig": {
+              "includeThoughts": false,
+              "thinkingLevel": "medium"
+            }
+          },
+          "variants": {
+            "deep-think": {
+              "thinkingConfig": {
+                "includeThoughts": true,
+                "thinkingLevel": "high"
+              }
+            },
+            "economy": {
+              "thinkingConfig": {
+                "includeThoughts": false,
+                "thinkingLevel": "low"
+              }
+            }
+          }
+        }
+      }
+    },
+    "minimax": {
+      "models": {
+        "minimax-m2.5": { "options": { "temperature": 0.6 } },
+        "minimax-m2.7": { "options": { "temperature": 0.6 } },
+        "minimax-m3": { "options": { "temperature": 0.6 } }
+      }
+    },
+    "moonshot": {
+      "models": {
+        "kimi-k2.5": {
+          "options": { "thinking": { "type": "enabled" } },
+          "variants": {
+            "economy": { "thinking": { "type": "disabled" } }
+          }
+        },
+        "kimi-k2.6": {
+          "options": { "thinking": { "type": "enabled" } },
+          "variants": {
+            "economy": { "thinking": { "type": "disabled" } }
+          }
+        }
+      }
+    },
+    "openai": {
+      "models": {
+        "gpt-5": {
+          "options": {
+            "reasoningEffort": "medium",
+            "textVerbosity": "low",
+            "reasoningSummary": "auto"
+          },
+          "variants": {
+            "deep-think": {
+              "reasoningEffort": "high",
+              "textVerbosity": "low",
+              "reasoningSummary": "auto"
+            },
+            "economy": {
+              "reasoningEffort": "low",
+              "textVerbosity": "low",
+              "reasoningSummary": "none"
+            }
+          }
+        },
+        "gpt-5.1-codex": {
+          "options": {
+            "reasoningEffort": "high",
+            "textVerbosity": "low",
+            "reasoningSummary": "auto"
+          },
+          "variants": {
+            "deep-think": {
+              "reasoningEffort": "xhigh",
+              "textVerbosity": "low"
+            },
+            "economy": {
+              "reasoningEffort": "low",
+              "textVerbosity": "low",
+              "reasoningSummary": "none"
+            }
+          }
+        },
+        "gpt-5.3-codex": {
+          "options": {
+            "reasoningEffort": "high",
+            "textVerbosity": "low",
+            "reasoningSummary": "auto"
+          },
+          "variants": {
+            "deep-think": {
+              "reasoningEffort": "xhigh",
+              "textVerbosity": "low"
+            },
+            "economy": {
+              "reasoningEffort": "low",
+              "textVerbosity": "low",
+              "reasoningSummary": "none"
+            }
+          }
+        },
+        "gpt-5.4-mini": {
+          "options": {
+            "reasoningEffort": "medium",
+            "textVerbosity": "low",
+            "reasoningSummary": "auto"
+          },
+          "variants": {
+            "deep-think": {
+              "reasoningEffort": "xhigh",
+              "textVerbosity": "low"
+            },
+            "economy": {
+              "reasoningEffort": "low",
+              "textVerbosity": "low",
+              "reasoningSummary": "none"
+            }
+          }
+        },
+        "gpt-5.5-pro": {
+          "options": {
+            "reasoningEffort": "high",
+            "textVerbosity": "low",
+            "reasoningSummary": "auto"
+          },
+          "variants": {
+            "deep-think": {
+              "reasoningEffort": "xhigh",
+              "textVerbosity": "low"
+            },
+            "economy": {
+              "reasoningEffort": "medium",
+              "textVerbosity": "low",
+              "reasoningSummary": "none"
+            }
+          }
+        }
+      }
+    },
+    
+    "z-ai": {
+      "models": {
+        "glm-5.1": {
+          "options": { "thinking": { "type": "enabled" } },
+          "variants": {
+            "economy": { "thinking": { "type": "disabled" } }
+          }
+        }
+      }
+    }
+  },
+
+  "agent": {
+    "huitzilopochtli": {
+      "model": "opencode/deepseek-v4-flash-free",
+      "color": "#d3e22b",
+      "temperature": 0.5,
+      "steps": 20
+    },
+    "quetzalcoatl": {
+      "model": "opencode-go/kimi-k2.6",
+      "color": "#ffffff",
+      "temperature": 0.3,
+      "steps": 15
+    },
+    "moctezuma": {
+      "model": "opencode-go/minimax-m2.7",
+      "color": "#8B4513",
+      "temperature": 0.1,
+      "steps": 20
+    },
+    "tlaloc": {
+      "model": "opencode/deepseek-v4-flash-free",
+      "color": "#00ffff",
+      "temperature": 0.2,
+      "steps": 40
+    },
+    "mictlantecuhtli": {
+      "model": "opencode/mimo-v2.5-free",
+      "color": "#2d2d2d",
+      "temperature": 0.2,
+      "steps": 40
+    },
+    "tezcatlipoca": {
+      "model": "opencode-go/deepseek-v4-pro",
+      "color": "#ff3134",
+      "temperature": 0.1,
+      "steps": 15
+    },
+    "build": {
+      "disable": true
+    },
+    "plan": {
+      "disable": true
+    },
+    "explore": {
+      "model": "openrouter/openrouter/free"
+    },
+    "general": {
+      "disable": true
+    }
+  },
+
+  "instructions": [
+    "CONTRIBUTING.md",
+    "SPEC.md",
+    "docs/WORKFLOW.md",
+    "docs/ARCHITECTURE.md",
+    "docs/CODE_STYLE.md"
+  ],
+
+  "permission": {
+    "task": {
+      "*": "deny"
+    },
+    "bash": {
+      "*": "ask",
+      "cd *": "allow",
+      "ls": "allow",
+      "ls *": "allow",
+      "tree *": "allow",
+      "grep *": "allow",
+      "wc *": "allow",
+      "find *": "allow",
+      "echo": "allow",
+      "echo *": "allow",
+      "printf *": "allow",
+      "cat *": "allow",
+      "head *": "allow",
+      "tail *": "allow",
+      "sort *": "allow",
+      "uniq *": "allow",
+      "cut *": "allow",
+      "awk *": "allow",
+      "sed *": "allow",
+      "tr *": "allow",
+      "diff *": "allow",
+      "comm *": "allow",
+      "paste *": "allow",
+      "join *": "allow",
+      "tee *": "allow",
+      "xargs *": "allow",
+      "nl *": "allow",
+      "column *": "allow",
+      "cksum *": "allow",
+      "strings *": "allow",
+      "jq *": "allow",
+      "rg *": "allow",
+      "ag *": "allow",
+      "ack *": "allow",
+      "fd *": "allow",
+      "bat *": "allow",
+      "exa *": "allow",
+      "eza *": "allow",
+      "delta *": "allow",
+      "hexyl *": "allow",
+      "df *": "allow",
+      "free": "allow",
+      "uname *": "allow",
+      "whoami": "allow",
+      "id": "allow",
+      "uptime": "allow",
+      "ps *": "allow",
+      "lsof *": "allow",
+      "dig *": "allow",
+      "nslookup *": "allow",
+      "host *": "allow",
+      "curl *": "allow",
+      "http *": "allow",
+      "unzip -l *": "allow",
+      "zipinfo *": "allow",
+      "tar -tf *": "allow",
+      "which *": "allow",
+      "pwd": "allow",
+      "file *": "allow",
+      "stat *": "allow",
+      "du *": "allow",
+      "date *": "allow",
+      "dirname *": "allow",
+      "basename *": "allow",
+      "realpath *": "allow",
+      "git status *": "allow",
+      "git status": "allow",
+      "git diff *": "allow",
+      "git log *": "allow",
+      "git branch": "allow",
+      "git branch -r *": "allow",
+      "git branch -a": "allow",
+      "git show *": "allow",
+      "git bisect *": "allow",
+      "git blame *": "allow",
+      "git tag": "allow",
+      "git tag -l *": "allow",
+      "git remote -v": "allow",
+      "git remote": "allow",
+      "git stash list": "allow",
+      "git reflog": "allow",
+      "git shortlog *": "allow",
+      "git ls-files": "allow",
+      "git ls-files *": "allow",
+      "gh auth status": "allow",
+      "gh repo view": "allow",
+      "gh repo view *": "allow",
+      "gh issue list": "allow",
+      "gh issue view *": "allow",
+      "gh pr list": "allow",
+      "gh pr view *": "allow",
+      "gh pr checks *": "allow",
+      "gh run list": "allow",
+      "gh run view *": "allow",
+      "gh release list": "allow",
+      "gh release view *": "allow",
+      "gh api *": "allow",
+      "gh gist list": "allow",
+      "gh gist view *": "allow",
+      "env": "deny",
+      "env *": "deny",
+      "printenv *": "deny",
+      "* .env": "deny",
+      "* .env.*": "deny",
+      "* ./.env": "deny",
+      "* ./.env.*": "deny",
+      "* .env.example": "allow",
+      "* ./.env.example": "allow"
+    },
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    }
+  },
+
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+      "enabled": false
+    },
+    "excel": {
+      "type": "local",
+      "command": ["uvx", "excel-mcp-server", "stdio"],
+      "enabled": false
+    },
+    "jupyter": {
+      "type": "local",
+      "command": ["uvx", "mcp-jupyter-notebook"],
+      "enabled": false,
+      "env": {
+        "MCP_JUPYTER_SESSION_MODE": "server",
+        "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
+        "MCP_JUPYTER_TOKEN": "mcp-dev-token",
+        "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
+      }
+    }
+  }
+}
