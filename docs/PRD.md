@@ -1,5 +1,5 @@
 # Product Requirements Document – Códice: Opencode Workspace Installer v1.0.0 (MVP)
-**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Borrador (Pendiente de Aprobación)
+**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 0. Descripción General
 Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñada para instalar, configurar y actualizar plantillas de espacios de trabajo de OpenCode (`opencode`). Su objetivo es proporcionar una experiencia de instalación "a prueba de tontos", rápida, segura y con fusión inteligente de archivos, preservando las personalizaciones del usuario.
@@ -27,20 +27,20 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 ## 3. Historias de Usuario / Casos de Uso (Priorizadas)
 | ID | Como [rol] | Quiero [acción] | Para [beneficio] | Prioridad | Criterios de Aceptación |
 |----|------------|-----------------|------------------|-----------|--------------------------|
-| HU-01 | Dev Nuevo | Ejecutar un comando y seleccionar "Instalación Limpia" | Obtener una copia exacta y completa del template en mi directorio actual. | Alta | Se copian todos los archivos. Se crea `.opencode-version.json`. |
+| HU-01 | Dev Nuevo | Ejecutar un comando y seleccionar "Instalación Limpia" | Obtener una copia exacta y completa del template en mi directorio actual. | Alta | Se copian todos los archivos. Se crea `.codice-version`. |
 | HU-02 | Dev Experimentado | Ejecutar "Instalación a Proyecto" y ver un checklist de archivos opcionales | Añadir herramientas base sin sobrescribir mis `skills` o `agents` personalizados. | Alta | Archivos "Obligatorios" se sobrescriben. "Estándar/Opcional" se omiten si existen, o se muestran en checklist interactivo. |
 | HU-03 | Dev Experimentado | Ejecutar "Actualizar Workspace" | Saber si hay una nueva versión en GitHub y aplicar solo los cambios necesarios. | Alta | El CLI consulta la API de GitHub. Si hay update, aplica fusión granular. Si no, muestra mensaje de "versión más reciente". |
 | HU-04 | Mantenedor | Ejecutar `just test` o `make test` | Verificar que la lógica de fusión y la TUI funcionen correctamente antes de hacer un release. | Alta | Las pruebas unitarias (Bun/Vitest) y E2E (scripts de shell) pasan con >80% de cobertura. |
-| HU-05 | Cualquiera | Que el instalador falle a mitad de proceso | Que mi proyecto no quede en un estado corrupto o a medias. | Alta | Si falla, el directorio `.opencode-staging/` se elimina y el proyecto original queda intacto (Atomicidad). |
+| HU-05 | Cualquiera | Que el instalador falle a mitad de proceso | Que mi proyecto no quede en un estado corrupto o a medias. | Alta | Si falla, el directorio `.codice-staging/` se elimina y el proyecto original queda intacto (Atomicidad). |
 
 ## 4. Requisitos Funcionales
 | REQ-ID | Descripción | Reglas de Negocio | Estado | Trazabilidad (TRD/Flow) |
 |--------|-------------|-------------------|--------|--------------------------|
-| RF-01 | Menú Interactivo TUI | Usar `@clack/prompts`. Debe ser intuitivo, con spinners y validación de entrada. | Pendiente | HU-01, HU-02, HU-03 |
-| RF-02 | Motor de Fusión de Archivos | Evaluar archivo por archivo. Reglas: Obligatorio (sobrescribir), Estándar (omitir si existe), Opcional (checklist -> omitir si existe). | Pendiente | HU-02, HU-05 |
-| RF-03 | Atomicidad de Operaciones | Toda escritura debe ocurrir primero en un directorio temporal (`.opencode-staging`). Solo al finalizar con éxito, se mueve a la ubicación final. | Pendiente | HU-05 |
-| RF-04 | Gestión de Versiones Local | Crear/actualizar `.opencode-version.json` con el tag de la versión instalada (ej: "v1.0.0"). | Pendiente | HU-01, HU-03 |
-| RF-05 | Consulta de Versión Remota | Consultar `GET https://api.github.com/repos/{owner}/{repo}/releases/latest`. Comparar con versión local usando semver. | Pendiente | HU-03 |
+| RF-01 | Menú Interactivo TUI | Usar `@clack/prompts`. Debe ser intuitivo, con spinners y validación de entrada. | Especificado | HU-01, HU-02, HU-03 |
+| RF-02 | Motor de Fusión de Archivos | Evaluar archivo por archivo. Reglas: Obligatorio (sobrescribir), Estándar (omitir si existe), Opcional (checklist -> omitir si existe). | Especificado | HU-02, HU-05 |
+| RF-03 | Atomicidad de Operaciones | Toda escritura debe ocurrir primero en un directorio temporal (`.codice-staging`). Solo al finalizar con éxito, se mueve a la ubicación final. | Especificado | HU-05 |
+| RF-04 | Gestión de Versiones Local | Crear/actualizar `.codice-version` con el tag de la versión instalada (ej: "v1.0.0"). | Especificado | HU-01, HU-03 |
+| RF-05 | Consulta de Versión Remota | Consultar `GET https://api.github.com/repos/{owner}/{repo}/releases/latest`. Comparar con versión local usando semver. | Especificado | HU-03 |
 
 ## 5. Requisitos No Funcionales
 - **Rendimiento:** La consulta de versión remota debe tomar < 2 segundos. La extracción del template empaquetado debe tomar < 5 segundos.
@@ -61,6 +61,6 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 ## 8. Control de Cambios
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---------|-------|-------|--------|--------------|
-| 0.1.0 | 2026-06-13 | Fisherk2 | Creación inicial del PRD basado en cuestionario de clarificación. | Pendiente |
+| 0.1.0 | 2026-06-13 | Fisherk2 | Creación inicial del PRD basado en cuestionario de clarificación. | ✅ Aprobado |
 
 ---

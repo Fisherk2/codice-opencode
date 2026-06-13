@@ -1,5 +1,5 @@
 # AGENTS.MD – Códice: Opencode Workspace Installer v1.0.0
-**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Borrador
+**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ---
 
@@ -196,7 +196,7 @@ src/
 - **Input Sanitization:** No confiar en entradas de usuario sin validación explícita.
 
 ### Manejo de Secretos
-- **No Hardcode Tokens:** Si se soporta autenticación de GitHub, usar variables de entorno (`GITHUB_TOKEN`).
+- **No Hardcode Tokens:** No se soporta autenticación de GitHub. El cliente usa únicamente requests no autenticadas (60 req/hr). Si en el futuro se añade soporte para tokens, usar variables de entorno (`GITHUB_TOKEN`).
 - **No Loggear Secrets:** Excluir tokens y credenciales de los logs, incluso en modo `--verbose`.
 
 ### Control de Excepciones y Timeouts

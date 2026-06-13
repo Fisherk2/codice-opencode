@@ -1,5 +1,8 @@
 # Workflow – Códice: Opencode Workspace Installer v1.0.0 (MVP)
-**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Metodología:** Agile/Iterativo
+**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Metodología:** Agile/Iterativo | **Estado:** Especificación Aprobada — Listo para Implementación
+
+> ✅ **SPEC.md, AGENTS.md, ADRs y documentación modular han sido aprobados el 2026-06-13.**
+> Las fases S0, S2 y S3 (documentación y diseño) están completadas. Las fases S1, S4, S5 y S6 están pendientes de implementación.
 
 ## 1. Visión de Fases
 | Fase | Objetivo | Entregables | Duración Estimada |
@@ -80,10 +83,10 @@ graph TD
     classDef done fill:#d4edda,stroke:#155724,stroke-width:2px;
 
     %% Nodos del grafo
-    S0[S0: Estructura y Convenciones<br/>Estado: ⏳ Pendiente]:::pending
+    S0[S0: Estructura y Convenciones<br/>Estado: ✅ Completado]:::done
     S1[S1: Adaptadores FS y Red<br/>Estado: ⏳ Pendiente]:::pending
-    S2[S2: Dominio y Lógica de Negocio<br/>Estado: ⏳ Pendiente]:::pending
-    S3[S3: Casos de Uso y TUI CLI<br/>Estado: ⏳ Pendiente]:::pending
+    S2[S2: Dominio y Lógica de Negocio<br/>Estado: ✅ Completado]:::done
+    S3[S3: Casos de Uso y TUI CLI<br/>Estado: ✅ Completado]:::done
     S4[S4: Pruebas Unitarias y E2E<br/>Estado: ⏳ Pendiente]:::pending
     S5[S5: CI/CD y Binarios<br/>Estado: ⏳ Pendiente]:::pending
     S6[S6: Documentación Final<br/>Estado: ⏳ Pendiente]:::pending
@@ -118,6 +121,7 @@ graph TD
 ## 5. Revisiones Técnicas Formales (FTRs)
 | Gate | Artefacto a Revisar | Checklist | Participantes | Resultado |
 |------|---------------------|-----------|---------------|-----------|
+| **Gate 0** | Especificación | ¿SPEC.md, AGENTS.md y ADRs están aprobados? ¿Las decisiones arquitectónicas están documentadas? | Arquitecto | ✅ **Aprobado** — 2026-06-13 |
 | **Gate 1** | F2 (Núcleo) | ¿Lógica libre de efectos secundarios? ¿Principios SOLID aplicados? | Arquitecto, Dev Lead | Pendiente |
 | **Gate 2** | F3 (Interfaces) | ¿La TUI maneja `SIGINT` correctamente? ¿Los mensajes de error son accionables? | Arquitecto, UX Reviewer | Pendiente |
 | **Gate 3** | F4 (Pruebas) | ¿Cobertura >80%? ¿Los tests E2E validan el rollback atómico? | QA, Dev Lead | Pendiente |

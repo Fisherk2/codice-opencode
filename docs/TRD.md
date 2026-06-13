@@ -1,5 +1,5 @@
 # Technical Requirements Document – Códice: Opencode Workspace Installer v1.0.0 (MVP)
-**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Borrador (Pendiente de Aprobación)
+**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Arquitectura de Referencia
 Se aplicará **Clean Architecture** adaptada a una aplicación de línea de comandos (CLI). Esto garantiza que la lógica de negocio (reglas de fusión, comparación de versiones) esté completamente desacoplada de los detalles de implementación (sistema de archivos, red, librería de TUI).
@@ -66,7 +66,7 @@ graph TD
 ## 4. Contratos de API / Integraciones
 | Endpoint | Método | Request | Response | Autenticación | Rate Limit |
 |----------|--------|---------|----------|---------------|------------|
-| `GET /repos/{owner}/{repo}/releases/latest` | GET | Headers: `User-Agent: OpenCode-CLI` | JSON: `{ "tag_name": "v1.0.0", "name": "..." }` | Opcional (Token para mayor límite) | 60 req/hora (anon), 5000 req/hora (auth) |
+| `GET /repos/{owner}/{repo}/releases/latest` | GET | Headers: `User-Agent: OpenCode-CLI` | JSON: `{ "tag_name": "v1.0.0", "name": "..." }` | No requerida | 60 req/hora (anon) |
 
 ## 5. Requisitos Técnicos No Funcionales
 - **Escalabilidad**: El binario debe ser autocontenido. No escala horizontalmente (es una herramienta de cliente), pero debe escalar en tamaño de template sin degradar el rendimiento de memoria (streaming de archivos si el template crece >50MB).
@@ -90,11 +90,11 @@ graph TD
 ## 7. Matriz de Trazabilidad
 | PRD REQ-ID | TRD Componente | API/DB | Estado |
 |------------|----------------|--------|--------|
-| RF-01 (Menú TUI) | `CLI Entrypoint`, `@clack/prompts` | N/A | Pendiente |
-| RF-02 (Motor de Fusión) | `FileMergeEngine`, `AtomicFileWriter` | `fs` | Pendiente |
-| RF-03 (Atomicidad) | `AtomicFileWriter` | `fs` | Pendiente |
-| RF-04 (Versión Local) | `VersionManager` | `.opencode-version.json` | Pendiente |
-| RF-05 (Versión Remota)| `VersionManager`, `IGitHubClient` | GitHub REST API | Pendiente |
+| RF-01 (Menú TUI) | `CLI Entrypoint`, `@clack/prompts` | N/A | Especificado |
+| RF-02 (Motor de Fusión) | `FileMergeEngine`, `AtomicFileWriter` | `fs` | Especificado |
+| RF-03 (Atomicidad) | `AtomicFileWriter` | `fs` | Especificado |
+| RF-04 (Versión Local) | `VersionManager` | `.codice-version` | Especificado |
+| RF-05 (Versión Remota)| `VersionManager`, `IGitHubClient` | GitHub REST API | Especificado |
 
 ## 8. ADRs (Architecture Decision Records)
 | ADR-ID | Contexto | Decisión | Consecuencias | Alternativas Descartadas |
