@@ -1,0 +1,22 @@
+{
+  "name": "codice",
+  "version": "1.0.0",
+  "module": "src/cli/main.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "dev": "bun run src/cli/main.ts --verbose",
+    "build": "bun build --compile src/cli/main.ts --outfile ./dist/codice",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "lint": "biome check src/ tests/",
+    "format": "biome format --write src/ tests/",
+    "format:check": "biome format --check src/ tests/"
+  }
+}
