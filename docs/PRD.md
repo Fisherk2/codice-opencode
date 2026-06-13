@@ -1,5 +1,5 @@
 # Product Requirements Document – Códice: Opencode Workspace CLI v1.0.0 (MVP)
-**Fecha:** 2024-05-20 | **Autor:** Fisherk2 | **Estado:** Borrador (Pendiente de Aprobación)
+**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Borrador (Pendiente de Aprobación)
 
 ## 0. Descripción General
 Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñada para instalar, configurar y actualizar plantillas de espacios de trabajo de OpenCode (`opencode`). Su objetivo es proporcionar una experiencia de instalación "a prueba de tontos", rápida, segura y con fusión inteligente de archivos, preservando las personalizaciones del usuario.
@@ -61,6 +61,6 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 ## 8. Control de Cambios
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---------|-------|-------|--------|--------------|
-| 0.1.0 | 2024-05-20 | Fisherk2 | Creación inicial del PRD basado en cuestionario de clarificación. | Pendiente |
+| 0.1.0 | 2026-06-13 | Fisherk2 | Creación inicial del PRD basado en cuestionario de clarificación. | Pendiente |
 
 ---
