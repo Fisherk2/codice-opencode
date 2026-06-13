@@ -1,55 +1,55 @@
-# Registro de Cambios (Changelog)
+# Changelog
 
-Todos los cambios notables de este proyecto serán documentados en este archivo.
+All notable changes to this project will be documented in this file.
 
-El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
-y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Sin Lanzar]
+## [Unreleased]
 
 
 ---
 
-## Información del Proyecto
+## Project Information
 
-### Repositorio
-- **Nombre**: Códice - Workspace de Desarrollo Spec-Driven con OpenCode
-- **Descripción**: Espacio de trabajo nativo para OpenCode con metodología Spec-Driven Development, 46 skills integradas (45 ingeniería + 1 meta-skill), 6 agentes primarios + 96+ subagentes, pipeline SDD Plugin con orquestación completa y 7 providers oficiales configurados
-- **Repositorio**: https://github.com/Fisherk2/codice-opencode
-- **Licencia**: MIT License
+### Repository
+- **Name**: Códice - Spec-Driven Development Workspace with OpenCode
+- **Description**: Native workspace for OpenCode with Spec-Driven Development methodology, 46 integrated skills (45 engineering + 1 meta-skill), 6 primary agents + 96+ subagents, SDD Pipeline Plugin with full orchestration and 7 official providers configured
+- **Repository**: https://github.com/Fisherk2/codice-opencode
+- **License**: MIT License
 
-### Stack Tecnológico
+### Technology Stack
 ...
 
-### Documentación Relacionada
+### Related Documentation
 ...
 
-### Instrucciones de Actualización
+### Update Instructions
 
-#### Desde Versiones Anteriores
+#### From Previous Versions
 ...
 
-#### Para Versiones Futuras
+#### For Future Versions
 ...
 
-### Contribuyendo al CHANGELOG
+### Contributing to the CHANGELOG
 
-Al contribuir a este proyecto:
+When contributing to this project:
 
-1. **Agrega entradas** a la sección `[Sin Lanzar]`
-2. **Sigue versionado semántico** para cambios rupturantes
-3. **Usa categorías apropiadas** (Agregado, Cambiado, Deprecado, Removido, Corregido, Seguridad)
-4. **Incluye fechas** en formato `YYYY-MM-DD`
-5. **Proporciona descripciones claras** explicando el impacto de los cambios
-6. **Agrupa por fase** (Definir, Planear, Construir, Verificar, Revisar, Lanzar)
-7. **Referencia issues relacionados** o pull requests cuando aplique
+1. **Add entries** to the `[Unreleased]` section
+2. **Follow semantic versioning** for breaking changes
+3. **Use appropriate categories** (Added, Changed, Deprecated, Removed, Fixed, Security)
+4. **Include dates** in `YYYY-MM-DD` format
+5. **Provide clear descriptions** explaining the impact of changes
+6. **Group by phase** (Define, Plan, Build, Verify, Review, Ship)
+7. **Reference related issues** or pull requests when applicable
 
-### Por Qué Este CHANGELOG Importa
+### Why This CHANGELOG Matters
 
-Este CHANGELOG sirve como documentación viva que:
+This CHANGELOG serves as living documentation that:
 
-- **Rastrea la evolución** de la plantilla de desarrollo asistido por IA
-- **Comunica cambios** a usuarios y contribuyentes
-- **Proporciona guía de actualización** para lanzamientos futuros
-- **Documenta decisiones arquitectónicas** y su racional
-- **Habilita procesos de lanzamiento automatizados** con seguimiento estructurado de cambios
+- **Tracks the evolution** of the AI-assisted development template
+- **Communicates changes** to users and contributors
+- **Provides update guidance** for future releases
+- **Documents architectural decisions** and their rationale
+- **Enables automated release processes** with structured change tracking
