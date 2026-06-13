@@ -36,6 +36,7 @@
 /.opencode/plugins/.sdd-state.json
 /.opencode/plugins/.sdd-audit.log
 /skills-lock.json
+/opencode.json
 
 # Sistema - Excluye archivos temporales del sistema operativo
 .DS_Store
