@@ -178,7 +178,7 @@ flowchart LR
 
 ---
 
-## Project Structure
+## Workspace Structure
 
 ```
 project-root/
