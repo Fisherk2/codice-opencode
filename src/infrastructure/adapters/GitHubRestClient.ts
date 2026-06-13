@@ -5,11 +5,11 @@ import type { IGitHubClient } from "../../application/ports/IGitHubClient";
  * Uses unauthenticated requests (60 req/hr limit).
  */
 export class GitHubRestClient implements IGitHubClient {
-  getLatestReleaseTag(): Promise<string | null> {
-    throw new Error("Not implemented");
-  }
+	getLatestReleaseTag(): Promise<string | null> {
+		throw new Error("Not implemented");
+	}
 
-  getLatestReleaseNotes(): Promise<string | null> {
-    throw new Error("Not implemented");
-  }
+	getLatestReleaseNotes(): Promise<string | null> {
+		throw new Error("Not implemented");
+	}
 }

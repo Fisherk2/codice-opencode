@@ -13,12 +13,16 @@
   },
   "scripts": {
     "dev": "bun run src/cli/main.ts --verbose",
-    "build": "bun build --compile src/cli/main.ts --outfile ./dist/codice",
+    "build": "bun build --compile src/cli/main.ts --outfile ./dist/codice-linux",
     "test": "bun test",
+    "test:unit": "bun test tests/unit/",
+    "test:integration": "bun test tests/integration/",
     "test:coverage": "bun test --coverage",
-    "lint": "biome check src/ tests/",
-    "format": "biome format --write src/ tests/",
-    "format:check": "biome format --check src/ tests/"
+    "lint": "bunx @biomejs/biome check src/ tests/",
+    "format": "bunx @biomejs/biome format --write src/ tests/",
+    "format:check": "bunx @biomejs/biome ci src/ tests/",
+    "check": "bunx @biomejs/biome ci src/ tests/ && bun run tsc --noEmit",
+    "clean": "rm -rf dist/*"
   },
   "dependencies": {
     "@clack/prompts": "^1.5.1",

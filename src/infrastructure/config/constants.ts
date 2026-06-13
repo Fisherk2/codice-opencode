@@ -5,7 +5,8 @@ export const GITHUB_OWNER = "fisherk2";
 export const GITHUB_REPO = "11-codice-opencode";
 
 /** GitHub API URL for latest release */
-export const GITHUB_API_LATEST_RELEASE = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest` as const;
+export const GITHUB_API_LATEST_RELEASE =
+	`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest` as const;
 
 /** Timeout for GitHub API requests (milliseconds) */
 export const GITHUB_API_TIMEOUT_MS = 3_000;

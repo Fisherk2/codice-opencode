@@ -9,11 +9,11 @@
 const VERSION = "1.0.0";
 
 function printVersion(): void {
-  console.log(`Códice v${VERSION}`);
+	console.log(`Códice v${VERSION}`);
 }
 
 function printHelp(): void {
-  console.log(`
+	console.log(`
 Códice — Opencode Workspace Installer v${VERSION}
 
 Usage:
@@ -37,28 +37,28 @@ Exit codes:
 }
 
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
+	const args = process.argv.slice(2);
 
-  // Terminal flags
-  if (args.includes("--version") || args.includes("-V")) {
-    printVersion();
-    process.exit(0);
-  }
+	// Terminal flags
+	if (args.includes("--version") || args.includes("-V")) {
+		printVersion();
+		process.exit(0);
+	}
 
-  if (args.includes("--help") || args.includes("-h")) {
-    printHelp();
-    process.exit(0);
-  }
+	if (args.includes("--help") || args.includes("-h")) {
+		printHelp();
+		process.exit(0);
+	}
 
-  // TODO: Implement mode dispatch (interactive default)
-  // TODO: Handle --force, --verbose flags
-  // TODO: Wire dependency injection
-  // TODO: Handle SIGINT cleanup
+	// TODO: Implement mode dispatch (interactive default)
+	// TODO: Handle --force, --verbose flags
+	// TODO: Wire dependency injection
+	// TODO: Handle SIGINT cleanup
 
-  console.log("Códice v1.0.0 — coming soon!");
+	console.log("Códice v1.0.0 — coming soon!");
 }
 
 main().catch((error: unknown) => {
-  console.error("Fatal error:", error);
-  process.exit(1);
+	console.error("Fatal error:", error);
+	process.exit(1);
 });
