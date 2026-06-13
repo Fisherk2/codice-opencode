@@ -178,6 +178,170 @@ flowchart LR
 
 ---
 
+## Project Structure
+
+```
+project-root/
+├── AGENTS.md                   # Agent personas and orchestration
+├── CHANGELOG.md                # Release history
+├── CONTRIBUTING.md             # How to add agents and skills
+├── Justfile                    # Task runner commands
+├── LICENSE                     # MIT License
+├── Makefile                    # Build targets
+├── README.md                   # Project overview
+├── SPEC.md                     # Project specification
+├── opencode.json               # OpenCode configuration
+├── skills-lock.json            # Skill dependency lockfile
+├── requirements.txt            # Python dependencies
+├── .env.example                # Environment variables template
+│
+├── agents/                     # 102+ agent personas (6 primary + 96+ subagents)
+│   ├── huitzilopochtli.md      #   Supreme Orchestrator
+│   ├── quetzalcoatl.md         #   Visionary Architect
+│   ├── moctezuma.md            #   Strategic Commander
+│   ├── tlaloc.md               #   Rain God Builder
+│   ├── mictlantecuhtli.md      #   Underworld Judge
+│   ├── tezcatlipoca.md         #   Smoking Mirror Critic
+│   └── ... (96+ subagent files)
+│
+├── commands/                   # 10 slash commands for OpenCode
+│   ├── build.md                #   BUILD
+│   ├── code-simplify.md        #   SIMPLIFY (recommended pre-review)
+│   ├── design.md               #   DESIGN (optional, UI/UX)
+│   ├── evolve.md               #   EVOLVE (existing projects)
+│   ├── plan.md                 #   PLAN
+│   ├── review.md               #   REVIEW
+│   ├── ship.md                 #   SHIP
+│   ├── spec.md                 #   DEFINE (new projects)
+│   ├── test.md                 #   VERIFY
+│   └── webperf.md              #   WEBPERF (optional, perf. audit)
+│
+├── .opencode/                  # OpenCode runtime config
+│   ├── agents -> ../agents     #   Symlink to agents
+│   ├── commands -> ../commands #   Symlink to commands
+│   ├── skills -> ../skills     #   Symlink to skills
+│   ├── plugins/                #   SDD pipeline plugin
+│       ├── sdd-pipeline.ts     #     Pipeline state machine
+│       └── sdd-workflow-test.md #   Workflow test specs
+│
+├── skills/                     # 46 skills (45 engineering + 1 meta-skill)
+│   ├── using-agent-skills/     #   META: skill discovery
+│   ├── idea-refine/            #   DEFINE / EVOLVE
+│   ├── spec-driven-development/#   DEFINE / EVOLVE
+│   ├── agent-md-refactor/      #   DEFINE (PRE-FLIGHT)
+│   ├── env-setup/              #   DEFINE (PRE-FLIGHT)
+│   ├── clean-ddd-hexagonal/    #   DEFINE / PLAN / BUILD
+│   ├── design-patterns/        #   DEFINE / PLAN / REVIEW
+│   ├── architecture-diagrams/  #   DEFINE / PLAN / SHIP
+│   ├── ui-ux-design-pro/       #   DEFINE / BUILD
+│   ├── interview-me/           #   DEFINE / EVOLVE (extract requirements)
+│   ├── doubt-driven-development/ # EVOLVE / BUILD (stress-test decisions)
+│   ├── planning-and-task-breakdown/ # PLAN
+│   ├── incremental-implementation/  # BUILD
+│   ├── test-driven-development/     # BUILD
+│   ├── source-driven-development/   # BUILD
+│   ├── context-engineering/         # BUILD
+│   ├── frontend-ui-engineering/     # BUILD
+│   ├── api-and-interface-design/    # BUILD
+│   ├── api-spec-generation/         # BUILD
+│   ├── docker-optimize/             # BUILD / SHIP
+│   ├── db-migration/                # BUILD / SHIP
+│   ├── solid/                       # BUILD / REVIEW
+│   ├── clean-code/                  # BUILD / REVIEW
+│   ├── error-handling-patterns/     # BUILD / VERIFY / REVIEW
+│   ├── design-taste-frontend/       # BUILD / VERIFY / REVIEW
+│   ├── bash-defensive-patterns/     # BUILD / SHIP
+│   ├── observability-and-instrumentation/ # BUILD / VERIFY / SHIP
+│   ├── browser-testing-with-devtools/ # VERIFY / WEBPERF
+│   ├── debugging-and-error-recovery/  # VERIFY
+│   ├── code-review-and-quality/       # REVIEW
+│   ├── code-simplification/           # SIMPLIFY
+│   ├── security-and-hardening/        # REVIEW
+│   ├── dependency-audit/              # REVIEW
+│   ├── performance-optimization/      # REVIEW
+│   ├── performance-analysis/          # REVIEW
+│   ├── refactoring-patterns/          # SIMPLIFY
+│   ├── git-workflow-and-versioning/   # SHIP
+│   ├── changelog-generate/            # SHIP
+│   ├── ci-cd-and-automation/          # SHIP
+│   ├── deprecation-and-migration/     # SHIP
+│   ├── documentation-and-adrs/        # SHIP / EVOLVE
+│   ├── shipping-and-launch/           # SHIP
+│   ├── incident-response/             # SHIP / VERIFY
+│   ├── crafting-effective-readmes/    # DEFINE / SHIP
+│   ├── xlsx/                          # EXTRA
+│   └── excel-analysis/                # EXTRA
+│
+├── references/                 # 59 technical reference files
+│   ├── testing-patterns.md
+│   ├── security-checklist.md
+│   ├── performance-checklist.md
+│   ├── accessibility-checklist.md
+│   ├── clean-code.md
+│   ├── code-smells.md
+│   ├── design-patterns.md
+│   ├── solid-principles.md
+│   ├── error-handling.md
+│   ├── tdd.md
+│   ├── architecture.md
+│   ├── DDD-STRATEGIC.md
+│   ├── DDD-TACTICAL.md
+│   ├── HEXAGONAL.md
+│   ├── CQRS-EVENTS.md
+│   ├── refactoring-smell-catalog.md
+│   ├── component-patterns.md
+│   ├── color-system.md
+│   ├── typography.md
+│   └── ... (59 files total — see references/ for the full list)
+│
+├── docs/                       # Project documentation
+│   ├── APPFLOW.md              #   Application flow
+│   ├── ARCHITECTURE.md         #   System architecture decisions
+│   ├── CODE_STYLE.md           #   Coding conventions
+│   ├── DESIGN.md               #   Design directions
+│   ├── PRD.md                  #   Product requirements
+│   ├── SCHEMA.md               #   Data schema
+│   ├── TRD.md                  #   Technical requirements
+│   ├── WORKFLOW.md             #   Implementation workflow
+│   └── opencode/               #   OpenCode configuration guides
+│       ├── USER_GUIDE.md       #     Complete Reference Guide
+│       ├── 00-setup.md
+│       ├── 01-agents.md
+│       ├── 02-orchestration-patterns.md
+│       ├── 03-agent-index.md
+│       ├── 04-commands.md    #     Command creation guide
+│       ├── 05-skills.md
+│       ├── 06-mcp-servers.md
+│       ├── 07-models.md
+│       ├── 08-rules.md
+│       ├── 09-tools-and-custom-tools.md
+│       └── 10-permissions.md
+│
+├── specs/                      # Project specifications
+│   ├── spec-xx.md              #   Feature specs
+│   ├── adr/                    #   Architecture Decision Records
+│   │   └── adr-xxx.md          #     Template
+│   └── design/                 #   Design docs
+│       ├── components.md
+│       ├── style-guide.md
+│       └── user-flow.md
+│
+├── scripts/                    # Helper scripts
+│   ├── build.sh
+│   ├── lint.sh
+│   ├── setup.sh
+│   └── test.sh
+│
+├── tasks/                      # Task tracking
+│   ├── plan.md                 #   Current plan
+│   └── todo.md                 #   Todo list
+│
+├── src/                        # Source code
+└── tests/                      # Tests
+```
+
+---
+
 ## License
 
 MIT — See [LICENSE](LICENSE) for details.
