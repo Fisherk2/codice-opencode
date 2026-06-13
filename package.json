@@ -5,6 +5,7 @@
   "type": "module",
   "private": true,
   "devDependencies": {
+    "@biomejs/biome": "^2.5.0",
     "@types/bun": "latest"
   },
   "peerDependencies": {
@@ -18,5 +19,9 @@
     "lint": "biome check src/ tests/",
     "format": "biome format --write src/ tests/",
     "format:check": "biome format --check src/ tests/"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.5.1",
+    "semver": "^7.8.4"
   }
 }
