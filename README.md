@@ -1,4 +1,4 @@
-# Spec-Driven Development Workspace with OpenCode
+# Códice: Spec-Driven Development Workspace
 
 <p align="center">
   <img src="docs/img/banner.png" alt="Spec-Driven Development Workspace Banner">
