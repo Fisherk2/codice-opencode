@@ -1,4 +1,5 @@
 import type { FileRule } from "../entities/FileRule";
+import type { Result } from "../types/Result";
 
 /**
  * Orchestrates file merging according to classification rules.
@@ -11,11 +12,8 @@ export class FileMergeEngine {
 	 * @param rules - Ordered list of classification rules to apply.
 	 * @returns Result indicating success or a structured error.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	async execute(_rules: readonly FileRule[]): Promise<void> {
+	async execute(_rules: readonly FileRule[]): Promise<Result<void, Error>> {
 		// TODO: Implement merge logic per classification category
-		// - mandatory: always copy, overwrite if exists
-		// - standard: copy only if missing
-		// - optional: copy only if user selected AND missing
+		throw new Error("Not implemented");
 	}
 }

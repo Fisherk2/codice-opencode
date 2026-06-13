@@ -1,5 +1,5 @@
 # Workflow – Códice: Opencode Workspace Installer v1.0.0 (MVP)
-**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Metodología:** Agile/Iterativo | **Estado:** F0 Listo para Implementación
+**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Metodología:** Agile/Iterativo | **Estado:** F0 ✅ Completado | F1 🟢 Listo para Planificar
 
 ## 1. Visión de Fases
 | Fase | Objetivo | Entregables | Duración Estimada |
@@ -14,21 +14,28 @@
 
 ## 2. Desglose por Fase
 
-### Fase F0 – Preparación y Convenciones
-- **Tareas:** 
-  - `T0.1`: Inicializar repositorio con `bun init` y estructura de carpetas Clean Architecture.
-  - `T0.2`: Crear `Justfile` con tareas: `setup`, `lint`, `format`, `test`, `build`, `release`.
-  - `T0.3`: Configurar `biome` o `eslint` + `prettier` para formateo y linting automático.
-- **Criterios de Completitud (DoD):** `just setup` ejecuta sin errores, el linter pasa en el boilerplate inicial.
+### Fase F0 – Preparación y Convenciones ✅ Completado
+- **Tareas realizadas:** 
+  - `T0.1`: Inicializar repositorio con `bun init` y estructura Clean Architecture (15 stubs + 12 directorios).
+  - `T0.2`: Crear `Justfile` con 17 recipes: `setup`, `dev`, `lint`, `format`, `check`, `test`, `build`, `release`, `clean`.
+  - `T0.3`: Configurar `@biomejs/biome` v2.5.0 para linting y formateo (strict rules, organize imports).
+  - `T0.4`: Crear CI/CD pipeline (`.github/workflows/ci.yml`) — matrix 3-OS (ubuntu, macos, windows).
+  - `T0.5`: Configurar `bunfig.toml` (dev/optional/peer deps, text lockfile, hoisted linker).
+  - `T0.6`: Crear `.gitignore` optimizado para Bun/TypeScript (~42 líneas).
+  - `T0.7`: Escribir 74 tests de validación F0 (8 módulos en `tests/unit/setup/`).
+  - **Extra:** Code review 5-ejes sobre todo F0, corrección de 12 hallazgos (Result pattern, eslint muerto, stubs consistentes).
+- **Artefactos generados:** `package.json`, `tsconfig.json`, `biome.json`, `bunfig.toml`, `Justfile`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `.gitignore`, 15 stubs Clean Architecture, `src/domain/types/Result.ts`, 74 tests de validación.
+- **Criterios de Completitud (DoD):** `just setup` ✅, `just lint` (4 warnings esperados, solo noConsole) ✅, `just check` ✅, `bun test` (74/74) ✅, `tsc --noEmit` ✅.
 - **Dependencias:** Ninguna.
 
-### Fase F1 – Infraestructura (Adaptadores)
-- **Tareas:**
+### Fase F1 – Infraestructura (Adaptadores) 🟢 Listo para Planificar
+- **Tareas propuestas:**
   - `T1.1`: Implementar `IFileSystem` y su adaptación concreta `BunFileSystem` (con soporte para staging atómico).
   - `T1.2`: Implementar `IGitHubClient` para consultar `releases/latest` con manejo de timeouts y errores de red.
-  - `T1.3`: Crear mocks de infraestructura para pruebas unitarias.
-- **Criterios de Completitud (DoD):** Los adaptadores pasan pruebas unitarias de aislamiento.
-- **Dependencias:** F0.
+  - `T1.3`: Implementar `ClackPromptsAdapter` concreto para TUI real (reemplazar stubs no-op).
+  - `T1.4`: Escribir pruebas unitarias para los 3 adaptadores (BunFileSystem, GitHubRestClient, ClackPromptsAdapter).
+- **Criterios de Completitud (DoD):** Los adaptadores pasan pruebas unitarias de aislamiento; BunFileSystem implementa staging atómico; GitHubRestClient maneja timeouts (3s); ClackPromptsAdapter usa @clack/prompts real.
+- **Dependencias:** F0 ✅.
 
 ### Fase F2 – Núcleo (Dominio y Lógica de Negocio)
 - **Tareas:**
@@ -80,8 +87,8 @@ graph TD
     classDef done fill:#d4edda,stroke:#155724,stroke-width:2px;
 
     %% Nodos del grafo
-    S0[S0: Estructura y Convenciones<br/>Estado: ⏳ Pendiente]:::pending
-    S1[S1: Adaptadores FS y Red<br/>Estado: ⏳ Pendiente]:::pending
+    S0[S0: Estructura y Convenciones<br/>Estado: ✅ Completado]:::done
+    S1[S1: Adaptadores FS y Red<br/>Estado: 🟢 Listo para Planificar]:::pending
     S2[S2: Dominio y Lógica de Negocio<br/>Estado: ⏳ Pendiente]:::pending
     S3[S3: Casos de Uso y TUI CLI<br/>Estado: ⏳ Pendiente]:::pending
     S4[S4: Pruebas Unitarias y E2E<br/>Estado: ⏳ Pendiente]:::pending

@@ -1,3 +1,5 @@
+import type { Result } from "../types/Result";
+
 /**
  * Result of comparing two semantic versions.
  */
@@ -15,13 +17,8 @@ export class VersionComparator {
 	 * @param remote - Latest remote version string (e.g. "1.1.0")
 	 * @returns The relationship between local and remote.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	compare(_local: string, _remote: string): ComparisonResult {
+	compare(_local: string, _remote: string): Result<ComparisonResult, Error> {
 		// TODO: Implement using semver library
-		// Returns "newer" if remote > local
-		// Returns "older" if remote < local
-		// Returns "equal" if same
-		// Returns "incompatible" if versions can't be compared
-		return "equal";
+		throw new Error("Not implemented");
 	}
 }
