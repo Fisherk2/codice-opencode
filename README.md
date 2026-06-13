@@ -1,7 +1,7 @@
 # Workspace de Desarrollo Spec-Driven con OpenCode
 
 <p align="center">
-  <img src="docs/opencode/img/banner.png" alt="Spec-Driven Development Workspace Banner">
+  <img src="docs/img/banner.png" alt="Spec-Driven Development Workspace Banner">
 </p>
 
 **Workspace de OpenCode para desarrollo asistido por IA con metodología Spec-Driven Development.**
@@ -30,7 +30,7 @@ Seis agentes primarios orquestan el ciclo SDD, cada uno con un rol y permisos es
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/opencode/img/Huitzilopochtli.jpeg" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Huitzilopochtli.jpeg" width="240" style="border-radius: 10px;">
       <br><sub><i>Forjado en el fuego de la guerra y el sol.</i></sub>
     </td>
     <td width="70%" valign="top">
@@ -49,7 +49,7 @@ Seis agentes primarios orquestan el ciclo SDD, cada uno con un rol y permisos es
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/opencode/img/Quetzalcoatl.png" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Quetzalcoatl.png" width="240" style="border-radius: 10px;">
       <br><sub><i>Nacido del viento y la sabiduría infinita.</i></sub>
     </td>
     <td width="70%" valign="top">
@@ -68,7 +68,7 @@ Seis agentes primarios orquestan el ciclo SDD, cada uno con un rol y permisos es
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/opencode/img/Moctezuma.jpeg" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Moctezuma.jpeg" width="240" style="border-radius: 10px;">
       <br><sub><i>Arquitecto de imperios y planes de batalla.</i></sub>
     </td>
     <td width="70%" valign="top">
@@ -87,7 +87,7 @@ Seis agentes primarios orquestan el ciclo SDD, cada uno con un rol y permisos es
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/opencode/img/Tlaloc.jpeg" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Tlaloc.jpeg" width="240" style="border-radius: 10px;">
       <br><sub><i>El hacedor de lluvia que fecunda los proyectos.</i></sub>
     </td>
     <td width="70%" valign="top">
@@ -106,7 +106,7 @@ Seis agentes primarios orquestan el ciclo SDD, cada uno con un rol y permisos es
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/opencode/img/Mictlantecuhtli.jpeg" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Mictlantecuhtli.jpeg" width="240" style="border-radius: 10px;">
       <br><sub><i>Señor del inframundo de las 9 pruebas.</i></sub>
     </td>
     <td width="70%" valign="top">
@@ -125,7 +125,7 @@ Seis agentes primarios orquestan el ciclo SDD, cada uno con un rol y permisos es
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/opencode/img/Tezcatlipoca.png" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Tezcatlipoca.png" width="240" style="border-radius: 10px;">
       <br><sub><i>El espejo que revela toda verdad oculta.</i></sub>
     </td>
     <td width="70%" valign="top">
