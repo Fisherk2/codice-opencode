@@ -1,5 +1,5 @@
 # Workflow – Códice: Opencode Workspace Installer v1.0.0 (MVP)
-**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Metodología:** Agile/Iterativo | **Estado:** F0 ✅ Completado | F1 🟢 Listo para Planificar
+**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Metodología:** Agile/Iterativo | **Estado:** F0 ✅ Completado | F1 ✅ Completado | F2 🟢 Listo para Planificar
 
 ## 1. Visión de Fases
 | Fase | Objetivo | Entregables | Duración Estimada |
@@ -28,13 +28,15 @@
 - **Criterios de Completitud (DoD):** `just setup` ✅, `just lint` (4 warnings esperados, solo noConsole) ✅, `just check` ✅, `bun test` (74/74) ✅, `tsc --noEmit` ✅.
 - **Dependencias:** Ninguna.
 
-### Fase F1 – Infraestructura (Adaptadores) 🟢 Listo para Planificar
-- **Tareas propuestas:**
-  - `T1.1`: Implementar `IFileSystem` y su adaptación concreta `BunFileSystem` (con soporte para staging atómico).
-  - `T1.2`: Implementar `IGitHubClient` para consultar `releases/latest` con manejo de timeouts y errores de red.
-  - `T1.3`: Implementar `ClackPromptsAdapter` concreto para TUI real (reemplazar stubs no-op).
-  - `T1.4`: Escribir pruebas unitarias para los 3 adaptadores (BunFileSystem, GitHubRestClient, ClackPromptsAdapter).
-- **Criterios de Completitud (DoD):** Los adaptadores pasan pruebas unitarias de aislamiento; BunFileSystem implementa staging atómico; GitHubRestClient maneja timeouts (3s); ClackPromptsAdapter usa @clack/prompts real.
+### Fase F1 – Infraestructura (Adaptadores) ✅ Completado
+- **Tareas realizadas:**
+  - `T1.1`: Implementar `IFileSystem` y `BunFileSystem` con staging atómico, rollback, path traversal prevention, template cache.
+  - `T1.2`: Implementar `IGitHubClient` y `GitHubRestClient` con manejo de timeouts (3s), semver tag validation, content-length guard.
+  - `T1.3`: Implementar `IClientPrompts` y `ClackPromptsAdapter` con confirm, multiselect, spinner, y flow messages.
+  - `T1.4`: Escribir 64 tests de integración para los 3 adaptadores (32 BunFileSystem, 15 ClackPrompts, 17 GitHubRestClient).
+  - `T1.5`: Code review 5-ejes sobre F1, corrección de 12 hallazgos (clearTimeout en finally, path traversal, rollback, semver, simplificaciones).
+- **Artefactos generados:** `BunFileSystem.ts` con staging atómico, `resolveWithinRoot`, `restoreBackups`, template cache; `GitHubRestClient.ts` con semver validation, timeout handling, oversized response rejection; `ClackPromptsAdapter.ts` con implementación completa de `IUserPrompt`; 64 tests de integración, todos pasando; Commit: `124cfd0`.
+- **Criterios de Completitud (DoD):** BunFileSystem implementa staging atómico, rollback en fallo, path traversal prevention ✅; BunFileSystem tiene isEmpty con safe default, template cache, version file ops ✅; GitHubRestClient maneja timeouts (3s), valida semver, rechaza oversized responses ✅; ClackPromptsAdapter usa @clack/prompts real con todos los métodos ✅; `bun test` (138/138) ✅; Code review F1 completado con 0 hallazgos críticos ✅.
 - **Dependencias:** F0 ✅.
 
 ### Fase F2 – Núcleo (Dominio y Lógica de Negocio)
@@ -43,7 +45,7 @@
   - `T2.2`: Implementar `FileMergeEngine` con lógica de fusión granular y patrón Strategy.
   - `T2.3`: Implementar `VersionComparator` usando la librería `semver`.
 - **Criterios de Completitud (DoD):** 100% de cobertura en lógica de dominio, cero dependencias de Bun/Red en esta capa.
-- **Dependencias:** F0.
+- **Dependencias:** F0 ✅, F1 ✅.
 
 ### Fase F3 – Interfaces (Casos de Uso y CLI)
 - **Tareas:**
@@ -88,8 +90,8 @@ graph TD
 
     %% Nodos del grafo
     S0[S0: Estructura y Convenciones<br/>Estado: ✅ Completado]:::done
-    S1[S1: Adaptadores FS y Red<br/>Estado: 🟢 Listo para Planificar]:::pending
-    S2[S2: Dominio y Lógica de Negocio<br/>Estado: ⏳ Pendiente]:::pending
+    S1[S1: Adaptadores FS y Red<br/>Estado: ✅ Completado]:::done
+    S2[S2: Dominio y Lógica de Negocio<br/>Estado: 🟢 Listo para Planificar]:::pending
     S3[S3: Casos de Uso y TUI CLI<br/>Estado: ⏳ Pendiente]:::pending
     S4[S4: Pruebas Unitarias y E2E<br/>Estado: ⏳ Pendiente]:::pending
     S5[S5: CI/CD y Binarios<br/>Estado: ⏳ Pendiente]:::pending
@@ -126,10 +128,11 @@ graph TD
 | Gate | Artefacto a Revisar | Checklist | Participantes | Resultado |
 |------|---------------------|-----------|---------------|-----------|
 | **Gate 0** | Especificación | ¿SPEC.md, AGENTS.md y ADRs están aprobados? ¿Las decisiones arquitectónicas están documentadas? | Arquitecto | ✅ **Aprobado** — 2026-06-13 |
-| **Gate 1** | F2 (Núcleo) | ¿Lógica libre de efectos secundarios? ¿Principios SOLID aplicados? | Arquitecto, Dev Lead | Pendiente |
-| **Gate 2** | F3 (Interfaces) | ¿La TUI maneja `SIGINT` correctamente? ¿Los mensajes de error son accionables? | Arquitecto, UX Reviewer | Pendiente |
-| **Gate 3** | F4 (Pruebas) | ¿Cobertura >80%? ¿Los tests E2E validan el rollback atómico? | QA, Dev Lead | Pendiente |
-| **Gate 4** | F5 (Release) | ¿El pipeline compila las 3 plataformas? ¿El binario funciona "out of the box"? | Arquitecto, DevOps | Pendiente |
+| **Gate 1** | F1 (Infraestructura) | ¿Adaptadores implementan staging atómico? ¿Manejo de timeouts? ¿Path traversal prevention? ¿Rollback en fallo? | Arquitecto, Dev Lead | ✅ **Aprobado** — 2026-06-14 |
+| **Gate 2** | F2 (Núcleo) | ¿Lógica libre de efectos secundarios? ¿Principios SOLID aplicados? | Arquitecto, Dev Lead | Pendiente |
+| **Gate 3** | F3 (Interfaces) | ¿La TUI maneja `SIGINT` correctamente? ¿Los mensajes de error son accionables? | Arquitecto, UX Reviewer | Pendiente |
+| **Gate 4** | F4 (Pruebas) | ¿Cobertura >80%? ¿Los tests E2E validan el rollback atómico? | QA, Dev Lead | Pendiente |
+| **Gate 5** | F5 (Release) | ¿El pipeline compila las 3 plataformas? ¿El binario funciona "out of the box"? | Arquitecto, DevOps | Pendiente |
 
 ## 6. Gestión de Riesgos
 | Riesgo | Probabilidad | Impacto | Mitigación | Contingencia |
@@ -153,7 +156,7 @@ graph TD
 ## 8. Cronograma y Hitos
 | Hito | Descripción | Fecha Objetivo (Semanas desde inicio) |
 |------|-------------|---------------------------------------|
-| **M1: Cimientos** | F0 y F1 completadas, entorno de desarrollo listo. | Semana 1 |
+| **M1: Cimientos** | F0 y F1 completadas, entorno de desarrollo listo. | Semana 1 ✅ |
 | **M2: Motor Funcional** | F2 y F3 completadas, CLI funcional en modo desarrollo. | Semana 3 |
 | **M3: Calidad Garantizada** | F4 completada, todas las pruebas E2E pasando en CI. | Semana 4 |
 | **M4: Release v1.0.0** | F5 y F6 completadas, primera versión pública en GitHub Releases. | Semana 5 |
