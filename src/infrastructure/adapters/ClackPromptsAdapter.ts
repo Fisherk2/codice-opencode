@@ -126,4 +126,36 @@ export class ClackPromptsAdapter implements IUserPrompt {
 	showError(message: string): void {
 		clack.cancel(`❌ ${message}`);
 	}
+
+	/**
+	 * Present the mode selection menu to the user.
+	 * This is a CLI-specific method (not on IUserPrompt) available
+	 * on the concrete ClackPromptsAdapter.
+	 * @returns Selected mode, or null if user cancelled.
+	 */
+	async promptForMode(): Promise<"clean" | "project" | "update" | null> {
+		const result = await clack.select({
+			message: "Select installation mode:",
+			options: [
+				{
+					value: "clean" as const,
+					label: "Clean Install",
+					hint: "Complete template overwrite (all files)",
+				},
+				{
+					value: "project" as const,
+					label: "Project Install",
+					hint: "Selective merge with file classification",
+				},
+				{
+					value: "update" as const,
+					label: "Update Workspace",
+					hint: "Update to latest template version",
+				},
+			],
+		});
+
+		if (clack.isCancel(result)) return null;
+		return result as "clean" | "project" | "update";
+	}
 }

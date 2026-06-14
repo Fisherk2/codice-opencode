@@ -7,9 +7,15 @@ import type { FileRule } from "../../../src/domain/entities/FileRule";
  */
 
 // Mock the @clack/prompts module
+// IMPORTANT: Bun's mock.module() replaces all future imports of this module
+// globally within the test runner. The mock must include ALL functions that
+// any tested module might call, otherwise those functions will be undefined.
+// In particular, ClackPromptsAdapter.promptForMode() needs `select`.
+
 const mockNote = mock();
 const mockConfirm = mock();
 const mockMultiselect = mock();
+const mockSelect = mock();
 const mockSpinner = mock(() => ({
 	start: mock(),
 	stop: mock(),
@@ -23,6 +29,7 @@ mock.module("@clack/prompts", () => ({
 	note: mockNote,
 	confirm: mockConfirm,
 	multiselect: mockMultiselect,
+	select: mockSelect,
 	spinner: mockSpinner,
 	intro: mockIntro,
 	outro: mockOutro,

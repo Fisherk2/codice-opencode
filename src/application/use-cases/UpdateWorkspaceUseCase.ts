@@ -1,4 +1,20 @@
-import type { Result } from "../../domain/types/Result";
+import { FILE_RULE_MANIFEST } from "../../domain/entities/FileRuleManifest";
+import type { FileMergeEngine } from "../../domain/services/FileMergeEngine";
+import type { VersionComparator } from "../../domain/services/VersionComparator";
+import { failure, type Result, success } from "../../domain/types/Result";
+import type { IFileSystem } from "../ports/IFileSystem";
+import type { IGitHubClient } from "../ports/IGitHubClient";
+import type { IUserPrompt } from "../ports/IUserPrompt";
+
+/**
+ * Options for the update workspace execution.
+ */
+export interface UpdateWorkspaceOptions {
+	/** Skip the confirmation prompt */
+	readonly force?: boolean;
+	/** Explicit version tag (overrides GitHub version lookup) */
+	readonly version?: string;
+}
 
 /**
  * Mode 3: Update Workspace — update an existing installation
@@ -7,12 +23,136 @@ import type { Result } from "../../domain/types/Result";
  */
 export class UpdateWorkspaceUseCase {
 	/**
+	 * @param fileSystem - Adapter for filesystem operations (staging, reading version)
+	 * @param mergeEngine - Domain service that orchestrates file merging
+	 * @param userPrompt - Adapter for interactive user prompts
+	 * @param gitHubClient - Adapter for GitHub API version checking
+	 * @param versionComparator - Domain service for semantic version comparison
+	 */
+	constructor(
+		private readonly fileSystem: IFileSystem,
+		private readonly mergeEngine: FileMergeEngine,
+		private readonly userPrompt: IUserPrompt,
+		private readonly gitHubClient: IGitHubClient,
+		private readonly versionComparator: VersionComparator,
+	) {}
+
+	/**
 	 * Execute a workspace update.
-	 * @param destinationPath - Target directory to update.
+	 *
+	 * Flow:
+	 * 1. Validate destination is writable.
+	 * 2. If not forced, ask user for confirmation.
+	 * 3. Read local version info from `.codice-version` (best-effort).
+	 * 4. Check GitHub for latest release tag.
+	 * 5. Compare versions; if already up to date, inform user and skip.
+	 * 6. If GitHub unreachable, warn and continue with local template.
+	 * 7. Execute merge engine with only Obligatorio and Estándar rules.
+	 * 8. Write updated `.codice-version` file.
+	 *
+	 * @param destinationPath - Target directory for the update.
+	 * @param options - Optional flags.
 	 * @returns Result indicating success or a structured error.
 	 */
-	async execute(_destinationPath: string): Promise<Result<void, Error>> {
-		// TODO: Implement update workspace flow
-		throw new Error("Not implemented");
+	async execute(
+		destinationPath: string,
+		options?: UpdateWorkspaceOptions,
+	): Promise<Result<void, Error>> {
+		// Step 1: Check writability
+		const writable = await this.fileSystem.isWritable();
+		if (!writable) {
+			return failure(
+				new Error(
+					`Permission denied at "${destinationPath}". Check directory permissions or run with elevated access.`,
+				),
+			);
+		}
+
+		// Step 2: Ask for confirmation if not forced
+		if (!options?.force) {
+			const confirmed = await this.userPrompt.confirm(
+				`Update workspace in "${destinationPath}"? Obligatorio and Estándar files will be updated. Opcional files will be preserved. Continue?`,
+				true,
+			);
+			if (!confirmed) {
+				await this.userPrompt.showCancel("Update cancelled by user.");
+				return success(undefined);
+			}
+		}
+
+		// Step 3: Read local version info (best-effort)
+		let installedVersion = "0.0.0";
+		let previousOptionalSelections: string[] = [];
+		try {
+			const versionData = await this.fileSystem.readVersionFile();
+			if (versionData) {
+				const parsed = JSON.parse(versionData);
+				installedVersion = parsed.installedVersion ?? installedVersion;
+				previousOptionalSelections = parsed.optionalSelections ?? [];
+			}
+		} catch {
+			// No version file found — this is a first update in an existing project
+		}
+
+		// Step 4: Check GitHub for latest version
+		const remoteTag = await this.gitHubClient.getLatestReleaseTag();
+		if (remoteTag) {
+			// Strip 'v' prefix (GitHub tags use "vX.Y.Z" format)
+			const remoteVersion = remoteTag.startsWith("v") ? remoteTag.slice(1) : remoteTag;
+			const comparison = this.versionComparator.compare(installedVersion, remoteVersion);
+			if (comparison.ok && comparison.value === "equal") {
+				await this.userPrompt.showInfo(
+					`Workspace is already up to date at version ${installedVersion}. No update needed.`,
+				);
+				return success(undefined);
+			}
+			if (comparison.ok && comparison.value !== "newer") {
+				// Local is ahead of remote — unusual but not an error
+				await this.userPrompt.showInfo(
+					`Local version (${installedVersion}) is ahead of remote (${remoteVersion}). No update needed.`,
+				);
+				return success(undefined);
+			}
+		} else {
+			await this.userPrompt.showWarning(
+				"Could not check for updates via GitHub. Falling back to the bundled template version.",
+			);
+		}
+
+		// Step 5: Get only Obligatorio + Estándar rules (skip Opcional)
+		const allRules = FILE_RULE_MANIFEST;
+		const updateRules = allRules.filter((rule) => rule.category !== "optional");
+
+		// Step 6: Execute the merge engine
+		const mergeResult = await this.mergeEngine.execute(updateRules);
+		if (!mergeResult.ok) {
+			return failure(new Error(mergeResult.error.message));
+		}
+
+		// Determine the version to write:
+		// Priority: explicit version > GitHub remote > previously installed > "0.0.0"
+		const newVersion =
+			options?.version ?? (remoteTag ? remoteTag.replace(/^v/, "") : undefined) ?? installedVersion;
+
+		// Step 7: Write version file
+		try {
+			await this.fileSystem.writeVersionFile(
+				JSON.stringify({
+					installedVersion: newVersion,
+					installedAt: new Date().toISOString(),
+					optionalSelections: previousOptionalSelections,
+				}),
+			);
+		} catch (err) {
+			// Clean up staging since version file write failed
+			await this.fileSystem.cleanStaging();
+			return failure(
+				new Error(
+					`Failed to write version file: ${err instanceof Error ? err.message : "Unknown error"}. Update rolled back.`,
+				),
+			);
+		}
+
+		return success(undefined);
 	}
 }
