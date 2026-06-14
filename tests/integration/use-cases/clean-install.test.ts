@@ -178,6 +178,25 @@ describe("CleanInstallUseCase", () => {
 			expect(typeof versionData.installedAt).toBe("string");
 		});
 
+		it("should return error and clean staging when merge engine fails", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			// Make stageFile throw to trigger a merge engine failure
+			(fs.stageFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full during staging"));
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(false);
+			if (result.ok) return;
+			expect(result.error.message).toContain("staging");
+			// Staging should have been cleaned after the merge failure
+			expect(calls.cleanStaging).toBeGreaterThanOrEqual(1);
+			// Version file should NOT have been written
+			expect(calls.writeVersionFile.length).toBe(0);
+		});
+
 		it("should handle version file write failure gracefully", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.writeVersionFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full"));

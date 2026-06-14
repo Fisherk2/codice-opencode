@@ -235,6 +235,75 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(versionData.optionalSelections).toEqual(["Justfile"]);
 		});
 
+		it("should return error and clean staging when merge engine fails", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			// Make stageFile throw to trigger a merge engine failure
+			(fs.stageFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full during staging"));
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(false);
+			if (result.ok) return;
+			expect(result.error.message).toContain("staging");
+			// Staging should have been cleaned after the merge failure
+			expect(calls.cleanStaging).toBeGreaterThanOrEqual(1);
+			// Version file should NOT have been written
+			expect(calls.writeVersionFile.length).toBe(0);
+		});
+
+		it("should skip update when local version is ahead of remote", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+				JSON.stringify({
+					installedVersion: "1.0.0",
+					installedAt: "2026-01-01T00:00:00.000Z",
+					optionalSelections: [],
+				}),
+			);
+			const prompt = createMockPrompt();
+			const engine = new FileMergeEngine(fs);
+			// Remote is older than local
+			const gitHub = createMockGitHubClient("v0.5.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			// Should inform user that local is ahead
+			expect(prompt.showInfo).toHaveBeenCalled();
+			// No files should be staged
+			expect(calls.stageFile.length).toBe(0);
+		});
+
+		it("should proceed with update when local version is invalid semver", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+				JSON.stringify({
+					installedVersion: "not-a-version",
+					installedAt: "2026-01-01T00:00:00.000Z",
+					optionalSelections: [],
+				}),
+			);
+			const prompt = createMockPrompt();
+			const engine = new FileMergeEngine(fs);
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			// When comparison fails (invalid semver), code falls through to update
+			expect(result.ok).toBe(true);
+			// Files should still be staged (update proceeds despite invalid local version)
+			expect(calls.stageFile.length).toBe(nonOptionalCount);
+		});
+
 		it("should handle version file write failure gracefully", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.writeVersionFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full"));

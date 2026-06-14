@@ -238,6 +238,52 @@ describe("ProjectInstallUseCase", () => {
 			expect(versionData.optionalSelections).toEqual(selectedPaths);
 		});
 
+		it("should not stage optional file that already exists in destination", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			// User selects the first optional file
+			const firstOptional = optionalRules[0]!;
+			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue([firstOptional.path]);
+			// But that file already exists in the destination
+			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(
+				async (path: string) => path === firstOptional.path,
+			);
+			const engine = new FileMergeEngine(fs);
+			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// The selected optional file should NOT be staged because it already exists
+			const stagedOptional = calls.stageFile.filter((p) => p === firstOptional.path);
+			expect(stagedOptional.length).toBe(0);
+			// But mandatory + standard files (minus existing standard) should still be staged
+			// Since destinationExists returns true for the optional path only, standard files
+			// that don't exist should still be staged
+			const mandatoryCount = getRulesByCategory("mandatory").length;
+			const standardCount = getRulesByCategory("standard").length;
+			expect(calls.stageFile.length).toBe(mandatoryCount + standardCount);
+		});
+
+		it("should return error and clean staging when merge engine fails", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			// Make stageFile throw to trigger a merge engine failure
+			(fs.stageFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full during staging"));
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(false);
+			if (result.ok) return;
+			expect(result.error.message).toContain("staging");
+			// Staging should have been cleaned after the merge failure
+			expect(calls.cleanStaging).toBeGreaterThanOrEqual(1);
+			// Version file should NOT have been written
+			expect(calls.writeVersionFile.length).toBe(0);
+		});
+
 		it("should handle version file write failure gracefully", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.writeVersionFile as ReturnType<typeof mockFn>).mockRejectedValue(
