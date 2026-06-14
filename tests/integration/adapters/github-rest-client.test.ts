@@ -53,6 +53,54 @@ describe("GitHubRestClient", () => {
 			expect(tag).toBe("v1.2.3");
 		});
 
+		it("should accept pre-release semver tags", async () => {
+			mockFetchOnce(
+				new Response(JSON.stringify({ tag_name: "v2.0.0-beta.1" }), {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				}),
+			);
+
+			const tag = await client.getLatestReleaseTag();
+			expect(tag).toBe("v2.0.0-beta.1");
+		});
+
+		it("should accept pre-release tags with rc suffix", async () => {
+			mockFetchOnce(
+				new Response(JSON.stringify({ tag_name: "v1.5.0-rc.2" }), {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				}),
+			);
+
+			const tag = await client.getLatestReleaseTag();
+			expect(tag).toBe("v1.5.0-rc.2");
+		});
+
+		it("should reject non-semver tag names", async () => {
+			mockFetchOnce(
+				new Response(JSON.stringify({ tag_name: "release-2024-06" }), {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				}),
+			);
+
+			const tag = await client.getLatestReleaseTag();
+			expect(tag).toBeNull();
+		});
+
+		it("should reject tag with invalid format", async () => {
+			mockFetchOnce(
+				new Response(JSON.stringify({ tag_name: "latest" }), {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				}),
+			);
+
+			const tag = await client.getLatestReleaseTag();
+			expect(tag).toBeNull();
+		});
+
 		it("should return null on 404 response", async () => {
 			mockFetchOnce(new Response("Not Found", { status: 404 }));
 
@@ -101,6 +149,37 @@ describe("GitHubRestClient", () => {
 		it("should return null on non-JSON response body", async () => {
 			mockFetchOnce(
 				new Response(null, {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				}),
+			);
+
+			const tag = await client.getLatestReleaseTag();
+			expect(tag).toBeNull();
+		});
+
+		it("should reject oversized response via content-length header", async () => {
+			// 2 MB declared content-length exceeds the 1 MB limit
+			const oversizedHeaders = new Headers({
+				"Content-Type": "application/json",
+				"content-length": String(2 * 1024 * 1024),
+			});
+			mockFetchOnce(
+				new Response(JSON.stringify({ tag_name: "v1.0.0" }), {
+					status: 200,
+					headers: oversizedHeaders,
+				}),
+			);
+
+			const tag = await client.getLatestReleaseTag();
+			expect(tag).toBeNull();
+		});
+
+		it("should reject oversized response via actual body length", async () => {
+			// Response body of 1.5 MB but content-length is missing/lying
+			const bigBody = "x".repeat(2 * 1024 * 1024);
+			mockFetchOnce(
+				new Response(JSON.stringify({ tag_name: "v1.0.0", data: bigBody }), {
 					status: 200,
 					headers: { "Content-Type": "application/json" },
 				}),

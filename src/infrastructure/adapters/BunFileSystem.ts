@@ -80,7 +80,10 @@ export class BunFileSystem implements IFileSystem {
 		for (const category of categories) {
 			const fullPath = path.join(this.templateRoot, category, relativePath);
 
-			// Verify resolved path stays within templateRoot
+			// Verify resolved path stays within templateRoot — prevents symlink escape
+			// and traversal via path components like `subdir/../../../etc/passwd`.
+			// The trailing separator prevents substring prefix matching (e.g. /home/project
+			// vs /home/project-evil).
 			const resolved = path.resolve(fullPath);
 			const templateWithSep = path.resolve(this.templateRoot) + path.sep;
 			if (!resolved.startsWith(templateWithSep)) {
@@ -217,12 +220,11 @@ export class BunFileSystem implements IFileSystem {
 					const destFile = Bun.file(destPath);
 					if (await destFile.exists()) {
 						const backupPath = `${destPath}.codice-backup`;
-						const content = await destFile.text();
-						await Bun.write(backupPath, content);
+						await fs.copyFile(destPath, backupPath);
 						backups.set(destPath, backupPath);
 					}
 				} catch {
-					// If we can't read the original, we can't back it up — proceed anyway
+					// If we can't copy the original, we can't back it up — proceed anyway
 					// The worst case is we can't roll back this particular file
 				}
 
@@ -243,18 +245,7 @@ export class BunFileSystem implements IFileSystem {
 			}
 		} catch (error) {
 			// Rollback: restore all backed-up original files
-			for (const [destPath, backupPath] of backups) {
-				try {
-					const backupFile = Bun.file(backupPath);
-					if (await backupFile.exists()) {
-						const content = await backupFile.text();
-						await Bun.write(destPath, content);
-					}
-					await fs.unlink(backupPath);
-				} catch {
-					// If rollback fails for a specific file, continue with others
-				}
-			}
+			await this.restoreBackups(backups);
 
 			// Clean up staging on failure too
 			await this.cleanStaging();
@@ -356,6 +347,24 @@ export class BunFileSystem implements IFileSystem {
 	// ---------------------------------------------------------------------------
 	// Private helpers
 	// ---------------------------------------------------------------------------
+
+	/**
+	 * Restore backed-up destination files and clean up backup files.
+	 * On any individual failure, continues with the remaining backups.
+	 */
+	private async restoreBackups(backups: Map<string, string>): Promise<void> {
+		for (const [destPath, backupPath] of backups) {
+			try {
+				const backupFile = Bun.file(backupPath);
+				if (await backupFile.exists()) {
+					await fs.copyFile(backupPath, destPath);
+				}
+				await fs.unlink(backupPath);
+			} catch {
+				// If rollback fails for a specific file, continue with others
+			}
+		}
+	}
 
 	/**
 	 * Recursively walk a directory and return all file paths.

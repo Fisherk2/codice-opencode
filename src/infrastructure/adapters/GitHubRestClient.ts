@@ -1,11 +1,9 @@
+import semver from "semver";
 import type { IGitHubClient } from "../../application/ports/IGitHubClient";
 import { GITHUB_API_LATEST_RELEASE, GITHUB_API_TIMEOUT_MS } from "../config/constants";
 
 /** Maximum allowed response body size (1 MB) to prevent OOM from malicious responses */
 const MAX_RESPONSE_BYTES = 1024 * 1024;
-
-/** Valid semver tag pattern: vX.Y.Z where X, Y, Z are one or more digits */
-const VALID_TAG_PATTERN = /^v\d+\.\d+\.\d+$/;
 
 /**
  * Fetch-based GitHub REST API client for checking latest releases.
@@ -42,8 +40,8 @@ export class GitHubRestClient implements IGitHubClient {
 			if (typeof tag !== "string") {
 				return null;
 			}
-			// Validate tag format to prevent injection via malformed tag_name
-			if (!VALID_TAG_PATTERN.test(tag)) {
+			// Validate tag is a valid semver (including pre-release tags like v1.0.0-beta)
+			if (semver.valid(tag) === null) {
 				return null;
 			}
 			return tag;
@@ -79,10 +77,10 @@ export class GitHubRestClient implements IGitHubClient {
 	 * Returns null for any error condition (network, timeout, HTTP, parsing).
 	 */
 	private async fetchLatestRelease(): Promise<Record<string, unknown> | null> {
-		try {
-			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
+		try {
 			const response = await fetch(this.apiUrl, {
 				signal: controller.signal,
 				headers: {
@@ -90,8 +88,6 @@ export class GitHubRestClient implements IGitHubClient {
 					"User-Agent": "codice-installer/1.0.0",
 				},
 			});
-
-			clearTimeout(timeoutId);
 
 			// Handle HTTP errors gracefully
 			if (!response.ok) {
@@ -138,6 +134,8 @@ export class GitHubRestClient implements IGitHubClient {
 			}
 			// Network errors (DNS failure, connection refused, etc.)
 			return null;
+		} finally {
+			clearTimeout(timeoutId);
 		}
 	}
 }
