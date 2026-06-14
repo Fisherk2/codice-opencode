@@ -1,10 +1,27 @@
-# Plan: F3 – Interfaces (Casos de Uso y CLI)
+# Plan: F4 – Pruebas (Unitarias, Integración y E2E)
+
+**Fecha:** 2026-06-14 | **Autor:** Fisherk2 | **Estado:** 🟢 Listo para Implementar
 
 ## Overview
 
-Implementar la capa de aplicación (use cases) y el punto de entrada CLI. Esta fase conecta el dominio (F2) con la infraestructura (F1) y expone todo a través de una TUI interactiva y CLI flags.
+Implementar la fase de pruebas completa: scripts E2E que compilan el binary, lo ejecutan en directorios temporales aislados, y validan el comportamiento real. También cerrar gaps de coverage y wirear E2E en CI.
 
-**Goal:** CLI funcional en modo desarrollo (`bun run`), los 3 flujos completos ejecutando con datos mockeados/integrados, pasando los gates de calidad.
+**Goal:** Todos los tests E2E pasan en CI, coverage >90% overall, Gate 4 aprobado.
+
+---
+
+## Estado Actual
+
+| Artefacto | Estado | Detalle |
+|-----------|--------|---------|
+| Unit + Integration tests | ✅ | 269 tests passing |
+| E2E scripts | ❌ | `tests/e2e/` vacío — 0 scripts |
+| `just test-e2e` | ⚠️ | Existe en Justfile pero llama script inexistente |
+| CI E2E step | ❌ | No corre E2E en GitHub Actions |
+| Coverage | ✅ | 89.69% functions / 88.36% lines (>80%) |
+| VersionComparator coverage | ⚠️ | 80% functions (test gap: pre-release versions) |
+| ClackPromptsAdapter coverage | ⚠️ | 86.67% functions (test gap: promptForMode cancel) |
+| output.ts coverage | ❌ | 0% functions (sin tests) |
 
 ---
 
@@ -12,300 +29,308 @@ Implementar la capa de aplicación (use cases) y el punto de entrada CLI. Esta f
 
 | # | Decision | Rationale |
 |---|----------|------------|
-| F3-A1 | Cada use case recibe los ports via constructor (DIP) | Clean Architecture: el caso de uso no conoce Bun, fetch ni @clack/prompts directamente |
-| F3-A2 | `main.ts` es el composition root | Todas las dependencias se instancian aquí; los use cases solo reciben interfaces |
-| F3-A3 | CleanInstallUseCase trata todos los archivos como Obligatorio | El FileMergeEngine recibe solo las reglas Obligatorio (todas); el motor aplica overwrite |
-| F3-A4 | UpdateWorkspaceUseCase filtra reglas internamente | Recibe todas las reglas pero solo pasa Obligatorio + Estándar al motor; Opcional se excluye |
-| F3-A5 | Modo interactivo es el default (`codice` sin flags) | UX: usuarios nuevos deben ver el menú guided; power users usan flags |
+| F4-A1 | E2E usa `bash` puro | SPEC.md §Phase 3 pide `bash`/`zx`; bash puro evita dependencia adicional |
+| F4-A2 | Mock server HTTP con Bun `serve` API | Puerto fijo `localhost:4567`, responde `{"tag_name":"v1.0.0"}`, retorna PID |
+| F4-A3 | Binary compilado una vez al inicio del runner | `just test-e2e` compila; todos los tests usan `dist/codice-*` |
+| F4-A4 | Temp dirs con `mktemp -d` + `trap` cleanup | Garantiza isolation y cleanup automático en EXIT |
+| F4-A5 | 6 escenarios E2E completos | Clean Install, Project Selective, Optional Skip, Update, Rollback, Path Traversal |
+| F4-A6 | Optional Skip: fuerza + interactivo piped | `--force` no copia opcionales; sin `--force` pipea input que deselecciona todos |
 
 ---
 
 ## Dependency Graph
 
 ```
-T3.1: CleanInstallUseCase          T3.2: ProjectInstallUseCase         T3.3: UpdateWorkspaceUseCase
-    │                                  │                                   │
-    ├── IFileSystem                    ├── IFileSystem                     ├── IFileSystem
-    ├── FileMergeEngine                ├── FileMergeEngine                 ├── FileMergeEngine
-    ├── IUserPrompt                    ├── FileRuleManifest (F2 ✅)        ├── VersionComparator (F2 ✅)
-    │                             T3.1 + T3.2 en paralelo               ├── IGitHubClient
-    │                                                                        │
-    └──────────────────────────┬─────────────────────────────────────────────┘
-                               │
-                         T3.4: main.ts (CLI wiring)
-                               │
-                         T3.5: SIGINT handling
-                               │
-                         T3.6: Integration tests
+F4-T1: E2E lib (common.sh)          ← base para todos
+F4-T2: Clean Install E2E             ← depende de T1
+F4-T3: Project Install E2E           ← depende de T1
+F4-T4: Project Optional Skip E2E     ← depende de T1
+F4-T5: Update Workspace E2E          ← depende de T1 + mock server
+F4-T6: Atomic Rollback E2E           ← depende de T1
+F4-T7: Path Traversal E2E            ← depende de T1
+F4-T8: CI Integration                ← depende de T2-T7
+F4-T9: Coverage gaps                 ← independiente, paralelo con T8
 ```
-
-**T3.1 y T3.2 son completamente paralelos** — no comparten estado ni dependencias cruzadas.
-**T3.3 depende de T3.1/T3.2?** No — usa los mismos puertos pero tiene lógica adicional de version check. Puede implementarse en paralelo.
-**T3.4 requiere T3.1, T3.2, T3.3** — necesita los 3 use cases instanciados.
-**T3.5 requiere T3.4** — el handler referencia las funciones de cleanup.
-**T3.6 requiere todos los anteriores** — tests de integración end-to-end.
 
 ---
 
 ## Task List
 
-### Phase 1: Use Cases
+### Phase 1: E2E Infrastructure
 
-#### Task F3-T1: CleanInstallUseCase — implementación completa
+#### Task F4-T1: E2E shared library (`tests/e2e/common.sh`)
 
-**Descripción:** Implementar el caso de uso para instalación limpia. Recibe `IFileSystem` y `FileMergeEngine` via constructor. Obtiene todas las reglas del `FILE_RULE_MANIFEST`, las pasa todas como Obligatorio al motor, y ejecuta. Si `isEmpty()` retorna false Y `--force` no está activo, pide confirmación. Al terminar exitosamente, escribe `.codice-version`.
-
-**Acceptance criteria:**
-- [ ] Constructor recibe `IFileSystem`, `FileMergeEngine`, `IUserPrompt`
-- [ ] `execute(destinationPath: string, options?: { force?: boolean }): Promise<Result<void, Error>>`
-- [ ] Si `destinationExists()` es false → error accionable "Directory does not exist"
-- [ ] Si `isWritable()` es false → error accionable "Permission denied"
-- [ ] Si `isEmpty()` es false Y `force === false` → pide confirmación via `confirm()`
-- [ ] Si usuario rechaza → retorna `Result.ok()` (no error, cancelación graceful)
-- [ ] Obtiene todas las reglas de `FILE_RULE_MANIFEST` y las pasa al motor
-- [ ] Llama `fileMergeEngine.execute(allRules)` — todas como Obligatorio
-- [ ] En éxito → `writeVersionFile()` con la versión actual
-- [ ] En error → retorna `Result.err()` con mensaje accionable
-- [ ] **Zero runtime dependencies** en el use case (sin Bun, fetch, process)
-- [ ] Logs en verbose mode: cada decisión emit un objeto JSON a stderr
-
-**Verification:**
-- [ ] `bun test tests/integration/` → todos pasan
-- [ ] `just lint` pasa con cero warnings
-- [ ] `tsc --noEmit` pasa (ningún `any`)
-- [ ] Cobertura del use case > 70%
-
-**Dependencies:** F1 (IFileSystem, FileMergeEngine) ✅, F2 (FILE_RULE_MANIFEST) ✅
-
-**Files touched:**
-- `src/application/use-cases/CleanInstallUseCase.ts` — reemplazar stub con implementación
-
-**Estimated scope:** M
-
----
-
-#### Task F3-T2: ProjectInstallUseCase — implementación completa
-
-**Descripción:** Implementar el caso de uso para instalación en proyecto existente. Aplica clasificación: Obligatorio siempre, Estándar solo si no existe, Opcional solo si el usuario los selecciona. Presenta el checklist de opcionales al usuario vía `IUserPrompt.selectOptional()`. Al terminar, escribe `.codice-version` con las selecciones.
+**Descripción:** Script de utilidades compartido por todos los E2E tests. Provee: binary path resolution, temp dir creation con trap cleanup, assertion helpers, mock server startup/shutdown.
 
 **Acceptance criteria:**
-- [ ] Constructor recibe `IFileSystem`, `FileMergeEngine`, `FileRuleManifest`, `IUserPrompt`
-- [ ] `execute(destinationPath: string, options?: { force?: boolean }): Promise<Result<void, Error>>`
-- [ ] Valida `isWritable()` antes de cualquier operación
-- [ ] Obtiene reglas Obligatorio: `getMandatoryRules()` → siempre al motor
-- [ ] Obtiene reglas Estandar: `getStandardRules()` → solo si `destinationExists() === false`
-- [ ] Obtiene reglas Opcional: `getOptionalRules()` → presenta multiselect al usuario
-- [ ] Si `force === true` → salta el multiselect, no copia opcionales
-- [ ] Si usuario cancela multiselect → continúa sin opcionales (no es error)
-- [ ] Construye array de reglas a aplicar y llama `fileMergeEngine.execute(rules)`
-- [ ] En éxito → `writeVersionFile()` con selections de opcionales
-- [ ] **Zero runtime dependencies** en el use case
-- [ ] Logs en verbose mode: cada categoría procesada y count de archivos
+- [ ] `setup_temp_dir()` — crea `mktemp -d`, registra trap para cleanup en EXIT
+- [ ] `assert_file_exists(dir, path)` — falla si `$dir/$path` no existe
+- [ ] `assert_file_missing(dir, path)` — falla si `$dir/$path` existe
+- [ ] `assert_exit_code(cmd, expected)` — falla si exit code no coincide
+- [ ] `assert_contains(file, substring)` — falla si substring no está en file
+- [ ] `start_mock_server()` — inicia Bun serve en puerto 4567, responde `{"tag_name":"v1.0.0"}`, retorna PID
+- [ ] `stop_mock_server(pid)` — mata el proceso mock
+- [ ] `CODICE_BINARY` resolved from `dist/codice-*`
+- [ ] Todos los E2E scripts hacen `set -e` y `source common.sh`
 
 **Verification:**
-- [ ] `bun test tests/integration/` → todos pasan
-- [ ] `just lint` pasa con cero warnings
-- [ ] Cobertura del use case > 70%
+- [ ] `bash -n tests/e2e/common.sh` → sin errores de sintaxis
+- [ ] `source tests/e2e/common.sh && start_mock_server && curl localhost:4567 && stop_mock_server $!` → mock responde JSON
 
-**Dependencies:** F1 (IFileSystem, FileMergeEngine) ✅, F2 (FileRuleManifest) ✅
-
-**Files touched:**
-- `src/application/use-cases/ProjectInstallUseCase.ts` — reemplazar stub con implementación
-
-**Estimated scope:** M
-
----
-
-#### Task F3-T3: UpdateWorkspaceUseCase — implementación completa
-
-**Descripción:** Implementar el caso de uso para actualización de workspace existente. Consulta GitHub para la versión latest, compara con la local, y si hay update disponible aplica solo Obligatorio + Estandar (nunca Opcional). El flujo es el más complejo por el version check.
-
-**Acceptance criteria:**
-- [ ] Constructor recibe `IFileSystem`, `FileMergeEngine`, `FileRuleManifest`, `IGitHubClient`, `IUserPrompt`
-- [ ] `execute(destinationPath: string, options?: { force?: boolean }): Promise<Result<void, Error>>`
-- [ ] Lee `.codice-version` con `readVersionFile()` — si null/missing, treat as unknown
-- [ ] Consulta `githubClient.getLatestReleaseTag()` — si null, proceed con advertencia
-- [ ] Si `githubClient.getLatestReleaseNotes()` disponible, la muestra al usuario
-- [ ] `VersionComparator.compare(local, remote)`:
-  - `"equal"` → info al usuario "already latest", retorna `Result.ok()`
-  - `"older"` (local > remote) → info "local is newer", retorna `Result.ok()`
-  - `"newer"` (local < remote) → proceed con update
-  - Error → proceed con advertencia
-- [ ] Si `force === false` → pide confirmación con `confirm()`
-- [ ] Si usuario rechaza → retorna `Result.ok()` (no error)
-- [ ] Obtiene Obligatorio + Estandar (nunca Opcional) y pasa al motor
-- [ ] En éxito → `writeVersionFile()` con la nueva versión
-- [ ] **Zero runtime dependencies** en el use case
-- [ ] Logs en verbose mode: local/remote version, tipo de release, count de archivos
-
-**Verification:**
-- [ ] `bun test tests/integration/` → todos pasan
-- [ ] `just lint` pasa con cero warnings
-- [ ] Cobertura del use case > 70%
-
-**Dependencies:** F1 ✅, F2 (FileRuleManifest, VersionComparator) ✅
+**Dependencies:** Ninguna
 
 **Files touched:**
-- `src/application/use-cases/UpdateWorkspaceUseCase.ts` — reemplazar stub con implementación
-
-**Estimated scope:** M
-
----
-
-### Phase 2: CLI Wiring
-
-#### Task F3-T4: main.ts — argument parsing y dependency injection
-
-**Descripción:** Implementar el composition root completo en `main.ts`. Parsear args, instanciar adaptadores, inyectar en use cases, y hacer dispatch al modo correspondiente (interactive default o flags). Incluye también la gestión de `--verbose` (logs JSON a stderr).
-
-**Acceptance criteria:**
-- [ ] Flags terminales (`--help`, `--version`) se procesan primero, exit inmediato
-- [ ] Flags de modo (`--clean`, `--project`, `--update`) son mutuamente excluyentes
-- [ ] Si múltiples mode flags → exit 2 con mensaje de error claro
-- [ ] `--force` (`-f`) se propaga a los use cases
-- [ ] `--verbose` activa logging estructurado JSON a stderr
-- [ ] Modo interactivo (sin flags): renderiza TUI con `ClackPromptsAdapter`, presenta menú de 3 opciones
-- [ ] Modo non-interactive: ejecuta el use case correspondiente directamente sin TUI
-- [ ] Instanciación de adaptadores:
-  ```
-  BunFileSystem → IFileSystem
-  GitHubRestClient → IGitHubClient
-  ClackPromptsAdapter → IUserPrompt
-  ```
-- [ ] Instanciación de use cases:
-  ```
-  CleanInstallUseCase(fileSystem, mergeEngine, prompts)
-  ProjectInstallUseCase(fileSystem, mergeEngine, manifest, prompts)
-  UpdateWorkspaceUseCase(fileSystem, mergeEngine, manifest, github, prompts)
-  ```
-- [ ] Exit codes: 0 (éxito), 1 (runtime error), 2 (CLI usage), 130 (SIGINT)
-- [ ] Error messages son accionables (ej: no "Error EACCES", sí "Permission denied at /path...")
-- [ ] `VERSION` se importa de `package.json` o se hardcodea en `constants.ts`
-
-**Verification:**
-- [ ] `bun run src/cli/main.ts --help` → muestra help y exit 0
-- [ ] `bun run src/cli/main.ts --version` → muestra versión y exit 0
-- [ ] `bun run src/cli/main.ts --clean --project` → exit 2 con mensaje de modo冲突
-- [ ] `bun run src/cli/main.ts` → запускает интерактивное меню (проверить что no error en этом режиме)
-
-**Dependencies:** T3.1 ✅, T3.2 ✅, T3.3 ✅
-
-**Files touched:**
-- `src/cli/main.ts` — reemplazar stub con implementación completa
-
-**Estimated scope:** L
-
----
-
-#### Task F3-T5: SIGINT handler y graceful shutdown
-
-**Descripción:** Añadir manejo de señales `SIGINT` (`Ctrl+C`) en `main.ts`. Si una operación está en curso, cancelar el spinner activo, limpiar el staging directory, y salir con código 130.
-
-**Acceptance criteria:**
-- [ ] `process.on("SIGINT", handler)` registrado antes de cualquier operación async
-- [ ] Si hay staging directory activo → `fileSystem.cleanStaging()` antes de salir
-- [ ] Si no hay operación en curso → exit 130 inmediato (sin cleanup)
-- [ ] El handler solo se registra una vez (no double-registration en re-ejecuciones)
-- [ ] El handler no mata el proceso si no hay operación activa
-- [ ] Mensaje: `"⚠️ Operation cancelled by user."` antes de exit 130
-- [ ] En verbose mode → emite `{"level":"warn","phase":"sigint","message":"..."}` a stderr
-
-**Verification:**
-- [ ] Enviar SIGINT durante spinner → staging limpiado, exit 130
-- [ ] Enviar SIGINT antes de cualquier operación → exit 130 inmediato
-- [ ] `bun test` pasa sin regression
-
-**Dependencies:** T3.4 ✅
-
-**Files touched:**
-- `src/cli/main.ts` — añadir handler
+- `tests/e2e/common.sh` — nuevo
 
 **Estimated scope:** S
 
 ---
 
-### Phase 3: Testing
+### Phase 2: E2E Scenarios
 
-#### Task F3-T6: Integration tests para use cases
+#### Task F4-T2: Clean Install E2E (`tests/e2e/01-clean-install.sh`)
 
-**Descripción:** Tests de integración para los 3 use cases usando mocks de los ports. Los tests verifican el flujo completo de cada modo sin tocar disco real ni red real.
-
-**CleanInstallUseCase tests:**
-- `execute()` con directorio vacío → éxito, staging + commit
-- `execute()` con directorio no vacío + `force=false` → pide confirmación
-- `execute()` con directorio no vacío + usuario rechaza → `Result.ok()`, no copy
-- `execute()` con directorio no vacía + `force=true` → éxito sin confirmación
-- `execute()` con directorio no writable → `Result.err()` con EACCES
-- `execute()` llama `writeVersionFile()` al terminar
-
-**ProjectInstallUseCase tests:**
-- `execute()` copia Obligatorio siempre
-- `execute()` copia Estandar solo si destination no existe
-- `execute()` NO sobrescribe Estandar existente
-- `execute()` presenta multiselect para Opcional
-- `execute()` con `force=true` → skip multiselect, no opcionales
-- `execute()` con usuario cancelando → continúa sin opcionales
-
-**UpdateWorkspaceUseCase tests:**
-- `execute()` con local == remote → info + `Result.ok()` sin copy
-- `execute()` con local > remote → info + `Result.ok()` sin copy
-- `execute()` con local < remote → proceed con copy
-- `execute()` con red fallida → proceed con advertencia
-- `execute()` con `force=false` → pide confirmación
-- `execute()` copia solo Obligatorio + Estandar (no Opcional)
+**Descripción:** Scenario 1 de SPEC.md. Ejecuta el binary en directorio vacío con `--clean --force`, verifica que todos los archivos del template aparezcan en destino.
 
 **Acceptance criteria:**
-- [ ] ≥5 tests por use case (≥15 tests total)
-- [ ] Mock de `IFileSystem` que registra calls sin tocar disco
-- [ ] Mock de `IGitHubClient` que retorna predefined responses
-- [ ] Mock de `IUserPrompt` que simula user input
-- [ ] `bun test tests/integration/` → todos pasan
-- [ ] Cobertura de use cases > 70%
+- [ ] Crea temp dir vacío
+- [ ] Ejecuta `codice --clean --force`
+- [ ] Verifica `.codice-version` existe y es JSON válido con `installedVersion`
+- [ ] Verifica archivos de `template/obligatorio/` fueron copiados (≥5)
+- [ ] Verifica archivos de `template/estandar/` fueron copiados (≥5)
+- [ ] Verifica archivos de `template/opcional/` fueron copiados
+- [ ] Exit code = 0
+- [ ] Cleanup automático via trap
 
 **Verification:**
-- [ ] `bun test` → todos pasan sin regression
-- [ ] `just lint` pasa con cero warnings
+- [ ] `just test-e2e` → test pasa
+- [ ] Mismo test en Ubuntu CI runner pasa
 
-**Dependencies:** T3.1 ✅, T3.2 ✅, T3.3 ✅, T3.4 ✅
+**Dependencies:** F4-T1 ✅
 
 **Files touched:**
-- `tests/integration/use-cases/clean-install.test.ts` — nuevo
-- `tests/integration/use-cases/project-install.test.ts` — nuevo
-- `tests/integration/use-cases/update-workspace.test.ts` — nuevo
+- `tests/e2e/01-clean-install.sh` — nuevo
 
 **Estimated scope:** M
 
 ---
 
-## Checkpoint: Después de F3-T1 a F3-T6
+#### Task F4-T3: Project Install Selective E2E (`tests/e2e/02-project-install.sh`)
 
-| Checkpoint Item | Status |
-|-----------------|--------|
-| CleanInstallUseCase: implementada con staging + commit | ⏳ Pendiente |
-| ProjectInstallUseCase: clasificación 3 vías funcionando | ⏳ Pendiente |
-| UpdateWorkspaceUseCase: version check + selective update | ⏳ Pendiente |
-| main.ts: CLI completo con modo interactivo y flags | ⏳ Pendiente |
-| SIGINT: cleanup de staging + exit 130 | ⏳ Pendiente |
-| Integration tests: ≥15 tests, >70% cobertura use cases | ⏳ Pendiente |
-| `just lint` pasa en todos los archivos F3 | ⏳ Pendiente |
-| `bun test` pasa sin regresión (214 + nuevos) | ⏳ Pendiente |
+**Descripción:** Scenario 2 de SPEC.md. Pre-pobla destino con archivo existente en `template/estandar/`, ejecuta `--project --force`, verifica que el archivo pre-existente es preservado.
+
+**Acceptance criteria:**
+- [ ] Crea temp dir con `docs/README.md` pre-existente (que también existe en template/estandar/)
+- [ ] Guarda contenido original de `docs/README.md`
+- [ ] Ejecuta `codice --project --force`
+- [ ] Verifica que `docs/README.md` **preserva** contenido original (no fue sobreescrito)
+- [ ] Verifica que otros archivos Obligatorio + Estandar sí fueron copiados
+- [ ] Exit code = 0
+
+**Verification:**
+- [ ] `just test-e2e` → test pasa
+
+**Dependencies:** F4-T1 ✅
+
+**Files touched:**
+- `tests/e2e/02-project-install.sh` — nuevo
+
+**Estimated scope:** M
 
 ---
 
-## Gate 3: F3 Review Checklist
+#### Task F4-T4: Project Install Optional Skip E2E (`tests/e2e/03-optional-skip.sh`)
 
-Antes de marcar F3 como completo, verificar:
+**Descripción:** Scenario 3 de SPEC.md. Verifica que `--force` no copia opcionales y que sin `--force` piped input puede deseleccionarlos.
 
-- [ ] `bun run src/cli/main.ts --help` funciona y muestra help correcta
-- [ ] `bun run src/cli/main.ts --version` muestra versión y exit 0
-- [ ] `bun run src/cli/main.ts` (sin args) запускает интерактивное меню (o al menos no crash)
-- [ ] `bun run src/cli/main.ts --clean --project` → exit 2
-- [ ] Los 3 use cases ejecutan sin `throw new Error("Not implemented")`
-- [ ] `bun test tests/integration/` → todos pasando
-- [ ] `just lint` → 0 errors, 0 warnings
+**Acceptance criteria:**
+- [ ] Ejecuta `codice --project --force` (non-interactive)
+- [ ] Verifica que ningún archivo de `template/opcional/` fue copiado
+- [ ] Verifica que Obligatorio + Estandar sí fueron copiados
+- [ ] Ejecuta `codice --project` (sin force) con input piped que presiona Enter (acepta defaults = nada seleccionado)
+- [ ] Verifica que opcionales no fueron copiados
+- [ ] Exit code = 0 en ambos casos
+
+**Verification:**
+- [ ] `just test-e2e` → test pasa
+
+**Dependencies:** F4-T1 ✅
+
+**Files touched:**
+- `tests/e2e/03-optional-skip.sh` — nuevo
+
+**Estimated scope:** M
+
+---
+
+#### Task F4-T5: Update Workspace E2E (`tests/e2e/04-update-workspace.sh`)
+
+**Descripción:** Scenario 4 de SPEC.md. Pre-pobla con `.codice-version` antiguo, mock server devuelve `v1.0.0`, verifica que solo Obligatorio + Estandar se actualizan (Opcional preservado).
+
+**Acceptance criteria:**
+- [ ] Crea temp dir con `.codice-version` = `{"installedVersion":"0.9.0","installedAt":"...","optionalSelections":[]}`
+- [ ] Crea archivos opcionales pre-existentes en destino
+- [ ] Inicia mock server en puerto 4567
+- [ ] Ejecuta `GITHUB_API_BASE=http://localhost:4567 codice --update --force`
+- [ ] Verifica `.codice-version` actualizado a `1.0.0`
+- [ ] Verifica Obligatorio fueron copiados
+- [ ] Verifica Estandar fueron copiados
+- [ ] Verifica Opcional **no fueron tocados** (ni creados ni modificados)
+- [ ] Stop mock server
+- [ ] Exit code = 0
+
+**Verification:**
+- [ ] `just test-e2e` → test pasa
+
+**Dependencies:** F4-T1 ✅
+
+**Files touched:**
+- `tests/e2e/04-update-workspace.sh` — nuevo
+
+**Estimated scope:** M
+
+---
+
+#### Task F4-T6: Atomic Rollback E2E (`tests/e2e/05-atomic-rollback.sh`)
+
+**Descripción:** Scenario 5 de SPEC.md. Envía `kill -9` (SIGKILL) durante operación, verifica destino intacto y staging limpio.
+
+**Acceptance criteria:**
+- [ ] Crea temp dir vacío
+- [ ] Ejecuta `codice --clean` en background, guarda PID
+- [ ] Espera 200ms para que el proceso empiece a escribir staging
+- [ ] Envía `kill -9 $PID`
+- [ ] Verifica que destino **no tiene archivos nuevos**
+- [ ] Verifica que no hay staging directory leftover
+- [ ] Cleanup del temp dir
+
+**Verification:**
+- [ ] `just test-e2e` → test pasa
+- [ ] Ejecución repetida produce resultado consistente
+
+**Dependencies:** F4-T1 ✅
+
+**Files touched:**
+- `tests/e2e/05-atomic-rollback.sh` — nuevo
+
+**Estimated scope:** M
+
+---
+
+#### Task F4-T7: Path Traversal Rejection E2E (`tests/e2e/06-path-traversal.sh`)
+
+**Descripción:** Scenario 6 de SPEC.md. Intenta escribir fuera del directorio destino usando `../`, verifica exit code 1.
+
+**Acceptance criteria:**
+- [ ] Crea temp dir `/tmp/codice-test-XXXX`
+- [ ] Ejecuta `codice --clean --force` con destino que contiene `../outside`
+- [ ] Verifica exit code = 1
+- [ ] Verifica que NO se escreveu ningún archivo fuera del temp dir
+- [ ] Test similar con `../../../../etc/passwd`
+- [ ] Verifica que no hay archivos creados fuera del temp dir
+
+**Verification:**
+- [ ] `just test-e2e` → test pasa
+
+**Dependencies:** F4-T1 ✅
+
+**Files touched:**
+- `tests/e2e/06-path-traversal.sh` — nuevo
+
+**Estimated scope:** S
+
+---
+
+### Phase 3: CI Integration
+
+#### Task F4-T8: CI Integration (`tests/e2e/run-e2e.sh` + CI workflow)
+
+**Descripción:** Crear runner script que ejecuta todos los E2E tests secuencialmente, y wirear en CI.
+
+**Acceptance criteria:**
+- [ ] `tests/e2e/run-e2e.sh` ejecuta cada test script en orden numérico
+- [ ] `run-e2e.sh` retorna exit code 0 si todos pasan, 1 si alguno falla
+- [ ] `run-e2e.sh` imprime "X/Y tests passed"
+- [ ] `run-e2e.sh` cleanup del mock server si está corriendo
+- [ ] CI workflow añade paso `just test-e2e` después de `just build`
+- [ ] Si `just test-e2e` falla, el job de CI falla
+
+**Verification:**
+- [ ] `just test-e2e` → "6/6 tests passed"
+- [ ] CI corre en Ubuntu y pasa
+
+**Dependencies:** F4-T2 ✅, F4-T3 ✅, F4-T4 ✅, F4-T5 ✅, F4-T6 ✅, F4-T7 ✅
+
+**Files touched:**
+- `tests/e2e/run-e2e.sh` — nuevo
+- `.github/workflows/ci.yml` — añade paso E2E
+
+**Estimated scope:** S
+
+---
+
+### Phase 4: Coverage Improvements
+
+#### Task F4-T9: Coverage gap closure
+
+**Descripción:** Cerrar gaps de coverage identificados. Prioridad: output.ts (0%), VersionComparator (80% funcs), ClackPromptsAdapter (86.67% funcs), main.ts (50% lines).
+
+**Acceptance criteria:**
+- [ ] `output.ts`: tests para `printVersion()` y `printHelp()` (capturan stdout)
+- [ ] `VersionComparator`: test para `getReleaseType()` con premajor, prerelease versions
+- [ ] `ClackPromptsAdapter`: tests para `promptForMode()` con selección cancelada y cada modo
+- [ ] `main.ts`: tests para `--help`, `--version` exit codes
+- [ ] Coverage overall > 90% functions
+
+**Verification:**
+- [ ] `bun test --coverage` → >90% functions overall
+- [ ] Domain layer > 90% functions
+- [ ] Infrastructure adapters > 90% functions
+
+**Dependencies:** Ninguna (paralelo con F4-T8)
+
+**Files touched:**
+- `tests/unit/cli/output.test.ts` — nuevo
+- `tests/unit/cli/main.test.ts` — extensión
+- `tests/integration/adapters/clack-prompts-adapter.test.ts` — extensión
+
+**Estimated scope:** M
+
+---
+
+## Checkpoints
+
+### After F4-T1 (E2E Infrastructure)
+- [ ] `bash -n tests/e2e/common.sh` pasa
+- [ ] Mock server inicia y responde correctamente en puerto 4567
+
+### After F4-T2 to F4-T7 (All E2E Scenarios)
+- [ ] `just test-e2e` → "6/6 tests passed"
+- [ ] `bash tests/e2e/run-e2e.sh` → "6/6 tests passed"
+
+### After F4-T8 (CI Integration)
+- [ ] `just test-e2e` corre en CI (Ubuntu runner) y pasa
+- [ ] Gate 4 (F4 Review) listo para ejecutar
+
+### After F4-T9 (Coverage)
+- [ ] `bun test --coverage` → >90% functions overall
+- [ ] `bun test --coverage` → domain >90%, infra >90%
+
+---
+
+## Gate 4: F4 Review Checklist
+
+Antes de marcar F4 como completo, verificar:
+
+- [ ] Los 6 escenarios E2E pasan en CI (Ubuntu runner)
+- [ ] `bun test` (unit + integration) → todos pasan sin regresión
+- [ ] `bun test --coverage` → >90% functions overall
+- [ ] `just check` → 0 errors, 0 warnings
 - [ ] `tsc --noEmit` → limpio
-- [ ] Los messages de error son accionables (no solo "Error")
-- [ ] SIGINT durante operación limpia staging y sale 130
+- [ ] **SC-14:** E2E tests pasan en CI ✅
+- [ ] **SC-18:** Path traversal rechazado con exit code 1 ✅
+- [ ] **SC-9:** Clean Install < 5s (medir con `time just test-e2e`)
+- [ ] **SC-10:** GitHub API timeout < 3s (mock server con delay injection)
 
 ---
 
@@ -313,34 +338,27 @@ Antes de marcar F3 como completo, verificar:
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Los use cases hacen demasiado (anemic domain) | Medium | Los use cases solo orquestan; toda la lógica está en domain (F2). Los use cases no tienen if/else de negocio, solo coordinación de puertos. |
-| main.ts se convierte en god object | High | Mantener main.ts como wiring puro; extraer lógica de parsing a `cli/argument-parser.ts` si crece >100 líneas |
-| ClackPromptsAdapter no puede mockearse en tests | Medium | Los integration tests usan mocks manuales de `IUserPrompt`; no dependen del adapter real |
-| El staging cleanup en SIGINT no funciona en Windows | Low | Bun's `fs` polyfill maneja SIGINT de forma consistente; probar en CI con windows-latest |
-
----
-
-## Open Questions — Resolved
-
-| # | Question | Resolution |
-|---|----------|-----------|
-| F3-O1 | ¿Se puede mockear `@clack/prompts` en tests? | Los integration tests mockean `IUserPrompt` (la interfaz), no el adapter concreto. El ClackPromptsAdapter real solo se usa en main.ts. |
-| F3-O2 | ¿De dónde viene la versión para `--version`? | Se hardcodea en `src/infrastructure/config/constants.ts` como `CODICE_VERSION`. Debe actualizarse manualmente en cada release. |
-| F3-O3 | ¿Dónde se define el template path absoluto? | En `BunFileSystem` se resuelve desde `import.meta.dirname` o similar. El template se embebe en el binary en F5. |
+| SIGKILL test es timing-sensitive y puede ser flaky | Medium | Retry logic, esperar suficiente para que el proceso haya creado staging |
+| Mock server no disponible en Windows CI | Low | E2E corre solo en Unix (ubuntu/macos); windows solo corre lint/test |
+| E2E tests lentos (>5 min en CI) | Low | Binary compilation es el bottleneck (~10s); tests son rápidos |
+| output.ts tests requieren capturar stdout | Low | Redirección a archivo temporal, luego assert contenido |
 
 ---
 
 ## Phase Summary
 
-| Task | Description | Duration |
-|------|-------------|----------|
-| F3-T1 | CleanInstallUseCase: implementación completa | ~1.5 hrs |
-| F3-T2 | ProjectInstallUseCase: implementación completa | ~1.5 hrs |
-| F3-T3 | UpdateWorkspaceUseCase: implementación completa | ~2 hrs |
-| F3-T4 | main.ts: CLI wiring + argument parsing + DI | ~2 hrs |
-| F3-T5 | SIGINT handler + graceful shutdown | ~1 hr |
-| F3-T6 | Integration tests para use cases | ~2 hrs |
-| **Total F3** | **6 tasks** | **~10 hrs** |
+| Task | Description | Estimated |
+|------|-------------|-----------|
+| F4-T1 | E2E shared lib (common.sh) | 1 hr |
+| F4-T2 | Clean Install E2E | 1 hr |
+| F4-T3 | Project Install Selective E2E | 1 hr |
+| F4-T4 | Optional Skip E2E | 1 hr |
+| F4-T5 | Update Workspace E2E | 1.5 hrs |
+| F4-T6 | Atomic Rollback E2E | 1.5 hrs |
+| F4-T7 | Path Traversal E2E | 1 hr |
+| F4-T8 | CI Integration + run-e2e.sh | 1 hr |
+| F4-T9 | Coverage gap closure | 2 hrs |
+| **Total F4** | **9 tasks** | **~11 hrs** |
 
 ---
 

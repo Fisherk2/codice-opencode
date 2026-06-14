@@ -1,178 +1,234 @@
-# TODO: F3 – Interfaces (Casos de Uso y CLI)
+# TODO: F4 – Pruebas (Unitarias, Integración y E2E)
 
-**Estado:** 🟢 Listo para Planificar
+**Estado:** 🟢 Listo para Implementar
 **Fecha:** 2026-06-14
-**Dependencias:** F0 ✅ Completado → F1 ✅ Completado → F2 ✅ Completado → F3 🟢 En Planificación
+**Dependencias:** F0 ✅ Completado → F1 ✅ Completado → F2 ✅ Completado → F3 ✅ Completado → F4 🟢 En Implementación
 
 ---
 
-## Phase 1: Use Cases
+## Phase 1: E2E Infrastructure
 
-### F3-T1: CleanInstallUseCase — implementación completa
+### F4-T1: E2E shared library (`tests/e2e/common.sh`)
 
-**Descripción:** Implementar el caso de uso para instalación limpia. Recibe `IFileSystem`, `FileMergeEngine`, `IUserPrompt` via constructor. Valida directorio, confirma si no-vacío, copia todos los archivos como Obligatorio, escribe `.codice-version`.
-
-**Criterios de aceptación:**
-- [ ] Constructor recibe `IFileSystem`, `FileMergeEngine`, `IUserPrompt`
-- [ ] `execute(destinationPath, options?)` retorna `Promise<Result<void, Error>>`
-- [ ] Valida `isWritable()` → error accionable si no
-- [ ] Si directorio no-vacío + `force=false` → pide confirmación
-- [ ] Si usuario rechaza → `Result.ok()` (cancelación graceful)
-- [ ] Copia todas las reglas como Obligatorio via `FileMergeEngine`
-- [ ] En éxito → `writeVersionFile()`
-- [ ] Logs en verbose mode (JSON a stderr)
-
-**Verificación:**
-- [ ] `bun test tests/integration/` → todos pasan
-- [ ] `just lint` pasa con cero warnings
-- [ ] Cobertura del use case > 70%
-
-**Dependencias:** F1 ✅, F2 ✅
-**Scope:** M
-
----
-
-### F3-T2: ProjectInstallUseCase — implementación completa
-
-**Descripción:** Instalación selectiva en proyecto existente. Clasifica archivos: Obligatorio siempre, Estandar si no existe, Opcional si usuario los selecciona.
+**Descripción:** Script de utilidades compartido. Provee: binary resolution, temp dir con trap, assertions, mock server.
 
 **Criterios de aceptación:**
-- [ ] Constructor recibe `IFileSystem`, `FileMergeEngine`, `FileRuleManifest`, `IUserPrompt`
-- [ ] `execute(destinationPath, options?)` retorna `Promise<Result<void, Error>>`
-- [ ] Obligatorio → siempre al motor
-- [ ] Estandar → solo si `destinationExists() === false`
-- [ ] Opcional → presenta multiselect, solo si seleccionado
-- [ ] `force=true` → skip multiselect, no opcionales
-- [ ] En éxito → `writeVersionFile()` con selections
-- [ ] Logs en verbose mode
+- [ ] `setup_temp_dir()` — mktemp -d + trap cleanup en EXIT
+- [ ] `assert_file_exists()`, `assert_file_missing()`, `assert_exit_code()`, `assert_contains()`
+- [ ] `start_mock_server()` — Bun serve en puerto 4567, responde `{"tag_name":"v1.0.0"}`, retorna PID
+- [ ] `stop_mock_server(pid)`
+- [ ] `CODICE_BINARY` desde `dist/codice-*`
+- [ ] Todos los E2E scripts hacen `set -e` y `source common.sh`
 
 **Verificación:**
-- [ ] `bun test tests/integration/` → todos pasan
-- [ ] Cobertura del use case > 70%
+- [ ] `bash -n tests/e2e/common.sh` pasa
+- [ ] Mock server responde en puerto 4567
 
-**Dependencias:** F1 ✅, F2 ✅
-**Scope:** M
-
----
-
-### F3-T3: UpdateWorkspaceUseCase — implementación completa
-
-**Descripción:** Actualización con version check. Consulta GitHub, compara versiones, copia solo Obligatorio + Estandar (nunca Opcional).
-
-**Criterios de aceptación:**
-- [ ] Constructor recibe `IFileSystem`, `FileMergeEngine`, `FileRuleManifest`, `IGitHubClient`, `IUserPrompt`
-- [ ] `execute(destinationPath, options?)` retorna `Promise<Result<void, Error>>`
-- [ ] Lee `.codice-version` con `readVersionFile()` — treat as unknown si missing
-- [ ] Consulta `getLatestReleaseTag()` — proceed con advertencia si falla
-- [ ] `VersionComparator.compare()`: equal/older → info + `Result.ok()`; newer → proceed
-- [ ] Si `force=false` → pide confirmación
-- [ ] Copia Obligatorio + Estandar (excluye Opcional)
-- [ ] En éxito → `writeVersionFile()` con nueva versión
-- [ ] Logs en verbose mode
-
-**Verificación:**
-- [ ] `bun test tests/integration/` → todos pasan
-- [ ] Cobertura del use case > 70%
-
-**Dependencias:** F1 ✅, F2 ✅
-**Scope:** M
-
----
-
-## Phase 2: CLI Wiring
-
-### F3-T4: main.ts — argument parsing y dependency injection
-
-**Descripción:** Composition root completo. Parsea args, instancia adaptadores, inyecta en use cases, dispatch al modo interactivo o flags. Incluye `--verbose` logging.
-
-**Criterios de aceptación:**
-- [ ] `--help` / `-h` → help text + exit 0
-- [ ] `--version` / `-V` → versión + exit 0
-- [ ] Mode flags (`--clean`, `--project`, `--update`) mutuamente excluyentes → exit 2
-- [ ] `--force` / `-f` se propaga a use cases
-- [ ] `--verbose` activa logging JSON a stderr
-- [ ] Sin flags → modo interactivo (TUI con @clack/prompts)
-- [ ] Non-interactive → ejecuta use case sin TUI
-- [ ] Instancia: BunFileSystem, GitHubRestClient, ClackPromptsAdapter
-- [ ] Instancia los 3 use cases con sus dependencias
-- [ ] Exit codes: 0, 1, 2, 130 según spec-cli-commands.md
-
-**Verificación:**
-- [ ] `bun run src/cli/main.ts --help` → exit 0
-- [ ] `bun run src/cli/main.ts --version` → exit 0
-- [ ] `bun run src/cli/main.ts --clean --project` → exit 2
-- [ ] `bun run src/cli/main.ts` → no crash
-
-**Dependencias:** F3-T1, F3-T2, F3-T3 ✅
-**Scope:** L
-
----
-
-### F3-T5: SIGINT handler y graceful shutdown
-
-**Descripción:** Manejo de Ctrl+C. Limpia staging directory activo y sale con código 130.
-
-**Criterios de aceptación:**
-- [ ] `process.on("SIGINT", handler)` registrado antes de cualquier async
-- [ ] Si staging activo → `cleanStaging()` antes de exit
-- [ ] Si no hay operación activa → exit 130 inmediato
-- [ ] Mensaje: `"⚠️ Operation cancelled by user."`
-- [ ] No double-registration del handler
-- [ ] Verbose mode → JSON log a stderr
-
-**Verificación:**
-- [ ] SIGINT durante operación → staging limpiado, exit 130
-- [ ] `bun test` pasa sin regresión
-
-**Dependencias:** F3-T4 ✅
+**Dependencias:** Ninguna
 **Scope:** S
 
 ---
 
-## Phase 3: Testing
+## Phase 2: E2E Scenarios
 
-### F3-T6: Integration tests para use cases
+### F4-T2: Clean Install E2E (`tests/e2e/01-clean-install.sh`)
 
-**Descripción:** Tests de integración con mocks de ports. ≥5 tests por use case.
+**Descripción:** Ejecuta `codice --clean --force` en dir vacío. Verifica todos los archivos copiados, .codice-version existe.
 
 **Criterios de aceptación:**
-- [ ] CleanInstallUseCase: ≥5 tests (vacío, no-vacío+confirm, force, permisos, versionFile)
-- [ ] ProjectInstallUseCase: ≥5 tests (obligatorio, estandar, opcional, multiselect, force)
-- [ ] UpdateWorkspaceUseCase: ≥5 tests (equal, older, newer, network fail, confirmation)
-- [ ] Mocks manuales de `IFileSystem`, `IGitHubClient`, `IUserPrompt`
-- [ ] `bun test tests/integration/` → todos pasan
-- [ ] Cobertura de use cases > 70%
+- [ ] Temp dir vacío
+- [ ] `codice --clean --force` → exit 0
+- [ ] `.codice-version` existe, JSON válido, tiene `installedVersion`
+- [ ] template/obligatorio/ copiado (≥5 archivos)
+- [ ] template/estandar/ copiado (≥5 archivos)
+- [ ] template/opcional/ copiado
+- [ ] Cleanup automático
 
 **Verificación:**
-- [ ] `bun test --coverage` → cobertura > 70% en use cases
+- [ ] `just test-e2e` → pasa
 
-**Dependencias:** F3-T1, F3-T2, F3-T3, F3-T4 ✅
+**Dependencias:** F4-T1 ✅
 **Scope:** M
 
 ---
 
-## Checkpoint: Después de F3-T1 a F3-T6
+### F4-T3: Project Install Selective E2E (`tests/e2e/02-project-install.sh`)
 
-| Elemento de Checkpoint | Estado |
-|------------------------|--------|
-| CleanInstallUseCase: implementada con staging + commit | ⏳ Pendiente |
-| ProjectInstallUseCase: clasificación 3 vías funcionando | ⏳ Pendiente |
-| UpdateWorkspaceUseCase: version check + selective update | ⏳ Pendiente |
-| main.ts: CLI completo con modo interactivo y flags | ⏳ Pendiente |
-| SIGINT: cleanup de staging + exit 130 | ⏳ Pendiente |
-| Integration tests: ≥15 tests, >70% cobertura use cases | ⏳ Pendiente |
-| `just lint` pasa en todos los archivos F3 | ⏳ Pendiente |
-| `bun test` pasa sin regresión | ⏳ Pendiente |
+**Descripción:** Archivo pre-existente en template/estandar/ es preservado (no sobreescrito).
+
+**Criterios de aceptación:**
+- [ ] Temp dir con `docs/README.md` pre-existente (contenido original guardado)
+- [ ] `codice --project --force` → exit 0
+- [ ] `docs/README.md` preserva contenido original
+- [ ] Obligatorio + Estandar copiados
+
+**Verificación:**
+- [ ] `just test-e2e` → pasa
+
+**Dependencias:** F4-T1 ✅
+**Scope:** M
 
 ---
 
-## Preguntas Abiertas — Resueltas
+### F4-T4: Project Install Optional Skip E2E (`tests/e2e/03-optional-skip.sh`)
 
-| # | Pregunta | Respuesta |
-|---|----------|-----------|
-| F3-O1 | ¿Se puede mockear `@clack/prompts` en tests? | Los integration tests mockean `IUserPrompt` (la interfaz), no el adapter concreto. |
-| F3-O2 | ¿De dónde viene la versión para `--version`? | Se hardcodea en `src/infrastructure/config/constants.ts` como `CODICE_VERSION`. |
-| F3-O3 | ¿Dónde se define el template path absoluto? | En `BunFileSystem` se resuelve desde `import.meta.dirname`. El template se embebe en el binary en F5. |
+**Descripción:** Verifica que `--force` no copia opcionales y piped input puede deseleccionar.
+
+**Criterios de aceptación:**
+- [ ] `codice --project --force` → no copia template/opcional/
+- [ ] Obligatorio + Estandar sí copiados
+- [ ] `codice --project` con input piped (Enter) → no copia opcionales
+- [ ] Exit 0 en ambos
+
+**Verificación:**
+- [ ] `just test-e2e` → pasa
+
+**Dependencias:** F4-T1 ✅
+**Scope:** M
+
+---
+
+### F4-T5: Update Workspace E2E (`tests/e2e/04-update-workspace.sh`)
+
+**Descripción:** Mock server + `.codice-version` antiguo. Solo Obligatorio + Estandar se actualizan.
+
+**Criterios de aceptación:**
+- [ ] Temp dir con `.codice-version` = `{"installedVersion":"0.9.0",...}`
+- [ ] Archivos opcionales pre-existentes en destino
+- [ ] Mock server puerto 4567
+- [ ] `GITHUB_API_BASE=http://localhost:4567 codice --update --force` → exit 0
+- [ ] `.codice-version` actualizado a `1.0.0`
+- [ ] Obligatorio copiados
+- [ ] Estandar copiados
+- [ ] Opcional **preservados** (no tocados)
+
+**Verificación:**
+- [ ] `just test-e2e` → pasa
+
+**Dependencias:** F4-T1 ✅
+**Scope:** M
+
+---
+
+### F4-T6: Atomic Rollback E2E (`tests/e2e/05-atomic-rollback.sh`)
+
+**Descripción:** `kill -9` durante operación. Destino intacto, staging limpio.
+
+**Criterios de aceptación:**
+- [ ] Temp dir vacío
+- [ ] `codice --clean` en background
+- [ ] `kill -9` tras 200ms
+- [ ] Destino sin archivos nuevos
+- [ ] Staging directory limpio
+- [ ] Cleanup
+
+**Verificación:**
+- [ ] `just test-e2e` → pasa
+- [ ] Consistente en ejecuciones múltiples
+
+**Dependencias:** F4-T1 ✅
+**Scope:** M
+
+---
+
+### F4-T7: Path Traversal E2E (`tests/e2e/06-path-traversal.sh`)
+
+**Descripción:** Intenta escribir fuera del temp dir con `../`. Exit code 1.
+
+**Criterios de aceptación:**
+- [ ] `codice --clean --force` con `../outside` en destino → exit 1
+- [ ] No archivos fuera del temp dir
+- [ ] Mismo test con `../../../../etc/passwd` → exit 1
+
+**Verificación:**
+- [ ] `just test-e2e` → pasa
+
+**Dependencias:** F4-T1 ✅
+**Scope:** S
+
+---
+
+## Phase 3: CI Integration
+
+### F4-T8: CI Integration (`tests/e2e/run-e2e.sh` + CI workflow)
+
+**Descripción:** Runner que ejecuta los 6 E2E tests secuencialmente. Wirear en CI.
+
+**Criterios de aceptación:**
+- [ ] `run-e2e.sh` ejecuta en orden numérico
+- [ ] `run-e2e.sh` → "X/6 tests passed"
+- [ ] Exit 0 si todos pasan, 1 si alguno falla
+- [ ] Cleanup del mock server
+- [ ] CI workflow: `just test-e2e` después de `just build`
+
+**Verificación:**
+- [ ] `just test-e2e` → "6/6 tests passed"
+- [ ] CI (Ubuntu) pasa
+
+**Dependencias:** F4-T2 ✅, F4-T3 ✅, F4-T4 ✅, F4-T5 ✅, F4-T6 ✅, F4-T7 ✅
+**Scope:** S
+
+---
+
+## Phase 4: Coverage Improvements
+
+### F4-T9: Coverage gap closure
+
+**Descripción:** Cerrar gaps: output.ts (0%), VersionComparator (80%), ClackPromptsAdapter (86.67%), main.ts (50%).
+
+**Criterios de aceptación:**
+- [ ] output.ts: tests para `printVersion()` y `printHelp()`
+- [ ] VersionComparator: test `getReleaseType()` con premajor/prerelease
+- [ ] ClackPromptsAdapter: tests `promptForMode()` con cancel y cada modo
+- [ ] main.ts: tests `--help`, `--version` exit codes
+- [ ] Coverage >90% functions overall
+
+**Verificación:**
+- [ ] `bun test --coverage` → >90% functions
+
+**Dependencias:** Ninguna (paralelo con F4-T8)
+**Scope:** M
+
+---
+
+## Checkpoint: Después de F4-T1 a F4-T9
+
+| Elemento | Estado |
+|---------|--------|
+| E2E lib (common.sh) | ⏳ Pendiente |
+| Clean Install E2E | ⏳ Pendiente |
+| Project Selective E2E | ⏳ Pendiente |
+| Optional Skip E2E | ⏳ Pendiente |
+| Update Workspace E2E | ⏳ Pendiente |
+| Atomic Rollback E2E | ⏳ Pendiente |
+| Path Traversal E2E | ⏳ Pendiente |
+| CI Integration + run-e2e.sh | ⏳ Pendiente |
+| Coverage gap closure | ⏳ Pendiente |
+| Gate 4: F4 Review | ⏳ Pendiente |
+
+---
+
+## Gate 4: F4 Review Checklist
+
+- [ ] Los 6 escenarios E2E pasan en CI (Ubuntu runner)
+- [ ] `bun test` → todos pasan sin regresión
+- [ ] `bun test --coverage` → >90% functions overall
+- [ ] `just check` → 0 errors, 0 warnings
+- [ ] `tsc --noEmit` → limpio
+- [ ] SC-14: E2E tests pasan en CI ✅
+- [ ] SC-18: Path traversal rechazado con exit 1 ✅
+- [ ] SC-9: Clean Install < 5s ✅
+- [ ] SC-10: GitHub API timeout < 3s ✅
+
+---
+
+## Risks y Mitigaciones
+
+| Risk | Mitigation |
+|------|------------|
+| SIGKILL test flaky (timing) | Retry logic, esperar 200ms |
+| Mock server en Windows CI | E2E solo corre en Unix |
+| E2E lento en CI (>5 min) | Binary compilation es el bottleneck |
 
 ---
 
