@@ -28,7 +28,7 @@ export interface IUserPrompt {
 	 * @param options - List of optional FileRules to present.
 	 * @returns Selected paths.
 	 */
-	selectOptional(options: FileRule[]): Promise<string[]>;
+	selectOptional(options: readonly FileRule[]): Promise<string[]>;
 
 	/**
 	 * Show a spinner with a message during async operations.

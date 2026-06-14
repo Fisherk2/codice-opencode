@@ -51,7 +51,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 	 * @param options - List of optional FileRules to present.
 	 * @returns Selected paths (the `path` property of each selected FileRule).
 	 */
-	async selectOptional(options: FileRule[]): Promise<string[]> {
+	async selectOptional(options: readonly FileRule[]): Promise<string[]> {
 		if (options.length === 0) {
 			return [];
 		}

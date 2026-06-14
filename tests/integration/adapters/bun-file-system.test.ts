@@ -252,15 +252,11 @@ describe("BunFileSystem", () => {
 
 	describe("template path traversal prevention", () => {
 		it("should reject absolute paths in readTemplateFile", async () => {
-			expect(fsAdapter.readTemplateFile("/etc/passwd")).rejects.toThrow(
-				"Invalid template path",
-			);
+			expect(fsAdapter.readTemplateFile("/etc/passwd")).rejects.toThrow("Invalid template path");
 		});
 
 		it("should reject parent directory traversal in readTemplateFile", async () => {
-			expect(fsAdapter.readTemplateFile("../../outside")).rejects.toThrow(
-				"Invalid template path",
-			);
+			expect(fsAdapter.readTemplateFile("../../outside")).rejects.toThrow("Invalid template path");
 		});
 
 		it("should reject traversal in stageFile", async () => {
