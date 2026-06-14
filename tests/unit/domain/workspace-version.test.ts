@@ -82,6 +82,23 @@ describe("WorkspaceVersion comparison", () => {
 		).toThrow("must be a version string");
 	});
 
+	test("fromJSON rejects non-semver version string", () => {
+		expect(() =>
+			WorkspaceVersion.fromJSON({
+				installedVersion: "not-a-version",
+				installedAt: "2026-06-13T12:00:00.000Z",
+			}),
+		).toThrow("not a valid semver version");
+	});
+
+	test("fromJSON accepts v-prefixed semver versions", () => {
+		const v = WorkspaceVersion.fromJSON({
+			installedVersion: "v1.0.0",
+			installedAt: "2026-06-13T12:00:00.000Z",
+		});
+		expect(v.version).toBe("v1.0.0");
+	});
+
 	test("fromJSON rejects invalid installedAt", () => {
 		expect(() =>
 			WorkspaceVersion.fromJSON({

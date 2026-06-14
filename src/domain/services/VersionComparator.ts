@@ -23,6 +23,37 @@ export type ReleaseType = "major" | "minor" | "patch" | "none";
  */
 export class VersionComparator {
 	/**
+	 * Validate both version strings and return normalized valid forms.
+	 * Returns Failure with actionable message if either is invalid.
+	 */
+	private validateVersions(
+		local: string,
+		remote: string,
+	): { localValid: string; remoteValid: string } | { error: Result<never, Error> } {
+		const localValid = semverValid(local);
+		if (!localValid) {
+			return {
+				error: failure(
+					new Error(
+						`Invalid version format: "${local}". Expected a valid semver version (e.g. "1.0.0").`,
+					),
+				),
+			};
+		}
+		const remoteValid = semverValid(remote);
+		if (!remoteValid) {
+			return {
+				error: failure(
+					new Error(
+						`Invalid version format: "${remote}". Expected a valid semver version (e.g. "1.0.0").`,
+					),
+				),
+			};
+		}
+		return { localValid, remoteValid };
+	}
+
+	/**
 	 * Compare a local version against a remote version.
 	 *
 	 * @param local - Installed version string (e.g. "1.0.0")
@@ -37,25 +68,10 @@ export class VersionComparator {
 	 * - Failure  → invalid version format
 	 */
 	compare(local: string, remote: string): Result<ComparisonResult, Error> {
-		const localValid = semverValid(local);
-		const remoteValid = semverValid(remote);
+		const validated = this.validateVersions(local, remote);
+		if ("error" in validated) return validated.error;
 
-		if (!localValid) {
-			return failure(
-				new Error(
-					`Invalid version format: "${local}". Expected a valid semver version (e.g. "1.0.0").`,
-				),
-			);
-		}
-		if (!remoteValid) {
-			return failure(
-				new Error(
-					`Invalid version format: "${remote}". Expected a valid semver version (e.g. "1.0.0").`,
-				),
-			);
-		}
-
-		const result = semverCompare(localValid, remoteValid);
+		const result = semverCompare(validated.localValid, validated.remoteValid);
 		if (result < 0) return success("newer");
 		if (result > 0) return success("older");
 		return success("equal");
@@ -78,25 +94,10 @@ export class VersionComparator {
 	 * @returns The type of version bump, or Failure if versions are invalid.
 	 */
 	getReleaseType(local: string, remote: string): Result<ReleaseType, Error> {
-		const localValid = semverValid(local);
-		const remoteValid = semverValid(remote);
+		const validated = this.validateVersions(local, remote);
+		if ("error" in validated) return validated.error;
 
-		if (!localValid) {
-			return failure(
-				new Error(
-					`Invalid version format: "${local}". Expected a valid semver version (e.g. "1.0.0").`,
-				),
-			);
-		}
-		if (!remoteValid) {
-			return failure(
-				new Error(
-					`Invalid version format: "${remote}". Expected a valid semver version (e.g. "1.0.0").`,
-				),
-			);
-		}
-
-		const diff = semverDiff(localValid, remoteValid);
+		const diff = semverDiff(validated.localValid, validated.remoteValid);
 		if (diff === null) return success("none");
 
 		// Map semver diff to our ReleaseType union
