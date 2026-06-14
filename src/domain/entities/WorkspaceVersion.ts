@@ -1,10 +1,4 @@
-import {
-	compare as semverCompare,
-	eq as semverEq,
-	gt as semverGt,
-	lt as semverLt,
-	valid as semverValid,
-} from "semver";
+import { eq, gt, lt, compare as semverCompare, valid } from "semver";
 
 /**
  * Result of comparing a local and remote version.
@@ -34,21 +28,21 @@ export class WorkspaceVersion {
 	 * Returns true if this version is newer (greater) than the given version.
 	 */
 	isNewerThan(other: WorkspaceVersion): boolean {
-		return semverGt(this.version, other.version);
+		return gt(this.version, other.version);
 	}
 
 	/**
 	 * Returns true if this version is older (less) than the given version.
 	 */
 	isOlderThan(other: WorkspaceVersion): boolean {
-		return semverLt(this.version, other.version);
+		return lt(this.version, other.version);
 	}
 
 	/**
 	 * Returns true if this version equals the given version.
 	 */
 	equals(other: WorkspaceVersion): boolean {
-		return semverEq(this.version, other.version);
+		return eq(this.version, other.version);
 	}
 
 	/**
@@ -80,7 +74,7 @@ export class WorkspaceVersion {
 				`Invalid .codice-version file: field 'installedVersion' must be a version string (e.g. "1.0.0"), received ${typeof obj.installedVersion}`,
 			);
 		}
-		if (!semverValid(obj.installedVersion)) {
+		if (!valid(obj.installedVersion)) {
 			throw new Error(
 				`Invalid .codice-version file: field 'installedVersion' is not a valid semver version (e.g. "1.0.0"), received "${obj.installedVersion}"`,
 			);

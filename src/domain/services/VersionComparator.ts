@@ -1,4 +1,4 @@
-import { compare as semverCompare, diff as semverDiff, valid as semverValid } from "semver";
+import { compare, diff as semverDiff, valid } from "semver";
 import { failure, type Result, success } from "../types/Result";
 
 /**
@@ -6,9 +6,8 @@ import { failure, type Result, success } from "../types/Result";
  * - "newer": Local is older, remote is newer (update available).
  * - "older": Local is newer than remote (downgrade scenario).
  * - "equal": Both versions are identical.
- * - "incompatible": Version strings could not be parsed.
  */
-export type ComparisonResult = "newer" | "older" | "equal" | "incompatible";
+export type ComparisonResult = "newer" | "older" | "equal";
 
 /**
  * Release type determined from a version diff.
@@ -29,28 +28,24 @@ export class VersionComparator {
 	private validateVersions(
 		local: string,
 		remote: string,
-	): { localValid: string; remoteValid: string } | { error: Result<never, Error> } {
-		const localValid = semverValid(local);
+	): Result<{ localValid: string; remoteValid: string }, Error> {
+		const localValid = valid(local);
 		if (!localValid) {
-			return {
-				error: failure(
-					new Error(
-						`Invalid version format: "${local}". Expected a valid semver version (e.g. "1.0.0").`,
-					),
+			return failure(
+				new Error(
+					`Invalid version format: "${local}". Expected a valid semver version (e.g. "1.0.0").`,
 				),
-			};
+			);
 		}
-		const remoteValid = semverValid(remote);
+		const remoteValid = valid(remote);
 		if (!remoteValid) {
-			return {
-				error: failure(
-					new Error(
-						`Invalid version format: "${remote}". Expected a valid semver version (e.g. "1.0.0").`,
-					),
+			return failure(
+				new Error(
+					`Invalid version format: "${remote}". Expected a valid semver version (e.g. "1.0.0").`,
 				),
-			};
+			);
 		}
-		return { localValid, remoteValid };
+		return success({ localValid, remoteValid });
 	}
 
 	/**
@@ -69,9 +64,9 @@ export class VersionComparator {
 	 */
 	compare(local: string, remote: string): Result<ComparisonResult, Error> {
 		const validated = this.validateVersions(local, remote);
-		if ("error" in validated) return validated.error;
+		if (!validated.ok) return validated;
 
-		const result = semverCompare(validated.localValid, validated.remoteValid);
+		const result = compare(validated.value.localValid, validated.value.remoteValid);
 		if (result < 0) return success("newer");
 		if (result > 0) return success("older");
 		return success("equal");
@@ -95,27 +90,20 @@ export class VersionComparator {
 	 */
 	getReleaseType(local: string, remote: string): Result<ReleaseType, Error> {
 		const validated = this.validateVersions(local, remote);
-		if ("error" in validated) return validated.error;
+		if (!validated.ok) return validated;
 
-		const diff = semverDiff(validated.localValid, validated.remoteValid);
+		const diff = semverDiff(validated.value.localValid, validated.value.remoteValid);
 		if (diff === null) return success("none");
 
-		// Map semver diff to our ReleaseType union
-		switch (diff) {
-			case "major":
-				return success("major");
-			case "premajor":
-				return success("major");
-			case "minor":
-				return success("minor");
-			case "preminor":
-				return success("minor");
-			case "patch":
-				return success("patch");
-			case "prepatch":
-				return success("patch");
-			default:
-				return success("none");
-		}
+		// Map semver diff to our ReleaseType union (pre* variants map to base type)
+		const releaseTypeMap: Partial<Record<string, ReleaseType>> = {
+			major: "major",
+			premajor: "major",
+			minor: "minor",
+			preminor: "minor",
+			patch: "patch",
+			prepatch: "patch",
+		};
+		return success(releaseTypeMap[diff] ?? "none");
 	}
 }
