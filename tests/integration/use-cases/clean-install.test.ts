@@ -181,7 +181,9 @@ describe("CleanInstallUseCase", () => {
 		it("should return error and clean staging when merge engine fails", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			// Make stageFile throw to trigger a merge engine failure
-			(fs.stageFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full during staging"));
+			(fs.stageFile as ReturnType<typeof mockFn>).mockRejectedValue(
+				new Error("Disk full during staging"),
+			);
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
 			const useCase = new CleanInstallUseCase(fs, engine, prompt);

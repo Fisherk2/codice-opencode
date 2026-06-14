@@ -1,6 +1,7 @@
 import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../domain/entities/FileRuleManifest";
 import type { FileMergeEngine } from "../../domain/services/FileMergeEngine";
 import { failure, type Result, success } from "../../domain/types/Result";
+import { checkWritable, writeVersionFileSafe } from "../helpers";
 import type { IFileSystem } from "../ports/IFileSystem";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 
@@ -49,17 +50,11 @@ export class ProjectInstallUseCase {
 		destinationPath: string,
 		options?: ProjectInstallOptions,
 	): Promise<Result<void, Error>> {
-		// Step 1: Check writability
-		const writable = await this.fileSystem.isWritable();
-		if (!writable) {
-			return failure(
-				new Error(
-					`Permission denied at "${destinationPath}". Check directory permissions or run with elevated access.`,
-				),
-			);
-		}
+		// Check writability
+		const writableCheck = await checkWritable(this.fileSystem, destinationPath);
+		if (!writableCheck.ok) return writableCheck;
 
-		// Step 2: Check if destination is empty and ask confirmation if needed
+		// Ask confirmation if destination is not empty
 		const isEmpty = await this.fileSystem.isEmpty();
 		if (!isEmpty && !options?.force) {
 			const confirmed = await this.userPrompt.confirm(
@@ -72,34 +67,25 @@ export class ProjectInstallUseCase {
 			}
 		}
 
-		// Step 3: Present optional files as a checklist
+		// Present optional files as a checklist
 		const optionalRules = getRulesByCategory("optional");
 		const selectedOptionals = await this.userPrompt.selectOptional(optionalRules);
 
-		// Step 4: Execute the merge engine with manifest rules + selected optionals
+		// Execute the merge engine with manifest rules + selected optionals
 		const mergeResult = await this.mergeEngine.execute(FILE_RULE_MANIFEST, selectedOptionals);
 		if (!mergeResult.ok) {
 			return failure(new Error(mergeResult.error.message));
 		}
 
-		// Step 5: Write version file with optional selections recorded
-		try {
-			await this.fileSystem.writeVersionFile(
-				JSON.stringify({
-					installedVersion: options?.version ?? "0.0.0",
-					installedAt: new Date().toISOString(),
-					optionalSelections: selectedOptionals,
-				}),
-			);
-		} catch (err) {
-			await this.fileSystem.cleanStaging();
-			return failure(
-				new Error(
-					`Failed to write version file: ${err instanceof Error ? err.message : "Unknown error"}. Installation rolled back.`,
-				),
-			);
-		}
-
-		return success(undefined);
+		// Write version file with optional selections recorded
+		return writeVersionFileSafe(
+			this.fileSystem,
+			{
+				installedVersion: options?.version ?? "0.0.0",
+				installedAt: new Date().toISOString(),
+				optionalSelections: selectedOptionals,
+			},
+			"Installation",
+		);
 	}
 }

@@ -2,6 +2,7 @@ import { FILE_RULE_MANIFEST } from "../../domain/entities/FileRuleManifest";
 import type { FileMergeEngine } from "../../domain/services/FileMergeEngine";
 import type { VersionComparator } from "../../domain/services/VersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
+import { checkWritable, writeVersionFileSafe } from "../helpers";
 import type { IFileSystem } from "../ports/IFileSystem";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
@@ -58,17 +59,11 @@ export class UpdateWorkspaceUseCase {
 		destinationPath: string,
 		options?: UpdateWorkspaceOptions,
 	): Promise<Result<void, Error>> {
-		// Step 1: Check writability
-		const writable = await this.fileSystem.isWritable();
-		if (!writable) {
-			return failure(
-				new Error(
-					`Permission denied at "${destinationPath}". Check directory permissions or run with elevated access.`,
-				),
-			);
-		}
+		// Check writability
+		const writableCheck = await checkWritable(this.fileSystem, destinationPath);
+		if (!writableCheck.ok) return writableCheck;
 
-		// Step 2: Ask for confirmation if not forced
+		// Ask for confirmation if not forced
 		if (!options?.force) {
 			const confirmed = await this.userPrompt.confirm(
 				`Update workspace in "${destinationPath}"? Obligatorio and Estándar files will be updated. Opcional files will be preserved. Continue?`,
@@ -80,7 +75,7 @@ export class UpdateWorkspaceUseCase {
 			}
 		}
 
-		// Step 3: Read local version info (best-effort)
+		// Read local version info (best-effort)
 		let installedVersion = "0.0.0";
 		let previousOptionalSelections: string[] = [];
 		try {
@@ -94,7 +89,7 @@ export class UpdateWorkspaceUseCase {
 			// No version file found — this is a first update in an existing project
 		}
 
-		// Step 4: Check GitHub for latest version
+		// Check GitHub for latest version
 		const remoteTag = await this.gitHubClient.getLatestReleaseTag();
 		if (remoteTag) {
 			// Strip 'v' prefix (GitHub tags use "vX.Y.Z" format)
@@ -119,40 +114,28 @@ export class UpdateWorkspaceUseCase {
 			);
 		}
 
-		// Step 5: Get only Obligatorio + Estándar rules (skip Opcional)
-		const allRules = FILE_RULE_MANIFEST;
-		const updateRules = allRules.filter((rule) => rule.category !== "optional");
+		// Get only Obligatorio + Estándar rules (skip Opcional)
+		const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional");
 
-		// Step 6: Execute the merge engine
+		// Execute the merge engine
 		const mergeResult = await this.mergeEngine.execute(updateRules);
 		if (!mergeResult.ok) {
 			return failure(new Error(mergeResult.error.message));
 		}
 
-		// Determine the version to write:
 		// Priority: explicit version > GitHub remote > previously installed > "0.0.0"
 		const newVersion =
 			options?.version ?? (remoteTag ? remoteTag.replace(/^v/, "") : undefined) ?? installedVersion;
 
-		// Step 7: Write version file
-		try {
-			await this.fileSystem.writeVersionFile(
-				JSON.stringify({
-					installedVersion: newVersion,
-					installedAt: new Date().toISOString(),
-					optionalSelections: previousOptionalSelections,
-				}),
-			);
-		} catch (err) {
-			// Clean up staging since version file write failed
-			await this.fileSystem.cleanStaging();
-			return failure(
-				new Error(
-					`Failed to write version file: ${err instanceof Error ? err.message : "Unknown error"}. Update rolled back.`,
-				),
-			);
-		}
-
-		return success(undefined);
+		// Write version file with preserved optional selections
+		return writeVersionFileSafe(
+			this.fileSystem,
+			{
+				installedVersion: newVersion,
+				installedAt: new Date().toISOString(),
+				optionalSelections: previousOptionalSelections,
+			},
+			"Update",
+		);
 	}
 }

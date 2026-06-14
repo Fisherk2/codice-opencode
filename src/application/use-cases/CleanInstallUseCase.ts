@@ -1,6 +1,7 @@
 import { FILE_RULE_MANIFEST } from "../../domain/entities/FileRuleManifest";
 import type { FileMergeEngine } from "../../domain/services/FileMergeEngine";
 import { failure, type Result, success } from "../../domain/types/Result";
+import { checkWritable, writeVersionFileSafe } from "../helpers";
 import type { IFileSystem } from "../ports/IFileSystem";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 
@@ -49,17 +50,11 @@ export class CleanInstallUseCase {
 		destinationPath: string,
 		options?: CleanInstallOptions,
 	): Promise<Result<void, Error>> {
-		// Step 1: Check writability
-		const writable = await this.fileSystem.isWritable();
-		if (!writable) {
-			return failure(
-				new Error(
-					`Permission denied at "${destinationPath}". Check directory permissions or run with elevated access.`,
-				),
-			);
-		}
+		// Check writability
+		const writableCheck = await checkWritable(this.fileSystem, destinationPath);
+		if (!writableCheck.ok) return writableCheck;
 
-		// Step 2: Check if destination is empty and ask confirmation if needed
+		// Ask confirmation if destination is not empty
 		const isEmpty = await this.fileSystem.isEmpty();
 		if (!isEmpty && !options?.force) {
 			const confirmed = await this.userPrompt.confirm(
@@ -72,37 +67,27 @@ export class CleanInstallUseCase {
 			}
 		}
 
-		// Step 3: Convert all rules to mandatory so every file overwrites
+		// Convert all rules to mandatory so every file overwrites
 		const allRules = FILE_RULE_MANIFEST.map((rule) => ({
 			...rule,
 			category: "mandatory" as const,
 		}));
 
-		// Step 4: Execute the merge engine
+		// Execute the merge engine
 		const mergeResult = await this.mergeEngine.execute(allRules);
 		if (!mergeResult.ok) {
 			return failure(new Error(mergeResult.error.message));
 		}
 
-		// Step 5: Write version file
-		try {
-			await this.fileSystem.writeVersionFile(
-				JSON.stringify({
-					installedVersion: options?.version ?? "0.0.0",
-					installedAt: new Date().toISOString(),
-					optionalSelections: [] as string[],
-				}),
-			);
-		} catch (err) {
-			// Clean up staging since version file write failed
-			await this.fileSystem.cleanStaging();
-			return failure(
-				new Error(
-					`Failed to write version file: ${err instanceof Error ? err.message : "Unknown error"}. Installation rolled back.`,
-				),
-			);
-		}
-
-		return success(undefined);
+		// Write version file (with atomic rollback on failure)
+		return writeVersionFileSafe(
+			this.fileSystem,
+			{
+				installedVersion: options?.version ?? "0.0.0",
+				installedAt: new Date().toISOString(),
+				optionalSelections: [] as string[],
+			},
+			"Installation",
+		);
 	}
 }
