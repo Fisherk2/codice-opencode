@@ -1,10 +1,10 @@
-# Plan: F2 – Núcleo (Dominio y Lógica de Negocio)
+# Plan: F3 – Interfaces (Casos de Uso y CLI)
 
 ## Overview
 
-Implementar la lógica de dominio pura: entidades, value objects y servicios de negocio. Esta fase **no tiene dependencias externas** (ningún `Bun`, `fetch`, `process`). Toda comunicación con el exterior se hace a través de las interfaces de aplicación (`IFileSystem`, `IGitHubClient`) inyectadas via constructor.
+Implementar la capa de aplicación (use cases) y el punto de entrada CLI. Esta fase conecta el dominio (F2) con la infraestructura (F1) y expone todo a través de una TUI interactiva y CLI flags.
 
-**Goal:** Cuatro artefactos de dominio production-ready + sus tests unitarios (cobertura >90%), todos pasando.
+**Goal:** CLI funcional en modo desarrollo (`bun run`), los 3 flujos completos ejecutando con datos mockeados/integrados, pasando los gates de calidad.
 
 ---
 
@@ -12,277 +12,300 @@ Implementar la lógica de dominio pura: entidades, value objects y servicios de 
 
 | # | Decision | Rationale |
 |---|----------|------------|
-| F2-A1 | `FileRuleManifest` como constante hardcodeada en el dominio | SPEC.md Decision #1 garantiza que el template está embebido; el manifest refleja la clasificación estática por release |
-| F2-A2 | `FileMergeEngine` recibe `IFileSystem` via constructor (DIP) | El motor de fusión necesita leer template y escribir a staging; `IFileSystem` es la abstracción definida en la capa de aplicación |
-| F2-A3 | Strategy Pattern para las 3 categorías de fusión | Cada categoría (Obligatorio/Estandar/Opcional) tiene comportamiento diferente; las estrategias son intercambiables sin modificar el motor |
-| F2-A4 | `WorkspaceVersion` usa `semver` internamente para comparación | La librería ya está en `package.json`; el dominio la usa solo para parsing y comparación, no para instanciación directa |
-| F2-A5 | `VersionComparator` retorna tipos discriminated union | Errores de parsing de semver se propagan como `Failure`, no como excepciones |
+| F3-A1 | Cada use case recibe los ports via constructor (DIP) | Clean Architecture: el caso de uso no conoce Bun, fetch ni @clack/prompts directamente |
+| F3-A2 | `main.ts` es el composition root | Todas las dependencias se instancian aquí; los use cases solo reciben interfaces |
+| F3-A3 | CleanInstallUseCase trata todos los archivos como Obligatorio | El FileMergeEngine recibe solo las reglas Obligatorio (todas); el motor aplica overwrite |
+| F3-A4 | UpdateWorkspaceUseCase filtra reglas internamente | Recibe todas las reglas pero solo pasa Obligatorio + Estándar al motor; Opcional se excluye |
+| F3-A5 | Modo interactivo es el default (`codice` sin flags) | UX: usuarios nuevos deben ver el menú guided; power users usan flags |
 
 ---
 
 ## Dependency Graph
 
 ```
-F2-T1: WorkspaceVersion (comparación + semver)
-        │
-        └──▶ F2-T3: VersionComparator (usa WorkspaceVersion)
-        │
-F2-T2: FileRule (validación + manifest + factory)
-        │
-        ├──▶ F2-T4: FileMergeEngine (usa FileRule + IFileSystem)
-        │
-        └──▶ F2-T3: VersionComparator (independiente — paralelo)
-                    │
-                    └──▶ F2-T4: FileMergeEngine (depende de T1 + T2)
-                            │
-                            └──▶ F2-T5: Unit tests (todos los anteriores)
+T3.1: CleanInstallUseCase          T3.2: ProjectInstallUseCase         T3.3: UpdateWorkspaceUseCase
+    │                                  │                                   │
+    ├── IFileSystem                    ├── IFileSystem                     ├── IFileSystem
+    ├── FileMergeEngine                ├── FileMergeEngine                 ├── FileMergeEngine
+    ├── IUserPrompt                    ├── FileRuleManifest (F2 ✅)        ├── VersionComparator (F2 ✅)
+    │                             T3.1 + T3.2 en paralelo               ├── IGitHubClient
+    │                                                                        │
+    └──────────────────────────┬─────────────────────────────────────────────┘
+                               │
+                         T3.4: main.ts (CLI wiring)
+                               │
+                         T3.5: SIGINT handling
+                               │
+                         T3.6: Integration tests
 ```
 
-**T1 y T2 son completamente paralelos** — WorkspaceVersion y FileRule no tienen dependencias entre sí.
+**T3.1 y T3.2 son completamente paralelos** — no comparten estado ni dependencias cruzadas.
+**T3.3 depende de T3.1/T3.2?** No — usa los mismos puertos pero tiene lógica adicional de version check. Puede implementarse en paralelo.
+**T3.4 requiere T3.1, T3.2, T3.3** — necesita los 3 use cases instanciados.
+**T3.5 requiere T3.4** — el handler referencia las funciones de cleanup.
+**T3.6 requiere todos los anteriores** — tests de integración end-to-end.
 
 ---
 
 ## Task List
 
-### Phase 1: Value Objects
+### Phase 1: Use Cases
 
-#### Task F2-T1: WorkspaceVersion — métodos de comparación
+#### Task F3-T1: CleanInstallUseCase — implementación completa
 
-**Descripción:** Añadir métodos de comparación semántica a `WorkspaceVersion` usando la librería `semver`. El value object ya tiene `version: string` (e.g. "1.0.0"). Se añaden `isNewerThan()`, `isOlderThan()`, `equals()` y `compare()`.
-
-**Acceptance criteria:**
-- [ ] `isNewerThan(other: WorkspaceVersion): boolean` — true si `this` > `other` (semver)
-- [ ] `isOlderThan(other: WorkspaceVersion): boolean` — true si `this` < `other` (semver)
-- [ ] `equals(other: WorkspaceVersion): boolean` — true si `this` == `other` (semver)
-- [ ] `compare(other: WorkspaceVersion): ComparisonResult` — retorna `"newer" | "older" | "equal"`
-- [ ] Método `compare(other: WorkspaceVersion): Result<ComparisonResult, Error>` en `VersionComparator` que usa `semver.valid()` para validar formato y `semver.compare()` para la comparación
-- [ ] Formato inválido retorna `Failure` con mensaje accionable (no lanza excepción)
-- [ ] `compare()` de `VersionComparator` usa `semver.compare(local, remote)` donde local/remote son strings sin prefijo "v"
-
-**Verification:**
-- [ ] `bun test tests/unit/domain/` → todos pasan
-- [ ] `just lint` pasa con cero warnings
-- [ ] Cobertura de `WorkspaceVersion.ts` > 90%
-
-**Dependencies:** Ninguna (solo `semver`, ya disponible en dependencies)
-
-**Files touched:**
-- `src/domain/entities/WorkspaceVersion.ts` — añadir métodos de comparación
-
-**Estimated scope:** S
-
----
-
-### Phase 2: Entities
-
-#### Task F2-T2: FileRule — validación, factory y manifest
-
-**Descripción:** Crear el sistema completo de clasificación de archivos. Esto incluye: (1) el manifest hardcodeado de todas las rutas del template con su categoría, (2) métodos de validación en la entidad `FileRule`, (3) función factory `createFileRule(path)` que busca en el manifest, (4) helper `classifyFile(path): RuleCategory` para uso directo.
+**Descripción:** Implementar el caso de uso para instalación limpia. Recibe `IFileSystem` y `FileMergeEngine` via constructor. Obtiene todas las reglas del `FILE_RULE_MANIFEST`, las pasa todas como Obligatorio al motor, y ejecuta. Si `isEmpty()` retorna false Y `--force` no está activo, pide confirmación. Al terminar exitosamente, escribe `.codice-version`.
 
 **Acceptance criteria:**
-- [ ] `src/domain/entities/FileRuleManifest.ts` existe con array `FILE_RULE_MANIFEST: readonly FileRule[]` conteniendo las 27 rutas de `spec-file-rules.md`
-- [ ] `FileRule.isValid(path): boolean` — verifica que la ruta existe en el manifest
-- [ ] `FileRule.isDirectory(path): boolean` — verifica si la ruta es directorio
-- [ ] `FileRule.getCategory(path): RuleCategory | null` — retorna la categoría o null si no existe
-- [ ] `createFileRule(path: string): FileRule | null` — factory que retorna la regla completa o null
-- [ ] `getRulesByCategory(category: RuleCategory): readonly FileRule[]` — filtra el manifest por categoría
-- [ ] `getMandatoryRules(): readonly FileRule[]` — alias para Obligatorio
-- [ ] `getStandardRules(): readonly FileRule[]` — alias para Estandar
-- [ ] `getOptionalRules(): readonly FileRule[]` — alias para Opcional
-- [ ] Las rutas de `spec-file-rules.md` están reflejadas: obligatorio (12), estandar (11), opcional (10), sin duplicados ni conflictos
-- [ ] Helper `isPathDirectoryInTemplate(path: string): boolean` — verifica si la ruta en el manifest es directorio
-- [ ] Helper `getRuleDescription(path: string): string` — retorna la descripción del manifest
-
-**Classification manifest coverage (27 paths):**
-
-*Obligatorio (12):*
-- `opencode.json`, `skills-lock.json`, `agents/`, `commands/`, `.opencode/`, `.opencode/plugins/`, `.opencode/skills/`, `.opencode/references/`, `skills/`, `references/`, `docs/REQUIRED.md` (futuro), `specs/required.md` (futuro)
-
-*Estandar (11):*
-- `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `README.md`, `SPEC.md`, `.env.example`, `tasks/`, `docs/` (base), `specs/` (base), `.opencode/config.json`
-
-*Opcional (10):*
-- `Justfile`, `Makefile`, `requirements.txt`, `scripts/`, `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/`, `specs/design/`, `.opencode/plugins/sdd-workflow-test.md`
+- [ ] Constructor recibe `IFileSystem`, `FileMergeEngine`, `IUserPrompt`
+- [ ] `execute(destinationPath: string, options?: { force?: boolean }): Promise<Result<void, Error>>`
+- [ ] Si `destinationExists()` es false → error accionable "Directory does not exist"
+- [ ] Si `isWritable()` es false → error accionable "Permission denied"
+- [ ] Si `isEmpty()` es false Y `force === false` → pide confirmación via `confirm()`
+- [ ] Si usuario rechaza → retorna `Result.ok()` (no error, cancelación graceful)
+- [ ] Obtiene todas las reglas de `FILE_RULE_MANIFEST` y las pasa al motor
+- [ ] Llama `fileMergeEngine.execute(allRules)` — todas como Obligatorio
+- [ ] En éxito → `writeVersionFile()` con la versión actual
+- [ ] En error → retorna `Result.err()` con mensaje accionable
+- [ ] **Zero runtime dependencies** en el use case (sin Bun, fetch, process)
+- [ ] Logs en verbose mode: cada decisión emit un objeto JSON a stderr
 
 **Verification:**
-- [ ] `bun test tests/unit/domain/` → todos pasan
+- [ ] `bun test tests/integration/` → todos pasan
 - [ ] `just lint` pasa con cero warnings
 - [ ] `tsc --noEmit` pasa (ningún `any`)
-- [ ] Cobertura de `FileRuleManifest.ts` > 90%
+- [ ] Cobertura del use case > 70%
 
-**Dependencies:** Ninguna (T1 y T2 son paralelos — no se necesitan entre sí)
+**Dependencies:** F1 (IFileSystem, FileMergeEngine) ✅, F2 (FILE_RULE_MANIFEST) ✅
 
 **Files touched:**
-- `src/domain/entities/FileRule.ts` — añadir métodos de validación y factory
-- `src/domain/entities/FileRuleManifest.ts` — nuevo archivo con el manifest hardcodeado
+- `src/application/use-cases/CleanInstallUseCase.ts` — reemplazar stub con implementación
 
 **Estimated scope:** M
 
 ---
 
-### Phase 3: Domain Services
+#### Task F3-T2: ProjectInstallUseCase — implementación completa
 
-#### Task F2-T3: VersionComparator — implementación
-
-**Descripción:** Implementar `VersionComparator.compare()` usando `semver`. El servicio recibe un string local y remote, valida el formato, y retorna el resultado de la comparación. También implementa `compareForUpdate()` que mapea `semver.compare()` a `"newer" | "older" | "equal"`.
+**Descripción:** Implementar el caso de uso para instalación en proyecto existente. Aplica clasificación: Obligatorio siempre, Estándar solo si no existe, Opcional solo si el usuario los selecciona. Presenta el checklist de opcionales al usuario vía `IUserPrompt.selectOptional()`. Al terminar, escribe `.codice-version` con las selecciones.
 
 **Acceptance criteria:**
-- [ ] `compare(local: string, remote: string): Result<ComparisonResult, Error>`
-  - Si `semver.valid(local)` o `semver.valid(remote)` es null → `Failure` con mensaje `"Invalid version format: {value}. Expected vX.Y.Z"`
-  - Si `semver.compare(local, remote) < 0` → `Success("newer")` (remote es más nuevo)
-  - Si `semver.compare(local, remote) > 0` → `Success("older")` (local es más nuevo)
-  - Si `semver.compare(local, remote) === 0` → `Success("equal")`
-- [ ] `isUpdateAvailable(local: string, remote: string): boolean` — convenience method que retorna true si remote > local
-- [ ] `getReleaseType(local: string, remote: string): Result<"major" | "minor" | "patch" | "none", Error>` — determina el tipo de release basándose en semver diff
-- [ ] **Zero imports de runtime** — solo `semver` (librería pura) y tipos del dominio
-- [ ] Todos los mensajes de error son accionables
+- [ ] Constructor recibe `IFileSystem`, `FileMergeEngine`, `FileRuleManifest`, `IUserPrompt`
+- [ ] `execute(destinationPath: string, options?: { force?: boolean }): Promise<Result<void, Error>>`
+- [ ] Valida `isWritable()` antes de cualquier operación
+- [ ] Obtiene reglas Obligatorio: `getMandatoryRules()` → siempre al motor
+- [ ] Obtiene reglas Estandar: `getStandardRules()` → solo si `destinationExists() === false`
+- [ ] Obtiene reglas Opcional: `getOptionalRules()` → presenta multiselect al usuario
+- [ ] Si `force === true` → salta el multiselect, no copia opcionales
+- [ ] Si usuario cancela multiselect → continúa sin opcionales (no es error)
+- [ ] Construye array de reglas a aplicar y llama `fileMergeEngine.execute(rules)`
+- [ ] En éxito → `writeVersionFile()` con selections de opcionales
+- [ ] **Zero runtime dependencies** en el use case
+- [ ] Logs en verbose mode: cada categoría procesada y count de archivos
 
 **Verification:**
-- [ ] `bun test tests/unit/domain/` → todos pasan
+- [ ] `bun test tests/integration/` → todos pasan
 - [ ] `just lint` pasa con cero warnings
-- [ ] Cobertura de `VersionComparator.ts` > 90%
+- [ ] Cobertura del use case > 70%
 
-**Dependencies:** F2-T1 (WorkspaceVersion necesita los métodos de comparación)
+**Dependencies:** F1 (IFileSystem, FileMergeEngine) ✅, F2 (FileRuleManifest) ✅
 
 **Files touched:**
-- `src/domain/services/VersionComparator.ts` — reemplazar stub con implementación
+- `src/application/use-cases/ProjectInstallUseCase.ts` — reemplazar stub con implementación
+
+**Estimated scope:** M
+
+---
+
+#### Task F3-T3: UpdateWorkspaceUseCase — implementación completa
+
+**Descripción:** Implementar el caso de uso para actualización de workspace existente. Consulta GitHub para la versión latest, compara con la local, y si hay update disponible aplica solo Obligatorio + Estandar (nunca Opcional). El flujo es el más complejo por el version check.
+
+**Acceptance criteria:**
+- [ ] Constructor recibe `IFileSystem`, `FileMergeEngine`, `FileRuleManifest`, `IGitHubClient`, `IUserPrompt`
+- [ ] `execute(destinationPath: string, options?: { force?: boolean }): Promise<Result<void, Error>>`
+- [ ] Lee `.codice-version` con `readVersionFile()` — si null/missing, treat as unknown
+- [ ] Consulta `githubClient.getLatestReleaseTag()` — si null, proceed con advertencia
+- [ ] Si `githubClient.getLatestReleaseNotes()` disponible, la muestra al usuario
+- [ ] `VersionComparator.compare(local, remote)`:
+  - `"equal"` → info al usuario "already latest", retorna `Result.ok()`
+  - `"older"` (local > remote) → info "local is newer", retorna `Result.ok()`
+  - `"newer"` (local < remote) → proceed con update
+  - Error → proceed con advertencia
+- [ ] Si `force === false` → pide confirmación con `confirm()`
+- [ ] Si usuario rechaza → retorna `Result.ok()` (no error)
+- [ ] Obtiene Obligatorio + Estandar (nunca Opcional) y pasa al motor
+- [ ] En éxito → `writeVersionFile()` con la nueva versión
+- [ ] **Zero runtime dependencies** en el use case
+- [ ] Logs en verbose mode: local/remote version, tipo de release, count de archivos
+
+**Verification:**
+- [ ] `bun test tests/integration/` → todos pasan
+- [ ] `just lint` pasa con cero warnings
+- [ ] Cobertura del use case > 70%
+
+**Dependencies:** F1 ✅, F2 (FileRuleManifest, VersionComparator) ✅
+
+**Files touched:**
+- `src/application/use-cases/UpdateWorkspaceUseCase.ts` — reemplazar stub con implementación
+
+**Estimated scope:** M
+
+---
+
+### Phase 2: CLI Wiring
+
+#### Task F3-T4: main.ts — argument parsing y dependency injection
+
+**Descripción:** Implementar el composition root completo en `main.ts`. Parsear args, instanciar adaptadores, inyectar en use cases, y hacer dispatch al modo correspondiente (interactive default o flags). Incluye también la gestión de `--verbose` (logs JSON a stderr).
+
+**Acceptance criteria:**
+- [ ] Flags terminales (`--help`, `--version`) se procesan primero, exit inmediato
+- [ ] Flags de modo (`--clean`, `--project`, `--update`) son mutuamente excluyentes
+- [ ] Si múltiples mode flags → exit 2 con mensaje de error claro
+- [ ] `--force` (`-f`) se propaga a los use cases
+- [ ] `--verbose` activa logging estructurado JSON a stderr
+- [ ] Modo interactivo (sin flags): renderiza TUI con `ClackPromptsAdapter`, presenta menú de 3 opciones
+- [ ] Modo non-interactive: ejecuta el use case correspondiente directamente sin TUI
+- [ ] Instanciación de adaptadores:
+  ```
+  BunFileSystem → IFileSystem
+  GitHubRestClient → IGitHubClient
+  ClackPromptsAdapter → IUserPrompt
+  ```
+- [ ] Instanciación de use cases:
+  ```
+  CleanInstallUseCase(fileSystem, mergeEngine, prompts)
+  ProjectInstallUseCase(fileSystem, mergeEngine, manifest, prompts)
+  UpdateWorkspaceUseCase(fileSystem, mergeEngine, manifest, github, prompts)
+  ```
+- [ ] Exit codes: 0 (éxito), 1 (runtime error), 2 (CLI usage), 130 (SIGINT)
+- [ ] Error messages son accionables (ej: no "Error EACCES", sí "Permission denied at /path...")
+- [ ] `VERSION` se importa de `package.json` o se hardcodea en `constants.ts`
+
+**Verification:**
+- [ ] `bun run src/cli/main.ts --help` → muestra help y exit 0
+- [ ] `bun run src/cli/main.ts --version` → muestra versión y exit 0
+- [ ] `bun run src/cli/main.ts --clean --project` → exit 2 con mensaje de modo冲突
+- [ ] `bun run src/cli/main.ts` → запускает интерактивное меню (проверить что no error en этом режиме)
+
+**Dependencies:** T3.1 ✅, T3.2 ✅, T3.3 ✅
+
+**Files touched:**
+- `src/cli/main.ts` — reemplazar stub con implementación completa
+
+**Estimated scope:** L
+
+---
+
+#### Task F3-T5: SIGINT handler y graceful shutdown
+
+**Descripción:** Añadir manejo de señales `SIGINT` (`Ctrl+C`) en `main.ts`. Si una operación está en curso, cancelar el spinner activo, limpiar el staging directory, y salir con código 130.
+
+**Acceptance criteria:**
+- [ ] `process.on("SIGINT", handler)` registrado antes de cualquier operación async
+- [ ] Si hay staging directory activo → `fileSystem.cleanStaging()` antes de salir
+- [ ] Si no hay operación en curso → exit 130 inmediato (sin cleanup)
+- [ ] El handler solo se registra una vez (no double-registration en re-ejecuciones)
+- [ ] El handler no mata el proceso si no hay operación activa
+- [ ] Mensaje: `"⚠️ Operation cancelled by user."` antes de exit 130
+- [ ] En verbose mode → emite `{"level":"warn","phase":"sigint","message":"..."}` a stderr
+
+**Verification:**
+- [ ] Enviar SIGINT durante spinner → staging limpiado, exit 130
+- [ ] Enviar SIGINT antes de cualquier operación → exit 130 inmediato
+- [ ] `bun test` pasa sin regression
+
+**Dependencies:** T3.4 ✅
+
+**Files touched:**
+- `src/cli/main.ts` — añadir handler
 
 **Estimated scope:** S
 
 ---
 
-#### Task F2-T4: FileMergeEngine — estrategia de fusión
+### Phase 3: Testing
 
-**Descripción:** Implementar el motor de fusión completo usando el Strategy Pattern. El motor recibe `IFileSystem` via constructor y procesa `FileRule[]` aplicando la estrategia correcta por categoría. El algoritmo principal:
+#### Task F3-T6: Integration tests para use cases
 
-```
-1. Para cada rule en rules:
-   a. Obtener staging path desde fileSystem
-   b. Si category == "mandatory":
-      - stageFile() siempre (sobrescribe)
-      - log "[OBLIGATORIO] Copiado: {path}"
-   c. Si category == "standard":
-      - Si destinationExists() == false:
-        - stageFile()
-        - log "[ESTANDAR] Creado: {path}"
-      - Si no:
-        - log "[ESTANDAR] Preservado: {path}"
-   d. Si category == "optional":
-      - Si userSelected(path) == true AND destinationExists() == false:
-        - stageFile()
-        - log "[OPCIONAL] Copiado: {path}"
-      - Si no:
-        - log "[OPCIONAL] Omitido: {path}"
-2. fileSystem.commitStaging()
-3. En caso de error: fileSystem.cleanStaging() + rollback
-```
+**Descripción:** Tests de integración para los 3 use cases usando mocks de los ports. Los tests verifican el flujo completo de cada modo sin tocar disco real ni red real.
+
+**CleanInstallUseCase tests:**
+- `execute()` con directorio vacío → éxito, staging + commit
+- `execute()` con directorio no vacío + `force=false` → pide confirmación
+- `execute()` con directorio no vacío + usuario rechaza → `Result.ok()`, no copy
+- `execute()` con directorio no vacía + `force=true` → éxito sin confirmación
+- `execute()` con directorio no writable → `Result.err()` con EACCES
+- `execute()` llama `writeVersionFile()` al terminar
+
+**ProjectInstallUseCase tests:**
+- `execute()` copia Obligatorio siempre
+- `execute()` copia Estandar solo si destination no existe
+- `execute()` NO sobrescribe Estandar existente
+- `execute()` presenta multiselect para Opcional
+- `execute()` con `force=true` → skip multiselect, no opcionales
+- `execute()` con usuario cancelando → continúa sin opcionales
+
+**UpdateWorkspaceUseCase tests:**
+- `execute()` con local == remote → info + `Result.ok()` sin copy
+- `execute()` con local > remote → info + `Result.ok()` sin copy
+- `execute()` con local < remote → proceed con copy
+- `execute()` con red fallida → proceed con advertencia
+- `execute()` con `force=false` → pide confirmación
+- `execute()` copia solo Obligatorio + Estandar (no Opcional)
 
 **Acceptance criteria:**
-- [ ] Constructor recibe `IFileSystem` (inyección via `ports/IFileSystem`)
-- [ ] `execute(rules: readonly FileRule[], selectedOptionals?: readonly string[]): Promise<Result<void, MergeError>>`
-  - `selectedOptionals` es un array de paths opcionales seleccionados por el usuario
-  - Retorna `Result.ok()` en éxito, `Result.err(MergeError)` en fallo
-- [ ] `MergeError` es un tipo de error del dominio con campos: `phase: "staging" | "commit" | "validation"`, `path?: string`, `message: string`
-- [ ] Obligatorio: siempre `stageFile()`, sin verificar si existe en destino
-- [ ] Estandar: solo `stageFile()` si `destinationExists() === false`
-- [ ] Opcional: solo `stageFile()` si el path está en `selectedOptionals` Y `destinationExists() === false`
-- [ ] `commitStaging()` se llama al final si todas las operaciones fueron exitosas
-- [ ] Si alguna operación falla, se hace `cleanStaging()` y se retorna el error
-- [ ] **Zero runtime dependencies** — sin `Bun`, `fetch`, `process`
-- [ ] Todos los paths se normalizan a forward slashes (`/`) antes de operar
-- [ ] Log en verbose mode: cada decisión de fusión emit un objeto JSON estructurado
+- [ ] ≥5 tests por use case (≥15 tests total)
+- [ ] Mock de `IFileSystem` que registra calls sin tocar disco
+- [ ] Mock de `IGitHubClient` que retorna predefined responses
+- [ ] Mock de `IUserPrompt` que simula user input
+- [ ] `bun test tests/integration/` → todos pasan
+- [ ] Cobertura de use cases > 70%
 
 **Verification:**
-- [ ] `bun test tests/unit/domain/` → todos pasan
+- [ ] `bun test` → todos pasan sin regression
 - [ ] `just lint` pasa con cero warnings
-- [ ] `tsc --noEmit` pasa
-- [ ] Cobertura de `FileMergeEngine.ts` > 90%
 
-**Dependencies:** F2-T2 (FileRule manifest), F2-T1 (WorkspaceVersion para contexto)
+**Dependencies:** T3.1 ✅, T3.2 ✅, T3.3 ✅, T3.4 ✅
 
 **Files touched:**
-- `src/domain/services/FileMergeEngine.ts` — implementación completa
-- `src/domain/types/MergeError.ts` — nuevo tipo de error
+- `tests/integration/use-cases/clean-install.test.ts` — nuevo
+- `tests/integration/use-cases/project-install.test.ts` — nuevo
+- `tests/integration/use-cases/update-workspace.test.ts` — nuevo
 
 **Estimated scope:** M
 
 ---
 
-### Phase 4: Testing
-
-#### Task F2-T5: Unit tests para toda la capa de dominio
-
-**Descripción:** Escribir tests unitarios exhaustivos para `WorkspaceVersion`, `FileRule`, `FileRuleManifest`, `VersionComparator` y `FileMergeEngine`. Tests siguiendo el patrón AAA, sin mocks de filesystem (son tests de dominio puro).
-
-**WorkspaceVersion tests:**
-- `fromJSON()`: parsing válido, campos faltantes, tipos incorrectos, array inválido
-- `isNewerThan()` / `isOlderThan()` / `equals()`: v1.0.0 vs v1.1.0, v1.0.0 vs v1.0.0, v2.0.0 vs v1.0.0
-- `compare()`: todos los casos de ComparisonResult
-
-**FileRuleManifest tests:**
-- `FILE_RULE_MANIFEST` tiene exactamente 27 entradas sin duplicados
-- `getMandatoryRules()` retorna exactamente las reglas Obligatorio
-- `getStandardRules()` retorna exactamente las reglas Estandar
-- `getOptionalRules()` retorna exactamente las reglas Opcional
-- `getRulesByCategory()` filtra correctamente
-- `createFileRule(path)` retorna la regla correcta para paths válidos y null para paths no clasificados
-- `getRuleDescription(path)` retorna la descripción correcta
-
-**VersionComparator tests:**
-- `compare()`: v1.0.0 vs v1.1.0 → "newer"; v2.0.0 vs v1.0.0 → "older"; v1.0.0 vs v1.0.0 → "equal"
-- `compare()` con formato inválido: retorna `Failure`
-- `isUpdateAvailable()`: true/false según corresponda
-- `getReleaseType()`: major/minor/patch/none
-
-**FileMergeEngine tests (con mock de IFileSystem):**
-- `execute()` con reglas Obligatorio: siempre stageFile
-- `execute()` con reglas Estandar: solo stageFile si destination no existe
-- `execute()` con reglas Opcional: solo stageFile si seleccionado Y destination no existe
-- `execute()` retorna error si stageFile falla
-- `execute()` hace commitStaging al final si todo OK
-- `execute()` hace cleanStaging si hay error
-- Verify que `destinationExists()` se consulta para Estandar y Opcional, pero NO para Obligatorio
-
-**Acceptance criteria:**
-- [ ] `WorkspaceVersion`: ≥6 tests
-- [ ] `FileRuleManifest`: ≥10 tests
-- [ ] `VersionComparator`: ≥6 tests
-- [ ] `FileMergeEngine`: ≥10 tests
-- [ ] Total coverage del dominio > 90%
-- [ ] `bun test tests/unit/domain/` → todos pasan
-- [ ] `bun test --coverage tests/unit/domain/` → cobertura > 90%
-- [ ] Tests usan `bun:test` (no shell scripts)
-- [ ] Zero dependencias de runtime (Bun, fetch, process) en los tests de dominio
-
-**Verification:**
-- [ ] `bun test` → todos pasan
-- [ ] `bun test --coverage` → cobertura dominio > 90%
-- [ ] `just lint` pasa con cero warnings
-
-**Dependencies:** F2-T1, F2-T2, F2-T3, F2-T4 (todos los componentes deben existir)
-
-**Files touched:**
-- `tests/unit/domain/workspace-version.test.ts`
-- `tests/unit/domain/file-rule.test.ts`
-- `tests/unit/domain/file-rule-manifest.test.ts`
-- `tests/unit/domain/version-comparator.test.ts`
-- `tests/unit/domain/file-merge-engine.test.ts`
-
-**Estimated scope:** M
-
----
-
-### Checkpoint: Después de F2-T1 a F2-T5
+## Checkpoint: Después de F3-T1 a F3-T6
 
 | Checkpoint Item | Status |
 |-----------------|--------|
-| WorkspaceVersion: métodos de comparación implementados | ⏳ Pendiente |
-| FileRuleManifest: 27 paths clasificados correctamente | ⏳ Pendiente |
-| VersionComparator: compare() con semver, retorna Result | ⏳ Pendiente |
-| FileMergeEngine: estrategia completa con staging | ⏳ Pendiente |
-| Unit tests: todos pasando, cobertura > 90% | ⏳ Pendiente |
-| `just lint` pasa en todos los archivos F2 | ⏳ Pendiente |
-| `bun test` (138 + nuevos) pasa sin regresión | ⏳ Pendiente |
+| CleanInstallUseCase: implementada con staging + commit | ⏳ Pendiente |
+| ProjectInstallUseCase: clasificación 3 vías funcionando | ⏳ Pendiente |
+| UpdateWorkspaceUseCase: version check + selective update | ⏳ Pendiente |
+| main.ts: CLI completo con modo interactivo y flags | ⏳ Pendiente |
+| SIGINT: cleanup de staging + exit 130 | ⏳ Pendiente |
+| Integration tests: ≥15 tests, >70% cobertura use cases | ⏳ Pendiente |
+| `just lint` pasa en todos los archivos F3 | ⏳ Pendiente |
+| `bun test` pasa sin regresión (214 + nuevos) | ⏳ Pendiente |
+
+---
+
+## Gate 3: F3 Review Checklist
+
+Antes de marcar F3 como completo, verificar:
+
+- [ ] `bun run src/cli/main.ts --help` funciona y muestra help correcta
+- [ ] `bun run src/cli/main.ts --version` muestra versión y exit 0
+- [ ] `bun run src/cli/main.ts` (sin args) запускает интерактивное меню (o al menos no crash)
+- [ ] `bun run src/cli/main.ts --clean --project` → exit 2
+- [ ] Los 3 use cases ejecutan sin `throw new Error("Not implemented")`
+- [ ] `bun test tests/integration/` → todos pasando
+- [ ] `just lint` → 0 errors, 0 warnings
+- [ ] `tsc --noEmit` → limpio
+- [ ] Los messages de error son accionables (no solo "Error")
+- [ ] SIGINT durante operación limpia staging y sale 130
 
 ---
 
@@ -290,20 +313,20 @@ F2-T2: FileRule (validación + manifest + factory)
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| El manifest hardcodeado se desincroniza del template real | High | El manifest se mantiene en `FileRuleManifest.ts` junto al template; verificar con test que todas las rutas existen |
-| semver retorna `null` en `valid()` para versiones edge case | Medium | Verificar `null` antes de `compare()`; retornar `Failure` con mensaje claro |
-| FileMergeEngine puede romper la atomicidad si commit falla parcialmente | High | `commitStaging()` es una sola operación atómica en `IFileSystem`; si falla, se hace `cleanStaging()` |
-| El manifest crece con cada release de template | Low | Cada release de Códice actualiza el manifest junto con el template; no es responsabilidad del dominio |
+| Los use cases hacen demasiado (anemic domain) | Medium | Los use cases solo orquestan; toda la lógica está en domain (F2). Los use cases no tienen if/else de negocio, solo coordinación de puertos. |
+| main.ts se convierte en god object | High | Mantener main.ts como wiring puro; extraer lógica de parsing a `cli/argument-parser.ts` si crece >100 líneas |
+| ClackPromptsAdapter no puede mockearse en tests | Medium | Los integration tests usan mocks manuales de `IUserPrompt`; no dependen del adapter real |
+| El staging cleanup en SIGINT no funciona en Windows | Low | Bun's `fs` polyfill maneja SIGINT de forma consistente; probar en CI con windows-latest |
 
 ---
 
 ## Open Questions — Resolved
 
 | # | Question | Resolution |
-|---|----------|------------|
-| F2-O1 | ¿Dónde se define el manifest de clasificación? | **En `src/domain/entities/FileRuleManifest.ts`** como constante `FILE_RULE_MANIFEST`. Es estático por release del template. |
-| F2-O2 | ¿Cómo se relaciona `FileMergeEngine` con `IFileSystem` si el dominio no puede importar de aplicación? | **Dependency Inversion**: `FileMergeEngine` recibe `IFileSystem` via constructor. La interfaz está en `application/ports/`, pero la implementación concreta (BunFileSystem) está en `infrastructure/adapters/`. El dominio depende de la abstracción, no de la implementación. |
-| F2-O3 | ¿Los tests de `FileMergeEngine` necesitan mocks del filesystem? | **Sí, pero solo de `IFileSystem`**. Los tests injectan un mock/stub de `IFileSystem` que registra las llamadas sin tocar disco. Esto es inyección de dependencias, no un mock global. |
+|---|----------|-----------|
+| F3-O1 | ¿Se puede mockear `@clack/prompts` en tests? | Los integration tests mockean `IUserPrompt` (la interfaz), no el adapter concreto. El ClackPromptsAdapter real solo se usa en main.ts. |
+| F3-O2 | ¿De dónde viene la versión para `--version`? | Se hardcodea en `src/infrastructure/config/constants.ts` como `CODICE_VERSION`. Debe actualizarse manualmente en cada release. |
+| F3-O3 | ¿Dónde se define el template path absoluto? | En `BunFileSystem` se resuelve desde `import.meta.dirname` o similar. El template se embebe en el binary en F5. |
 
 ---
 
@@ -311,12 +334,13 @@ F2-T2: FileRule (validación + manifest + factory)
 
 | Task | Description | Duration |
 |------|-------------|----------|
-| F2-T1 | WorkspaceVersion: métodos de comparación con semver | ~30 min |
-| F2-T2 | FileRule: manifest + validación + factory | ~1.5 hrs |
-| F2-T3 | VersionComparator: implementación con semver | ~30 min |
-| F2-T4 | FileMergeEngine: estrategia de fusión completa | ~2 hrs |
-| F2-T5 | Unit tests para toda la capa de dominio | ~2 hrs |
-| **Total F2** | **5 tasks** | **~6.5 hrs** |
+| F3-T1 | CleanInstallUseCase: implementación completa | ~1.5 hrs |
+| F3-T2 | ProjectInstallUseCase: implementación completa | ~1.5 hrs |
+| F3-T3 | UpdateWorkspaceUseCase: implementación completa | ~2 hrs |
+| F3-T4 | main.ts: CLI wiring + argument parsing + DI | ~2 hrs |
+| F3-T5 | SIGINT handler + graceful shutdown | ~1 hr |
+| F3-T6 | Integration tests para use cases | ~2 hrs |
+| **Total F3** | **6 tasks** | **~10 hrs** |
 
 ---
 
