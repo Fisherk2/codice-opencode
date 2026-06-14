@@ -1,5 +1,5 @@
-import { valid as semverValid, compare as semverCompare, diff as semverDiff } from "semver";
-import { type Result, success, failure } from "../types/Result";
+import { compare as semverCompare, diff as semverDiff, valid as semverValid } from "semver";
+import { failure, type Result, success } from "../types/Result";
 
 /**
  * Result of comparing two semantic versions.

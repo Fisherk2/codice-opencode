@@ -9,9 +9,9 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
-import type { FileRule } from "../../../src/domain/entities/FileRule";
 import type { IFileSystem } from "../../../src/application/ports/IFileSystem";
+import type { FileRule } from "../../../src/domain/entities/FileRule";
+import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 
 // ---- Mock IFileSystem ----
 
@@ -76,19 +76,14 @@ describe("FileMergeEngine — Mandatory rules", () => {
 
 		expect(result.ok).toBe(true);
 		expect(calls.filter((c) => c.method === "stageFile").length).toBe(1);
-		expect(calls.filter((c) => c.method === "destinationExists").length).toBe(
-			0,
-		);
+		expect(calls.filter((c) => c.method === "destinationExists").length).toBe(0);
 	});
 
 	test("stages multiple mandatory files", async () => {
 		const { fs, calls } = createMockFs();
 		const engine = new FileMergeEngine(fs);
 
-		const rules = [
-			rule("opencode.json", "mandatory"),
-			rule("agents", "mandatory", true),
-		];
+		const rules = [rule("opencode.json", "mandatory"), rule("agents", "mandatory", true)];
 		const result = await engine.execute(rules);
 
 		expect(result.ok).toBe(true);
@@ -122,7 +117,7 @@ describe("FileMergeEngine — Standard rules", () => {
 		expect(result.ok).toBe(true);
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
 		expect(stageCalls.length).toBe(1);
-		expect(stageCalls[0].args[0]).toBe("README.md");
+		expect(stageCalls[0]?.args[0]).toBe("README.md");
 	});
 
 	test("skips standard file if destination exists", async () => {
@@ -146,7 +141,7 @@ describe("FileMergeEngine — Standard rules", () => {
 
 		const existsCalls = calls.filter((c) => c.method === "destinationExists");
 		expect(existsCalls.length).toBe(1);
-		expect(existsCalls[0].args[0]).toBe("README.md");
+		expect(existsCalls[0]?.args[0]).toBe("README.md");
 	});
 });
 
@@ -164,7 +159,7 @@ describe("FileMergeEngine — Optional rules", () => {
 		expect(result.ok).toBe(true);
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
 		expect(stageCalls.length).toBe(1);
-		expect(stageCalls[0].args[0]).toBe("Justfile");
+		expect(stageCalls[0]?.args[0]).toBe("Justfile");
 	});
 
 	test("skips optional file NOT in selectedOptionals", async () => {
@@ -211,9 +206,7 @@ describe("FileMergeEngine — Mixed rules", () => {
 		const result = await engine.execute(rules, ["Justfile"]);
 
 		expect(result.ok).toBe(true);
-		const staged = calls
-			.filter((c) => c.method === "stageFile")
-			.map((c) => c.args[0]);
+		const staged = calls.filter((c) => c.method === "stageFile").map((c) => c.args[0]);
 		// opencode.json: mandatory → always staged
 		// README.md: standard, exists → skipped
 		// Justfile: optional, selected, destination doesn't exist → wait, does Justfile exist?
@@ -227,7 +220,7 @@ describe("FileMergeEngine — Mixed rules", () => {
 
 describe("FileMergeEngine — Error handling", () => {
 	test("returns Failure when stageFile throws", async () => {
-		const { fs, calls } = createMockFs();
+		const { fs } = createMockFs();
 		fs.stageFile = async () => {
 			throw new Error("Disk full");
 		};

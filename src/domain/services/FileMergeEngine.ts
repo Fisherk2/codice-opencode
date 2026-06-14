@@ -1,9 +1,9 @@
-import type { FileRule } from "../entities/FileRule";
-import type { Result } from "../types/Result";
-import { success, failure } from "../types/Result";
-import type { MergeError } from "../types/MergeError";
-import { stagingError, commitError } from "../types/MergeError";
 import type { IFileSystem } from "../../application/ports/IFileSystem";
+import type { FileRule } from "../entities/FileRule";
+import type { MergeError } from "../types/MergeError";
+import { commitError, stagingError } from "../types/MergeError";
+import type { Result } from "../types/Result";
+import { failure, success } from "../types/Result";
 
 /**
  * Orchestrates file merging according to classification rules.
@@ -44,8 +44,7 @@ export class FileMergeEngine {
 				await this.fileSystem.stageFile(rule.path);
 			} catch (err) {
 				await this.fileSystem.cleanStaging();
-				const message =
-					err instanceof Error ? err.message : "Unknown staging error";
+				const message = err instanceof Error ? err.message : "Unknown staging error";
 				return failure(stagingError(rule.path, message));
 			}
 		}
@@ -55,8 +54,7 @@ export class FileMergeEngine {
 			await this.fileSystem.commitStaging();
 		} catch (err) {
 			await this.fileSystem.cleanStaging();
-			const message =
-				err instanceof Error ? err.message : "Unknown commit error";
+			const message = err instanceof Error ? err.message : "Unknown commit error";
 			return failure(commitError(message));
 		}
 
@@ -76,10 +74,7 @@ export class FileMergeEngine {
 	 * | optional   | yes/no              | no        | NO     |
 	 * | optional   | yes                 | yes       | NO     |
 	 */
-	private async shouldStage(
-		rule: FileRule,
-		selected: Set<string>,
-	): Promise<boolean> {
+	private async shouldStage(rule: FileRule, selected: Set<string>): Promise<boolean> {
 		if (rule.category === "mandatory") {
 			return true;
 		}

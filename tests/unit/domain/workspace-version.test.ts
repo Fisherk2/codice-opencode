@@ -92,8 +92,14 @@ describe("WorkspaceVersion comparison", () => {
 	});
 
 	test("fromJSON rejects null data", () => {
-		expect(() => WorkspaceVersion.fromJSON(null)).toThrow(
-			"expected a JSON object",
-		);
+		expect(() => WorkspaceVersion.fromJSON(null)).toThrow("expected a JSON object");
+	});
+
+	test("toJSON serializes correctly", () => {
+		const v = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z", ["Justfile"]);
+		const json = v.toJSON();
+		expect(json.installedVersion).toBe("1.0.0");
+		expect(json.installedAt).toBe("2026-06-13T12:00:00.000Z");
+		expect(json.optionalSelections).toEqual(["Justfile"]);
 	});
 });

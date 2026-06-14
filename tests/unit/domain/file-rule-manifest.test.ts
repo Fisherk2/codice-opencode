@@ -8,12 +8,12 @@
 
 import { describe, expect, test } from "bun:test";
 import {
-	FILE_RULE_MANIFEST,
 	createFileRule,
-	getRulesByCategory,
+	FILE_RULE_MANIFEST,
 	getMandatoryRules,
-	getStandardRules,
 	getOptionalRules,
+	getRulesByCategory,
+	getStandardRules,
 } from "../../../src/domain/entities/FileRuleManifest";
 
 // ---- Manifest completeness ----
@@ -75,9 +75,7 @@ describe("Category distribution", () => {
 		const standard = getRulesByCategory("standard");
 		const optional = getRulesByCategory("optional");
 
-		expect(mandatory.length + standard.length + optional.length).toBe(
-			FILE_RULE_MANIFEST.length,
-		);
+		expect(mandatory.length + standard.length + optional.length).toBe(FILE_RULE_MANIFEST.length);
 	});
 
 	test("mandatory rules include core config files", () => {

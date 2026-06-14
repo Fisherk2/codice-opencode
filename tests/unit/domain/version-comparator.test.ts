@@ -119,8 +119,31 @@ describe("VersionComparator.getReleaseType", () => {
 		}
 	});
 
-	test("returns Failure for invalid versions", () => {
+	test("returns Failure for invalid local version", () => {
 		const result = comparator.getReleaseType("bad", "1.0.0");
 		expect(result.ok).toBe(false);
+	});
+
+	test("returns Failure for invalid remote version", () => {
+		const result = comparator.getReleaseType("1.0.0", "bad");
+		expect(result.ok).toBe(false);
+	});
+
+	test("returns 'major' for premajor version bump", () => {
+		const result = comparator.getReleaseType("1.0.0", "2.0.0-pre.1");
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value).toBe("major");
+	});
+
+	test("returns 'minor' for preminor version bump", () => {
+		const result = comparator.getReleaseType("1.0.0", "1.1.0-pre.1");
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value).toBe("minor");
+	});
+
+	test("returns 'patch' for prepatch version bump", () => {
+		const result = comparator.getReleaseType("1.0.0", "1.0.1-pre.1");
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value).toBe("patch");
 	});
 });
