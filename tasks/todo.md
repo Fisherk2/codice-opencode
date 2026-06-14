@@ -14,8 +14,8 @@
 
 **Criterios de aceptación:**
 - [ ] `template/obligatorio/` contiene: `opencode.json`, `skills-lock.json`, `agents/`, `commands/`, `.opencode/`, `skills/`, `references/`
-- [ ] `template/estandar/` contiene: `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `README.md`, `SPEC.md`, `.env.example`, `scripts/`, `tasks/`, `docs/` (con excepciones), `specs/` (con excepciones)
-- [ ] `template/opcional/` contiene: `Justfile`, `Makefile`, `requirements.txt`, `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/`, `specs/design/`, `.opencode/plugins/sdd-workflow-test.md`
+- [ ] `template/estandar/` contiene: `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `README.md`, `SPEC.md`, `.env.example`, `tasks/`, `docs/` (con excepciones), `specs/` (con excepciones)
+- [ ] `template/opcional/` contiene: `Justfile`, `Makefile`, `requirements.txt`, `scripts/`, `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/`, `specs/design/`, `.opencode/plugins/sdd-workflow-test.md`
 - [ ] `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/` movidos a opcional/
 - [ ] `specs/design/` movido a opcional/
 - [ ] `.opencode/plugins/sdd-workflow-test.md` movido a opcional/

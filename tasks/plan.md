@@ -46,8 +46,8 @@ T1.0 must complete before T1.1 (BunFileSystem reads from the organized template 
 
 **Acceptance criteria:**
 - [ ] `template/obligatorio/` contains: `opencode.json`, `skills-lock.json`, `agents/`, `commands/`, `.opencode/`, `skills/`, `references/`
-- [ ] `template/estandar/` contains: `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `README.md`, `SPEC.md`, `.env.example`, `scripts/`, `tasks/`, `docs/` (with exceptions), `specs/` (with exceptions)
-- [ ] `template/opcional/` contains: `Justfile`, `Makefile`, `requirements.txt`, `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/`, `specs/design/`, `.opencode/plugins/sdd-workflow-test.md`
+- [ ] `template/estandar/` contains: `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `README.md`, `SPEC.md`, `.env.example`, `tasks/`, `docs/` (with exceptions), `specs/` (with exceptions)
+- [ ] `template/opcional/` contains: `Justfile`, `Makefile`, `requirements.txt`, `scripts/`, `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/`, `specs/design/`, `.opencode/plugins/sdd-workflow-test.md`
 - [ ] `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/` moved to opcional/
 - [ ] `specs/design/` moved to opcional/
 - [ ] `.opencode/plugins/sdd-workflow-test.md` moved to opcional/
