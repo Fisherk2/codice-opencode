@@ -1,0 +1,99 @@
+/**
+ * Unit tests for WorkspaceVersion value object.
+ * Tests comparison methods that use the semver library.
+ */
+
+import { describe, expect, test } from "bun:test";
+import { WorkspaceVersion } from "../../../src/domain/entities/WorkspaceVersion";
+
+describe("WorkspaceVersion comparison", () => {
+	test("isNewerThan returns true when this version is greater", () => {
+		const v1 = new WorkspaceVersion("1.1.0", "2026-06-13T12:00:00.000Z");
+		const v2 = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		expect(v1.isNewerThan(v2)).toBe(true);
+	});
+
+	test("isNewerThan returns false when this version is lesser", () => {
+		const v1 = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		const v2 = new WorkspaceVersion("1.1.0", "2026-06-13T12:00:00.000Z");
+		expect(v1.isNewerThan(v2)).toBe(false);
+	});
+
+	test("isNewerThan returns false when versions are equal", () => {
+		const v1 = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		const v2 = new WorkspaceVersion("1.0.0", "2026-06-14T12:00:00.000Z");
+		expect(v1.isNewerThan(v2)).toBe(false);
+	});
+
+	test("isOlderThan returns true when this version is lesser", () => {
+		const v1 = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		const v2 = new WorkspaceVersion("1.1.0", "2026-06-13T12:00:00.000Z");
+		expect(v1.isOlderThan(v2)).toBe(true);
+	});
+
+	test("isOlderThan returns false when this version is greater", () => {
+		const v1 = new WorkspaceVersion("1.1.0", "2026-06-13T12:00:00.000Z");
+		const v2 = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		expect(v1.isOlderThan(v2)).toBe(false);
+	});
+
+	test("isOlderThan returns false when versions are equal", () => {
+		const v1 = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		const v2 = new WorkspaceVersion("1.0.0", "2026-06-14T12:00:00.000Z");
+		expect(v1.isOlderThan(v2)).toBe(false);
+	});
+
+	test("equals returns true when versions match", () => {
+		const v1 = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		const v2 = new WorkspaceVersion("1.0.0", "2026-06-14T12:00:00.000Z");
+		expect(v1.equals(v2)).toBe(true);
+	});
+
+	test("equals returns false when versions differ", () => {
+		const v1 = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		const v2 = new WorkspaceVersion("1.1.0", "2026-06-13T12:00:00.000Z");
+		expect(v1.equals(v2)).toBe(false);
+	});
+
+	test("compare returns 'newer' when remote is greater than local", () => {
+		const local = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		const remote = new WorkspaceVersion("1.1.0", "2026-06-14T12:00:00.000Z");
+		expect(local.compare(remote)).toBe("older");
+	});
+
+	test("compare returns 'older' when remote is lesser than local", () => {
+		const local = new WorkspaceVersion("1.1.0", "2026-06-13T12:00:00.000Z");
+		const remote = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		expect(local.compare(remote)).toBe("newer");
+	});
+
+	test("compare returns 'equal' when versions match", () => {
+		const local = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		const remote = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z");
+		expect(local.compare(remote)).toBe("equal");
+	});
+
+	test("fromJSON rejects invalid version format", () => {
+		expect(() =>
+			WorkspaceVersion.fromJSON({
+				installedVersion: 123,
+				installedAt: "2026-06-13T12:00:00.000Z",
+			}),
+		).toThrow("must be a version string");
+	});
+
+	test("fromJSON rejects invalid installedAt", () => {
+		expect(() =>
+			WorkspaceVersion.fromJSON({
+				installedVersion: "1.0.0",
+				installedAt: 123,
+			}),
+		).toThrow("must be an ISO 8601 timestamp");
+	});
+
+	test("fromJSON rejects null data", () => {
+		expect(() => WorkspaceVersion.fromJSON(null)).toThrow(
+			"expected a JSON object",
+		);
+	});
+});

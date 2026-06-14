@@ -1,7 +1,16 @@
+import { compare as semverCompare, eq as semverEq, gt as semverGt, lt as semverLt } from "semver";
+
+/**
+ * Result of comparing a local and remote version.
+ * - "newer": Local version is greater than the remote.
+ * - "older": Local version is less than the remote.
+ * - "equal": Both versions are identical.
+ */
+export type ComparisonResult = "newer" | "older" | "equal";
+
 /**
  * Value object representing a semantic version (vX.Y.Z).
- * TODO: Wrap the semver library to enforce format validation
- * and provide comparison logic within the domain layer.
+ * Uses the semver library for version parsing and comparison.
  */
 export class WorkspaceVersion {
 	constructor(
@@ -14,6 +23,38 @@ export class WorkspaceVersion {
 		/** Optional list of paths the user selected during install */
 		public readonly optionalSelections: readonly string[] = [],
 	) {}
+
+	/**
+	 * Returns true if this version is newer (greater) than the given version.
+	 */
+	isNewerThan(other: WorkspaceVersion): boolean {
+		return semverGt(this.version, other.version);
+	}
+
+	/**
+	 * Returns true if this version is older (less) than the given version.
+	 */
+	isOlderThan(other: WorkspaceVersion): boolean {
+		return semverLt(this.version, other.version);
+	}
+
+	/**
+	 * Returns true if this version equals the given version.
+	 */
+	equals(other: WorkspaceVersion): boolean {
+		return semverEq(this.version, other.version);
+	}
+
+	/**
+	 * Compare this version against another.
+	 * Returns "newer" if this > other, "older" if this < other, "equal" if same.
+	 */
+	compare(other: WorkspaceVersion): ComparisonResult {
+		const result = semverCompare(this.version, other.version);
+		if (result > 0) return "newer";
+		if (result < 0) return "older";
+		return "equal";
+	}
 
 	/**
 	 * Create a WorkspaceVersion from a raw JSON object.
