@@ -1,8 +1,8 @@
 # TODO: F1 – Infrastructure (Adapters)
 
-**Estado:** 🟢 Listo para Implementar
+**Estado:** ✅ Completado
 **Fecha:** 2026-06-14
-**Dependencias:** F0 ✅ Completado
+**Dependencias:** F0 ✅ Completado → F1 ✅ Completado → F2 🟢 Listo para Planificar
 
 ---
 
@@ -172,16 +172,16 @@
 
 | Elemento de Checkpoint | Estado |
 |------------------------|--------|
-| Directorio template organizado en 3 subdirs | Pending |
-| BunFileSystem: los 11 métodos de IFileSystem implementados | Pending |
-| GitHubRestClient: 2 métodos con timeout + mapeo de errores | Pending |
-| ClackPromptsAdapter: los 11 métodos de IUserPrompt con @clack/prompts real | Pending |
-| Tests de integración BunFileSystem: ≥8 tests pasan | Pending |
-| Tests de integración GitHubRestClient: ≥6 tests pasan | Pending |
-| Tests de integración ClackPromptsAdapter: ≥6 tests pasan | Pending |
-| `just lint` pasa en todos los archivos F1 | Pending |
-| `bun test` (todos los 74 F0 + nuevos F1): todos pasan | Pending |
-| Cobertura de adaptadores >70% | Pending |
+| Directorio template organizado en 3 subdirs | ✅ Completado |
+| BunFileSystem: los 11 métodos de IFileSystem implementados | ✅ Completado |
+| GitHubRestClient: 2 métodos con timeout + mapeo de errores | ✅ Completado |
+| ClackPromptsAdapter: los 11 métodos de IUserPrompt con @clack/prompts real | ✅ Completado |
+| Tests de integración BunFileSystem: ≥8 tests pasan (25 tests) | ✅ Completado |
+| Tests de integración GitHubRestClient: ≥6 tests pasan (11 tests) | ✅ Completado |
+| Tests de integración ClackPromptsAdapter: ≥6 tests pasan (15 tests) | ✅ Completado |
+| `just lint` pasa en todos los archivos F1 (solo 4 noConsole esperados en main.ts) | ✅ Completado |
+| `bun test` (74 F0 + 51 F1 = 125): todos pasan | ✅ Completado |
+| Cobertura de adaptadores >70% (100% líneas en BunFileSystem/GitHubRestClient/constants, 100% ClackPromptsAdapter líneas, 92.86% funciones) | ✅ Completado |
 
 ---
 

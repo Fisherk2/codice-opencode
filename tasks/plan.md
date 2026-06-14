@@ -217,16 +217,16 @@ T1.0 must complete before T1.1 (BunFileSystem reads from the organized template 
 
 | Checkpoint Item | Status |
 |-----------------|--------|
-| Template directory organized into 3 subdirs | Pending |
-| BunFileSystem: all 11 IFileSystem methods implemented | Pending |
-| GitHubRestClient: 2 methods with timeout + error mapping | Pending |
-| ClackPromptsAdapter: all 11 IUserPrompt methods with real @clack/prompts | Pending |
-| BunFileSystem integration tests: ≥8 tests pass | Pending |
-| GitHubRestClient integration tests: ≥6 tests pass | Pending |
-| ClackPromptsAdapter integration tests: ≥6 tests pass | Pending |
-| `just lint` passes on all F1 files | Pending |
-| `bun test` (all 74 F0 + new F1 tests): all pass | Pending |
-| Adapter test coverage >70% | Pending |
+| Template directory organized into 3 subdirs | ✅ Done |
+| BunFileSystem: all 11 IFileSystem methods implemented | ✅ Done |
+| GitHubRestClient: 2 methods with timeout + error mapping | ✅ Done |
+| ClackPromptsAdapter: all 11 IUserPrompt methods with real @clack/prompts | ✅ Done |
+| BunFileSystem integration tests: ≥8 tests pass (25 tests) | ✅ Done |
+| GitHubRestClient integration tests: ≥6 tests pass (11 tests) | ✅ Done |
+| ClackPromptsAdapter integration tests: ≥6 tests pass (15 tests) | ✅ Done |
+| `just lint` passes on all F1 files (4 expected noConsole warnings in main.ts) | ✅ Done |
+| `bun test` (74 F0 + 51 F1 = 125): all pass | ✅ Done |
+| Adapter test coverage >70% (100% lines on all adapters) | ✅ Done |
 
 ---
 
