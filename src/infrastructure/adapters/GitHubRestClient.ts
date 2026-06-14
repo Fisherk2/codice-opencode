@@ -1,6 +1,12 @@
 import type { IGitHubClient } from "../../application/ports/IGitHubClient";
 import { GITHUB_API_LATEST_RELEASE, GITHUB_API_TIMEOUT_MS } from "../config/constants";
 
+/** Maximum allowed response body size (1 MB) to prevent OOM from malicious responses */
+const MAX_RESPONSE_BYTES = 1024 * 1024;
+
+/** Valid semver tag pattern: vX.Y.Z where X, Y, Z are one or more digits */
+const VALID_TAG_PATTERN = /^v\d+\.\d+\.\d+$/;
+
 /**
  * Fetch-based GitHub REST API client for checking latest releases.
  * Uses unauthenticated requests (60 req/hr limit).
@@ -33,7 +39,14 @@ export class GitHubRestClient implements IGitHubClient {
 				return null;
 			}
 			const tag = data.tag_name;
-			return typeof tag === "string" ? tag : null;
+			if (typeof tag !== "string") {
+				return null;
+			}
+			// Validate tag format to prevent injection via malformed tag_name
+			if (!VALID_TAG_PATTERN.test(tag)) {
+				return null;
+			}
+			return tag;
 		} catch {
 			// Catch any unexpected errors gracefully
 			return null;
@@ -95,8 +108,19 @@ export class GitHubRestClient implements IGitHubClient {
 				return null;
 			}
 
+			// Check content-length before reading body to prevent OOM
+			const contentLength = response.headers.get("content-length");
+			if (contentLength && Number.parseInt(contentLength, 10) > MAX_RESPONSE_BYTES) {
+				return null;
+			}
+
 			// Parse JSON
 			const text = await response.text();
+
+			// Guard against oversized responses where content-length was missing or lying
+			if (text.length > MAX_RESPONSE_BYTES) {
+				return null;
+			}
 			try {
 				const data = JSON.parse(text);
 				if (typeof data === "object" && data !== null) {

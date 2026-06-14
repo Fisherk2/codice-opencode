@@ -5,8 +5,8 @@
 export interface IGitHubClient {
 	/**
 	 * Fetch the latest release tag from the repository.
-	 * @returns The tag name (e.g. "v1.0.0") or null on failure.
-	 * @throws If the network is unreachable or timeout exceeded.
+	 * @returns The tag name (e.g. "v1.0.0") or null on any failure
+	 * (network error, timeout, HTTP error, malformed response).
 	 */
 	getLatestReleaseTag(): Promise<string | null>;
 

@@ -114,12 +114,12 @@ describe("BunFileSystem", () => {
 	describe("getStagingPath", () => {
 		it("should return path inside staging dir", () => {
 			const stagingPath = fsAdapter.getStagingPath("config.json");
-			expect(stagingPath).toBe(path.join(destDir, STAGING_DIR_NAME, "config.json"));
+			expect(stagingPath).toBe(path.resolve(destDir, STAGING_DIR_NAME, "config.json"));
 		});
 
 		it("should handle nested paths", () => {
 			const stagingPath = fsAdapter.getStagingPath(path.join("subdir", "file.txt"));
-			expect(stagingPath).toBe(path.join(destDir, STAGING_DIR_NAME, "subdir", "file.txt"));
+			expect(stagingPath).toBe(path.resolve(destDir, STAGING_DIR_NAME, "subdir", "file.txt"));
 		});
 	});
 

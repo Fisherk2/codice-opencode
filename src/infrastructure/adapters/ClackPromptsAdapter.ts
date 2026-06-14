@@ -48,7 +48,6 @@ export class ClackPromptsAdapter implements IUserPrompt {
 
 	/**
 	 * Present a multiselect checklist for optional files.
-	 * Groups options by the first path segment when the count exceeds 10.
 	 * @param options - List of optional FileRules to present.
 	 * @returns Selected paths (the `path` property of each selected FileRule).
 	 */
@@ -66,23 +65,11 @@ export class ClackPromptsAdapter implements IUserPrompt {
 			}),
 		);
 
-		// Group by first path segment when count > 10
-		const useGroups = options.length > 10;
-		let result: unknown;
-
-		if (useGroups) {
-			result = await clack.multiselect({
-				message: "Select optional files to install:",
-				options: promptOptions,
-				required: false,
-			});
-		} else {
-			result = await clack.multiselect({
-				message: "Select optional files to install:",
-				options: promptOptions,
-				required: false,
-			});
-		}
+		const result = await clack.multiselect({
+			message: "Select optional files to install:",
+			options: promptOptions,
+			required: false,
+		});
 
 		if (clack.isCancel(result)) {
 			return [];

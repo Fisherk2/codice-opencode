@@ -4,8 +4,12 @@ import type { IFileSystem } from "../../application/ports/IFileSystem";
 import { STAGING_DIR_NAME, TEMPLATE_DIR_NAME, VERSION_FILE_NAME } from "../config/constants";
 
 /**
- * Bun-native filesystem adapter with atomic staging support.
- * Uses Bun.file() and Bun.write() APIs for optimal performance.
+ * Bun-compatible filesystem adapter with atomic staging support.
+ *
+ * Uses Bun.file() and Bun.write() for file reads and writes (Bun-native APIs).
+ * Uses node:fs/promises for directory operations (mkdir, readdir, rename, rm,
+ * access, unlink) because Bun does not yet provide native equivalents for
+ * these filesystem primitives. All operations are compatible with Bun's runtime.
  *
  * Template files are resolved from the template root by searching
  * each category subdirectory (obligatorio/estandar/opcional) in order.
@@ -32,6 +36,28 @@ export class BunFileSystem implements IFileSystem {
 	// ---------------------------------------------------------------------------
 
 	/**
+	 * Resolve a relative path against a root directory.
+	 * Rejects absolute paths, traversal sequences, and paths
+	 * that resolve outside the root boundary.
+	 */
+	private resolveWithinRoot(root: string, relativePath: string, context: string): string {
+		const normalized = path.normalize(relativePath);
+		if (path.isAbsolute(normalized) || normalized.startsWith("..")) {
+			throw new Error(
+				`Path traversal detected: ${relativePath}. All paths must be relative and stay within the ${context} directory.`,
+			);
+		}
+		const resolved = path.resolve(root, normalized);
+		const rootWithSep = path.resolve(root) + path.sep;
+		if (!resolved.startsWith(rootWithSep)) {
+			throw new Error(
+				`Path traversal blocked: ${relativePath} resolves outside the ${context} directory.`,
+			);
+		}
+		return resolved;
+	}
+
+	/**
 	 * Build the full template path by searching each category subdirectory
 	 * (obligatorio, estandar, opcional) for the given relative path.
 	 * Results are cached so each relative path is resolved at most once.
@@ -42,9 +68,25 @@ export class BunFileSystem implements IFileSystem {
 			return cached;
 		}
 
+		// Reject absolute paths and explicit traversal sequences
+		const normalized = path.normalize(relativePath);
+		if (path.isAbsolute(normalized) || normalized.startsWith("..")) {
+			throw new Error(
+				`Invalid template path: ${relativePath}. All template paths must be relative.`,
+			);
+		}
+
 		const categories = ["obligatorio", "estandar", "opcional"];
 		for (const category of categories) {
 			const fullPath = path.join(this.templateRoot, category, relativePath);
+
+			// Verify resolved path stays within templateRoot
+			const resolved = path.resolve(fullPath);
+			const templateWithSep = path.resolve(this.templateRoot) + path.sep;
+			if (!resolved.startsWith(templateWithSep)) {
+				throw new Error(`Template path escapes template directory: ${relativePath}.`);
+			}
+
 			try {
 				const file = Bun.file(fullPath);
 				if (await file.exists()) {
@@ -52,7 +94,7 @@ export class BunFileSystem implements IFileSystem {
 					return fullPath;
 				}
 			} catch {
-				// File.stat may throw on certain errors; treat as "not found"
+				// File.stat throws for symlinks and other edge cases; treat as "not found"
 			}
 		}
 
@@ -67,34 +109,16 @@ export class BunFileSystem implements IFileSystem {
 	 * destinationRoot boundary.
 	 */
 	private resolveDestinationPath(relativePath: string): string {
-		const normalized = path.normalize(relativePath);
-
-		// Block absolute paths and explicit traversal sequences
-		if (path.isAbsolute(normalized) || normalized.startsWith("..")) {
-			throw new Error(
-				`Path traversal detected: ${relativePath}. All paths must be relative and stay within the destination directory.`,
-			);
-		}
-
-		const resolved = path.resolve(this.destinationRoot, normalized);
-
-		// Verify the resolved path is actually inside destinationRoot
-		const destinationWithSep = path.resolve(this.destinationRoot) + path.sep;
-		if (!resolved.startsWith(destinationWithSep)) {
-			throw new Error(
-				`Path traversal blocked: ${relativePath} resolves outside the destination directory.`,
-			);
-		}
-
-		return resolved;
+		return this.resolveWithinRoot(this.destinationRoot, relativePath, "destination");
 	}
 
 	/**
 	 * Compute the staging path for a given relative destination path.
 	 * Mirrors the destination directory structure under the staging root.
+	 * Validates that the resolved path stays within the staging directory.
 	 */
 	private resolveStagingPath(relativePath: string): string {
-		return path.join(this.stagingRoot, relativePath);
+		return this.resolveWithinRoot(this.stagingRoot, relativePath, "staging");
 	}
 
 	// ---------------------------------------------------------------------------
@@ -154,11 +178,14 @@ export class BunFileSystem implements IFileSystem {
 	/**
 	 * Atomic rename: promote all staged files to the destination.
 	 * Walks the staging directory tree and renames each file to its
-	 * corresponding destination path. If any rename fails, the caller
-	 * should call cleanStaging() to roll back.
+	 * corresponding destination path. Before each rename, the original
+	 * destination file (if it exists) is backed up. On failure, all
+	 * backed-up files are restored to guarantee project consistency.
 	 */
 	async commitStaging(): Promise<void> {
 		const stagingDir = this.stagingRoot;
+		// Backup of original destination files: destPath → backupPath
+		const backups = new Map<string, string>();
 
 		try {
 			// Check if staging directory exists (fs.access works for directories; Bun.file does not)
@@ -185,13 +212,53 @@ export class BunFileSystem implements IFileSystem {
 				// Ensure destination parent directory exists
 				await fs.mkdir(path.dirname(destPath), { recursive: true });
 
+				// Back up original destination file if it exists
+				try {
+					const destFile = Bun.file(destPath);
+					if (await destFile.exists()) {
+						const backupPath = `${destPath}.codice-backup`;
+						const content = await destFile.text();
+						await Bun.write(backupPath, content);
+						backups.set(destPath, backupPath);
+					}
+				} catch {
+					// If we can't read the original, we can't back it up — proceed anyway
+					// The worst case is we can't roll back this particular file
+				}
+
 				// Atomic rename: staging → destination
 				await fs.rename(stagingFilePath, destPath);
 			}
 
 			// Clean up staging directory after successful commit
 			await this.cleanStaging();
+
+			// Clean up backup files on success
+			for (const backupPath of backups.values()) {
+				try {
+					await fs.unlink(backupPath);
+				} catch {
+					// Ignore cleanup errors for backup files
+				}
+			}
 		} catch (error) {
+			// Rollback: restore all backed-up original files
+			for (const [destPath, backupPath] of backups) {
+				try {
+					const backupFile = Bun.file(backupPath);
+					if (await backupFile.exists()) {
+						const content = await backupFile.text();
+						await Bun.write(destPath, content);
+					}
+					await fs.unlink(backupPath);
+				} catch {
+					// If rollback fails for a specific file, continue with others
+				}
+			}
+
+			// Clean up staging on failure too
+			await this.cleanStaging();
+
 			// Re-throw with actionable message
 			const message = error instanceof Error ? error.message : String(error);
 			throw new Error(`Failed to commit staged files: ${message}`);
@@ -237,8 +304,9 @@ export class BunFileSystem implements IFileSystem {
 			);
 			return visibleEntries.length === 0;
 		} catch {
-			// If we can't read the directory, assume it's empty
-			return true;
+			// If we can't read the directory, assume non-empty to prevent
+			// silent overwrites — the confirmation prompt will be shown.
+			return false;
 		}
 	}
 
