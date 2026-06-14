@@ -1,160 +1,125 @@
-# TODO: F1 – Infrastructure (Adapters)
+# TODO: F2 – Núcleo (Dominio y Lógica de Negocio)
 
-**Estado:** ✅ Completado
+**Estado:** 🟢 Listo para Planificar
 **Fecha:** 2026-06-14
 **Dependencias:** F0 ✅ Completado → F1 ✅ Completado → F2 🟢 Listo para Planificar
 
 ---
 
-## Phase 1: Template Setup
+## Phase 1: Value Objects
 
-### F1-T0: Setup template directory structure
+### F2-T1: WorkspaceVersion — métodos de comparación
 
-**Descripción:** Reorganizar el directorio `template/` plano en la estructura de 3 subdirectorios definida en `spec-file-rules.md`. Crear `obligatorio/`, `estandar/`, `opcional/` y mover los archivos existentes.
+**Descripción:** Añadir métodos de comparación semántica a `WorkspaceVersion` usando `semver`: `isNewerThan()`, `isOlderThan()`, `equals()`, `compare()`.
 
 **Criterios de aceptación:**
-- [ ] `template/obligatorio/` contiene: `opencode.json`, `skills-lock.json`, `agents/`, `commands/`, `.opencode/`, `skills/`, `references/`
-- [ ] `template/estandar/` contiene: `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `README.md`, `SPEC.md`, `.env.example`, `tasks/`, `docs/` (con excepciones), `specs/` (con excepciones)
-- [ ] `template/opcional/` contiene: `Justfile`, `Makefile`, `requirements.txt`, `scripts/`, `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/`, `specs/design/`, `.opencode/plugins/sdd-workflow-test.md`
-- [ ] `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/` movidos a opcional/
-- [ ] `specs/design/` movido a opcional/
-- [ ] `.opencode/plugins/sdd-workflow-test.md` movido a opcional/
-- [ ] No hay archivos sueltos en la raíz de `template/` (solo los 3 dirs de categoría)
-- [ ] `bun test` sigue pasando (74 tests F0 sin cambios)
+- [ ] `isNewerThan(other: WorkspaceVersion): boolean` — true si `this` > `other` (semver)
+- [ ] `isOlderThan(other: WorkspaceVersion): boolean` — true si `this` < `other` (semver)
+- [ ] `equals(other: WorkspaceVersion): boolean` — true si `this` == `other` (semver)
+- [ ] `compare(other: WorkspaceVersion): ComparisonResult` — retorna `"newer" | "older" | "equal"`
+- [ ] `VersionComparator.compare()` usa `semver.valid()` para validar formato y `semver.compare()` para la comparación
+- [ ] Formato inválido retorna `Failure` con mensaje accionable
 
 **Verificación:**
-- [ ] `ls template/` muestra solo `obligatorio/`, `estandar/`, `opcional/`
-- [ ] `find template/obligatorio/` lista todos los archivos y directorios obligatorios
-- [ ] `find template/estandar/` lista todos los archivos y directorios estándar
-- [ ] `find template/opcional/` lista todos los archivos y directorios opcionales
-- [ ] `bun test` → 74/74 pass (sin cambios)
+- [ ] `bun test tests/unit/domain/` → todos pasan
+- [ ] `just lint` pasa con cero warnings
+- [ ] Cobertura de `WorkspaceVersion.ts` > 90%
 
-**Dependencias:** Ninguna (F0 ✅)
+**Dependencias:** Ninguna
 **Scope:** S
 
 ---
 
-## Phase 2: Adapter Implementation
+## Phase 2: Entities
 
-### F1-T1: BunFileSystem adapter
+### F2-T2: FileRule — validación, factory y manifest
 
-**Descripción:** Implementar los 11 métodos de `IFileSystem` usando las APIs nativas de Bun. Patrón atómico con staging: `stageFile()` copia de template a staging; `commitStaging()` renombra a destino; `cleanStaging()` limpia en rollback. Prevención de path traversal via `path.resolve()` + validación de frontera.
+**Descripción:** Crear `FileRuleManifest.ts` con 27 paths clasificados, métodos de validación en `FileRule`, y función factory `createFileRule(path)`.
 
 **Criterios de aceptación:**
-- [ ] `readTemplateFile(relativePath)` lee de `template/` usando `Bun.file().text()`
-- [ ] `destinationExists(relativePath)` verifica destino con `Bun.file().exists()`
-- [ ] `getStagingPath(relativePath)` retorna `path.join(stagingDir, relativePath)`
-- [ ] `stageFile(relativePath)` lee de template, escribe a staging (crea directorios intermedios)
-- [ ] `commitStaging()` renombra archivos de staging a destino; falla gracefully si rename falla
-- [ ] `cleanStaging()` elimina el directorio staging recursivamente
-- [ ] `isWritable()` verifica permiso de escritura del directorio destino
-- [ ] `isEmpty()` retorna `true` si destino no tiene archivos (excepto .git/ y .codice-version)
-- [ ] `writeVersionFile(versionData)` escribe `.codice-version` en la raíz del destino atómicamente
-- [ ] `readVersionFile()` lee `.codice-version` de la raíz del destino (null si no existe)
-- [ ] Intento de path traversal (`../` fuera del destino) retorna `false`/`null`/`throw` — nunca escribe fuera de la frontera
+- [ ] `src/domain/entities/FileRuleManifest.ts` existe con `FILE_RULE_MANIFEST: readonly FileRule[]` conteniendo las 27 rutas de `spec-file-rules.md`
+- [ ] `FileRule.isValid(path): boolean` — verifica que la ruta existe en el manifest
+- [ ] `FileRule.getCategory(path): RuleCategory | null` — retorna la categoría o null
+- [ ] `createFileRule(path: string): FileRule | null` — factory que retorna la regla completa o null
+- [ ] `getRulesByCategory(category: RuleCategory): readonly FileRule[]`
+- [ ] `getMandatoryRules()`, `getStandardRules()`, `getOptionalRules()`
+- [ ] Las 27 rutas cubren: Obligatorio (12), Estandar (11), Opcional (10), sin duplicados
 
 **Verificación:**
-- [ ] `bun test` para los nuevos tests de integración pasa
-- [ ] `just lint` pasa con cero warnings en `BunFileSystem.ts`
-- [ ] Los 11 métodos retornan tipos correctos (sin `any`)
-- [ ] El directorio staging no existe después de llamar `cleanStaging()`
+- [ ] `bun test tests/unit/domain/` → todos pasan
+- [ ] `just lint` pasa con cero warnings
+- [ ] Cobertura de `FileRuleManifest.ts` > 90%
 
-**Dependencias:** F1-T0
+**Dependencias:** Ninguna (paralelo con F2-T1)
 **Scope:** M
 
 ---
 
-### F1-T2: GitHubRestClient adapter
+## Phase 3: Domain Services
 
-**Descripción:** Implementar `IGitHubClient` usando `fetch` con `AbortController` para timeout. Mapeo de errores HTTP a valores de retorno del dominio: 404 → `null`, 403 → `null`, network failure → `null`, timeout → `null`.
+### F2-T3: VersionComparator — implementación
+
+**Descripción:** Implementar `VersionComparator.compare()` usando `semver`. Valida formato, retorna `"newer" | "older" | "equal"` via `Result`.
 
 **Criterios de aceptación:**
-- [ ] `getLatestReleaseTag()` hace fetch a `GITHUB_API_LATEST_RELEASE`, parsea `tag_name` del JSON
-- [ ] `getLatestReleaseNotes()` hace fetch a la misma URL, parsea `body` del JSON
-- [ ] Timeout exactamente `GITHUB_API_TIMEOUT_MS` (3000ms) via `AbortController.timeout`
-- [ ] HTTP 404 → retorna `null` (no lanza error)
-- [ ] HTTP 403 → retorna `null` (rate limited, no lanza error)
-- [ ] Network unreachable → retorna `null` (no lanza error)
-- [ ] Respuesta exitosa con JSON malformado → retorna `null`
-- [ ] Todos los paths de error loguean mensaje accionable a stderr (en modo verbose)
+- [ ] `compare(local: string, remote: string): Result<ComparisonResult, Error>`
+- [ ] `semver.valid()` null → `Failure` con mensaje `"Invalid version format: {value}. Expected vX.Y.Z"`
+- [ ] `semver.compare(local, remote)` → mapea a `"newer" | "older" | "equal"`
+- [ ] `isUpdateAvailable(local: string, remote: string): boolean`
+- [ ] `getReleaseType(local: string, remote: string): Result<"major" | "minor" | "patch" | "none", Error>`
+- [ ] Zero runtime dependencies (solo `semver` y tipos del dominio)
 
 **Verificación:**
-- [ ] `bun test` integration tests pasan (usando `fetch` mockeado)
-- [ ] Comportamiento de timeout verificado: respuesta después de 4s retorna `null`
-- [ ] `just lint` pasa con cero warnings
+- [ ] `bun test tests/unit/domain/` → todos pasan
+- [ ] Cobertura de `VersionComparator.ts` > 90%
 
-**Dependencias:** Ninguna (puede paralelizarse con F1-T0, F1-T1)
+**Dependencias:** F2-T1
 **Scope:** S
 
 ---
 
-### F1-T3: ClackPromptsAdapter
+### F2-T4: FileMergeEngine — estrategia de fusión
 
-**Descripción:** Implementar los 11 métodos de `IUserPrompt` usando `@clack/prompts` real. Wire `note()` para warning/info, `confirm()` para sí/no, `multiselect()` para selección de archivos opcionales (con agrupamiento cuando >10 items), `spinner` para ops async, `intro()`/`outro()`/`cancel()` para mensajes de flujo.
+**Descripción:** Implementar el motor de fusión completo con Strategy Pattern. Recibe `IFileSystem` via constructor, procesa `FileRule[]` aplicando la estrategia correcta por categoría.
 
 **Criterios de aceptación:**
-- [ ] `showWarning(message)` muestra warning via `@clack/prompts.note()` con estilo apropiado
-- [ ] `showInfo(message)` muestra info via `@clack/prompts.note()`
-- [ ] `confirm(message, defaultYes)` retorna `true`/`false` desde `@clack/prompts.confirm()`
-- [ ] `selectOptional(options)` muestra multiselect agrupado; agrupa por primer segmento del path cuando count > 10
-- [ ] `showSpinner(message)` / `stopSpinner()` inicia/detiene spinner con mensaje
-- [ ] `showIntro(title)` muestra banner de título
-- [ ] `showSuccess(message)` muestra mensaje de éxito
-- [ ] `showCancel(message)` / `showError(message)` muestra mensajes de cancelación/error
-- [ ] Todos los prompts son non-blocking para métodos de display (retorno sync `void`)
+- [ ] Constructor recibe `IFileSystem` (inyección via `ports/IFileSystem`)
+- [ ] `execute(rules, selectedOptionals?): Promise<Result<void, MergeError>>`
+- [ ] `MergeError` con campos: `phase`, `path?`, `message`
+- [ ] Obligatorio: siempre `stageFile()` (sobrescribe)
+- [ ] Estandar: solo `stageFile()` si `destinationExists() === false`
+- [ ] Opcional: solo `stageFile()` si path en `selectedOptionals` Y `destinationExists() === false`
+- [ ] `commitStaging()` al final si todo OK
+- [ ] `cleanStaging()` en caso de error
+- [ ] Zero runtime dependencies
 
 **Verificación:**
-- [ ] `bun test` integration tests pasan (módulo `@clack/prompts` mockeado)
-- [ ] `just lint` pasa con cero warnings
-- [ ] El adaptador puede ser instanciado sin errores
+- [ ] `bun test tests/unit/domain/` → todos pasan
+- [ ] Cobertura de `FileMergeEngine.ts` > 90%
 
-**Dependencias:** Ninguna (puede paralelizarse con F1-T0, F1-T1)
-**Scope:** S
+**Dependencias:** F2-T1, F2-T2
+**Scope:** M
 
 ---
 
-## Phase 3: Testing
+## Phase 4: Testing
 
-### F1-T4: Integration tests para los 3 adaptadores
+### F2-T5: Unit tests para la capa de dominio
 
-**Descripción:** Escribir tests de integración para los tres adaptadores usando `bun:test` con directorios temporales reales y dependencias externas mockeadas.
-
-**BunFileSystem tests:**
-- Crear directorio temporal real como destino, `template/` real para lecturas
-- Test `stageFile()` crea archivo en staging
-- Test `commitStaging()` promueve a destino
-- Test `cleanStaging()` elimina staging
-- Test `destinationExists()` retorna booleanos correctos
-- Test `isEmpty()` / `isWritable()` behavior
-- Test ciclo escritura/lectura de version file
-- Test rechazo de path traversal (intentos de escribir fuera del destino → error/null)
-
-**GitHubRestClient tests:**
-- Mock `fetch` para retornar JSON predefinido (success, 404, 403, timeout)
-- Test timeout retorna `null`
-- Test 404 retorna `null`
-- Test 403 retorna `null`
-- Test extracción exitosa de tag
-
-**ClackPromptsAdapter tests:**
-- Mock módulo `@clack/prompts` para capturar argumentos de llamadas
-- Verificar `confirm()` llama a `confirm()` con mensaje correcto
-- Verificar `selectOptional()` llama a `multiselect()` con opciones correctas
-- Verificar output agrupado cuando >10 items
+**Descripción:** Tests exhaustivos para todos los componentes de dominio. Patrón AAA, mocks de `IFileSystem` inyectados via constructor.
 
 **Criterios de aceptación:**
-- [ ] BunFileSystem: ≥8 tests, todos pasan
-- [ ] GitHubRestClient: ≥6 tests, todos pasan (fetch mockeado, sin red real)
-- [ ] ClackPromptsAdapter: ≥6 tests, todos pasan (@clack/prompts mockeado)
-- [ ] Todos los tests usan `bun test` (no scripts de shell)
-- [ ] Cobertura total de F1 >70% de los adaptadores de infraestructura
-- [ ] Los 74 tests F0 existentes siguen pasando (sin regresión)
+- [ ] `WorkspaceVersion`: ≥6 tests
+- [ ] `FileRuleManifest`: ≥10 tests
+- [ ] `VersionComparator`: ≥6 tests
+- [ ] `FileMergeEngine`: ≥10 tests
+- [ ] Cobertura total del dominio > 90%
+- [ ] `bun test tests/unit/domain/` → todos pasan
 
 **Verificación:**
-- [ ] `bun test` → todos pasan
-- [ ] `bun test --coverage` → cobertura de adaptadores >70%
+- [ ] `bun test --coverage tests/unit/domain/` → cobertura > 90%
 
-**Dependencias:** F1-T1, F1-T2, F1-T3 (todos los adaptadores deben existir antes de testear)
+**Dependencias:** F2-T1, F2-T2, F2-T3, F2-T4
 **Scope:** M
 
 ---
@@ -163,25 +128,23 @@
 
 | # | Pregunta | Respuesta |
 |---|----------|-----------|
-| F1-O1 | ¿Cómo locate BunFileSystem el directorio template en producción (embebido en binary vs. lado a lado)? | **Deferred a F3** — por ahora usar `path.join(process.cwd(), "template")` en dev; la estrategia de compilación se maneja cuando se configure el build del binary |
-| F1-O2 | ¿El directorio staging debe estar dentro o fuera del destino? | **Dentro del destino** — manejo de paths más simple; se limpia en éxito o SIGINT |
+| F2-O1 | ¿Dónde se define el manifest de clasificación? | En `src/domain/entities/FileRuleManifest.ts` como constante `FILE_RULE_MANIFEST`. Es estático por release del template. |
+| F2-O2 | ¿Cómo se relaciona `FileMergeEngine` con `IFileSystem` si el dominio no puede importar de aplicación? | **Dependency Inversion**: `FileMergeEngine` recibe `IFileSystem` via constructor. La interfaz está en `application/ports/`, pero el dominio depende de la abstracción, no de la implementación. |
+| F2-O3 | ¿Los tests de `FileMergeEngine` necesitan mocks del filesystem? | Sí, pero solo de `IFileSystem`. Los tests injectan un mock/stub de `IFileSystem` que registra las llamadas sin tocar disco. |
 
 ---
 
-## Checkpoint: Después de F1-T0 a F1-T4
+## Checkpoint: Después de F2-T1 a F2-T5
 
 | Elemento de Checkpoint | Estado |
 |------------------------|--------|
-| Directorio template organizado en 3 subdirs | ✅ Completado |
-| BunFileSystem: los 11 métodos de IFileSystem implementados | ✅ Completado |
-| GitHubRestClient: 2 métodos con timeout + mapeo de errores | ✅ Completado |
-| ClackPromptsAdapter: los 11 métodos de IUserPrompt con @clack/prompts real | ✅ Completado |
-| Tests de integración BunFileSystem: ≥8 tests pasan (25 tests) | ✅ Completado |
-| Tests de integración GitHubRestClient: ≥6 tests pasan (11 tests) | ✅ Completado |
-| Tests de integración ClackPromptsAdapter: ≥6 tests pasan (15 tests) | ✅ Completado |
-| `just lint` pasa en todos los archivos F1 (solo 4 noConsole esperados en main.ts) | ✅ Completado |
-| `bun test` (74 F0 + 51 F1 = 125): todos pasan | ✅ Completado |
-| Cobertura de adaptadores >70% (100% líneas en BunFileSystem/GitHubRestClient/constants, 100% ClackPromptsAdapter líneas, 92.86% funciones) | ✅ Completado |
+| WorkspaceVersion: métodos de comparación implementados | ⏳ Pendiente |
+| FileRuleManifest: 27 paths clasificados correctamente | ⏳ Pendiente |
+| VersionComparator: compare() con semver, retorna Result | ⏳ Pendiente |
+| FileMergeEngine: estrategia completa con staging | ⏳ Pendiente |
+| Unit tests: todos pasando, cobertura > 90% | ⏳ Pendiente |
+| `just lint` pasa en todos los archivos F2 | ⏳ Pendiente |
+| `bun test` pasa sin regresión | ⏳ Pendiente |
 
 ---
 
