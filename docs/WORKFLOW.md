@@ -1,5 +1,5 @@
 # Workflow – Códice: Opencode Workspace Installer v1.0.0 (MVP)
-**Fecha:** 2026-06-14 | **Autor:** Fisherk2 | **Metodología:** Agile/Iterativo | **Estado:** F0 ✅ Completado | F1 ✅ Completado | F2 ✅ Completado | F3 🟢 Listo para Planificar
+**Fecha:** 2026-06-14 | **Autor:** Fisherk2 | **Metodología:** Agile/Iterativo | **Estado:** F0 ✅ Completado | F1 ✅ Completado | F2 ✅ Completado | F3 ✅ Completado | F4 🟢 Listo para Planificar
 
 ## 1. Visión de Fases
 | Fase | Objetivo | Entregables | Duración Estimada |
@@ -51,21 +51,25 @@
 - **Criterios de Completitud (DoD):** 100% cobertura domain layer (100% lines, 96.4% functions) ✅; cero dependencias de Bun/Red ✅; `bun test` (214/214) ✅; biome lint 0 errors ✅; `tsc --noEmit` clean ✅; Code review 5-ejes aprobado ✅.
 - **Dependencias:** F0 ✅, F1 ✅.
 
-### Fase F3 – Interfaces (Casos de Uso y CLI) 🟢 Listo para Planificar
-- **Tareas pendientes:**
-  - `T3.1`: Implementar `CleanInstallUseCase`, `ProjectInstallUseCase` y `UpdateWorkspaceUseCase`.
-  - `T3.2`: Integrar `@clack/prompts` en `main.ts` para el menú interactivo y manejo de señales `SIGINT`.
-  - `T3.3`: Conectar la TUI con los casos de uso mediante inyección de dependencias.
-- **Criterios de Completitud (DoD):** El CLI se ejecuta en modo desarrollo y los 3 flujos principales funcionan con datos mockeados.
+### Fase F3 – Interfaces (Casos de Uso y CLI) ✅ Completado
+- **Tareas realizadas:**
+  - `T3.1`: Implementar `CleanInstallUseCase`, `ProjectInstallUseCase` y `UpdateWorkspaceUseCase` con suscripción completa a `IUserPrompt` (confirmación, selección opcional, showSuccess/showCancel/showError).
+  - `T3.2`: Integrar `@clack/prompts` en `main.ts` para el menú interactivo y manejo de señales `SIGINT` con `BunFileSystem.cleanStaging()`.
+  - `T3.3`: Conectar la TUI con los casos de uso mediante inyección de dependencias en `main.ts`.
+  - `T3.4`: Refactor — extraer `checkWritable()` y `writeVersionFileSafe()` a `src/application/helpers.ts` (Rule of Three).
+  - `T3.5`: TDD gap audit — detectar y añadir 6 tests de cobertura faltantes (merge engine failure propagation, local version ahead, invalid semver fallback, optional file already exists).
+  - `T3.6`: Code review 5-ejes con 3 correcciones: C1 (cancel+success UX), I1 (semver validation guard), I2 (split main.ts en 4 módulos <200 líneas c/u).
+- **Artefactos generados:** `CleanInstallUseCase.ts`, `ProjectInstallUseCase.ts`, `UpdateWorkspaceUseCase.ts`, `helpers.ts`, `main.ts` (175 lines), `parse-args.ts`, `output.ts`, `container.ts`; test files para use cases (35 tests), CLI integration (10 tests), parseArgs unit (10 tests), gap tests (6 tests).
+- **Criterios de Completitud (DoD):** CLI se ejecuta en modo desarrollo ✅; 3 flujos funcionan con datos mockeados ✅; `bun test` (269/269) ✅; `just check` 0 errores ✅; Code review completado con 0 hallazgos críticos ✅; main.ts <200 líneas ✅.
 - **Dependencias:** F1 ✅, F2 ✅.
 
-### Fase F4 – Pruebas (Unitarias, Integración y E2E)
-- **Tareas:**
+### Fase F4 – Pruebas (Unitarias, Integración y E2E) 🟢 Listo para Planificar
+- **Tareas propuestas:**
   - `T4.1`: Escribir pruebas unitarias para dominio e infraestructura (`bun test`).
   - `T4.2`: Crear scripts E2E (`just test-e2e`) que compilen el binario, lo ejecuten en un directorio temporal y validen el estado final del sistema de archivos.
   - `T4.3`: Validar manejo de errores (ej: disco lleno, permiso denegado, red caída).
 - **Criterios de Completitud (DoD):** Cobertura >80%, todos los tests E2E pasan en CI.
-- **Dependencias:** F3.
+- **Dependencias:** F3 ✅.
 
 ### Fase F5 – Despliegue y CI/CD
 - **Tareas:**
@@ -96,8 +100,8 @@ graph TD
     S0[S0: Estructura y Convenciones<br/>Estado: ✅ Completado]:::done
     S1[S1: Adaptadores FS y Red<br/>Estado: ✅ Completado]:::done
     S2[S2: Dominio y Lógica de Negocio<br/>Estado: ✅ Completado]:::done
-    S3[S3: Casos de Uso y TUI CLI<br/>Estado: 🟢 Listo para Planificar]:::pending
-    S4[S4: Pruebas Unitarias y E2E<br/>Estado: ⏳ Pendiente]:::pending
+    S3[S3: Casos de Uso y TUI CLI<br/>Estado: ✅ Completado]:::done
+    S4[S4: Pruebas Unitarias y E2E<br/>Estado: 🟢 Listo para Planificar]:::pending
     S5[S5: CI/CD y Binarios<br/>Estado: ⏳ Pendiente]:::pending
     S6[S6: Documentación Final<br/>Estado: ⏳ Pendiente]:::pending
 
@@ -112,7 +116,7 @@ graph TD
 
     %% Leyenda
     subgraph Leyenda
-        L1[⏳ Pendiente]:::pending
+        L1[⏳ Pendiente / 🟢 Listo para Planificar]:::pending
         L2[🔄 En Progreso]:::progress
         L3[✅ Completado]:::done
     end
@@ -134,7 +138,7 @@ graph TD
 | **Gate 0** | Especificación | ¿SPEC.md, AGENTS.md y ADRs están aprobados? ¿Las decisiones arquitectónicas están documentadas? | Arquitecto | ✅ **Aprobado** — 2026-06-13 |
 | **Gate 1** | F1 (Infraestructura) | ¿Adaptadores implementan staging atómico? ¿Manejo de timeouts? ¿Path traversal prevention? ¿Rollback en fallo? | Arquitecto, Dev Lead | ✅ **Aprobado** — 2026-06-14 |
 | **Gate 2** | F2 (Núcleo) | ¿Lógica libre de efectos secundarios? ¿Principios SOLID aplicados? | Arquitecto, Dev Lead | ✅ **Aprobado** — 2026-06-14 |
-| **Gate 3** | F3 (Interfaces) | ¿La TUI maneja `SIGINT` correctamente? ¿Los mensajes de error son accionables? | Arquitecto, UX Reviewer | Pendiente |
+| **Gate 3** | F3 (Interfaces) | ¿La TUI maneja `SIGINT` correctamente? ¿Los mensajes de error son accionables? | Arquitecto, UX Reviewer | ✅ **Aprobado** — 2026-06-14 |
 | **Gate 4** | F4 (Pruebas) | ¿Cobertura >80%? ¿Los tests E2E validan el rollback atómico? | QA, Dev Lead | Pendiente |
 | **Gate 5** | F5 (Release) | ¿El pipeline compila las 3 plataformas? ¿El binario funciona "out of the box"? | Arquitecto, DevOps | Pendiente |
 
@@ -161,7 +165,7 @@ graph TD
 | Hito | Descripción | Fecha Objetivo (Semanas desde inicio) |
 |------|-------------|---------------------------------------|
 | **M1: Cimientos** | F0 y F1 completadas, entorno de desarrollo listo. | Semana 1 ✅ |
-| **M2: Motor Funcional** | F2 y F3 completadas, CLI funcional en modo desarrollo. | F2 ✅ (Semana 2) — F3 ⏳ |
+| **M2: Motor Funcional** | F2 y F3 completadas, CLI funcional en modo desarrollo. | F2 ✅ (Semana 2) — F3 ✅ (Semana 2) |
 | **M3: Calidad Garantizada** | F4 completada, todas las pruebas E2E pasando en CI. | Semana 4 |
 | **M4: Release v1.0.0** | F5 y F6 completadas, primera versión pública en GitHub Releases. | Semana 5 |
 
