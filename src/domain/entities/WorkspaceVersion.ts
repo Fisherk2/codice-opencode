@@ -84,6 +84,13 @@ export class WorkspaceVersion {
 				`Invalid .codice-version file: field 'installedAt' must be an ISO 8601 timestamp string, received ${typeof obj.installedAt}`,
 			);
 		}
+		// Validate ISO 8601 format (e.g. "2026-06-13T12:00:00.000Z" or "2026-06-13T12:00:00Z")
+		const iso8601Pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+		if (!iso8601Pattern.test(obj.installedAt)) {
+			throw new Error(
+				`Invalid .codice-version file: field 'installedAt' must be an ISO 8601 timestamp (e.g. "2026-06-13T12:00:00.000Z"), received "${obj.installedAt}"`,
+			);
+		}
 
 		return new WorkspaceVersion(
 			obj.installedVersion,

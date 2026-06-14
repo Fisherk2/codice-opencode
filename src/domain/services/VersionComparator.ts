@@ -1,6 +1,16 @@
 import { compare, diff as semverDiff, valid } from "semver";
 import { failure, type Result, success } from "../types/Result";
 
+// Module-level map: semver diff strings → ReleaseType (pre* variants map to base type)
+const RELEASE_TYPE_MAP: Partial<Record<string, ReleaseType>> = {
+	major: "major",
+	premajor: "major",
+	minor: "minor",
+	preminor: "minor",
+	patch: "patch",
+	prepatch: "patch",
+};
+
 /**
  * Result of comparing two semantic versions.
  * - "newer": Local is older, remote is newer (update available).
@@ -95,15 +105,6 @@ export class VersionComparator {
 		const diff = semverDiff(validated.value.localValid, validated.value.remoteValid);
 		if (diff === null) return success("none");
 
-		// Map semver diff to our ReleaseType union (pre* variants map to base type)
-		const releaseTypeMap: Partial<Record<string, ReleaseType>> = {
-			major: "major",
-			premajor: "major",
-			minor: "minor",
-			preminor: "minor",
-			patch: "patch",
-			prepatch: "patch",
-		};
-		return success(releaseTypeMap[diff] ?? "none");
+		return success(RELEASE_TYPE_MAP[diff] ?? "none");
 	}
 }

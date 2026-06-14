@@ -99,13 +99,38 @@ describe("WorkspaceVersion comparison", () => {
 		expect(v.version).toBe("v1.0.0");
 	});
 
-	test("fromJSON rejects invalid installedAt", () => {
+	test("fromJSON rejects invalid installedAt type", () => {
 		expect(() =>
 			WorkspaceVersion.fromJSON({
 				installedVersion: "1.0.0",
 				installedAt: 123,
 			}),
 		).toThrow("must be an ISO 8601 timestamp");
+	});
+
+	test("fromJSON rejects non-ISO 8601 installedAt string", () => {
+		expect(() =>
+			WorkspaceVersion.fromJSON({
+				installedVersion: "1.0.0",
+				installedAt: "yesterday",
+			}),
+		).toThrow("must be an ISO 8601 timestamp");
+	});
+
+	test("fromJSON accepts ISO 8601 with milliseconds", () => {
+		const v = WorkspaceVersion.fromJSON({
+			installedVersion: "1.0.0",
+			installedAt: "2026-06-13T12:00:00.000Z",
+		});
+		expect(v.installedAt).toBe("2026-06-13T12:00:00.000Z");
+	});
+
+	test("fromJSON accepts ISO 8601 without milliseconds", () => {
+		const v = WorkspaceVersion.fromJSON({
+			installedVersion: "1.0.0",
+			installedAt: "2026-06-13T12:00:00Z",
+		});
+		expect(v.installedAt).toBe("2026-06-13T12:00:00Z");
 	});
 
 	test("fromJSON rejects null data", () => {
