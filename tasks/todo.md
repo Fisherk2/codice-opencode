@@ -1,164 +1,161 @@
-# TODO: F0 – Preparación y Convenciones
+# TODO: F1 – Infrastructure (Adapters)
 
-**Estado:** ⏳ Pendiente  
-**Fecha:** 2026-06-13  
-**Dependencias:** Ninguna (F0 es la base)
-
----
-
-## Phase 1: Inicialización del Proyecto
-
-### F0-T1: Inicializar proyecto Bun con `bun init`
-
-**Descripción:** Bootstrap del proyecto usando `bun init` para crear `package.json`, `tsconfig.json`, y punto de entrada. Limpiar archivos auto-generados.
-
-**Criterios de aceptación:**
-- [ ] `bun init` se ejecuta sin errores
-- [ ] `package.json` contiene name `"codice"`, version `"1.0.0"`, y type `"module"`
-- [ ] `tsconfig.json` tiene strict mode habilitado
-- [ ] Archivos boilerplate auto-generados eliminados
-
-**Verificación:**
-- [ ] `bun --version` outputs `>= 1.1.x`
-- [ ] `cat package.json | grep '"type": "module"'` succeeds
-- [ ] `ls src/` muestra solo archivos creados por esta tarea
-
-**Dependencias:** Ninguna  
-**Scope:** XS
+**Estado:** 🟢 Listo para Implementar
+**Fecha:** 2026-06-14
+**Dependencias:** F0 ✅ Completado
 
 ---
 
-### F0-T2: Crear estructura de directorios Clean Architecture
+## Phase 1: Template Setup
 
-**Descripción:** Crear el árbol de directorios completo bajo `src/` según SPEC.md §Project Structure. También crear el árbol `tests/` y el directorio `dist/`.
+### F1-T0: Setup template directory structure
+
+**Descripción:** Reorganizar el directorio `template/` plano en la estructura de 3 subdirectorios definida en `spec-file-rules.md`. Crear `obligatorio/`, `estandar/`, `opcional/` y mover los archivos existentes.
 
 **Criterios de aceptación:**
-- [ ] `src/domain/entities/` existe con stubs de `FileRule.ts` y `WorkspaceVersion.ts`
-- [ ] `src/domain/services/` existe con stubs de `FileMergeEngine.ts` y `VersionComparator.ts`
-- [ ] `src/application/use-cases/` existe con los tres stubs de use cases
-- [ ] `src/application/ports/` existe con stubs de `IFileSystem.ts`, `IGitHubClient.ts`, `IUserPrompt.ts`
-- [ ] `src/infrastructure/adapters/` existe con stubs de `BunFileSystem.ts`, `GitHubRestClient.ts`, `ClackPromptsAdapter.ts`
-- [ ] `src/infrastructure/config/` existe con stub de `constants.ts`
-- [ ] `src/cli/main.ts` existe como stub del punto de entrada
-- [ ] `tests/unit/`, `tests/integration/`, `tests/e2e/`, `tests/fixtures/` existen
-- [ ] `dist/` existe
+- [ ] `template/obligatorio/` contiene: `opencode.json`, `skills-lock.json`, `agents/`, `commands/`, `.opencode/`, `skills/`, `references/`
+- [ ] `template/estandar/` contiene: `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `README.md`, `SPEC.md`, `.env.example`, `scripts/`, `tasks/`, `docs/` (con excepciones), `specs/` (con excepciones)
+- [ ] `template/opcional/` contiene: `Justfile`, `Makefile`, `requirements.txt`, `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/`, `specs/design/`, `.opencode/plugins/sdd-workflow-test.md`
+- [ ] `docs/DESIGN.md`, `docs/SCHEMA.md`, `docs/opencode/` movidos a opcional/
+- [ ] `specs/design/` movido a opcional/
+- [ ] `.opencode/plugins/sdd-workflow-test.md` movido a opcional/
+- [ ] No hay archivos sueltos en la raíz de `template/` (solo los 3 dirs de categoría)
+- [ ] `bun test` sigue pasando (74 tests F0 sin cambios)
 
 **Verificación:**
-- [ ] `find src -type d | sort` lista todos los directorios esperados
-- [ ] `find tests -type d | sort` lista todos los directorios de test esperados
-- [ ] Todos los archivos stub exportan algo (incluso si es solo `// TODO`)
+- [ ] `ls template/` muestra solo `obligatorio/`, `estandar/`, `opcional/`
+- [ ] `find template/obligatorio/` lista todos los archivos y directorios obligatorios
+- [ ] `find template/estandar/` lista todos los archivos y directorios estándar
+- [ ] `find template/opcional/` lista todos los archivos y directorios opcionales
+- [ ] `bun test` → 74/74 pass (sin cambios)
 
-**Dependencias:** F0-T1  
+**Dependencias:** Ninguna (F0 ✅)
 **Scope:** S
 
 ---
 
-### F0-T3: Instalar dependencias del proyecto
+## Phase 2: Adapter Implementation
 
-**Descripción:** Instalar las dependencias de runtime y desarrollo definidas en el tech stack.
+### F1-T1: BunFileSystem adapter
 
-**Criterios de aceptación:**
-- [ ] `@clack/prompts` instalado (TUI framework)
-- [ ] `semver` instalado (version parsing)
-- [ ] `biome` instalado como dev dependency (linting/formatting)
-
-**Verificación:**
-- [ ] `bun add @clack/prompts semver` succeeds
-- [ ] `bun add -d biome` succeeds
-- [ ] `ls node_modules/@clack/` muestra `prompts`
-- [ ] `ls node_modules/semver/` existe
-- [ ] `ls node_modules/.bin/biome` existe
-
-**Dependencias:** F0-T1  
-**Scope:** S
-
----
-
-## Phase 2: Configuración del Task Runner
-
-### F0-T4: Crear `Justfile` con todas las tareas de desarrollo
-
-**Descripción:** Crear el `Justfile` con todas las tareas definidas en SPEC.md §Commands.
+**Descripción:** Implementar los 11 métodos de `IFileSystem` usando las APIs nativas de Bun. Patrón atómico con staging: `stageFile()` copia de template a staging; `commitStaging()` renombra a destino; `cleanStaging()` limpia en rollback. Prevención de path traversal via `path.resolve()` + validación de frontera.
 
 **Criterios de aceptación:**
-- [ ] `just setup` instala dependencias, verifica Bun version >= 1.1.x, y crea directorios requeridos
-- [ ] `just dev` ejecuta `src/cli/main.ts` via `bun run` con verbose logging
-- [ ] `just lint` ejecuta Biome en `src/` y `tests/`
-- [ ] `just format` ejecuta Biome format en modo escritura
-- [ ] `just check` ejecuta lint + format check + typecheck en secuencia
-- [ ] `just test` ejecuta `bun test` en todos los archivos `*.test.ts`
-- [ ] `just test:unit` ejecuta solo `tests/unit/**/*.test.ts`
-- [ ] `just test:integration` ejecuta solo `tests/integration/**/*.test.ts`
-- [ ] `just test:e2e` compila binary y ejecuta scripts E2E en shell
-- [ ] `just test:coverage` ejecuta `bun test --coverage` y enforce > 80% threshold
-- [ ] `just build` compila el binary a `dist/codice-<platform>`
-- [ ] `just build:all` dispara workflow de compilación multiplataforma
-- [ ] `just release` crea GitHub Release con binaries adjuntos
-- [ ] `just -n` (dry run) muestra todas las recetas sin ejecutar
+- [ ] `readTemplateFile(relativePath)` lee de `template/` usando `Bun.file().text()`
+- [ ] `destinationExists(relativePath)` verifica destino con `Bun.file().exists()`
+- [ ] `getStagingPath(relativePath)` retorna `path.join(stagingDir, relativePath)`
+- [ ] `stageFile(relativePath)` lee de template, escribe a staging (crea directorios intermedios)
+- [ ] `commitStaging()` renombra archivos de staging a destino; falla gracefully si rename falla
+- [ ] `cleanStaging()` elimina el directorio staging recursivamente
+- [ ] `isWritable()` verifica permiso de escritura del directorio destino
+- [ ] `isEmpty()` retorna `true` si destino no tiene archivos (excepto .git/ y .codice-version)
+- [ ] `writeVersionFile(versionData)` escribe `.codice-version` en la raíz del destino atómicamente
+- [ ] `readVersionFile()` lee `.codice-version` de la raíz del destino (null si no existe)
+- [ ] Intento de path traversal (`../` fuera del destino) retorna `false`/`null`/`throw` — nunca escribe fuera de la frontera
 
 **Verificación:**
-- [ ] `just -n` lista las 13 recetas
-- [ ] `just setup` completa sin error en primera ejecución
-- [ ] `just lint` pasa en el boilerplate actual
+- [ ] `bun test` para los nuevos tests de integración pasa
+- [ ] `just lint` pasa con cero warnings en `BunFileSystem.ts`
+- [ ] Los 11 métodos retornan tipos correctos (sin `any`)
+- [ ] El directorio staging no existe después de llamar `cleanStaging()`
 
-**Dependencias:** F0-T1, F0-T2  
+**Dependencias:** F1-T0
 **Scope:** M
 
 ---
 
-## Phase 3: Linting y CI
+### F1-T2: GitHubRestClient adapter
 
-### F0-T5: Configurar Biome para linting y formatting
-
-**Descripción:** Crear `biome.json` con reglas que matcheen los requisitos de estilo TypeScript del proyecto.
+**Descripción:** Implementar `IGitHubClient` usando `fetch` con `AbortController` para timeout. Mapeo de errores HTTP a valores de retorno del dominio: 404 → `null`, 403 → `null`, network failure → `null`, timeout → `null`.
 
 **Criterios de aceptación:**
-- [ ] `biome.json` existe con configuración válida
-- [ ] `just lint` pasa en todos los archivos TypeScript existentes sin errores
-- [ ] `just format` formatea todos los archivos TypeScript in place
-- [ ] `just check` falla si archivos están sin formatear o tienen errores de lint
+- [ ] `getLatestReleaseTag()` hace fetch a `GITHUB_API_LATEST_RELEASE`, parsea `tag_name` del JSON
+- [ ] `getLatestReleaseNotes()` hace fetch a la misma URL, parsea `body` del JSON
+- [ ] Timeout exactamente `GITHUB_API_TIMEOUT_MS` (3000ms) via `AbortController.timeout`
+- [ ] HTTP 404 → retorna `null` (no lanza error)
+- [ ] HTTP 403 → retorna `null` (rate limited, no lanza error)
+- [ ] Network unreachable → retorna `null` (no lanza error)
+- [ ] Respuesta exitosa con JSON malformado → retorna `null`
+- [ ] Todos los paths de error loguean mensaje accionable a stderr (en modo verbose)
 
 **Verificación:**
-- [ ] `just lint` exits 0 en el codebase actual
-- [ ] `just format --check` exits 0 después de correr format
-- [ ] No tipos `any` en ningún archivo `.ts` después de formatear
+- [ ] `bun test` integration tests pasan (usando `fetch` mockeado)
+- [ ] Comportamiento de timeout verificado: respuesta después de 4s retorna `null`
+- [ ] `just lint` pasa con cero warnings
 
-**Dependencias:** F0-T3, F0-T4  
+**Dependencias:** Ninguna (puede paralelizarse con F1-T0, F1-T1)
 **Scope:** S
 
 ---
 
-### F0-T6: Configurar GitHub Actions workflow para F0
+### F1-T3: ClackPromptsAdapter
 
-**Descripción:** Crear `.github/workflows/ci.yml` que corra en cada push/PR a `main`.
+**Descripción:** Implementar los 11 métodos de `IUserPrompt` usando `@clack/prompts` real. Wire `note()` para warning/info, `confirm()` para sí/no, `multiselect()` para selección de archivos opcionales (con agrupamiento cuando >10 items), `spinner` para ops async, `intro()`/`outro()`/`cancel()` para mensajes de flujo.
 
 **Criterios de aceptación:**
-- [ ] `.github/workflows/ci.yml` existe
-- [ ] Workflow se dispara en `push` y `pull_request` a `main`
-- [ ] Jobs corren en `ubuntu-latest`, `macos-latest`, `windows-latest`
-- [ ] Cada job corre `just check` y `just build`
-- [ ] Artifacts se suben en caso de falla para debugging
+- [ ] `showWarning(message)` muestra warning via `@clack/prompts.note()` con estilo apropiado
+- [ ] `showInfo(message)` muestra info via `@clack/prompts.note()`
+- [ ] `confirm(message, defaultYes)` retorna `true`/`false` desde `@clack/prompts.confirm()`
+- [ ] `selectOptional(options)` muestra multiselect agrupado; agrupa por primer segmento del path cuando count > 10
+- [ ] `showSpinner(message)` / `stopSpinner()` inicia/detiene spinner con mensaje
+- [ ] `showIntro(title)` muestra banner de título
+- [ ] `showSuccess(message)` muestra mensaje de éxito
+- [ ] `showCancel(message)` / `showError(message)` muestra mensajes de cancelación/error
+- [ ] Todos los prompts son non-blocking para métodos de display (retorno sync `void`)
 
 **Verificación:**
-- [ ] `cat .github/workflows/ci.yml | grep 'ubuntu-latest'` succeeds
-- [ ] El archivo workflow es YAML válido (sin errores de sintaxis)
+- [ ] `bun test` integration tests pasan (módulo `@clack/prompts` mockeado)
+- [ ] `just lint` pasa con cero warnings
+- [ ] El adaptador puede ser instanciado sin errores
 
-**Dependencias:** F0-T4, F0-T5  
+**Dependencias:** Ninguna (puede paralelizarse con F1-T0, F1-T1)
 **Scope:** S
 
 ---
 
-## Checkpoint: Después de F0-T1 a F0-T6
+## Phase 3: Testing
 
-| Elemento de Checkpoint | Estado |
-|------------------------|--------|
-| `bun --version` >= 1.1.x | ✅ Confirmado: v1.3.14 |
-| `just setup` se ejecuta sin error | Pending |
-| `just lint` pasa en boilerplate | Pending |
-| `just format` formatea todos los archivos | Pending |
-| `just -n` muestra las 13 recetas | Pending |
-| `.github/workflows/ci.yml` YAML válido | Pending |
-| Todos los stubs exportan algo | Pending |
+### F1-T4: Integration tests para los 3 adaptadores
+
+**Descripción:** Escribir tests de integración para los tres adaptadores usando `bun:test` con directorios temporales reales y dependencias externas mockeadas.
+
+**BunFileSystem tests:**
+- Crear directorio temporal real como destino, `template/` real para lecturas
+- Test `stageFile()` crea archivo en staging
+- Test `commitStaging()` promueve a destino
+- Test `cleanStaging()` elimina staging
+- Test `destinationExists()` retorna booleanos correctos
+- Test `isEmpty()` / `isWritable()` behavior
+- Test ciclo escritura/lectura de version file
+- Test rechazo de path traversal (intentos de escribir fuera del destino → error/null)
+
+**GitHubRestClient tests:**
+- Mock `fetch` para retornar JSON predefinido (success, 404, 403, timeout)
+- Test timeout retorna `null`
+- Test 404 retorna `null`
+- Test 403 retorna `null`
+- Test extracción exitosa de tag
+
+**ClackPromptsAdapter tests:**
+- Mock módulo `@clack/prompts` para capturar argumentos de llamadas
+- Verificar `confirm()` llama a `confirm()` con mensaje correcto
+- Verificar `selectOptional()` llama a `multiselect()` con opciones correctas
+- Verificar output agrupado cuando >10 items
+
+**Criterios de aceptación:**
+- [ ] BunFileSystem: ≥8 tests, todos pasan
+- [ ] GitHubRestClient: ≥6 tests, todos pasan (fetch mockeado, sin red real)
+- [ ] ClackPromptsAdapter: ≥6 tests, todos pasan (@clack/prompts mockeado)
+- [ ] Todos los tests usan `bun test` (no scripts de shell)
+- [ ] Cobertura total de F1 >70% de los adaptadores de infraestructura
+- [ ] Los 74 tests F0 existentes siguen pasando (sin regresión)
+
+**Verificación:**
+- [ ] `bun test` → todos pasan
+- [ ] `bun test --coverage` → cobertura de adaptadores >70%
+
+**Dependencias:** F1-T1, F1-T2, F1-T3 (todos los adaptadores deben existir antes de testear)
+**Scope:** M
 
 ---
 
@@ -166,30 +163,26 @@
 
 | # | Pregunta | Respuesta |
 |---|----------|-----------|
-| F0-O1 | ¿La CI debe ejecutar E2E tests? | **Solo en Release** — E2E tests solo corren en el workflow de release, no en cada PR. |
-| F0-O2 | ¿Necesitamos `bunfig.toml`? | **Sí** — Crear `bunfig.toml` para configuración centralizada de Bun |
-| F0-O3 | ¿Incluimos `.editorconfig`? | **No** — Biome es suficiente para consistencia entre editores |
+| F1-O1 | ¿Cómo locate BunFileSystem el directorio template en producción (embebido en binary vs. lado a lado)? | **Deferred a F3** — por ahora usar `path.join(process.cwd(), "template")` en dev; la estrategia de compilación se maneja cuando se configure el build del binary |
+| F1-O2 | ¿El directorio staging debe estar dentro o fuera del destino? | **Dentro del destino** — manejo de paths más simple; se limpia en éxito o SIGINT |
 
 ---
 
-## Tarea Adicional
+## Checkpoint: Después de F1-T0 a F1-T4
 
-### F0-T7: Crear `bunfig.toml` para configuración de Bun
-
-**Descripción:** Crear `bunfig.toml` con configuración centralizada de Bun para el proyecto. Incluye settings de instalación, objetivos de compilación, y opciones de compile.
-
-**Criterios de aceptación:**
-- [ ] `bunfig.toml` existe con configuración válida
-- [ ] La configuración soporta objetivos de compilación multiplataforma
-- [ ] Los settings de instalación están configurados (production vs development)
-
-**Verificación:**
-- [ ] `cat bunfig.toml` es TOML válido
-- [ ] Bun lee la config sin warnings
-
-**Dependencias:** F0-T1  
-**Scope:** XS
+| Elemento de Checkpoint | Estado |
+|------------------------|--------|
+| Directorio template organizado en 3 subdirs | Pending |
+| BunFileSystem: los 11 métodos de IFileSystem implementados | Pending |
+| GitHubRestClient: 2 métodos con timeout + mapeo de errores | Pending |
+| ClackPromptsAdapter: los 11 métodos de IUserPrompt con @clack/prompts real | Pending |
+| Tests de integración BunFileSystem: ≥8 tests pasan | Pending |
+| Tests de integración GitHubRestClient: ≥6 tests pasan | Pending |
+| Tests de integración ClackPromptsAdapter: ≥6 tests pasan | Pending |
+| `just lint` pasa en todos los archivos F1 | Pending |
+| `bun test` (todos los 74 F0 + nuevos F1): todos pasan | Pending |
+| Cobertura de adaptadores >70% | Pending |
 
 ---
 
-*Última actualización: 2026-06-13*
+*Última actualización: 2026-06-14*
