@@ -1,3 +1,4 @@
+import { valid } from "semver";
 import { FILE_RULE_MANIFEST } from "../../domain/entities/FileRuleManifest";
 import type { FileMergeEngine } from "../../domain/services/FileMergeEngine";
 import type { VersionComparator } from "../../domain/services/VersionComparator";
@@ -127,15 +128,23 @@ export class UpdateWorkspaceUseCase {
 		const newVersion =
 			options?.version ?? (remoteTag ? remoteTag.replace(/^v/, "") : undefined) ?? installedVersion;
 
+		// Validate version string before writing; fall back to "0.0.0" if invalid
+		const safeVersion = valid(newVersion) ? newVersion : "0.0.0";
+
 		// Write version file with preserved optional selections
-		return writeVersionFileSafe(
+		const versionResult = await writeVersionFileSafe(
 			this.fileSystem,
 			{
-				installedVersion: newVersion,
+				installedVersion: safeVersion,
 				installedAt: new Date().toISOString(),
 				optionalSelections: previousOptionalSelections,
 			},
 			"Update",
 		);
+
+		if (versionResult.ok) {
+			this.userPrompt.showSuccess("Workspace update complete.");
+		}
+		return versionResult;
 	}
 }

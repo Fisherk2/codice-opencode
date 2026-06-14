@@ -78,7 +78,7 @@ export class ProjectInstallUseCase {
 		}
 
 		// Write version file with optional selections recorded
-		return writeVersionFileSafe(
+		const versionResult = await writeVersionFileSafe(
 			this.fileSystem,
 			{
 				installedVersion: options?.version ?? "0.0.0",
@@ -87,5 +87,10 @@ export class ProjectInstallUseCase {
 			},
 			"Installation",
 		);
+
+		if (versionResult.ok) {
+			this.userPrompt.showSuccess("Project installation complete.");
+		}
+		return versionResult;
 	}
 }

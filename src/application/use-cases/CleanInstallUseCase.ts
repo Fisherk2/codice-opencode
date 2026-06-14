@@ -80,7 +80,7 @@ export class CleanInstallUseCase {
 		}
 
 		// Write version file (with atomic rollback on failure)
-		return writeVersionFileSafe(
+		const versionResult = await writeVersionFileSafe(
 			this.fileSystem,
 			{
 				installedVersion: options?.version ?? "0.0.0",
@@ -89,5 +89,10 @@ export class CleanInstallUseCase {
 			},
 			"Installation",
 		);
+
+		if (versionResult.ok) {
+			this.userPrompt.showSuccess("Clean installation complete.");
+		}
+		return versionResult;
 	}
 }
