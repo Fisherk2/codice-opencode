@@ -1,5 +1,5 @@
 # Workflow – Códice: Opencode Workspace Installer v1.0.0 (MVP)
-**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Metodología:** Agile/Iterativo | **Estado:** F0 ✅ Completado | F1 ✅ Completado | F2 🟢 Listo para Planificar
+**Fecha:** 2026-06-14 | **Autor:** Fisherk2 | **Metodología:** Agile/Iterativo | **Estado:** F0 ✅ Completado | F1 ✅ Completado | F2 ✅ Completado | F3 🟢 Listo para Planificar
 
 ## 1. Visión de Fases
 | Fase | Objetivo | Entregables | Duración Estimada |
@@ -39,21 +39,25 @@
 - **Criterios de Completitud (DoD):** BunFileSystem implementa staging atómico, rollback en fallo, path traversal prevention ✅; BunFileSystem tiene isEmpty con safe default, template cache, version file ops ✅; GitHubRestClient maneja timeouts (3s), valida semver, rechaza oversized responses ✅; ClackPromptsAdapter usa @clack/prompts real con todos los métodos ✅; `bun test` (138/138) ✅; Code review F1 completado con 0 hallazgos críticos ✅.
 - **Dependencias:** F0 ✅.
 
-### Fase F2 – Núcleo (Dominio y Lógica de Negocio)
-- **Tareas:**
-  - `T2.1`: Definir entidades `FileRule` (Obligatorio, Estándar, Opcional) y `WorkspaceVersion`.
-  - `T2.2`: Implementar `FileMergeEngine` con lógica de fusión granular y patrón Strategy.
+### Fase F2 – Núcleo (Dominio y Lógica de Negocio) ✅ Completado
+- **Tareas realizadas:**
+  - `T2.1`: Definir entidades `FileRule` (Obligatorio, Estándar, Opcional) y `WorkspaceVersion` con `fromJSON()` y `toJSON()`.
+  - `T2.2`: Implementar `FileMergeEngine` con lógica de fusión granular y patrón Strategy (Obligatorio/Estándar/Opcional).
   - `T2.3`: Implementar `VersionComparator` usando la librería `semver`.
-- **Criterios de Completitud (DoD):** 100% de cobertura en lógica de dominio, cero dependencias de Bun/Red en esta capa.
+  - `T2.4`: Implementar `FileRuleManifest` con 32 reglas de clasificación + helpers.
+  - `T2.5`: Implementar tipos `MergeError`, `Result<T,E>`.
+  - `T2_Fix`: Code review Tezcatlipoca — ISO 8601 validation, módulo-level constant.
+- **Artefactos generados:** `WorkspaceVersion.ts`, `FileRule.ts`, `FileRuleManifest.ts`, `FileMergeEngine.ts`, `VersionComparator.ts`, `MergeError.ts`, `Result.ts` (domain layer completa).
+- **Criterios de Completitud (DoD):** 100% cobertura domain layer (100% lines, 96.4% functions) ✅; cero dependencias de Bun/Red ✅; `bun test` (214/214) ✅; biome lint 0 errors ✅; `tsc --noEmit` clean ✅; Code review 5-ejes aprobado ✅.
 - **Dependencias:** F0 ✅, F1 ✅.
 
-### Fase F3 – Interfaces (Casos de Uso y CLI)
-- **Tareas:**
+### Fase F3 – Interfaces (Casos de Uso y CLI) 🟢 Listo para Planificar
+- **Tareas pendientes:**
   - `T3.1`: Implementar `CleanInstallUseCase`, `ProjectInstallUseCase` y `UpdateWorkspaceUseCase`.
   - `T3.2`: Integrar `@clack/prompts` en `main.ts` para el menú interactivo y manejo de señales `SIGINT`.
   - `T3.3`: Conectar la TUI con los casos de uso mediante inyección de dependencias.
 - **Criterios de Completitud (DoD):** El CLI se ejecuta en modo desarrollo y los 3 flujos principales funcionan con datos mockeados.
-- **Dependencias:** F1, F2.
+- **Dependencias:** F1 ✅, F2 ✅.
 
 ### Fase F4 – Pruebas (Unitarias, Integración y E2E)
 - **Tareas:**
@@ -91,8 +95,8 @@ graph TD
     %% Nodos del grafo
     S0[S0: Estructura y Convenciones<br/>Estado: ✅ Completado]:::done
     S1[S1: Adaptadores FS y Red<br/>Estado: ✅ Completado]:::done
-    S2[S2: Dominio y Lógica de Negocio<br/>Estado: 🟢 Listo para Planificar]:::pending
-    S3[S3: Casos de Uso y TUI CLI<br/>Estado: ⏳ Pendiente]:::pending
+    S2[S2: Dominio y Lógica de Negocio<br/>Estado: ✅ Completado]:::done
+    S3[S3: Casos de Uso y TUI CLI<br/>Estado: 🟢 Listo para Planificar]:::pending
     S4[S4: Pruebas Unitarias y E2E<br/>Estado: ⏳ Pendiente]:::pending
     S5[S5: CI/CD y Binarios<br/>Estado: ⏳ Pendiente]:::pending
     S6[S6: Documentación Final<br/>Estado: ⏳ Pendiente]:::pending
@@ -129,7 +133,7 @@ graph TD
 |------|---------------------|-----------|---------------|-----------|
 | **Gate 0** | Especificación | ¿SPEC.md, AGENTS.md y ADRs están aprobados? ¿Las decisiones arquitectónicas están documentadas? | Arquitecto | ✅ **Aprobado** — 2026-06-13 |
 | **Gate 1** | F1 (Infraestructura) | ¿Adaptadores implementan staging atómico? ¿Manejo de timeouts? ¿Path traversal prevention? ¿Rollback en fallo? | Arquitecto, Dev Lead | ✅ **Aprobado** — 2026-06-14 |
-| **Gate 2** | F2 (Núcleo) | ¿Lógica libre de efectos secundarios? ¿Principios SOLID aplicados? | Arquitecto, Dev Lead | Pendiente |
+| **Gate 2** | F2 (Núcleo) | ¿Lógica libre de efectos secundarios? ¿Principios SOLID aplicados? | Arquitecto, Dev Lead | ✅ **Aprobado** — 2026-06-14 |
 | **Gate 3** | F3 (Interfaces) | ¿La TUI maneja `SIGINT` correctamente? ¿Los mensajes de error son accionables? | Arquitecto, UX Reviewer | Pendiente |
 | **Gate 4** | F4 (Pruebas) | ¿Cobertura >80%? ¿Los tests E2E validan el rollback atómico? | QA, Dev Lead | Pendiente |
 | **Gate 5** | F5 (Release) | ¿El pipeline compila las 3 plataformas? ¿El binario funciona "out of the box"? | Arquitecto, DevOps | Pendiente |
@@ -157,7 +161,7 @@ graph TD
 | Hito | Descripción | Fecha Objetivo (Semanas desde inicio) |
 |------|-------------|---------------------------------------|
 | **M1: Cimientos** | F0 y F1 completadas, entorno de desarrollo listo. | Semana 1 ✅ |
-| **M2: Motor Funcional** | F2 y F3 completadas, CLI funcional en modo desarrollo. | Semana 3 |
+| **M2: Motor Funcional** | F2 y F3 completadas, CLI funcional en modo desarrollo. | F2 ✅ (Semana 2) — F3 ⏳ |
 | **M3: Calidad Garantizada** | F4 completada, todas las pruebas E2E pasando en CI. | Semana 4 |
 | **M4: Release v1.0.0** | F5 y F6 completadas, primera versión pública en GitHub Releases. | Semana 5 |
 
