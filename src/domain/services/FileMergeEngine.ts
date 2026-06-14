@@ -1,19 +1,102 @@
 import type { FileRule } from "../entities/FileRule";
 import type { Result } from "../types/Result";
+import { success, failure } from "../types/Result";
+import type { MergeError } from "../types/MergeError";
+import { stagingError, commitError } from "../types/MergeError";
+import type { IFileSystem } from "../../application/ports/IFileSystem";
 
 /**
  * Orchestrates file merging according to classification rules.
- * Applies the correct strategy (Obligatorio/Estándar/Opcional)
- * for each rule and guarantees atomic writes.
+ *
+ * Applies the correct strategy per category:
+ * - **mandatory**: Always stages the file (overwrites destination).
+ * - **standard**: Stages only if the destination does NOT exist.
+ * - **optional**: Stages only if the user selected it AND destination does NOT exist.
+ *
+ * Guarantees atomic writes:
+ * 1. Stage all files first (into staging directory).
+ * 2. If any stage fails → cleanStaging() + return error.
+ * 3. If all stages succeed → commitStaging() (atomic rename).
+ * 4. If commit fails → cleanStaging() + return error.
  */
 export class FileMergeEngine {
+	constructor(private readonly fileSystem: IFileSystem) {}
+
 	/**
 	 * Execute all merge rules against the destination directory.
+	 *
 	 * @param rules - Ordered list of classification rules to apply.
-	 * @returns Result indicating success or a structured error.
+	 * @param selectedOptionals - Paths of optional files the user opted into.
+	 * @returns Result<void, MergeError> — success if all operations complete.
 	 */
-	async execute(_rules: readonly FileRule[]): Promise<Result<void, Error>> {
-		// TODO: Implement merge logic per classification category
-		throw new Error("Not implemented");
+	async execute(
+		rules: readonly FileRule[],
+		selectedOptionals?: readonly string[],
+	): Promise<Result<void, MergeError>> {
+		const selected = new Set(selectedOptionals ?? []);
+
+		// Phase 1: Stage all files
+		for (const rule of rules) {
+			const shouldStage = await this.shouldStage(rule, selected);
+			if (!shouldStage) continue;
+
+			try {
+				await this.fileSystem.stageFile(rule.path);
+			} catch (err) {
+				await this.fileSystem.cleanStaging();
+				const message =
+					err instanceof Error ? err.message : "Unknown staging error";
+				return failure(stagingError(rule.path, message));
+			}
+		}
+
+		// Phase 2: Commit staging (atomic rename)
+		try {
+			await this.fileSystem.commitStaging();
+		} catch (err) {
+			await this.fileSystem.cleanStaging();
+			const message =
+				err instanceof Error ? err.message : "Unknown commit error";
+			return failure(commitError(message));
+		}
+
+		return success(undefined);
+	}
+
+	/**
+	 * Determine whether a rule's file should be staged.
+	 *
+	 * Strategy decision matrix:
+	 * | Category   | Destination exists? | Selected? | Stage? |
+	 * |------------|---------------------|-----------|--------|
+	 * | mandatory  | (ignored)           | N/A       | YES    |
+	 * | standard   | no                  | N/A       | YES    |
+	 * | standard   | yes                 | N/A       | NO     |
+	 * | optional   | no                  | yes       | YES    |
+	 * | optional   | yes/no              | no        | NO     |
+	 * | optional   | yes                 | yes       | NO     |
+	 */
+	private async shouldStage(
+		rule: FileRule,
+		selected: Set<string>,
+	): Promise<boolean> {
+		if (rule.category === "mandatory") {
+			return true;
+		}
+
+		if (rule.category === "standard") {
+			const exists = await this.fileSystem.destinationExists(rule.path);
+			return !exists;
+		}
+
+		if (rule.category === "optional") {
+			if (!selected.has(rule.path)) {
+				return false;
+			}
+			const exists = await this.fileSystem.destinationExists(rule.path);
+			return !exists;
+		}
+
+		return false;
 	}
 }
