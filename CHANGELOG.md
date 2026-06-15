@@ -48,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD with 3-platform matrix
 - SHA-256 checksums for release integrity verification
 
+### Security
+
+- No security vulnerabilities identified in this release.
+
 
 ---
 
