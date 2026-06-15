@@ -128,12 +128,7 @@ export class UpdateWorkspaceUseCase {
 			return failure(new Error(mergeResult.error.message));
 		}
 
-		// Priority: explicit version > GitHub remote > previously installed > "0.0.0"
-		const newVersion =
-			options?.version ?? (remoteTag ? remoteTag.replace(/^v/, "") : undefined) ?? installedVersion;
-
-		// Validate version string before writing; fall back to "0.0.0" if invalid
-		const safeVersion = valid(newVersion) ? newVersion : "0.0.0";
+		const safeVersion = this.resolveNewVersion(options, remoteTag, installedVersion);
 
 		// Write version file with preserved optional selections
 		const versionResult = await writeVersionFileSafe(
@@ -150,5 +145,20 @@ export class UpdateWorkspaceUseCase {
 			this.userPrompt.showSuccess("Workspace update complete.");
 		}
 		return versionResult;
+	}
+
+	/**
+	 * Resolve the version string to write to .codice-version.
+	 * Priority: explicit flag > GitHub remote > previously installed > "0.0.0"
+	 * Falls back to "0.0.0" if the resolved string is not valid semver.
+	 */
+	private resolveNewVersion(
+		options: UpdateWorkspaceOptions | undefined,
+		remoteTag: string | null,
+		installedVersion: string,
+	): string {
+		const resolved =
+			options?.version ?? (remoteTag ? remoteTag.replace(/^v/, "") : undefined) ?? installedVersion;
+		return valid(resolved) ? resolved : "0.0.0";
 	}
 }
