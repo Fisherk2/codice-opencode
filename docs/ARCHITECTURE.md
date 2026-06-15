@@ -15,6 +15,20 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 
 > **Note:** `TemplateResolver` and `AtomicStager` are extracted classes (not full ADRs). They are SRP-based refactorings of `BunFileSystem` that follow the existing ADR-003 (atomic staging) pattern.
 
+### SPEC.md Resolved Decisions Coverage
+
+All seven resolved decisions from [SPEC.md](../SPEC.md) are covered by the ADRs above or by their implementation:
+
+| # | Decision | Covered By | Status |
+|---|----------|------------|--------|
+| 1 | Template Packaging Format (embed into binary) | ADR-002 (Bun compilation) | Documented |
+| 2 | Optional File Grouping in TUI | ADR-004 (Clack prompts, IUserPrompt supports grouped multiselect) | Documented |
+| 3 | GitHub Authentication (unauthenticated only) | ADR-002 (compiled binary, no runtime deps) | Documented |
+| 4 | Windows Path Handling (normalize to `/`) | ADR-002 (cross-platform via Bun) | Documented |
+| 5 | Local Version Storage (`.codice-version` file) | ADR-005 (dest flag affects version file location) | Documented |
+| 6 | Rollback on Partial Failure | ADR-003 (atomic staging + backup/rollback) | Documented |
+| 7 | Update Notification in Other Modes (exclusive to Update) | Implemented per SPEC.md; version check only runs in UpdateWorkspaceUseCase | Implemented |
+
 ## Layer Diagram
 
 ```mermaid
