@@ -187,3 +187,43 @@ F6 completado con 4 tareas de documentación. Sin regresión en tests, cobertura
 - CHANGELOG Security section presente y formateada
 - ARCHITECTURE.md: tabla de coverage SPEC.md decisions vs ADRs
 - CONTRIBUTING.md: 355 líneas con 12 secciones completas
+
+---
+
+## 6. Release v1.0.0 — Listo para Despliegue
+
+**Estado:** ✅ Release Ready
+
+Todas las fases del plan de implementación han sido completadas exitosamente.
+
+**Resumen de fases:**
+
+| Fase | Objetivo | Estado |
+|------|----------|--------|
+| F0 | Preparación (entorno, convenciones, CI/CD) | ✅ Completo |
+| F1 | Infraestructura (adaptadores) | ✅ Completo |
+| F2 | Núcleo/Dominio (entidades, servicios) | ✅ Completo |
+| F3 | Interfaces (CLI, DI, Use Cases) | ✅ Completo |
+| F4 | Pruebas (E2E, CI, coverage) | ✅ Completo |
+| F4.5 | Workspace seguro (`--dest`, `just dev`) | ✅ Completo |
+| F4.6 | Code Review + Refactor (TemplateResolver, AtomicStager) | ✅ Completo |
+| F5 | CI/CD + Cross-platform (builds, release automation) | ✅ Completo |
+| F6 | Documentación (README, CHANGELOG, CONTRIBUTING, ARCHITECTURE) | ✅ Completo |
+
+**Métricas finales v1.0.0:**
+- `bun test`: 284 pass, 0 fail (593 expects)
+- `just check`: 0 errores (biome ci + tsc --noEmit)
+- E2E: 6/6 escenarios pasando
+- Coverage: 96.23% funciones / 94.26% líneas
+- Domain coverage: 100% líneas
+
+**Artefactos de release:**
+| Platform | Binary | Source |
+|----------|--------|--------|
+| Linux (x64) | `dist/codice-linux` | `bun build --compile --target=bun-linux-x64-modern` |
+| macOS (x64) | `dist/codice-macos` | CI build en `macos-latest` |
+| Windows (x64) | `dist/codice-windows.exe` | CI build en `windows-latest` |
+
+**Release pipeline:** Crear tag `v1.0.0` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG.
+
+**Success Criteria (SPEC.md):** Todos los SC-1 a SC-21 han sido verificados y cumplen los criterios de aceptación.
