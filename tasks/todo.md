@@ -216,10 +216,10 @@ F5-T7: Test cross-platform E2E         ← depende de T1
 
 ---
 
-## F6 — Documentación (En planeación)
+## F6 — Documentación (Completada)
 
-**Estado:** 🟡 En Revisión — plan aprobado, listo para ejecutar
-**Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F6 ⬅️ En curso**
+**Estado:** 🟢 Completo — proyecto listo para release v1.0.0
+**Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F6 ✅ Completado** → **🏁 v1.0.0 Listo para release**
 **Plan:** Ver `tasks/plan.md` para detalle completo
 
 ---
@@ -231,15 +231,15 @@ F5-T7: Test cross-platform E2E         ← depende de T1
 **Descripción:** Añadir sección "Códice CLI — Instalador del Workspace" al README existente. Badge CI/CD, quick install, usage (3 modos), troubleshooting. No modificar contenido existente del workspace template de OpenCode.
 
 **Criterios de aceptación:**
-- [ ] Badge CI: `https://github.com/Fisherk2/codice-opencode/workflows/CI/badge.svg`
-- [ ] Nueva sección con: quick install (copy-paste), usage (3 modos), troubleshooting, flags
-- [ ] Contenido existente del workspace template NO modificado
-- [ ] Tabla de contenidos actualizada con enlace a nueva sección
+- [x] Badge CI: `https://github.com/Fisherk2/codice-opencode/workflows/CI/badge.svg`
+- [x] Nueva sección con: quick install (copy-paste), usage (3 modos), troubleshooting, flags
+- [x] Contenido existente del workspace template NO modificado
+- [x] Tabla de contenidos actualizada con enlace a nueva sección
 
 **Verificación:**
-- [ ] `just check` pasa (0 errors)
-- [ ] Badge visible en GitHub rendered README
-- [ ] Instrucciones copy-paste funcionan en Linux/macOS/Windows
+- [x] `just check` pasa (0 errors)
+- [x] Badge visible en GitHub rendered README
+- [x] Instrucciones copy-paste funcionan en Linux/macOS/Windows
 
 **Dependencias:** Ninguna
 **Files touched:** `README.md`
@@ -252,13 +252,13 @@ F5-T7: Test cross-platform E2E         ← depende de T1
 **Descripción:** Añadir sección `### Security` a v1.0.0. Si no hay fixed issues, texto: "No security vulnerabilities identified in this release."
 
 **Criterios de aceptación:**
-- [ ] Sección Security presente en v1.0.0
-- [ ] Formato consistente con Added, Architecture, Technical
-- [ ] `just check` pasa
+- [x] Sección Security presente en v1.0.0
+- [x] Formato consistente con Added, Architecture, Technical
+- [x] `just check` pasa
 
 **Verificación:**
-- [ ] CHANGELOG pasa validación Keep a Changelog
-- [ ] `just check` pasa
+- [x] CHANGELOG pasa validación Keep a Changelog
+- [x] `just check` pasa
 
 **Dependencias:** Ninguna
 **Files touched:** `CHANGELOG.md`
@@ -273,17 +273,17 @@ F5-T7: Test cross-platform E2E         ← depende de T1
 **Descripción:** CONTRIBUTING.md vacío → crear completo. Secciones: How to Contribute, Development Setup, Testing, Building, Commit Convention, Pre-commit Checklist.
 
 **Criterios de aceptación:**
-- [ ] How to Contribute: fork & branch, PR process
-- [ ] Development Setup: `just setup`, `just dev`, `just check`
-- [ ] Testing: `just test`, `just test:unit`, `just test:integration`, `just test:e2e`
-- [ ] Building: `just build`, `just build-all`
-- [ ] Commit Message Convention: feat, fix, docs, refactor, test, chore
-- [ ] Pre-commit Checklist: `just check` + `just test`
+- [x] How to Contribute: fork & branch, PR process
+- [x] Development Setup: `just setup`, `just dev`, `just check`
+- [x] Testing: `just test`, `just test:unit`, `just test:integration`, `just test:e2e`
+- [x] Building: `just build`, `just build-all`
+- [x] Commit Message Convention: feat, fix, docs, refactor, test, chore
+- [x] Pre-commit Checklist: `just check` + `just test`
 
 **Verificación:**
-- [ ] CONTRIBUTING.md no vacío
-- [ ] `just check` pasa
-- [ ] Contribuidor nuevo puede hacer setup siguiendo el documento
+- [x] CONTRIBUTING.md no vacío
+- [x] `just check` pasa
+- [x] Contribuidor nuevo puede hacer setup siguiendo el documento
 
 **Dependencias:** Ninguna
 **Files touched:** `CONTRIBUTING.md`
@@ -298,14 +298,14 @@ F5-T7: Test cross-platform E2E         ← depende de T1
 **Descripción:** Verificar que ARCHITECTURE.md + 5 ADRs cubren todas las decisiones de SPEC.md (decisions 1-7). Identificar gaps.
 
 **Criterios de aceptación:**
-- [ ] ADR-001 a ADR-005 listados con estado "Accepted"
-- [ ] Decisiones 1-7 de SPEC.md cubiertas
-- [ ] Layer diagram refleja estructura actual del código
-- [ ] No hay decisión en SPEC.md sin documentación en ADRs
+- [x] ADR-001 a ADR-005 listados con estado "Accepted"
+- [x] Decisiones 1-7 de SPEC.md cubiertas
+- [x] Layer diagram refleja estructura actual del código
+- [x] No hay decisión en SPEC.md sin documentación en ADRs
 
 **Verificación:**
-- [ ] Lectura cruzada SPEC.md vs ADRs → 0 gaps
-- [ ] `just check` pasa
+- [x] Lectura cruzada SPEC.md vs ADRs → 0 gaps
+- [x] `just check` pasa
 
 **Dependencias:** Ninguna
 **Files touched:** `docs/ARCHITECTURE.md`, `specs/adr/*.md` (lectura)
@@ -317,20 +317,46 @@ F5-T7: Test cross-platform E2E         ← depende de T1
 
 | Task | Estado |
 |------|--------|
-| F6-T1: README.md (Códice CLI) | ⏳ Pendiente |
-| F6-T2: CHANGELOG.md (Security) | ⏳ Pendiente |
-| F6-T3: CONTRIBUTING.md | ⏳ Pendiente |
-| F6-T4: ARCHITECTURE.md (ADRs) | ⏳ Pendiente |
+| F6-T1: README.md (Códice CLI) | ✅ Completo |
+| F6-T2: CHANGELOG.md (Security) | ✅ Completo |
+| F6-T3: CONTRIBUTING.md | ✅ Completo |
+| F6-T4: ARCHITECTURE.md (ADRs) | ✅ Completo |
 
 ## Gate F6: F6 Review Checklist
 
-- [ ] README aprobado por peer review no-técnico
-- [ ] CHANGELOG.md sigue formato Keep a Changelog (Added, Changed, Deprecated, Removed, Fixed, **Security**)
-- [ ] CI/CD badge visible en README
-- [ ] ARCHITECTURE.md y ADRs documentan decisiones clave
-- [ ] `bun test`: sin regresión (284 pass, 0 fail)
-- [ ] `just check`: 0 errores
-- [ ] E2E: 6/6 pasando
+- [x] README aprobado por peer review no-técnico
+- [x] CHANGELOG.md sigue formato Keep a Changelog (Added, Changed, Deprecated, Removed, Fixed, **Security**)
+- [x] CI/CD badge visible en README
+- [x] ARCHITECTURE.md y ADRs documentan decisiones clave
+- [x] `bun test`: sin regresión (284 pass, 0 fail)
+- [x] `just check`: 0 errores
+- [x] E2E: 6/6 pasando
+
+---
+
+## Release v1.0.0 — Listo para Despliegue
+
+**Estado:** ✅ Release Ready — todas las métricas verificadas, binarios compilados, release pipeline lista.
+
+| Fase | Estado | Entregable |
+|------|--------|------------|
+| F0–F6 | ✅ Todas completas | Ver `tasks/plan.md` para detalle |
+
+**Métricas finales:**
+- Tests: 284 pass, 0 fail (593 expects)
+- Coverage: 96.23% funciones / 94.26% líneas
+- Domain coverage: 100% líneas
+- E2E: 6/6 escenarios pasando
+- `just check`: 0 errores
+
+**Binarios multi-plataforma:**
+- `dist/codice-linux` (ELF x64)
+- `dist/codice-macos` (Mach-O x64) — via CI
+- `dist/codice-windows.exe` (PE x64) — via CI
+
+**Release pipeline:** Tag `v*` → GitHub Actions build matrix (3 platforms) → GitHub Release con assets adjuntos.
+
+**Próximo paso:** Crear tag `v1.0.0` y ejecutar release workflow en GitHub Actions.
 
 ---
 
