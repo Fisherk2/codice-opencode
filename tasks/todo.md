@@ -1,224 +1,177 @@
-# TODO: F4 – Pruebas (Unitarias, Integración y E2E)
+# TODO: F5 – CI/CD + Cross-platform Release Automation
 
 **Estado:** 🟢 Listo para Implementar
-**Fecha:** 2026-06-14
-**Dependencias:** F0 ✅ Completado → F1 ✅ Completado → F2 ✅ Completado → F3 ✅ Completado → F4 🟢 En Implementación
+**Fecha:** 2026-06-15
+**Dependencias:** F0 ✅ Completado → F1 ✅ Completado → F2 ✅ Completado → F3 ✅ Completado → F4 ✅ Completado → F4.5 ✅ Completado → F4.6 ✅ Completado → F5 🟢 En Implementación
 
 ---
 
-## Phase 1: E2E Infrastructure
+## Phase 1: Cross-Platform CI Build
 
-### F4-T1: E2E shared library (`tests/e2e/common.sh`)
+### F5-T1: Cross-platform CI matrix
 
-**Descripción:** Script de utilidades compartido. Provee: binary resolution, temp dir con trap, assertions, mock server.
+**Descripción:** Extender el job `quality` de `ci.yml` para que compile en las 3 plataformas (ubuntu, macos, windows) usando Bun nativo. El binary name cambia por platform: `codice-linux`, `codice-macos`, `codice-windows.exe`.
 
 **Criterios de aceptación:**
-- [ ] `setup_temp_dir()` — mktemp -d + trap cleanup en EXIT
-- [ ] `assert_file_exists()`, `assert_file_missing()`, `assert_exit_code()`, `assert_contains()`
-- [ ] `start_mock_server()` — Bun serve en puerto 4567, responde `{"tag_name":"v1.0.0"}`, retorna PID
-- [ ] `stop_mock_server(pid)`
-- [ ] `CODICE_BINARY` desde `dist/codice-*`
-- [ ] Todos los E2E scripts hacen `set -e` y `source common.sh`
+- [ ] `ci.yml` tiene strategy matrix con `os: [ubuntu-latest, macos-latest, windows-latest]`
+- [ ] Step `Build binary` usa `just build` que produce `codice-linux` en ubuntu, `codice-macos` en macos, `codice-windows.exe` en windows
+- [ ] El binary path se resuelve dinámicamente por OS (output filename diferente por plataforma)
+- [ ] `dist/` se limpia antes de cada build con `just clean`
+- [ ] E2E tests corren solo en Linux (ya existe, no cambia)
+- [ ] Quality gates (lint, test) corren en las 3 plataformas
 
 **Verificación:**
-- [ ] `bash -n tests/e2e/common.sh` pasa
-- [ ] Mock server responde en puerto 4567
+- [ ] `just check` pasa en las 3 plataformas
+- [ ] `just test` pasa en las 3 plataformas
+- [ ] CI muestra 3 jobs parallel (ubuntu/macos/windows)
+
+**Dependencias:** Ninguna
+**Scope:** M
+
+---
+
+### F5-T2: Upload artifacts on every build
+
+**Descripción:** Cambiar el step de upload-artifact para que suba los binaries siempre (no solo en failure), y renombrar el artifact con la plataforma para evitar colisiones.
+
+**Criterios de aceptación:**
+- [ ] `actions/upload-artifact@v4` corre siempre (sin `if: failure()`), o sea un step separado
+- [ ] Artifact name es `codice-${{ runner.os }}` (codice-ubuntu-latest, codice-macos-latest, codice-windows-latest)
+- [ ] Artifact path incluye el binary específico (no todo `dist/`)
+- [ ] Los artifacts están disponibles como build artifacts en cada run
+
+**Verificación:**
+- [ ] Ir a cualquier CI run → Artifacts section muestra `codice-<platform>`
+
+**Dependencias:** F5-T1 ✅
+**Scope:** S
+
+---
+
+## Phase 2: Local Build Automation
+
+### F5-T3: `just build:all` recipe
+
+**Descripción:** Añadir recipe `build:all` al Justfile que compila los 3 binaries secuencialmente en la máquina local (para developers que quieren los 3 binarios sin CI).
+
+**Criterios de aceptación:**
+- [ ] `just build:all` compila `codice-linux`, `codice-macos`, `codice-windows.exe` en `dist/`
+- [ ] Cada build usa el flag correcto de output filename
+- [ ] Si un build falla, los otros continúan y el comando final retorna exit 1
+- [ ] Mensaje claro indicando qué se está compilando y resultado
+
+**Verificación:**
+- [ ] `just build:all` → 3 archivos en `dist/`
+- [ ] `ls -la dist/codice-*` → 3 archivos
 
 **Dependencias:** Ninguna
 **Scope:** S
 
 ---
 
-## Phase 2: E2E Scenarios
+## Phase 3: Release Workflow
 
-### F4-T2: Clean Install E2E (`tests/e2e/01-clean-install.sh`)
+### F5-T4: Release workflow: build step
 
-**Descripción:** Ejecuta `codice --clean --force` en dir vacío. Verifica todos los archivos copiados, .codice-version existe.
+**Descripción:** Modificar `release.yml` para que en el job de release primero compile los 3 binaries antes de crear el release. Crear un job separado de build (necesita matrix de platforms).
 
 **Criterios de aceptación:**
-- [ ] Temp dir vacío
-- [ ] `codice --clean --force` → exit 0
-- [ ] `.codice-version` existe, JSON válido, tiene `installedVersion`
-- [ ] template/obligatorio/ copiado (≥5 archivos)
-- [ ] template/estandar/ copiado (≥5 archivos)
-- [ ] template/opcional/ copiado
-- [ ] Cleanup automático
+- [ ] `release.yml` tiene job `build` con matrix `[ubuntu, macos, windows]`
+- [ ] Cada platform compila su binary y lo sube como artifact
+- [ ] Job `release` descarga los 3 artifacts de build
+- [ ] Los artifacts se renombran a `codice-linux`, `codice-macos`, `codice-windows.exe`
 
 **Verificación:**
-- [ ] `just test-e2e` → pasa
+- [ ] Hacer tag `v99.0.0-test` y verificar que el release draft incluye los 3 binarios
 
-**Dependencias:** F4-T1 ✅
+**Dependencias:** F5-T1 ✅, F5-T2 ✅
 **Scope:** M
 
 ---
 
-### F4-T3: Project Install Selective E2E (`tests/e2e/02-project-install.sh`)
+### F5-T5: Release workflow: attach assets
 
-**Descripción:** Archivo pre-existente en template/estandar/ es preservado (no sobreescrito).
-
-**Criterios de aceptación:**
-- [ ] Temp dir con `docs/README.md` pre-existente (contenido original guardado)
-- [ ] `codice --project --force` → exit 0
-- [ ] `docs/README.md` preserva contenido original
-- [ ] Obligatorio + Estandar copiados
-
-**Verificación:**
-- [ ] `just test-e2e` → pasa
-
-**Dependencias:** F4-T1 ✅
-**Scope:** M
-
----
-
-### F4-T4: Project Install Optional Skip E2E (`tests/e2e/03-optional-skip.sh`)
-
-**Descripción:** Verifica que `--force` no copia opcionales y piped input puede deseleccionar.
+**Descripción:** Configurar `softprops/action-gh-release@v3` para que adjunte los 3 binarios como release assets. Los assets deben tener nombres limpios: `codice-linux`, `codice-macos`, `codice-windows.exe`.
 
 **Criterios de aceptación:**
-- [ ] `codice --project --force` → no copia template/opcional/
-- [ ] Obligatorio + Estandar sí copiados
-- [ ] `codice --project` con input piped (Enter) → no copia opcionales
-- [ ] Exit 0 en ambos
+- [ ] `with: files: codice-linux,codice-macos,codice-windows.exe` en la acción release
+- [ ] Los assets se suben con nombres legibles (sin paths de artifact internos)
+- [ ] El release body sigue viniendo del CHANGELOG
+- [ ] El release se marca como `Latest` en GitHub
 
 **Verificación:**
-- [ ] `just test-e2e` → pasa
+- [ ] En un tag test, verificar que el release draft tiene los 3 binarios adjuntos
+- [ ] Los binarios son descargables desde la página del release
 
-**Dependencias:** F4-T1 ✅
-**Scope:** M
-
----
-
-### F4-T5: Update Workspace E2E (`tests/e2e/04-update-workspace.sh`)
-
-**Descripción:** Mock server + `.codice-version` antiguo. Solo Obligatorio + Estandar se actualizan.
-
-**Criterios de aceptación:**
-- [ ] Temp dir con `.codice-version` = `{"installedVersion":"0.9.0",...}`
-- [ ] Archivos opcionales pre-existentes en destino
-- [ ] Mock server puerto 4567
-- [ ] `GITHUB_API_BASE=http://localhost:4567 codice --update --force` → exit 0
-- [ ] `.codice-version` actualizado a `1.0.0`
-- [ ] Obligatorio copiados
-- [ ] Estandar copiados
-- [ ] Opcional **preservados** (no tocados)
-
-**Verificación:**
-- [ ] `just test-e2e` → pasa
-
-**Dependencias:** F4-T1 ✅
-**Scope:** M
-
----
-
-### F4-T6: Atomic Rollback E2E (`tests/e2e/05-atomic-rollback.sh`)
-
-**Descripción:** `kill -9` durante operación. Destino intacto, staging limpio.
-
-**Criterios de aceptación:**
-- [ ] Temp dir vacío
-- [ ] `codice --clean` en background
-- [ ] `kill -9` tras 200ms
-- [ ] Destino sin archivos nuevos
-- [ ] Staging directory limpio
-- [ ] Cleanup
-
-**Verificación:**
-- [ ] `just test-e2e` → pasa
-- [ ] Consistente en ejecuciones múltiples
-
-**Dependencias:** F4-T1 ✅
-**Scope:** M
-
----
-
-### F4-T7: Path Traversal E2E (`tests/e2e/06-path-traversal.sh`)
-
-**Descripción:** Intenta escribir fuera del temp dir con `../`. Exit code 1.
-
-**Criterios de aceptación:**
-- [ ] `codice --clean --force` con `../outside` en destino → exit 1
-- [ ] No archivos fuera del temp dir
-- [ ] Mismo test con `../../../../etc/passwd` → exit 1
-
-**Verificación:**
-- [ ] `just test-e2e` → pasa
-
-**Dependencias:** F4-T1 ✅
+**Dependencias:** F5-T4 ✅
 **Scope:** S
 
 ---
 
-## Phase 3: CI Integration
+## Phase 4: Bug Fixes and Testing
 
-### F4-T8: CI Integration (`tests/e2e/run-e2e.sh` + CI workflow)
+### F5-T6: Fix CHANGELOG extraction
 
-**Descripción:** Runner que ejecuta los 6 E2E tests secuencialmente. Wirear en CI.
+**Descripción:** El script actual de CHANGELOG extraction en `release.yml` tiene edge cases (e.g., versión no encontrada, empty output). Mejorar el script awk para manejar mejor los casos edge y añadir un fallback.
 
 **Criterios de aceptación:**
-- [ ] `run-e2e.sh` ejecuta en orden numérico
-- [ ] `run-e2e.sh` → "X/6 tests passed"
-- [ ] Exit 0 si todos pasan, 1 si alguno falla
-- [ ] Cleanup del mock server
-- [ ] CI workflow: `just test-e2e` después de `just build`
+- [ ] Si no hay sección para la versión, el script no falla en silencio (da error claro)
+- [ ] Si el CHANGELOG está vacío o malformado, usa un body mínimo genérico
+- [ ] El script no deja líneas en blanco extrañas en el release body
 
 **Verificación:**
-- [ ] `just test-e2e` → "6/6 tests passed"
-- [ ] CI (Ubuntu) pasa
+- [ ] Crear tag `v99.99.99-test` y verificar que el release body no está vacío ni malformado
 
-**Dependencias:** F4-T2 ✅, F4-T3 ✅, F4-T4 ✅, F4-T5 ✅, F4-T6 ✅, F4-T7 ✅
+**Dependencias:** Ninguna (independiente)
 **Scope:** S
 
 ---
 
-## Phase 4: Coverage Improvements
+### F5-T7: Test cross-platform E2E smoke test
 
-### F4-T9: Coverage gap closure
-
-**Descripción:** Cerrar gaps: output.ts (0%), VersionComparator (80%), ClackPromptsAdapter (86.67%), main.ts (50%).
+**Descripción:** Aunque E2E full solo corre en Linux por ser bash scripts, verificar que los binaries de macOS y Windows al menos ejecutan `--version` y `--help` sin error. Esto se hace en CI como smoke test.
 
 **Criterios de aceptación:**
-- [ ] output.ts: tests para `printVersion()` y `printHelp()`
-- [ ] VersionComparator: test `getReleaseType()` con premajor/prerelease
-- [ ] ClackPromptsAdapter: tests `promptForMode()` con cancel y cada modo
-- [ ] main.ts: tests `--help`, `--version` exit codes
-- [ ] Coverage >90% functions overall
+- [ ] En macOS CI job: `dist/codice-macos --version` → exit 0, output contiene versión
+- [ ] En Windows CI job: `dist/codice-windows.exe --version` → exit 0, output contiene versión
+- [ ] En macOS CI job: `dist/codice-macos --help` → exit 0
+- [ ] En Windows CI job: `dist/codice-windows.exe --help` → exit 0
 
 **Verificación:**
-- [ ] `bun test --coverage` → >90% functions
+- [ ] CI macOS job muestra `--version` passing
+- [ ] CI Windows job muestra `--version` passing
 
-**Dependencias:** Ninguna (paralelo con F4-T8)
-**Scope:** M
+**Dependencias:** F5-T1 ✅
+**Scope:** S
 
 ---
 
-## Checkpoint: Después de F4-T1 a F4-T9
+## Checkpoint: Después de F5-T1 a F5-T7
 
 | Elemento | Estado |
 |---------|--------|
-| E2E lib (common.sh) | ⏳ Pendiente |
-| Clean Install E2E | ⏳ Pendiente |
-| Project Selective E2E | ⏳ Pendiente |
-| Optional Skip E2E | ⏳ Pendiente |
-| Update Workspace E2E | ⏳ Pendiente |
-| Atomic Rollback E2E | ⏳ Pendiente |
-| Path Traversal E2E | ⏳ Pendiente |
-| CI Integration + run-e2e.sh | ⏳ Pendiente |
-| Coverage gap closure | ⏳ Pendiente |
-| Gate 4: F4 Review | ⏳ Pendiente |
+| Cross-platform CI matrix | ⏳ Pendiente |
+| Upload artifacts on every build | ⏳ Pendiente |
+| `just build:all` recipe | ⏳ Pendiente |
+| Release workflow: build step | ⏳ Pendiente |
+| Release workflow: attach assets | ⏳ Pendiente |
+| Fix CHANGELOG extraction | ⏳ Pendiente |
+| Cross-platform smoke test | ⏳ Pendiente |
+| Gate 5: F5 Review | ⏳ Pendiente |
 
 ---
 
-## Gate 4: F4 Review Checklist
+## Gate 5: F5 Review Checklist
 
-- [ ] Los 6 escenarios E2E pasan en CI (Ubuntu runner)
-- [ ] `bun test` → todos pasan sin regresión
-- [ ] `bun test --coverage` → >90% functions overall
-- [ ] `just check` → 0 errors, 0 warnings
-- [ ] `tsc --noEmit` → limpio
-- [ ] SC-14: E2E tests pasan en CI ✅
-- [ ] SC-18: Path traversal rechazado con exit 1 ✅
-- [ ] SC-9: Clean Install < 5s ✅
-- [ ] SC-10: GitHub API timeout < 3s ✅
+- [ ] **SC-15:** Compiled binaries produced for Linux, macOS, and Windows x64 ✅
+- [ ] CI corre en las 3 plataformas y pasa
+- [ ] `just build:all` produce 3 binarios
+- [ ] Tag `v*` crea release con 3 binarios en assets
+- [ ] CHANGELOG parsing genera release notes correctas
+- [ ] Smoke test (`--version`) pasa en macOS y Windows
+- [ ] `just check` → 0 errors en las 3 plataformas
+- [ ] `bun test` → 0 failures en las 3 plataformas
+- [ ] `just test-e2e` → 6/6 en Linux
 
 ---
 
@@ -226,10 +179,37 @@
 
 | Risk | Mitigation |
 |------|------------|
-| SIGKILL test flaky (timing) | Retry logic, esperar 200ms |
-| Mock server en Windows CI | E2E solo corre en Unix |
-| E2E lento en CI (>5 min) | Binary compilation es el bottleneck |
+| Bun build en macOS/windows lento (>10 min) | Matrix parallelization; Bun build es rápido (~10-15s por platform) |
+| Artifact naming collisions en upload | Usar `codice-${{ runner.os }}` como name |
+| Release workflow secrets insuficientes | `contents: write` ya está configurado |
+| Tag sin sección en CHANGELOG | Script improved en F5-T6 con fallback |
+| Windows binary no funciona (path issues) | Smoke test en CI (F5-T7) |
 
 ---
 
-*Última actualización: 2026-06-14*
+## Dependency Graph
+
+```
+F5-T1: Cross-platform CI matrix        ← base (todos dependen)
+F5-T2: Upload artifacts en CI          ← depende de T1
+F5-T3: just build:all recipe           ← independiente (local dev)
+F5-T4: Release workflow: build step    ← depende de T1, T2
+F5-T5: Release workflow: attach assets ← depende de T4
+F5-T6: Fix CHANGELOG extraction        ← independiente (bug fix)
+F5-T7: Test cross-platform E2E         ← depende de T1
+```
+
+---
+
+## Vertical Slices
+
+| Slice | Path | Description |
+|-------|------|-------------|
+| **Slice 1** | F5-T1 → T2 | CI matrix + artifact upload — every commit gets 3 platform binaries |
+| **Slice 2** | F5-T3 | `just build:all` — local developer experience for 3-platform builds |
+| **Slice 3** | F5-T4 → T5 | Release workflow — tag → build → attach binaries |
+| **Slice 4** | F5-T6, T7 | Bug fixes + smoke tests — polish and verification |
+
+---
+
+*Última actualización: 2026-06-15*
