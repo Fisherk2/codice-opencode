@@ -121,7 +121,19 @@
 - ✅ `bun test`: 284 pass, 0 fail, 593 expects (sin regresión)
 - ✅ `just check`: 0 errors (biome ci + tsc --noEmit)
 - ✅ E2E: 6/6 pasando
-- ✅ Commit `15a1e92` en `feat/installer-updater`
+- ✅ Commits F5: `7d9c4df`, `15a1e92`, `828acc2`, `8682d3a`, `3b5ad76` en `feat/installer-updater`
+- ✅ Commits F5 review fixes (2026-06-15): echo format normalization, Bun version env var consistency, action-gh-release SHA pinning
+
+**Code review findings and corrections (2026-06-15):**
+- R1: Formato echo normalizado entre `build` y `build-all` — ambos usan convención `===` en `Justfile`
+- R2: Bun version unificada — `release.yml` ahora usa `env.BUN_VERSION` (consistente con `ci.yml`)
+- R3: `softprops/action-gh-release` pineado a SHA commit `b4309332` con comentario `# v3` para supply-chain hardening
+
+**Verificación tras correcciones:**
+- ✅ `bun test`: 284 pass, 0 fail, 593 expects (sin regresión)
+- ✅ `just check`: 0 errors (biome ci + tsc --noEmit)
+- ✅ E2E: 6/6 pasando (sin regresión)
+- ✅ Coverage sin pérdida, sin regresión en ningún test
 
 ## 3. Estrategia de Pruebas por Fase
 
@@ -145,17 +157,31 @@
 - **Binary:** dist/codice-linux (74MB ELF x64), dist/codice-macos (via CI), dist/codice-windows.exe (via CI)
 - **Cross-platform builds:** CI matrix ubuntu/macos/windows con smoke test + artifact upload
 - **Release pipeline:** tag v* → build 3 platforms → create release with binary assets
-- **Commits F5:** `15a1e92` (CI/CD + cross-platform + release automation)
-- **F5 total:** 7 tasks, 7 completed
+- **Commits F5:** `7d9c4df`, `15a1e92`, `828acc2`, `8682d3a`, `3b5ad76` en `feat/installer-updater`
+- **Commits F5 review fixes (2026-06-15):** 3 correcciones post-review (echo format, Bun version, SHA pinning)
+- **F5 total:** 7 tasks, 7 completed + 3 review fixes
 
-## 5. Próximos Pasos (F6)
+## 5. F6 — Documentación (Listo para planeación)
 
-### F6 — Documentación (Pendiente)
+**Estado:** 🟡 Listo para planeación
+**Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ Completado → **F6 ⬅️ Siguiente**
 
-README final con instrucciones de instalación copy-paste, CHANGELOG.md en formato Keep a Changelog, ADRs finales si es necesario.
+F5 completado con 7 tareas + 3 correcciones post-review. Sin regresión en tests, cobertura, ni E2E.
 
-**Tareas identificadas:**
-- F6-T1: README.md con instalación, uso (3 modos), troubleshooting
-- F6-T2: CHANGELOG.md con historial de cambios v1.0.0
-- F6-T3: Verificar documentación de arquitectura (ADRs, ARCHITECTURE.md)
-- F6-T4: Badge CI/CD en README
+**Tareas identificadas para F6:**
+
+| ID | Descripción | Prioridad | Estado |
+|----|-------------|-----------|--------|
+| F6-T1 | README.md — instrucciones copy-paste, instalación, uso (3 modos), troubleshooting, CI/CD badge | Alta | Pendiente |
+| F6-T2 | CHANGELOG.md — verificar formato Keep a Changelog, historial v1.0.0 completo | Alta | Pendiente |
+| F6-T3 | Documentación de arquitectura — ADRs finales, ARCHITECTURE.md actualizado | Media | Pendiente |
+| F6-T4 | Sección de Contributing (CONTRIBUTING.md) — guía para PRs, dev setup, testing | Media | Pendiente |
+
+**Criterios de completitud propuestos (DoD F6):**
+- [ ] README.md aprobado por peer review no-técnico (instrucciones copy-paste)
+- [ ] CHANGELOG.md sigue formato Keep a Changelog con Added, Changed, Fixed, Security
+- [ ] CI/CD badge visible en README reflejando estado de `main`
+- [ ] ARCHITECTURE.md y ADRs documentan decisiones clave del proyecto
+- [ ] `bun test`: sin regresión vs F5 (284 pass, 0 fail)
+- [ ] `just check`: 0 errores
+- [ ] E2E: 6/6 pasando

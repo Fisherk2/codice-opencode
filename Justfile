@@ -40,7 +40,7 @@ build:
         Darwin*) binary="./dist/codice-macos" ;;
         *)       binary="./dist/codice-windows.exe" ;;
     esac
-    echo "Building $binary..."
+    echo "=== Building $binary ==="
     mkdir -p dist
     bun build --compile src/cli/main.ts --outfile "$binary"
 

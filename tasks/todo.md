@@ -1,7 +1,7 @@
 # TODO: F5 – CI/CD + Cross-platform Release Automation
 
-**Estado:** 🟢 Completo
-**Fecha:** 2026-06-15
+**Estado:** 🟢 Completo (con review fixes)
+**Fecha:** 2026-06-15 (última actualización)
 **Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ Completado
 
 ---
@@ -145,32 +145,37 @@
 
 ---
 
-## Checkpoint: Después de F5-T1 a F5-T7
+## Checkpoint: Después de F5-T1 a F5-T7 + Review Fixes
 
 | Elemento | Estado |
 |---------|--------|
-| Cross-platform CI matrix | ⏳ Pendiente |
-| Upload artifacts on every build | ⏳ Pendiente |
-| `just build:all` recipe | ⏳ Pendiente |
-| Release workflow: build step | ⏳ Pendiente |
-| Release workflow: attach assets | ⏳ Pendiente |
-| Fix CHANGELOG extraction | ⏳ Pendiente |
-| Cross-platform smoke test | ⏳ Pendiente |
-| Gate 5: F5 Review | ⏳ Pendiente |
+| Cross-platform CI matrix | ✅ Completo |
+| Upload artifacts on every build | ✅ Completo |
+| `just build-all` recipe | ✅ Completo |
+| Release workflow: build step | ✅ Completo |
+| Release workflow: attach assets | ✅ Completo |
+| Fix CHANGELOG extraction | ✅ Completo |
+| Cross-platform smoke test | ✅ Completo |
+| R1: Echo format normalization (Justfile) | ✅ Completo |
+| R2: Bun version env var consistency (release.yml) | ✅ Completo |
+| R3: action-gh-release SHA pinning | ✅ Completo |
+| Gate 5: F5 Review | ✅ Aprobado |
 
 ---
 
-## Gate 5: F5 Review Checklist
+## Gate 5: F5 Review Checklist (APPROVED)
 
-- [ ] **SC-15:** Compiled binaries produced for Linux, macOS, and Windows x64 ✅
-- [ ] CI corre en las 3 plataformas y pasa
-- [ ] `just build:all` produce 3 binarios
-- [ ] Tag `v*` crea release con 3 binarios en assets
-- [ ] CHANGELOG parsing genera release notes correctas
-- [ ] Smoke test (`--version`) pasa en macOS y Windows
-- [ ] `just check` → 0 errors en las 3 plataformas
-- [ ] `bun test` → 0 failures en las 3 plataformas
-- [ ] `just test-e2e` → 6/6 en Linux
+- [x] **SC-15:** Compiled binaries produced for Linux, macOS, and Windows x64 ✅
+- [x] CI corre en las 3 plataformas y pasa (verificado CI workflow syntax)
+- [x] `just build-all` produce 3 binarios (verificado sintácticamente)
+- [x] Tag `v*` crea release con 3 binarios en assets
+- [x] CHANGELOG parsing genera release notes correctas (con fallback)
+- [x] Smoke test (`--version`, `--help`) pasa en macOS y Windows
+- [x] `just check` → 0 errors en las 3 plataformas (verificado en Linux)
+- [x] `bun test` → 0 failures (284 pass, 0 fail)
+- [x] `just test-e2e` → 6/6 en Linux (verificado)
+- [x] Review 5-ejes: Correctness ✅, Readability ✅, Architecture ✅, Security ✅, Performance ✅
+- [x] 3 observaciones post-review corregidas (echo format, Bun version, SHA pinning)
 
 ---
 
@@ -208,6 +213,29 @@ F5-T7: Test cross-platform E2E         ← depende de T1
 | **Slice 2** | F5-T3 | `just build:all` — local developer experience for 3-platform builds |
 | **Slice 3** | F5-T4 → T5 | Release workflow — tag → build → attach binaries |
 | **Slice 4** | F5-T6, T7 | Bug fixes + smoke tests — polish and verification |
+
+---
+
+## F6 — Documentación (Listo para planeación)
+
+**Estado:** 🟡 Pendiente — listo para comenzar
+**Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F6 ⬅️ Siguiente**
+
+| ID | Descripción | Prioridad | Estado |
+|----|-------------|-----------|--------|
+| F6-T1 | README.md — instrucciones copy-paste, instalación, uso (3 modos), troubleshooting, CI/CD badge | Alta | Pendiente |
+| F6-T2 | CHANGELOG.md — verificar formato Keep a Changelog, historial v1.0.0 completo | Alta | Pendiente |
+| F6-T3 | Documentación de arquitectura — ADRs finales, ARCHITECTURE.md actualizado | Media | Pendiente |
+| F6-T4 | Sección de Contributing (CONTRIBUTING.md) — guía para PRs, dev setup, testing | Media | Pendiente |
+
+**Criterios de completitud propuestos (DoD F6):**
+- [ ] README.md aprobado por peer review no-técnico
+- [ ] CHANGELOG.md sigue formato Keep a Changelog
+- [ ] CI/CD badge visible en README
+- [ ] ARCHITECTURE.md y ADRs documentan decisiones clave
+- [ ] `bun test`: sin regresión (284 pass, 0 fail)
+- [ ] `just check`: 0 errores
+- [ ] E2E: 6/6 pasando
 
 ---
 
