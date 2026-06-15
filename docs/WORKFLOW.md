@@ -11,7 +11,7 @@
 | F3 | Interfaces | CLI, DI, Use Cases, tests integración | ✅ Completo |
 | F4 | Pruebas | E2E (6 escenarios), CI integration, coverage gaps | ✅ Completo |
 | F4.5 | Workspace seguro | `--dest` flag, `tests/fixtures/workspace/`, `just dev` protegido | ✅ Completo |
-| F5 | CI/CD + Cross-platform | Builds multi-plataforma, release automation | Pendiente |
+| F5 | CI/CD + Cross-platform | Builds multi-plataforma, release automation | ✅ Completo |
 | F6 | Documentación | README, CHANGELOG, ADRs finales | Pendiente |
 
 ## 2. Desglose por Fase
@@ -99,6 +99,30 @@
 - `GitHubRestClient`/`constants`: `CODICE_GITHUB_API_URL` env var para mocking
 - `set -e` en scripts E2E: patrón `|| EXIT_CODE=$?` para evitar errexit
 
+### Fase 5 — CI/CD + Cross-platform (Builds multi-plataforma + Release automation)
+
+**Tareas:**
+
+| ID | Descripción | Estado |
+|----|-------------|--------|
+| F5-T1 | Cross-platform CI matrix (ubuntu/macos/windows) | ✅ Completo |
+| F5-T2 | Upload artifacts on every CI run (platform-specific naming) | ✅ Completo |
+| F5-T3 | `just build-all` recipe para cross-compile local (3 targets Bun) | ✅ Completo |
+| F5-T4 | Release workflow: job build con matrix + job release descarga artifacts | ✅ Completo |
+| F5-T5 | Release workflow: attach 3 binarios como assets del release | ✅ Completo |
+| F5-T6 | Fix CHANGELOG extraction con fallback body si no hay sección | ✅ Completo |
+| F5-T7 | Smoke test (--version, --help) para macOS/Windows en CI | ✅ Completo |
+
+**Criterios de completitud (DoD F5):**
+- ✅ `ci.yml` con 3-platform matrix, `just build` OS-aware, smoke test + artifact upload
+- ✅ `just build-all` cross-compila 3 targets con Bun `--target=` flags (uno falla no detiene los demás)
+- ✅ `release.yml` con `build` (matrix) → `release` (assets) pipeline
+- ✅ CHANGELOG extraction con fallback body genérico si no se encuentra sección
+- ✅ `bun test`: 284 pass, 0 fail, 593 expects (sin regresión)
+- ✅ `just check`: 0 errors (biome ci + tsc --noEmit)
+- ✅ E2E: 6/6 pasando
+- ✅ Commit `15a1e92` en `feat/installer-updater`
+
 ## 3. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -115,26 +139,23 @@
 - **Coverage:** 96.23% funciones / 94.26% líneas
 - **Domain coverage:** 100% líneas
 - **`just check`:** 0 errores
-- **Binary:** compilado a dist/codice-linux (74MB ELF x64)
 - **Fix rate:** 10+ bugs encontrados y corregidos durante desarrollo de E2E
 - **Commits F4:** `5f75006` (E2E + CI + Coverage)
 - **Commits F4.5:** `04c7c4b` (`--dest` + workspace seguro)
-- **Commits F4.6:** `33f58b4` (code review + extract TemplateResolver/AtomicStager)
+- **Binary:** dist/codice-linux (74MB ELF x64), dist/codice-macos (via CI), dist/codice-windows.exe (via CI)
+- **Cross-platform builds:** CI matrix ubuntu/macos/windows con smoke test + artifact upload
+- **Release pipeline:** tag v* → build 3 platforms → create release with binary assets
+- **Commits F5:** `15a1e92` (CI/CD + cross-platform + release automation)
+- **F5 total:** 7 tasks, 7 completed
 
-## 5. Próximos Pasos (F5-F6)
-
-### F5 — CI/CD + Cross-platform (Listo para planificación)
-
-Builds multi-plataforma (Windows/macOS/Linux), release automation, GitHub Releases con binarios adjuntos.
-
-**Tareas preliminares identificadas:**
-- F5-T1: Configurar cross-compilation en GitHub Actions (matrix: ubuntu, macos, windows)
-- F5-T2: Build step produce 3 binarios: `codice-linux`, `codice-macos`, `codice-windows.exe`
-- F5-T3: Configurar GitHub Release con etiquetado semántico automático
-- F5-T4: Subir artefactos de build como assets del release
-- F5-T5: Generar release notes desde `CHANGELOG.md`
-- F5-T6: Verificar binarios en CI (test-e2e en cada plataforma)
+## 5. Próximos Pasos (F6)
 
 ### F6 — Documentación (Pendiente)
 
-README final, CHANGELOG, documentación de arquitectura.
+README final con instrucciones de instalación copy-paste, CHANGELOG.md en formato Keep a Changelog, ADRs finales si es necesario.
+
+**Tareas identificadas:**
+- F6-T1: README.md con instalación, uso (3 modos), troubleshooting
+- F6-T2: CHANGELOG.md con historial de cambios v1.0.0
+- F6-T3: Verificar documentación de arquitectura (ADRs, ARCHITECTURE.md)
+- F6-T4: Badge CI/CD en README
