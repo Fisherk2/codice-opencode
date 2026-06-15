@@ -29,12 +29,10 @@ readonly COLOR_RESET='\033[0m'
 # ---------------------------------------------------------------------------
 
 # Root of the repository (assumes common.sh is at tests/e2e/common.sh)
-readonly CODICE_ROOT
-CODICE_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+readonly CODICE_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
 # Platform-detected binary name
-readonly CODICE_PLATFORM
-CODICE_PLATFORM="$(uname -s | tr '[:upper:]' '[:lower:]')"
+readonly CODICE_PLATFORM="$(uname -s | tr '[:upper:]' '[:lower:]')"
 readonly CODICE_BINARY_NAME="codice-${CODICE_PLATFORM}"
 
 # Path to the compiled binary (used by setup_binary)
@@ -118,6 +116,7 @@ create_temp_dir() {
 # Resolve the codice binary path.
 # If CODICE_BINARY is already set, use it.
 # Otherwise, check if the compiled binary exists in dist/.
+# If it's on a no-exec filesystem (e.g., NTFS fuse), copy to /tmp first.
 # If neither works, fall back to "bun run" for development.
 # Returns the command string to invoke codice.
 setup_binary() {
@@ -127,17 +126,46 @@ setup_binary() {
     fi
 
     local binary_path="$CODICE_ROOT/dist/$CODICE_BINARY_NAME"
-    if [[ -x "$binary_path" ]]; then
-        CODICE_BINARY="$binary_path"
-        echo "$CODICE_BINARY"
-        return 0
+
+    if [[ -f "$binary_path" ]]; then
+        # Check if binary is executable; if not, it may be on a no-exec filesystem
+        if [[ -x "$binary_path" ]]; then
+            CODICE_BINARY="$binary_path"
+            echo "$CODICE_BINARY"
+            return 0
+        fi
+
+        # Try to copy to a temp location on a proper filesystem
+        local tmp_binary
+        tmp_binary="$(mktemp -p /tmp codice-XXXXXX)" || {
+            log_warn "Could not create temp binary path. Using bun run fallback."
+            echo "bun run $CODICE_ROOT/src/cli/main.ts"
+            return 0
+        }
+        if cp "$binary_path" "$tmp_binary" && chmod +x "$tmp_binary"; then
+            CODICE_BINARY="$tmp_binary"
+            log_info "Copied binary to $tmp_binary (exec permissions on /tmp)"
+            echo "$CODICE_BINARY"
+            return 0
+        fi
     fi
 
     local fallback_binary="$CODICE_ROOT/dist/codice"
-    if [[ -x "$fallback_binary" ]]; then
-        CODICE_BINARY="$fallback_binary"
-        echo "$CODICE_BINARY"
-        return 0
+    if [[ -f "$fallback_binary" ]]; then
+        if [[ -x "$fallback_binary" ]]; then
+            CODICE_BINARY="$fallback_binary"
+            echo "$CODICE_BINARY"
+            return 0
+        fi
+        # Also try to copy fallback
+        local tmp_fallback
+        tmp_fallback="$(mktemp -p /tmp codice-XXXXXX)" || true
+        if [[ -n "${tmp_fallback:-}" ]] && cp "$fallback_binary" "$tmp_fallback" && chmod +x "$tmp_fallback"; then
+            CODICE_BINARY="$tmp_fallback"
+            log_info "Copied fallback binary to $tmp_fallback"
+            echo "$CODICE_BINARY"
+            return 0
+        fi
     fi
 
     # Fall back to bun run for development

@@ -60,6 +60,7 @@ export class BunFileSystem implements IFileSystem {
 	/**
 	 * Build the full template path by searching each category subdirectory
 	 * (obligatorio, estandar, opcional) for the given relative path.
+	 * Supports both files and directories.
 	 * Results are cached so each relative path is resolved at most once.
 	 */
 	private async resolveTemplatePath(relativePath: string): Promise<string> {
@@ -90,14 +91,13 @@ export class BunFileSystem implements IFileSystem {
 				throw new Error(`Template path escapes template directory: ${relativePath}.`);
 			}
 
+			// Check existence using fs.access (works for both files and directories)
 			try {
-				const file = Bun.file(fullPath);
-				if (await file.exists()) {
-					this.templateCache.set(relativePath, fullPath);
-					return fullPath;
-				}
+				await fs.access(resolved);
+				this.templateCache.set(relativePath, resolved);
+				return resolved;
 			} catch {
-				// File.stat throws for symlinks and other edge cases; treat as "not found"
+				// Not found in this category; continue to next
 			}
 		}
 
@@ -162,20 +162,37 @@ export class BunFileSystem implements IFileSystem {
 	}
 
 	/**
-	 * Stage a file by reading from the template and writing to the staging directory.
-	 * Creates intermediate directories in the staging path as needed.
+	 * Stage a file or directory by reading from the template and writing
+	 * to the staging directory. If the resolved path is a directory, all
+	 * files within it are staged recursively. Creates intermediate
+	 * directories in the staging path as needed.
 	 */
 	async stageFile(relativePath: string): Promise<void> {
-		// Read the template file content
-		const templatePath = await this.resolveTemplatePath(relativePath);
-		const content = await Bun.file(templatePath).text();
+		const resolved = await this.resolveTemplatePath(relativePath);
+		const stat = await fs.stat(resolved);
 
-		// Compute staging path and ensure its parent directory exists
-		const stagingPath = this.resolveStagingPath(relativePath);
-		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
+		if (stat.isDirectory()) {
+			// Walk the template directory and stage each file
+			const files = await this.walkDirectory(resolved);
+			for (const filePath of files) {
+				const fileRelative = path.relative(resolved, filePath);
+				const fullRelative = path.join(relativePath, fileRelative);
 
-		// Write to staging
-		await Bun.write(stagingPath, content);
+				// Read content and write to staging
+				const content = await Bun.file(filePath).text();
+				const stagingPath = this.resolveStagingPath(fullRelative);
+				await fs.mkdir(path.dirname(stagingPath), { recursive: true });
+				await Bun.write(stagingPath, content);
+			}
+		} else {
+			// Single file: read and write to staging
+			const templatePath = resolved;
+			const content = await Bun.file(templatePath).text();
+
+			const stagingPath = this.resolveStagingPath(relativePath);
+			await fs.mkdir(path.dirname(stagingPath), { recursive: true });
+			await Bun.write(stagingPath, content);
+		}
 	}
 
 	/**
@@ -368,12 +385,20 @@ export class BunFileSystem implements IFileSystem {
 
 	/**
 	 * Recursively walk a directory and return all file paths.
+	 * Skips symbolic links to prevent following symlinks that
+	 * point outside the template directory (security measure).
 	 */
 	private async walkDirectory(dirPath: string): Promise<string[]> {
 		const files: string[] = [];
 		const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
 		for (const entry of entries) {
+			// Skip symbolic links — they may point outside the template
+			// (e.g., development-time symlinks to other projects)
+			if (entry.isSymbolicLink()) {
+				continue;
+			}
+
 			const entryPath = path.join(dirPath, entry.name);
 			if (entry.isDirectory()) {
 				const subFiles = await this.walkDirectory(entryPath);

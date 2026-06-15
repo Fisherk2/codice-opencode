@@ -51,4 +51,5 @@ Bun.serve({
 });
 
 // Signal readiness to parent process
+// biome-ignore lint/suspicious/noConsole: intentional E2E server logging
 console.error(`Mock GitHub API server listening on port ${port}`);

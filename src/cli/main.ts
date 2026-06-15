@@ -105,6 +105,7 @@ async function main(): Promise<void> {
 	// Parse mode and options
 	const parsed = parseArgs(args);
 	if (parsed === null) {
+		// biome-ignore lint/suspicious/noConsole: intentional CLI output
 		console.error("Usage error: unrecognized arguments. Use --help for usage information.");
 		process.exit(EXIT_USAGE);
 	}
@@ -115,18 +116,16 @@ async function main(): Promise<void> {
 	// Wire dependencies (needed early for SIGINT cleanup)
 	const deps = createDependencies(destinationPath);
 
-	// SIGINT handler — clean up staging directory before exit
+	// SIGINT handler — immediately exit to avoid races with async cleanup.
+	// The staging directory will be left behind but cleaned up by the caller
+	// (e.g., the test harness's trap handler or the OS temp file cleanup).
+	let interrupted = false;
 	const handleSigint = (): void => {
-		console.error("\nInterrupted by user. Cleaning up staging directory...");
-		deps.fileSystem
-			.cleanStaging()
-			.then(() => {
-				console.error("Staging directory cleaned.");
-				process.exit(EXIT_INTERRUPT);
-			})
-			.catch(() => {
-				process.exit(EXIT_INTERRUPT);
-			});
+		if (interrupted) return; // Double SIGINT: already handling
+		interrupted = true;
+		// biome-ignore lint/suspicious/noConsole: intentional CLI output
+		console.error("\nInterrupted by user.");
+		process.exit(EXIT_INTERRUPT);
 	};
 	process.on("SIGINT", handleSigint);
 
@@ -158,6 +157,7 @@ async function main(): Promise<void> {
 		process.exit(EXIT_SUCCESS);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
+		// biome-ignore lint/suspicious/noConsole: intentional CLI output
 		console.error(`Fatal error: ${message}`);
 		process.exit(EXIT_ERROR);
 	} finally {
@@ -168,8 +168,9 @@ async function main(): Promise<void> {
 // Only invoke when this is the entry point (not during tests or when imported)
 // import.meta.main is true only when the module is directly executed via bun run
 if (import.meta.main) {
-	main().catch((error: unknown) => {
-		console.error("Fatal error:", error instanceof Error ? error.message : String(error));
+	main().catch((_error: unknown) => {
+		// biome-ignore lint/suspicious/noConsole: intentional CLI output
+		console.error("Fatal error:", _error instanceof Error ? _error.message : String(_error));
 		process.exit(EXIT_ERROR);
 	});
 }

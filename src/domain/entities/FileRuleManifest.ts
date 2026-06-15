@@ -74,12 +74,10 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: true,
 		description: "Skill definitions under .opencode",
 	},
-	{
-		path: ".opencode/config.json",
-		category: "mandatory",
-		isDirectory: false,
-		description: "OpenCode global config file",
-	},
+	// NOTE: .opencode/config.json removed — does not exist in template
+	// The .opencode directory is already listed as mandatory above, so
+	// actual files within it (e.g., .gitignore, plugins/) will be
+	// included when the directory is walked at stage time.
 	{
 		path: "skills",
 		category: "mandatory",

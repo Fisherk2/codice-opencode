@@ -29,6 +29,7 @@ export const EXIT_INTERRUPT = 130;
  * Print the version string to stdout.
  */
 export function printVersion(): void {
+	// biome-ignore lint/suspicious/noConsole: intentional CLI output
 	console.log(`Códice v${VERSION}`);
 }
 
@@ -36,6 +37,7 @@ export function printVersion(): void {
  * Print usage help text to stdout.
  */
 export function printHelp(): void {
+	// biome-ignore lint/suspicious/noConsole: intentional CLI output
 	console.log(`Códice — Opencode Workspace Installer v${VERSION}
 
 Usage:

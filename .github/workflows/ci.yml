@@ -55,6 +55,11 @@ jobs:
       - name: Build binary
         run: just build
 
+      - name: Run E2E tests (Linux only — bash scripts)
+        if: runner.os == 'Linux'
+        run: just test-e2e
+        timeout-minutes: 5
+
       - name: Upload binary on failure
         if: failure()
         uses: actions/upload-artifact@v4

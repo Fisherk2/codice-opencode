@@ -48,4 +48,8 @@ describe("CI Workflow Configuration", () => {
 	test("has just build step", () => {
 		expect(ciYaml).toContain("just build");
 	});
+
+	test("has just test-e2e step", () => {
+		expect(ciYaml).toContain("just test-e2e");
+	});
 });

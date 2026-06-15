@@ -1,0 +1,138 @@
+#!/bin/bash
+#===============================================================================
+# F4-T5: Update Workspace E2E
+#
+# Scenario: Pre-populate directory with older version of template files
+#           Start mock GitHub API server
+#           Run --update --force
+# Expected: Obligatorio files updated (overwritten)
+#           Estandar files updated (overwritten)
+#           Opcional files preserved (not touched)
+#           .codice-version file updated
+#
+# This tests the Update mode with a mock GitHub server returning a
+# newer version tag, verifying the version check and selective update.
+#===============================================================================
+
+set -Eeuo pipefail
+source "$(dirname "$0")/common.sh"
+
+# ---------------------------------------------------------------------------
+# Setup
+# ---------------------------------------------------------------------------
+
+log_step "F4-T5: Update Workspace E2E"
+
+# Resolve binary
+CODICE_BINARY="$(setup_binary)"
+log_info "Using binary: $CODICE_BINARY"
+
+# Create temp directory with template
+TEMP_DIR="$(create_temp_dir)"
+log_info "Test directory: $TEMP_DIR"
+
+cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
+
+# Pre-populate with "older version" of key files
+# Estandar file with old content (will be overwritten)
+echo "# OLD README — This should be updated" > "$TEMP_DIR/README.md"
+
+# Obligatorio file with old content (will be overwritten)
+mkdir -p "$TEMP_DIR/agents"
+echo "# OLD AGENT — This should be updated" > "$TEMP_DIR/agents/tlaloc.md"
+
+# Opcional file that already exists (should be preserved)
+mkdir -p "$TEMP_DIR/scripts"
+echo "# OLD SCRIPT — This should be preserved" > "$TEMP_DIR/scripts/build.sh"
+
+# Write version file with old version
+echo '{"installedVersion":"0.9.0","installedAt":"2025-01-01T00:00:00.000Z","optionalSelections":["scripts/build.sh"]}' > "$TEMP_DIR/.codice-version"
+
+log_info "Pre-populated project with version 0.9.0 files"
+
+# Start mock server (returns tag_name: "v1.0.0" by default)
+start_mock_server
+log_info "Mock GitHub API pointing to $CODICE_GITHUB_API_URL"
+
+# ---------------------------------------------------------------------------
+# Execute
+# ---------------------------------------------------------------------------
+
+log_info "Running: $CODICE_BINARY --update --force in $TEMP_DIR"
+EXIT_CODE=0
+(cd "$TEMP_DIR" && "$CODICE_BINARY" --update --force) 2>/dev/null || EXIT_CODE=$?
+
+# Stop mock server
+stop_mock_server
+
+if [[ "$EXIT_CODE" -ne 0 ]]; then
+    log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    exit 1
+fi
+log_pass "Binary exited with code 0"
+
+# ---------------------------------------------------------------------------
+# Assertions
+# ---------------------------------------------------------------------------
+
+log_info "Checking that estandar file WAS updated..."
+
+UPDATED_README=$(head -1 "$TEMP_DIR/README.md" 2>/dev/null || echo "")
+if [[ "$UPDATED_README" == "# OLD README — This should be updated" ]]; then
+    log_fail "README.md was NOT updated (expected estandar to be overwritten)"
+    exit 1
+fi
+log_pass "README.md was updated (estandar overwritten)"
+
+log_info "Checking that obligatorio file WAS updated..."
+
+UPDATED_AGENT=$(head -1 "$TEMP_DIR/agents/tlaloc.md" 2>/dev/null || echo "")
+if [[ "$UPDATED_AGENT" == "# OLD AGENT — This should be updated" ]]; then
+    log_fail "agents/tlaloc.md was NOT updated (expected obligatorio to overwrite)"
+    exit 1
+fi
+log_pass "agents/tlaloc.md was updated (obligatorio overwritten)"
+
+log_info "Checking that opcional file was PRESERVED (not touched)..."
+
+PRESERVED_SCRIPT=$(head -1 "$TEMP_DIR/scripts/build.sh" 2>/dev/null || echo "")
+if [[ "$PRESERVED_SCRIPT" != "# OLD SCRIPT — This should be preserved" ]]; then
+    log_fail "scripts/build.sh was modified! Expected opcional to be preserved."
+    echo "    Actual first line: $PRESERVED_SCRIPT" >&2
+    exit 1
+fi
+log_pass "scripts/build.sh preserved (opcional not updated)"
+
+log_info "Checking that other obligatorio files are present..."
+
+assert_file_exists "$TEMP_DIR/opencode.json"
+
+log_info "Checking version file was updated..."
+
+if [[ ! -f "$TEMP_DIR/.codice-version" ]]; then
+    log_fail ".codice-version file is missing!"
+    exit 1
+fi
+
+VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
+if ! echo "$VERSION_DATA" | grep -q '"installedVersion"\s*:\s*"1.0.0"'; then
+    log_fail "Version file was not updated to 1.0.0"
+    echo "    Version data: $VERSION_DATA" >&2
+    exit 1
+fi
+log_pass "Version file updated to 1.0.0"
+
+log_info "Verifying optional selections preserved from old version..."
+
+if ! echo "$VERSION_DATA" | grep -q '"optionalSelections"\s*:\s*\['; then
+    log_fail "Version file is missing optionalSelections"
+    echo "    Version data: $VERSION_DATA" >&2
+    exit 1
+fi
+log_pass "Optional selections preserved in version file"
+
+# ---------------------------------------------------------------------------
+# Done
+# ---------------------------------------------------------------------------
+
+log_pass "F4-T5: All assertions passed"
