@@ -153,7 +153,7 @@ describe("ProjectInstallUseCase", () => {
 			expect(calls.stageFile.length).toBe(0);
 		});
 
-		it("should skip confirmation when force=true even if destination is not empty", async () => {
+		it("should skip confirmation and optional selection when force=true", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.isEmpty as ReturnType<typeof mockFn>).mockResolvedValue(false);
 			const prompt = createMockPrompt();
@@ -164,7 +164,10 @@ describe("ProjectInstallUseCase", () => {
 
 			expect(result.ok).toBe(true);
 			expect(prompt.confirm).not.toHaveBeenCalled();
-			expect(calls.stageFile.length).toBe(FILE_RULE_MANIFEST.length);
+			expect(prompt.selectOptional).not.toHaveBeenCalled();
+			// Only non-optional files should be staged (mandatory + standard)
+			const nonOptionalCount = FILE_RULE_MANIFEST.length - optionalRules.length;
+			expect(calls.stageFile.length).toBe(nonOptionalCount);
 		});
 
 		it("should present optional files checkbox and use selected paths", async () => {

@@ -1,6 +1,6 @@
 import semver from "semver";
 import type { IGitHubClient } from "../../application/ports/IGitHubClient";
-import { GITHUB_API_LATEST_RELEASE, GITHUB_API_TIMEOUT_MS } from "../config/constants";
+import { GITHUB_API_TIMEOUT_MS, getGitHubApiUrl } from "../config/constants";
 
 /** Maximum allowed response body size (1 MB) to prevent OOM from malicious responses */
 const MAX_RESPONSE_BYTES = 1024 * 1024;
@@ -22,7 +22,7 @@ export class GitHubRestClient implements IGitHubClient {
 	 * @param timeoutMs - Request timeout in milliseconds (default: from constants)
 	 */
 	constructor(apiUrl?: string, timeoutMs?: number) {
-		this.apiUrl = apiUrl ?? GITHUB_API_LATEST_RELEASE;
+		this.apiUrl = apiUrl ?? getGitHubApiUrl();
 		this.timeoutMs = timeoutMs ?? GITHUB_API_TIMEOUT_MS;
 	}
 

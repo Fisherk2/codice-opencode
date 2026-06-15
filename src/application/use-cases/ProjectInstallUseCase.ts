@@ -67,9 +67,11 @@ export class ProjectInstallUseCase {
 			}
 		}
 
-		// Present optional files as a checklist
+		// Present optional files as a checklist (skip if force=true — no interaction)
 		const optionalRules = getRulesByCategory("optional");
-		const selectedOptionals = await this.userPrompt.selectOptional(optionalRules);
+		const selectedOptionals = options?.force
+			? []
+			: await this.userPrompt.selectOptional(optionalRules);
 
 		// Execute the merge engine with manifest rules + selected optionals
 		const mergeResult = await this.mergeEngine.execute(FILE_RULE_MANIFEST, selectedOptionals);

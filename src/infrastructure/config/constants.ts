@@ -4,9 +4,13 @@ export const GITHUB_OWNER = "fisherk2";
 /** GitHub repository name */
 export const GITHUB_REPO = "11-codice-opencode";
 
-/** GitHub API URL for latest release */
-export const GITHUB_API_LATEST_RELEASE =
-	`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest` as const;
+/** GitHub API URL for latest release (default: hardcoded URL, override via CODICE_GITHUB_API_URL env var) */
+export function getGitHubApiUrl(): string {
+	return (
+		process.env.CODICE_GITHUB_API_URL ??
+		`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`
+	);
+}
 
 /** Timeout for GitHub API requests (milliseconds) */
 export const GITHUB_API_TIMEOUT_MS = 3_000;
