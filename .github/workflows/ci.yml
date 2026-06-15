@@ -60,10 +60,32 @@ jobs:
         run: just test-e2e
         timeout-minutes: 5
 
-      - name: Upload binary on failure
-        if: failure()
+      - name: Smoke test binary (macOS/Windows)
+        if: runner.os != 'Linux'
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            ./dist/codice-macos --version
+            ./dist/codice-macos --help
+          else
+            ./dist/codice-windows.exe --version
+            ./dist/codice-windows.exe --help
+          fi
+
+      - name: Set artifact binary name
+        id: artifact
+        shell: bash
+        run: |
+          case "${{ runner.os }}" in
+            Linux)   echo "name=codice-linux" >> "$GITHUB_OUTPUT" ;;
+            macOS)   echo "name=codice-macos" >> "$GITHUB_OUTPUT" ;;
+            Windows) echo "name=codice-windows" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Upload binary artifact
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
-          name: codice-${{ runner.os }}
+          name: ${{ steps.artifact.outputs.name }}
           path: dist/
-          retention-days: 1
+          retention-days: 7

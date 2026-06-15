@@ -4,16 +4,87 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to release'
+        required: true
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.1"
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build binary
+        run: just build
+
+      - name: Set artifact name
+        id: artifact
+        shell: bash
+        run: |
+          case "${{ runner.os }}" in
+            Linux)   echo "name=codice-linux" >> "$GITHUB_OUTPUT" ;;
+            macOS)   echo "name=codice-macos" >> "$GITHUB_OUTPUT" ;;
+            Windows) echo "name=codice-windows" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: dist/
+          retention-days: 1
+
   release:
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: codice-linux
+          path: ./release-assets
+
+      - name: Download macOS binary
+        uses: actions/download-artifact@v4
+        with:
+          name: codice-macos
+          path: ./release-assets
+
+      - name: Download Windows binary
+        uses: actions/download-artifact@v4
+        with:
+          name: codice-windows
+          path: ./release-assets
+
+      - name: List release assets
+        run: ls -la ./release-assets/
 
       - name: Extract release body from CHANGELOG
         run: |
@@ -23,10 +94,21 @@ jobs:
             'index($0, "## [" ver "]") == 1 { found=1; next }
              /^## \[/ && found { exit }
              found' CHANGELOG.md > release-body.md
-          [ -s release-body.md ] || echo "No changelog section found for $VERSION" >&2
+          if [ ! -s release-body.md ]; then
+            echo "## Release $VERSION" > release-body.md
+            echo "" >> release-body.md
+            echo "No changelog section found for this version. Please update CHANGELOG.md." >> release-body.md
+            echo "" >> release-body.md
+            echo "See [CHANGELOG.md](./CHANGELOG.md) for the full history." >> release-body.md
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
           body_path: release-body.md
+          files: |
+            ./release-assets/codice-linux
+            ./release-assets/codice-macos
+            ./release-assets/codice-windows.exe
           make_latest: true
+          fail_on_unmatched_files: false
