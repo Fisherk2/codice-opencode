@@ -4,6 +4,12 @@
   <img src="docs/img/banner.png" alt="Spec-Driven Development Workspace Banner">
 </p>
 
+<p align="center">
+  <a href="https://github.com/Fisherk2/codice-opencode/actions/workflows/ci.yml">
+    <img src="https://github.com/Fisherk2/codice-opencode/workflows/CI/badge.svg" alt="CI">
+  </a>
+</p>
+
 **OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
 
 A production-grade workspace integrating 45 engineering skills + 1 meta-skill organized in 10 SDD cycle phases (3 optional) + Extra, slash commands, and specialized agents to accelerate AI-assisted development. Designed for teams and developers who want consistent quality in AI-assisted projects.
@@ -342,6 +348,93 @@ project-root/
 
 ---
 
+## Códice CLI — Workspace Installer
+
+**Códice** is a command-line tool that installs and updates this OpenCode workspace template atomically, safely, and intelligently. It is compiled with Bun into a single native binary with zero runtime dependencies.
+
+### Quick Install
+
+#### Linux (x64) / macOS (x64)
+
+```bash
+# Download the latest binary for your platform:
+curl -L -o codice https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-linux
+# macOS: replace `codice-linux` with `codice-macos`
+
+# Make it executable:
+chmod +x codice
+
+# Run the installer:
+./codice
+```
+
+#### Windows (x64)
+
+```powershell
+# Download the latest binary:
+curl -L -o codice.exe https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-windows.exe
+
+# Run the installer:
+.\codice.exe
+```
+
+### Usage
+
+Códice presents an interactive menu with three installation modes:
+
+| Mode | Description | When to Use |
+|------|-------------|-------------|
+| **Clean Install** | Overwrites the destination with the complete template | Starting a fresh project |
+| **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
+| **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
+
+```bash
+# Interactive menu (default):
+codice
+
+# Direct mode with flags:
+codice --dest ./my-project     # Install into a specific directory
+codice --force                  # Skip confirmations (automated installs)
+codice --verbose                # Enable detailed logging for debugging
+codice --version                # Show binary version
+codice --help                   # Show usage information
+```
+
+### File Classification
+
+When installing or updating, Códice classifies every file into one of three categories:
+
+| Category | Behavior | Examples |
+|----------|----------|----------|
+| **Obligatorio** | Always copied, overwrites existing | Core agents, commands, configuration |
+| **Estándar** | Copied only if missing in destination | Recommended skills, documentation |
+| **Opcional** | Presented as a checklist; copied only if selected **and** missing | Optional skills, specialized references |
+
+### Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| `Permission denied` | Run `chmod +x` on the downloaded binary, or prepend `sudo` |
+| Binary not found after install | Ensure the binary is in your `$PATH`, or use `./codice` |
+| GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
+| Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
+| `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--dest <path>` | Target installation directory (default: current directory) |
+| `--force` | Skip all confirmation prompts |
+| `--verbose` | Enable structured logging to stderr |
+| `--version` | Print binary version and exit |
+| `--clean` | Run Clean Install mode (skip interactive menu) |
+| `--project` | Run Project Install mode (skip interactive menu) |
+| `--update` | Run Update Workspace mode (skip interactive menu) |
+| `--help` | Show usage help |
+
+---
+
 ## License
 
 MIT — See [LICENSE](LICENSE) for details.
@@ -360,4 +453,4 @@ Thanks to their authors and contributors for their invaluable contribution to th
 
 ---
 
-*Last revision: 2026-06-12*
+*Last revision: 2026-06-15*
