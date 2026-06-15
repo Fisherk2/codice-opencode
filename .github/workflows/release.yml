@@ -22,6 +22,7 @@ jobs:
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +45,7 @@ jobs:
           case "${{ runner.os }}" in
             Linux)   echo "name=codice-linux" >> "$GITHUB_OUTPUT" ;;
             macOS)   echo "name=codice-macos" >> "$GITHUB_OUTPUT" ;;
-            Windows) echo "name=codice-windows" >> "$GITHUB_OUTPUT" ;;
+            Windows) echo "name=codice-windows.exe" >> "$GITHUB_OUTPUT" ;;
           esac
 
       - name: Upload binary artifact
@@ -80,11 +81,14 @@ jobs:
       - name: Download Windows binary
         uses: actions/download-artifact@v4
         with:
-          name: codice-windows
+          name: codice-windows.exe
           path: ./release-assets
 
-      - name: List release assets
-        run: ls -la ./release-assets/
+      - name: Generate SHA-256 checksums
+        run: |
+          cd ./release-assets
+          sha256sum codice-linux codice-macos codice-windows.exe > checksums-sha256.txt
+          cat checksums-sha256.txt
 
       - name: Extract release body from CHANGELOG
         run: |
@@ -110,5 +114,6 @@ jobs:
             ./release-assets/codice-linux
             ./release-assets/codice-macos
             ./release-assets/codice-windows.exe
+            ./release-assets/checksums-sha256.txt
           make_latest: true
           fail_on_unmatched_files: false

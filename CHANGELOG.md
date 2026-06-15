@@ -8,6 +8,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [1.0.0] — 2026-06-15
+
+### Added
+
+- **CLI with 3 installation modes**: Clean Install, Project Install, and Update Workspace
+- **Interactive TUI** powered by @clack/prompts with mode selection, confirmation prompts, and optional file checkboxes
+- **Atomic file operations**: Staging directory + rename pattern guarantees zero corruption on interruption
+- **File classification engine**: Obligatorio (always copy), Estándar (copy if missing), Opcional (user-selected, copy if missing)
+- **Semantic version checking**: Queries GitHub API for latest release, compares with local `.codice-version`
+- **Path traversal prevention**: Validates all paths resolve within destination directory
+- **`--dest` flag**: Safe development playground via `--dest tests/fixtures/workspace/`
+- **`--force` flag**: Skip confirmations for automated installs
+- **`--verbose` flag**: Structured logging for debugging
+- **Cross-platform binaries**: Linux (x64), macOS (x64), Windows (x64) via Bun compilation
+- **CI/CD pipeline**: GitHub Actions with 3-platform matrix, smoke tests, and artifact upload
+- **Release automation**: Tag-triggered workflow builds binaries for all platforms, generates checksums, and creates GitHub Releases
+- **E2E test suite**: 6 scenarios covering clean install, project install, optional skip, update workspace, atomic rollback, and path traversal rejection
+- **Unit + Integration tests**: 284 tests with 96.23% function coverage
+- **Domain architecture**: Clean Architecture with strict layer boundaries (Domain → Application → Infrastructure)
+- **FileMergeEngine**: Strategy-based merge orchestrator with Obligatorio/Estándar/Opcional rules
+- **VersionComparator**: Semantic version comparison with newer/older/equal/incompatible results
+- **AtomicStager**: Atomic staging, commit, and rollback operations
+- **TemplateResolver**: Template path resolution with category search and cache
+
+### Architecture
+
+- Clean Architecture with Dependency Inversion Principle
+- Result/Either pattern for explicit error handling without exceptions
+- Strategy Pattern for file merge rules
+- Command Pattern for installation modes
+- SRP-based refactoring: BunFileSystem decomposed into TemplateResolver + AtomicStager
+
+### Technical
+
+- Bun runtime for compilation and execution
+- TypeScript strict mode with zero `any` types
+- Biome for linting and formatting
+- GitHub Actions CI/CD with 3-platform matrix
+- SHA-256 checksums for release integrity verification
+
+
 ---
 
 ## Project Information

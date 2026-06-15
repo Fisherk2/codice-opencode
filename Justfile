@@ -66,7 +66,7 @@ build-all:
     echo "All builds succeeded"
 
 test-e2e:
-    just build && bash tests/e2e/run-e2e.sh
+    just build && SKIP_BUILD=1 bash tests/e2e/run-e2e.sh
 
 clean:
     rm -rf dist/*

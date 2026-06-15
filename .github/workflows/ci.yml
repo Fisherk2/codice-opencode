@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
 
@@ -79,7 +80,7 @@ jobs:
           case "${{ runner.os }}" in
             Linux)   echo "name=codice-linux" >> "$GITHUB_OUTPUT" ;;
             macOS)   echo "name=codice-macos" >> "$GITHUB_OUTPUT" ;;
-            Windows) echo "name=codice-windows" >> "$GITHUB_OUTPUT" ;;
+            Windows) echo "name=codice-windows.exe" >> "$GITHUB_OUTPUT" ;;
           esac
 
       - name: Upload binary artifact
