@@ -66,6 +66,28 @@
 - ✅ `just dev` escribe en `tests/fixtures/workspace/`, no en la raíz
 - ✅ ADR-005 creado en `specs/adr/adr-005-dest-flag-and-workspace.md`
 
+### Fase 4.6 — Code Review + Refactor (F4/F4.5 post-review)
+
+**Tareas:**
+
+| ID | Descripción | Estado |
+|----|-------------|--------|
+| F46-T1 | Code review 5-ejes (Correctness, Readability, Architecture, Security, Performance) | ✅ Completo |
+| F46-T2 | R1: Extraer `resolveNewVersion()` helper en `UpdateWorkspaceUseCase.ts` | ✅ Completo |
+| F46-T3 | R2: Extraer `TemplateResolver.ts` de `BunFileSystem.ts` | ✅ Completo |
+| F46-T4 | R2: Extraer `AtomicStager.ts` de `BunFileSystem.ts` | ✅ Completo |
+| F46-T5 | R2: Refactorizar `BunFileSystem.ts` como fachada que compone ambas clases | ✅ Completo |
+| F46-T6 | Formateo Biome + verificación completa (`bun test`, `just check`, E2E) | ✅ Completo |
+
+**Criterios de completitud (DoD F4.6):**
+- ✅ `bun test`: 284 pass, 0 fail, 593 expects (sin regresión)
+- ✅ `just check`: 0 errors (biome ci + tsc --noEmit)
+- ✅ E2E: 6/6 escenarios pasando (sin regresión)
+- ✅ Coverage: 96.23% funciones / 94.26% líneas (↑ 1.27pp / 0.65pp)
+- ✅ `BunFileSystem.ts` reducido de 412 → 115 líneas
+- ✅ Todos los archivos de infraestructura < 200 líneas
+- ✅ Commit `33f58b4` en `feat/installer-updater`
+
 **Bugs encontrados y corregidos durante E2E:**
 - `resolveTemplatePath()`: usa `fs.access()` en vez de `Bun.file().exists()`
 - `stageFile()`: maneja directorios (walk recursivo)
@@ -90,13 +112,29 @@
 
 - **Tests unit+int:** 284 tests, 0 fail, 593 expects
 - **Tests E2E:** 6/6 pasando
-- **Coverage:** 94.96% funciones / 93.61% líneas
+- **Coverage:** 96.23% funciones / 94.26% líneas
 - **Domain coverage:** 100% líneas
 - **`just check`:** 0 errores
 - **Binary:** compilado a dist/codice-linux (74MB ELF x64)
 - **Fix rate:** 10+ bugs encontrados y corregidos durante desarrollo de E2E
+- **Commits F4:** `5f75006` (E2E + CI + Coverage)
+- **Commits F4.5:** `04c7c4b` (`--dest` + workspace seguro)
+- **Commits F4.6:** `33f58b4` (code review + extract TemplateResolver/AtomicStager)
 
 ## 5. Próximos Pasos (F5-F6)
 
-- F5: Builds multi-plataforma (Windows/macOS), release automation, GitHub Releases
-- F6: README completo, CHANGELOG, documentación de arquitectura
+### F5 — CI/CD + Cross-platform (Listo para planificación)
+
+Builds multi-plataforma (Windows/macOS/Linux), release automation, GitHub Releases con binarios adjuntos.
+
+**Tareas preliminares identificadas:**
+- F5-T1: Configurar cross-compilation en GitHub Actions (matrix: ubuntu, macos, windows)
+- F5-T2: Build step produce 3 binarios: `codice-linux`, `codice-macos`, `codice-windows.exe`
+- F5-T3: Configurar GitHub Release con etiquetado semántico automático
+- F5-T4: Subir artefactos de build como assets del release
+- F5-T5: Generar release notes desde `CHANGELOG.md`
+- F5-T6: Verificar binarios en CI (test-e2e en cada plataforma)
+
+### F6 — Documentación (Pendiente)
+
+README final, CHANGELOG, documentación de arquitectura.

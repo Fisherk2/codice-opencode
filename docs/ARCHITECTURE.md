@@ -13,14 +13,21 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 | [ADR-004](../specs/adr/adr-004-clack-prompts.md) | TUI with @clack/prompts | Accepted | Lightweight interactive prompts |
 | [ADR-005](../specs/adr/adr-005-dest-flag-and-workspace.md) | `--dest` Flag and Workspace Directory | Accepted | Safe dev playground via `--dest` + `tests/fixtures/workspace/` |
 
+> **Note:** `TemplateResolver` and `AtomicStager` are extracted classes (not full ADRs). They are SRP-based refactorings of `BunFileSystem` that follow the existing ADR-003 (atomic staging) pattern.
+
 ## Layer Diagram
 
 ```mermaid
 graph TD
     subgraph "Infrastructure Layer"
-        FS[BunFileSystem Adapter]
+        FS[BunFileSystem]
+        TR[TemplateResolver]
+        AS[AtomicStager]
         GH[GitHubRestClient]
         TUI[ClackPromptsAdapter]
+
+        FS -->|delegates| TR
+        FS -->|delegates| AS
     end
 
     subgraph "Application Layer"
@@ -64,9 +71,11 @@ graph TD
 
 ### Infrastructure Layer (`src/infrastructure/`)
 - Concrete adapters for external systems
-- BunFileSystem: Atomic file operations
-- GitHubRestClient: Version checking
-- ClackPromptsAdapter: TUI interactions
+- BunFileSystem: Facade implementing IFileSystem, composes TemplateResolver + AtomicStager
+- TemplateResolver: Template path resolution with category search and cache (extracted from BunFileSystem v1)
+- AtomicStager: Atomic staging, commit, and rollback operations (extracted from BunFileSystem v1)
+- GitHubRestClient: Version checking via GitHub API
+- ClackPromptsAdapter: TUI interactions via @clack/prompts
 
 ### CLI Layer (`src/cli/`)
 - Entry point: main.ts
