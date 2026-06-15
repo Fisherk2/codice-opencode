@@ -72,14 +72,12 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 		const arg: string = args[i]!; // Non-null: guarded by i < args.length
 
 		if (VALUE_FLAGS.has(arg)) {
-			// --dest <path>: consume the next arg as the value
+			// Consume the next arg as the value for this flag
 			i++;
 			if (i >= args.length) {
-				return null; // --dest requires a value
+				return null; // --dest (and future value flags) require a value
 			}
-			if (arg === "--dest") {
-				destination = args[i];
-			}
+			destination = args[i];
 		} else if (ALLOWED_FLAGS.has(arg)) {
 			flags.add(arg);
 		} else {

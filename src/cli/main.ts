@@ -165,12 +165,9 @@ async function main(): Promise<void> {
 	}
 }
 
-// Only invoke when this is the entry point (not during tests or when imported)
-// import.meta.main is true only when the module is directly executed via bun run
+// Only invoke when this is the entry point (not during tests or when imported).
+// import.meta.main is true only when the module is directly executed via bun run.
+// The .catch() handler is omitted because main()'s try/catch catches all errors.
 if (import.meta.main) {
-	main().catch((_error: unknown) => {
-		// biome-ignore lint/suspicious/noConsole: intentional CLI output
-		console.error("Fatal error:", _error instanceof Error ? _error.message : String(_error));
-		process.exit(EXIT_ERROR);
-	});
+	main();
 }

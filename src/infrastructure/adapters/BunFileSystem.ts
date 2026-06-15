@@ -172,26 +172,14 @@ export class BunFileSystem implements IFileSystem {
 		const stat = await fs.stat(resolved);
 
 		if (stat.isDirectory()) {
-			// Walk the template directory and stage each file
 			const files = await this.walkDirectory(resolved);
 			for (const filePath of files) {
 				const fileRelative = path.relative(resolved, filePath);
 				const fullRelative = path.join(relativePath, fileRelative);
-
-				// Read content and write to staging
-				const content = await Bun.file(filePath).text();
-				const stagingPath = this.resolveStagingPath(fullRelative);
-				await fs.mkdir(path.dirname(stagingPath), { recursive: true });
-				await Bun.write(stagingPath, content);
+				await this.writeFileToStaging(filePath, fullRelative);
 			}
 		} else {
-			// Single file: read and write to staging
-			const templatePath = resolved;
-			const content = await Bun.file(templatePath).text();
-
-			const stagingPath = this.resolveStagingPath(relativePath);
-			await fs.mkdir(path.dirname(stagingPath), { recursive: true });
-			await Bun.write(stagingPath, content);
+			await this.writeFileToStaging(resolved, relativePath);
 		}
 	}
 
@@ -381,6 +369,17 @@ export class BunFileSystem implements IFileSystem {
 				// If rollback fails for a specific file, continue with others
 			}
 		}
+	}
+
+	/**
+	 * Read a template file and write its content to the staging directory.
+	 * Creates intermediate directories in the staging path as needed.
+	 */
+	private async writeFileToStaging(sourcePath: string, stagingRelativePath: string): Promise<void> {
+		const content = await Bun.file(sourcePath).text();
+		const stagingPath = this.resolveStagingPath(stagingRelativePath);
+		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
+		await Bun.write(stagingPath, content);
 	}
 
 	/**
