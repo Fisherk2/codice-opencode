@@ -216,21 +216,116 @@ F5-T7: Test cross-platform E2E         ← depende de T1
 
 ---
 
-## F6 — Documentación (Listo para planeación)
+## F6 — Documentación (En planeación)
 
-**Estado:** 🟡 Pendiente — listo para comenzar
-**Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F6 ⬅️ Siguiente**
+**Estado:** 🟡 En Revisión — plan aprobado, listo para ejecutar
+**Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F6 ⬅️ En curso**
+**Plan:** Ver `tasks/plan.md` para detalle completo
 
-| ID | Descripción | Prioridad | Estado |
-|----|-------------|-----------|--------|
-| F6-T1 | README.md — instrucciones copy-paste, instalación, uso (3 modos), troubleshooting, CI/CD badge | Alta | Pendiente |
-| F6-T2 | CHANGELOG.md — verificar formato Keep a Changelog, historial v1.0.0 completo | Alta | Pendiente |
-| F6-T3 | Documentación de arquitectura — ADRs finales, ARCHITECTURE.md actualizado | Media | Pendiente |
-| F6-T4 | Sección de Contributing (CONTRIBUTING.md) — guía para PRs, dev setup, testing | Media | Pendiente |
+---
 
-**Criterios de completitud propuestos (DoD F6):**
-- [ ] README.md aprobado por peer review no-técnico
-- [ ] CHANGELOG.md sigue formato Keep a Changelog
+## Phase 1: Slice 1 — Usuario Final
+
+### F6-T1: README.md — Añadir sección Códice CLI
+
+**Descripción:** Añadir sección "Códice CLI — Instalador del Workspace" al README existente. Badge CI/CD, quick install, usage (3 modos), troubleshooting. No modificar contenido existente del workspace template de OpenCode.
+
+**Criterios de aceptación:**
+- [ ] Badge CI: `https://github.com/Fisherk2/codice-opencode/workflows/CI/badge.svg`
+- [ ] Nueva sección con: quick install (copy-paste), usage (3 modos), troubleshooting, flags
+- [ ] Contenido existente del workspace template NO modificado
+- [ ] Tabla de contenidos actualizada con enlace a nueva sección
+
+**Verificación:**
+- [ ] `just check` pasa (0 errors)
+- [ ] Badge visible en GitHub rendered README
+- [ ] Instrucciones copy-paste funcionan en Linux/macOS/Windows
+
+**Dependencias:** Ninguna
+**Files touched:** `README.md`
+**Scope:** M
+
+---
+
+### F6-T2: CHANGELOG.md — Completar sección Security
+
+**Descripción:** Añadir sección `### Security` a v1.0.0. Si no hay fixed issues, texto: "No security vulnerabilities identified in this release."
+
+**Criterios de aceptación:**
+- [ ] Sección Security presente en v1.0.0
+- [ ] Formato consistente con Added, Architecture, Technical
+- [ ] `just check` pasa
+
+**Verificación:**
+- [ ] CHANGELOG pasa validación Keep a Changelog
+- [ ] `just check` pasa
+
+**Dependencias:** Ninguna
+**Files touched:** `CHANGELOG.md`
+**Scope:** XS
+
+---
+
+## Phase 2: Slice 2 — Contribuidor
+
+### F6-T3: CONTRIBUTING.md — Crear guía completa
+
+**Descripción:** CONTRIBUTING.md vacío → crear completo. Secciones: How to Contribute, Development Setup, Testing, Building, Commit Convention, Pre-commit Checklist.
+
+**Criterios de aceptación:**
+- [ ] How to Contribute: fork & branch, PR process
+- [ ] Development Setup: `just setup`, `just dev`, `just check`
+- [ ] Testing: `just test`, `just test:unit`, `just test:integration`, `just test:e2e`
+- [ ] Building: `just build`, `just build-all`
+- [ ] Commit Message Convention: feat, fix, docs, refactor, test, chore
+- [ ] Pre-commit Checklist: `just check` + `just test`
+
+**Verificación:**
+- [ ] CONTRIBUTING.md no vacío
+- [ ] `just check` pasa
+- [ ] Contribuidor nuevo puede hacer setup siguiendo el documento
+
+**Dependencias:** Ninguna
+**Files touched:** `CONTRIBUTING.md`
+**Scope:** M
+
+---
+
+## Phase 3: Slice 3 — Arquitectura
+
+### F6-T4: docs/ARCHITECTURE.md — Verificar ADRs y decisiones
+
+**Descripción:** Verificar que ARCHITECTURE.md + 5 ADRs cubren todas las decisiones de SPEC.md (decisions 1-7). Identificar gaps.
+
+**Criterios de aceptación:**
+- [ ] ADR-001 a ADR-005 listados con estado "Accepted"
+- [ ] Decisiones 1-7 de SPEC.md cubiertas
+- [ ] Layer diagram refleja estructura actual del código
+- [ ] No hay decisión en SPEC.md sin documentación en ADRs
+
+**Verificación:**
+- [ ] Lectura cruzada SPEC.md vs ADRs → 0 gaps
+- [ ] `just check` pasa
+
+**Dependencias:** Ninguna
+**Files touched:** `docs/ARCHITECTURE.md`, `specs/adr/*.md` (lectura)
+**Scope:** S
+
+---
+
+## Checkpoint: F6 Completado
+
+| Task | Estado |
+|------|--------|
+| F6-T1: README.md (Códice CLI) | ⏳ Pendiente |
+| F6-T2: CHANGELOG.md (Security) | ⏳ Pendiente |
+| F6-T3: CONTRIBUTING.md | ⏳ Pendiente |
+| F6-T4: ARCHITECTURE.md (ADRs) | ⏳ Pendiente |
+
+## Gate F6: F6 Review Checklist
+
+- [ ] README aprobado por peer review no-técnico
+- [ ] CHANGELOG.md sigue formato Keep a Changelog (Added, Changed, Deprecated, Removed, Fixed, **Security**)
 - [ ] CI/CD badge visible en README
 - [ ] ARCHITECTURE.md y ADRs documentan decisiones clave
 - [ ] `bun test`: sin regresión (284 pass, 0 fail)
