@@ -61,17 +61,19 @@ jobs:
         run: just test-e2e
         timeout-minutes: 5
 
-      - name: Smoke test binary (macOS/Windows)
-        if: runner.os != 'Linux'
+      - name: Smoke test binary (macOS)
+        if: runner.os == 'macOS'
         shell: bash
         run: |
-          if [ "${{ runner.os }}" = "macOS" ]; then
-            ./dist/codice-macos --version
-            ./dist/codice-macos --help
-          else
-            ./dist/codice-windows.exe --version
-            ./dist/codice-windows.exe --help
-          fi
+          ./dist/codice-macos --version
+          ./dist/codice-macos --help
+
+      - name: Smoke test binary (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          ./dist/codice-windows.exe --version
+          ./dist/codice-windows.exe --help
 
       - name: Set artifact binary name
         id: artifact
