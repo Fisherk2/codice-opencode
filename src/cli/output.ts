@@ -49,8 +49,9 @@ Usage:
   codice --help              Show this help and exit
 
 Flags:
-  --force     Skip all confirmations
-  --verbose   Enable structured JSON logging to stderr
+  --dest <path>  Target directory (default: current directory)
+  --force        Skip all confirmations
+  --verbose      Enable structured JSON logging to stderr
 
 Exit codes:
   0   Success

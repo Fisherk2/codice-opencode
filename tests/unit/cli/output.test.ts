@@ -81,6 +81,7 @@ describe("printHelp", () => {
 			expect(helpText).toContain("--help");
 			expect(helpText).toContain("--force");
 			expect(helpText).toContain("--verbose");
+			expect(helpText).toContain("--dest");
 			expect(helpText).toContain("Exit codes");
 		} finally {
 			spy.mockRestore();

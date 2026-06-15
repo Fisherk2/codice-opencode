@@ -110,8 +110,8 @@ async function main(): Promise<void> {
 		process.exit(EXIT_USAGE);
 	}
 
-	const { mode, options } = parsed;
-	const destinationPath = process.cwd();
+	const { mode, options, destination } = parsed;
+	const destinationPath = destination ?? process.cwd();
 
 	// Wire dependencies (needed early for SIGINT cleanup)
 	const deps = createDependencies(destinationPath);

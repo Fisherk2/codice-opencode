@@ -4,7 +4,8 @@ setup:
     bun install
 
 dev:
-    bun run src/cli/main.ts --verbose
+    mkdir -p tests/fixtures/workspace
+    bun run src/cli/main.ts --verbose --dest tests/fixtures/workspace
 
 lint:
     bunx @biomejs/biome check src/ tests/

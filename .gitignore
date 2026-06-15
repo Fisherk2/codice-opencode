@@ -74,6 +74,10 @@ lcov.info
 junit/
 test-results/
 
+# Generated content (E2E/dev workspace — safe playground for the installer)
+/tests/fixtures/workspace/*
+!/tests/fixtures/workspace/.gitkeep
+
 # ─── Secretos / Config local ─────────────────────────────────────────────────
 *.secret.yaml
 *.local.yaml

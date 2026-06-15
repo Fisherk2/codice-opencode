@@ -64,4 +64,42 @@ describe("parseArgs", () => {
 		expect(result!.options.force).toBe(true);
 		expect(result!.options.verbose).toBe(true);
 	});
+
+	// -----------------------------------------------------------------------
+	// --dest flag tests
+	// -----------------------------------------------------------------------
+
+	it("should parse --dest with a path", () => {
+		const result = parseArgs(["--clean", "--dest", "/tmp/test-dir"]);
+		expect(result).not.toBeNull();
+		expect(result!.mode).toBe("clean");
+		expect(result!.destination).toBe("/tmp/test-dir");
+	});
+
+	it("should return null if --dest is provided without a value", () => {
+		const result = parseArgs(["--clean", "--dest"]);
+		expect(result).toBeNull();
+	});
+
+	it("should extract destination in interactive mode", () => {
+		const result = parseArgs(["--dest", "/custom/path"]);
+		expect(result).not.toBeNull();
+		expect(result!.mode).toBe("interactive");
+		expect(result!.destination).toBe("/custom/path");
+	});
+
+	it("should keep destination undefined when --dest is not provided", () => {
+		const result = parseArgs(["--clean"]);
+		expect(result).not.toBeNull();
+		expect(result!.destination).toBeUndefined();
+	});
+
+	it("should allow combined --dest with --force and --verbose", () => {
+		const result = parseArgs(["--update", "--dest", "./my-project", "--force", "--verbose"]);
+		expect(result).not.toBeNull();
+		expect(result!.mode).toBe("update");
+		expect(result!.destination).toBe("./my-project");
+		expect(result!.options.force).toBe(true);
+		expect(result!.options.verbose).toBe(true);
+	});
 });
