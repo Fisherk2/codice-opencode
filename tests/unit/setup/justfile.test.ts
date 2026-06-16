@@ -42,14 +42,14 @@ describe("Justfile Configuration", () => {
 
 	test("lint recipe uses bunx @biomejs/biome", () => {
 		// Find the lint recipe block using simple section-based parsing
-		const lintMatch = justfile.match(/^lint:\n([\s\S]*?)(?=^\w)/m);
+		const lintMatch = justfile.match(/^lint:\r?\n([\s\S]*?)(?=^\w)/m);
 		expect(lintMatch).not.toBeNull();
 		expect(lintMatch![1]).toContain("bunx @biomejs/biome");
 	});
 
 	test("format recipe uses bunx @biomejs/biome", () => {
 		// Find the format recipe block using simple section-based parsing
-		const formatMatch = justfile.match(/^format:\n([\s\S]*?)(?=^\w)/m);
+		const formatMatch = justfile.match(/^format:\r?\n([\s\S]*?)(?=^\w)/m);
 		expect(formatMatch).not.toBeNull();
 		expect(formatMatch![1]).toContain("bunx @biomejs/biome");
 	});
