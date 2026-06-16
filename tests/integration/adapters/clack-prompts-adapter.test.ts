@@ -203,8 +203,10 @@ describe("ClackPromptsAdapter", () => {
 
 	describe("flow messages", () => {
 		it("should show intro", () => {
-			adapter.showIntro("Códice v1.0.0");
-			expect(mockIntro).toHaveBeenCalledWith("Códice v1.0.0");
+			// Use a placeholder message—the adapter delegates verbatim; version is irrelevant
+			const testMessage = "Códice vX.Y.Z";
+			adapter.showIntro(testMessage);
+			expect(mockIntro).toHaveBeenCalledWith(testMessage);
 		});
 
 		it("should show success", () => {

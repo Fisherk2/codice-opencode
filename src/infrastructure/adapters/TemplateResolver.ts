@@ -1,4 +1,4 @@
-import * as fs from "node:fs/promises";
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { TEMPLATE_DIR_NAME } from "../config/constants";
 
@@ -41,11 +41,24 @@ export class TemplateResolver {
 	 * are always in a `template/` directory at the project or package root.
 	 */
 	static detectTemplateRoot(): string {
-		if (import.meta.dir) {
-			// Source mode: template is ../../template/ relative to src/cli/
-			return path.resolve(import.meta.dir, `../../${TEMPLATE_DIR_NAME}`);
+		// Source mode: template is ../../template/ relative to src/cli/
+		// import.meta.dir is always truthy (even in compiled binaries), so we
+		// verify the path actually exists before using it.
+		const sourcePath = path.resolve(import.meta.dir, `../../${TEMPLATE_DIR_NAME}`);
+		if (fs.existsSync(sourcePath)) {
+			return sourcePath;
 		}
-		// Compiled mode: template is relative to CWD (backward compatible)
+
+		// Compiled mode: try relative to the binary's location.
+		// process.argv[0] is the path to the compiled binary; fall back to
+		// process.execPath (always defined) if argv is empty.
+		const binaryDir = path.dirname(process.argv[0] ?? process.execPath);
+		const binaryRelativePath = path.resolve(binaryDir, `../${TEMPLATE_DIR_NAME}`);
+		if (fs.existsSync(binaryRelativePath)) {
+			return binaryRelativePath;
+		}
+
+		// Fallback: template is relative to CWD (backward compatible)
 		return path.resolve(process.cwd(), TEMPLATE_DIR_NAME);
 	}
 
@@ -103,13 +116,12 @@ export class TemplateResolver {
 				throw new Error(`Template path escapes template directory: ${relativePath}.`);
 			}
 
-			// Check existence using fs.access (works for both files and directories)
-			try {
-				await fs.access(resolved);
+			// Check existence — fs.access() cannot read embedded files in compiled
+			// binaries, but Bun.file() can. However, Bun.file().exists() returns
+			// false for directories, so we use fs.existsSync() for directory entries.
+			if (fs.existsSync(resolved)) {
 				this.templateCache.set(relativePath, resolved);
 				return resolved;
-			} catch {
-				// Not found in this category; continue to next
 			}
 		}
 

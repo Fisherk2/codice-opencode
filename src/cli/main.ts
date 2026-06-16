@@ -1,5 +1,5 @@
 /**
- * Códice — Opencode Workspace Installer v1.0.0
+ * Códice — Opencode Workspace Installer
  *
  * CLI entry point for the interactive installer.
  * Parses command-line arguments, wires dependencies via DI,

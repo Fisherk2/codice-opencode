@@ -1,4 +1,6 @@
 import semver from "semver";
+// Import version for User-Agent header — bundle-friendly (Bun includes package.json at compile time)
+import { version as pkgVersion } from "../../../package.json";
 import type { IGitHubClient } from "../../application/ports/IGitHubClient";
 import { GITHUB_API_TIMEOUT_MS, getGitHubApiUrl } from "../config/constants";
 
@@ -85,7 +87,7 @@ export class GitHubRestClient implements IGitHubClient {
 				signal: controller.signal,
 				headers: {
 					Accept: "application/vnd.github.v3+json",
-					"User-Agent": "codice-installer/1.0.0",
+					"User-Agent": `codice-installer/${pkgVersion}`,
 				},
 			});
 
