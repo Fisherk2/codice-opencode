@@ -25,6 +25,8 @@ export type { Dependencies } from "./container";
 export { createDependencies } from "./container";
 export { VERSION } from "./output";
 export { type CliOptions, type Mode, type ParsedArgs, parseArgs } from "./parse-args";
+// Export main for dynamic import via bin.js (npm requires .js bin extension)
+export { main };
 
 // ---------------------------------------------------------------------------
 // Interactive mode selection

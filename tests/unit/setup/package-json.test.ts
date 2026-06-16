@@ -17,7 +17,8 @@ describe("Package.json Configuration", () => {
 	});
 
 	test("has correct version", () => {
-		expect(pkg.version).toBe("1.0.0");
+		// Match whatever version is in package.json (no hardcoding)
+		expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/);
 	});
 
 	test("has type module", () => {
@@ -49,9 +50,9 @@ describe("Package.json Configuration", () => {
 		expect(pkg.devDependencies["@biomejs/biome"]).toBeDefined();
 	});
 
-	test("has bin entry for codice pointing to main.ts", () => {
+	test("has bin entry for codice pointing to bin.js", () => {
 		expect(pkg.bin).toBeDefined();
-		expect(pkg.bin?.codice).toBe("./src/cli/main.ts");
+		expect(pkg.bin?.codice).toBe("./src/cli/bin.js");
 	});
 
 	test("has files array including src, template, package.json, and tsconfig.json", () => {

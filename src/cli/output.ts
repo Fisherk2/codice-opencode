@@ -9,8 +9,12 @@
 // Binary version
 // ---------------------------------------------------------------------------
 
-/** Compiled-in binary version (also used for version file) */
-export const VERSION = "1.0.0";
+/** Compiled-in binary version (also used for version file).
+ * Reads from package.json — works in source mode (bun run, bunx)
+ * and compiled binary mode (package.json is bundled at compile time). */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import { version as pkgVersion } from "../../package.json";
+export const VERSION: string = pkgVersion;
 
 // ---------------------------------------------------------------------------
 // Exit codes
