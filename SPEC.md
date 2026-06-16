@@ -398,6 +398,7 @@ The following architectural decisions have been resolved and are now part of the
 | 5 | **Local Version Storage** | Persist the installed version in a `.codice-version` file in the project root. | Simplest implementation. The file is small, human-readable, and easy to parse. |
 | 6 | **Rollback on Partial Failure** | If a multi-file operation fails mid-way, automatically roll back all already-copied files from the current staging batch. | Guarantees project consistency. Combined with per-file atomic staging, this provides transaction-like safety. |
 | 7 | **Update Notification in Other Modes** | Version checking is **exclusive** to Update Workspace mode. Clean Install and Project Install do not check for newer versions. | Reduces noise and API calls. Users in install mode are assumed to want the bundled version. |
+| 8 | **Primary Distribution Method** | Publish to npm as `@fisherk2/codice`. Use `bunx @fisherk2/codice` as the official installation method. Provide pre-compiled binaries as offline fallback. | Broadens accessibility beyond Bun users. Eliminates installation friction for npm-native workflows. |
 
 ---
 
