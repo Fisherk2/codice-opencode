@@ -1,5 +1,4 @@
 import { describe, expect, it, mock as mockFn } from "bun:test";
-import type { IFileSystem } from "../../../src/application/ports/IFileSystem";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { ProjectInstallUseCase } from "../../../src/application/use-cases/ProjectInstallUseCase";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
@@ -7,6 +6,7 @@ import {
 	FILE_RULE_MANIFEST,
 	getRulesByCategory,
 } from "../../../src/domain/entities/FileRuleManifest";
+import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 
 /**

@@ -17,7 +17,12 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 CODICE_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
-PLATFORM="$(uname -s | tr '[:upper:]' '[:lower:]')"
+CODICE_UNAME_S="$(uname -s | tr '[:upper:]' '[:lower:]')"
+case "$CODICE_UNAME_S" in
+    linux*)  PLATFORM="linux" ;;
+    darwin*) PLATFORM="macos" ;;
+    *)       PLATFORM="windows.exe" ;;
+esac
 BINARY_NAME="codice-${PLATFORM}"
 
 # Colors

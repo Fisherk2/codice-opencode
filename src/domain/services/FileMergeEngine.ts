@@ -1,5 +1,5 @@
-import type { IFileSystem } from "../../application/ports/IFileSystem";
 import type { FileRule } from "../entities/FileRule";
+import type { IFileSystem } from "../ports/IFileSystem";
 import type { MergeError } from "../types/MergeError";
 import { commitError, stagingError } from "../types/MergeError";
 import type { Result } from "../types/Result";

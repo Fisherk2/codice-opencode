@@ -83,3 +83,6 @@ test-results/
 local.properties
 *.local
 *.override
+
+# npm token (contiene Granular Access Token para publish)
+.npmrc

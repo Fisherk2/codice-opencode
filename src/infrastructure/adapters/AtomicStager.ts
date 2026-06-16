@@ -1,5 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { walkDirectory } from "./directoryWalker";
+import { resolveWithinRoot } from "./pathResolver";
 
 /**
  * Performs atomic file staging, commit, and rollback operations.
@@ -34,7 +36,7 @@ export class AtomicStager {
 	 * destinationRoot boundary.
 	 */
 	resolveDestinationPath(relativePath: string): string {
-		return this.resolveWithinRoot(this.destinationRoot, relativePath, "destination");
+		return resolveWithinRoot(this.destinationRoot, relativePath, "destination");
 	}
 
 	/**
@@ -43,7 +45,7 @@ export class AtomicStager {
 	 * Validates that the resolved path stays within the staging directory.
 	 */
 	resolveStagingPath(relativePath: string): string {
-		return this.resolveWithinRoot(this.stagingRoot, relativePath, "staging");
+		return resolveWithinRoot(this.stagingRoot, relativePath, "staging");
 	}
 
 	/**
@@ -58,7 +60,7 @@ export class AtomicStager {
 		const stat = await fs.stat(resolvedTemplatePath);
 
 		if (stat.isDirectory()) {
-			const files = await this.walkDirectory(resolvedTemplatePath);
+			const files = await walkDirectory(resolvedTemplatePath);
 			for (const filePath of files) {
 				const fileRelative = path.relative(resolvedTemplatePath, filePath);
 				const fullRelative = path.join(relativeDestPath, fileRelative);
@@ -78,49 +80,20 @@ export class AtomicStager {
 	 */
 	async commitStaging(): Promise<void> {
 		const stagingDir = this.stagingRoot;
-		// Backup of original destination files: destPath → backupPath
 		const backups = new Map<string, string>();
 
 		try {
 			// Check if staging directory exists (fs.access works for dirs; Bun.file does not)
-			let stagingExists = false;
 			try {
 				await fs.access(stagingDir);
-				stagingExists = true;
 			} catch {
-				stagingExists = false;
-			}
-
-			if (!stagingExists) {
 				throw new Error("No staged files found. Call stageFile() before commitStaging().");
 			}
 
-			// Walk the staging directory recursively
-			const stagedFiles = await this.walkDirectory(stagingDir);
-
+			// Walk and rename each staged file atomically
+			const stagedFiles = await walkDirectory(stagingDir);
 			for (const stagingFilePath of stagedFiles) {
-				// Compute relative path from staging root → this is the destination relative path
-				const relativePath = path.relative(stagingDir, stagingFilePath);
-				const destPath = this.resolveDestinationPath(relativePath);
-
-				// Ensure destination parent directory exists
-				await fs.mkdir(path.dirname(destPath), { recursive: true });
-
-				// Back up original destination file if it exists
-				try {
-					const destFile = Bun.file(destPath);
-					if (await destFile.exists()) {
-						const backupPath = `${destPath}.codice-backup`;
-						await fs.copyFile(destPath, backupPath);
-						backups.set(destPath, backupPath);
-					}
-				} catch {
-					// If we can't copy the original, we can't back it up — proceed anyway
-					// The worst case is we can't roll back this particular file
-				}
-
-				// Atomic rename: staging → destination
-				await fs.rename(stagingFilePath, destPath);
+				await this.renameStagedFile(stagingFilePath, stagingDir, backups);
 			}
 
 			// Clean up staging directory after successful commit
@@ -135,13 +108,9 @@ export class AtomicStager {
 				}
 			}
 		} catch (error) {
-			// Rollback: restore all backed-up original files
 			await this.restoreBackups(backups);
-
-			// Clean up staging on failure too
 			await this.cleanStaging();
 
-			// Re-throw with actionable message
 			const message = error instanceof Error ? error.message : String(error);
 			throw new Error(`Failed to commit staged files: ${message}`);
 		}
@@ -163,28 +132,6 @@ export class AtomicStager {
 	// ---------------------------------------------------------------------------
 
 	/**
-	 * Resolve a relative path against a root directory.
-	 * Rejects absolute paths, traversal sequences, and paths
-	 * that resolve outside the root boundary.
-	 */
-	private resolveWithinRoot(root: string, relativePath: string, context: string): string {
-		const normalized = path.normalize(relativePath);
-		if (path.isAbsolute(normalized) || normalized.startsWith("..")) {
-			throw new Error(
-				`Path traversal detected: ${relativePath}. All paths must be relative and stay within the ${context} directory.`,
-			);
-		}
-		const resolved = path.resolve(root, normalized);
-		const rootWithSep = path.resolve(root) + path.sep;
-		if (!resolved.startsWith(rootWithSep)) {
-			throw new Error(
-				`Path traversal blocked: ${relativePath} resolves outside the ${context} directory.`,
-			);
-		}
-		return resolved;
-	}
-
-	/**
 	 * Read a source file and write its content to the staging directory.
 	 * Creates intermediate directories in the staging path as needed.
 	 */
@@ -193,6 +140,38 @@ export class AtomicStager {
 		const stagingPath = this.resolveStagingPath(stagingRelativePath);
 		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
 		await Bun.write(stagingPath, content);
+	}
+
+	/**
+	 * Atomically rename a single staged file to its destination path.
+	 * Before the rename, the original destination file (if it exists) is backed
+	 * up to allow rollback. Creates intermediate directories as needed.
+	 */
+	private async renameStagedFile(
+		stagingFilePath: string,
+		stagingDir: string,
+		backups: Map<string, string>,
+	): Promise<void> {
+		const relativePath = path.relative(stagingDir, stagingFilePath);
+		const destPath = this.resolveDestinationPath(relativePath);
+
+		// Ensure destination parent directory exists
+		await fs.mkdir(path.dirname(destPath), { recursive: true });
+
+		// Back up original destination file if it exists
+		try {
+			const destFile = Bun.file(destPath);
+			if (await destFile.exists()) {
+				const backupPath = `${destPath}.codice-backup`;
+				await fs.copyFile(destPath, backupPath);
+				backups.set(destPath, backupPath);
+			}
+		} catch {
+			// If we can't copy the original, we can't back it up — proceed anyway
+		}
+
+		// Atomic rename: staging → destination
+		await fs.rename(stagingFilePath, destPath);
 	}
 
 	/**
@@ -211,33 +190,5 @@ export class AtomicStager {
 				// If rollback fails for a specific file, continue with others
 			}
 		}
-	}
-
-	/**
-	 * Recursively walk a directory and return all file paths.
-	 * Skips symbolic links to prevent following symlinks that
-	 * point outside the template directory (security measure).
-	 */
-	private async walkDirectory(dirPath: string): Promise<string[]> {
-		const files: string[] = [];
-		const entries = await fs.readdir(dirPath, { withFileTypes: true });
-
-		for (const entry of entries) {
-			// Skip symbolic links — they may point outside the template
-			// (e.g., development-time symlinks to other projects)
-			if (entry.isSymbolicLink()) {
-				continue;
-			}
-
-			const entryPath = path.join(dirPath, entry.name);
-			if (entry.isDirectory()) {
-				const subFiles = await this.walkDirectory(entryPath);
-				files.push(...subFiles);
-			} else if (entry.isFile()) {
-				files.push(entryPath);
-			}
-		}
-
-		return files;
 	}
 }

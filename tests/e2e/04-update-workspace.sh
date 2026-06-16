@@ -114,13 +114,18 @@ if [[ ! -f "$TEMP_DIR/.codice-version" ]]; then
     exit 1
 fi
 
+# Get the binary's own version (from package.json, bundled at compile time)
+BINARY_VERSION=$("$CODICE_BINARY" --version 2>/dev/null | sed 's/^Códice v//')
+log_info "Binary version: $BINARY_VERSION"
+
 VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
-if ! echo "$VERSION_DATA" | grep -q '"installedVersion"\s*:\s*"1.0.0"'; then
-    log_fail "Version file was not updated to 1.0.0"
+# After update, version file should reflect the binary's own version (not the remote tag)
+if ! echo "$VERSION_DATA" | grep -q "\"installedVersion\"\s*:\s*\"${BINARY_VERSION}\""; then
+    log_fail "Version file was not updated to binary version ${BINARY_VERSION}"
     echo "    Version data: $VERSION_DATA" >&2
     exit 1
 fi
-log_pass "Version file updated to 1.0.0"
+log_pass "Version file updated to binary version ${BINARY_VERSION}"
 
 log_info "Verifying optional selections preserved from old version..."
 

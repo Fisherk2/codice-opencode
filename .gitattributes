@@ -1,0 +1,17 @@
+# Force LF line endings for code files to prevent Biome formatting failures on Windows
+*.ts      text eol=lf
+*.tsx     text eol=lf
+*.js      text eol=lf
+*.json    text eol=lf
+*.yaml    text eol=lf
+*.yml     text eol=lf
+*.md      text eol=lf
+*.sh      text eol=lf
+*.env     text eol=lf
+*.gitignore text eol=lf
+Justfile  text eol=lf
+
+# Binary files should not be modified
+*.png     binary
+*.jpg     binary
+*.ico     binary

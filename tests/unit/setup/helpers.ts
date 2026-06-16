@@ -18,6 +18,12 @@ export interface PackageJson {
 	scripts: Record<string, string>;
 	dependencies: Record<string, string>;
 	devDependencies: Record<string, string>;
+	bin?: Record<string, string>;
+	files?: string[];
+	private?: boolean;
+	publishConfig?: {
+		access: string;
+	};
 }
 
 export interface BiomeJson {

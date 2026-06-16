@@ -9,8 +9,8 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import type { IFileSystem } from "../../../src/application/ports/IFileSystem";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
+import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 
 // ---- Mock IFileSystem ----

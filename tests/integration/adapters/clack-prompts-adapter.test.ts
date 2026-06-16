@@ -51,6 +51,7 @@ describe("ClackPromptsAdapter", () => {
 		mockNote.mockReset();
 		mockConfirm.mockReset();
 		mockMultiselect.mockReset();
+		mockSelect.mockReset();
 		mockIntro.mockReset();
 		mockOutro.mockReset();
 		mockCancel.mockReset();
@@ -203,8 +204,10 @@ describe("ClackPromptsAdapter", () => {
 
 	describe("flow messages", () => {
 		it("should show intro", () => {
-			adapter.showIntro("Códice v1.0.0");
-			expect(mockIntro).toHaveBeenCalledWith("Códice v1.0.0");
+			// Use a placeholder message—the adapter delegates verbatim; version is irrelevant
+			const testMessage = "Códice vX.Y.Z";
+			adapter.showIntro(testMessage);
+			expect(mockIntro).toHaveBeenCalledWith(testMessage);
 		});
 
 		it("should show success", () => {
@@ -220,6 +223,43 @@ describe("ClackPromptsAdapter", () => {
 		it("should show error message", () => {
 			adapter.showError("Something went wrong");
 			expect(mockCancel).toHaveBeenCalledWith(expect.stringContaining("Something went wrong"));
+		});
+	});
+
+	describe("promptForMode", () => {
+		it("should return 'clean' when user selects Clean Install", async () => {
+			mockSelect.mockResolvedValue("clean");
+			mockIsCancel.mockReturnValue(false);
+
+			const result = await adapter.promptForMode();
+			expect(result).toBe("clean");
+			expect(mockSelect).toHaveBeenCalledWith(
+				expect.objectContaining({ message: expect.stringContaining("mode") }),
+			);
+		});
+
+		it("should return 'project' when user selects Project Install", async () => {
+			mockSelect.mockResolvedValue("project");
+			mockIsCancel.mockReturnValue(false);
+
+			const result = await adapter.promptForMode();
+			expect(result).toBe("project");
+		});
+
+		it("should return 'update' when user selects Update Workspace", async () => {
+			mockSelect.mockResolvedValue("update");
+			mockIsCancel.mockReturnValue(false);
+
+			const result = await adapter.promptForMode();
+			expect(result).toBe("update");
+		});
+
+		it("should return null when user cancels", async () => {
+			mockSelect.mockResolvedValue(undefined);
+			mockIsCancel.mockReturnValue(true);
+
+			const result = await adapter.promptForMode();
+			expect(result).toBeNull();
 		});
 	});
 });
