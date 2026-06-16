@@ -1,5 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { TEMPLATE_DIR_NAME } from "../config/constants";
 
 /**
  * Resolves template file paths within a structured template directory.
@@ -20,9 +21,32 @@ export class TemplateResolver {
 
 	/**
 	 * @param templateRoot - Absolute path to the template directory root.
+	 *                       Auto-detected when not provided (see detectTemplateRoot).
 	 */
-	constructor(templateRoot: string) {
-		this.templateRoot = templateRoot;
+	constructor(templateRoot?: string) {
+		this.templateRoot = templateRoot ?? TemplateResolver.detectTemplateRoot();
+	}
+
+	/**
+	 * Auto-detect the template root based on execution mode.
+	 *
+	 * - **Source mode** (bun run, bunx): resolves the template directory relative
+	 *   to the source file location (`import.meta.dir`). This allows the `bin`
+	 *   entry in package.json to find templates from the npm package directory.
+	 *
+	 * - **Compiled mode** (standalone binary): falls back to the current working
+	 *   directory, matching the pre-v1.0.0 behavior for backward compatibility.
+	 *
+	 * Source: Template file location convention from SPEC.md — template files
+	 * are always in a `template/` directory at the project or package root.
+	 */
+	static detectTemplateRoot(): string {
+		if (import.meta.dir) {
+			// Source mode: template is ../../template/ relative to src/cli/
+			return path.resolve(import.meta.dir, `../../${TEMPLATE_DIR_NAME}`);
+		}
+		// Compiled mode: template is relative to CWD (backward compatible)
+		return path.resolve(process.cwd(), TEMPLATE_DIR_NAME);
 	}
 
 	/**

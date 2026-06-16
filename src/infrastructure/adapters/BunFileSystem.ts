@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { IFileSystem } from "../../application/ports/IFileSystem";
-import { TEMPLATE_DIR_NAME, VERSION_FILE_NAME } from "../config/constants";
+import { VERSION_FILE_NAME } from "../config/constants";
 import { AtomicStager } from "./AtomicStager";
 import { TemplateResolver } from "./TemplateResolver";
 
@@ -23,13 +23,13 @@ export class BunFileSystem implements IFileSystem {
 	private readonly destinationRoot: string;
 
 	/**
-	 * @param templateRoot - Path to the template directory (default: cwd/template)
-	 * @param destinationRoot - Path to the destination directory (default: cwd)
+	 * @param templateRoot - Path to the template directory.
+	 *                       Auto-detected by TemplateResolver when not provided.
+	 * @param destinationRoot - Path to the destination directory (default: cwd).
 	 */
 	constructor(templateRoot?: string, destinationRoot?: string) {
-		const resolvedTemplate = templateRoot ?? path.join(process.cwd(), TEMPLATE_DIR_NAME);
 		const resolvedDest = destinationRoot ?? process.cwd();
-		this.templateResolver = new TemplateResolver(resolvedTemplate);
+		this.templateResolver = new TemplateResolver(templateRoot);
 		this.atomicStager = new AtomicStager(resolvedDest);
 		this.destinationRoot = resolvedDest;
 	}
