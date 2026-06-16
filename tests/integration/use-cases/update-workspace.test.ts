@@ -1,5 +1,4 @@
 import { describe, expect, it, mock as mockFn } from "bun:test";
-import type { IFileSystem } from "../../../src/application/ports/IFileSystem";
 import type { IGitHubClient } from "../../../src/application/ports/IGitHubClient";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { UpdateWorkspaceUseCase } from "../../../src/application/use-cases/UpdateWorkspaceUseCase";
@@ -8,6 +7,7 @@ import {
 	FILE_RULE_MANIFEST,
 	getRulesByCategory,
 } from "../../../src/domain/entities/FileRuleManifest";
+import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import { VersionComparator } from "../../../src/domain/services/VersionComparator";
 

@@ -1,12 +1,5 @@
 import { eq, gt, lt, compare as semverCompare, valid } from "semver";
-
-/**
- * Result of comparing a local and remote version.
- * - "newer": Local version is greater than the remote.
- * - "older": Local version is less than the remote.
- * - "equal": Both versions are identical.
- */
-export type ComparisonResult = "newer" | "older" | "equal";
+import type { ComparisonResult } from "../types/version";
 
 /**
  * Value object representing a semantic version (vX.Y.Z).

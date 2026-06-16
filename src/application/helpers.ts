@@ -7,7 +7,7 @@
  * - version file write with staging rollback
  */
 
-import type { IFileSystem } from "../application/ports/IFileSystem";
+import type { IFileSystem } from "../domain/ports/IFileSystem";
 import { failure, type Result, success } from "../domain/types/Result";
 
 /**

@@ -40,7 +40,7 @@ const stubs: StubEntry[] = [
 		pattern: EXPORT_PATTERN,
 	},
 	{
-		path: "src/application/ports/IFileSystem.ts",
+		path: "src/domain/ports/IFileSystem.ts",
 		description: "IFileSystem port",
 		pattern: EXPORT_PATTERN,
 	},

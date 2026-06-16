@@ -84,6 +84,15 @@ jobs:
           sha256sum codice-linux codice-macos codice-windows.exe > checksums-sha256.txt
           cat checksums-sha256.txt
 
+      - name: Validate tag format (prevent injection)
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "ERROR: Invalid tag format: $TAG"
+            exit 1
+          fi
+          echo "Tag format validated: $TAG"
+
       - name: Extract release body from CHANGELOG
         run: |
           TAG="${{ github.ref_name }}"

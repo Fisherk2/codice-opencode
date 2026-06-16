@@ -1,5 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { walkDirectory } from "./directoryWalker";
+import { resolveWithinRoot } from "./pathResolver";
 
 /**
  * Performs atomic file staging, commit, and rollback operations.
@@ -34,7 +36,7 @@ export class AtomicStager {
 	 * destinationRoot boundary.
 	 */
 	resolveDestinationPath(relativePath: string): string {
-		return this.resolveWithinRoot(this.destinationRoot, relativePath, "destination");
+		return resolveWithinRoot(this.destinationRoot, relativePath, "destination");
 	}
 
 	/**
@@ -43,7 +45,7 @@ export class AtomicStager {
 	 * Validates that the resolved path stays within the staging directory.
 	 */
 	resolveStagingPath(relativePath: string): string {
-		return this.resolveWithinRoot(this.stagingRoot, relativePath, "staging");
+		return resolveWithinRoot(this.stagingRoot, relativePath, "staging");
 	}
 
 	/**
@@ -58,7 +60,7 @@ export class AtomicStager {
 		const stat = await fs.stat(resolvedTemplatePath);
 
 		if (stat.isDirectory()) {
-			const files = await this.walkDirectory(resolvedTemplatePath);
+			const files = await walkDirectory(resolvedTemplatePath);
 			for (const filePath of files) {
 				const fileRelative = path.relative(resolvedTemplatePath, filePath);
 				const fullRelative = path.join(relativeDestPath, fileRelative);
@@ -89,7 +91,7 @@ export class AtomicStager {
 			}
 
 			// Walk and rename each staged file atomically
-			const stagedFiles = await this.walkDirectory(stagingDir);
+			const stagedFiles = await walkDirectory(stagingDir);
 			for (const stagingFilePath of stagedFiles) {
 				await this.renameStagedFile(stagingFilePath, stagingDir, backups);
 			}
@@ -128,28 +130,6 @@ export class AtomicStager {
 	// ---------------------------------------------------------------------------
 	// Private helpers
 	// ---------------------------------------------------------------------------
-
-	/**
-	 * Resolve a relative path against a root directory.
-	 * Rejects absolute paths, traversal sequences, and paths
-	 * that resolve outside the root boundary.
-	 */
-	private resolveWithinRoot(root: string, relativePath: string, context: string): string {
-		const normalized = path.normalize(relativePath);
-		if (path.isAbsolute(normalized) || normalized.startsWith("..")) {
-			throw new Error(
-				`Path traversal detected: ${relativePath}. All paths must be relative and stay within the ${context} directory.`,
-			);
-		}
-		const resolved = path.resolve(root, normalized);
-		const rootWithSep = path.resolve(root) + path.sep;
-		if (!resolved.startsWith(rootWithSep)) {
-			throw new Error(
-				`Path traversal blocked: ${relativePath} resolves outside the ${context} directory.`,
-			);
-		}
-		return resolved;
-	}
 
 	/**
 	 * Read a source file and write its content to the staging directory.
@@ -210,33 +190,5 @@ export class AtomicStager {
 				// If rollback fails for a specific file, continue with others
 			}
 		}
-	}
-
-	/**
-	 * Recursively walk a directory and return all file paths.
-	 * Skips symbolic links to prevent following symlinks that
-	 * point outside the template directory (security measure).
-	 */
-	private async walkDirectory(dirPath: string): Promise<string[]> {
-		const files: string[] = [];
-		const entries = await fs.readdir(dirPath, { withFileTypes: true });
-
-		for (const entry of entries) {
-			// Skip symbolic links — they may point outside the template
-			// (e.g., development-time symlinks to other projects)
-			if (entry.isSymbolicLink()) {
-				continue;
-			}
-
-			const entryPath = path.join(dirPath, entry.name);
-			if (entry.isDirectory()) {
-				const subFiles = await this.walkDirectory(entryPath);
-				files.push(...subFiles);
-			} else if (entry.isFile()) {
-				files.push(entryPath);
-			}
-		}
-
-		return files;
 	}
 }

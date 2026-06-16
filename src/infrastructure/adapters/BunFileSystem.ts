@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { IFileSystem } from "../../application/ports/IFileSystem";
+import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import { VERSION_FILE_NAME } from "../config/constants";
 import { AtomicStager } from "./AtomicStager";
 import { TemplateResolver } from "./TemplateResolver";
@@ -61,6 +61,7 @@ export class BunFileSystem implements IFileSystem {
 			return await file.exists();
 		} catch {
 			// Filesystem errors (permissions, etc.) treated as "does not exist"
+			// to avoid overwriting inaccessible files
 			return false;
 		}
 	}

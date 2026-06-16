@@ -1,8 +1,8 @@
 import { FILE_RULE_MANIFEST } from "../../domain/entities/FileRuleManifest";
+import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { FileMergeEngine } from "../../domain/services/FileMergeEngine";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, writeVersionFileSafe } from "../helpers";
-import type { IFileSystem } from "../ports/IFileSystem";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 
 /**

@@ -1,8 +1,14 @@
 import { compare, diff as semverDiff, valid } from "semver";
 import { failure, type Result, success } from "../types/Result";
+import type { ComparisonResult } from "../types/version";
 
 // Module-level map: semver diff strings → ReleaseType (pre* variants map to base type)
-const RELEASE_TYPE_MAP: Partial<Record<string, ReleaseType>> = {
+const RELEASE_TYPE_MAP: Partial<
+	Record<
+		"major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease" | "release",
+		ReleaseType
+	>
+> = {
 	major: "major",
 	premajor: "major",
 	minor: "minor",
@@ -10,14 +16,6 @@ const RELEASE_TYPE_MAP: Partial<Record<string, ReleaseType>> = {
 	patch: "patch",
 	prepatch: "patch",
 };
-
-/**
- * Result of comparing two semantic versions.
- * - "newer": Local is older, remote is newer (update available).
- * - "older": Local is newer than remote (downgrade scenario).
- * - "equal": Both versions are identical.
- */
-export type ComparisonResult = "newer" | "older" | "equal";
 
 /**
  * Release type determined from a version diff.
