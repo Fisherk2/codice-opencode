@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0
-**Fecha:** 2026-06-15 | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v1.0.3
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-16 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -12,7 +12,7 @@
 | F4 | Pruebas | E2E (6 escenarios), CI integration, coverage gaps | ✅ Completo |
 | F4.5 | Workspace seguro | `--dest` flag, `tests/fixtures/workspace/`, `just dev` protegido | ✅ Completo |
 | F5 | CI/CD + Cross-platform | Builds multi-plataforma, release automation | ✅ Completo |
-| F5.5 | Publicación npm + bunx | Paquete npm @fisherk2-dev/codice, instalación vía bunx como método oficial | 🟡 En curso |
+| F5.5 | Publicación npm + bunx | Paquete npm @fisherk2-dev/codice, instalación vía bunx como método oficial | ✅ Completo |
 | F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
 
 ## 2. Desglose por Fase
@@ -162,31 +162,27 @@
 - **Commits F5 review fixes (2026-06-15):** 3 correcciones post-review (echo format, Bun version, SHA pinning)
 - **F5 total:** 7 tasks, 7 completed + 3 review fixes
 
-## 5. F5.5 — Publicación npm + bunx support (En curso)
+## 5. F5.5 — Publicación npm + bunx support (Completado)
 
-**Estado:** 🟡 En curso
-**Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F5.5 ⬅️ Siguiente** → F6 ✅
+**Estado:** ✅ Completo
+**Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F5.5 ✅** → F6 ✅
 
 | ID | Descripción | Prioridad | Estado |
 |----|-------------|-----------|--------|
 | F55-T1 | Crear package.json con bin entry + dependencies | Alta | ✅ Completo |
 | F55-T2 | Modificar TemplateResolver para source mode | Alta | ✅ Completo |
 | F55-T3 | Publicar paquete npm @fisherk2-dev/codice | Alta | ✅ Completo |
-| F55-T4 | Release pipeline: publicar a npm en tag v* | Alta | 🟡 En curso |
+| F55-T4 | Release pipeline: publicar a npm en tag v* | Alta | ✅ Completo |
 | F55-T5 | Actualizar README: bunx como método oficial, binario como offline | Alta | ✅ Completo |
 
-**Último progreso (2026-06-16):**
-- F55-T1: package.json con `bin: { codice: "./src/cli/bin.js" }`, `files` correctos, `publishConfig.access: public`, dependencias runtime vs dev separadas
-- F55-T2: `TemplateResolver.detectTemplateRoot()` implementado con `import.meta.dir` (source) y `process.cwd()` (compiled), 11 tests
-- F55-T3: v1.0.0/1 deprecados, v1.0.2 deprecado, v1.0.3 activo en npm (`@fisherk2-dev/codice`)
-- F55-T4: release.yml editado con npm publish step + version validation. Pendiente push tag y verificación CI
-- F55-T5: README actualizado con npx fallback y troubleshooting
+**Resultados finales (2026-06-16):**
+- v1.0.0/1 deprecados, v1.0.2 deprecado, v1.0.3 activo en npm (`@fisherk2-dev/codice`)
+- `release.yml` con npm publish step, version validation, y cleanup de `.npmrc`
+- README: bunx como método oficial de instalación, npx fallback, binaries como offline fallback
+- Post-ship review: commit `b659bae` con fixes de naming, logging, y cobertura de tests
 
 **Problemas conocidos:**
 - `bunx @fisherk2-dev/codice --version` (sin @version) no produce output — bug de bun 1.3.14 con scoped packages con guión. Workaround: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/codice`
-- NPM_TOKEN debe añadirse como secreto en GitHub (`secrets.NPM_TOKEN`)
-
-**Próximo paso:** Finalizar F55-T4 (push tag, verificar CI, merge release branch). Luego ejecutar verificación completa y marcar F5.5 como completado.
 
 ---
 
@@ -219,9 +215,9 @@ F6 completado con 4 tareas de documentación. Sin regresión en tests, cobertura
 
 ---
 
-## 7. Release v1.0.0 — Listo para Despliegue
+## 7. Release v1.0.3 — Activo en npm
 
-**Estado:** ✅ Release Ready
+**Estado:** ✅ Release Ready (v1.0.3 publicado en npm, v1.0.0/1/2 deprecados)
 
 Todas las fases del plan de implementación han sido completadas exitosamente.
 
@@ -237,15 +233,16 @@ Todas las fases del plan de implementación han sido completadas exitosamente.
 | F4.5 | Workspace seguro (`--dest`, `just dev`) | ✅ Completo |
 | F4.6 | Code Review + Refactor (TemplateResolver, AtomicStager) | ✅ Completo |
 | F5 | CI/CD + Cross-platform (builds, release automation) | ✅ Completo |
-| F5.5 | Publicación npm + bunx (paquete @fisherk2-dev/codice) | 🟡 En curso |
+| F5.5 | Publicación npm + bunx (paquete @fisherk2-dev/codice) | ✅ Completo |
 | F6 | Documentación (README, CHANGELOG, CONTRIBUTING, ARCHITECTURE) | ✅ Completo |
 
-**Métricas finales v1.0.0:**
-- `bun test`: 284 pass, 0 fail (593 expects)
+**Métricas finales v1.0.3:**
+- `bun test`: 343 pass, 0 fail (682 expects)
 - `just check`: 0 errores (biome ci + tsc --noEmit)
 - E2E: 6/6 escenarios pasando
-- Coverage: 96.23% funciones / 94.26% líneas
+- Coverage: 96.84% funciones / 94.22% líneas
 - Domain coverage: 100% líneas
+- Último commit: `b659bae` en `release/v.1.0.0` (post-ship review fixes)
 
 **Artefactos de release:**
 | Platform | Binary | Source |
@@ -254,6 +251,9 @@ Todas las fases del plan de implementación han sido completadas exitosamente.
 | macOS (x64) | `dist/codice-macos` | CI build en `macos-latest` |
 | Windows (x64) | `dist/codice-windows.exe` | CI build en `windows-latest` |
 
-**Release pipeline:** Crear tag `v1.0.0` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG.
+**npm package:** `@fisherk2-dev/codice` — v1.0.3 activo, v1.0.0/1/2 deprecados.
+Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/codice`
+
+**Release pipeline:** Crear tag `v1.0.3` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG + publicación automática a npm.
 
 **Success Criteria (SPEC.md):** Todos los SC-1 a SC-21 han sido verificados y cumplen los criterios de aceptación.
