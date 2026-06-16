@@ -12,8 +12,8 @@ describe("Package.json Configuration", () => {
 		pkg = readJsonFile<PackageJson>("package.json");
 	});
 
-	test("has correct name", () => {
-		expect(pkg.name).toBe("codice");
+	test("has scoped npm package name", () => {
+		expect(pkg.name).toBe("@fisherk2/codice");
 	});
 
 	test("has correct version", () => {
@@ -47,5 +47,27 @@ describe("Package.json Configuration", () => {
 
 	test("has dev dependency on @biomejs/biome", () => {
 		expect(pkg.devDependencies["@biomejs/biome"]).toBeDefined();
+	});
+
+	test("has bin entry for codice pointing to main.ts", () => {
+		expect(pkg.bin).toBeDefined();
+		expect(pkg.bin?.codice).toBe("./src/cli/main.ts");
+	});
+
+	test("has files array including src, template, package.json, and tsconfig.json", () => {
+		expect(pkg.files).toBeDefined();
+		expect(pkg.files).toContain("src/");
+		expect(pkg.files).toContain("template/");
+		expect(pkg.files).toContain("package.json");
+		expect(pkg.files).toContain("tsconfig.json");
+	});
+
+	test("has publishConfig with public access", () => {
+		expect(pkg.publishConfig).toBeDefined();
+		expect(pkg.publishConfig?.access).toBe("public");
+	});
+
+	test("is not marked as private", () => {
+		expect(pkg.private).toBeUndefined();
 	});
 });

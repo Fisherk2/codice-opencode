@@ -1,9 +1,20 @@
 {
-  "name": "codice",
+  "name": "@fisherk2/codice",
   "version": "1.0.0",
   "module": "src/cli/main.ts",
   "type": "module",
-  "private": true,
+  "bin": {
+    "codice": "./src/cli/main.ts"
+  },
+  "files": [
+    "src/",
+    "template/",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
     "@types/bun": "latest",
