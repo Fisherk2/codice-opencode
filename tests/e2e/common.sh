@@ -31,8 +31,13 @@ readonly COLOR_RESET='\033[0m'
 # Root of the repository (assumes common.sh is at tests/e2e/common.sh)
 readonly CODICE_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
-# Platform-detected binary name
-readonly CODICE_PLATFORM="$(uname -s | tr '[:upper:]' '[:lower:]')"
+# Platform-detected binary name (matches Justfile naming convention)
+readonly CODICE_UNAME_S="$(uname -s | tr '[:upper:]' '[:lower:]')"
+case "$CODICE_UNAME_S" in
+    linux*)  CODICE_PLATFORM="linux" ;;
+    darwin*) CODICE_PLATFORM="macos" ;;
+    *)       CODICE_PLATFORM="windows.exe" ;;
+esac
 readonly CODICE_BINARY_NAME="codice-${CODICE_PLATFORM}"
 
 # Path to the compiled binary (used by setup_binary)
