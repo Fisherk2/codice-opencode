@@ -1,12 +1,18 @@
-# Plan: F6 — Documentación
+# Plan: F5.5 — Publicación npm + bunx support
 
-**Fecha:** 2026-06-15 | **Autor:** Moctezuma (Planner Agent) | **Estado:** 🟢 Completo
+**Fecha:** 2026-06-16 | **Autor:** Moctezuma (Planner Agent) | **Estado:** 🟡 En curso
 
 ## Overview
 
-Completar la documentación pendiente para el release v1.0.0 de Códice. Los archivos existentes (README.md, CHANGELOG.md, CONTRIBUTING.md, docs/ARCHITECTURE.md) fueron auditados y completados. No se eliminó contenido existente del README (workspace template de OpenCode establecido).
+Publicar Códice como paquete npm (`@fisherk2/codice`) para que los usuarios puedan instalar el workspace de OpenCode con un solo comando:
 
-**Estado de Fase:** ✅ Completado — 4/4 tareas ejecutadas, proyecto listo para release v1.0.0.
+```bash
+bunx @fisherk2/codice
+```
+
+El binario compilado (vía `bun build --compile`) se mantiene como método alternativo offline/air-gapped. El objetivo es que `bunx` sea la experiencia de instalación por defecto.
+
+**Estado de Fase:** 🟡 En curso — 0/5 tareas ejecutadas
 
 ---
 
@@ -14,10 +20,11 @@ Completar la documentación pendiente para el release v1.0.0 de Códice. Los arc
 
 | # | Decisión | Rationale |
 |---|----------|-----------|
-| F6-A1 | README unificado | El usuario confirmó mantener el contenido existente del workspace template de OpenCode y añadir sección para Códice CLI |
-| F6-A2 | Badge CI usa repo `Fisherk2/codice-opencode` | Confirmado por el usuario |
-| F6-A3 | CHANGELOG sigue Keep a Changelog | Se añade sección `Security` faltante a v1.0.0 |
-| F6-A4 | CONTRIBUTING.md sigue Conventional Commits | Formato de commits: feat, fix, docs, refactor, test, chore |
+| F55-A1 | `@fisherk2/codice` como nombre npm | Scoped, dueño claro, consistente con awesome-opencode (usa @weisser-dev) |
+| F55-A2 | `bunx` como método oficial, binario como opcional offline | Experiencia más simple, sin descargar binarios. Binario para air-gapped/CI sin Bun |
+| F55-A3 | Template se resuelve desde filesystem en source mode | TemplateResolver detecta automáticamente si está en source (import.meta.dir) o compilado (execPath) |
+| F55-A4 | @clack/prompts y semver pasan a dependencies | Necessarios para que bunx funcione sin instalación adicional |
+| F55-A5 | Publicación automática via CI en tag v* | Tag v* → build matrix + publish a npm. Automatización completa |
 
 ---
 
@@ -25,142 +32,146 @@ Completar la documentación pendiente para el release v1.0.0 de Códice. Los arc
 
 | Artefacto | Estado | Gap |
 |-----------|--------|-----|
-| README.md | ⚠️ Describe workspace template OpenCode | No menciona Códice CLI, no tiene install commands, usage 3 modos, troubleshooting, ni badge CI |
-| CHANGELOG.md | ✅ v1.0.0 completo | Le falta sección `Security` (requerido por Keep a Changelog) |
-| docs/ARCHITECTURE.md | ✅ ADRs + diagrama + patrones | Ya está completo — verificar coverage |
-| CONTRIBUTING.md | ❌ Vacío | Necesita contenido completo |
-| ADRs | ✅ 5/5 completos | ADR-001 a ADR-005 |
-
----
-
-## Dependency Graph
-
-```
-F6-T1: README.md         — independiente (añadir sección Códice CLI)
-F6-T2: CHANGELOG.md      — independiente (añadir Security)
-F6-T3: ARCHITECTURE.md   — independiente (verificar ADRs)
-F6-T4: CONTRIBUTING.md   — independiente (crear desde cero)
-```
-**Todas las tareas son independientes — se pueden ejecutar en paralelo.**
+| package.json | ⚠️ Existe como proyecto Bun | No tiene `bin` entry, no está configurado para npm publish |
+| TemplateResolver | ✅ Carga templates en compiled mode | No soporta source mode (import.meta.dir) |
+| Template files | ✅ En `template/` | Listos para ser incluidos en npm package |
+| release.yml | ✅ Builds + GitHub Release | No publica a npm |
+| README.md | ✅ Binario como instalación oficial | No menciona bunx como método primario |
 
 ---
 
 ## Task List
 
-### Phase 1: Slice 1 — Usuario Final (README + CHANGELOG)
+### Phase 1: Preparación del paquete npm
 
-#### Task F6-T1: README.md — Añadir sección Códice CLI
+#### Task F55-T1: package.json — Añadir bin entry y mover dependencies
 
-**Descripción:** El README actual describe el workspace template de OpenCode (45 skills, 6 agentes). Se añade una nueva sección al final del README que documenta Códice como CLI installer. No se modifica el contenido existente del workspace.
+**Descripción:** Configurar package.json para que sea un paquete npm ejecutable con `bunx`.
 
 **Criterios de aceptación:**
-- [x] Badge CI/CD de GitHub Actions visible cerca del inicio del README
-  - URL: `https://github.com/Fisherk2/codice-opencode/workflows/CI/badge.svg`
-- [x] Tabla de contenidos existente actualizada con enlace a nueva sección Códice CLI
-- [x] Nueva sección `## Códice CLI — Instalador del Workspace` con subsecciones:
-  - [x] Quick Install (copy-paste commands para Linux/macOS/Windows)
-  - [x] Usage: los 3 modos con ejemplos de comando
-  - [x] Troubleshooting: errores comunes y soluciones
-  - [x] Flags disponibles: `--clean`, `--project`, `--update`, `--dest`, `--force`, `--verbose`
-- [x] Contenido existente del workspace template **no se modifica**
+- [ ] `"bin": { "codice": "./src/cli/main.ts" }` en package.json
+- [ ] `@clack/prompts` y `semver` en `dependencies` (no devDependencies)
+- [ ] `"files": [...]` incluye `src/`, `template/`, `package.json`, `tsconfig.json`
+- [ ] `"publishConfig": { "access": "public" }` (scoped packages requieren acceso público)
+- [ ] `"type": "module"` preservado
 
 **Verification:**
-- [x] `just check` pasa (0 errors de biome + tsc)
-- [x] README renderizado en GitHub muestra badge y nueva sección
-- [x] Instrucciones copy-paste funcionan sin modificación en cada OS
+- [ ] `bun run src/cli/main.ts` funciona correctamente
+- [ ] `bun install` (desde un directorio limpio) instala solo los deps necesarios
 
 **Dependencies:** Ninguna
-**Files touched:** `README.md`
+**Files touched:** `package.json`, `bun.lock`
+**Estimated scope:** S
+
+---
+
+#### Task F55-T2: TemplateResolver — Soportar source mode
+
+**Descripción:** Modificar `TemplateResolver.ts` para que detecte automáticamente si está corriendo desde source (bunx/bun run) o desde binario compilado, y resuelva la ruta del template en consecuencia.
+
+**Criterios de aceptación:**
+- [ ] En source mode: `import.meta.dir` + `'../../template/'` como raíz del template
+- [ ] En compiled mode: `process.execPath` + `'../template/'` como raíz (comportamiento actual, no romper)
+- [ ] Detección automática: verificar si `import.meta.dir` existe relativo al directorio template
+- [ ] Sin necesidad de variables de entorno ni flags
+
+**Verification:**
+- [ ] `bun run src/cli/main.ts` carga templates correctamente (source mode)
+- [ ] `./dist/codice-linux` carga templates correctamente (compiled mode, no romper)
+- [ ] `bun test` sigue pasando (284 tests, 0 fail)
+
+**Dependencies:** F55-T1 ✅
+**Files touched:** `src/infrastructure/adapters/TemplateResolver.ts`
 **Estimated scope:** M
 
 ---
 
-#### Task F6-T2: CHANGELOG.md — Completar sección Security
+### Phase 2: Publicación
 
-**Descripción:** El CHANGELOG actual tiene v1.0.0 con secciones Added, Architecture, Technical. Keep a Changelog requiere también `Security`. Se añade la sección Security a v1.0.0.
+#### Task F55-T3: Publicar primera versión a npm (manual)
+
+**Descripción:** Publicar `@fisherk2/codice` a npm por primera vez. Pasos guiados.
 
 **Criterios de aceptación:**
-- [x] Sección `### Security` presente en v1.0.0
-- [x] Si no hay fixed security issues, texto: "No security vulnerabilities identified in this release."
-- [x] Formato consistente con las demás secciones (indentación, empty lines)
+- [ ] Cuenta npm creada y organización @fisherk2 configurada
+- [ ] MFA configurado: `npm access set mfa=automation @fisherk2/codice`
+- [ ] Granular Access Token generado con `--bypass-2fa --scopes @fisherk2`
+- [ ] `npm publish` exitoso
+- [ ] `bunx @fisherk2/codice` descarga e inicia el instalador correctamente
 
 **Verification:**
-- [x] CHANGELOG.md pasa validación manual de formato Keep a Changelog
-- [x] `just check` pasa (0 errors)
+- [ ] `bunx @fisherk2/codice` → menú interactivo funciona
+- [ ] `bunx @fisherk2/codice --version` → muestra versión correcta
 
-**Dependencies:** Ninguna
-**Files touched:** `CHANGELOG.md`
-**Estimated scope:** XS
+**Dependencies:** F55-T1 ✅, F55-T2 ✅
+**Estimated scope:** L (por ser primera vez del usuario)
 
 ---
 
-### Phase 2: Slice 2 — Contribuidor
+#### Task F55-T4: Automatizar publicación npm en release.yml
 
-#### Task F6-T3: CONTRIBUTING.md — Crear guía completa
-
-**Descripción:** CONTRIBUTING.md está vacío. Crear contenido completo para guiar contribuidores.
+**Descripción:** Modificar el workflow de release para que además de subir binarios a GitHub Releases, publique el paquete a npm automáticamente.
 
 **Criterios de aceptación:**
-- [x] Sección **How to Contribute**: fork & branch workflow, PR process, code review expectations
-- [x] Sección **Development Setup**: `just setup`, `just dev`, `just check`, testing locally
-- [x] Sección **Testing**: `just test`, `just test:unit`, `just test:integration`, `just test:e2e`, `just test:coverage`
-- [x] Sección **Building**: `just build`, `just build-all`
-- [x] Sección **Commit Message Convention**: tipos (feat, fix, docs, refactor, test, chore), formato, ejemplo
-- [x] Sección **Pre-commit Checklist**: referencia a `just check` y `just test`
+- [ ] Job `publish-npm` en release.yml que ejecuta `npm publish`
+- [ ] Usa `NPM_TOKEN` de GitHub Secrets para autenticación
+- [ ] Corre solo si los tests y builds pasaron
+- [ ] Publica la misma versión del tag (e.g., tag v1.0.0 → publish v1.0.0 a npm)
 
 **Verification:**
-- [x] CONTRIBUTING.md no está vacío
-- [x] `just check` pasa (0 errors)
-- [x] Un contribuidor nuevo puede hacer setup siguiendo el documento
+- [ ] Crear tag `v1.0.0-test` → npm recibe el paquete (probar en dry-run)
+- [ ] No publica si los tests fallan
 
-**Dependencies:** Ninguna
-**Files touched:** `CONTRIBUTING.md`
+**Dependencies:** F55-T3 ✅
+**Files touched:** `.github/workflows/release.yml`
 **Estimated scope:** M
 
 ---
 
-### Phase 3: Slice 3 — Arquitectura
+### Phase 3: Documentación
 
-#### Task F6-T4: docs/ARCHITECTURE.md — Verificar ADRs y decisiones
+#### Task F55-T5: Actualizar README y documentación
 
-**Descripción:** Verificar que ARCHITECTURE.md y los 5 ADRs existentes cubren todas las decisiones arquitectónicas clave del proyecto. Comparar contra SPEC.md resolved decisions (decisions 1-7) y docs/WORKFLOW.md.
+**Descripción:** Actualizar README.md y docs/WORKFLOW.md para reflejar `bunx @fisherk2/codice` como método oficial de instalación, y el binario como alternativa offline.
 
 **Criterios de aceptación:**
-- [x] ADR-001 a ADR-005 listados en ARCHITECTURE.md con estado "Accepted"
-- [x] Decisiones 1-7 de SPEC.md cubiertas: Template Packaging, Optional File Grouping, GitHub Auth, Windows Path, Local Version Storage, Rollback, Update Notification
-- [x] No hay decisión documentada en SPEC.md que no esté en ARCHITECTURE.md o ADRs
-- [x] Layer diagram en ARCHITECTURE.md refleja la estructura actual del código
+- [ ] README: primera opción de instalación es `bunx @fisherk2/codice`
+- [ ] README: binario compilado como "Offline / air-gapped alternative"
+- [ ] WORKFLOW.md: F5.5 como fase activa con tasks y estado 🟡
+- [ ] tasks/plan.md y tasks/todo.md actualizados con F5.5
 
 **Verification:**
-- [x] Lectura cruzada SPEC.md resolved decisions vs ADRs existentes
-- [x] `just check` pasa (0 errors)
+- [ ] `just check` pasa (0 errors)
+- [ ] Las instrucciones son claras y priorizan bunx
 
-**Dependencies:** Ninguna
-**Files touched:** `docs/ARCHITECTURE.md`, `specs/adr/*.md` (lectura)
+**Dependencies:** F55-T1 ✅ → F55-T4 ✅ (depende de publicación exitosa)
+**Files touched:** `README.md`, `docs/WORKFLOW.md`, `tasks/plan.md`, `tasks/todo.md`
 **Estimated scope:** S
 
 ---
 
 ## Checkpoints
 
-### After F6-T1 + F6-T2 (Slice 1 — Usuario Final)
-- [x] README tiene sección Códice CLI con install commands, ejemplos 3 modos, troubleshooting, badge CI
-- [x] CHANGELOG tiene sección Security en v1.0.0
-- [x] `just check` pasa
+### After F55-T1 + F55-T2 (Phase 1 — Preparación del paquete)
+- [ ] package.json configurado con bin entry
+- [ ] TemplateResolver funciona en source mode
+- [ ] `bunx .` (local) funciona
+- [ ] `bun test` pasa sin regresión
 
-### After F6-T4 (Slice 2 — Contribuidor)
-- [x] CONTRIBUTING.md tiene guía completa de setup, testing, PR workflow
+### After F55-T3 (Primera publicación)
+- [ ] `@fisherk2/codice` publicado en npm
+- [ ] `bunx @fisherk2/codice` funciona
 
-### After F6-T3 (Slice 3 — Arquitectura)
-- [x] ARCHITECTURE.md y ADRs cubriendo todas las decisiones de SPEC.md
+### After F55-T4 (Automatización CI)
+- [ ] release.yml publica a npm automáticamente en tag v*
+- [ ] `NPM_TOKEN` configurado en GitHub Secrets
 
-### Gate F6: F6 Review Checklist
-- [x] README aprobado por peer review (instrucciones copy-paste funcionan)
-- [x] CHANGELOG.md sigue formato Keep a Changelog con Security
-- [x] CI/CD badge visible en README
-- [x] `bun test`: sin regresión (284 pass, 0 fail)
-- [x] `just check`: 0 errores
-- [x] E2E: 6/6 pasando
+### Gate F5.5: F5.5 Review Checklist
+- [ ] `bunx @fisherk2/codice` es la instalación oficial
+- [ ] Binario compilado disponible como alternativa offline
+- [ ] Publicación automática en CI (tag v*)
+- [ ] `bun test`: sin regresión (284 pass, 0 fail)
+- [ ] `just check`: 0 errores
 
 ---
 
@@ -168,20 +179,22 @@ F6-T4: CONTRIBUTING.md   — independiente (crear desde cero)
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| README demasiado largo con contenido dual (workspace + CLI) | Low | Mantener estructura clara con headings jerárquicos, no mezclar contenidos |
-| CHANGELOG Security vacía parece extraño | Low | Incluir mensaje explicativo "No security vulnerabilities identified" |
-| CONTRIBUTING.md muy genérico | Medium | Seguir formatos establecidos (Conventional Commits, Keep a Changelog) |
-| ADRs no cubren alguna decisión | Low | Identificar gaps en F6-T3 antes de escribir |
+| TemplateResolver en source mode rompe el binario compilado | Medium | Probar ambos modos (bun run + binary) antes de merge |
+| npm publish falla por configuración de cuenta | Medium | Hacer `npm pack --dry-run` primero, verificar contenido |
+| Token npm expira o se revoca | Low | Automation tokens no expiran. Monitorear CI |
+| bunx descarga versión cacheada (no la latest) | Low | Usar `bunx --fresh @fisherk2/codice` para forzar fresh |
 
 ---
 
-## Vertical Slices
+## Dependency Graph
 
-| Slice | Tasks | Description |
-|-------|-------|-------------|
-| **Slice 1** | F6-T1 → T2 | Usuario final: README con Códice CLI + CHANGELOG completo |
-| **Slice 2** | F6-T4 | Contribuidor: CONTRIBUTING.md completo |
-| **Slice 3** | F6-T3 | Arquitectura: verificar ARCHITECTURE.md y ADRs |
+```
+F55-T1: package.json (bin + deps)    ← base
+F55-T2: TemplateResolver source mode ← depende de T1
+F55-T3: Publicar primera versión      ← depende de T1, T2
+F55-T4: Automatizar CI               ← depende de T3
+F55-T5: Documentación                ← depende de T1 → T4 (publicación exitosa)
+```
 
 ---
 
@@ -189,43 +202,13 @@ F6-T4: CONTRIBUTING.md   — independiente (crear desde cero)
 
 | Task | Description | Estimated |
 |------|-------------|-----------|
-| F6-T1 | README.md — añadir sección Códice CLI (install, 3 modos, troubleshooting, CI badge) | 2 hrs |
-| F6-T2 | CHANGELOG.md — añadir sección Security faltante | 15 min |
-| F6-T3 | docs/ARCHITECTURE.md — verificar ADRs coverage | 30 min |
-| F6-T4 | CONTRIBUTING.md — crear guía completa (setup, testing, PRs) | 1.5 hrs |
-| **Total F6** | **4 tasks** | **~4.5 hrs** |
+| F55-T1 | package.json — bin entry + dependencies | 30 min |
+| F55-T2 | TemplateResolver — source mode detection | 1 hr |
+| F55-T3 | Publicar primera versión a npm (guiada) | 30 min + cuenta npm |
+| F55-T4 | Automatizar npm publish en CI | 1 hr |
+| F55-T5 | Actualizar documentación (README, etc.) | 30 min |
+| **Total F5.5** | **5 tasks** | **~3.5 hrs** |
 
 ---
 
-## Release v1.0.0 — Listo para Despliegue
-
-**Estado:** ✅ Release Ready
-
-Todas las fases (F0–F6) han sido completadas y verificadas:
-
-| Fase | Estado | Entregable Clave |
-|------|--------|-----------------|
-| F0 | ✅ Completo | Entorno, convenciones, CI/CD |
-| F1 | ✅ Completo | BunFileSystem, GitHubRestClient, ClackPromptsAdapter |
-| F2 | ✅ Completo | FileMergeEngine, VersionComparator, Result type |
-| F3 | ✅ Completo | CLI, DI, Use Cases, tests integración |
-| F4 | ✅ Completo | E2E (6 escenarios), CI integration, coverage gaps |
-| F4.5 | ✅ Completo | `--dest` flag, workspace seguro, `just dev` protegido |
-| F4.6 | ✅ Completo | Code Review + Refactor (TemplateResolver, AtomicStager) |
-| F5 | ✅ Completo | Cross-platform builds (linux/macos/windows), release automation |
-| F6 | ✅ Completo | README, CHANGELOG, CONTRIBUTING, ARCHITECTURE |
-
-**Métricas finales v1.0.0:**
-- `bun test`: 284 pass, 0 fail (593 expects)
-- `just check`: 0 errores (biome ci + tsc --noEmit)
-- E2E: 6/6 escenarios pasando
-- Coverage: 96.23% funciones / 94.26% líneas
-- Domain coverage: 100% líneas
-- Binarios: Linux (x64), macOS (x64), Windows (x64)
-- Release pipeline: tag `v*` → build 3 platforms → release con assets
-
-**Próximo paso:** Crear tag `v1.0.0` y ejecutar release workflow en GitHub Actions.
-
----
-
-*Last updated: 2026-06-15*
+*Last updated: 2026-06-16*
