@@ -12,6 +12,7 @@
 | F4 | Pruebas | E2E (6 escenarios), CI integration, coverage gaps | ✅ Completo |
 | F4.5 | Workspace seguro | `--dest` flag, `tests/fixtures/workspace/`, `just dev` protegido | ✅ Completo |
 | F5 | CI/CD + Cross-platform | Builds multi-plataforma, release automation | ✅ Completo |
+| F5.5 | Publicación npm + bunx | Paquete npm @fisherk2/codice, instalación vía bunx como método oficial | 🟡 En curso |
 | F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
 
 ## 2. Desglose por Fase
@@ -161,7 +162,24 @@
 - **Commits F5 review fixes (2026-06-15):** 3 correcciones post-review (echo format, Bun version, SHA pinning)
 - **F5 total:** 7 tasks, 7 completed + 3 review fixes
 
-## 5. F6 — Documentación (Completada)
+## 5. F5.5 — Publicación npm + bunx support (En curso)
+
+**Estado:** 🟡 En curso
+**Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F5.5 ⬅️ Siguiente** → F6 ✅
+
+| ID | Descripción | Prioridad | Estado |
+|----|-------------|-----------|--------|
+| F55-T1 | Crear package.json con bin entry + dependencies | Alta | ⏳ Pendiente |
+| F55-T2 | Modificar TemplateResolver para source mode | Alta | ⏳ Pendiente |
+| F55-T3 | Publicar paquete npm @fisherk2/codice | Alta | ⏳ Pendiente |
+| F55-T4 | Release pipeline: publicar a npm en tag v* | Alta | ⏳ Pendiente |
+| F55-T5 | Actualizar README: bunx como método oficial, binario como offline | Alta | ⏳ Pendiente |
+
+**Próximo paso:** Estructurar package.json y adaptar TemplateResolver para que el código sea ejecutable vía `bunx @fisherk2/codice`.
+
+---
+
+## 6. F6 — Documentación (Completada)
 
 **Estado:** ✅ Completo
 **Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F6 ✅ Completado**
@@ -190,7 +208,7 @@ F6 completado con 4 tareas de documentación. Sin regresión en tests, cobertura
 
 ---
 
-## 6. Release v1.0.0 — Listo para Despliegue
+## 7. Release v1.0.0 — Listo para Despliegue
 
 **Estado:** ✅ Release Ready
 
@@ -208,6 +226,7 @@ Todas las fases del plan de implementación han sido completadas exitosamente.
 | F4.5 | Workspace seguro (`--dest`, `just dev`) | ✅ Completo |
 | F4.6 | Code Review + Refactor (TemplateResolver, AtomicStager) | ✅ Completo |
 | F5 | CI/CD + Cross-platform (builds, release automation) | ✅ Completo |
+| F5.5 | Publicación npm + bunx (paquete @fisherk2/codice) | 🟡 En curso |
 | F6 | Documentación (README, CHANGELOG, CONTRIBUTING, ARCHITECTURE) | ✅ Completo |
 
 **Métricas finales v1.0.0:**
