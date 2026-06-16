@@ -4,7 +4,7 @@
   "module": "src/cli/main.ts",
   "type": "module",
   "bin": {
-    "codice": "./src/cli/main.ts"
+    "codice": "./src/cli/bin.js"
   },
   "files": [
     "src/",
