@@ -1,0 +1,49 @@
+# Códice — Opencode Workspace Installer
+# Bun configuration file
+# See https://bun.sh/docs/runtime/bunfig for full documentation
+
+# ─── Install Settings ────────────────────────────────────────────────────────
+
+[install]
+
+# Install devDependencies by default (use --production to skip)
+dev = true
+
+# Install optionalDependencies
+optional = true
+
+# Install peerDependencies
+peer = true
+
+# Use production mode (set via --production flag or CI)
+# production = false
+
+# Save lockfile as text for better diffs and merge conflict resolution
+saveTextLockfile = true
+
+# Don't allow modifications without updating lockfile
+frozenLockfile = false
+
+# Maximum concurrent network requests during install
+concurrentScripts = 16
+
+# Package manager linker strategy: hoisted (flat) or isolated
+linker = "hoisted"
+
+# ─── Cache Settings ──────────────────────────────────────────────────────────
+
+[install.cache]
+
+# Global cache directory
+dir = "~/.bun/install/cache"
+
+# Don't disable the cache
+disable = false
+
+# ─── Build Settings ──────────────────────────────────────────────────────────
+
+# These are defaults; CLI flags override them.
+# For cross-platform compilation, use:
+#   bun build --compile --target=bun-linux-x64-latest
+#   bun build --compile --target=bun-darwin-x64-latest
+#   bun build --compile --target=bun-windows-x64-latest

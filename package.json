@@ -1,0 +1,41 @@
+{
+  "name": "@fisherk2-dev/codice",
+  "version": "1.0.4",
+  "module": "src/cli/main.ts",
+  "type": "module",
+  "bin": {
+    "codice": "./src/cli/bin.js"
+  },
+  "files": [
+    "src/",
+    "template/",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.0",
+    "@types/bun": "^1.3.14",
+    "@types/semver": "^7.7.1",
+    "typescript": "^5"
+  },
+  "scripts": {
+    "dev": "bun run src/cli/main.ts --verbose",
+    "build": "bun build --compile src/cli/main.ts --outfile ./dist/codice-linux",
+    "test": "bun test",
+    "test:unit": "bun test tests/unit/",
+    "test:integration": "bun test tests/integration/",
+    "test:coverage": "bun test --coverage",
+    "lint": "bunx @biomejs/biome check src/ tests/",
+    "format": "bunx @biomejs/biome format --write src/ tests/",
+    "format:check": "bunx @biomejs/biome ci src/ tests/",
+    "check": "bunx @biomejs/biome ci src/ tests/ && bun run tsc --noEmit",
+    "clean": "rm -rf dist/*"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.5.1",
+    "semver": "^7.8.4"
+  }
+}

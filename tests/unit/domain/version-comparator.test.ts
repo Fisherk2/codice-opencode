@@ -1,0 +1,229 @@
+/**
+ * Unit tests for VersionComparator service.
+ *
+ * Tests version comparison, update availability detection,
+ * and release type determination using the semver library.
+ */
+
+import { describe, expect, test } from "bun:test";
+import {
+	VersionComparator,
+	validateVersion,
+	validateVersions,
+} from "../../../src/domain/services/VersionComparator";
+
+const comparator = new VersionComparator();
+
+describe("validateVersion", () => {
+	test("returns valid normalized version for standard semver", () => {
+		const result = validateVersion("1.0.0");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value).toBe("1.0.0");
+		}
+	});
+
+	test("returns valid normalized version for v-prefixed", () => {
+		const result = validateVersion("v2.1.3");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value).toBe("2.1.3");
+		}
+	});
+
+	test("returns Failure for invalid version string", () => {
+		const result = validateVersion("not-a-version");
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain("Invalid version format");
+			expect(result.error.message).toContain("not-a-version");
+		}
+	});
+
+	test("returns Failure for empty string", () => {
+		const result = validateVersion("");
+		expect(result.ok).toBe(false);
+	});
+});
+
+describe("validateVersions", () => {
+	test("returns both normalized versions when both are valid", () => {
+		const result = validateVersions("1.0.0", "2.0.0");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.localValid).toBe("1.0.0");
+			expect(result.value.remoteValid).toBe("2.0.0");
+		}
+	});
+
+	test("returns Failure when local is invalid (fail-fast)", () => {
+		const result = validateVersions("bad", "2.0.0");
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain("bad");
+		}
+	});
+
+	test("returns Failure when remote is invalid", () => {
+		const result = validateVersions("1.0.0", "bad");
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain("bad");
+		}
+	});
+
+	test("accepts v-prefixed versions for both", () => {
+		const result = validateVersions("v1.0.0", "v2.0.0");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.localValid).toBe("1.0.0");
+			expect(result.value.remoteValid).toBe("2.0.0");
+		}
+	});
+});
+
+describe("VersionComparator.compare", () => {
+	test("returns 'newer' when remote is greater than local", () => {
+		const result = comparator.compare("1.0.0", "1.1.0");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value).toBe("newer");
+		}
+	});
+
+	test("returns 'older' when remote is lesser than local", () => {
+		const result = comparator.compare("1.1.0", "1.0.0");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value).toBe("older");
+		}
+	});
+
+	test("returns 'equal' when versions match", () => {
+		const result = comparator.compare("1.0.0", "1.0.0");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value).toBe("equal");
+		}
+	});
+
+	test("returns Failure for invalid local version", () => {
+		const result = comparator.compare("not-a-version", "1.0.0");
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain("Invalid version format");
+			expect(result.error.message).toContain("not-a-version");
+		}
+	});
+
+	test("returns Failure for invalid remote version", () => {
+		const result = comparator.compare("1.0.0", "abc.def.ghi");
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain("Invalid version format");
+			expect(result.error.message).toContain("abc.def.ghi");
+		}
+	});
+
+	test("returns Failure for empty string", () => {
+		const result = comparator.compare("", "1.0.0");
+		expect(result.ok).toBe(false);
+	});
+
+	test("accepts v-prefixed versions", () => {
+		const result = comparator.compare("v1.0.0", "v1.1.0");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value).toBe("newer");
+		}
+	});
+});
+
+describe("VersionComparator.isUpdateAvailable", () => {
+	test("returns true when remote is newer", () => {
+		expect(comparator.isUpdateAvailable("1.0.0", "1.1.0")).toBe(true);
+	});
+
+	test("returns false when versions are equal", () => {
+		expect(comparator.isUpdateAvailable("1.0.0", "1.0.0")).toBe(false);
+	});
+
+	test("returns false when local is newer than remote", () => {
+		expect(comparator.isUpdateAvailable("1.1.0", "1.0.0")).toBe(false);
+	});
+
+	test("returns false when either version is invalid", () => {
+		expect(comparator.isUpdateAvailable("bad", "1.0.0")).toBe(false);
+		expect(comparator.isUpdateAvailable("1.0.0", "bad")).toBe(false);
+	});
+});
+
+describe("VersionComparator.getReleaseType", () => {
+	test("returns 'major' for major version bump", () => {
+		const result = comparator.getReleaseType("1.0.0", "2.0.0");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value).toBe("major");
+		}
+	});
+
+	test("returns 'minor' for minor version bump", () => {
+		const result = comparator.getReleaseType("1.0.0", "1.1.0");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value).toBe("minor");
+		}
+	});
+
+	test("returns 'patch' for patch version bump", () => {
+		const result = comparator.getReleaseType("1.0.0", "1.0.1");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value).toBe("patch");
+		}
+	});
+
+	test("returns 'none' for equal versions", () => {
+		const result = comparator.getReleaseType("1.0.0", "1.0.0");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value).toBe("none");
+		}
+	});
+
+	test("returns Failure for invalid local version", () => {
+		const result = comparator.getReleaseType("bad", "1.0.0");
+		expect(result.ok).toBe(false);
+	});
+
+	test("returns Failure for invalid remote version", () => {
+		const result = comparator.getReleaseType("1.0.0", "bad");
+		expect(result.ok).toBe(false);
+	});
+
+	test("returns 'major' for premajor version bump", () => {
+		const result = comparator.getReleaseType("1.0.0", "2.0.0-pre.1");
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value).toBe("major");
+	});
+
+	test("returns 'minor' for preminor version bump", () => {
+		const result = comparator.getReleaseType("1.0.0", "1.1.0-pre.1");
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value).toBe("minor");
+	});
+
+	test("returns 'patch' for prepatch version bump", () => {
+		const result = comparator.getReleaseType("1.0.0", "1.0.1-pre.1");
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value).toBe("patch");
+	});
+
+	test("returns 'none' for prerelease diff (not in map, falls through ?? \"none\")", () => {
+		// semverDiff("1.0.0-alpha.1", "1.0.0-rc.1") returns "prerelease",
+		// which is NOT in RELEASE_TYPE_MAP, so ?? "none" applies
+		const result = comparator.getReleaseType("1.0.0-alpha.1", "1.0.0-rc.1");
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value).toBe("none");
+	});
+});

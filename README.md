@@ -1,7 +1,13 @@
-# Spec-Driven Development Workspace with OpenCode
+# Códice: Spec-Driven Development Workspace
 
 <p align="center">
   <img src="docs/img/banner.png" alt="Spec-Driven Development Workspace Banner">
+</p>
+
+<p align="center">
+  <a href="https://github.com/Fisherk2/codice-opencode/actions/workflows/ci.yml">
+    <img src="https://github.com/Fisherk2/codice-opencode/workflows/CI/badge.svg" alt="CI">
+  </a>
 </p>
 
 **OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
@@ -178,6 +184,276 @@ flowchart LR
 
 ---
 
+## Workspace Structure
+
+```
+project-root/
+├── AGENTS.md                   # Agent personas and orchestration
+├── CHANGELOG.md                # Release history
+├── CONTRIBUTING.md             # How to add agents and skills
+├── Justfile                    # Task runner commands
+├── LICENSE                     # MIT License
+├── Makefile                    # Build targets
+├── README.md                   # Project overview
+├── SPEC.md                     # Project specification
+├── opencode.json               # OpenCode configuration
+├── skills-lock.json            # Skill dependency lockfile
+├── requirements.txt            # Python dependencies
+├── .env.example                # Environment variables template
+│
+├── agents/                     # 102+ agent personas (6 primary + 96+ subagents)
+│   ├── huitzilopochtli.md      #   Supreme Orchestrator
+│   ├── quetzalcoatl.md         #   Visionary Architect
+│   ├── moctezuma.md            #   Strategic Commander
+│   ├── tlaloc.md               #   Rain God Builder
+│   ├── mictlantecuhtli.md      #   Underworld Judge
+│   ├── tezcatlipoca.md         #   Smoking Mirror Critic
+│   └── ... (96+ subagent files)
+│
+├── commands/                   # 10 slash commands for OpenCode
+│   ├── build.md                #   BUILD
+│   ├── code-simplify.md        #   SIMPLIFY (recommended pre-review)
+│   ├── design.md               #   DESIGN (optional, UI/UX)
+│   ├── evolve.md               #   EVOLVE (existing projects)
+│   ├── plan.md                 #   PLAN
+│   ├── review.md               #   REVIEW
+│   ├── ship.md                 #   SHIP
+│   ├── spec.md                 #   DEFINE (new projects)
+│   ├── test.md                 #   VERIFY
+│   └── webperf.md              #   WEBPERF (optional, perf. audit)
+│
+├── .opencode/                  # OpenCode runtime config
+│   ├── agents -> ../agents     #   Symlink to agents
+│   ├── commands -> ../commands #   Symlink to commands
+│   ├── skills -> ../skills     #   Symlink to skills
+│   ├── plugins/                #   SDD pipeline plugin
+│       ├── sdd-pipeline.ts     #     Pipeline state machine
+│       └── sdd-workflow-test.md #   Workflow test specs
+│
+├── skills/                     # 46 skills (45 engineering + 1 meta-skill)
+│   ├── using-agent-skills/     #   META: skill discovery
+│   ├── idea-refine/            #   DEFINE / EVOLVE
+│   ├── spec-driven-development/#   DEFINE / EVOLVE
+│   ├── agent-md-refactor/      #   DEFINE (PRE-FLIGHT)
+│   ├── env-setup/              #   DEFINE (PRE-FLIGHT)
+│   ├── clean-ddd-hexagonal/    #   DEFINE / PLAN / BUILD
+│   ├── design-patterns/        #   DEFINE / PLAN / REVIEW
+│   ├── architecture-diagrams/  #   DEFINE / PLAN / SHIP
+│   ├── ui-ux-design-pro/       #   DEFINE / BUILD
+│   ├── interview-me/           #   DEFINE / EVOLVE (extract requirements)
+│   ├── doubt-driven-development/ # EVOLVE / BUILD (stress-test decisions)
+│   ├── planning-and-task-breakdown/ # PLAN
+│   ├── incremental-implementation/  # BUILD
+│   ├── test-driven-development/     # BUILD
+│   ├── source-driven-development/   # BUILD
+│   ├── context-engineering/         # BUILD
+│   ├── frontend-ui-engineering/     # BUILD
+│   ├── api-and-interface-design/    # BUILD
+│   ├── api-spec-generation/         # BUILD
+│   ├── docker-optimize/             # BUILD / SHIP
+│   ├── db-migration/                # BUILD / SHIP
+│   ├── solid/                       # BUILD / REVIEW
+│   ├── clean-code/                  # BUILD / REVIEW
+│   ├── error-handling-patterns/     # BUILD / VERIFY / REVIEW
+│   ├── design-taste-frontend/       # BUILD / VERIFY / REVIEW
+│   ├── bash-defensive-patterns/     # BUILD / SHIP
+│   ├── observability-and-instrumentation/ # BUILD / VERIFY / SHIP
+│   ├── browser-testing-with-devtools/ # VERIFY / WEBPERF
+│   ├── debugging-and-error-recovery/  # VERIFY
+│   ├── code-review-and-quality/       # REVIEW
+│   ├── code-simplification/           # SIMPLIFY
+│   ├── security-and-hardening/        # REVIEW
+│   ├── dependency-audit/              # REVIEW
+│   ├── performance-optimization/      # REVIEW
+│   ├── performance-analysis/          # REVIEW
+│   ├── refactoring-patterns/          # SIMPLIFY
+│   ├── git-workflow-and-versioning/   # SHIP
+│   ├── changelog-generate/            # SHIP
+│   ├── ci-cd-and-automation/          # SHIP
+│   ├── deprecation-and-migration/     # SHIP
+│   ├── documentation-and-adrs/        # SHIP / EVOLVE
+│   ├── shipping-and-launch/           # SHIP
+│   ├── incident-response/             # SHIP / VERIFY
+│   ├── crafting-effective-readmes/    # DEFINE / SHIP
+│   ├── xlsx/                          # EXTRA
+│   └── excel-analysis/                # EXTRA
+│
+├── references/                 # 59 technical reference files
+│   ├── testing-patterns.md
+│   ├── security-checklist.md
+│   ├── performance-checklist.md
+│   ├── accessibility-checklist.md
+│   ├── clean-code.md
+│   ├── code-smells.md
+│   ├── design-patterns.md
+│   ├── solid-principles.md
+│   ├── error-handling.md
+│   ├── tdd.md
+│   ├── architecture.md
+│   ├── DDD-STRATEGIC.md
+│   ├── DDD-TACTICAL.md
+│   ├── HEXAGONAL.md
+│   ├── CQRS-EVENTS.md
+│   ├── refactoring-smell-catalog.md
+│   ├── component-patterns.md
+│   ├── color-system.md
+│   ├── typography.md
+│   └── ... (59 files total — see references/ for the full list)
+│
+├── docs/                       # Project documentation
+│   ├── APPFLOW.md              #   Application flow
+│   ├── ARCHITECTURE.md         #   System architecture decisions
+│   ├── CODE_STYLE.md           #   Coding conventions
+│   ├── DESIGN.md               #   Design directions
+│   ├── PRD.md                  #   Product requirements
+│   ├── SCHEMA.md               #   Data schema
+│   ├── TRD.md                  #   Technical requirements
+│   ├── WORKFLOW.md             #   Implementation workflow
+│   └── opencode/               #   OpenCode configuration guides
+│       ├── USER_GUIDE.md       #     Complete Reference Guide
+│       ├── 00-setup.md
+│       ├── 01-agents.md
+│       ├── 02-orchestration-patterns.md
+│       ├── 03-agent-index.md
+│       ├── 04-commands.md    #     Command creation guide
+│       ├── 05-skills.md
+│       ├── 06-mcp-servers.md
+│       ├── 07-models.md
+│       ├── 08-rules.md
+│       ├── 09-tools-and-custom-tools.md
+│       └── 10-permissions.md
+│
+├── specs/                      # Project specifications
+│   ├── spec-xx.md              #   Feature specs
+│   ├── adr/                    #   Architecture Decision Records
+│   │   └── adr-xxx.md          #     Template
+│   └── design/                 #   Design docs
+│       ├── components.md
+│       ├── style-guide.md
+│       └── user-flow.md
+│
+├── scripts/                    # Helper scripts
+│   ├── build.sh
+│   ├── lint.sh
+│   ├── setup.sh
+│   └── test.sh
+│
+├── tasks/                      # Task tracking
+│   ├── plan.md                 #   Current plan
+│   └── todo.md                 #   Todo list
+│
+├── src/                        # Source code
+└── tests/                      # Tests
+```
+
+---
+
+## Códice CLI — Workspace Installer
+
+**Códice** is a command-line tool that installs and updates this OpenCode workspace template atomically, safely, and intelligently.
+
+### Quick Install (Recommended)
+
+Requires [Bun](https://bun.sh) installed on your system.
+
+```bash
+bunx @fisherk2-dev/codice
+```
+
+That's it. Bun downloads and runs the latest version automatically.
+
+> **Note:** If you encounter issues with `bunx` (e.g., no output, scoped package cache issues), use `npx @fisherk2-dev/codice` as a fallback — both commands work identically.
+
+> **Tip:** Use `bunx --fresh @fisherk2-dev/codice` to force download the latest version.
+
+### Offline / Air-gapped Alternative
+
+If you don't have Bun installed or prefer a standalone binary, download the compiled binary for your platform:
+
+#### Linux (x64) / macOS (x64)
+
+```bash
+# Download the latest binary for your platform:
+curl -L -o codice https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-linux
+# macOS: replace `codice-linux` with `codice-macos`
+
+# Make it executable:
+chmod +x codice
+
+# Run the installer:
+./codice
+```
+
+#### Windows (x64)
+
+```powershell
+# Download the latest binary:
+curl -L -o codice.exe https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-windows.exe
+
+# Run the installer:
+.\codice.exe
+```
+
+### Usage
+
+Códice presents an interactive menu with three installation modes:
+
+| Mode | Description | When to Use |
+|------|-------------|-------------|
+| **Clean Install** | Overwrites the destination with the complete template | Starting a fresh project |
+| **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
+| **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
+
+```bash
+# Interactive menu (default) — via bunx or binary:
+bunx @fisherk2-dev/codice     # via npm (requires Bun)
+./codice                   # via compiled binary (standalone)
+
+# Direct mode with flags:
+bunx @fisherk2-dev/codice --dest ./my-project
+./codice --force
+./codice --version
+codice --help
+```
+
+### File Classification
+
+When installing or updating, Códice classifies every file into one of three categories:
+
+| Category | Behavior | Examples |
+|----------|----------|----------|
+| **Obligatorio** | Always copied, overwrites existing | Core agents, commands, configuration |
+| **Estándar** | Copied only if missing in destination | Recommended skills, documentation |
+| **Opcional** | Presented as a checklist; copied only if selected **and** missing | Optional skills, specialized references |
+
+### Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| `bunx @fisherk2-dev/codice` not found | Ensure Bun is installed: `curl -fsSL https://bun.sh/install \| bash` |
+| `bunx` shows no output or hangs | Try `bunx @fisherk2-dev/codice@latest` or use `npx @fisherk2-dev/codice` instead |
+| `bunx` uses a cached version | Run `bunx --fresh @fisherk2-dev/codice` |
+| `Permission denied` (binary) | Run `chmod +x` on the downloaded binary, or prepend `sudo` |
+| Binary not found after install | Ensure the binary is in your `$PATH`, or use `./codice` |
+| GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
+| Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
+| `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--dest <path>` | Target installation directory (default: current directory) |
+| `--force` | Skip all confirmation prompts |
+| `--verbose` | Enable structured logging to stderr |
+| `--version` | Print binary version and exit |
+| `--clean` | Run Clean Install mode (skip interactive menu) |
+| `--project` | Run Project Install mode (skip interactive menu) |
+| `--update` | Run Update Workspace mode (skip interactive menu) |
+| `--help` | Show usage help |
+
+---
+
 ## License
 
 MIT — See [LICENSE](LICENSE) for details.
@@ -196,4 +472,4 @@ Thanks to their authors and contributors for their invaluable contribution to th
 
 ---
 
-*Last revision: 2026-06-12*
+*Last revision: 2026-06-16*

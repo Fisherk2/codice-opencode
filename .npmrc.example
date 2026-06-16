@@ -1,0 +1,12 @@
+# Códice — npm publish configuration
+#
+# Genera un Granular Access Token en:
+#   https://www.npmjs.com/settings/fisherk2/tokens
+# Permisos: Read and Write para @fisherk2-dev/codice
+#
+# Luego copia este archivo a .npmrc y reemplaza el token:
+#   cp .npmrc.example .npmrc
+#   # edita .npmrc con tu token real
+#   npm publish
+
+//registry.npmjs.org/:_authToken=npms_xxxxxxxxxxxxxxxxxxxx

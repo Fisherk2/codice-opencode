@@ -4,16 +4,97 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to release'
+        required: true
+
+env:
+  BUN_VERSION: "1.1"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Setup Just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build binary
+        run: just build
+
+      - name: Set artifact name
+        id: artifact
+        shell: bash
+        run: |
+          case "${{ runner.os }}" in
+            Linux)   echo "name=codice-linux" >> "$GITHUB_OUTPUT" ;;
+            macOS)   echo "name=codice-macos" >> "$GITHUB_OUTPUT" ;;
+            Windows) echo "name=codice-windows.exe" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: dist/
+          retention-days: 1
+
   release:
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Download all binary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: codice-*
+          path: ./release-assets
+          merge-multiple: true
+
+      # All-or-nothing: all 3 platforms must build for a release.
+      # If any binary is missing, sha256sum fails and blocks the release.
+      - name: Generate SHA-256 checksums
+        run: |
+          cd ./release-assets
+          sha256sum codice-linux codice-macos codice-windows.exe > checksums-sha256.txt
+          cat checksums-sha256.txt
+
+      - name: Validate tag format (prevent injection)
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "ERROR: Invalid tag format: $TAG"
+            exit 1
+          fi
+          echo "Tag format validated: $TAG"
 
       - name: Extract release body from CHANGELOG
         run: |
@@ -23,10 +104,51 @@ jobs:
             'index($0, "## [" ver "]") == 1 { found=1; next }
              /^## \[/ && found { exit }
              found' CHANGELOG.md > release-body.md
-          [ -s release-body.md ] || echo "No changelog section found for $VERSION" >&2
+          if [ ! -s release-body.md ]; then
+            echo "## Release $VERSION" > release-body.md
+            echo "" >> release-body.md
+            echo "No changelog section found for this version. Please update CHANGELOG.md." >> release-body.md
+            echo "" >> release-body.md
+            echo "See [CHANGELOG.md](./CHANGELOG.md) for the full history." >> release-body.md
+          fi
+
+      - name: Validate version
+        run: |
+          TAG="${{ github.ref_name }}"
+          TAG_VERSION="${TAG#v}"
+          PKG_VERSION="$(jq -r '.version' package.json)"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "ERROR: Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "Version validated: $TAG_VERSION"
+
+      - name: Publish to npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          trap 'rm -f .npmrc' EXIT
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+          PUBLISH_OUTPUT=$(npm publish 2>&1) && PUBLISH_EXIT=0 || PUBLISH_EXIT=$?
+          echo "$PUBLISH_OUTPUT"
+          if [ $PUBLISH_EXIT -ne 0 ]; then
+            if echo "$PUBLISH_OUTPUT" | grep -q "cannot publish over the previously published version"; then
+              echo "Version already published — skipping."
+            else
+              echo "npm publish failed with exit code $PUBLISH_EXIT"
+              exit $PUBLISH_EXIT
+            fi
+          fi
 
       - name: Create Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
         with:
           body_path: release-body.md
+          files: |
+            ./release-assets/codice-linux
+            ./release-assets/codice-macos
+            ./release-assets/codice-windows.exe
+            ./release-assets/checksums-sha256.txt
           make_latest: true
+          fail_on_unmatched_files: false

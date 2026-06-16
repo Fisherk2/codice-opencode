@@ -1,11 +1,17 @@
-# Entorno - Excluye archivos con credenciales y configuraciones locales
+# ─── Node / Bun ───────────────────────────────────────────────────────────────
+node_modules/
+
+# Build output — compiled binary (populated by CI)
+dist/
+
+# ─── Entorno ─────────────────────────────────────────────────────────────────
 .env
 .env.local
 .env.development
 .env.production
 .env.test
 
-# IDE - Excluye configuraciones personales de editores de código
+# ─── IDE / Editor ────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
@@ -15,13 +21,11 @@
 .metadata/
 .recommenders/
 
-# AI Agent - Excluye archivos de IA y agentes de la raiz
-
+# ─── AI Agents ────────────────────────────────────────────────────────────────
 /agents/
 /skills/
 /references/
 /commands/
-/docs/opencode/
 /.agents/
 /.opencode/
 /.windsurf/
@@ -38,7 +42,7 @@
 /skills-lock.json
 /opencode.json
 
-# Sistema - Excluye archivos temporales del sistema operativo
+# ─── Sistema ─────────────────────────────────────────────────────────────────
 .DS_Store
 .DS_Store?
 ._*
@@ -49,15 +53,11 @@ Thumbs.db
 *.tmp
 *.temp
 
-# Logs - Excluye archivos de registro y errores
+# ─── Logs ────────────────────────────────────────────────────────────────────
 *.log
 logs/
-error.log
-connection.log
-postgresql.log
-pg_log/
 
-# Temporales - Excluye caché y archivos temporales de aplicación
+# ─── Temporales ──────────────────────────────────────────────────────────────
 cache/
 tmp/
 temp/
@@ -66,125 +66,23 @@ temp/
 *.backup
 *.old
 
-# PostgreSQL - Excluye archivos específicos de PostgreSQL
-*.dump
-*.sqlc
-*.psql_history
-pgadmin/
-.postgresql/
-pg_hba.conf.local
-postgresql.conf.local
-
-# Documentación generada - Excluye archivos generados automáticamente
-docs/build/
-#*.html
-*.png.temp
-diagrams/generated/
-mermaid-output/
-
-# Python - Entorno virtual y dependencias
-__pycache__/
-*.py[cod]
-*$py.class
-venv/
-env/
-ENV/
-.env/
-.venv/
-
-# Python - Build y distribución
-dist/
-build/
-*.egg-info/
-*.egg
-*.whl
-
-# Python - Testing y Coverage
-.pytest_cache/
-.coverage
-htmlcov/
-coverage.xml
-*.cover
-.hypothesis/
-junit.xml
-.tox/
-
-# Configuración - Secretos y archivos locales
-#.env*
-config/*secret*.yaml
-config/*local*.yaml
-*.secret.yaml
-*.local.yaml
-
-# Modulos de Node.js
-node_modules/
-
-# Docker y Contenedores - Excluye configuraciones de contenedores y orquestación
-.docker/
-docker-compose.override.yml
-*.kubeconfig
-kubeconfig*
-
-# Lenguajes Adicionales - Excluye artefactos de build y dependencias
-# Go
-vendor/
-*.exe
-*.test
-coverage.txt
-# Rust
-target/
-# Java/Maven
-*.class
-*.jar
-*.war
-target/
-.mvn/
-# Ruby
-vendor/bundle/
-.bundle/
-
-# Frameworks Web - Excluye directorios de build y archivos generados
-# Next.js
-.next/
-out/
-# Vite / Webpack
-dist/
-build/
-# Laravel
-storage/*.key
-# Django
-*.pot
-*.mo
-
-# Cloud e Infraestructura - Excluye credenciales y configuraciones de servicios
-# AWS
-.aws/credentials
-aws-config.json
-# SSH
-*.pem
-*.key
-# GCP
-*.json.key
-service-account*.json
-# Terraform
-*.tfstate
-*.tfstate.*
-.terraform/
-crash.log
-override.tf
-
-# Testing y Coverage - Excluye reportes y caché de herramientas de testing
+# ─── Testing / Coverage ──────────────────────────────────────────────────────
 .nyc_output/
 lcov.info
 *.lcov
 junit/
 test-results/
-allure-results/
 
-# Entornos Locales - Excluye configuraciones específicas de cada desarrollador
+# Generated content (E2E/dev workspace — safe playground for the installer)
+/tests/fixtures/workspace/*
+!/tests/fixtures/workspace/.gitkeep
+
+# ─── Secretos / Config local ─────────────────────────────────────────────────
+*.secret.yaml
+*.local.yaml
 local.properties
-local.gradle
 *.local
 *.override
 
-# Para añadir nueva regla: identificar categoría específica, evitar patrones demasiado amplios
+# npm token (contiene Granular Access Token para publish)
+.npmrc
