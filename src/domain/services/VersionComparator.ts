@@ -32,6 +32,22 @@ export type ReleaseType = "major" | "minor" | "patch" | "none";
  */
 export class VersionComparator {
 	/**
+	 * Validate a single version string and return its normalized form.
+	 * Returns Failure with an actionable message if the format is invalid.
+	 */
+	private validateSingleVersion(version: string): Result<string, Error> {
+		const validVersion = valid(version);
+		if (!validVersion) {
+			return failure(
+				new Error(
+					`Invalid version format: "${version}". Expected a valid semver version (e.g. "1.0.0").`,
+				),
+			);
+		}
+		return success(validVersion);
+	}
+
+	/**
 	 * Validate both version strings and return normalized valid forms.
 	 * Returns Failure with actionable message if either is invalid.
 	 */
@@ -39,23 +55,11 @@ export class VersionComparator {
 		local: string,
 		remote: string,
 	): Result<{ localValid: string; remoteValid: string }, Error> {
-		const localValid = valid(local);
-		if (!localValid) {
-			return failure(
-				new Error(
-					`Invalid version format: "${local}". Expected a valid semver version (e.g. "1.0.0").`,
-				),
-			);
-		}
-		const remoteValid = valid(remote);
-		if (!remoteValid) {
-			return failure(
-				new Error(
-					`Invalid version format: "${remote}". Expected a valid semver version (e.g. "1.0.0").`,
-				),
-			);
-		}
-		return success({ localValid, remoteValid });
+		const localResult = this.validateSingleVersion(local);
+		if (!localResult.ok) return localResult;
+		const remoteResult = this.validateSingleVersion(remote);
+		if (!remoteResult.ok) return remoteResult;
+		return success({ localValid: localResult.value, remoteValid: remoteResult.value });
 	}
 
 	/**

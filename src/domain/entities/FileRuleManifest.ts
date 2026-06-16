@@ -229,12 +229,8 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
  */
 export function createFileRule(path: string): FileRule | null {
 	const normalized = normalizePath(path);
-	for (const rule of FILE_RULE_MANIFEST) {
-		if (rule.path === normalized) {
-			return { ...rule }; // Return a copy to prevent mutation
-		}
-	}
-	return null;
+	const rule = FILE_RULE_MANIFEST.find((r) => r.path === normalized);
+	return rule ? { ...rule } : null; // Return a copy to prevent mutation
 }
 
 /**

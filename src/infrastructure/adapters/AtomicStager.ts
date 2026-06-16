@@ -78,49 +78,20 @@ export class AtomicStager {
 	 */
 	async commitStaging(): Promise<void> {
 		const stagingDir = this.stagingRoot;
-		// Backup of original destination files: destPath → backupPath
 		const backups = new Map<string, string>();
 
 		try {
 			// Check if staging directory exists (fs.access works for dirs; Bun.file does not)
-			let stagingExists = false;
 			try {
 				await fs.access(stagingDir);
-				stagingExists = true;
 			} catch {
-				stagingExists = false;
-			}
-
-			if (!stagingExists) {
 				throw new Error("No staged files found. Call stageFile() before commitStaging().");
 			}
 
-			// Walk the staging directory recursively
+			// Walk and rename each staged file atomically
 			const stagedFiles = await this.walkDirectory(stagingDir);
-
 			for (const stagingFilePath of stagedFiles) {
-				// Compute relative path from staging root → this is the destination relative path
-				const relativePath = path.relative(stagingDir, stagingFilePath);
-				const destPath = this.resolveDestinationPath(relativePath);
-
-				// Ensure destination parent directory exists
-				await fs.mkdir(path.dirname(destPath), { recursive: true });
-
-				// Back up original destination file if it exists
-				try {
-					const destFile = Bun.file(destPath);
-					if (await destFile.exists()) {
-						const backupPath = `${destPath}.codice-backup`;
-						await fs.copyFile(destPath, backupPath);
-						backups.set(destPath, backupPath);
-					}
-				} catch {
-					// If we can't copy the original, we can't back it up — proceed anyway
-					// The worst case is we can't roll back this particular file
-				}
-
-				// Atomic rename: staging → destination
-				await fs.rename(stagingFilePath, destPath);
+				await this.renameStagedFile(stagingFilePath, stagingDir, backups);
 			}
 
 			// Clean up staging directory after successful commit
@@ -135,13 +106,9 @@ export class AtomicStager {
 				}
 			}
 		} catch (error) {
-			// Rollback: restore all backed-up original files
 			await this.restoreBackups(backups);
-
-			// Clean up staging on failure too
 			await this.cleanStaging();
 
-			// Re-throw with actionable message
 			const message = error instanceof Error ? error.message : String(error);
 			throw new Error(`Failed to commit staged files: ${message}`);
 		}
@@ -193,6 +160,38 @@ export class AtomicStager {
 		const stagingPath = this.resolveStagingPath(stagingRelativePath);
 		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
 		await Bun.write(stagingPath, content);
+	}
+
+	/**
+	 * Atomically rename a single staged file to its destination path.
+	 * Before the rename, the original destination file (if it exists) is backed
+	 * up to allow rollback. Creates intermediate directories as needed.
+	 */
+	private async renameStagedFile(
+		stagingFilePath: string,
+		stagingDir: string,
+		backups: Map<string, string>,
+	): Promise<void> {
+		const relativePath = path.relative(stagingDir, stagingFilePath);
+		const destPath = this.resolveDestinationPath(relativePath);
+
+		// Ensure destination parent directory exists
+		await fs.mkdir(path.dirname(destPath), { recursive: true });
+
+		// Back up original destination file if it exists
+		try {
+			const destFile = Bun.file(destPath);
+			if (await destFile.exists()) {
+				const backupPath = `${destPath}.codice-backup`;
+				await fs.copyFile(destPath, backupPath);
+				backups.set(destPath, backupPath);
+			}
+		} catch {
+			// If we can't copy the original, we can't back it up — proceed anyway
+		}
+
+		// Atomic rename: staging → destination
+		await fs.rename(stagingFilePath, destPath);
 	}
 
 	/**
