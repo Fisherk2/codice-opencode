@@ -22,7 +22,7 @@ Códice is built with [Bun](https://bun.sh), which provides `bunx` (equivalent t
 
 ## Decision
 
-We will publish Códice as the npm package `@fisherk2/codice` and establish `bunx @fisherk2/codice` as the **official, primary** installation method.
+We will publish Códice as the npm package `@fisherk2-dev/codice` and establish `bunx @fisherk2-dev/codice` as the **official, primary** installation method.
 
 The compiled binary (via `bun build --compile`) will be maintained as an **alternative, offline/air-gapped** distribution method.
 
@@ -30,7 +30,7 @@ The compiled binary (via `bun build --compile`) will be maintained as an **alter
 
 | Method | Command | Runtime Required | Use Case |
 |--------|---------|------------------|----------|
-| **npm (primary)** | `bunx @fisherk2/codice` | Bun | Quick setup, CI with Bun, daily use |
+| **npm (primary)** | `bunx @fisherk2-dev/codice` | Bun | Quick setup, CI with Bun, daily use |
 | **Binary (alternative)** | `./codice` | None | Offline, air-gapped, CI without Bun, Docker |
 
 ### Package Configuration
@@ -45,7 +45,7 @@ The compiled binary (via `bun build --compile`) will be maintained as an **alter
 
 ### Positive
 
-- **Simpler UX:** `bunx @fisherk2/codice` is shorter and more discoverable than downloading a binary
+- **Simpler UX:** `bunx @fisherk2-dev/codice` is shorter and more discoverable than downloading a binary
 - **Automatic updates:** `bunx` always fetches the latest version (unless cached)
 - **Consistency with ecosystem:** Matches the pattern established by awesome-opencode and other npx/bunx tools
 - **Smaller initial download:** The npm package is source + templates (~KB), not a 74MB compiled binary

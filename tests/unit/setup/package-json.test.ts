@@ -13,7 +13,7 @@ describe("Package.json Configuration", () => {
 	});
 
 	test("has scoped npm package name", () => {
-		expect(pkg.name).toBe("@fisherk2/codice");
+		expect(pkg.name).toBe("@fisherk2-dev/codice");
 	});
 
 	test("has correct version", () => {

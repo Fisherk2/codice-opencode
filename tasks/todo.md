@@ -54,18 +54,18 @@
 
 ### F55-T3: Publicar primera versión a npm (manual)
 
-**Descripción:** Publicar `@fisherk2/codice` a npm por primera vez. Pasos guiados.
+**Descripción:** Publicar `@fisherk2-dev/codice` a npm por primera vez. Pasos guiados.
 
 **Criterios de aceptación:**
 - [ ] Cuenta npm creada y organización @fisherk2 configurada
-- [ ] MFA configurado: `npm access set mfa=automation @fisherk2/codice`
+- [ ] MFA configurado: `npm access set mfa=automation @fisherk2-dev/codice`
 - [ ] Granular Access Token generado con `--bypass-2fa --scopes @fisherk2`
 - [ ] `npm publish` exitoso
-- [ ] `bunx @fisherk2/codice` descarga e inicia el instalador correctamente
+- [ ] `bunx @fisherk2-dev/codice` descarga e inicia el instalador correctamente
 
 **Verification:**
-- [ ] `bunx @fisherk2/codice` → menú interactivo funciona
-- [ ] `bunx @fisherk2/codice --version` → muestra versión correcta
+- [ ] `bunx @fisherk2-dev/codice` → menú interactivo funciona
+- [ ] `bunx @fisherk2-dev/codice --version` → muestra versión correcta
 
 **Dependencies:** F55-T1 ✅, F55-T2 ✅
 **Scope:** L (por ser primera vez del usuario)
@@ -96,10 +96,10 @@
 
 ### F55-T5: Actualizar README y documentación
 
-**Descripción:** Actualizar README.md y docs/WORKFLOW.md para reflejar `bunx @fisherk2/codice` como método oficial de instalación, y el binario como alternativa offline.
+**Descripción:** Actualizar README.md y docs/WORKFLOW.md para reflejar `bunx @fisherk2-dev/codice` como método oficial de instalación, y el binario como alternativa offline.
 
 **Criterios de aceptación:**
-- [ ] README: primera opción de instalación es `bunx @fisherk2/codice`
+- [ ] README: primera opción de instalación es `bunx @fisherk2-dev/codice`
 - [ ] README: binario compilado como "Offline / air-gapped alternative"
 - [ ] WORKFLOW.md: F5.5 como fase activa con tasks y estado 🟡
 - [ ] tasks/plan.md y tasks/todo.md actualizados con F5.5
@@ -116,7 +116,7 @@
 
 ## Gate F5.5: F5.5 Review Checklist
 
-- [ ] `bunx @fisherk2/codice` es la instalación oficial
+- [ ] `bunx @fisherk2-dev/codice` es la instalación oficial
 - [ ] Binario compilado disponible como alternativa offline
 - [ ] Publicación automática en CI (tag v*)
 - [ ] `bun test`: sin regresión (284 pass, 0 fail)

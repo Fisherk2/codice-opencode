@@ -357,12 +357,12 @@ project-root/
 Requires [Bun](https://bun.sh) installed on your system.
 
 ```bash
-bunx @fisherk2/codice
+bunx @fisherk2-dev/codice
 ```
 
 That's it. Bun downloads and runs the latest version automatically.
 
-> **Tip:** Use `bunx --fresh @fisherk2/codice` to force download the latest version.
+> **Tip:** Use `bunx --fresh @fisherk2-dev/codice` to force download the latest version.
 
 ### Offline / Air-gapped Alternative
 
@@ -404,11 +404,11 @@ Códice presents an interactive menu with three installation modes:
 
 ```bash
 # Interactive menu (default) — via bunx or binary:
-bunx @fisherk2/codice     # via npm (requires Bun)
+bunx @fisherk2-dev/codice     # via npm (requires Bun)
 ./codice                   # via compiled binary (standalone)
 
 # Direct mode with flags:
-bunx @fisherk2/codice --dest ./my-project
+bunx @fisherk2-dev/codice --dest ./my-project
 ./codice --force
 ./codice --version
 codice --help
@@ -428,9 +428,9 @@ When installing or updating, Códice classifies every file into one of three cat
 
 | Problem | Solution |
 |---------|----------|
-| `bunx @fisherk2/codice` not found | Ensure Bun is installed: `curl -fsSL https://bun.sh/install \| bash` |
+| `bunx @fisherk2-dev/codice` not found | Ensure Bun is installed: `curl -fsSL https://bun.sh/install \| bash` |
 | `Permission denied` (binary) | Run `chmod +x` on the downloaded binary, or prepend `sudo` |
-| `bunx` uses a cached version | Run `bunx --fresh @fisherk2/codice` |
+| `bunx` uses a cached version | Run `bunx --fresh @fisherk2-dev/codice` |
 | Binary not found after install | Ensure the binary is in your `$PATH`, or use `./codice` |
 | GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |

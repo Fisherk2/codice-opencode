@@ -4,10 +4,10 @@
 
 ## Overview
 
-Publicar Códice como paquete npm (`@fisherk2/codice`) para que los usuarios puedan instalar el workspace de OpenCode con un solo comando:
+Publicar Códice como paquete npm (`@fisherk2-dev/codice`) para que los usuarios puedan instalar el workspace de OpenCode con un solo comando:
 
 ```bash
-bunx @fisherk2/codice
+bunx @fisherk2-dev/codice
 ```
 
 El binario compilado (vía `bun build --compile`) se mantiene como método alternativo offline/air-gapped. El objetivo es que `bunx` sea la experiencia de instalación por defecto.
@@ -20,7 +20,7 @@ El binario compilado (vía `bun build --compile`) se mantiene como método alter
 
 | # | Decisión | Rationale |
 |---|----------|-----------|
-| F55-A1 | `@fisherk2/codice` como nombre npm | Scoped, dueño claro, consistente con awesome-opencode (usa @weisser-dev) |
+| F55-A1 | `@fisherk2-dev/codice` como nombre npm | Scoped, dueño claro, consistente con awesome-opencode (usa @weisser-dev) |
 | F55-A2 | `bunx` como método oficial, binario como opcional offline | Experiencia más simple, sin descargar binarios. Binario para air-gapped/CI sin Bun |
 | F55-A3 | Template se resuelve desde filesystem en source mode | TemplateResolver detecta automáticamente si está en source (import.meta.dir) o compilado (execPath) |
 | F55-A4 | @clack/prompts y semver pasan a dependencies | Necessarios para que bunx funcione sin instalación adicional |
@@ -90,18 +90,18 @@ El binario compilado (vía `bun build --compile`) se mantiene como método alter
 
 #### Task F55-T3: Publicar primera versión a npm (manual)
 
-**Descripción:** Publicar `@fisherk2/codice` a npm por primera vez. Pasos guiados.
+**Descripción:** Publicar `@fisherk2-dev/codice` a npm por primera vez. Pasos guiados.
 
 **Criterios de aceptación:**
 - [ ] Cuenta npm creada y organización @fisherk2 configurada
-- [ ] MFA configurado: `npm access set mfa=automation @fisherk2/codice`
+- [ ] MFA configurado: `npm access set mfa=automation @fisherk2-dev/codice`
 - [ ] Granular Access Token generado con `--bypass-2fa --scopes @fisherk2`
 - [ ] `npm publish` exitoso
-- [ ] `bunx @fisherk2/codice` descarga e inicia el instalador correctamente
+- [ ] `bunx @fisherk2-dev/codice` descarga e inicia el instalador correctamente
 
 **Verification:**
-- [ ] `bunx @fisherk2/codice` → menú interactivo funciona
-- [ ] `bunx @fisherk2/codice --version` → muestra versión correcta
+- [ ] `bunx @fisherk2-dev/codice` → menú interactivo funciona
+- [ ] `bunx @fisherk2-dev/codice --version` → muestra versión correcta
 
 **Dependencies:** F55-T1 ✅, F55-T2 ✅
 **Estimated scope:** L (por ser primera vez del usuario)
@@ -132,10 +132,10 @@ El binario compilado (vía `bun build --compile`) se mantiene como método alter
 
 #### Task F55-T5: Actualizar README y documentación
 
-**Descripción:** Actualizar README.md y docs/WORKFLOW.md para reflejar `bunx @fisherk2/codice` como método oficial de instalación, y el binario como alternativa offline.
+**Descripción:** Actualizar README.md y docs/WORKFLOW.md para reflejar `bunx @fisherk2-dev/codice` como método oficial de instalación, y el binario como alternativa offline.
 
 **Criterios de aceptación:**
-- [ ] README: primera opción de instalación es `bunx @fisherk2/codice`
+- [ ] README: primera opción de instalación es `bunx @fisherk2-dev/codice`
 - [ ] README: binario compilado como "Offline / air-gapped alternative"
 - [ ] WORKFLOW.md: F5.5 como fase activa con tasks y estado 🟡
 - [ ] tasks/plan.md y tasks/todo.md actualizados con F5.5
@@ -159,15 +159,15 @@ El binario compilado (vía `bun build --compile`) se mantiene como método alter
 - [ ] `bun test` pasa sin regresión
 
 ### After F55-T3 (Primera publicación)
-- [ ] `@fisherk2/codice` publicado en npm
-- [ ] `bunx @fisherk2/codice` funciona
+- [ ] `@fisherk2-dev/codice` publicado en npm
+- [ ] `bunx @fisherk2-dev/codice` funciona
 
 ### After F55-T4 (Automatización CI)
 - [ ] release.yml publica a npm automáticamente en tag v*
 - [ ] `NPM_TOKEN` configurado en GitHub Secrets
 
 ### Gate F5.5: F5.5 Review Checklist
-- [ ] `bunx @fisherk2/codice` es la instalación oficial
+- [ ] `bunx @fisherk2-dev/codice` es la instalación oficial
 - [ ] Binario compilado disponible como alternativa offline
 - [ ] Publicación automática en CI (tag v*)
 - [ ] `bun test`: sin regresión (284 pass, 0 fail)
@@ -182,7 +182,7 @@ El binario compilado (vía `bun build --compile`) se mantiene como método alter
 | TemplateResolver en source mode rompe el binario compilado | Medium | Probar ambos modos (bun run + binary) antes de merge |
 | npm publish falla por configuración de cuenta | Medium | Hacer `npm pack --dry-run` primero, verificar contenido |
 | Token npm expira o se revoca | Low | Automation tokens no expiran. Monitorear CI |
-| bunx descarga versión cacheada (no la latest) | Low | Usar `bunx --fresh @fisherk2/codice` para forzar fresh |
+| bunx descarga versión cacheada (no la latest) | Low | Usar `bunx --fresh @fisherk2-dev/codice` para forzar fresh |
 
 ---
 
