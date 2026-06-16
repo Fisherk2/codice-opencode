@@ -72,16 +72,24 @@ describe("resolveWithinRoot", () => {
 	// ---------------------------------------------------------------------------
 	// Defense-in-depth boundary check (lines 23-26)
 	//
-	// This guard is a safety net. With current path.resolve() behavior,
-	// the resolved path always starts with rootWithSep, making this
-	// guard unreachable. It protects against:
-	//   - Future changes in Node/Bun path.resolve() normalization
-	//   - Platform-specific path behavior differences
+	// This guard is a safety net for inputs that pass the first guard
+	// but resolve to a path outside the root boundary. Example:
+	//   "." passes the first guard but resolves to root itself,
+	//   which does NOT start with rootWithSep (no trailing sep).
+	//
+	// It also protects against future changes in path.resolve()
+	// normalization and platform-specific path behavior differences.
 	// ---------------------------------------------------------------------------
 
-	test("returns resolved path starting with root (guard prerequisite)", () => {
-		// Verify the invariant that makes the second guard unreachable:
-		// path.resolve(ROOT, normalized) always starts with ROOT + sep
+	test("catches path that resolves to root itself (no trailing sep)", () => {
+		// "." is not absolute and doesn't start with ".." → passes first guard
+		// but path.resolve("/workspace/project", ".") == "/workspace/project"
+		// which does NOT start with "/workspace/project/" → triggers second guard
+		expect(() => resolveWithinRoot(ROOT, ".", "destination")).toThrow("Path traversal blocked");
+	});
+
+	test("returns resolved path starting with root (normal case)", () => {
+		// When resolved is within root (with trailing sep), no error is thrown
 		const result = resolveWithinRoot(ROOT, "src/file.ts", "destination");
 		expect(result.startsWith(path.resolve(ROOT) + path.sep)).toBe(true);
 	});

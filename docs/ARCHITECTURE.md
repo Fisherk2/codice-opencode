@@ -108,3 +108,4 @@ graph TD
 - [AGENTS.md](../AGENTS.md) — Full architectural guidelines
 - [SPEC.md](../SPEC.md) — Central specification
 - [WORKFLOW.md](./WORKFLOW.md) — Implementation phases
+- [TECH_DEBT.md](./TECH_DEBT.md) — Known technical debt and improvement priorities

@@ -144,4 +144,30 @@ describe("WorkspaceVersion comparison", () => {
 		expect(json.installedAt).toBe("2026-06-13T12:00:00.000Z");
 		expect(json.optionalSelections).toEqual(["Justfile"]);
 	});
+
+	test("fromJSON parses optionalSelections array of strings", () => {
+		const v = WorkspaceVersion.fromJSON({
+			installedVersion: "1.0.0",
+			installedAt: "2026-06-13T12:00:00.000Z",
+			optionalSelections: ["Justfile", "README.md"],
+		});
+		expect(v.optionalSelections).toEqual(["Justfile", "README.md"]);
+	});
+
+	test("fromJSON treats non-array optionalSelections as empty", () => {
+		const v = WorkspaceVersion.fromJSON({
+			installedVersion: "1.0.0",
+			installedAt: "2026-06-13T12:00:00.000Z",
+			optionalSelections: "not-an-array",
+		});
+		expect(v.optionalSelections).toEqual([]);
+	});
+
+	test("fromJSON treats missing optionalSelections as empty", () => {
+		const v = WorkspaceVersion.fromJSON({
+			installedVersion: "1.0.0",
+			installedAt: "2026-06-13T12:00:00.000Z",
+		});
+		expect(v.optionalSelections).toEqual([]);
+	});
 });
