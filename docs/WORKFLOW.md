@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.3
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-16 | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v1.0.4
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-17 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -14,6 +14,7 @@
 | F5 | CI/CD + Cross-platform | Builds multi-plataforma, release automation | ✅ Completo |
 | F5.5 | Publicación npm + bunx | Paquete npm @fisherk2-dev/codice, instalación vía bunx como método oficial | ✅ Completo |
 | F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
+| F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth test, ClackPromptsAdapter/WorskpaceVersion coverage, TECH_DEBT.md | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -147,14 +148,15 @@
 
 ## 4. Métricas de Progreso
 
-- **Tests unit+int:** 284 tests, 0 fail, 593 expects
+- **Tests unit+int:** 360 tests, 0 fail, 711 expects
 - **Tests E2E:** 6/6 pasando
-- **Coverage:** 96.23% funciones / 94.26% líneas
+- **Coverage:** 97.66% funciones / 96.52% líneas
 - **Domain coverage:** 100% líneas
 - **`just check`:** 0 errores
 - **Fix rate:** 10+ bugs encontrados y corregidos durante desarrollo de E2E
 - **Commits F4:** `5f75006` (E2E + CI + Coverage)
 - **Commits F4.5:** `04c7c4b` (`--dest` + workspace seguro)
+- **Commits F6.5:** `4f76a55` (coverage + tech debt)
 - **Binary:** dist/codice-linux (74MB ELF x64), dist/codice-macos (via CI), dist/codice-windows.exe (via CI)
 - **Cross-platform builds:** CI matrix ubuntu/macos/windows con smoke test + artifact upload
 - **Release pipeline:** tag v* → build 3 platforms → create release with binary assets
@@ -257,3 +259,33 @@ Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/co
 **Release pipeline:** Crear tag `v1.0.3` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG + publicación automática a npm.
 
 **Success Criteria (SPEC.md):** Todos los SC-1 a SC-21 han sido verificados y cumplen los criterios de aceptación.
+
+---
+
+## 8. Release v1.0.4 — Tech Debt & Coverage Closing
+
+**Estado:** ✅ Release Ready
+
+**Tareas ejecutadas en F6.5:**
+
+| ID | Descripción | Estado |
+|----|-------------|--------|
+| F65-T1 | Refactor VersionComparator: métodos privados → funciones exportadas del módulo | ✅ Completo |
+| F65-T2 | 8 tests nuevos para validateVersion y validateVersions | ✅ Completo |
+| F65-T3 | Test defense-in-depth guard pathResolver.ts (líneas 23-26 a 100%) | ✅ Completo |
+| F65-T4 | Tests ClackPromptsAdapter.promptForMode (4 rutas: clean/project/update/cancel) | ✅ Completo |
+| F65-T5 | Tests WorkspaceVersion.fromJSON optionalSelections (array/non-array/missing) | ✅ Completo |
+| F65-T6 | TECH_DEBT.md en docs/ con 6 secciones de deuda técnica catalogada | ✅ Completo |
+
+**Métricas v1.0.4:**
+- `bun test`: 360 pass, 0 fail (711 expects)
+- `just check`: 0 errores (biome ci + tsc --noEmit)
+- E2E: 6/6 escenarios pasando
+- Coverage: 97.66% funciones / 96.52% líneas
+- Domain coverage: 100% líneas
+- Último commit: `4f76a55` en `release/v.1.0.0`
+
+**npm package:** `@fisherk2-dev/codice` — v1.0.4 a publicar.
+Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/codice`
+
+**Release pipeline:** Crear tag `v1.0.4` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG + publicación automática a npm.

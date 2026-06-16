@@ -1,6 +1,6 @@
-# Technical Debt — Códice v1.0.3
+# Technical Debt — Códice v1.0.4
 
-**Generated:** 2026-06-16  
+**Generated:** 2026-06-17  
 **Status:** Live reference for improvement planning  
 **Coverage:** 97.66% functions / 96.52% lines (360 tests, 0 fail, 711 expects)
 
