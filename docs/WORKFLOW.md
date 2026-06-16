@@ -169,13 +169,24 @@
 
 | ID | Descripción | Prioridad | Estado |
 |----|-------------|-----------|--------|
-| F55-T1 | Crear package.json con bin entry + dependencies | Alta | ⏳ Pendiente |
-| F55-T2 | Modificar TemplateResolver para source mode | Alta | ⏳ Pendiente |
-| F55-T3 | Publicar paquete npm @fisherk2-dev/codice | Alta | ⏳ Pendiente |
-| F55-T4 | Release pipeline: publicar a npm en tag v* | Alta | ⏳ Pendiente |
-| F55-T5 | Actualizar README: bunx como método oficial, binario como offline | Alta | ⏳ Pendiente |
+| F55-T1 | Crear package.json con bin entry + dependencies | Alta | ✅ Completo |
+| F55-T2 | Modificar TemplateResolver para source mode | Alta | ✅ Completo |
+| F55-T3 | Publicar paquete npm @fisherk2-dev/codice | Alta | ✅ Completo |
+| F55-T4 | Release pipeline: publicar a npm en tag v* | Alta | 🟡 En curso |
+| F55-T5 | Actualizar README: bunx como método oficial, binario como offline | Alta | ✅ Completo |
 
-**Próximo paso:** Estructurar package.json y adaptar TemplateResolver para que el código sea ejecutable vía `bunx @fisherk2-dev/codice`.
+**Último progreso (2026-06-16):**
+- F55-T1: package.json con `bin: { codice: "./src/cli/bin.js" }`, `files` correctos, `publishConfig.access: public`, dependencias runtime vs dev separadas
+- F55-T2: `TemplateResolver.detectTemplateRoot()` implementado con `import.meta.dir` (source) y `process.cwd()` (compiled), 11 tests
+- F55-T3: v1.0.0/1 deprecados, v1.0.2 deprecado, v1.0.3 activo en npm (`@fisherk2-dev/codice`)
+- F55-T4: release.yml editado con npm publish step + version validation. Pendiente push tag y verificación CI
+- F55-T5: README actualizado con npx fallback y troubleshooting
+
+**Problemas conocidos:**
+- `bunx @fisherk2-dev/codice --version` (sin @version) no produce output — bug de bun 1.3.14 con scoped packages con guión. Workaround: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/codice`
+- NPM_TOKEN debe añadirse como secreto en GitHub (`secrets.NPM_TOKEN`)
+
+**Próximo paso:** Finalizar F55-T4 (push tag, verificar CI, merge release branch). Luego ejecutar verificación completa y marcar F5.5 como completado.
 
 ---
 

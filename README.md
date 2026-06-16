@@ -362,6 +362,8 @@ bunx @fisherk2-dev/codice
 
 That's it. Bun downloads and runs the latest version automatically.
 
+> **Note:** If you encounter issues with `bunx` (e.g., no output, scoped package cache issues), use `npx @fisherk2-dev/codice` as a fallback — both commands work identically.
+
 > **Tip:** Use `bunx --fresh @fisherk2-dev/codice` to force download the latest version.
 
 ### Offline / Air-gapped Alternative
@@ -429,8 +431,9 @@ When installing or updating, Códice classifies every file into one of three cat
 | Problem | Solution |
 |---------|----------|
 | `bunx @fisherk2-dev/codice` not found | Ensure Bun is installed: `curl -fsSL https://bun.sh/install \| bash` |
-| `Permission denied` (binary) | Run `chmod +x` on the downloaded binary, or prepend `sudo` |
+| `bunx` shows no output or hangs | Try `bunx @fisherk2-dev/codice@latest` or use `npx @fisherk2-dev/codice` instead |
 | `bunx` uses a cached version | Run `bunx --fresh @fisherk2-dev/codice` |
+| `Permission denied` (binary) | Run `chmod +x` on the downloaded binary, or prepend `sudo` |
 | Binary not found after install | Ensure the binary is in your `$PATH`, or use `./codice` |
 | GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
