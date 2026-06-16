@@ -350,9 +350,23 @@ project-root/
 
 ## Códice CLI — Workspace Installer
 
-**Códice** is a command-line tool that installs and updates this OpenCode workspace template atomically, safely, and intelligently. It is compiled with Bun into a single native binary with zero runtime dependencies.
+**Códice** is a command-line tool that installs and updates this OpenCode workspace template atomically, safely, and intelligently.
 
-### Quick Install
+### Quick Install (Recommended)
+
+Requires [Bun](https://bun.sh) installed on your system.
+
+```bash
+bunx @fisherk2/codice
+```
+
+That's it. Bun downloads and runs the latest version automatically.
+
+> **Tip:** Use `bunx --fresh @fisherk2/codice` to force download the latest version.
+
+### Offline / Air-gapped Alternative
+
+If you don't have Bun installed or prefer a standalone binary, download the compiled binary for your platform:
 
 #### Linux (x64) / macOS (x64)
 
@@ -389,15 +403,15 @@ Códice presents an interactive menu with three installation modes:
 | **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
 
 ```bash
-# Interactive menu (default):
-codice
+# Interactive menu (default) — via bunx or binary:
+bunx @fisherk2/codice     # via npm (requires Bun)
+./codice                   # via compiled binary (standalone)
 
 # Direct mode with flags:
-codice --dest ./my-project     # Install into a specific directory
-codice --force                  # Skip confirmations (automated installs)
-codice --verbose                # Enable detailed logging for debugging
-codice --version                # Show binary version
-codice --help                   # Show usage information
+bunx @fisherk2/codice --dest ./my-project
+./codice --force
+./codice --version
+codice --help
 ```
 
 ### File Classification
@@ -414,7 +428,9 @@ When installing or updating, Códice classifies every file into one of three cat
 
 | Problem | Solution |
 |---------|----------|
-| `Permission denied` | Run `chmod +x` on the downloaded binary, or prepend `sudo` |
+| `bunx @fisherk2/codice` not found | Ensure Bun is installed: `curl -fsSL https://bun.sh/install \| bash` |
+| `Permission denied` (binary) | Run `chmod +x` on the downloaded binary, or prepend `sudo` |
+| `bunx` uses a cached version | Run `bunx --fresh @fisherk2/codice` |
 | Binary not found after install | Ensure the binary is in your `$PATH`, or use `./codice` |
 | GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
@@ -453,4 +469,4 @@ Thanks to their authors and contributors for their invaluable contribution to th
 
 ---
 
-*Last revision: 2026-06-15*
+*Last revision: 2026-06-16*
