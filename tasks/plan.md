@@ -1,214 +1,212 @@
-# Plan: F5.5 — Publicación npm + bunx support
+# Plan: Fase FEV-1 — Resolución de Issues Críticos (v1.0.5)
 
-**Fecha:** 2026-06-16 | **Autor:** Moctezuma (Planner Agent) | **Estado:** 🟡 En curso
+**Fecha:** 2026-06-17 | **Autor:** Moctezuma (Planner Agent) | **Estado:** 🟡 Plan Aprobado
 
 ## Overview
 
-Publicar Códice como paquete npm (`@fisherk2-dev/codice`) para que los usuarios puedan instalar el workspace de OpenCode con un solo comando:
+Resolver los **5 issues críticos** identificados en la Fase FEV-1 para estabilizar Códice y mejorar seguridad/documentación:
+1. **Issue #6 (bunx)**: Template resolution en modo `bunx` (crítico).
+2. **Issue #2 (update overwrite)**: Corregir transformación de reglas en `UpdateWorkspaceUseCase` (crítico).
+3. **Issue #3 (permisos)**: Actualizar `opencode.json` para bloquear lectura de credenciales (seguridad).
+4. **Issue #4 (enlaces)**: Corregir enlaces rotos en documentación (calidad).
+5. **Issue #5 (TECH_DEBT.md)**: Añadir `TECH_DEBT.md` a la plantilla (documentación).
 
-```bash
-bunx @fisherk2-dev/codice
-```
-
-El binario compilado (vía `bun build --compile`) se mantiene como método alternativo offline/air-gapped. El objetivo es que `bunx` sea la experiencia de instalación por defecto.
-
-**Estado de Fase:** 🟡 En curso — 0/5 tareas ejecutadas
-
----
-
-## Arquitectura de Decisiones
-
-| # | Decisión | Rationale |
-|---|----------|-----------|
-| F55-A1 | `@fisherk2-dev/codice` como nombre npm | Scoped, dueño claro, consistente con awesome-opencode (usa @weisser-dev) |
-| F55-A2 | `bunx` como método oficial, binario como opcional offline | Experiencia más simple, sin descargar binarios. Binario para air-gapped/CI sin Bun |
-| F55-A3 | Template se resuelve desde filesystem en source mode | TemplateResolver detecta automáticamente si está en source (import.meta.dir) o compilado (execPath) |
-| F55-A4 | @clack/prompts y semver pasan a dependencies | Necessarios para que bunx funcione sin instalación adicional |
-| F55-A5 | Publicación automática via CI en tag v* | Tag v* → build matrix + publish a npm. Automatización completa |
+**Objetivo:** Publicar v1.0.5 con todos los issues resueltos y sin regresiones.
 
 ---
 
-## Estado Actual (Audit)
+## Arquitectura de Decisiones (ADR-007)
 
-| Artefacto | Estado | Gap |
-|-----------|--------|-----|
-| package.json | ⚠️ Existe como proyecto Bun | No tiene `bin` entry, no está configurado para npm publish |
-| TemplateResolver | ✅ Carga templates en compiled mode | No soporta source mode (import.meta.dir) |
-| Template files | ✅ En `template/` | Listos para ser incluidos en npm package |
-| release.yml | ✅ Builds + GitHub Release | No publica a npm |
-| README.md | ✅ Binario como instalación oficial | No menciona bunx como método primario |
-
----
-
-## Task List
-
-### Phase 1: Preparación del paquete npm
-
-#### Task F55-T1: package.json — Añadir bin entry y mover dependencies
-
-**Descripción:** Configurar package.json para que sea un paquete npm ejecutable con `bunx`.
-
-**Criterios de aceptación:**
-- [ ] `"bin": { "codice": "./src/cli/main.ts" }` en package.json
-- [ ] `@clack/prompts` y `semver` en `dependencies` (no devDependencies)
-- [ ] `"files": [...]` incluye `src/`, `template/`, `package.json`, `tsconfig.json`
-- [ ] `"publishConfig": { "access": "public" }` (scoped packages requieren acceso público)
-- [ ] `"type": "module"` preservado
-
-**Verification:**
-- [ ] `bun run src/cli/main.ts` funciona correctamente
-- [ ] `bun install` (desde un directorio limpio) instala solo los deps necesarios
-
-**Dependencies:** Ninguna
-**Files touched:** `package.json`, `bun.lock`
-**Estimated scope:** S
+| Decisión | Rationale |
+|----------|-----------|
+| **ADR-FEV1-1**: Añadir tercera ruta en `TemplateResolver` para `bunx` | Necesario para soportar instalación vía `bunx` sin romper el modo compilado. |
+| **ADR-FEV1-2**: No convertir `standard` a `mandatory` en `UpdateWorkspaceUseCase` | Preserva la lógica de `destinationExists()` para evitar sobrescrituras. |
+| **ADR-FEV1-3**: Extender `permissions.read.deny` en `opencode.json` | Bloquea lectura de archivos sensibles por el agente IA. |
+| **ADR-FEV1-4**: Usar rutas relativas corregidas en documentación | Mantiene enlaces funcionales tras reorganización de directorios. |
+| **ADR-FEV1-5**: Incluir `TECH_DEBT.md` como placeholder en `estandar/` | Proporciona visibilidad de deuda técnica a usuarios. |
 
 ---
 
-#### Task F55-T2: TemplateResolver — Soportar source mode
+## Task Breakdown
 
-**Descripción:** Modificar `TemplateResolver.ts` para que detecte automáticamente si está corriendo desde source (bunx/bun run) o desde binario compilado, y resuelva la ruta del template en consecuencia.
+### Phase 1: Issues Críticos (Bloqueantes)
 
-**Criterios de aceptación:**
-- [ ] En source mode: `import.meta.dir` + `'../../template/'` como raíz del template
-- [ ] En compiled mode: `process.execPath` + `'../template/'` como raíz (comportamiento actual, no romper)
-- [ ] Detección automática: verificar si `import.meta.dir` existe relativo al directorio template
-- [ ] Sin necesidad de variables de entorno ni flags
+#### Task FEV1-T1: TemplateResolver — Añadir soporte para `bunx` (Issue #6)
+**Descripción:** Modificar `TemplateResolver.detectTemplateRoot()` para detectar automáticamente el modo `bunx` (source mode) y resolver la ruta del template desde `node_modules/@fisherk2-dev/codice/template/`.
 
-**Verification:**
-- [ ] `bun run src/cli/main.ts` carga templates correctamente (source mode)
-- [ ] `./dist/codice-linux` carga templates correctamente (compiled mode, no romper)
-- [ ] `bun test` sigue pasando (284 tests, 0 fail)
+**Criterios de Aceptación:**
+- [ ] Añadir tercera ruta de detección: `path.resolve(import.meta.dir, '../template/')`.
+- [ ] Mantener compatibilidad con modos existentes (compiled y source desarrollo).
+- [ ] Fallar con `TemplateNotFoundError` si no se encuentra el template en ninguna ruta.
+- [ ] Tests unitarios para los 3 modos (compiled, bunx, source).
 
-**Dependencies:** F55-T1 ✅
-**Files touched:** `src/infrastructure/adapters/TemplateResolver.ts`
-**Estimated scope:** M
+**Verificación:**
+- [ ] `bunx @fisherk2-dev/codice` funciona en un directorio limpio.
+- [ ] `bun run src/cli/main.ts` (source mode) sigue funcionando.
+- [ ] `./dist/codice-linux` (compiled mode) sigue funcionando.
+- [ ] `bun test` pasa sin regresión (360 tests, 0 fail).
 
----
+**Dependencias:** Ninguna.
+**Archivos:**
+- `src/infrastructure/adapters/TemplateResolver.ts`
+- `tests/integration/TemplateResolver.test.ts` (nuevos tests).
 
-### Phase 2: Publicación
-
-#### Task F55-T3: Publicar primera versión a npm (manual)
-
-**Descripción:** Publicar `@fisherk2-dev/codice` a npm por primera vez. Pasos guiados.
-
-**Criterios de aceptación:**
-- [ ] Cuenta npm creada y organización @fisherk2 configurada
-- [ ] MFA configurado: `npm access set mfa=automation @fisherk2-dev/codice`
-- [ ] Granular Access Token generado con `--bypass-2fa --scopes @fisherk2`
-- [ ] `npm publish` exitoso
-- [ ] `bunx @fisherk2-dev/codice` descarga e inicia el instalador correctamente
-
-**Verification:**
-- [ ] `bunx @fisherk2-dev/codice` → menú interactivo funciona
-- [ ] `bunx @fisherk2-dev/codice --version` → muestra versión correcta
-
-**Dependencies:** F55-T1 ✅, F55-T2 ✅
-**Estimated scope:** L (por ser primera vez del usuario)
+**Scope:** M (2h).
 
 ---
 
-#### Task F55-T4: Automatizar publicación npm en release.yml
+#### Task FEV1-T2: UpdateWorkspaceUseCase — Corregir transformación de reglas (Issue #2)
+**Descripción:** Modificar `buildUpdateRules()` para que **no convierta** reglas `standard` a `mandatory`, preservando la verificación `destinationExists()`.
 
-**Descripción:** Modificar el workflow de release para que además de subir binarios a GitHub Releases, publique el paquete a npm automáticamente.
+**Criterios de Aceptación:**
+- [ ] Solo reglas `obligatorio` se convierten a `mandatory`.
+- [ ] Reglas `standard` mantienen su tipo original.
+- [ ] Tests unitarios para los 3 tipos de reglas (`obligatorio`, `standard`, `opcional`).
 
-**Criterios de aceptación:**
-- [ ] Job `publish-npm` en release.yml que ejecuta `npm publish`
-- [ ] Usa `NPM_TOKEN` de GitHub Secrets para autenticación
-- [ ] Corre solo si los tests y builds pasaron
-- [ ] Publica la misma versión del tag (e.g., tag v1.0.0 → publish v1.0.0 a npm)
+**Verificación:**
+- [ ] `UpdateWorkspaceUseCase` no sobrescribe archivos existentes en `estandar/`.
+- [ ] `bun test` pasa sin regresión (360 tests, 0 fail).
+- [ ] E2E: Escenario "Update Workspace" pasa (6/6).
 
-**Verification:**
-- [ ] Crear tag `v1.0.0-test` → npm recibe el paquete (probar en dry-run)
-- [ ] No publica si los tests fallan
+**Dependencias:** Ninguna.
+**Archivos:**
+- `src/application/use-cases/UpdateWorkspaceUseCase.ts`
+- `tests/unit/UpdateWorkspaceUseCase.test.ts` (nuevos tests).
 
-**Dependencies:** F55-T3 ✅
-**Files touched:** `.github/workflows/release.yml`
-**Estimated scope:** M
+**Scope:** M (1h).
+
+---
+
+### Phase 2: Seguridad y Calidad
+
+#### Task FEV1-T3: Actualizar permisos en `opencode.json` (Issue #3)
+**Descripción:** Extender la lista `permissions.read.deny` para bloquear archivos de credenciales (`.npmrc`, `.pem`, `*.key`, etc.).
+
+**Criterios de Aceptación:**
+- [ ] Añadir patrones: `.env*`, `.npmrc`, `.pem`, `*.key`, `*.p12`, `*.pfx`, `credentials.json`, `service-account*.json`.
+- [ ] Validar que el agente IA no puede leer estos archivos en pruebas manuales.
+
+**Verificación:**
+- [ ] `just check` pasa (0 errores).
+- [ ] Revisión manual: Intentar leer `.npmrc` con el agente IA falla.
+
+**Dependencias:** Ninguna.
+**Archivos:**
+- `template/obligatorio/opencode.json`.
+
+**Scope:** S (30min).
+
+---
+
+#### Task FEV1-T4: Corregir enlaces rotos en documentación (Issue #4)
+**Descripción:** Actualizar rutas relativas en `README.md`, `CONTRIBUTING.md`, y `AGENTS.md` para reflejar la nueva estructura de directorios (`obligatorio/`, `estandar/`, `opcional/`).
+
+**Criterios de Aceptación:**
+- [ ] Revisar y corregir enlaces en:
+  - `template/estandar/README.md`
+  - `template/estandar/CONTRIBUTING.md`
+  - `template/obligatorio/AGENTS.md`
+- [ ] Usar rutas relativas correctas (ej: `../obligatorio/skills/xlsx/SKILL.md`).
+
+**Verificación:**
+- [ ] Todos los enlaces funcionan al instalar la plantilla.
+- [ ] `just check` pasa (0 errores).
+
+**Dependencias:** Ninguna.
+**Archivos:**
+- `template/estandar/README.md`
+- `template/estandar/CONTRIBUTING.md`
+- `template/obligatorio/AGENTS.md`.
+
+**Scope:** M (1h).
 
 ---
 
 ### Phase 3: Documentación
 
-#### Task F55-T5: Actualizar README y documentación
+#### Task FEV1-T5: Añadir TECH_DEBT.md a la plantilla (Issue #5)
+**Descripción:** Crear `template/estandar/TECH_DEBT.md` como placeholder que referencia al documento canónico en el repositorio.
 
-**Descripción:** Actualizar README.md y docs/WORKFLOW.md para reflejar `bunx @fisherk2-dev/codice` como método oficial de instalación, y el binario como alternativa offline.
+**Criterios de Aceptación:**
+- [ ] Archivo `TECH_DEBT.md` en `template/estandar/` con contenido:
+  ```markdown
+  # Technical Debt
+  Este documento es un placeholder. Consulta el catálogo oficial de deuda técnica en:
+  [docs/TECH_DEBT.md](../../docs/TECH_DEBT.md)
+  ```
 
-**Criterios de aceptación:**
-- [ ] README: primera opción de instalación es `bunx @fisherk2-dev/codice`
-- [ ] README: binario compilado como "Offline / air-gapped alternative"
-- [ ] WORKFLOW.md: F5.5 como fase activa con tasks y estado 🟡
-- [ ] tasks/plan.md y tasks/todo.md actualizados con F5.5
+**Verificación:**
+- [ ] `just check` pasa (0 errores).
+- [ ] El archivo se incluye al instalar la plantilla.
 
-**Verification:**
-- [ ] `just check` pasa (0 errors)
-- [ ] Las instrucciones son claras y priorizan bunx
+**Dependencias:** Ninguna.
+**Archivos:**
+- `template/estandar/TECH_DEBT.md` (nuevo).
 
-**Dependencies:** F55-T1 ✅ → F55-T4 ✅ (depende de publicación exitosa)
-**Files touched:** `README.md`, `docs/WORKFLOW.md`, `tasks/plan.md`, `tasks/todo.md`
-**Estimated scope:** S
+**Scope:** XS (15min).
 
 ---
 
 ## Checkpoints
 
-### After F55-T1 + F55-T2 (Phase 1 — Preparación del paquete)
-- [ ] package.json configurado con bin entry
-- [ ] TemplateResolver funciona en source mode
-- [ ] `bunx .` (local) funciona
-- [ ] `bun test` pasa sin regresión
+### Checkpoint 1: After FEV1-T1 + FEV1-T2 (Issues Críticos)
+- [ ] `bunx @fisherk2-dev/codice` funciona en todos los modos.
+- [ ] `UpdateWorkspaceUseCase` no sobrescribe archivos `estandar/`.
+- [ ] `bun test`: 360 pass, 0 fail (sin regresión).
+- [ ] E2E: 6/6 escenarios pasando.
 
-### After F55-T3 (Primera publicación)
-- [ ] `@fisherk2-dev/codice` publicado en npm
-- [ ] `bunx @fisherk2-dev/codice` funciona
+### Checkpoint 2: After FEV1-T3 + FEV1-T4 (Seguridad y Calidad)
+- [ ] Agente IA no puede leer archivos de credenciales.
+- [ ] Todos los enlaces en documentación funcionan.
+- [ ] `just check`: 0 errores.
 
-### After F55-T4 (Automatización CI)
-- [ ] release.yml publica a npm automáticamente en tag v*
-- [ ] `NPM_TOKEN` configurado en GitHub Secrets
-
-### Gate F5.5: F5.5 Review Checklist
-- [ ] `bunx @fisherk2-dev/codice` es la instalación oficial
-- [ ] Binario compilado disponible como alternativa offline
-- [ ] Publicación automática en CI (tag v*)
-- [ ] `bun test`: sin regresión (284 pass, 0 fail)
-- [ ] `just check`: 0 errores
-
----
-
-## Risks y Mitigaciones
-
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| TemplateResolver en source mode rompe el binario compilado | Medium | Probar ambos modos (bun run + binary) antes de merge |
-| npm publish falla por configuración de cuenta | Medium | Hacer `npm pack --dry-run` primero, verificar contenido |
-| Token npm expira o se revoca | Low | Automation tokens no expiran. Monitorear CI |
-| bunx descarga versión cacheada (no la latest) | Low | Usar `bunx --fresh @fisherk2-dev/codice` para forzar fresh |
+### Gate FEV-1: F5.5 Review Checklist (Final)
+- [ ] Todos los issues de FEV-1 resueltos (#6, #2, #3, #4, #5).
+- [ ] `bun test`: 360 pass, 0 fail.
+- [ ] `just check`: 0 errores.
+- [ ] E2E: 6/6 escenarios pasando.
+- [ ] ADR-007 documentado en `specs/adr/`.
+- [ ] CHANGELOG.md actualizado con sección `[Unreleased]`.
 
 ---
 
 ## Dependency Graph
 
-```
-F55-T1: package.json (bin + deps)    ← base
-F55-T2: TemplateResolver source mode ← depende de T1
-F55-T3: Publicar primera versión      ← depende de T1, T2
-F55-T4: Automatizar CI               ← depende de T3
-F55-T5: Documentación                ← depende de T1 → T4 (publicación exitosa)
+```mermaid
+graph TD
+    FEV1-T1[TemplateResolver: bunx mode] --> FEV1-T2[UpdateWorkspaceUseCase: reglas]
+    FEV1-T1 --> FEV1-T3[Permisos: opencode.json]
+    FEV1-T2 --> FEV1-T4[Enlaces: documentación]
+    FEV1-T3 --> FEV1-T5[TECH_DEBT.md]
+    FEV1-T4 --> FEV1-GATE[Gate FEV-1]
+    FEV1-T5 --> FEV1-GATE
 ```
 
 ---
 
-## Phase Summary
+## Riesgos y Mitigaciones
 
-| Task | Description | Estimated |
-|------|-------------|-----------|
-| F55-T1 | package.json — bin entry + dependencies | 30 min |
-| F55-T2 | TemplateResolver — source mode detection | 1 hr |
-| F55-T3 | Publicar primera versión a npm (guiada) | 30 min + cuenta npm |
-| F55-T4 | Automatizar npm publish en CI | 1 hr |
-| F55-T5 | Actualizar documentación (README, etc.) | 30 min |
-| **Total F5.5** | **5 tasks** | **~3.5 hrs** |
+| Riesgo | Impacto | Mitigación |
+|--------|---------|------------|
+| **TemplateResolver rompe compiled mode** | Alto | Probar ambos modos (bun run + binary) antes de merge. |
+| **Tests de regresión en UpdateWorkspaceUseCase** | Alto | Tests unitarios + E2E para escenario "Update Workspace". |
+| **Enlaces rotos en documentación** | Medio | Revisión manual de enlaces en plantilla instalada. |
+| **Publicación de TECH_DEBT.md sin contexto** | Bajo | Incluir referencia al documento canónico. |
 
 ---
 
-*Last updated: 2026-06-16*
+## Métricas Objetivo
+
+| Métrica | Actual (v1.0.4) | Meta (v1.0.5) |
+|---------|-----------------|---------------|
+| Tests (pass/fail) | 360 / 0 | 360 / 0 |
+| Coverage (funciones) | 97.66% | ≥97.66% |
+| Coverage (líneas) | 96.52% | ≥96.52% |
+| E2E escenarios | 6/6 | 6/6 |
+| `just check` errores | 0 | 0 |
+| Issues críticos abiertos | 2 (#6, #2) | 0 |
+| Issues totales abiertos | 5 | 0 |
+
+---
+
+*Última actualización: 2026-06-17*
