@@ -9,15 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- *(none)*
+- **ADR-007**: Template resolution for bunx/npm mode — third detection path `../template/` relative to `import.meta.dir`
+- **Credential file permissions**: Extended `permissions.read.deny` in `opencode.json` to include `.npmrc`, `.pem`, `*.key`, `*.p12`, `*.pfx`, `credentials.json`, `service-account*.json`
+- **TECH_DEBT.md in template**: Placeholder file in `template/estandar/` referencing the canonical technical debt catalog
+- **Internal link fixes**: Updated relative paths in `template/estandar/README.md`, `template/estandar/CONTRIBUTING.md`, and `template/obligatorio/AGENTS.md` to reflect `obligatorio/`, `estandar/`, `opcional/` directory structure
 
 ### Changed
 
-- *(none)*
+- **UpdateWorkspaceUseCase rule transformation**: `standard` rules no longer converted to `mandatory` in update mode; only `obligatorio` rules are elevated, preserving `destinationExists()` check for standard files
 
 ### Fixed
 
-- *(none)*
+- **Issue #6 (CRITICAL)**: `bunx @fisherk2-dev/codice` now resolves template files correctly in all modes (compiled, bunx/npm, source) via three-path detection cascade in `TemplateResolver.detectTemplateRoot()`
+- **Issue #2 (CRITICAL)**: Update Workspace mode no longer overwrites existing Standard files (e.g., `README.md`, `AGENTS.md`) — only Obligatorio files are force-copied
 
 ---
 
