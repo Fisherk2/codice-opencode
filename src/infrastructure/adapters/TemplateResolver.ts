@@ -41,24 +41,30 @@ export class TemplateResolver {
 	 * are always in a `template/` directory at the project or package root.
 	 */
 	static detectTemplateRoot(): string {
-		// Source mode: template is ../../template/ relative to src/cli/
-		// import.meta.dir is always truthy (even in compiled binaries), so we
-		// verify the path actually exists before using it.
+		// Ruta 1: Modo bunx/npm (paquete en node_modules)
+		// En modo bunx, import.meta.dir apunta a src/cli/, y el template está en ../template/
+		const bunxPath = path.resolve(import.meta.dir, `../${TEMPLATE_DIR_NAME}`);
+		if (fs.existsSync(bunxPath)) {
+			return bunxPath;
+		}
+
+		// Ruta 2: Modo source desarrollo (raíz del repo)
+		// En desarrollo (bun run desde raíz), import.meta.dir apunta a src/cli/,
+		// y el template está en ../../template/
 		const sourcePath = path.resolve(import.meta.dir, `../../${TEMPLATE_DIR_NAME}`);
 		if (fs.existsSync(sourcePath)) {
 			return sourcePath;
 		}
 
-		// Compiled mode: try relative to the binary's location.
-		// process.argv[0] is the path to the compiled binary; fall back to
-		// process.execPath (always defined) if argv is empty.
+		// Ruta 3: Modo compilado (binario standalone)
+		// process.argv[0] es la ruta del binario compilado; fallback a process.execPath
 		const binaryDir = path.dirname(process.argv[0] ?? process.execPath);
 		const binaryRelativePath = path.resolve(binaryDir, `../${TEMPLATE_DIR_NAME}`);
 		if (fs.existsSync(binaryRelativePath)) {
 			return binaryRelativePath;
 		}
 
-		// Fallback: template is relative to CWD (backward compatible)
+		// Fallback: template relativo a CWD (compatibilidad retroactiva)
 		return path.resolve(process.cwd(), TEMPLATE_DIR_NAME);
 	}
 
