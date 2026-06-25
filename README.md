@@ -160,6 +160,91 @@ Additionally, over **90 specialized subagents** are available for specific tasks
 
 ---
 
+## Install / Update
+
+**Códice** is a command-line tool that installs and updates this OpenCode workspace template atomically, safely, and intelligently.
+
+### Quick Install (Recommended)
+
+Requires [Bun](https://bun.sh) installed on your system.
+
+```bash
+bunx @fisherk2-dev/codice
+```
+
+That's it. Bun downloads and runs the latest version automatically.
+
+> **Note:** If you encounter issues with `bunx` (e.g., no output, scoped package cache issues), use `npx @fisherk2-dev/codice` as a fallback — both commands work identically.
+
+> **Tip:** Use `bunx --fresh @fisherk2-dev/codice` to force download the latest version.
+
+> **Next steps:** After installation, follow the [First Steps Before Opening OpenCode](template/opcional/docs/opencode/00-setup.md#first-steps-before-opening-opencode-after-install-códice-workspace) guide to configure models, install plugin dependencies, and start your first workflow.
+
+### Offline / Air-gapped Alternative
+
+If you don't have Bun installed or prefer a standalone binary, download the compiled binary for your platform:
+
+#### Linux (x64) / macOS (x64)
+
+```bash
+# Download the latest binary for your platform:
+curl -L -o codice https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-linux
+# macOS: replace `codice-linux` with `codice-macos`
+
+# Make it executable:
+chmod +x codice
+
+# Run the installer:
+./codice
+```
+
+#### Windows (x64)
+
+```powershell
+# Download the latest binary:
+curl -L -o codice.exe https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-windows.exe
+
+# Run the installer:
+.\codice.exe
+```
+
+### Usage
+
+Códice presents an interactive menu with three installation modes:
+
+| Mode | Description | When to Use |
+|------|-------------|-------------|
+| **Clean Install** | Overwrites the destination with the complete template | Starting a fresh project |
+| **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
+| **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
+
+```bash
+# Interactive menu (default) — via bunx or binary:
+bunx @fisherk2-dev/codice     # via npm (requires Bun)
+./codice                   # via compiled binary (standalone)
+
+# Direct mode with flags:
+bunx @fisherk2-dev/codice --dest ./my-project
+./codice --force
+./codice --version
+codice --help
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--dest <path>` | Target installation directory (default: current directory) |
+| `--force` | Skip all confirmation prompts |
+| `--verbose` | Enable structured logging to stderr |
+| `--version` | Print binary version and exit |
+| `--clean` | Run Clean Install mode (skip interactive menu) |
+| `--project` | Run Project Install mode (skip interactive menu) |
+| `--update` | Run Update Workspace mode (skip interactive menu) |
+| `--help` | Show usage help |
+
+---
+
 ## Workflow
 
 ```mermaid
@@ -359,85 +444,7 @@ project-root/
 
 ---
 
-## Códice CLI — Workspace Installer
-
-**Códice** is a command-line tool that installs and updates this OpenCode workspace template atomically, safely, and intelligently.
-
-### Quick Install (Recommended)
-
-Requires [Bun](https://bun.sh) installed on your system.
-
-```bash
-bunx @fisherk2-dev/codice
-```
-
-That's it. Bun downloads and runs the latest version automatically.
-
-> **Note:** If you encounter issues with `bunx` (e.g., no output, scoped package cache issues), use `npx @fisherk2-dev/codice` as a fallback — both commands work identically.
-
-> **Tip:** Use `bunx --fresh @fisherk2-dev/codice` to force download the latest version.
-
-### Offline / Air-gapped Alternative
-
-If you don't have Bun installed or prefer a standalone binary, download the compiled binary for your platform:
-
-#### Linux (x64) / macOS (x64)
-
-```bash
-# Download the latest binary for your platform:
-curl -L -o codice https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-linux
-# macOS: replace `codice-linux` with `codice-macos`
-
-# Make it executable:
-chmod +x codice
-
-# Run the installer:
-./codice
-```
-
-#### Windows (x64)
-
-```powershell
-# Download the latest binary:
-curl -L -o codice.exe https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-windows.exe
-
-# Run the installer:
-.\codice.exe
-```
-
-### Usage
-
-Códice presents an interactive menu with three installation modes:
-
-| Mode | Description | When to Use |
-|------|-------------|-------------|
-| **Clean Install** | Overwrites the destination with the complete template | Starting a fresh project |
-| **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
-| **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
-
-```bash
-# Interactive menu (default) — via bunx or binary:
-bunx @fisherk2-dev/codice     # via npm (requires Bun)
-./codice                   # via compiled binary (standalone)
-
-# Direct mode with flags:
-bunx @fisherk2-dev/codice --dest ./my-project
-./codice --force
-./codice --version
-codice --help
-```
-
-### File Classification
-
-When installing or updating, Códice classifies every file into one of three categories:
-
-| Category | Behavior | Examples |
-|----------|----------|----------|
-| **Obligatorio** | Always copied, overwrites existing | Core agents, commands, configuration |
-| **Estándar** | Copied only if missing in destination | Recommended skills, documentation |
-| **Opcional** | Presented as a checklist; copied only if selected **and** missing | Optional skills, specialized references |
-
-### Troubleshooting
+## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
@@ -449,19 +456,6 @@ When installing or updating, Códice classifies every file into one of three cat
 | GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
 | `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
-
-### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--dest <path>` | Target installation directory (default: current directory) |
-| `--force` | Skip all confirmation prompts |
-| `--verbose` | Enable structured logging to stderr |
-| `--version` | Print binary version and exit |
-| `--clean` | Run Clean Install mode (skip interactive menu) |
-| `--project` | Run Project Install mode (skip interactive menu) |
-| `--update` | Run Update Workspace mode (skip interactive menu) |
-| `--help` | Show usage help |
 
 ---
 
@@ -482,5 +476,3 @@ This project would not exist without the work of:
 Thanks to their authors and contributors for their invaluable contribution to the community.
 
 ---
-
-*Last revision: 2026-06-16*
