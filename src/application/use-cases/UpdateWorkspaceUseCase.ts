@@ -115,18 +115,10 @@ export class UpdateWorkspaceUseCase {
 			);
 		}
 
-		// Get only Obligatorio + Estándar rules (skip Opcional)
-		// Obligatorio rules are treated as mandatory (always overwrite).
-		// Estándar rules keep their original category to respect destinationExists.
-		const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional").map(
-			(rule) => {
-				if (rule.category === "mandatory") {
-					return rule;
-				}
-				// standard: keep original category (respect destinationExists)
-				return rule;
-			},
-		);
+		// Get only Obligatorio + Estándar rules (skip Opcional).
+		// Obligatorio rules overwrite existing files (mandatory category).
+		// Estándar rules respect destinationExists (preserve existing user files).
+		const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional");
 
 		// Execute the merge engine
 		const mergeResult = await this.mergeEngine.execute(updateRules);
