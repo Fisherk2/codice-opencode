@@ -14,73 +14,9 @@ This guide explains how to configure OpenCode for this template — slash comman
 
 ---
 
-## What OpenCode Does Automatically
+## First Steps Before Opening OpenCode (After Install Códice Workspace)
 
-### 1. Loads Slash Commands
-
-The `commands/` directory is automatically detected by OpenCode. Type `/` in the chat to see all available commands:
-
-| Command | Phase | What it does |
-|---------|-------|--------------|
-| `/spec` | DEFINE | Creates a structured specification before writing code |
-| `/design` | DESIGN | Creates UI/UX design specifications with fan-out to specialist subagents |
-| `/plan` | PLAN | Breaks specifications into small, ordered tasks |
-| `/build` | BUILD | Incremental implementation with TDD |
-| `/test` | VERIFY | Writes failing tests, implements, refactors |
-| `/review` | REVIEW | Multi-axis code review before merge |
-| `/code-simplify` | REVIEW | Simplifies complex code without changing behavior |
-| `/ship` | SHIP | Pre-launch checklist, gradual deployment, monitoring |
-
-Commands also automatically trigger complementary skills. For example, `/build` activates `incremental-implementation` plus `solid`, `error-handling-patterns`, `ui-ux-design-pro`, and others depending on the task.
-
-### 2. Provides Agent Personas
-
-The `agents/` directory contains **102+ agents**: 6 primary agents (SDD orchestration) and 96+ specialized subagents. The 6 main agents are directly invocable:
-
-| Agent | Role | Command |
-|-------|------|---------|
-| `huitzilopochtli` | Supreme Orchestrator — pure delegation | Any task needing orchestration |
-| `quetzalcoatl` | Visionary Architect — specs and design | `/spec`, `/design` |
-| `moctezuma` | Strategic Commander — task breakdown | `/plan` |
-| `tlaloc` | Rain God Builder — code implementation | `/build`, `/code-simplify` |
-| `mictlantecuhtli` | Underworld Judge — testing and validation | `/test`, `/ship` |
-| `tezcatlipoca` | Smoking Mirror Critic — code review | `/review` |
-
-> For the complete subagent catalog (96 specialists in frontend, backend, devops, testing, security, etc.), see [03-agent-index.md](./03-agent-index.md).
-
-Commands like `/review` and `/ship` automatically compose multiple agents.
-
-### 3. Discovers Skills
-
-The 46 skills live in `skills/<skill-name>/SKILL.md`. OpenCode agents receive instructions (via `AGENTS.md`) to:
-
-1. Detect when a skill applies to the current task
-2. Load the skill using the built-in `skill` tool
-3. Follow the skill's workflow step by step
-
-Skills are activated both through slash commands and automatically based on context — designing an API activates `api-and-interface-design`, building UI activates `frontend-ui-engineering`, debugging activates `debugging-and-error-recovery`, and so on.
-
----
-
-## First Steps After Opening OpenCode
-
-### 1. Clean up template files
-
-Replace the template-specific content with your own project files:
-
-#### README.md
-
-Replace the **entire content** with your own project's README. The template's README contains project-specific branding and descriptions that don't apply to your project.
-
-#### CONTRIBUTING.md
-
-Replace the **entire content** with your own contribution guidelines, or delete the file if you don't need them.
-
-#### CHANGELOG.md
-
-Remove only the **version entries** (the tagged releases `[x.x.x]`), keeping the format definition and structure. Your changelog starts fresh with your own versions.
-
-### 2. Configure opencode.json
+### 1. Configure opencode.json
 
 Edit `opencode.json` to set your models, agents, context files, and MCP servers:
 
@@ -124,13 +60,13 @@ Edit `opencode.json` to set your models, agents, context files, and MCP servers:
 - Execute `opencode models` to search connected LLMs and providers
 - Add MCP servers as needed — see [06-mcp-servers.md](./06-mcp-servers.md) for all options
 
-### 3. Install Plugin Dependencies
+### 2. Install Plugin Dependencies
 
 ```bash
 cd .opencode && bun install && cd ..
 ```
 
-### 4. Configure Context7 (Optional but Recommended)
+### 3. Configure Context7 (Optional but Recommended)
 
 Context7 provides up-to-date documentation for any library or framework:
 
@@ -140,7 +76,7 @@ npx ctx7@latest setup
 
 Once configured, the `find-docs` skill automatically retrieves current API documentation when you ask about any library.
 
-### 5. Start with the Meta-Skill
+### 4. Start with the Meta-Skill
 
 Load the [Meta-Skill](../../skills/using-agent-skills/SKILL.md) to discover which skill applies to your current task. It contains:
 - A **decision tree** that maps task types (implement code, design API, debug, etc.) to the appropriate skill
@@ -149,13 +85,14 @@ Load the [Meta-Skill](../../skills/using-agent-skills/SKILL.md) to discover whic
 
 > This is the canonical entry point for skill discovery. Both agents and humans should consult it when unsure which skill applies.
 
-### 6. Run Your First Workflow
+### 5. Run Your First Workflow
 
 ```bash
 /spec "Describe what you want to build"
 /plan
 /build
 /test
+/code-simplify
 /review
 /ship
 ```
