@@ -116,10 +116,16 @@ export class UpdateWorkspaceUseCase {
 		}
 
 		// Get only Obligatorio + Estándar rules (skip Opcional)
-		// Both categories are treated as mandatory in update mode so that
-		// existing files are always overwritten with the latest template version.
+		// Obligatorio rules are treated as mandatory (always overwrite).
+		// Estándar rules keep their original category to respect destinationExists.
 		const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional").map(
-			(rule) => ({ ...rule, category: "mandatory" as const }),
+			(rule) => {
+				if (rule.category === "mandatory") {
+					return rule;
+				}
+				// standard: keep original category (respect destinationExists)
+				return rule;
+			},
 		);
 
 		// Execute the merge engine
