@@ -1,4 +1,5 @@
 import type { FileRule } from "../entities/FileRule";
+import type { IFileMergeEngine } from "../ports/IFileMergeEngine";
 import type { IFileSystem } from "../ports/IFileSystem";
 import type { MergeError } from "../types/MergeError";
 import { commitError, stagingError } from "../types/MergeError";
@@ -19,7 +20,7 @@ import { failure, success } from "../types/Result";
  * 3. If all stages succeed → commitStaging() (atomic rename).
  * 4. If commit fails → cleanStaging() + return error.
  */
-export class FileMergeEngine {
+export class FileMergeEngine implements IFileMergeEngine {
 	constructor(private readonly fileSystem: IFileSystem) {}
 
 	/**

@@ -1,6 +1,6 @@
 import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../domain/entities/FileRuleManifest";
+import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
-import type { FileMergeEngine } from "../../domain/services/FileMergeEngine";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, writeVersionFileSafe } from "../helpers";
 import type { IUserPrompt } from "../ports/IUserPrompt";
@@ -35,7 +35,7 @@ export class ProjectInstallUseCase {
 	 */
 	constructor(
 		private readonly fileSystem: IFileSystem,
-		private readonly mergeEngine: FileMergeEngine,
+		private readonly mergeEngine: IFileMergeEngine,
 		private readonly userPrompt: IUserPrompt,
 	) {}
 

@@ -112,4 +112,24 @@ describe("TemplateResolver — bunx/npm mode (FEV1-T1)", () => {
 			fs.rmSync(tempDir, { recursive: true, force: true });
 		}
 	});
+
+	// -----------------------------------------------------------------------
+	// Direct detectTemplateRoot() tests — calls the static method that was
+	// modified in FEV-1, not the constructor that bypasses detection.
+	// -----------------------------------------------------------------------
+
+	test("detectTemplateRoot() returns an existing path containing 'template'", () => {
+		// This test calls detectTemplateRoot() directly (not via constructor
+		// with explicit path), exercising the actual detection cascade.
+		const root = TemplateResolver.detectTemplateRoot();
+		expect(root).toBeTruthy();
+		expect(root).toContain("template");
+		expect(fs.existsSync(root)).toBe(true);
+	});
+
+	test("detectTemplateRoot() finds a directory with obligatorio subdirectory", () => {
+		const root = TemplateResolver.detectTemplateRoot();
+		// The template root must contain at least obligatorio/ subdirectory
+		expect(fs.existsSync(path.join(root, "obligatorio"))).toBe(true);
+	});
 });

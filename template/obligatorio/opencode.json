@@ -522,7 +522,14 @@
       "* .ssh/id_*": "deny",
       "* .ssh/config": "deny",
       "* .aws/credentials": "deny",
-      "* .kube/config": "deny"
+      "* .kube/config": "deny",
+      "* .npmrc *": "deny",
+      "* .pem *": "deny",
+      "* .key *": "deny",
+      "* .p12 *": "deny",
+      "* .pfx *": "deny",
+      "* credentials.json *": "deny",
+      "* service-account*.json *": "deny"
     },
     "read": {
       "*": "allow",

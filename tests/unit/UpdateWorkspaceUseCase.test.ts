@@ -11,13 +11,13 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import type { IFileSystem } from "../../src/application/ports/IFileSystem";
 import type { IGitHubClient } from "../../src/application/ports/IGitHubClient";
 import type { IUserPrompt } from "../../src/application/ports/IUserPrompt";
 import { UpdateWorkspaceUseCase } from "../../src/application/use-cases/UpdateWorkspaceUseCase";
 import type { FileRule } from "../../src/domain/entities/FileRule";
-import type { FileMergeEngine } from "../../src/domain/services/FileMergeEngine";
-import type { ReleaseType } from "../../src/domain/services/VersionComparator";
+import type { IFileMergeEngine } from "../../src/domain/ports/IFileMergeEngine";
+import type { IFileSystem } from "../../src/domain/ports/IFileSystem";
+import type { IVersionComparator, ReleaseType } from "../../src/domain/ports/IVersionComparator";
 import type { MergeError } from "../../src/domain/types/MergeError";
 import { type Result, success } from "../../src/domain/types/Result";
 import type { ComparisonResult } from "../../src/domain/types/version";
@@ -51,7 +51,7 @@ class FakeFileSystem implements IFileSystem {
 	}
 }
 
-class CaptureMergeEngine {
+class CaptureMergeEngine implements IFileMergeEngine {
 	capturedRules: { path: string; category: string }[] = [];
 	async execute(
 		rules: readonly FileRule[],
@@ -88,7 +88,7 @@ class FakeUserPrompt implements IUserPrompt {
 	showError(_message: string): void {}
 }
 
-class FakeVersionComparator {
+class FakeVersionComparator implements IVersionComparator {
 	compare(_installed: string, _remote: string): Result<ComparisonResult, Error> {
 		return success("newer");
 	}
@@ -106,8 +106,8 @@ class FakeVersionComparator {
 
 /**
  * Create a use-case instance with test doubles.
- * MergeEngine is cast because FileMergeEngine is a class with private
- * members (TypeScript nominal checking prevents direct assignability).
+ * Test doubles structurally match the interface types (IFileMergeEngine,
+ * IVersionComparator), so no cast is needed.
  */
 function makeUseCase(
 	mergeEngine: CaptureMergeEngine,
@@ -116,7 +116,7 @@ function makeUseCase(
 ): UpdateWorkspaceUseCase {
 	return new UpdateWorkspaceUseCase(
 		new FakeFileSystem(),
-		mergeEngine as unknown as FileMergeEngine,
+		mergeEngine,
 		new FakeUserPrompt(),
 		gitHub ?? new FakeGitHubClient(),
 		versionComparator ?? new FakeVersionComparator(),

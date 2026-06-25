@@ -1,8 +1,8 @@
 import { valid } from "semver";
 import { FILE_RULE_MANIFEST } from "../../domain/entities/FileRuleManifest";
+import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
-import type { FileMergeEngine } from "../../domain/services/FileMergeEngine";
-import type { VersionComparator } from "../../domain/services/VersionComparator";
+import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, writeVersionFileSafe } from "../helpers";
 import type { IGitHubClient } from "../ports/IGitHubClient";
@@ -33,10 +33,10 @@ export class UpdateWorkspaceUseCase {
 	 */
 	constructor(
 		private readonly fileSystem: IFileSystem,
-		private readonly mergeEngine: FileMergeEngine,
+		private readonly mergeEngine: IFileMergeEngine,
 		private readonly userPrompt: IUserPrompt,
 		private readonly gitHubClient: IGitHubClient,
-		private readonly versionComparator: VersionComparator,
+		private readonly versionComparator: IVersionComparator,
 	) {}
 
 	/**
