@@ -1,6 +1,6 @@
 # TODO: Fase FEV-2 — Resolución de Issue #8 (v1.0.6)
 
-**Estado:** 🟡 Pendiente — 0/9 tareas ejecutadas
+**Estado:** 🟡 Pendiente — 0/10 tareas ejecutadas
 **Fecha:** 2026-06-25
 **Dependencias:** F0-F6 ✅ → FEV-1 ✅ → **FEV-2 🟡 En curso**
 
@@ -8,28 +8,29 @@
 
 ## Tareas Pendientes
 
-### ⏳ FEV2-T0: Confirmar causa raíz con reproducción aislada
-**Descripción:** Documentar la reproducción del bug con un test que simule la estructura del paquete npm y confirme que `detectTemplateRoot()` produce `src/template` en vez de `template/`.
+### ⏳ FEV2-T0: Reproducir bug del template path con test RED
+**Descripción:** Test que simule la estructura del paquete npm y confirme que `detectTemplateRoot()` produce `src/template` en vez de `template/`.
 
 **Criterios de Aceptación:**
-- [ ] Test RED que reproduce el bug con el código actual.
-- [ ] Documentación en commit message del fix.
+- [ ] Test que cree `tmp/{template/obligatorio/opencode.json, src/infrastructure/adapters/TemplateResolver.ts (mock)}`.
+- [ ] Test verifica que `detectTemplateRoot()` retorna la ruta del `template/`.
+- [ ] Test es RED con el código actual, GREEN después de FEV2-T1.
 
 **Dependencias:** Ninguna.
 **Archivos:**
-- `tests/integration/TemplateResolver.test.ts` (test de reproducción).
+- `tests/integration/TemplateResolver.test.ts` (nuevo test).
 
 **Scope:** S (30min).
 
 ---
 
-### ⏳ FEV2-T1: Corregir ruta relativa en `TemplateResolver.detectTemplateRoot()`
-**Descripción:** Cambiar `../../template` a `../../../template` en `TemplateResolver.detectTemplateRoot()`.
+### ⏳ FEV2-T1: Corregir ruta en `TemplateResolver.detectTemplateRoot()`
+**Descripción:** Cambiar `../../template` a `../../../template`.
 
 **Criterios de Aceptación:**
-- [ ] Línea corregida en `src/infrastructure/adapters/TemplateResolver.ts`.
+- [ ] `src/infrastructure/adapters/TemplateResolver.ts` línea 52 corregida.
 - [ ] JSDoc actualizado.
-- [ ] Tests existentes pasan.
+- [ ] Test FEV2-T0 ahora pasa (GREEN).
 
 **Dependencias:** FEV2-T0.
 **Archivos:**
@@ -39,31 +40,15 @@
 
 ---
 
-### ⏳ FEV2-T2: Añadir test específico para estructura del paquete npm
-**Descripción:** Test que simule la estructura real del paquete npm publicado y verifique que `detectTemplateRoot()` retorna la ruta correcta al directorio `template/`.
+### ⏳ FEV2-T2: E2E con bunx real en directorio limpio
+**Descripción:** Script E2E que simule instalación vía `bunx` y verifique los 3 modos.
 
 **Criterios de Aceptación:**
-- [ ] Test que cree estructura: `template/obligatorio/opencode.json` + `src/infrastructure/adapters/`.
-- [ ] Verificación de que `detectTemplateRoot()` retorna la ruta correcta.
+- [ ] Script `tests/e2e/07-bunx-template-resolution.sh` que prueba los 3 modos en directorio temporal vacío.
+- [ ] Sin "Template file not found" en output.
+- [ ] Integrado en `just test-e2e`.
 
 **Dependencias:** FEV2-T1.
-**Archivos:**
-- `tests/integration/TemplateResolver.test.ts`.
-
-**Scope:** S (45min).
-
----
-
-### ⏳ FEV2-T3: Verificar fix con `bunx` real en directorio limpio
-**Descripción:** Ejecutar `bunx @fisherk2-dev/codice@<version-dev>` en directorio temporal y confirmar que los 3 modos funcionan.
-
-**Criterios de Aceptación:**
-- [ ] Clean Install: instala sin error.
-- [ ] Project Install: muestra checklist y permite instalar.
-- [ ] Update Workspace: actualiza sin error.
-- [ ] Script E2E en `tests/e2e/07-bunx-template-resolution.sh`.
-
-**Dependencias:** FEV2-T1, FEV2-T2.
 **Archivos:**
 - `tests/e2e/07-bunx-template-resolution.sh` (nuevo).
 
@@ -71,31 +56,88 @@
 
 ---
 
-### ⏳ FEV2-T4: Revisar manifiesto de archivos opcionales
-**Descripción:** La issue #8 también reporta que se muestran como opcionales archivos como `scripts/`, `Makefile`, `requirements.txt`. Revisar y clasificar correctamente.
+### ⏳ FEV2-T3: Listar todos los archivos reales de `template/opcional/`
+**Descripción:** Inventario exhaustivo (incluyendo ocultos) de archivos y directorios en `template/opcional/`.
 
 **Criterios de Aceptación:**
-- [ ] Manifiesto revisado.
-- [ ] Si están mal clasificados, corregir.
-- [ ] Si están bien, documentar la decisión con comentario.
+- [ ] Lista generada con `find template/opcional -mindepth 1`.
+- [ ] Categorización: archivos sueltos / directorios / ocultos.
 
-**Dependencias:** FEV2-T1.
+**Dependencias:** Ninguna (paralelo a FEV2-T0).
+**Archivos:** (ninguno, solo inventario).
+
+**Scope:** XS (5min).
+
+---
+
+### ⏳ FEV2-T4: Añadir entradas faltantes al `FileRuleManifestData`
+**Descripción:** Añadir 4 nuevas entradas opcionales:
+- `.gitmessage` (archivo oculto)
+- `docs/opencode` (directorio, agrupa 13 archivos)
+- `.opencode/plugins/sdd-workflow-test.md` (archivo oculto)
+- `.devin/rules` (directorio oculto)
+
+Total: 9 (actuales) + 4 (nuevas) = 13 opcionales.
+
+**Criterios de Aceptación:**
+- [ ] 4 entradas añadidas con descripciones.
+- [ ] Orden: alfabético por `path`.
+- [ ] Tests existentes pasan.
+
+**Dependencias:** FEV2-T3.
 **Archivos:**
-- `src/domain/entities/file-rule-manifest.ts` (o equivalente).
-- `tests/unit/` (test de regresión si aplica).
+- `src/domain/entities/FileRuleManifestData.ts`.
 
 **Scope:** S (30min).
 
 ---
 
-### ⏳ FEV2-T5: Bump version a 1.0.6
-**Descripción:** Actualizar `package.json` de `1.0.5` a `1.0.6`.
+### ⏳ FEV2-T5: Implementar exclusion logic en motor de copia
+**Descripción:** `docs/` (estándar) debe excluir `docs/opencode/` (opcional) para evitar copia doble.
 
 **Criterios de Aceptación:**
-- [ ] `package.json` → `"version": "1.0.6"`.
-- [ ] Commit `chore: bump version to 1.0.6`.
+- [ ] Motor de copia (`BunFileSystem.stageFile` o `walkDirectory`) soporta `excludePaths`.
+- [ ] Copia de `docs/` excluye `docs/opencode/`.
+- [ ] Selección de `docs/opencode` opcional copia desde entrada individual.
+- [ ] Sin copia doble.
 
-**Dependencias:** FEV2-T1, FEV2-T2, FEV2-T3.
+**Verificación:**
+- [ ] Test unitario: copiar `docs/` no incluye `docs/opencode/`.
+- [ ] E2E con selección de `docs/opencode`: aparece una sola vez en destino.
+
+**Dependencias:** FEV2-T1, FEV2-T4.
+**Archivos:**
+- `src/infrastructure/adapters/directoryWalker.ts` (parámetro `excludePaths`).
+- `src/application/use-cases/ProjectInstallUseCase.ts` (configuración de exclusion).
+
+**Scope:** M (1h 30min).
+
+---
+
+### ⏳ FEV2-T6: Test de completitud por categoría
+**Descripción:** Test que cuenta archivos en `template/<categoría>/` y verifica que el manifest tenga al menos esa cantidad de entries.
+
+**Criterios de Aceptación:**
+- [ ] Test recursivo en `template/opcional/` (incluyendo ocultos).
+- [ ] Verifica `FILE_RULE_MANIFEST.filter(r => r.category === 'optional').length >= archivos_contados`.
+- [ ] Si se añade archivo sin manifest, el test falla (regression guard).
+
+**Dependencias:** FEV2-T4.
+**Archivos:**
+- `tests/unit/file-rule-manifest.test.ts` (nuevo).
+
+**Scope:** S (45min).
+
+---
+
+### ⏳ FEV2-T7: Bump version a 1.0.6
+**Descripción:** `package.json` → `1.0.6`.
+
+**Criterios de Aceptación:**
+- [ ] `"version": "1.0.6"`.
+- [ ] Commit: `chore: bump version to 1.0.6`.
+
+**Dependencias:** FEV2-T1, FEV2-T2, FEV2-T4, FEV2-T5, FEV2-T6.
 **Archivos:**
 - `package.json`.
 
@@ -103,54 +145,30 @@
 
 ---
 
-### ⏳ FEV2-T6: Mover `[Unreleased]` → `[1.0.6]` en CHANGELOG
-**Descripción:** Actualizar `CHANGELOG.md` con la fecha del release.
+### ⏳ FEV2-T8: Actualizar CHANGELOG y crear tag
+**Descripción:** Mover `[Unreleased]` a `[1.0.6] — 2026-06-25`. Crear tag anotado.
 
 **Criterios de Aceptación:**
-- [ ] Header `[1.0.6] — 2026-06-25` con entry de Issue #8.
-- [ ] Sin sección `[Unreleased]`.
-
-**Dependencias:** FEV2-T5.
-**Archivos:**
-- `CHANGELOG.md`.
-
-**Scope:** XS (5min).
-
----
-
-### ⏳ FEV2-T7: Crear tag `v1.0.6` y push
-**Descripción:** Tag anotado + push para gatillar release workflow.
-
-**Criterios de Aceptación:**
-- [ ] `git tag -a v1.0.6 -m "Release v1.0.6 — Issue #8"`.
+- [ ] CHANGELOG con 3 entries: Issue #8 fix, manifest completo, exclusion logic.
+- [ ] `git tag -a v1.0.6 -m "Release v1.0.6 — Issue #8 (bunx + manifest)"`.
 - [ ] `git push origin v1.0.6`.
 
-**Dependencias:** FEV2-T5, FEV2-T6.
-**Archivos:** (git only).
+**Dependencias:** FEV2-T7.
+**Archivos:**
+- `CHANGELOG.md`.
 
 **Scope:** S (10min).
 
 ---
 
-### ⏳ FEV2-T8: Verificar release en npm y GitHub
-**Descripción:** Confirmar publicación correcta.
+### ⏳ FEV2-T9: Verificar release + sync + cleanup
+**Descripción:** Confirmar publicación, merge, eliminar branches.
 
 **Criterios de Aceptación:**
 - [ ] `npm view @fisherk2-dev/codice version` → `1.0.6`.
-- [ ] GitHub Release `v1.0.6` con 4 assets.
-
-**Dependencias:** FEV2-T7.
-**Archivos:** (verificación).
-
-**Scope:** XS (5min).
-
----
-
-### ⏳ FEV2-T9: Sync main → develop y cleanup
-**Descripción:** Merge main a develop + eliminar branches.
-
-**Criterios de Aceptación:**
+- [ ] `gh release view v1.0.6` muestra 4 assets.
 - [ ] `git checkout develop && git merge main` (fast-forward).
+- [ ] `git push origin develop`.
 - [ ] `git branch -d fix/no-install-issue` (local).
 - [ ] `git push origin --delete fix/no-install-issue` (remote).
 - [ ] Solo `main` y `develop`.
@@ -164,19 +182,24 @@
 
 ## Checkpoints
 
-### Checkpoint 1: After FEV2-T1 (Fix aplicado)
-- [ ] `TemplateResolver.ts` corregido.
-- [ ] Tests existentes pasan (382+).
+### Checkpoint 1: After FEV2-T1 (Template path fix)
+- [ ] `TemplateResolver.ts` corregido con `../../../template`.
+- [ ] Tests existentes pasan sin regresión.
 - [ ] `just check` — 0 errores.
 
-### Checkpoint 2: After FEV2-T2 + FEV2-T4 (Cobertura completa)
-- [ ] Nuevo test pasa.
-- [ ] Manifiesto revisado.
+### Checkpoint 2: After FEV2-T4 + FEV2-T6 (Manifest completo)
+- [ ] 13+ entradas opcionales.
+- [ ] Test de completitud pasa.
 - [ ] Coverage ≥97.66%.
 
-### Checkpoint 3: After FEV2-T3 (Verificación E2E)
-- [ ] E2E con `bunx` real pasa.
-- [ ] No aparece "Template file not found".
+### Checkpoint 3: After FEV2-T5 (Exclusion logic)
+- [ ] `docs/` no copia `docs/opencode/`.
+- [ ] Selección de `docs/opencode` opcional funciona.
+- [ ] Sin copia doble.
+
+### Checkpoint 4: After FEV2-T2 (E2E bunx)
+- [ ] 7/7 E2E escenarios pasando.
+- [ ] No "Template file not found" en output.
 
 ### Gate FEV-2: After FEV2-T8 (Release publicado)
 - [ ] `npm view` → `1.0.6`.
