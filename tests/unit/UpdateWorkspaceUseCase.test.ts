@@ -11,12 +11,16 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { UpdateWorkspaceUseCase } from "../../src/application/use-cases/UpdateWorkspaceUseCase";
 import type { IFileSystem } from "../../src/application/ports/IFileSystem";
-import type { FileMergeEngine } from "../../src/domain/services/FileMergeEngine";
 import type { IGitHubClient } from "../../src/application/ports/IGitHubClient";
 import type { IUserPrompt } from "../../src/application/ports/IUserPrompt";
-import type { VersionComparator } from "../../src/domain/services/VersionComparator";
+import { UpdateWorkspaceUseCase } from "../../src/application/use-cases/UpdateWorkspaceUseCase";
+import type { FileRule } from "../../src/domain/entities/FileRule";
+import type { FileMergeEngine } from "../../src/domain/services/FileMergeEngine";
+import type { ReleaseType } from "../../src/domain/services/VersionComparator";
+import type { MergeError } from "../../src/domain/types/MergeError";
+import { type Result, success } from "../../src/domain/types/Result";
+import type { ComparisonResult } from "../../src/domain/types/version";
 
 // ---------------------------------------------------------------------------
 // Minimal test doubles
@@ -29,8 +33,8 @@ class FakeFileSystem implements IFileSystem {
 	async destinationExists(_path: string): Promise<boolean> {
 		return false;
 	}
-	async getStagingPath(_targetPath: string): Promise<string> {
-		return "/tmp/staging/" + _targetPath;
+	getStagingPath(relativePath: string): string {
+		return `/tmp/staging/${relativePath}`;
 	}
 	async stageFile(_path: string): Promise<void> {}
 	async commitStaging(): Promise<void> {}
@@ -47,13 +51,14 @@ class FakeFileSystem implements IFileSystem {
 	}
 }
 
-class CaptureMergeEngine implements FileMergeEngine {
+class CaptureMergeEngine {
 	capturedRules: { path: string; category: string }[] = [];
 	async execute(
-		rules: readonly { readonly path: string; readonly category: string }[],
-	): Promise<{ ok: true } | { ok: false; error: { message: string } }> {
+		rules: readonly FileRule[],
+		_selectedOptionals?: readonly string[],
+	): Promise<Result<void, MergeError>> {
 		this.capturedRules = Array.from(rules);
-		return { ok: true };
+		return success(undefined);
 	}
 }
 
@@ -61,39 +66,61 @@ class FakeGitHubClient implements IGitHubClient {
 	async getLatestReleaseTag(): Promise<string | null> {
 		return "v1.0.5";
 	}
+	async getLatestReleaseNotes(): Promise<string | null> {
+		return null;
+	}
 }
 
 class FakeUserPrompt implements IUserPrompt {
-	async confirm(_message: string, _default: boolean): Promise<boolean> {
+	showWarning(_message: string): void {}
+	showInfo(_message: string): void {}
+	async confirm(_message: string, _default?: boolean): Promise<boolean> {
 		return true;
 	}
-	async showInfo(_message: string): Promise<void> {}
-	async showWarning(_message: string): Promise<void> {}
-	async showSuccess(_message: string): Promise<void> {}
-	async showCancel(_message: string): Promise<void> {}
-	async select(_message: string, _options: readonly string[]): Promise<string | null> {
-		return null;
-	}
-	async multiselect(_message: string, _options: readonly string[]): Promise<string[]> {
+	async selectOptional(_options: readonly FileRule[]): Promise<string[]> {
 		return [];
 	}
+	showSpinner(_message: string): void {}
+	stopSpinner(): void {}
+	showIntro(_title: string): void {}
+	showSuccess(_message: string): void {}
+	showCancel(_message: string): void {}
+	showError(_message: string): void {}
 }
 
-class FakeVersionComparator implements VersionComparator {
-	compare(
-		_installed: string,
-		_remote: string,
-	):
-		| { ok: true; value: "newer" | "older" | "equal" | "incompatible" }
-		| { ok: false; error: Error } {
-		return { ok: true, value: "newer" };
+class FakeVersionComparator {
+	compare(_installed: string, _remote: string): Result<ComparisonResult, Error> {
+		return success("newer");
 	}
 	isUpdateAvailable(_installed: string, _remote: string): boolean {
 		return true;
 	}
-	getReleaseType(_version: string): string {
-		return "major";
+	getReleaseType(_local: string, _remote: string): Result<ReleaseType, Error> {
+		return success("major" as ReleaseType);
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a use-case instance with test doubles.
+ * MergeEngine is cast because FileMergeEngine is a class with private
+ * members (TypeScript nominal checking prevents direct assignability).
+ */
+function makeUseCase(
+	mergeEngine: CaptureMergeEngine,
+	gitHub?: FakeGitHubClient,
+	versionComparator?: FakeVersionComparator,
+): UpdateWorkspaceUseCase {
+	return new UpdateWorkspaceUseCase(
+		new FakeFileSystem(),
+		mergeEngine as unknown as FileMergeEngine,
+		new FakeUserPrompt(),
+		gitHub ?? new FakeGitHubClient(),
+		versionComparator ?? new FakeVersionComparator(),
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -103,13 +130,7 @@ class FakeVersionComparator implements VersionComparator {
 describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 	test("should pass standard rules as 'standard' (not 'mandatory') to merge engine", async () => {
 		const mergeEngine = new CaptureMergeEngine();
-		const useCase = new UpdateWorkspaceUseCase(
-			new FakeFileSystem(),
-			mergeEngine,
-			new FakeUserPrompt(),
-			new FakeGitHubClient(),
-			new FakeVersionComparator(),
-		);
+		const useCase = makeUseCase(mergeEngine);
 
 		await useCase.execute("/tmp/fake-dest", { force: true });
 
@@ -120,13 +141,7 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 
 	test("should pass obligatorio rules as 'mandatory' to merge engine", async () => {
 		const mergeEngine = new CaptureMergeEngine();
-		const useCase = new UpdateWorkspaceUseCase(
-			new FakeFileSystem(),
-			mergeEngine,
-			new FakeUserPrompt(),
-			new FakeGitHubClient(),
-			new FakeVersionComparator(),
-		);
+		const useCase = makeUseCase(mergeEngine);
 
 		await useCase.execute("/tmp/fake-dest", { force: true });
 
@@ -137,13 +152,7 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 
 	test("should exclude optional rules from update", async () => {
 		const mergeEngine = new CaptureMergeEngine();
-		const useCase = new UpdateWorkspaceUseCase(
-			new FakeFileSystem(),
-			mergeEngine,
-			new FakeUserPrompt(),
-			new FakeGitHubClient(),
-			new FakeVersionComparator(),
-		);
+		const useCase = makeUseCase(mergeEngine);
 
 		await useCase.execute("/tmp/fake-dest", { force: true });
 
@@ -154,13 +163,7 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 
 	test("should not convert standard rules to mandatory (regression for Issue #2)", async () => {
 		const mergeEngine = new CaptureMergeEngine();
-		const useCase = new UpdateWorkspaceUseCase(
-			new FakeFileSystem(),
-			mergeEngine,
-			new FakeUserPrompt(),
-			new FakeGitHubClient(),
-			new FakeVersionComparator(),
-		);
+		const useCase = makeUseCase(mergeEngine);
 
 		await useCase.execute("/tmp/fake-dest", { force: true });
 

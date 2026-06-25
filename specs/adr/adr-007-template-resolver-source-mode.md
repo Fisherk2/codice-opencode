@@ -23,13 +23,14 @@ ADR-006 established npm publication as the primary distribution method. However,
 private detectTemplateRoot(): string {
   // Ruta 1: Modo compilado (binario)
   const compiledPath = path.resolve(process.execPath, '../template/');
-  if (await this.exists(compiledPath)) return compiledPath;
+  if (fs.existsSync(compiledPath)) return compiledPath;
 
   // Ruta 2: Modo source (desarrollo)
   const sourcePath = path.resolve(import.meta.dir, '../../template/');
-  if (await this.exists(sourcePath)) return sourcePath;
+  if (fs.existsSync(sourcePath)) return sourcePath;
 
-  throw new TemplateNotFoundError('Template file not found');
+  // CWD fallback
+  return path.resolve(process.cwd(), 'template');
 }
 ```
 
@@ -58,31 +59,38 @@ The missing path is `../template/` relative to `import.meta.dir` in bunx mode.
 
 ## Decision
 
-Add a third detection path to `TemplateResolver.detectTemplateRoot()` for bunx/npm mode:
+Add a bunx/npm detection path to `TemplateResolver.detectTemplateRoot()`. The detection order prioritizes bunx/npm first because `import.meta.dir` resolves in ALL source-like modes, requiring bunx to be checked before source development:
 
 ```typescript
-// v1.0.5 — three paths
-private detectTemplateRoot(): string {
-  // Ruta 1: Modo compilado (binario)
-  const compiledPath = path.resolve(process.execPath, '../template/');
-  if (await this.exists(compiledPath)) return compiledPath;
-
-  // Ruta 2: Modo bunx/npm (paquete en node_modules)
+// v1.0.5 — three-path cascade + CWD fallback
+static detectTemplateRoot(): string {
+  // Ruta 1: Modo bunx/npm (paquete en node_modules)
+  // import.meta.dir = src/cli/, template = ../template/
   const bunxPath = path.resolve(import.meta.dir, '../template/');
-  if (await this.exists(bunxPath)) return bunxPath;
+  if (fs.existsSync(bunxPath)) return bunxPath;
 
-  // Ruta 3: Modo source desarrollo (raíz del repo)
+  // Ruta 2: Modo source desarrollo (raíz del repo)
+  // import.meta.dir = src/cli/, template = ../../template/
   const sourcePath = path.resolve(import.meta.dir, '../../template/');
-  if (await this.exists(sourcePath)) return sourcePath;
+  if (fs.existsSync(sourcePath)) return sourcePath;
 
-  throw new TemplateNotFoundError('Template file not found');
+  // Ruta 3: Modo compilado (binario standalone)
+  const binaryDir = path.dirname(process.argv[0] ?? process.execPath);
+  const binaryRelativePath = path.resolve(binaryDir, '../template/');
+  if (fs.existsSync(binaryRelativePath)) return binaryRelativePath;
+
+  // Fallback: template relativo a CWD (compatibilidad retroactiva)
+  return path.resolve(process.cwd(), 'template');
 }
 ```
 
 The detection order is:
-1. Compiled binary mode (most specific, highest priority)
-2. bunx/npm mode (package in node_modules)
-3. Source development mode (repo root)
+1. bunx/npm mode (must be first — `import.meta.dir` resolves in all source modes)
+2. Source development mode (repo root — checked only if bunx path doesn't exist)
+3. Compiled binary mode (standalone — least specific, checked last)
+4. CWD fallback (backward compatibility, error surfaces at file-read time)
+
+Note: The CWD fallback replaces the previously planned `TemplateNotFoundError` throw. This is intentional — if the template exists at CWD, it works without error; if not, the error surfaces naturally when `resolvePath()` attempts to read a file from the non-existent directory.
 
 ## Consequences
 

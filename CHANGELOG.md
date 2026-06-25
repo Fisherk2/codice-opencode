@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Critical — Template resolution in bunx mode**: `TemplateResolver.detectTemplateRoot()` now detects the template directory when running via `bunx @fisherk2-dev/codice`. Added third detection path: `import.meta.dir + '../template/'` for npm package layout (Issue #6)
+- **Critical — Update Workspace overwriting Standard files**: `UpdateWorkspaceUseCase` no longer converts `standard` rules to `mandatory` during update. Existing Estándar files are now correctly preserved when they already exist in the destination (Issue #2)
+
 ### Added
 
 - **ADR-007**: Template resolution for bunx/npm mode — third detection path `../template/` relative to `import.meta.dir`
 - **Credential file permissions**: Extended `permissions.read.deny` in `opencode.json` to include `.npmrc`, `.pem`, `*.key`, `*.p12`, `*.pfx`, `credentials.json`, `service-account*.json`
-- **TECH_DEBT.md in template**: Placeholder file in `template/estandar/` referencing the canonical technical debt catalog
-- **Internal link fixes**: Updated relative paths in `template/estandar/README.md`, `template/estandar/CONTRIBUTING.md`, and `template/obligatorio/AGENTS.md` to reflect `obligatorio/`, `estandar/`, `opcional/` directory structure
+- **TECH_DEBT.md in template**: Placeholder in `template/estandar/docs/TECH_DEBT.md` with structured format for tracking technical debt
+- **Internal link fixes**: Updated relative paths in `README.md` and `CONTRIBUTING.md` to reflect `obligatorio/`, `estandar/`, `opcional/` directory structure (Issue #4)
 
 ### Changed
 

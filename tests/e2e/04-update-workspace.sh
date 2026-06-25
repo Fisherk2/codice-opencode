@@ -6,12 +6,16 @@
 #           Start mock GitHub API server
 #           Run --update --force
 # Expected: Obligatorio files updated (overwritten)
-#           Estandar files updated (overwritten)
+#           Estandar files PRESERVED (not overwritten — Issue #2 fix)
 #           Opcional files preserved (not touched)
 #           .codice-version file updated
 #
 # This tests the Update mode with a mock GitHub server returning a
 # newer version tag, verifying the version check and selective update.
+#
+# Note: Issue #2 fixed the behavior where Estandar files were incorrectly
+# converted to 'mandatory' during update, causing existing user files to
+# be overwritten. Now Estandar files respect destinationExists().
 #===============================================================================
 
 set -Eeuo pipefail
@@ -38,8 +42,7 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 echo "# OLD README — This should be updated" > "$TEMP_DIR/README.md"
 
 # Obligatorio file with old content (will be overwritten)
-mkdir -p "$TEMP_DIR/agents"
-echo "# OLD AGENT — This should be updated" > "$TEMP_DIR/agents/tlaloc.md"
+echo '{"old": true, "version": "0.9.0"}' > "$TEMP_DIR/opencode.json"
 
 # Opcional file that already exists (should be preserved)
 mkdir -p "$TEMP_DIR/scripts"
@@ -75,23 +78,32 @@ log_pass "Binary exited with code 0"
 # Assertions
 # ---------------------------------------------------------------------------
 
-log_info "Checking that estandar file WAS updated..."
+log_info "Checking that estandar file was PRESERVED (not overwritten)..."
 
-UPDATED_README=$(head -1 "$TEMP_DIR/README.md" 2>/dev/null || echo "")
-if [[ "$UPDATED_README" == "# OLD README — This should be updated" ]]; then
-    log_fail "README.md was NOT updated (expected estandar to be overwritten)"
+PRESERVED_README=$(head -1 "$TEMP_DIR/README.md" 2>/dev/null || echo "")
+if [[ "$PRESERVED_README" != "# OLD README — This should be updated" ]]; then
+    log_fail "README.md was OVERWRITTEN! Expected estandar to be preserved (Issue #2 fix)."
+    echo "    Actual first line: $PRESERVED_README" >&2
     exit 1
 fi
-log_pass "README.md was updated (estandar overwritten)"
+log_pass "README.md preserved (estandar not overwritten - Issue #2 fix confirmed)"
 
-log_info "Checking that obligatorio file WAS updated..."
+log_info "Checking that new estandar files were copied (for missing destinations)..."
 
-UPDATED_AGENT=$(head -1 "$TEMP_DIR/agents/tlaloc.md" 2>/dev/null || echo "")
-if [[ "$UPDATED_AGENT" == "# OLD AGENT — This should be updated" ]]; then
-    log_fail "agents/tlaloc.md was NOT updated (expected obligatorio to overwrite)"
+if [[ ! -f "$TEMP_DIR/LICENSE" ]]; then
+    log_fail "LICENSE (estandar) was not copied — expected new estandar files to appear"
     exit 1
 fi
-log_pass "agents/tlaloc.md was updated (obligatorio overwritten)"
+log_pass "LICENSE was copied (new estandar file appears)"
+
+log_info "Checking that obligatorio file WAS updated (overwritten)..."
+
+UPDATED_OPENCODE=$(head -1 "$TEMP_DIR/opencode.json" 2>/dev/null || echo "")
+if [[ "$UPDATED_OPENCODE" == '{"old": true, "version": "0.9.0"}' ]]; then
+    log_fail "opencode.json was NOT updated (expected obligatorio to be overwritten)"
+    exit 1
+fi
+log_pass "opencode.json was updated (obligatorio overwritten)"
 
 log_info "Checking that opcional file was PRESERVED (not touched)..."
 
