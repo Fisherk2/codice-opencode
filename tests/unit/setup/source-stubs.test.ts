@@ -45,6 +45,16 @@ const stubs: StubEntry[] = [
 		pattern: EXPORT_PATTERN,
 	},
 	{
+		path: "src/domain/ports/IFileMergeEngine.ts",
+		description: "IFileMergeEngine port",
+		pattern: EXPORT_PATTERN,
+	},
+	{
+		path: "src/domain/ports/IVersionComparator.ts",
+		description: "IVersionComparator port",
+		pattern: EXPORT_PATTERN,
+	},
+	{
 		path: "src/application/ports/IGitHubClient.ts",
 		description: "IGitHubClient port",
 		pattern: EXPORT_PATTERN,

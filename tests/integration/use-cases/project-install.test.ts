@@ -73,6 +73,7 @@ function createMockPrompt(): IUserPrompt {
 		showSuccess: mockFn(() => {}),
 		showCancel: mockFn(() => {}),
 		showError: mockFn(() => {}),
+		promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
 	};
 }
 

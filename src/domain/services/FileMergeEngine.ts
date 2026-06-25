@@ -51,6 +51,9 @@ export class FileMergeEngine implements IFileMergeEngine {
 		}
 
 		// Phase 2: Commit staging (atomic rename)
+		// commitStaging() is always called, even with zero staged files (empty rules).
+		// This guarantees the staging directory is cleaned up consistently at the end
+		// of every execution, regardless of how many files were actually staged.
 		try {
 			await this.fileSystem.commitStaging();
 		} catch (err) {

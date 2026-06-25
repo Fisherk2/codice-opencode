@@ -129,8 +129,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 
 	/**
 	 * Present the mode selection menu to the user.
-	 * This is a CLI-specific method (not on IUserPrompt) available
-	 * on the concrete ClackPromptsAdapter.
+	 * Implements IUserPrompt.promptForMode().
 	 * @returns Selected mode, or null if user cancelled.
 	 */
 	async promptForMode(): Promise<"clean" | "project" | "update" | null> {

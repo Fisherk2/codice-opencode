@@ -83,8 +83,15 @@ export class UpdateWorkspaceUseCase {
 			const versionData = await this.fileSystem.readVersionFile();
 			if (versionData) {
 				const parsed = JSON.parse(versionData);
-				installedVersion = parsed.installedVersion ?? installedVersion;
-				previousOptionalSelections = parsed.optionalSelections ?? [];
+				// Validate fields (defense-in-depth — .codice-version could be corrupted)
+				if (typeof parsed.installedVersion === "string") {
+					installedVersion = parsed.installedVersion;
+				}
+				if (Array.isArray(parsed.optionalSelections)) {
+					previousOptionalSelections = parsed.optionalSelections.filter(
+						(s: unknown): s is string => typeof s === "string",
+					);
+				}
 			}
 		} catch {
 			// No version file found — this is a first update in an existing project

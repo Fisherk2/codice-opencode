@@ -86,6 +86,9 @@ class FakeUserPrompt implements IUserPrompt {
 	showSuccess(_message: string): void {}
 	showCancel(_message: string): void {}
 	showError(_message: string): void {}
+	async promptForMode(): Promise<"clean" | "project" | "update" | null> {
+		return null;
+	}
 }
 
 class FakeVersionComparator implements IVersionComparator {

@@ -63,7 +63,14 @@ export class TemplateResolver {
 		}
 
 		// Fallback: template relative to CWD (backward compatible)
-		return path.resolve(process.cwd(), TEMPLATE_DIR_NAME);
+		const cwdPath = path.resolve(process.cwd(), TEMPLATE_DIR_NAME);
+		// biome-ignore lint/suspicious/noConsole: production warning for missing template
+		console.warn(
+			`[warn] Template not found via source (${sourcePath}) or compiled binary path ` +
+				`(${binaryRelativePath}). Falling back to current working directory: ${cwdPath}. ` +
+				"Run `codice` from the project root, or ensure the template directory is present.",
+		);
+		return cwdPath;
 	}
 
 	/**
