@@ -1,80 +1,49 @@
 # Complete Reference Guide
 
-**Production-grade engineering skills for AI coding agents.**
+**Códice OpenCode Workspace User Guide**
 
 ---
 
 ## Quick Start
 
-This workspace is a **template** for building AI-assisted projects. Don't clone it directly — use one of these methods instead:
-
-- **Option A: Use this template (Recommended)** — Go to [github.com/Fisherk2/spec-driven-develop-opencode-workspace](https://github.com/Fisherk2/spec-driven-develop-opencode-workspace), click **"Use this template"** → **"Create a new repository"**, then clone your new repo.
-- **Option B: Download ZIP** — Go to the same URL, click **Code** → **Download ZIP**, extract, then `rm -rf .git && git init` to start fresh.
-
-> **Why not `git clone`?** Cloning inherits the template's commit history. The methods above give you a clean slate.
-
-### Clean up template files
-
-#### README.md
-
-Replace the **entire content** with your own project's README. The template's README contains project-specific branding and descriptions that don't apply to your project.
-
-#### CONTRIBUTING.md
-
-Replace the **entire content** with your own contribution guidelines, or delete the file if you don't need them.
-
-#### CHANGELOG.md
-
-Remove only the **version entries** (the tagged releases `[x.x.x]`), keeping the format definition and structure. Your changelog starts fresh with your own versions.
-
-See [00-setup.md](./00-setup.md) for prerequisites, configuration details (opencode.json, model setup, plugin dependencies), and troubleshooting.
-
-See [06-mcp-servers.md](./06-mcp-servers.md) for MCP server setup (Context7, Excel, Jupyter).
-
-### Verify commands
-
-```bash
-ls .opencode/commands/
-# → build.md  code-simplify.md  design.md  evolve.md  plan.md  review.md  ship.md  spec.md  test.md  webperf.md
-```
-
-### Run your first SDD workflow
-
-| Step | Command | Phase |
-|------|---------|-------|
-| Define what to build (new project) | `/spec "Create a REST API for tasks"` | DEFINE |
-| Evolve existing project | `/evolve "Add user authentication"` | EVOLVE |
-| Design the interface (optional) | `/design "Design dashboard UI"` | DESIGN |
-| Plan the tasks | `/plan` | PLAN |
-| Implement incrementally | `/build` | BUILD |
-| Prove it works | `/test` | VERIFY |
-| Audit web performance (optional) | `/webperf` | WEBPERF |
-| Simplify code (recommended) | `/code-simplify` | SIMPLIFY |
-| Review before merge | `/review` | REVIEW |
-| Ship to production | `/ship` | SHIP |
-
-See [02-orchestration-patterns.md](./02-orchestration-patterns.md) for the SDD lifecycle diagram and detailed orchestration.
+Check first steps before opening OpenCode in [00-setup.md](./00-setup.md#first-steps-before-opening-opencode-after-install-códice-workspace).
 
 ---
 
-## Commands
+## Workflow
 
-Ten slash commands map to the development lifecycle. Each activates the right skills automatically via a primary agent.
+```mermaid
+flowchart LR
+    A["/spec<br/>DEFINE"] --> B["/plan<br/>PLAN"]
+    B --> C["/build<br/>BUILD"]
+    C --> D["/test<br/>VERIFY"]
+    D --> E["/webperf<br/>WEBPERF (optional)"]
+    E --> F["/code-simplify<br/>SIMPLIFY (recommended)"]
+    F --> G["/review<br/>REVIEW"]
+    G --> H["/ship<br/>SHIP"]
+    H --> I["Go Live"]
 
-| Action | Command | Primary Agent | Principle |
-|--------|---------|---------------|-----------|
-| Define what to build (new project) | `/spec` | quetzalcoatl | Spec before code |
-| Evolve existing project | `/evolve` | quetzalcoatl | Document before coding |
-| Design UI/UX (optional) | `/design` | quetzalcoatl | Design before implementation |
-| Plan how to build it | `/plan` | moctezuma | Small, atomic tasks |
-| Build incrementally | `/build` | tlaloc | One slice at a time |
-| Prove it works | `/test` | mictlantecuhtli | Tests are proof |
-| Audit web performance (optional) | `/webperf` | mictlantecuhtli | Measure before optimizing |
-| Simplify the code (recommended) | `/code-simplify` | tlaloc | Clarity over cleverness |
-| Review before merge | `/review` | tezcatlipoca | Improve code health |
-| Ship to production | `/ship` | mictlantecuhtli | Faster is safer |
+    J["/evolve<br/>EVOLVE (existing project)"] -.-> A
+    K["/design<br/>DESIGN (optional)"] -.-> A
+    K -.-> C
+```
 
-See [02-orchestration-patterns.md](./02-orchestration-patterns.md) for detailed orchestration patterns and command behavior.
+### Full Cycle
+
+| Phase | Command | Agent | What It Does | Main Skills |
+|------|---------|--------|--------------|-------------|
+| Design (optional) | `/design` | quetzalcoatl | Parallel fan-out: UX research, technical feasibility, accessibility. Merges into design specification in `specs/design/` | ui-ux-design-pro, design-taste-frontend, frontend-ui-engineering |
+| Define (new) | `/spec` | quetzalcoatl | Detects project state (3 cases), clarifies requirements, generates docs (PRD, TRD, ARCHITECTURE, WORKFLOW) and synthesizes into SPEC.md | spec-driven-development, clean-ddd-hexagonal, architecture-diagrams, idea-refine, interview-me |
+| Evolve (existing) | `/evolve` | quetzalcoatl | Detects existing project state, determines route (docs, issues, new specs), updates living documentation. Replaces `/spec` in established projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
+| Plan | `/plan` | moctezuma | Analyzes dependencies, cuts vertically, writes tasks with acceptance criteria in `tasks/plan.md` and `tasks/todo.md` | planning-and-task-breakdown, clean-ddd-hexagonal, architecture-diagrams |
+| Build | `/build` | tlaloc | Takes next pending task, applies RED-GREEN-REFACTOR with TDD, runs full suite, commits | incremental-implementation, test-driven-development, solid, error-handling-patterns |
+| Verify | `/test` | mictlantecuhtli | TDD for features (test → implement → refactor). Prove-It for bugs (reproduce → fix → verify). Escalates to incident-response if incident | test-driven-development, error-handling-patterns, browser-testing-with-devtools |
+| Audit performance (optional) | `/webperf` | mictlantecuhtli | Delegates to web-performance-auditor to audit Core Web Vitals, GPU animations, layout shifts, CSS efficiency. Findings for /review | observability-and-instrumentation, browser-testing-with-devtools |
+| Simplify (recommended) | `/code-simplify` | tlaloc | Scans code for simplification opportunities (nesting, long functions, ternaries, dead code). Applies incrementally with tests | code-simplification, refactoring-patterns, solid |
+| Review | `/review` | tezcatlipoca | 5-axis audit: Correctness, Readability, Architecture, Security, Performance. Incorporates /webperf findings. Findings categorized Critical/Important/Suggestion | code-review-and-quality, solid, security-and-hardening, performance-optimization |
+| Ship | `/ship` | mictlantecuhtli | Parallel fan-out: code-reviewer, security-auditor, test-engineer, dependency-manager, ±accessibility-tester. Produces GO/NO-GO decision + rollback plan | shipping-and-launch, crafting-effective-readmes, architecture-diagrams, bash-defensive-patterns |
+
+See [02-orchestration-patterns.md](./02-orchestration-patterns.md) for detailed orchestration patterns and [04-commands.md](./04-commands.md) for command behavior.
 
 ---
 
@@ -427,8 +396,6 @@ project-root/
 └── tests/                      # Tests
 ```
 
-For OpenCode configuration details (commands, agents, skill loading), see [00-setup.md](./00-setup.md). For command creation, see [04-commands.md](./04-commands.md). For skill anatomy (sections, frontmatter, naming), see [05-skills.md](./05-skills.md).
-
 ---
 
 ## Troubleshooting
@@ -439,7 +406,7 @@ See [00-setup.md](./00-setup.md#troubleshooting) for common issues and solutions
 
 ## Reporting Issues
 
-Open an [issue](https://github.com/Fisherk2/spec-driven-develop-opencode-workspace/issues) if you find:
+Open an [issue](https://github.com/Fisherk2/codice-opencode/issues) if you find:
 
 - A skill that provides incorrect or outdated guidance
 - Missing coverage for a common engineering workflow

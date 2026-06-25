@@ -1,4 +1,5 @@
 import type { FileRule } from "../entities/FileRule";
+import type { IFileMergeEngine } from "../ports/IFileMergeEngine";
 import type { IFileSystem } from "../ports/IFileSystem";
 import type { MergeError } from "../types/MergeError";
 import { commitError, stagingError } from "../types/MergeError";
@@ -19,7 +20,7 @@ import { failure, success } from "../types/Result";
  * 3. If all stages succeed → commitStaging() (atomic rename).
  * 4. If commit fails → cleanStaging() + return error.
  */
-export class FileMergeEngine {
+export class FileMergeEngine implements IFileMergeEngine {
 	constructor(private readonly fileSystem: IFileSystem) {}
 
 	/**
@@ -50,6 +51,9 @@ export class FileMergeEngine {
 		}
 
 		// Phase 2: Commit staging (atomic rename)
+		// commitStaging() is always called, even with zero staged files (empty rules).
+		// This guarantees the staging directory is cleaned up consistently at the end
+		// of every execution, regardless of how many files were actually staged.
 		try {
 			await this.fileSystem.commitStaging();
 		} catch (err) {

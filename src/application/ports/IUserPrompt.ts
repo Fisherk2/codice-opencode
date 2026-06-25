@@ -60,4 +60,10 @@ export interface IUserPrompt {
 	 * Display the exit message on error.
 	 */
 	showError(message: string): void;
+
+	/**
+	 * Prompt the user to select an installation mode.
+	 * @returns Selected mode ("clean" | "project" | "update"), or null if cancelled.
+	 */
+	promptForMode(): Promise<"clean" | "project" | "update" | null>;
 }

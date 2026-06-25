@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.4
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-17 | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v1.0.5
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-25 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -15,6 +15,7 @@
 | F5.5 | Publicación npm + bunx | Paquete npm @fisherk2-dev/codice, instalación vía bunx como método oficial | ✅ Completo |
 | F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
 | F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth test, ClackPromptsAdapter/WorskpaceVersion coverage, TECH_DEBT.md | ✅ Completo |
+| FEV-1 | Resolución de Issues Críticos (v1.0.5) | Issues #6, #2, #3, #4, #5 + Ship review fixes | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -137,34 +138,9 @@
 - ✅ E2E: 6/6 pasando (sin regresión)
 - ✅ Coverage sin pérdida, sin regresión en ningún test
 
-## 3. Estrategia de Pruebas por Fase
+---
 
-| Tipo | Alcance | Herramienta | Criterio de Éxito |
-|------|---------|-------------|-------------------|
-| Unitarias | Dominio (entities, services, types) | Bun test | 100% func lines |
-| Integración | Adaptadores, Use Cases, CLI | Bun test | > 90% func/lines |
-| E2E | 6 escenarios binario compilado | bash + mock server | 6/6 pasando |
-| Coverage | Cobertura general | bun test --coverage | > 88% lines, > 89% funcs |
-
-## 4. Métricas de Progreso
-
-- **Tests unit+int:** 360 tests, 0 fail, 711 expects
-- **Tests E2E:** 6/6 pasando
-- **Coverage:** 97.66% funciones / 96.52% líneas
-- **Domain coverage:** 100% líneas
-- **`just check`:** 0 errores
-- **Fix rate:** 10+ bugs encontrados y corregidos durante desarrollo de E2E
-- **Commits F4:** `5f75006` (E2E + CI + Coverage)
-- **Commits F4.5:** `04c7c4b` (`--dest` + workspace seguro)
-- **Commits F6.5:** `4f76a55` (coverage + tech debt)
-- **Binary:** dist/codice-linux (74MB ELF x64), dist/codice-macos (via CI), dist/codice-windows.exe (via CI)
-- **Cross-platform builds:** CI matrix ubuntu/macos/windows con smoke test + artifact upload
-- **Release pipeline:** tag v* → build 3 platforms → create release with binary assets
-- **Commits F5:** `7d9c4df`, `15a1e92`, `828acc2`, `8682d3a`, `3b5ad76` en `feat/installer-updater`
-- **Commits F5 review fixes (2026-06-15):** 3 correcciones post-review (echo format, Bun version, SHA pinning)
-- **F5 total:** 7 tasks, 7 completed + 3 review fixes
-
-## 5. F5.5 — Publicación npm + bunx support (Completado)
+### Fase 5.5 — Publicación npm + bunx support (Completado)
 
 **Estado:** ✅ Completo
 **Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F5.5 ✅** → F6 ✅
@@ -188,7 +164,7 @@
 
 ---
 
-## 6. F6 — Documentación (Completada)
+### Fase 6 — Documentación (Completada)
 
 **Estado:** ✅ Completo
 **Dependencias:** F0 ✅ → F1 ✅ → F2 ✅ → F3 ✅ → F4 ✅ → F4.5 ✅ → F4.6 ✅ → F5 ✅ → **F6 ✅ Completado**
@@ -217,7 +193,7 @@ F6 completado con 4 tareas de documentación. Sin regresión en tests, cobertura
 
 ---
 
-## 7. Release v1.0.3 — Activo en npm
+### Release v1.0.3 — Activo en npm
 
 **Estado:** ✅ Release Ready (v1.0.3 publicado en npm, v1.0.0/1/2 deprecados)
 
@@ -262,7 +238,7 @@ Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/co
 
 ---
 
-## 8. Release v1.0.4 — Tech Debt & Coverage Closing
+### Release v1.0.4 — Tech Debt & Coverage Closing
 
 **Estado:** ✅ Release Ready
 
@@ -289,3 +265,291 @@ Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/co
 Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/codice`
 
 **Release pipeline:** Crear tag `v1.0.4` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG + publicación automática a npm.
+
+---
+
+### Release v1.0.5 — FEV-1: Critical Issue Resolution + Ship Review
+
+**Estado:** ✅ Release Ready
+
+**Issues resueltos:**
+
+| ID | Título | Severidad | Solución |
+|----|--------|-----------|----------|
+| #6 | Error en instalación limpia por `bunx` | 🔴 Crítico | Tercera ruta de detección en TemplateResolver (`../template/` relativo a import.meta.dir) |
+| #2 | Update sobrescribe archivos Estándar | 🔴 Crítico | buildUpdateRules ya no convierte standard→mandatory; solo obligatorio se eleva |
+| #3 | Permisos extra para credenciales | 🟡 Medio | Extendido permissions.read.deny con .npmrc, *.pem, *.key, *.p12, *.pfx, etc. |
+| #4 | Enlaces rotos en documentación | 🟡 Medio | Rutas relativas corregidas en README.md, CONTRIBUTING.md, AGENTS.md |
+| #5 | TECH_DEBT.md ausente en plantilla | 🟢 Bajo | Creado template/estandar/docs/TECH_DEBT.md |
+
+**Ship Review (Phase A fan-out):**
+| Reviewer | Findings | Result |
+|----------|----------|--------|
+| code-reviewer | 0 Critical, 2 Important (I1-I2) | ✅ Resuelto (DIP interface, deny docs) |
+| security-auditor | 0 Critical, 2 Medium (M1-M2) | ✅ Resuelto (CWD warning, URL validation) |
+| test-engineer | 0 Critical, 4 Suggestions (S1-S4, S6-S7) | ✅ Resuelto (docs, stubs, validation, logging) |
+| dependency-manager | 0 CVEs, 3 minor/patch updates | ✅ Resuelto (bun update) |
+
+**Post-ship fixes:**
+| ID | Observación | Archivos |
+|----|-------------|----------|
+| I1 | Dependencies interface usa tipos concretos → `IFileSystem`/`IUserPrompt` | container.ts, main.ts, IUserPrompt.ts, 4 test mocks |
+| I2 | Bash deny patterns sin documentar → `_comment` fields | opencode.json |
+| M1 | CWD fallback silencioso → `console.warn` | TemplateResolver.ts |
+| M2 | CODICE_GITHUB_API_URL sin validación → URL guard + warning | constants.ts |
+| S1 | FileRule category sin docs → Spanish mapping en JSDoc | FileRule.ts |
+| S2 | Source-stubs incompletos → +IFileMergeEngine, +IVersionComparator | source-stubs.test.ts |
+| S4 | commitStaging on empty sin comment → clarifying comment | FileMergeEngine.ts |
+| S6 | Symlink skip sin log → verbose param + warning | directoryWalker.ts |
+| S7 | Version file sin validación → type guards | UpdateWorkspaceUseCase.ts |
+| S8 | Dependencies desactualizadas → `bun update` | package.json, bun.lock |
+
+**Documentación actualizada:**
+| Documento | Cambios |
+|-----------|---------|
+| CONTRIBUTING.md | Sección Workspace Template reescrita con procedimientos detallados de USER_GUIDE.md |
+| README.md | Modelos sincronizados con opencode.json; enlace a 00-setup.md post-instalación |
+
+**Métricas v1.0.5:**
+- `bun test`: 382 pass, 0 fail (797 expects)
+- `just check`: 0 errores (biome ci + tsc --noEmit, solo errores pre-existentes de fixtures)
+- E2E: 6/6 escenarios pasando
+- Coverage: 97.66% funciones / 96.52% líneas
+- Domain coverage: 100% líneas
+- Branch: `feat/fev-1`, commits: `690d4a4`, `62a6440`, `3c469e4`
+
+**npm package:** `@fisherk2-dev/codice` — v1.0.5 a publicar.
+Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/codice`
+
+**Release pipeline:** Crear tag `v1.0.5` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG + publicación automática a npm.
+
+## 3. Desglose por Fase evolutiva
+
+### Fase FEV-1 — Resolución de Issues Críticos (v1.0.5)
+
+**Fecha:** 2026-06-17 → 2026-06-25 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado
+
+#### Contexto
+
+Tras el release de v1.0.4, se identificaron 5 issues abiertos que afectan la funcionalidad crítica del instalador. Dos de ellos (Issues #6 y #2) son **críticos** y bloquean escenarios de uso legítimos. Los restantes (Issues #3, #4, #5) son mejoras de calidad y seguridad.
+
+| ID | Título | Severidad | Estado |
+|----|--------|-----------|--------|
+| #6 | Error en instalación limpia por `bunx` | 🔴 Crítico | ✅ Resuelto |
+| #2 | Actualización sobrescribe archivos Estándar | 🔴 Crítico | ✅ Resuelto |
+| #3 | Añadir permisos extra para credenciales | 🟡 Medio | ✅ Resuelto |
+| #4 | Actualizar enlaces entre documentos | 🟡 Medio | ✅ Resuelto |
+| #5 | Añadir TECH_DEBT.md a plantilla | 🟢 Bajo | ✅ Resuelto |
+
+#### Diagnóstico Técnico
+
+##### Issue #6 — Error en instalación limpia por `bunx`
+
+**Síntoma:** `Template file not found: opencode.json` en todos los modos cuando se ejecuta vía `bunx @fisherk2-dev/codice`.
+
+**Diagnóstico detallado:**
+
+`TemplateResolver.detectTemplateRoot()` implementa una cascada de detección de rutas:
+
+```typescript
+// src/infrastructure/adapters/TemplateResolver.ts (v1.0.4)
+private detectTemplateRoot(): string {
+  // Ruta 1: Modo compilado (binario)
+  const compiledPath = path.resolve(process.execPath, '../template/');
+  if (await this.exists(compiledPath)) return compiledPath;
+
+  // Ruta 2: Modo source (desarrollo)
+  const sourcePath = path.resolve(import.meta.dir, '../../template/');
+  if (await this.exists(sourcePath)) return sourcePath;
+
+  // ❌ FALLO: No hay tercera ruta para modo bunx
+  throw new TemplateNotFoundError('Template file not found');
+}
+```
+
+En modo `bunx`, el paquete npm se instala en `node_modules/@fisherk2-dev/codice/`. La estructura de directorios es:
+
+```
+node_modules/@fisherk2-dev/codice/
+├── src/
+│   └── cli/
+│       └── main.ts          ← import.meta.dir apunta aquí
+└── template/                 ← template está AQUÍ (un nivel arriba)
+```
+
+- `process.execPath` → `/usr/local/bin/bun` (no relativo al paquete) → Ruta 1 falla
+- `import.meta.dir + '../../template/'` → `node_modules/@fisherk2-dev/codice/src/cli/../../template/` → `node_modules/@fisherk2-dev/codice/template/` → **Ruta 2 falla** porque `import.meta.dir` es `src/cli/`, no `src/`
+- No existe Ruta 3 → Error
+
+**Solución:** Añadir tercera ruta de detección: `path.resolve(import.meta.dir, '../template/')` para modo source/bunx.
+
+```typescript
+// Solución v1.0.5
+private detectTemplateRoot(): string {
+  // Ruta 1: Modo compilado (binario)
+  const compiledPath = path.resolve(process.execPath, '../template/');
+  if (await this.exists(compiledPath)) return compiledPath;
+
+  // Ruta 2: Modo bunx/npm (paquete en node_modules)
+  const bunxPath = path.resolve(import.meta.dir, '../template/');
+  if (await this.exists(bunxPath)) return bunxPath;
+
+  // Ruta 3: Modo source desarrollo (raíz del repo)
+  const sourcePath = path.resolve(import.meta.dir, '../../template/');
+  if (await this.exists(sourcePath)) return sourcePath;
+
+  throw new TemplateNotFoundError('Template file not found');
+}
+```
+
+##### Issue #2 — Actualización sobrescribe archivos Estándar
+
+**Síntoma:** Archivos en `estandar/` (como `README.md`, `AGENTS.md`) sobrescriben archivos existentes del proyecto durante `Update Workspace`.
+
+**Diagnóstico detallado:**
+
+`UpdateWorkspaceUseCase.ts` (líneas 119-123 en v1.0.4) aplica una transformación de reglas antes de ejecutar el merge:
+
+```typescript
+// src/application/use-cases/UpdateWorkspaceUseCase.ts (v1.0.4)
+private buildUpdateRules(allRules: readonly FileRule[]): FileRule[] {
+  // ❌ PROBLEMA: Convierte TODAS las reglas a mandatory
+  return allRules.map(rule => rule.type === 'opcional'
+    ? rule  // Opcionales se excluyen
+    : new FileRule({ ...rule, type: 'mandatory' })  // Standard → mandatory
+  );
+}
+```
+
+Esta conversión hace que `FileMergeEngine.shouldStage()` ignore la verificación `destinationExists()` para archivos Estándar, resultando en sobrescritura.
+
+**Solución:** No convertir `standard` a `mandatory` en modo update. Solo `obligatorio` se trata como mandatory.
+
+```typescript
+// Solución v1.0.5
+private buildUpdateRules(allRules: readonly FileRule[]): FileRule[] {
+  return allRules.map(rule => {
+    if (rule.type === 'opcional') return rule; // Excluir opcionales
+    if (rule.type === 'obligatorio') return new FileRule({ ...rule, type: 'mandatory' });
+    // standard: mantener tipo original (respetar destinationExists)
+    return rule;
+  });
+}
+```
+
+##### Issue #3 — Añadir permisos extra para credenciales
+
+**Síntoma:** El agente IA puede leer archivos con credenciales (`.npmrc`, `.env.local`, `*.pem`, etc.) además de `.env`.
+
+**Diagnóstico:** `template/obligatorio/opencode.json` define la sección `permissions` del agente, pero solo incluye `.env` en la lista de exclusión de lectura.
+
+**Solución:** Añadir patrones de archivo de credenciales a la sección `permissions.read`:
+
+```json
+{
+  "permissions": {
+    "read": {
+      "deny": [
+        ".env*",
+        ".npmrc",
+        ".pem",
+        "*.key",
+        "*.p12",
+        "*.pfx",
+        "credentials.json",
+        "service-account*.json"
+      ]
+    }
+  }
+}
+```
+
+##### Issue #4 — Actualizar enlaces entre documentos
+
+**Síntoma:** Links rotos en documentación del template tras reorganización en `obligatorio/`, `estandar/`, `opcional/`.
+
+**Diagnóstico:** Los documentos del template (`README.md`, `CONTRIBUTING.md`, etc.) contenían enlaces relativos a la estructura anterior de directorios planos. Tras la migración a carpetas por categoría, rutas como `docs/ARCHITECTURE.md` siguen funcionando (porque `docs/` está en `estandar/`), pero enlaces a `references/` o `skills/` desde documentos en `estandar/` fallan porque esas carpetas ahora están en `obligatorio/`.
+
+**Solución:** Revisar y actualizar todos los enlaces internos en:
+- `template/estandar/README.md`
+- `template/estandar/CONTRIBUTING.md`
+- `template/obligatorio/AGENTS.md`
+
+Usar rutas relativas correctas: `../obligatorio/skills/xlsx/SKILL.md` en vez de `skills/xlsx/SKILL.md`.
+
+##### Issue #5 — Añadir TECH_DEBT.md a plantilla
+
+**Síntoma:** No existe `TECH_DEBT.md` en la plantilla instalada. Los usuarios no tienen acceso al catálogo de deuda técnica del proyecto.
+
+**Diagnóstico:** `TECH_DEBT.md` existe en `docs/` del repositorio de Códice pero no está incluido en `template/`.
+
+**Solución:** Crear `template/estandar/TECH_DEBT.md` como placeholder que referencia al documento canónico.
+
+#### Plan de Resolución
+
+| Orden | Issue | Archivos Modificados | Esfuerzo | Dependencias |
+|-------|-------|---------------------|----------|--------------|
+| 1 | #6 (bunx) | `TemplateResolver.ts`, tests | 2h | Ninguna |
+| 2 | #2 (update overwrite) | `UpdateWorkspaceUseCase.ts`, tests | 1h | Ninguna |
+| 3 | #3 (permisos) | `template/obligatorio/opencode.json` | 30min | Ninguna |
+| 4 | #4 (enlaces) | `template/estandar/*.md`, `template/obligatorio/AGENTS.md` | 1h | Ninguna |
+| 5 | #5 (TECH_DEBT) | `template/estandar/TECH_DEBT.md` (nuevo) | 15min | Ninguna |
+
+**Orden de implementación:** Issues #6 y #2 primero (críticos, requieren tests), seguidos de #3, #4, #5 (mejoras sin riesgo).
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.4 (actual) | Meta v1.0.5 |
+|---------|-----------------|-------------|
+| Tests (pass/fail) | 360 / 0 | ≥360 / 0 |
+| Coverage (funciones) | 97.66% | ≥97.66% |
+| Coverage (líneas) | 96.52% | ≥96.52% |
+| E2E escenarios | 6/6 | 6/6 |
+| `just check` errores | 0 | 0 |
+| Issues críticos abiertos | 2 (#6, #2) | 0 |
+| Issues totales abiertos | 5 | 0 |
+
+**Criterios de completitud (DoD FEV-1):**
+- [x] Issue #6 resuelto: instalación vía `bunx` funciona en todos los modos
+- [x] Issue #2 resuelto: Update Workspace no sobrescribe archivos Estándar
+- [x] Issue #3 resuelto: permisos de credenciales actualizados
+- [x] Issue #4 resuelto: todos los enlaces internos funcionan
+- [x] Issue #5 resuelto: TECH_DEBT.md presente en plantilla instalada
+- [x] `bun test`: sin regresión (382 pass, 0 fail)
+- [x] `just check`: 0 errores
+- [x] E2E: 6/6 pasando
+- [x] ADR-007 documentado
+- [x] CHANGELOG actualizado con sección v1.0.5
+- [x] Ship review: 0/4 Critical findings → GO decision
+- [x] Todas las observaciones post-ship resueltas (I1, I2, M1, M2, S1-S8)
+
+## 4. Estrategia de Pruebas por Fase
+
+| Tipo | Alcance | Herramienta | Criterio de Éxito |
+|------|---------|-------------|-------------------|
+| Unitarias | Dominio (entities, services, types) | Bun test | 100% func lines |
+| Integración | Adaptadores, Use Cases, CLI | Bun test | > 90% func/lines |
+| E2E | 6 escenarios binario compilado | bash + mock server | 6/6 pasando |
+| Coverage | Cobertura general | bun test --coverage | > 88% lines, > 89% funcs |
+
+## 5. Métricas de Progreso
+
+- **Tests unit+int:** 382 tests, 0 fail, 797 expects
+- **Tests E2E:** 6/6 pasando
+- **Coverage:** 97.66% funciones / 96.52% líneas
+- **Domain coverage:** 100% líneas
+- **`just check`:** 0 errores
+- **Fix rate:** 10+ bugs encontrados y corregidos durante desarrollo de E2E
+- **Commits F4:** `5f75006` (E2E + CI + Coverage)
+- **Commits F4.5:** `04c7c4b` (`--dest` + workspace seguro)
+- **Commits F6.5:** `4f76a55` (coverage + tech debt)
+- **Binary:** dist/codice-linux (74MB ELF x64), dist/codice-macos (via CI), dist/codice-windows.exe (via CI)
+- **Cross-platform builds:** CI matrix ubuntu/macos/windows con smoke test + artifact upload
+- **Release pipeline:** tag v* → build 3 platforms → create release with binary assets
+- **Commits F5:** `7d9c4df`, `15a1e92`, `828acc2`, `8682d3a`, `3b5ad76` en `feat/installer-updater`
+- **Commits F5 review fixes (2026-06-15):** 3 correcciones post-review (echo format, Bun version, SHA pinning)
+- **F5 total:** 7 tasks, 7 completed + 3 review fixes
+- **Commits FEV-1:** `690d4a4` (ship review fixes), `62a6440` (README models sync), `3c469e4` (CONTRIBUTING/README docs)
+- **FEV-1 total:** 5 issues + 10 ship review fixes + 3 documentation updates = 18 changes
+
+---

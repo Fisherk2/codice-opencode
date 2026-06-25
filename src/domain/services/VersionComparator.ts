@@ -1,4 +1,5 @@
 import { compare, diff as semverDiff, valid } from "semver";
+import type { IVersionComparator, ReleaseType } from "../ports/IVersionComparator";
 import { failure, type Result, success } from "../types/Result";
 import type { ComparisonResult } from "../types/version";
 
@@ -16,11 +17,6 @@ const RELEASE_TYPE_MAP: Partial<
 	patch: "patch",
 	prepatch: "patch",
 };
-
-/**
- * Release type determined from a version diff.
- */
-export type ReleaseType = "major" | "minor" | "patch" | "none";
 
 /**
  * Validate a single version string and return its normalized form.
@@ -59,7 +55,7 @@ export function validateVersions(
  *
  * Uses the `semver` library for parsing and comparison.
  */
-export class VersionComparator {
+export class VersionComparator implements IVersionComparator {
 	/**
 	 * Compare a local version against a remote version.
 	 *

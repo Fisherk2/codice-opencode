@@ -1,8 +1,9 @@
-# Technical Debt — Códice v1.0.4
+# Technical Debt — Códice v1.0.5
 
-**Generated:** 2026-06-17  
-**Status:** Live reference for improvement planning  
-**Coverage:** 97.66% functions / 96.52% lines (360 tests, 0 fail, 711 expects)
+**Generated:** 2026-06-17
+**Status:** Live reference for improvement planning
+**Coverage:** 97.66% functions / 96.52% lines (382 tests, 0 fail, 797 expects)
+**Notes:** v1.0.5 resolves 5 issues (#2, #3, #4, #5, #6) identified post-release plus 10 ship review observations (I1-I2, M1-M2, S1-S8). Two critical bugs (#6, #2) blocked core installation paths. This document tracks both resolved debt and newly discovered fragilities.
 
 ---
 
@@ -117,17 +118,82 @@
 
 ---
 
-## 6. Summary & Prioritization
+## 6. Resolved in v1.0.5
 
-### Quick Wins (v1.0.4)
-| Item | Effort | Impact |
-|------|--------|--------|
-| Integration tests for `main.ts` | 4h | Coverage 33% → 95% lines |
-| Explicit constructors in `VersionComparator` + `ClackPromptsAdapter` | 15min | Silence coverage artifact |
+### 6.1 Issue #6 — Template Resolution in bunx/npm Mode (CRITICAL)
+
+| Item | Detail |
+|------|--------|
+| **Problem** | `TemplateResolver.detectTemplateRoot()` failed when running via `bunx @fisherk2-dev/codice` because the template directory is located at `../template/` relative to `src/cli/main.ts`, not `../../template/` |
+| **Root Cause** | Only two detection paths existed: compiled mode (`process.execPath`) and source mode (`import.meta.dir + '../../template/'`). The bunx/npm mode requires a third path: `import.meta.dir + '../template/'` |
+| **Resolution** | Added third detection path in `TemplateResolver.detectTemplateRoot()`: `path.resolve(import.meta.dir, '../template/')` |
+| **Files Changed** | `src/infrastructure/adapters/TemplateResolver.ts`, `tests/integration/TemplateResolver.test.ts` |
+| **Status** | ✅ Fixed in v1.0.5 |
+
+### 6.2 Issue #2 — Update Workspace Overwrites Standard Files (CRITICAL)
+
+| Item | Detail |
+|------|--------|
+| **Problem** | `UpdateWorkspaceUseCase.buildUpdateRules()` converted ALL non-optional rules to `mandatory`, including `standard` rules. This caused `FileMergeEngine.shouldStage()` to skip the `destinationExists()` check, overwriting existing user files |
+| **Root Cause** | Overly aggressive rule transformation: `rule.type === 'opcional' ? rule : new FileRule({ ...rule, type: 'mandatory' })` |
+| **Resolution** | Modified transformation to only convert `obligatorio` to `mandatory`. `standard` rules retain their original type, preserving the `destinationExists()` check |
+| **Files Changed** | `src/application/use-cases/UpdateWorkspaceUseCase.ts`, `tests/integration/UpdateWorkspaceUseCase.test.ts` |
+| **Status** | ✅ Fixed in v1.0.5 |
+
+### 6.3 Issue #3 — Credential File Permissions (MEDIUM)
+
+| Item | Detail |
+|------|--------|
+| **Problem** | The AI agent's `permissions.read.deny` list in `opencode.json` only excluded `.env`, leaving other credential files (`.npmrc`, `.pem`, `*.key`, etc.) readable |
+| **Resolution** | Extended deny list to include: `.env*`, `.npmrc`, `.pem`, `*.key`, `*.p12`, `*.pfx`, `credentials.json`, `service-account*.json` |
+| **Files Changed** | `template/obligatorio/opencode.json` |
+| **Status** | ✅ Fixed in v1.0.5 |
+
+### 6.4 Issue #4 — Broken Internal Links in Template Docs (MEDIUM)
+
+| Item | Detail |
+|------|--------|
+| **Problem** | After reorganizing template into `obligatorio/`, `estandar/`, `opcional/` directories, relative links in markdown files broke (e.g., `skills/xlsx/SKILL.md` should be `../obligatorio/skills/xlsx/SKILL.md` from `estandar/`) |
+| **Resolution** | Updated all internal links in `template/estandar/README.md`, `template/estandar/CONTRIBUTING.md`, and `template/obligatorio/AGENTS.md` to use correct relative paths |
+| **Files Changed** | `template/estandar/README.md`, `template/estandar/CONTRIBUTING.md`, `template/obligatorio/AGENTS.md` |
+| **Status** | ✅ Fixed in v1.0.5 |
+
+### 6.5 Issue #5 — TECH_DEBT.md Missing from Template (LOW)
+
+| Item | Detail |
+|------|--------|
+| **Problem** | `TECH_DEBT.md` exists in the repository's `docs/` but was not included in the installed template, so users couldn't access the technical debt catalog |
+| **Resolution** | Created `template/estandar/TECH_DEBT.md` as a placeholder that references the canonical document in the repository |
+| **Files Changed** | `template/estandar/TECH_DEBT.md` (new) |
+| **Status** | ✅ Fixed in v1.0.5 |
+
+### 6.6 Ship Review Observations (v1.0.5)
+
+| # | Observation | Resolution | Files Changed |
+|---|-------------|------------|---------------|
+| I1 | `Dependencies` interface leaks concrete types (BunFileSystem, ClackPromptsAdapter) | Changed to `IFileSystem` / `IUserPrompt` port types. Added `promptForMode()` to `IUserPrompt` | container.ts, main.ts, IUserPrompt.ts, 4 test mocks |
+| I2 | Bash deny patterns undocumented | Added `_comment` / `_comment_suffix` fields explaining `* .file` vs `* .file *` convention | opencode.json |
+| M1 | CWD fallback silent in TemplateResolver | Added `console.warn` with Biome suppression | TemplateResolver.ts |
+| M2 | `CODICE_GITHUB_API_URL` no validation | URL validated for HTTPS protocol + github.com hostname with fallback warning | constants.ts |
+| S1 | FileRule category undocumented | Spanish→English mapping (obligatorio→mandatory, estandar→standard, opcional→optional) in JSDoc | FileRule.ts |
+| S2 | Source-stubs missing interfaces | Added `IFileMergeEngine` and `IVersionComparator` entries | source-stubs.test.ts |
+| S4 | commitStaging on empty undocumented | Clarifying comment added in FileMergeEngine | FileMergeEngine.ts |
+| S6 | Symlink skip not logged | `verbose` parameter added to `walkDirectory()`; logs to stderr | directoryWalker.ts |
+| S7 | Version file no validation | Field-level type guards on `.codice-version` JSON fields | UpdateWorkspaceUseCase.ts |
+| S8 | Dependencies minor/patch stale | `bun update`: @biomejs/biome 2.5.0→2.5.1, @clack/prompts 1.5.1→1.6.0, semver 7.8.4→7.8.5 | package.json, bun.lock |
+
+| **Verification** | `bun test`: 382 pass / 0 fail, `just check`: clean, E2E: 6/6 |
+| **Status** | ✅ All 10 observations resolved in v1.0.5 |
+
+---
+
+## 7. Summary & Prioritization
 
 ### Planned (v1.1.0)
 | Item | Effort | Impact |
 |------|--------|--------|
+| Integration tests for `main.ts` | 4h | Coverage 33% → 95% lines |
+| Explicit constructors in `VersionComparator` + `ClackPromptsAdapter` | 15min | Silence coverage artifact |
 | TypeScript 6.x upgrade | 2h | Modern TS features |
 | Biome `^2` range update | 30min | New linter rules + organize imports assist |
 | `IFileSystem` port split | 3h | ISP compliance |

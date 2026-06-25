@@ -8,6 +8,17 @@
   <a href="https://github.com/Fisherk2/codice-opencode/actions/workflows/ci.yml">
     <img src="https://github.com/Fisherk2/codice-opencode/workflows/CI/badge.svg" alt="CI">
   </a>
+  <a href="https://www.npmjs.com/package/@fisherk2-dev/codice">
+    <img src="https://img.shields.io/npm/v/@fisherk2-dev/codice?label=npm&color=cb3837" alt="npm version">
+  </a>
+  <a href="https://github.com/Fisherk2/codice-opencode/releases">
+    <img src="https://img.shields.io/github/v/release/Fisherk2/codice-opencode?color=0076D6" alt="GitHub Release">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/github/license/Fisherk2/codice-opencode" alt="License">
+  </a>
+  <img src="https://img.shields.io/badge/typescript-strict-blue" alt="TypeScript Strict">
+  <img src="https://img.shields.io/badge/built%20with-bun-fbf0df" alt="Built with Bun">
 </p>
 
 **OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
@@ -44,10 +55,10 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Master of orchestration and strategic delegation</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="agents/huitzilopochtli.md"><code>agents/huitzilopochtli.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/huitzilopochtli.md"><code>template/obligatorio/agents/huitzilopochtli.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>DeepSeek V4 Flash</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>Gemini 3.1 Pro</code> <code>MiniMax M2.5</code> <code>Qwen3.6 Plus</code> <code>MiMo-V2.5</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash as default for speed and cost. Gemini 3.1 Flash when deep context comprehension is needed. MiniMax M2.5 as a lightweight alternative. Qwen3.6 Plus for reasoning/speed balance in orchestration decisions. MiMo-V2.5 for complex context analysis before delegation.</td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>Kimi K2.7 Code</code> <code>MiMo-V2.5</code> <code>MiniMax M3</code> <code>GLM 5.2</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash as default for speed and cost. Kimi K2.7 Code for architectural reasoning and context comprehension. MiMo-V2.5 for complex context analysis before delegation. MiniMax M3 as a lightweight alternative. GLM 5.2 as critical reasoning alternative.</td></tr>
 </table>
 
 ### Quetzalcoatl 🌬️ — Visionary Sage
@@ -63,10 +74,10 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>System architect and specification designer</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="agents/quetzalcoatl.md"><code>agents/quetzalcoatl.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>Kimi K2.6</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>Kimi K2.6</code> <code>Qwen3.7 Plus</code> <code>GLM 5.1</code> <code>Claude Sonnet 4</code> <code>GPT-5.1 Codex</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> Kimi K2.6 as default for excellent architectural reasoning and UI/UX capability. Qwen3.7 Plus for specifications requiring extensive reasoning. GLM 5.1 as maximum reasoning alternative. Claude Sonnet 4 for system design and structured specifications. GPT-5.1 Codex for API design and code architecture.</td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/quetzalcoatl.md"><code>template/obligatorio/agents/quetzalcoatl.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>Kimi K2.7 Code</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>Kimi K2.7 Code</code> <code>Claude Sonnet 4</code> <code>GLM 5.2</code> <code>DeepSeek V4 Flash</code> <code>GPT-5.3 Codex</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> Kimi K2.7 Code as default for excellent architectural reasoning and coding capability. Claude Sonnet 4 for system design and structured specifications. GLM 5.2 as maximum reasoning alternative. DeepSeek V4 Flash for rapid architectural iterations. GPT-5.3 Codex for API design and code architecture.</td></tr>
 </table>
 
 ### Moctezuma ⚔️ — Strategist and Commander
@@ -82,10 +93,10 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Task planner and work breakdown specialist</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="agents/moctezuma.md"><code>agents/moctezuma.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>MiniMax M2.7</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>MiniMax M2.7</code> <code>Claude 3.5 Haiku</code> <code>Kimi K2.5</code> <code>DeepSeek V4 Flash</code> <code>GPT-5.4 Mini</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> MiniMax M2.7 for detailed plans. Claude 3.5 Haiku when speed is needed in task breakdown. Kimi K2.5 as backup alternative. DeepSeek V4 Flash for rapid iterative planning. GPT-5.4 Mini for structured task decomposition.</td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/moctezuma.md"><code>template/obligatorio/agents/moctezuma.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>MiniMax M3</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>MiniMax M3</code> <code>Claude Haiku 4.5</code> <code>Kimi K2.5</code> <code>DeepSeek V4 Flash</code> <code>GPT-5.4 Mini</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> MiniMax M3 for detailed, structured plans. Claude Haiku 4.5 when speed is needed in task breakdown. Kimi K2.5 as backup alternative. DeepSeek V4 Flash for rapid iterative planning. GPT-5.4 Mini for structured task decomposition.</td></tr>
 </table>
 
 ### Tlaloc 🌧️ — Builder and Artisan
@@ -101,10 +112,10 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Main implementer and feature builder</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="agents/tlaloc.md"><code>agents/tlaloc.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/tlaloc.md"><code>template/obligatorio/agents/tlaloc.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>DeepSeek V4 Flash</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>MiMo-V2.5</code> <code>Claude 4.6 Sonnet</code> <code>GPT-5.3 Codex</code> <code>Gemini 3.5 Flash</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash for general implementation due to speed. MiMo-V2.5 for tasks requiring deep reasoning. Claude 4.6 Sonnet for high-quality code in critical features. GPT-5.3 Codex for extensive code generation and mass writing. Gemini 3.5 Flash as Google's fast alternative for code generation.</td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>MiMo-V2.5</code> <code>Claude Sonnet 4</code> <code>GPT-5.3 Codex</code> <code>Gemini 3.5 Flash</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash for general implementation due to speed. MiMo-V2.5 for tasks requiring deep reasoning. Claude Sonnet 4 for high-quality code in critical features. GPT-5.3 Codex for extensive code generation and mass writing. Gemini 3.5 Flash as Google's fast alternative for code generation.</td></tr>
 </table>
 
 ### Mictlantecuhtli 💀 — Judge and Guardian
@@ -120,10 +131,10 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Quality validator and deployment guardian</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="agents/mictlantecuhtli.md"><code>agents/mictlantecuhtli.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/mictlantecuhtli.md"><code>template/obligatorio/agents/mictlantecuhtli.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>MiMo-V2.5</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>MiMo-V2.5</code> <code>DeepSeek V4 Flash</code> <code>Qwen3.7 Plus</code> <code>Claude Opus 4.6</code> <code>MiniMax M3</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> MiMo-V2.5 for fast test execution with deep reasoning. DeepSeek V4 Flash for general validation. Qwen3.7 Plus for exhaustive pre-deployment validation. Claude Opus 4.6 for most rigorous pre-deployment validation. MiniMax M3 for test generation and coverage analysis.</td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>MiMo-V2.5</code> <code>DeepSeek V4 Flash</code> <code>Claude Opus 4.6</code> <code>MiniMax M3</code> <code>GPT-5.5 Pro</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> MiMo-V2.5 for fast test execution with deep reasoning. DeepSeek V4 Flash for general validation. Claude Opus 4.6 for most rigorous pre-deployment validation. MiniMax M3 for test generation and coverage analysis. GPT-5.5 Pro for maximum depth validation.</td></tr>
 </table>
 
 ### Tezcatlipoca 🔮 — The Smoking Mirror
@@ -139,13 +150,98 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Code critic and quality auditor</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="agents/tezcatlipoca.md"><code>agents/tezcatlipoca.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>DeepSeek V4 Pro</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Pro</code> <code>Qwen3.7 Max</code> <code>Claude Opus 4.6</code> <code>GLM 5.1</code> <code>GPT-5.5 Pro</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Pro for rigorous reviews and deep security analysis. Qwen3.7 Max for extensive reasoning. Claude Opus 4.6 for most rigorous pre-merge review. GLM 5.1 as critical reasoning alternative. GPT-5.5 Pro for maximum depth security audits.</td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/tezcatlipoca.md"><code>template/obligatorio/agents/tezcatlipoca.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>GLM 5.2</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>GLM 5.2</code> <code>Claude Opus 4.6</code> <code>DeepSeek V4 Pro</code> <code>GPT-5.5 Pro</code> <code>Claude Sonnet 4.6</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> GLM 5.2 as default for critical reasoning and code audit. Claude Opus 4.6 for most rigorous pre-merge review. DeepSeek V4 Pro for deep security analysis. GPT-5.5 Pro for maximum depth security audits. Claude Sonnet 4.6 for rapid review cycles.</td></tr>
 </table>
 
-Additionally, over **90 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog](docs/opencode/03-agent-index.md).
+Additionally, over **90 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog](template/opcional/docs/opencode/03-agent-index.md).
+
+---
+
+## Install / Update
+
+**Códice** is a command-line tool that installs and updates this OpenCode workspace template atomically, safely, and intelligently.
+
+### Quick Install (Recommended)
+
+Requires [Bun](https://bun.sh) installed on your system.
+
+```bash
+bunx @fisherk2-dev/codice
+```
+
+That's it. Bun downloads and runs the latest version automatically.
+
+> **Note:** If you encounter issues with `bunx` (e.g., no output, scoped package cache issues), use `npx @fisherk2-dev/codice` as a fallback — both commands work identically.
+
+> **Tip:** Use `bunx --fresh @fisherk2-dev/codice` to force download the latest version.
+
+> **Next steps:** After installation, follow the [First Steps Before Opening OpenCode](template/opcional/docs/opencode/00-setup.md#first-steps-before-opening-opencode-after-install-códice-workspace) guide to configure models, install plugin dependencies, and start your first workflow.
+
+### Offline / Air-gapped Alternative
+
+If you don't have Bun installed or prefer a standalone binary, download the compiled binary for your platform:
+
+#### Linux (x64) / macOS (x64)
+
+```bash
+# Download the latest binary for your platform:
+curl -L -o codice https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-linux
+# macOS: replace `codice-linux` with `codice-macos`
+
+# Make it executable:
+chmod +x codice
+
+# Run the installer:
+./codice
+```
+
+#### Windows (x64)
+
+```powershell
+# Download the latest binary:
+curl -L -o codice.exe https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-windows.exe
+
+# Run the installer:
+.\codice.exe
+```
+
+### Usage
+
+Códice presents an interactive menu with three installation modes:
+
+| Mode | Description | When to Use |
+|------|-------------|-------------|
+| **Clean Install** | Overwrites the destination with the complete template | Starting a fresh project |
+| **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
+| **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
+
+```bash
+# Interactive menu (default) — via bunx or binary:
+bunx @fisherk2-dev/codice     # via npm (requires Bun)
+./codice                   # via compiled binary (standalone)
+
+# Direct mode with flags:
+bunx @fisherk2-dev/codice --dest ./my-project
+./codice --force
+./codice --version
+codice --help
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--dest <path>` | Target installation directory (default: current directory) |
+| `--force` | Skip all confirmation prompts |
+| `--verbose` | Enable structured logging to stderr |
+| `--version` | Print binary version and exit |
+| `--clean` | Run Clean Install mode (skip interactive menu) |
+| `--project` | Run Project Install mode (skip interactive menu) |
+| `--update` | Run Update Workspace mode (skip interactive menu) |
+| `--help` | Show usage help |
 
 ---
 
@@ -348,85 +444,7 @@ project-root/
 
 ---
 
-## Códice CLI — Workspace Installer
-
-**Códice** is a command-line tool that installs and updates this OpenCode workspace template atomically, safely, and intelligently.
-
-### Quick Install (Recommended)
-
-Requires [Bun](https://bun.sh) installed on your system.
-
-```bash
-bunx @fisherk2-dev/codice
-```
-
-That's it. Bun downloads and runs the latest version automatically.
-
-> **Note:** If you encounter issues with `bunx` (e.g., no output, scoped package cache issues), use `npx @fisherk2-dev/codice` as a fallback — both commands work identically.
-
-> **Tip:** Use `bunx --fresh @fisherk2-dev/codice` to force download the latest version.
-
-### Offline / Air-gapped Alternative
-
-If you don't have Bun installed or prefer a standalone binary, download the compiled binary for your platform:
-
-#### Linux (x64) / macOS (x64)
-
-```bash
-# Download the latest binary for your platform:
-curl -L -o codice https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-linux
-# macOS: replace `codice-linux` with `codice-macos`
-
-# Make it executable:
-chmod +x codice
-
-# Run the installer:
-./codice
-```
-
-#### Windows (x64)
-
-```powershell
-# Download the latest binary:
-curl -L -o codice.exe https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-windows.exe
-
-# Run the installer:
-.\codice.exe
-```
-
-### Usage
-
-Códice presents an interactive menu with three installation modes:
-
-| Mode | Description | When to Use |
-|------|-------------|-------------|
-| **Clean Install** | Overwrites the destination with the complete template | Starting a fresh project |
-| **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
-| **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
-
-```bash
-# Interactive menu (default) — via bunx or binary:
-bunx @fisherk2-dev/codice     # via npm (requires Bun)
-./codice                   # via compiled binary (standalone)
-
-# Direct mode with flags:
-bunx @fisherk2-dev/codice --dest ./my-project
-./codice --force
-./codice --version
-codice --help
-```
-
-### File Classification
-
-When installing or updating, Códice classifies every file into one of three categories:
-
-| Category | Behavior | Examples |
-|----------|----------|----------|
-| **Obligatorio** | Always copied, overwrites existing | Core agents, commands, configuration |
-| **Estándar** | Copied only if missing in destination | Recommended skills, documentation |
-| **Opcional** | Presented as a checklist; copied only if selected **and** missing | Optional skills, specialized references |
-
-### Troubleshooting
+## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
@@ -438,19 +456,6 @@ When installing or updating, Códice classifies every file into one of three cat
 | GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
 | `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
-
-### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--dest <path>` | Target installation directory (default: current directory) |
-| `--force` | Skip all confirmation prompts |
-| `--verbose` | Enable structured logging to stderr |
-| `--version` | Print binary version and exit |
-| `--clean` | Run Clean Install mode (skip interactive menu) |
-| `--project` | Run Project Install mode (skip interactive menu) |
-| `--update` | Run Update Workspace mode (skip interactive menu) |
-| `--help` | Show usage help |
 
 ---
 
@@ -471,5 +476,3 @@ This project would not exist without the work of:
 Thanks to their authors and contributors for their invaluable contribution to the community.
 
 ---
-
-*Last revision: 2026-06-16*

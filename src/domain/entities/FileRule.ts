@@ -1,8 +1,10 @@
 /**
  * Classification category for a template file.
- * - **mandatory**: Always copied, overwrites destination.
- * - **standard**: Copied only if destination does not exist.
- * - **optional**: Copied only if user explicitly opts in.
+ *
+ * Maps from template directory naming (Spanish → English):
+ *   obligatorio/ → mandatory  — Always copied, overwrites destination.
+ *   estandar/    → standard    — Copied only if destination does not exist.
+ *   opcional/    → optional    — Copied only if user explicitly opts in.
  */
 export type RuleCategory = "mandatory" | "standard" | "optional";
 

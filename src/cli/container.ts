@@ -5,9 +5,11 @@
  * into a single Dependencies object.
  */
 
+import type { IUserPrompt } from "../application/ports/IUserPrompt";
 import { CleanInstallUseCase } from "../application/use-cases/CleanInstallUseCase";
 import { ProjectInstallUseCase } from "../application/use-cases/ProjectInstallUseCase";
 import { UpdateWorkspaceUseCase } from "../application/use-cases/UpdateWorkspaceUseCase";
+import type { IFileSystem } from "../domain/ports/IFileSystem";
 import { FileMergeEngine } from "../domain/services/FileMergeEngine";
 import { VersionComparator } from "../domain/services/VersionComparator";
 import { BunFileSystem } from "../infrastructure/adapters/BunFileSystem";
@@ -18,10 +20,16 @@ import { GitHubRestClient } from "../infrastructure/adapters/GitHubRestClient";
 // Types
 // ---------------------------------------------------------------------------
 
-/** Wired application dependencies */
+/**
+ * Wired application dependencies.
+ *
+ * Uses port interfaces (IFileSystem, IUserPrompt) rather than concrete
+ * adapter types, preserving Clean Architecture's Dependency Inversion
+ * Principle — consumers depend on abstractions, not implementations.
+ */
 export interface Dependencies {
-	readonly fileSystem: BunFileSystem;
-	readonly userPrompt: ClackPromptsAdapter;
+	readonly fileSystem: IFileSystem;
+	readonly userPrompt: IUserPrompt;
 	readonly cleanInstall: CleanInstallUseCase;
 	readonly projectInstall: ProjectInstallUseCase;
 	readonly updateWorkspace: UpdateWorkspaceUseCase;

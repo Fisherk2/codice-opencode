@@ -5,21 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.5] — 2026-06-25
 
 ### Added
 
-- *(none)*
+- **ADR-007**: Template resolution for bunx/npm mode — third detection path `../template/` relative to `import.meta.dir`
+- **Credential file permissions**: Extended `permissions.read.deny` in `opencode.json` to include `.npmrc`, `.pem`, `*.key`, `*.p12`, `*.pfx`, `credentials.json`, `service-account*.json`
+- **TECH_DEBT.md in template**: Placeholder in `template/estandar/docs/TECH_DEBT.md` with structured format for tracking technical debt
+- **Internal link fixes**: Updated relative paths in `README.md` and `CONTRIBUTING.md` to reflect `obligatorio/`, `estandar/`, `opcional/` directory structure (Issue #4)
+- **DIP architectural fix**: `Dependencies` interface now uses `IFileSystem` and `IUserPrompt` port types instead of concrete adapter types
+- **`promptForMode()` in `IUserPrompt` interface**: Moved from concrete `ClackPromptsAdapter` to port interface for proper Dependency Inversion
+- **CWD fallback warning**: `TemplateResolver.detectTemplateRoot()` warns via stderr when falling back to current working directory
+- **URL validation for `CODICE_GITHUB_API_URL`**: Environment variable validated for HTTPS protocol and github.com hostname
+- **FileRule category mapping docs**: Spanish→English directory mapping (obligatorio/→mandatory, estandar/→standard, opcional/→optional) added to JSDoc
+- **Symlink skip logging**: `directoryWalker.skipSymlinks()` logs to stderr when verbose mode is enabled
+- **Version file field validation**: `.codice-version` JSON fields validated with type guards before access
+- **Bash deny pattern documentation**: `_comment` and `_comment_suffix` fields added to `opencode.json` explaining `* .file` vs `* .file *` convention
 
 ### Changed
 
-- *(none)*
+- **UpdateWorkspaceUseCase rule transformation**: `standard` rules no longer converted to `mandatory` in update mode; only `obligatorio` rules are elevated, preserving `destinationExists()` check for standard files
+- **CONTRIBUTING.md rewritten**: "Contributing to the Workspace Template" section now references USER_GUIDE.md detailed procedures for adding agents, skills, and commands
+- **README.md model section synced**: Default and recommended models for all 6 primary agents updated to match `opencode.json` configuration
+- **README.md quick-start flow**: Added post-installation "Next steps" callout linking to `00-setup.md` first-steps guide
+- **Dependencies updated**: `@biomejs/biome` 2.5.0→2.5.1, `@clack/prompts` 1.5.1→1.6.0, `semver` 7.8.4→7.8.5
 
 ### Fixed
 
-- *(none)*
+- **Issue #6 (CRITICAL)**: `bunx @fisherk2-dev/codice` now resolves template files correctly in all modes (compiled, bunx/npm, source) via three-path detection cascade in `TemplateResolver.detectTemplateRoot()`
+- **Issue #2 (CRITICAL)**: Update Workspace mode no longer overwrites existing Standard files (e.g., `README.md`, `AGENTS.md`) — only Obligatorio files are force-copied
 
----
+### Security
+
+- **Extended credential denial**: Additional credential file patterns denied in both `bash` and `read` permission rules (`.npmrc`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `credentials.json`, `service-account*.json`)
 
 ## [1.0.4] — 2026-06-17
 

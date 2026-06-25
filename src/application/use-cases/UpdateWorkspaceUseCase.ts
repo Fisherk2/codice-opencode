@@ -1,8 +1,8 @@
 import { valid } from "semver";
 import { FILE_RULE_MANIFEST } from "../../domain/entities/FileRuleManifest";
+import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
-import type { FileMergeEngine } from "../../domain/services/FileMergeEngine";
-import type { VersionComparator } from "../../domain/services/VersionComparator";
+import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, writeVersionFileSafe } from "../helpers";
 import type { IGitHubClient } from "../ports/IGitHubClient";
@@ -33,10 +33,10 @@ export class UpdateWorkspaceUseCase {
 	 */
 	constructor(
 		private readonly fileSystem: IFileSystem,
-		private readonly mergeEngine: FileMergeEngine,
+		private readonly mergeEngine: IFileMergeEngine,
 		private readonly userPrompt: IUserPrompt,
 		private readonly gitHubClient: IGitHubClient,
-		private readonly versionComparator: VersionComparator,
+		private readonly versionComparator: IVersionComparator,
 	) {}
 
 	/**
@@ -83,8 +83,15 @@ export class UpdateWorkspaceUseCase {
 			const versionData = await this.fileSystem.readVersionFile();
 			if (versionData) {
 				const parsed = JSON.parse(versionData);
-				installedVersion = parsed.installedVersion ?? installedVersion;
-				previousOptionalSelections = parsed.optionalSelections ?? [];
+				// Validate fields (defense-in-depth — .codice-version could be corrupted)
+				if (typeof parsed.installedVersion === "string") {
+					installedVersion = parsed.installedVersion;
+				}
+				if (Array.isArray(parsed.optionalSelections)) {
+					previousOptionalSelections = parsed.optionalSelections.filter(
+						(s: unknown): s is string => typeof s === "string",
+					);
+				}
 			}
 		} catch {
 			// No version file found — this is a first update in an existing project
@@ -115,12 +122,10 @@ export class UpdateWorkspaceUseCase {
 			);
 		}
 
-		// Get only Obligatorio + Estándar rules (skip Opcional)
-		// Both categories are treated as mandatory in update mode so that
-		// existing files are always overwritten with the latest template version.
-		const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional").map(
-			(rule) => ({ ...rule, category: "mandatory" as const }),
-		);
+		// Get only Obligatorio + Estándar rules (skip Opcional).
+		// Obligatorio rules overwrite existing files (mandatory category).
+		// Estándar rules respect destinationExists (preserve existing user files).
+		const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional");
 
 		// Execute the merge engine
 		const mergeResult = await this.mergeEngine.execute(updateRules);

@@ -6,8 +6,8 @@
  * and launches the appropriate installation mode.
  */
 
+import type { IUserPrompt } from "../application/ports/IUserPrompt";
 import type { Result } from "../domain/types/Result";
-import type { ClackPromptsAdapter } from "../infrastructure/adapters/ClackPromptsAdapter";
 import { createDependencies, type Dependencies } from "./container";
 import {
 	EXIT_ERROR,
@@ -34,12 +34,12 @@ export { main };
 
 /**
  * Show an interactive mode selection menu.
- * Delegates to ClackPromptsAdapter.promptForMode().
- * @param userPrompt - The ClackPromptsAdapter instance.
+ * Delegates to IUserPrompt.promptForMode().
+ * @param userPrompt - The user prompt adapter instance.
  * @returns Selected mode, or null if user cancelled.
  */
 export async function promptForMode(
-	userPrompt: ClackPromptsAdapter,
+	userPrompt: IUserPrompt,
 ): Promise<"clean" | "project" | "update" | null> {
 	return userPrompt.promptForMode();
 }

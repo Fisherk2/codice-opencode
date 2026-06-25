@@ -1,7 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
 
-  "model": "opencode/deepseek-v4-flash-free",
+  "model": "nvidia/stepfun-ai/step-3.7-flash",
   "small_model": "openrouter/openrouter/free",
 
   "compaction": {
@@ -342,37 +342,37 @@
 
   "agent": {
     "huitzilopochtli": {
-      "model": "opencode/deepseek-v4-flash-free",
+      "model": "opencode-go/deepseek-v4-flash",
       "color": "#d3e22b",
       "temperature": 0.5,
       "steps": 20
     },
     "quetzalcoatl": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "opencode-go/kimi-k2.7-code",
       "color": "#ffffff",
       "temperature": 0.3,
       "steps": 15
     },
     "moctezuma": {
-      "model": "opencode-go/minimax-m2.7",
+      "model": "opencode-go/minimax-m3",
       "color": "#8B4513",
       "temperature": 0.1,
       "steps": 20
     },
     "tlaloc": {
-      "model": "opencode/deepseek-v4-flash-free",
+      "model": "opencode-go/deepseek-v4-flash",
       "color": "#00ffff",
       "temperature": 0.2,
       "steps": 40
     },
     "mictlantecuhtli": {
-      "model": "opencode/mimo-v2.5-free",
+      "model": "opencode-go/mimo-v2.5",
       "color": "#2d2d2d",
       "temperature": 0.2,
       "steps": 40
     },
     "tezcatlipoca": {
-      "model": "opencode-go/deepseek-v4-pro",
+      "model": "opencode-go/glm-5.2",
       "color": "#ff3134",
       "temperature": 0.1,
       "steps": 15
@@ -395,6 +395,7 @@
     "CONTRIBUTING.md",
     "SPEC.md",
     "docs/WORKFLOW.md",
+    "docs/TECH_DEBT.md",
     "docs/ARCHITECTURE.md",
     "docs/CODE_STYLE.md"
   ],
@@ -511,13 +512,59 @@
       "* ./.env": "deny",
       "* ./.env.*": "deny",
       "* .env.example": "allow",
-      "* ./.env.example": "allow"
+      "* ./.env.example": "allow",
+      "* .npmrc": "deny",
+      "* .pem": "deny",
+      "* .key": "deny",
+      "* .p12": "deny",
+      "* .pfx": "deny",
+      "* credentials.json": "deny",
+      "* service-account*.json": "deny",
+      "* .ssh/id_*": "deny",
+      "* .ssh/config": "deny",
+      "* .aws/credentials": "deny",
+      "* .kube/config": "deny",
+      "* .netrc": "deny",
+      "* .pgpass": "deny",
+      "* .git-credentials": "deny",
+      "* .docker/config.json": "deny",
+      "* .gpg": "deny",
+      "* .ovpn": "deny",
+      "* .npmrc *": "deny",
+      "* .pem *": "deny",
+      "* .key *": "deny",
+      "* .p12 *": "deny",
+      "* .pfx *": "deny",
+      "* credentials.json *": "deny",
+      "* service-account*.json *": "deny",
+      "* .netrc *": "deny",
+      "* .pgpass *": "deny",
+      "* .git-credentials *": "deny",
+      "* .gpg *": "deny",
+      "* .ovpn *": "deny"
     },
     "read": {
       "*": "allow",
       "*.env": "deny",
       "*.env.*": "deny",
-      "*.env.example": "allow"
+      "*.env.example": "allow",
+      ".npmrc": "deny",
+      "*.pem": "deny",
+      "*.key": "deny",
+      "*.p12": "deny",
+      "*.pfx": "deny",
+      "credentials.json": "deny",
+      "service-account*.json": "deny",
+      ".ssh/id_*": "deny",
+      ".ssh/config": "deny",
+      ".aws/credentials": "deny",
+      ".kube/config": "deny",
+      ".netrc": "deny",
+      ".pgpass": "deny",
+      ".git-credentials": "deny",
+      ".docker/config.json": "deny",
+      "*.gpg": "deny",
+      "*.ovpn": "deny"
     }
   },
 
