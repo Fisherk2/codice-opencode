@@ -511,7 +511,18 @@
       "* ./.env": "deny",
       "* ./.env.*": "deny",
       "* .env.example": "allow",
-      "* ./.env.example": "allow"
+      "* ./.env.example": "allow",
+      "* .npmrc": "deny",
+      "* .pem": "deny",
+      "* .key": "deny",
+      "* .p12": "deny",
+      "* .pfx": "deny",
+      "* credentials.json": "deny",
+      "* service-account*.json": "deny",
+      "* .ssh/id_*": "deny",
+      "* .ssh/config": "deny",
+      "* .aws/credentials": "deny",
+      "* .kube/config": "deny"
     },
     "read": {
       "*": "allow",
@@ -524,7 +535,11 @@
       "*.p12": "deny",
       "*.pfx": "deny",
       "credentials.json": "deny",
-      "service-account*.json": "deny"
+      "service-account*.json": "deny",
+      ".ssh/id_*": "deny",
+      ".ssh/config": "deny",
+      ".aws/credentials": "deny",
+      ".kube/config": "deny"
     }
   },
 
