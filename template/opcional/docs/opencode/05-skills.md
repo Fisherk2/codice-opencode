@@ -1,6 +1,6 @@
 # Agent Skills in OpenCode
 
-> **📖 For task-to-skill discovery, see the [Meta-Skill](../../skills/using-agent-skills/SKILL.md) — it contains the decision tree for finding which skill applies to your current task. For the complete skills reference by phase, see [USER_GUIDE.md > Skills Reference](./USER_GUIDE.md#skills-reference).
+> **📖 For task-to-skill discovery, see the [Meta-Skill](../../skills/using-agent-skills/SKILL.md) — it contains the decision tree for finding which skill applies to your current task.
 
 Skills are reusable instructions that OpenCode can discover from your repository or home directory. They are loaded on-demand through the native `skill` tool -- agents see available skills and can load the content when needed.
 
