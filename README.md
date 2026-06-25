@@ -8,6 +8,17 @@
   <a href="https://github.com/Fisherk2/codice-opencode/actions/workflows/ci.yml">
     <img src="https://github.com/Fisherk2/codice-opencode/workflows/CI/badge.svg" alt="CI">
   </a>
+  <a href="https://www.npmjs.com/package/@fisherk2-dev/codice">
+    <img src="https://img.shields.io/npm/v/@fisherk2-dev/codice?label=npm&color=cb3837" alt="npm version">
+  </a>
+  <a href="https://github.com/Fisherk2/codice-opencode/releases">
+    <img src="https://img.shields.io/github/v/release/Fisherk2/codice-opencode?color=0076D6" alt="GitHub Release">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/github/license/Fisherk2/codice-opencode" alt="License">
+  </a>
+  <img src="https://img.shields.io/badge/typescript-strict-blue" alt="TypeScript Strict">
+  <img src="https://img.shields.io/badge/built%20with-bun-fbf0df" alt="Built with Bun">
 </p>
 
 **OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
