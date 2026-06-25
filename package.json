@@ -1,6 +1,6 @@
 {
   "name": "@fisherk2-dev/codice",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "module": "src/cli/main.ts",
   "type": "module",
   "bin": {
