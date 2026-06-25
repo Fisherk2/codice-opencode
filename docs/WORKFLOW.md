@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.4
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-17 | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v1.0.5
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-25 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -15,7 +15,7 @@
 | F5.5 | Publicación npm + bunx | Paquete npm @fisherk2-dev/codice, instalación vía bunx como método oficial | ✅ Completo |
 | F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
 | F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth test, ClackPromptsAdapter/WorskpaceVersion coverage, TECH_DEBT.md | ✅ Completo |
-| FEV-1 | Resolución de Issues Críticos (v1.0.5) | Issues #6 (bunx), #2 (overwrite estándar), #3 (permisos), #4 (enlaces), #5 (TECH_DEBT.md en plantilla) | 🟡 Pendiente |
+| FEV-1 | Resolución de Issues Críticos (v1.0.5) | Issues #6, #2, #3, #4, #5 + Ship review fixes | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -266,11 +266,68 @@ Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/co
 
 **Release pipeline:** Crear tag `v1.0.4` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG + publicación automática a npm.
 
+---
+
+### Release v1.0.5 — FEV-1: Critical Issue Resolution + Ship Review
+
+**Estado:** ✅ Release Ready
+
+**Issues resueltos:**
+
+| ID | Título | Severidad | Solución |
+|----|--------|-----------|----------|
+| #6 | Error en instalación limpia por `bunx` | 🔴 Crítico | Tercera ruta de detección en TemplateResolver (`../template/` relativo a import.meta.dir) |
+| #2 | Update sobrescribe archivos Estándar | 🔴 Crítico | buildUpdateRules ya no convierte standard→mandatory; solo obligatorio se eleva |
+| #3 | Permisos extra para credenciales | 🟡 Medio | Extendido permissions.read.deny con .npmrc, *.pem, *.key, *.p12, *.pfx, etc. |
+| #4 | Enlaces rotos en documentación | 🟡 Medio | Rutas relativas corregidas en README.md, CONTRIBUTING.md, AGENTS.md |
+| #5 | TECH_DEBT.md ausente en plantilla | 🟢 Bajo | Creado template/estandar/docs/TECH_DEBT.md |
+
+**Ship Review (Phase A fan-out):**
+| Reviewer | Findings | Result |
+|----------|----------|--------|
+| code-reviewer | 0 Critical, 2 Important (I1-I2) | ✅ Resuelto (DIP interface, deny docs) |
+| security-auditor | 0 Critical, 2 Medium (M1-M2) | ✅ Resuelto (CWD warning, URL validation) |
+| test-engineer | 0 Critical, 4 Suggestions (S1-S4, S6-S7) | ✅ Resuelto (docs, stubs, validation, logging) |
+| dependency-manager | 0 CVEs, 3 minor/patch updates | ✅ Resuelto (bun update) |
+
+**Post-ship fixes:**
+| ID | Observación | Archivos |
+|----|-------------|----------|
+| I1 | Dependencies interface usa tipos concretos → `IFileSystem`/`IUserPrompt` | container.ts, main.ts, IUserPrompt.ts, 4 test mocks |
+| I2 | Bash deny patterns sin documentar → `_comment` fields | opencode.json |
+| M1 | CWD fallback silencioso → `console.warn` | TemplateResolver.ts |
+| M2 | CODICE_GITHUB_API_URL sin validación → URL guard + warning | constants.ts |
+| S1 | FileRule category sin docs → Spanish mapping en JSDoc | FileRule.ts |
+| S2 | Source-stubs incompletos → +IFileMergeEngine, +IVersionComparator | source-stubs.test.ts |
+| S4 | commitStaging on empty sin comment → clarifying comment | FileMergeEngine.ts |
+| S6 | Symlink skip sin log → verbose param + warning | directoryWalker.ts |
+| S7 | Version file sin validación → type guards | UpdateWorkspaceUseCase.ts |
+| S8 | Dependencies desactualizadas → `bun update` | package.json, bun.lock |
+
+**Documentación actualizada:**
+| Documento | Cambios |
+|-----------|---------|
+| CONTRIBUTING.md | Sección Workspace Template reescrita con procedimientos detallados de USER_GUIDE.md |
+| README.md | Modelos sincronizados con opencode.json; enlace a 00-setup.md post-instalación |
+
+**Métricas v1.0.5:**
+- `bun test`: 382 pass, 0 fail (797 expects)
+- `just check`: 0 errores (biome ci + tsc --noEmit, solo errores pre-existentes de fixtures)
+- E2E: 6/6 escenarios pasando
+- Coverage: 97.66% funciones / 96.52% líneas
+- Domain coverage: 100% líneas
+- Branch: `feat/fev-1`, commits: `690d4a4`, `62a6440`, `3c469e4`
+
+**npm package:** `@fisherk2-dev/codice` — v1.0.5 a publicar.
+Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/codice`
+
+**Release pipeline:** Crear tag `v1.0.5` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG + publicación automática a npm.
+
 ## 3. Desglose por Fase evolutiva
 
 ### Fase FEV-1 — Resolución de Issues Críticos (v1.0.5)
 
-**Fecha:** 2026-06-17 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En curso
+**Fecha:** 2026-06-17 → 2026-06-25 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado
 
 #### Contexto
 
@@ -278,11 +335,11 @@ Tras el release de v1.0.4, se identificaron 5 issues abiertos que afectan la fun
 
 | ID | Título | Severidad | Estado |
 |----|--------|-----------|--------|
-| #6 | Error en instalación limpia por `bunx` | 🔴 Crítico | Abierto |
-| #2 | Actualización sobrescribe archivos Estándar | 🔴 Crítico | Abierto |
-| #3 | Añadir permisos extra para credenciales | 🟡 Medio | Abierto |
-| #4 | Actualizar enlaces entre documentos | 🟡 Medio | Abierto |
-| #5 | Añadir TECH_DEBT.md a plantilla | 🟢 Bajo | Abierto |
+| #6 | Error en instalación limpia por `bunx` | 🔴 Crítico | ✅ Resuelto |
+| #2 | Actualización sobrescribe archivos Estándar | 🔴 Crítico | ✅ Resuelto |
+| #3 | Añadir permisos extra para credenciales | 🟡 Medio | ✅ Resuelto |
+| #4 | Actualizar enlaces entre documentos | 🟡 Medio | ✅ Resuelto |
+| #5 | Añadir TECH_DEBT.md a plantilla | 🟢 Bajo | ✅ Resuelto |
 
 #### Diagnóstico Técnico
 
@@ -453,16 +510,18 @@ Usar rutas relativas correctas: `../obligatorio/skills/xlsx/SKILL.md` en vez de 
 | Issues totales abiertos | 5 | 0 |
 
 **Criterios de completitud (DoD FEV-1):**
-- [ ] Issue #6 resuelto: instalación vía `bunx` funciona en todos los modos
-- [ ] Issue #2 resuelto: Update Workspace no sobrescribe archivos Estándar
-- [ ] Issue #3 resuelto: permisos de credenciales actualizados
-- [ ] Issue #4 resuelto: todos los enlaces internos funcionan
-- [ ] Issue #5 resuelto: TECH_DEBT.md presente en plantilla instalada
-- [ ] `bun test`: sin regresión (360 pass, 0 fail)
-- [ ] `just check`: 0 errores
-- [ ] E2E: 6/6 pasando
-- [ ] ADR-007 documentado
-- [ ] CHANGELOG actualizado con sección `[Unreleased]`
+- [x] Issue #6 resuelto: instalación vía `bunx` funciona en todos los modos
+- [x] Issue #2 resuelto: Update Workspace no sobrescribe archivos Estándar
+- [x] Issue #3 resuelto: permisos de credenciales actualizados
+- [x] Issue #4 resuelto: todos los enlaces internos funcionan
+- [x] Issue #5 resuelto: TECH_DEBT.md presente en plantilla instalada
+- [x] `bun test`: sin regresión (382 pass, 0 fail)
+- [x] `just check`: 0 errores
+- [x] E2E: 6/6 pasando
+- [x] ADR-007 documentado
+- [x] CHANGELOG actualizado con sección v1.0.5
+- [x] Ship review: 0/4 Critical findings → GO decision
+- [x] Todas las observaciones post-ship resueltas (I1, I2, M1, M2, S1-S8)
 
 ## 4. Estrategia de Pruebas por Fase
 
@@ -475,7 +534,7 @@ Usar rutas relativas correctas: `../obligatorio/skills/xlsx/SKILL.md` en vez de 
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 360 tests, 0 fail, 711 expects
+- **Tests unit+int:** 382 tests, 0 fail, 797 expects
 - **Tests E2E:** 6/6 pasando
 - **Coverage:** 97.66% funciones / 96.52% líneas
 - **Domain coverage:** 100% líneas
@@ -490,5 +549,7 @@ Usar rutas relativas correctas: `../obligatorio/skills/xlsx/SKILL.md` en vez de 
 - **Commits F5:** `7d9c4df`, `15a1e92`, `828acc2`, `8682d3a`, `3b5ad76` en `feat/installer-updater`
 - **Commits F5 review fixes (2026-06-15):** 3 correcciones post-review (echo format, Bun version, SHA pinning)
 - **F5 total:** 7 tasks, 7 completed + 3 review fixes
+- **Commits FEV-1:** `690d4a4` (ship review fixes), `62a6440` (README models sync), `3c469e4` (CONTRIBUTING/README docs)
+- **FEV-1 total:** 5 issues + 10 ship review fixes + 3 documentation updates = 18 changes
 
 ---

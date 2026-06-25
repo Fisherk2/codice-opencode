@@ -2,8 +2,8 @@
 
 **Generated:** 2026-06-17
 **Status:** Live reference for improvement planning
-**Coverage:** 97.66% functions / 96.52% lines (360 tests, 0 fail, 711 expects)
-**Notes:** v1.0.5 resolves 5 issues (#2, #3, #4, #5, #6) identified post-release. Two critical bugs (#6, #2) blocked core installation paths. This document tracks both resolved debt and newly discovered fragilities.
+**Coverage:** 97.66% functions / 96.52% lines (382 tests, 0 fail, 797 expects)
+**Notes:** v1.0.5 resolves 5 issues (#2, #3, #4, #5, #6) identified post-release plus 10 ship review observations (I1-I2, M1-M2, S1-S8). Two critical bugs (#6, #2) blocked core installation paths. This document tracks both resolved debt and newly discovered fragilities.
 
 ---
 
@@ -167,19 +167,33 @@
 | **Files Changed** | `template/estandar/TECH_DEBT.md` (new) |
 | **Status** | ✅ Fixed in v1.0.5 |
 
+### 6.6 Ship Review Observations (v1.0.5)
+
+| # | Observation | Resolution | Files Changed |
+|---|-------------|------------|---------------|
+| I1 | `Dependencies` interface leaks concrete types (BunFileSystem, ClackPromptsAdapter) | Changed to `IFileSystem` / `IUserPrompt` port types. Added `promptForMode()` to `IUserPrompt` | container.ts, main.ts, IUserPrompt.ts, 4 test mocks |
+| I2 | Bash deny patterns undocumented | Added `_comment` / `_comment_suffix` fields explaining `* .file` vs `* .file *` convention | opencode.json |
+| M1 | CWD fallback silent in TemplateResolver | Added `console.warn` with Biome suppression | TemplateResolver.ts |
+| M2 | `CODICE_GITHUB_API_URL` no validation | URL validated for HTTPS protocol + github.com hostname with fallback warning | constants.ts |
+| S1 | FileRule category undocumented | Spanish→English mapping (obligatorio→mandatory, estandar→standard, opcional→optional) in JSDoc | FileRule.ts |
+| S2 | Source-stubs missing interfaces | Added `IFileMergeEngine` and `IVersionComparator` entries | source-stubs.test.ts |
+| S4 | commitStaging on empty undocumented | Clarifying comment added in FileMergeEngine | FileMergeEngine.ts |
+| S6 | Symlink skip not logged | `verbose` parameter added to `walkDirectory()`; logs to stderr | directoryWalker.ts |
+| S7 | Version file no validation | Field-level type guards on `.codice-version` JSON fields | UpdateWorkspaceUseCase.ts |
+| S8 | Dependencies minor/patch stale | `bun update`: @biomejs/biome 2.5.0→2.5.1, @clack/prompts 1.5.1→1.6.0, semver 7.8.4→7.8.5 | package.json, bun.lock |
+
+| **Verification** | `bun test`: 382 pass / 0 fail, `just check`: clean, E2E: 6/6 |
+| **Status** | ✅ All 10 observations resolved in v1.0.5 |
+
 ---
 
 ## 7. Summary & Prioritization
 
-### Quick Wins (v1.0.4)
+### Planned (v1.1.0)
 | Item | Effort | Impact |
 |------|--------|--------|
 | Integration tests for `main.ts` | 4h | Coverage 33% → 95% lines |
 | Explicit constructors in `VersionComparator` + `ClackPromptsAdapter` | 15min | Silence coverage artifact |
-
-### Planned (v1.1.0)
-| Item | Effort | Impact |
-|------|--------|--------|
 | TypeScript 6.x upgrade | 2h | Modern TS features |
 | Biome `^2` range update | 30min | New linter rules + organize imports assist |
 | `IFileSystem` port split | 3h | ISP compliance |
