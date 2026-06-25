@@ -13,6 +13,7 @@
 
 import { describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { TemplateResolver } from "../../src/infrastructure/adapters/TemplateResolver";
 
@@ -29,7 +30,7 @@ describe("TemplateResolver — template root detection", () => {
 	});
 
 	test("resolves paths with explicit template root (compiled mode simulation)", async () => {
-		const tempDir = fs.mkdtempSync(path.join("/tmp", "codice-compiled-test-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "codice-compiled-test-"));
 		try {
 			const binaryDir = path.join(tempDir, "dist");
 			const templateDir = path.join(tempDir, "template");
