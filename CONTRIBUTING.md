@@ -311,10 +311,10 @@ When requesting a feature, include:
 
 Códice installs an **OpenCode workspace template**. If you want to add agents, commands, or skills to the template:
 
-1. **Agents** go in `agents/` — see existing agent files for format.
-2. **Commands** go in `commands/` — each command is a `.md` file.
-3. **Skills** go in `skills/` — each skill in its own directory with a `SKILL.md`.
-4. **References** go in `references/` — technical documentation files.
+1. **Agents** go in `template/obligatorio/agents/` — see existing agent files for format.
+2. **Commands** go in `template/obligatorio/commands/` — each command is a `.md` file.
+3. **Skills** go in `template/obligatorio/skills/` — each skill in its own directory with a `SKILL.md`.
+4. **References** go in `template/obligatorio/references/` — technical documentation files.
 5. **File rules** in `src/domain/entities/file-rule-manifest.ts` — register new files with the correct category (Obligatorio, Estándar, Opcional).
 
 After adding files, update the **file rule manifest** to classify them appropriately:
