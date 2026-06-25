@@ -1,4 +1,4 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.5
+# Plan de implementación – Códice v1.0.0 → v1.0.6
 **Fecha:** 2026-06-15 | **Última actualización:** 2026-06-25 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
@@ -16,6 +16,7 @@
 | F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
 | F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth test, ClackPromptsAdapter/WorskpaceVersion coverage, TECH_DEBT.md | ✅ Completo |
 | FEV-1 | Resolución de Issues Críticos (v1.0.5) | Issues #6, #2, #3, #4, #5 + Ship review fixes | ✅ Completo |
+| FEV-2 | Resolución de Issues Críticos (v1.0.6) | Issue #8 (bunx template resolution) | 🟡 En curso |
 
 ## 2. Desglose por Fase
 
@@ -523,6 +524,89 @@ Usar rutas relativas correctas: `../obligatorio/skills/xlsx/SKILL.md` en vez de 
 - [x] Ship review: 0/4 Critical findings → GO decision
 - [x] Todas las observaciones post-ship resueltas (I1, I2, M1, M2, S1-S8)
 
+---
+
+### Fase FEV-2 — Resolución de Issues Críticos (v1.0.6)
+
+**Fecha:** 2026-06-25 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En curso
+
+#### Contexto
+
+Inmediatamente después del release de v1.0.5, se reportó la **Issue #8**: `bunx @fisherk2-dev/codice` falla con `Template file not found: opencode.json` en los tres modos de instalación (Clean, Project, Update). A pesar de que FEV-1 resolvió la Issue #6 con una tercera ruta de detección, la ruta relativa usada en `TemplateResolver.detectTemplateRoot()` sigue calculándose desde la ubicación del archivo fuente (`src/infrastructure/adapters/`) en lugar de desde `src/cli/`, lo que produce `src/template` en vez del `template/` real del paquete.
+
+| ID | Título | Severidad | Estado |
+|----|--------|-----------|--------|
+| #8 | Error de instalación del workspace | 🔴 Crítico | 🟡 En curso |
+
+#### Diagnóstico Técnico
+
+**Síntoma:** Al ejecutar `bunx @fisherk2-dev/codice`, el CLI muestra:
+
+```
+[warn] Template not found via source (/tmp/.../node_modules/@fisherk2-dev/codice/src/template)
+```
+
+y luego:
+
+```
+❌ Template file not found: opencode.json
+```
+
+**Causa raíz:** `TemplateResolver.detectTemplateRoot()` contiene:
+
+```typescript
+const sourcePath = path.resolve(import.meta.dir, `../../${TEMPLATE_DIR_NAME}`);
+```
+
+Pero `detectTemplateRoot()` está definido en `src/infrastructure/adapters/TemplateResolver.ts`, por lo que `import.meta.dir` no apunta a `src/cli/` sino a `src/infrastructure/adapters/`. La resolución produce:
+
+```text
+src/infrastructure/adapters/ + ../../template = src/template  ❌
+```
+
+cuando debería producir:
+
+```text
+src/infrastructure/adapters/ + ../../../template = template/  ✅
+```
+
+**Solución propuesta:** Ajustar la ruta relativa de source mode a `../../../template` en `TemplateResolver.detectTemplateRoot()`.
+
+```typescript
+// src/infrastructure/adapters/TemplateResolver.ts (v1.0.6)
+const sourcePath = path.resolve(import.meta.dir, `../../../${TEMPLATE_DIR_NAME}`);
+```
+
+#### Plan de Resolución
+
+| Orden | Issue | Archivos Modificados | Esfuerzo | Dependencias |
+|-------|-------|---------------------|----------|--------------|
+| 1 | #8 (bunx template path) | `TemplateResolver.ts`, tests | 1h | Ninguna |
+
+**Orden de implementación:** Corregir la ruta relativa, añadir/actualizar tests para cubrir la estructura real del paquete npm, y verificar con `bunx` desde un directorio limpio.
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.5 (actual) | Meta v1.0.6 |
+|---------|-----------------|-------------|
+| Tests (pass/fail) | 382 / 0 | ≥382 / 0 |
+| Coverage (funciones) | 97.66% | ≥97.66% |
+| Coverage (líneas) | 96.52% | ≥96.52% |
+| E2E escenarios | 6/6 | 6/6 |
+| `just check` errores | 0 | 0 |
+| Issues críticos abiertos | 1 (#8) | 0 |
+
+**Criterios de completitud (DoD FEV-2):**
+- [ ] Issue #8 resuelto: `bunx @fisherk2-dev/codice` funciona en los tres modos desde un directorio vacío
+- [ ] `bun test`: sin regresión (382 pass, 0 fail)
+- [ ] `just check`: 0 errores
+- [ ] E2E: 6/6 pasando
+- [ ] CHANGELOG actualizado con sección `[Unreleased]`
+- [ ] WORKFLOW.md actualizado con FEV-2
+- [ ] Release v1.0.6 publicado en npm y GitHub
+
+---
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -551,5 +635,3 @@ Usar rutas relativas correctas: `../obligatorio/skills/xlsx/SKILL.md` en vez de 
 - **F5 total:** 7 tasks, 7 completed + 3 review fixes
 - **Commits FEV-1:** `690d4a4` (ship review fixes), `62a6440` (README models sync), `3c469e4` (CONTRIBUTING/README docs)
 - **FEV-1 total:** 5 issues + 10 ship review fixes + 3 documentation updates = 18 changes
-
----

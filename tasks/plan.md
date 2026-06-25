@@ -1,172 +1,237 @@
-# Plan: Fase FEV-1 — Resolución de Issues Críticos (v1.0.5)
+# Plan: Fase FEV-2 — Resolución de Issue #8 (v1.0.6)
 
-**Fecha:** 2026-06-17 | **Autor:** Moctezuma (Planner Agent) | **Estado:** 🟡 Plan Aprobado
-
-## Overview
-
-Resolver los **5 issues críticos** identificados en la Fase FEV-1 para estabilizar Códice y mejorar seguridad/documentación:
-1. **Issue #6 (bunx)**: Template resolution en modo `bunx` (crítico).
-2. **Issue #2 (update overwrite)**: Corregir transformación de reglas en `UpdateWorkspaceUseCase` (crítico).
-3. **Issue #3 (permisos)**: Actualizar `opencode.json` para bloquear lectura de credenciales (seguridad).
-4. **Issue #4 (enlaces)**: Corregir enlaces rotos en documentación (calidad).
-5. **Issue #5 (TECH_DEBT.md)**: Añadir `TECH_DEBT.md` a la plantilla (documentación).
-
-**Objetivo:** Publicar v1.0.5 con todos los issues resueltos y sin regresiones.
+**Fecha:** 2026-06-25 | **Autor:** Moctezuma (Planner Agent) | **Estado:** 🟡 Plan Aprobado
+**Versión objetivo:** v1.0.6
+**Issue principal:** #8 (CRITICAL) — `bunx @fisherk2-dev/codice` falla con `Template file not found: opencode.json`
 
 ---
 
-## Arquitectura de Decisiones (ADR-007)
+## Overview
+
+Resolver el **Issue #8** (crítico) detectado tras el release de v1.0.5. La causa raíz es un path relativo incorrecto en `TemplateResolver.detectTemplateRoot()`: como el método reside en `src/infrastructure/adapters/`, `import.meta.dir` apunta allí, y `../../template` resuelve a `src/template` (inexistente) en vez de a la raíz del paquete. Se requiere ajustar la ruta a `../../../template` y añadir tests que cubran la estructura real del paquete npm.
+
+**Objetivo:** Publicar v1.0.6 con el fix verificado en `bunx` desde un directorio vacío, sin regresiones.
+
+---
+
+## Arquitectura de Decisiones (ADR-008)
 
 | Decisión | Rationale |
 |----------|-----------|
-| **ADR-FEV1-1**: Añadir tercera ruta en `TemplateResolver` para `bunx` | Necesario para soportar instalación vía `bunx` sin romper el modo compilado. |
-| **ADR-FEV1-2**: No convertir `standard` a `mandatory` en `UpdateWorkspaceUseCase` | Preserva la lógica de `destinationExists()` para evitar sobrescrituras. |
-| **ADR-FEV1-3**: Extender `permissions.read.deny` en `opencode.json` | Bloquea lectura de archivos sensibles por el agente IA. |
-| **ADR-FEV1-4**: Usar rutas relativas corregidas en documentación | Mantiene enlaces funcionales tras reorganización de directorios. |
-| **ADR-FEV1-5**: Incluir `TECH_DEBT.md` como placeholder en `estandar/` | Proporciona visibilidad de deuda técnica a usuarios. |
+| **ADR-FEV2-1**: Corregir ruta relativa de `../../template` a `../../../template` en `TemplateResolver.detectTemplateRoot()` | `import.meta.dir` apunta a `src/infrastructure/adapters/` (no a `src/cli/`), por lo que se necesita un nivel adicional para alcanzar la raíz del paquete. |
+| **ADR-FEV2-2**: Validar la corrección con un test que verifique el path resuelto al directorio `template/` en el paquete npm | Asegura que el fix funciona en el contexto real de `bunx`, no solo en desarrollo local. |
+| **ADR-FEV2-3**: Revisar el manifiesto de archivos opcionales para evitar selección de directorios o archivos no-deseados | La issue #8 también menciona que `Project Install` muestra `scripts/`, `Makefile`, `requirements.txt` como opcionales; estos deberían clasificarse correctamente. |
 
 ---
 
 ## Task Breakdown
 
-### Phase 1: Issues Críticos (Bloqueantes)
+### Phase 1: Diagnóstico Confirmado
 
-#### Task FEV1-T1: TemplateResolver — Añadir soporte para `bunx` (Issue #6)
-**Descripción:** Modificar `TemplateResolver.detectTemplateRoot()` para detectar automáticamente el modo `bunx` (source mode) y resolver la ruta del template desde `node_modules/@fisherk2-dev/codice/template/`.
+#### Task FEV2-T0: Confirmar causa raíz con reproducción aislada
+**Descripción:** Antes de aplicar el fix, documentar la reproducción del bug con un script temporal que simule la estructura del paquete npm (`src/infrastructure/adapters/TemplateResolver.ts` ejecutado desde el contexto bunx) y confirme que `detectTemplateRoot()` produce `src/template` en vez de `template/`.
 
 **Criterios de Aceptación:**
-- [ ] Añadir tercera ruta de detección: `path.resolve(import.meta.dir, '../template/')`.
-- [ ] Mantener compatibilidad con modos existentes (compiled y source desarrollo).
-- [ ] Fallar con `TemplateNotFoundError` si no se encuentra el template en ninguna ruta.
-- [ ] Tests unitarios para los 3 modos (compiled, bunx, source).
+- [ ] Script de reproducción en `tests/integration/TemplateResolver.test.ts` que simule `import.meta.dir` apuntando a `src/infrastructure/adapters/`.
+- [ ] Output documentado en el commit message del fix.
+- [ ] Confirmación de que el path actual produce `src/template` (bug) y el path corregido produce `template/` (fix).
 
 **Verificación:**
-- [ ] `bunx @fisherk2-dev/codice` funciona en un directorio limpio.
-- [ ] `bun run src/cli/main.ts` (source mode) sigue funcionando.
-- [ ] `./dist/codice-linux` (compiled mode) sigue funcionando.
-- [ ] `bun test` pasa sin regresión (360 tests, 0 fail).
+- [ ] Test RED: el path actual falla con `template not found`.
+- [ ] Documentación del bug en el commit message.
 
 **Dependencias:** Ninguna.
 **Archivos:**
-- `src/infrastructure/adapters/TemplateResolver.ts`
-- `tests/integration/TemplateResolver.test.ts` (nuevos tests).
-
-**Scope:** M (2h).
-
----
-
-#### Task FEV1-T2: UpdateWorkspaceUseCase — Corregir transformación de reglas (Issue #2)
-**Descripción:** Modificar `buildUpdateRules()` para que **no convierta** reglas `standard` a `mandatory`, preservando la verificación `destinationExists()`.
-
-**Criterios de Aceptación:**
-- [ ] Solo reglas `obligatorio` se convierten a `mandatory`.
-- [ ] Reglas `standard` mantienen su tipo original.
-- [ ] Tests unitarios para los 3 tipos de reglas (`obligatorio`, `standard`, `opcional`).
-
-**Verificación:**
-- [ ] `UpdateWorkspaceUseCase` no sobrescribe archivos existentes en `estandar/`.
-- [ ] `bun test` pasa sin regresión (360 tests, 0 fail).
-- [ ] E2E: Escenario "Update Workspace" pasa (6/6).
-
-**Dependencias:** Ninguna.
-**Archivos:**
-- `src/application/use-cases/UpdateWorkspaceUseCase.ts`
-- `tests/unit/UpdateWorkspaceUseCase.test.ts` (nuevos tests).
-
-**Scope:** M (1h).
-
----
-
-### Phase 2: Seguridad y Calidad
-
-#### Task FEV1-T3: Actualizar permisos en `opencode.json` (Issue #3)
-**Descripción:** Extender la lista `permissions.read.deny` para bloquear archivos de credenciales (`.npmrc`, `.pem`, `*.key`, etc.).
-
-**Criterios de Aceptación:**
-- [ ] Añadir patrones: `.env*`, `.npmrc`, `.pem`, `*.key`, `*.p12`, `*.pfx`, `credentials.json`, `service-account*.json`.
-- [ ] Validar que el agente IA no puede leer estos archivos en pruebas manuales.
-
-**Verificación:**
-- [ ] `just check` pasa (0 errores).
-- [ ] Revisión manual: Intentar leer `.npmrc` con el agente IA falla.
-
-**Dependencias:** Ninguna.
-**Archivos:**
-- `template/obligatorio/opencode.json`.
+- `tests/integration/TemplateResolver.test.ts` (nuevo test que reproduce el bug).
 
 **Scope:** S (30min).
 
 ---
 
-#### Task FEV1-T4: Corregir enlaces rotos en documentación (Issue #4)
-**Descripción:** Actualizar rutas relativas en `README.md`, `CONTRIBUTING.md`, y `AGENTS.md` para reflejar la nueva estructura de directorios (`obligatorio/`, `estandar/`, `opcional/`).
+### Phase 2: Fix del Template Path
+
+#### Task FEV2-T1: Corregir ruta relativa en `TemplateResolver.detectTemplateRoot()`
+**Descripción:** Cambiar la ruta de source mode de `../../template` a `../../../template` en `TemplateResolver.detectTemplateRoot()` para reflejar la ubicación real del archivo (`src/infrastructure/adapters/`).
 
 **Criterios de Aceptación:**
-- [ ] Revisar y corregir enlaces en:
-  - `template/estandar/README.md`
-  - `template/estandar/CONTRIBUTING.md`
-  - `template/obligatorio/AGENTS.md`
-- [ ] Usar rutas relativas correctas (ej: `../obligatorio/skills/xlsx/SKILL.md`).
+- [ ] Línea 52 de `src/infrastructure/adapters/TemplateResolver.ts` corregida.
+- [ ] JSDoc actualizado para reflejar el path real (`src/infrastructure/adapters/` + 3 niveles).
+- [ ] Tests existentes siguen pasando.
 
 **Verificación:**
-- [ ] Todos los enlaces funcionan al instalar la plantilla.
-- [ ] `just check` pasa (0 errores).
+- [ ] `bun test tests/integration/TemplateResolver.test.ts` — todos pasan.
+- [ ] Test RED previo ahora pasa (GREEN).
+- [ ] `just check` — 0 errores.
 
-**Dependencias:** Ninguna.
+**Dependencias:** FEV2-T0 (confirmación del bug).
 **Archivos:**
-- `template/estandar/README.md`
-- `template/estandar/CONTRIBUTING.md`
-- `template/obligatorio/AGENTS.md`.
-
-**Scope:** M (1h).
-
----
-
-### Phase 3: Documentación
-
-#### Task FEV1-T5: Añadir TECH_DEBT.md a la plantilla (Issue #5)
-**Descripción:** Crear `template/estandar/TECH_DEBT.md` como placeholder que referencia al documento canónico en el repositorio.
-
-**Criterios de Aceptación:**
-- [ ] Archivo `TECH_DEBT.md` en `template/estandar/` con contenido:
-  ```markdown
-  # Technical Debt
-  Este documento es un placeholder. Consulta el catálogo oficial de deuda técnica en:
-  [docs/TECH_DEBT.md](../../docs/TECH_DEBT.md)
-  ```
-
-**Verificación:**
-- [ ] `just check` pasa (0 errores).
-- [ ] El archivo se incluye al instalar la plantilla.
-
-**Dependencias:** Ninguna.
-**Archivos:**
-- `template/estandar/TECH_DEBT.md` (nuevo).
+- `src/infrastructure/adapters/TemplateResolver.ts` (1 línea modificada + JSDoc).
 
 **Scope:** XS (15min).
 
 ---
 
-## Checkpoints
+#### Task FEV2-T2: Añadir test específico para estructura del paquete npm
+**Descripción:** Añadir un test que simule la estructura real del paquete npm publicado (`node_modules/@fisherk2-dev/codice/` con `src/infrastructure/adapters/TemplateResolver.ts` y `template/` en la raíz) y verifique que `detectTemplateRoot()` retorna la ruta correcta al directorio `template/`.
 
-### Checkpoint 1: After FEV1-T1 + FEV1-T2 (Issues Críticos)
-- [ ] `bunx @fisherk2-dev/codice` funciona en todos los modos.
-- [ ] `UpdateWorkspaceUseCase` no sobrescribe archivos `estandar/`.
-- [ ] `bun test`: 360 pass, 0 fail (sin regresión).
-- [ ] E2E: 6/6 escenarios pasando.
+**Criterios de Aceptación:**
+- [ ] Test que cree un directorio temporal con estructura: `template/obligatorio/opencode.json` y `src/infrastructure/adapters/TemplateResolver.ts` (mock).
+- [ ] Verificación de que `detectTemplateRoot()` retorna la ruta absoluta del `template/` creado.
+- [ ] Test debe pasar con el fix aplicado y fallar sin él (TDD).
 
-### Checkpoint 2: After FEV1-T3 + FEV1-T4 (Seguridad y Calidad)
-- [ ] Agente IA no puede leer archivos de credenciales.
-- [ ] Todos los enlaces en documentación funcionan.
-- [ ] `just check`: 0 errores.
+**Verificación:**
+- [ ] `bun test` — nuevo test pasa.
+- [ ] `bun test --coverage` — coverage de `TemplateResolver` no disminuye.
 
-### Gate FEV-1: F5.5 Review Checklist (Final)
-- [ ] Todos los issues de FEV-1 resueltos (#6, #2, #3, #4, #5).
-- [ ] `bun test`: 360 pass, 0 fail.
-- [ ] `just check`: 0 errores.
-- [ ] E2E: 6/6 escenarios pasando.
-- [ ] ADR-007 documentado en `specs/adr/`.
-- [ ] CHANGELOG.md actualizado con sección `[Unreleased]`.
+**Dependencias:** FEV2-T1.
+**Archivos:**
+- `tests/integration/TemplateResolver.test.ts` (nuevo test).
+
+**Scope:** S (45min).
+
+---
+
+### Phase 3: Verificación en bunx Real
+
+#### Task FEV2-T3: Verificar fix con `bunx` en directorio limpio
+**Descripción:** Ejecutar `bunx @fisherk2-dev/codice@<version-dev>` en un directorio temporal vacío y confirmar que los tres modos (Clean Install, Project Install, Update Workspace) funcionan sin el error `Template file not found`.
+
+**Criterios de Aceptación:**
+- [ ] Clean Install: instala sin error.
+- [ ] Project Install: muestra checklist de opcionales y permite instalar.
+- [ ] Update Workspace: consulta GitHub API y actualiza sin error.
+
+**Verificación:**
+- [ ] Script de verificación en `tests/e2e/07-bunx-template-resolution.sh` (nuevo escenario E2E).
+- [ ] Output captura: "Template file not found" no aparece.
+
+**Dependencias:** FEV2-T1, FEV2-T2.
+**Archivos:**
+- `tests/e2e/07-bunx-template-resolution.sh` (nuevo).
+- `tests/e2e/common.sh` (actualizar si es necesario).
+
+**Scope:** M (1h).
+
+---
+
+### Phase 4: Revisión de Opcionales (Issue #8 Adicional)
+
+#### Task FEV2-T4: Revisar manifiesto de archivos opcionales
+**Descripción:** La issue #8 también reporta que en "Project Install" se muestran como opcionales archivos que no deberían serlo: `scripts/`, `Makefile`, `requirements.txt`. Revisar el manifiesto y clasificar correctamente.
+
+**Criterios de Aceptación:**
+- [ ] Revisar `src/domain/entities/file-rule-manifest.ts` (o equivalente).
+- [ ] Confirmar clasificación de `scripts/`, `Makefile`, `requirements.txt`, `Dockerfile`, `docker-compose.yml`, `docs/DESIGN.md`, `docs/SCHEMA.md`, `specs/design/`.
+- [ ] Si están mal clasificados, corregir.
+
+**Verificación:**
+- [ ] Test que verifique el manifiesto retorna la categoría correcta para cada path.
+- [ ] E2E: la checklist de opcionales muestra solo archivos que el usuario realmente puede elegir.
+
+**Dependencias:** FEV2-T1.
+**Archivos:**
+- `src/domain/entities/file-rule-manifest.ts` (o el archivo que corresponda).
+- `tests/unit/` (test de regresión).
+
+**Scope:** S (30min).
+
+> **Nota:** Si la revisión determina que estos archivos están bien clasificados como opcionales (es la intención del usuario poder elegirlos), entonces esta task es solo documental: añadir un comentario explicando la decisión.
+
+---
+
+### Phase 5: Release
+
+#### Task FEV2-T5: Bump version a 1.0.6
+**Descripción:** Actualizar `package.json` de `1.0.5` a `1.0.6` (patch increment, fix crítico).
+
+**Criterios de Aceptación:**
+- [ ] `package.json` → `"version": "1.0.6"`.
+- [ ] Commit con mensaje conventional: `chore: bump version to 1.0.6`.
+
+**Verificación:**
+- [ ] `git diff package.json` muestra solo el bump de versión.
+
+**Dependencias:** FEV2-T1, FEV2-T2, FEV2-T3.
+**Archivos:**
+- `package.json`.
+
+**Scope:** XS (5min).
+
+---
+
+#### Task FEV2-T6: Actualizar CHANGELOG y mover `[Unreleased]` a `[1.0.6]`
+**Descripción:** Mover la sección `[Unreleased]` actual a `[1.0.6] — 2026-06-25` con la fecha del release, manteniendo el formato Keep a Changelog.
+
+**Criterios de Aceptación:**
+- [ ] `CHANGELOG.md` — sección `[1.0.6] — 2026-06-25` con el entry de Issue #8.
+- [ ] Sin sección `[Unreleased]` (vacía después del move).
+
+**Verificación:**
+- [ ] `git diff CHANGELOG.md` muestra el cambio de header.
+
+**Dependencias:** FEV2-T5.
+**Archivos:**
+- `CHANGELOG.md`.
+
+**Scope:** XS (5min).
+
+---
+
+#### Task FEV2-T7: Crear tag `v1.0.6` y push
+**Descripción:** Crear tag anotado `v1.0.6` con mensaje descriptivo y pushear para gatillar el release workflow.
+
+**Criterios de Aceptación:**
+- [ ] `git tag -a v1.0.6 -m "Release v1.0.6 — Issue #8 (bunx template path)"`.
+- [ ] `git push origin v1.0.6`.
+- [ ] GitHub Actions `release.yml` se ejecuta.
+
+**Verificación:**
+- [ ] `git tag -l "v1.0.*"` muestra `v1.0.5` y `v1.0.6`.
+- [ ] `gh run list --workflow release.yml` muestra run completado.
+
+**Dependencias:** FEV2-T5, FEV2-T6.
+**Archivos:** (ninguno, solo git).
+
+**Scope:** S (10min).
+
+---
+
+#### Task FEV2-T8: Verificar release en npm y GitHub
+**Descripción:** Confirmar que el release v1.0.6 se publicó correctamente en npm (`@fisherk2-dev/codice@1.0.6`) y que el GitHub Release tiene los 3 binarios + checksums.
+
+**Criterios de Aceptación:**
+- [ ] `npm view @fisherk2-dev/codice version` retorna `1.0.6`.
+- [ ] `gh release view v1.0.6` muestra 4 assets (linux, macos, windows.exe, checksums).
+
+**Verificación:**
+- [ ] `npm view @fisherk2-dev/codice version` → `1.0.6`.
+- [ ] GitHub Release tiene assets.
+
+**Dependencias:** FEV2-T7.
+**Archivos:** (ninguno, verificación).
+
+**Scope:** XS (5min).
+
+---
+
+#### Task FEV2-T9: Sync main → develop y cleanup
+**Descripción:** Mergear main a develop (fast-forward) y eliminar branches de feature.
+
+**Criterios de Aceptación:**
+- [ ] `git checkout develop && git merge main` (fast-forward).
+- [ ] `git push origin develop`.
+- [ ] `git branch -d fix/no-install-issue` (local).
+- [ ] `git push origin --delete fix/no-install-issue` (remote).
+- [ ] Solo `main` y `develop` quedan.
+
+**Verificación:**
+- [ ] `git branch` muestra solo `main` y `develop`.
+- [ ] `git branch -r` muestra solo `origin/main` y `origin/develop`.
+
+**Dependencias:** FEV2-T8.
+**Archivos:** (ninguno, solo git).
+
+**Scope:** S (10min).
 
 ---
 
@@ -174,13 +239,41 @@ Resolver los **5 issues críticos** identificados en la Fase FEV-1 para estabili
 
 ```mermaid
 graph TD
-    FEV1-T1[TemplateResolver: bunx mode] --> FEV1-T2[UpdateWorkspaceUseCase: reglas]
-    FEV1-T1 --> FEV1-T3[Permisos: opencode.json]
-    FEV1-T2 --> FEV1-T4[Enlaces: documentación]
-    FEV1-T3 --> FEV1-T5[TECH_DEBT.md]
-    FEV1-T4 --> FEV1-GATE[Gate FEV-1]
-    FEV1-T5 --> FEV1-GATE
+    FEV2-T0[Confirmar bug con reproducción] --> FEV2-T1[Corregir ruta TemplateResolver]
+    FEV2-T1 --> FEV2-T2[Test estructura paquete npm]
+    FEV2-T1 --> FEV2-T3[Verificar bunx real E2E]
+    FEV2-T1 --> FEV2-T4[Revisar opcionales]
+    FEV2-T3 --> FEV2-T5[Bump version 1.0.6]
+    FEV2-T2 --> FEV2-T5
+    FEV2-T4 --> FEV2-T5
+    FEV2-T5 --> FEV2-T6[Actualizar CHANGELOG]
+    FEV2-T6 --> FEV2-T7[Crear tag v1.0.6]
+    FEV2-T7 --> FEV2-T8[Verificar release]
+    FEV2-T8 --> FEV2-T9[Sync main→develop y cleanup]
 ```
+
+---
+
+## Checkpoints
+
+### Checkpoint 1: After FEV2-T1 (Fix aplicado)
+- [ ] `TemplateResolver.ts` corregido con `../../../template`.
+- [ ] Tests existentes pasan sin regresión (382+).
+- [ ] `just check` — 0 errores.
+
+### Checkpoint 2: After FEV2-T2 + FEV2-T4 (Cobertura completa)
+- [ ] Nuevo test de estructura npm pasa.
+- [ ] Manifiesto de opcionales revisado y documentado.
+- [ ] `bun test --coverage` ≥97.66% funciones.
+
+### Checkpoint 3: After FEV2-T3 (Verificación E2E)
+- [ ] E2E test con `bunx` real pasa en los 3 modos.
+- [ ] No aparece "Template file not found" en output.
+
+### Gate FEV-2: After FEV2-T8 (Release publicado)
+- [ ] `npm view @fisherk2-dev/codice version` → `1.0.6`.
+- [ ] GitHub Release `v1.0.6` con 4 assets.
+- [ ] CHANGELOG actualizado.
 
 ---
 
@@ -188,25 +281,42 @@ graph TD
 
 | Riesgo | Impacto | Mitigación |
 |--------|---------|------------|
-| **TemplateResolver rompe compiled mode** | Alto | Probar ambos modos (bun run + binary) antes de merge. |
-| **Tests de regresión en UpdateWorkspaceUseCase** | Alto | Tests unitarios + E2E para escenario "Update Workspace". |
-| **Enlaces rotos en documentación** | Medio | Revisión manual de enlaces en plantilla instalada. |
-| **Publicación de TECH_DEBT.md sin contexto** | Bajo | Incluir referencia al documento canónico. |
+| **Fix rompe compiled mode** | Alto | Test E2E 03 (compiled binary) debe seguir pasando. |
+| **Tests no detectan regresión en bunx** | Alto | Test FEV2-T2 simula estructura real del paquete npm. |
+| **Opcionales mal clasificados** | Medio | Task FEV2-T4 revisa el manifiesto explícitamente. |
+| **Publicación falla por versión existente** | Bajo | El `release.yml` maneja "cannot publish over previously published version". |
 
 ---
 
 ## Métricas Objetivo
 
-| Métrica | Actual (v1.0.4) | Meta (v1.0.5) |
-|---------|-----------------|---------------|
-| Tests (pass/fail) | 360 / 0 | 360 / 0 |
+| Métrica | v1.0.5 (actual) | Meta v1.0.6 |
+|---------|-----------------|-------------|
+| Tests (pass/fail) | 382 / 0 | ≥382 / 0 |
 | Coverage (funciones) | 97.66% | ≥97.66% |
 | Coverage (líneas) | 96.52% | ≥96.52% |
-| E2E escenarios | 6/6 | 6/6 |
+| E2E escenarios | 6/6 | 7/7 (nuevo 07-bunx) |
 | `just check` errores | 0 | 0 |
-| Issues críticos abiertos | 2 (#6, #2) | 0 |
-| Issues totales abiertos | 5 | 0 |
+| Issues críticos abiertos | 1 (#8) | 0 |
 
 ---
 
-*Última actualización: 2026-06-17*
+## Resumen de Esfuerzo
+
+| Tarea | Scope | Esfuerzo |
+|-------|-------|----------|
+| FEV2-T0: Reproducir bug | S | 30min |
+| FEV2-T1: Corregir path | XS | 15min |
+| FEV2-T2: Test paquete npm | S | 45min |
+| FEV2-T3: E2E bunx real | M | 1h |
+| FEV2-T4: Revisar opcionales | S | 30min |
+| FEV2-T5: Bump version | XS | 5min |
+| FEV2-T6: CHANGELOG | XS | 5min |
+| FEV2-T7: Tag + push | S | 10min |
+| FEV2-T8: Verificar release | XS | 5min |
+| FEV2-T9: Sync + cleanup | S | 10min |
+| **Total** | | **~4h 35min** |
+
+---
+
+*Última actualización: 2026-06-25*
