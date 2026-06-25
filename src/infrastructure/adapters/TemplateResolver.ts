@@ -30,33 +30,31 @@ export class TemplateResolver {
 	/**
 	 * Auto-detect the template root based on execution mode.
 	 *
-	 * - **Source mode** (bun run, bunx): resolves the template directory relative
-	 *   to the source file location (`import.meta.dir`). This allows the `bin`
-	 *   entry in package.json to find templates from the npm package directory.
+	 * - **Source/bunx mode** (bun run, bunx): resolves the template directory relative
+	 *   to the source file location (`import.meta.dir`). Template is at `src/cli/../../template/`
+	 *   which equals the package/project root. This works for both local development
+	 *   and npm package execution (e.g. `bunx @fisherk2-dev/codice`).
 	 *
-	 * - **Compiled mode** (standalone binary): falls back to the current working
-	 *   directory, matching the pre-v1.0.0 behavior for backward compatibility.
+	 * - **Compiled mode** (standalone binary): resolves the template directory
+	 *   relative to the binary location.
+	 *
+	 * - **Fallback**: uses the current working directory for backward compatibility
+	 *   with pre-v1.0.0 usage.
 	 *
 	 * Source: Template file location convention from SPEC.md — template files
 	 * are always in a `template/` directory at the project or package root.
 	 */
 	static detectTemplateRoot(): string {
-		// Path 1: bunx/npm mode (package in node_modules)
-		// In bunx mode, import.meta.dir points to src/cli/, template is at ../template/
-		const bunxPath = path.resolve(import.meta.dir, `../${TEMPLATE_DIR_NAME}`);
-		if (fs.existsSync(bunxPath)) {
-			return bunxPath;
-		}
-
-		// Path 2: Source development mode (repo root)
-		// In development (bun run from root), import.meta.dir points to src/cli/,
-		// template is at ../../template/
+		// Path 1: Source/bunx mode (repo root or npm package)
+		// In both development and bunx execution, import.meta.dir points
+		// to src/cli/ (or tests/integration/), and template is ../../template/
+		// from that location.
 		const sourcePath = path.resolve(import.meta.dir, `../../${TEMPLATE_DIR_NAME}`);
 		if (fs.existsSync(sourcePath)) {
 			return sourcePath;
 		}
 
-		// Path 3: Compiled mode (standalone binary)
+		// Path 2: Compiled mode (standalone binary)
 		// process.argv[0] is the compiled binary path; fallback to process.execPath
 		const binaryDir = path.dirname(process.argv[0] ?? process.execPath);
 		const binaryRelativePath = path.resolve(binaryDir, `../${TEMPLATE_DIR_NAME}`);

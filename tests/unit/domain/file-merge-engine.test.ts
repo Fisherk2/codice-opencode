@@ -264,6 +264,21 @@ describe("FileMergeEngine — Error handling", () => {
 		}
 	});
 
+	test("handles empty rules array gracefully", async () => {
+		const { fs, calls } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+
+		const result = await engine.execute([]);
+
+		expect(result.ok).toBe(true);
+		// No files to stage
+		const stageCalls = calls.filter((c) => c.method === "stageFile");
+		expect(stageCalls.length).toBe(0);
+		// commitStaging is still called (no-op on empty staging dir)
+		const commitCalls = calls.filter((c) => c.method === "commitStaging");
+		expect(commitCalls.length).toBe(1);
+	});
+
 	test("does NOT call commitStaging if stageFile failed", async () => {
 		const { fs, calls } = createMockFs();
 		fs.stageFile = async () => {

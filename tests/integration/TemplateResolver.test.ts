@@ -1,13 +1,14 @@
 /**
- * TemplateResolver — bunx/npm mode detection tests (FEV1-T1)
+ * TemplateResolver — template root detection tests
  *
- * Tests the three-path detection cascade:
- * 1. Compiled mode: process.execPath + '../template/'
- * 2. bunx/npm mode: import.meta.dir + '../template/'  ← NEW
- * 3. Source mode: import.meta.dir + '../../template/'
+ * Tests the detection cascade:
+ * 1. Source/bunx mode: import.meta.dir + '../../template/'
+ * 2. Compiled mode: process.argv[0] + '../template/'
+ * 3. Fallback: process.cwd() + 'template/'
  *
- * Issue #6: Template file not found when running via `bunx @fisherk2-dev/codice`
- * because the template directory is at ../template/ relative to src/cli/, not ../../template/.
+ * Issue #6 (v1.0.5): bunx mode was not detecting the template root.
+ * Resolution: the source mode path (../../template/) works for both
+ * local development and bunx/npm execution.
  */
 
 import { describe, expect, test } from "bun:test";
@@ -17,85 +18,17 @@ import { TemplateResolver } from "../../src/infrastructure/adapters/TemplateReso
 
 const PROJECT_ROOT = path.resolve(import.meta.dir, "../..");
 
-describe("TemplateResolver — bunx/npm mode (FEV1-T1)", () => {
-	// ---------------------------------------------------------------------------
-	// Helper: create a temporary template structure simulating bunx mode
-	// ---------------------------------------------------------------------------
-	function createBunxSimulation(tempDir: string): string {
-		// Simulate: node_modules/@fisherk2-dev/codice/
-		const pkgRoot = path.join(tempDir, "node_modules", "@fisherk2-dev", "codice");
-		const srcCliDir = path.join(pkgRoot, "src", "cli");
-		const templateDir = path.join(pkgRoot, "template");
-		const obligatorioDir = path.join(templateDir, "obligatorio");
-
-		// Create directories
-		fs.mkdirSync(srcCliDir, { recursive: true });
-		fs.mkdirSync(obligatorioDir, { recursive: true });
-
-		// Create a dummy template file
-		fs.writeFileSync(path.join(obligatorioDir, "opencode.json"), '{"test": true}');
-
-		return srcCliDir;
-	}
-
-	test("should detect template root in bunx mode (../../template/ from src/cli/)", async () => {
-		// This test verifies the fix for Issue #6.
-		// In bunx mode, import.meta.dir points to src/cli/, and template is at ../../template/
-		// (two levels up from src/cli/ to the package root).
-		// We simulate this by creating a temp structure matching the npm package layout.
-
-		const tempDir = fs.mkdtempSync(path.join("/tmp", "codice-bunx-test-"));
-		try {
-			const srcCliDir = createBunxSimulation(tempDir);
-			// From src/cli/, template is at ../../template/ (package root)
-			const expectedTemplateRoot = path.resolve(srcCliDir, "../../template");
-
-			// Verify the simulation is correct
-			expect(fs.existsSync(expectedTemplateRoot)).toBe(true);
-			expect(fs.existsSync(path.join(expectedTemplateRoot, "obligatorio", "opencode.json"))).toBe(
-				true,
-			);
-
-			// Create resolver pointing to the bunx-style template root
-			const resolver = new TemplateResolver(expectedTemplateRoot);
-			const resolved = await resolver.resolvePath("opencode.json");
-
-			expect(resolved).toBeTruthy();
-			expect(resolved).toContain("template");
-			expect(resolved).toContain("opencode.json");
-		} finally {
-			fs.rmSync(tempDir, { recursive: true, force: true });
-		}
-	});
-
-	test("should resolve files from template in bunx mode structure", async () => {
-		const tempDir = fs.mkdtempSync(path.join("/tmp", "codice-bunx-resolve-"));
-		try {
-			const srcCliDir = createBunxSimulation(tempDir);
-			const templateRoot = path.resolve(srcCliDir, "../../template");
-			const resolver = new TemplateResolver(templateRoot);
-
-			const content = await resolver.readFile("opencode.json");
-			expect(content).toBe('{"test": true}');
-		} finally {
-			fs.rmSync(tempDir, { recursive: true, force: true });
-		}
-	});
-
-	test("should still work with source mode (../../template/ from src/cli/)", async () => {
-		// Verify backward compatibility: source mode (development) uses ../../template/
+describe("TemplateResolver — template root detection", () => {
+	test("resolves paths with explicit template root (source mode)", async () => {
 		const explicitRoot = path.join(PROJECT_ROOT, "template");
 		const resolver = new TemplateResolver(explicitRoot);
-		// resolvePath searches categories internally, so we pass just the filename
 		const resolved = await resolver.resolvePath("AGENTS.md");
 		expect(resolved).toBeTruthy();
 		expect(resolved).toContain("template");
 		expect(resolved).toContain("AGENTS.md");
 	});
 
-	test("should still work with compiled mode (../template/ from binary)", async () => {
-		// Verify backward compatibility: compiled mode uses ../template/ relative to binary
-		// We simulate this by creating a temp binary dir with template
+	test("resolves paths with explicit template root (compiled mode simulation)", async () => {
 		const tempDir = fs.mkdtempSync(path.join("/tmp", "codice-compiled-test-"));
 		try {
 			const binaryDir = path.join(tempDir, "dist");
@@ -114,13 +47,12 @@ describe("TemplateResolver — bunx/npm mode (FEV1-T1)", () => {
 	});
 
 	// -----------------------------------------------------------------------
-	// Direct detectTemplateRoot() tests — calls the static method that was
-	// modified in FEV-1, not the constructor that bypasses detection.
+	// Direct detectTemplateRoot() tests — calls the static method that
+	// implements the actual detection cascade (not via constructor with
+	// explicit path). These verify that auto-detection works in dev mode.
 	// -----------------------------------------------------------------------
 
 	test("detectTemplateRoot() returns an existing path containing 'template'", () => {
-		// This test calls detectTemplateRoot() directly (not via constructor
-		// with explicit path), exercising the actual detection cascade.
 		const root = TemplateResolver.detectTemplateRoot();
 		expect(root).toBeTruthy();
 		expect(root).toContain("template");
@@ -129,7 +61,19 @@ describe("TemplateResolver — bunx/npm mode (FEV1-T1)", () => {
 
 	test("detectTemplateRoot() finds a directory with obligatorio subdirectory", () => {
 		const root = TemplateResolver.detectTemplateRoot();
-		// The template root must contain at least obligatorio/ subdirectory
 		expect(fs.existsSync(path.join(root, "obligatorio"))).toBe(true);
+	});
+
+	test("detectTemplateRoot() returns an absolute path", () => {
+		const root = TemplateResolver.detectTemplateRoot();
+		// Verify it returns a valid absolute path
+		expect(path.isAbsolute(root)).toBe(true);
+	});
+
+	test("detectTemplateRoot() returns the template directory in the project", () => {
+		const root = TemplateResolver.detectTemplateRoot();
+		// Verify it resolves to the correct project template directory
+		const expectedRoot = path.resolve(PROJECT_ROOT, "template");
+		expect(root).toBe(expectedRoot);
 	});
 });

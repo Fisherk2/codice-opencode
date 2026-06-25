@@ -523,13 +523,24 @@
       "* .ssh/config": "deny",
       "* .aws/credentials": "deny",
       "* .kube/config": "deny",
+      "* .netrc": "deny",
+      "* .pgpass": "deny",
+      "* .git-credentials": "deny",
+      "* .docker/config.json": "deny",
+      "* .gpg": "deny",
+      "* .ovpn": "deny",
       "* .npmrc *": "deny",
       "* .pem *": "deny",
       "* .key *": "deny",
       "* .p12 *": "deny",
       "* .pfx *": "deny",
       "* credentials.json *": "deny",
-      "* service-account*.json *": "deny"
+      "* service-account*.json *": "deny",
+      "* .netrc *": "deny",
+      "* .pgpass *": "deny",
+      "* .git-credentials *": "deny",
+      "* .gpg *": "deny",
+      "* .ovpn *": "deny"
     },
     "read": {
       "*": "allow",
@@ -546,7 +557,13 @@
       ".ssh/id_*": "deny",
       ".ssh/config": "deny",
       ".aws/credentials": "deny",
-      ".kube/config": "deny"
+      ".kube/config": "deny",
+      ".netrc": "deny",
+      ".pgpass": "deny",
+      ".git-credentials": "deny",
+      ".docker/config.json": "deny",
+      "*.gpg": "deny",
+      "*.ovpn": "deny"
     }
   },
 
