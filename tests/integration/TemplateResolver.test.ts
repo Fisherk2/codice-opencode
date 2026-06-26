@@ -226,9 +226,7 @@ describe("FEV-2-C — npm package structure (no .gitignore) resolution", () => {
 			// This must throw because .gitignore doesn't exist in any category.
 			// This reproduces the npm package bug: trying to resolve a path
 			// that npm excluded from the tarball.
-			await expect(resolver.resolvePath(".gitignore")).rejects.toThrow(
-				"Template file not found",
-			);
+			await expect(resolver.resolvePath(".gitignore")).rejects.toThrow("Template file not found");
 		} finally {
 			fs.rmSync(tempDir, { recursive: true, force: true });
 		}
