@@ -147,17 +147,15 @@ describe("BunGitignoreCreator — single createGitignore", () => {
 		}
 	});
 
-	test("returns TEMPLATE_NOT_FOUND when template directory is empty", async () => {
+	test("returns TEMPLATE_NOT_FOUND when template directory does not exist", async () => {
 		const { BunGitignoreCreator } = await import(modulePath);
-		const emptyDir = path.join(tempDir, "template-missing");
-		// DO NOT create any files here — simulate entirely missing template structure
-		fs.mkdirSync(emptyDir, { recursive: true });
-		// Note: no estandar/gitignore
+		// Simulate a template path that was never created (entirely missing)
+		const nonExistentDir = path.join(tempDir, "template-never-created", "estandar");
 
 		const workspaceMissing = path.join(tempDir, "workspace-missing");
 		fs.mkdirSync(workspaceMissing, { recursive: true });
 
-		const creator = new BunGitignoreCreator(emptyDir);
+		const creator = new BunGitignoreCreator(nonExistentDir);
 		const result = await creator.createGitignore(workspaceMissing);
 
 		expect(result.ok).toBe(false);
