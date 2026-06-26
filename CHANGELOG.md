@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] — 2026-06-26
+
+### Fixed
+
+- **TypeScript strict mode errors**: Fixed 3 `tsc --noEmit` errors that caused CI failures across all platforms:
+  - `parse-args.ts`: `args[i]` narrowed to `string` (was `string | undefined`)
+  - `project-install.test.ts`: Mock return types use `as const` to match `Result<void, SymlinkError>` literal types
+  - `bun-symlink-creator.test.ts`: Added optional chaining for `result.error[i]` access
+
+### Deprecated
+
+- **v1.0.7** — deprecated on npm due to TypeScript compilation errors in CI.
+
 ## [1.0.7] — 2026-06-26
 
 ### Fixed

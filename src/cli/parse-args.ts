@@ -127,7 +127,7 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 			if (i >= args.length) {
 				return null; // --dest (and future value flags) require a value
 			}
-			const rawDest = args[i];
+			const rawDest = args[i] as string;
 			const error = validateDestPath(rawDest);
 			if (error) {
 				// biome-ignore lint/suspicious/noConsole: CLI user-facing error

@@ -297,7 +297,8 @@ describe("BunSymlinkCreator — batch createSymlinks", () => {
 			expect(result.error).toHaveLength(3);
 			// All errors have linkPaths matching their spec
 			for (let i = 0; i < 3; i++) {
-				expect(result.error[i].linkPath).toBe(specs[i].linkPath);
+				const err = result.error[i] as SymlinkError;
+				expect(err.linkPath).toBe(specs[i].linkPath);
 			}
 		}
 	});

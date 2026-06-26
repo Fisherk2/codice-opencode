@@ -114,10 +114,10 @@ const DEVIN_SYMLINKS = [
 function createMockSymlinkCreator(): ISymlinkCreator & { getCreateSymlinksCalls(): number } {
 	let callCount = 0;
 	return {
-		createSymlink: mockFn(() => Promise.resolve({ ok: true, value: undefined })),
+		createSymlink: mockFn(() => Promise.resolve({ ok: true, value: undefined } as const)),
 		createSymlinks: mockFn(() => {
 			callCount++;
-			return Promise.resolve({ ok: true, value: undefined });
+			return Promise.resolve({ ok: true, value: undefined } as const);
 		}),
 		getCreateSymlinksCalls: () => callCount,
 	};
