@@ -56,9 +56,9 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Master of orchestration and strategic delegation</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/huitzilopochtli.md"><code>template/obligatorio/agents/huitzilopochtli.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>DeepSeek V4 Flash</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>Kimi K2.7 Code</code> <code>MiMo-V2.5</code> <code>MiniMax M3</code> <code>GLM 5.2</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash as default for speed and cost. Kimi K2.7 Code for architectural reasoning and context comprehension. MiMo-V2.5 for complex context analysis before delegation. MiniMax M3 as a lightweight alternative. GLM 5.2 as critical reasoning alternative.</td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>MiMo-V2.5</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>MiMo-V2.5</code> <code>MiniMax M3</code> <code>GLM 5.2</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> MiMo-V2.5 as default for complex context analysis and strategic delegation. DeepSeek V4 Flash for speed and cost. MiniMax M3 as a lightweight alternative. GLM 5.2 as critical reasoning alternative.</td></tr>
 </table>
 
 ### Quetzalcoatl 🌬️ — Visionary Sage
@@ -75,9 +75,9 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>System architect and specification designer</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/quetzalcoatl.md"><code>template/obligatorio/agents/quetzalcoatl.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>Kimi K2.7 Code</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>Kimi K2.7 Code</code> <code>Claude Sonnet 4</code> <code>GLM 5.2</code> <code>DeepSeek V4 Flash</code> <code>GPT-5.3 Codex</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> Kimi K2.7 Code as default for excellent architectural reasoning and coding capability. Claude Sonnet 4 for system design and structured specifications. GLM 5.2 as maximum reasoning alternative. DeepSeek V4 Flash for rapid architectural iterations. GPT-5.3 Codex for API design and code architecture.</td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>Qwen 3.7 Plus</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>Kimi 2.6</code> <code>Claude Sonnet 4</code> <code>GLM 5.2</code> <code>GPT-5.3 Codex</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> Qwen 3.7 Plus as default for strong reasoning and coding balance. Claude Sonnet 4 for system design and structured specifications. GLM 5.2 as maximum reasoning alternative. Kimi 2.6 for UI/UX design reasoning. GPT-5.3 Codex for API design and code architecture.</td></tr>
 </table>
 
 ### Moctezuma ⚔️ — Strategist and Commander
@@ -114,8 +114,8 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   <tr><td colspan="2"><b>Role:</b> <code>Main implementer and feature builder</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/tlaloc.md"><code>template/obligatorio/agents/tlaloc.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>DeepSeek V4 Flash</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>MiMo-V2.5</code> <code>Claude Sonnet 4</code> <code>GPT-5.3 Codex</code> <code>Gemini 3.5 Flash</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash for general implementation due to speed. MiMo-V2.5 for tasks requiring deep reasoning. Claude Sonnet 4 for high-quality code in critical features. GPT-5.3 Codex for extensive code generation and mass writing. Gemini 3.5 Flash as Google's fast alternative for code generation.</td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>Kimi K2.7 Code</code> <code>MiMo-V2.5</code> <code>Claude Sonnet 4</code> <code>GPT-5.3 Codex</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash for general implementation due to speed. Kimi K2.7 Code as the best option for coding-intensive tasks — excels at writing, refactoring, and implementing code. MiMo-V2.5 for tasks requiring deep reasoning. Claude Sonnet 4 for high-quality code in critical features. GPT-5.3 Codex for extensive code generation and mass writing.</td></tr>
 </table>
 
 ### Mictlantecuhtli 💀 — Judge and Guardian
@@ -133,8 +133,8 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   <tr><td colspan="2"><b>Role:</b> <code>Quality validator and deployment guardian</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/mictlantecuhtli.md"><code>template/obligatorio/agents/mictlantecuhtli.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>MiMo-V2.5</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>MiMo-V2.5</code> <code>DeepSeek V4 Flash</code> <code>Claude Opus 4.6</code> <code>MiniMax M3</code> <code>GPT-5.5 Pro</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> MiMo-V2.5 for fast test execution with deep reasoning. DeepSeek V4 Flash for general validation. Claude Opus 4.6 for most rigorous pre-deployment validation. MiniMax M3 for test generation and coverage analysis. GPT-5.5 Pro for maximum depth validation.</td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>MiMo-V2.5</code> <code>Kimi K2.7 Code</code> <code>DeepSeek V4 Flash</code> <code>Claude Opus 4.6</code> <code>MiniMax M3</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> MiMo-V2.5 for fast test execution with deep reasoning. Kimi K2.7 Code for coding-intensive validation — excels at writing tests, fixing code paths, and implementing patches. DeepSeek V4 Flash for general validation. Claude Opus 4.6 for most rigorous pre-deployment validation. MiniMax M3 for test generation and coverage analysis.</td></tr>
 </table>
 
 ### Tezcatlipoca 🔮 — The Smoking Mirror
