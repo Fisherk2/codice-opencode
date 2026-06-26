@@ -18,11 +18,7 @@ const OPCIONAL_DIR = path.join(PROJECT_ROOT, "template", "opcional");
  * Recursively collect all files and directories from a path.
  * Returns absolute paths.
  */
-function collectEntries(
-	dir: string,
-	relativeTo: string,
-	prefix: string = "",
-): string[] {
+function collectEntries(dir: string, relativeTo: string, prefix: string = ""): string[] {
 	const entries: string[] = [];
 	if (!fs.existsSync(dir)) return entries;
 
@@ -47,9 +43,7 @@ function collectEntries(
 
 describe("FileRuleManifest — completeness (FEV-2)", () => {
 	test("all optional manifest entries correspond to existing files or directories", () => {
-		const optionalEntries = FILE_RULE_MANIFEST.filter(
-			(r) => r.category === "optional",
-		);
+		const optionalEntries = FILE_RULE_MANIFEST.filter((r) => r.category === "optional");
 
 		for (const entry of optionalEntries) {
 			const fullPath = path.join(OPCIONAL_DIR, entry.path);
@@ -58,9 +52,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 	});
 
 	test("all top-level template/opcional entries have a manifest representation", () => {
-		const optionalEntries = FILE_RULE_MANIFEST.filter(
-			(r) => r.category === "optional",
-		);
+		const optionalEntries = FILE_RULE_MANIFEST.filter((r) => r.category === "optional");
 		const manifestPaths = new Set(optionalEntries.map((r) => r.path));
 
 		// Collect top-level entries and their direct children
@@ -92,20 +84,15 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 	});
 
 	test("optional manifest count is at least the number of top-level files and dirs in template/opcional/", () => {
-		const optionalEntries = FILE_RULE_MANIFEST.filter(
-			(r) => r.category === "optional",
-		);
+		const optionalEntries = FILE_RULE_MANIFEST.filter((r) => r.category === "optional");
 
-		const topLevelCount = fs
-			.readdirSync(OPCIONAL_DIR, { withFileTypes: true }).length;
+		const topLevelCount = fs.readdirSync(OPCIONAL_DIR, { withFileTypes: true }).length;
 
 		expect(optionalEntries.length).toBeGreaterThanOrEqual(topLevelCount);
 	});
 
 	test("all 13 optional manifest entries have unique paths", () => {
-		const optionalEntries = FILE_RULE_MANIFEST.filter(
-			(r) => r.category === "optional",
-		);
+		const optionalEntries = FILE_RULE_MANIFEST.filter((r) => r.category === "optional");
 		const paths = optionalEntries.map((r) => r.path);
 		const uniquePaths = new Set(paths);
 		expect(uniquePaths.size).toBe(paths.length);
@@ -116,9 +103,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 		["standard", 11],
 		["mandatory", 11],
 	])("category '%s' has %i entries", (category, expectedCount) => {
-		const count = FILE_RULE_MANIFEST.filter(
-			(r) => r.category === category,
-		).length;
+		const count = FILE_RULE_MANIFEST.filter((r) => r.category === category).length;
 		if (category === "optional") {
 			// Optional entries may grow as new files are added, check minimum
 			expect(count).toBeGreaterThanOrEqual(expectedCount);

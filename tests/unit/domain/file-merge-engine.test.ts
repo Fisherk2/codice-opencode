@@ -311,9 +311,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 		expect(result.ok).toBe(true);
 
 		// Find the stageFile call for "docs"
-		const docsStageCall = calls.find(
-			(c) => c.method === "stageFile" && c.args[0] === "docs",
-		);
+		const docsStageCall = calls.find((c) => c.method === "stageFile" && c.args[0] === "docs");
 		expect(docsStageCall).toBeDefined();
 
 		// The second argument should be the exclusion set containing "opencode"
@@ -335,9 +333,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 		expect(result.ok).toBe(true);
 
 		// Mandatory dirs should NOT have exclusions
-		const agentsStageCall = calls.find(
-			(c) => c.method === "stageFile" && c.args[0] === "agents",
-		);
+		const agentsStageCall = calls.find((c) => c.method === "stageFile" && c.args[0] === "agents");
 		expect(agentsStageCall).toBeDefined();
 		expect(agentsStageCall?.args[1]).toBeUndefined();
 	});
@@ -355,9 +351,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 
 		expect(result.ok).toBe(true);
 
-		const docsStageCall = calls.find(
-			(c) => c.method === "stageFile" && c.args[0] === "docs",
-		);
+		const docsStageCall = calls.find((c) => c.method === "stageFile" && c.args[0] === "docs");
 		expect(docsStageCall).toBeDefined();
 		expect(docsStageCall?.args[1]).toBeUndefined();
 	});
@@ -376,9 +370,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 
 		expect(result.ok).toBe(true);
 
-		const specsStageCall = calls.find(
-			(c) => c.method === "stageFile" && c.args[0] === "specs",
-		);
+		const specsStageCall = calls.find((c) => c.method === "stageFile" && c.args[0] === "specs");
 		expect(specsStageCall).toBeDefined();
 
 		const excludeSet = specsStageCall?.args[1] as Set<string> | undefined;

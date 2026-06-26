@@ -108,10 +108,10 @@ describe("walkDirectory", () => {
 	});
 
 	// ---------------------------------------------------------------------------
-	// Exclusion: excludeSubPaths parameter
+	// Exclusion: excludeNames parameter
 	// ---------------------------------------------------------------------------
 
-	test("excludes a named subdirectory when excludeSubPaths contains its name", async () => {
+	test("excludes a named subdirectory when excludeNames contains its name", async () => {
 		const dir = path.join(tmpDir, "excl-single");
 		const sub = path.join(dir, "excluded");
 		const keep = path.join(dir, "kept");
@@ -126,7 +126,7 @@ describe("walkDirectory", () => {
 		expect(names).toEqual(["root.txt", "visible.txt"]);
 	});
 
-	test("excludes multiple subdirectories when excludeSubPaths contains several names", async () => {
+	test("excludes multiple subdirectories when excludeNames contains several names", async () => {
 		const dir = path.join(tmpDir, "excl-multi");
 		await fs.mkdir(path.join(dir, "a"), { recursive: true });
 		await fs.mkdir(path.join(dir, "b"), { recursive: true });
@@ -141,7 +141,7 @@ describe("walkDirectory", () => {
 		expect(names).toEqual(["3.txt", "root.txt"]);
 	});
 
-	test("returns all files when excludeSubPaths is empty", async () => {
+	test("returns all files when excludeNames is empty", async () => {
 		const dir = path.join(tmpDir, "excl-empty");
 		await fs.mkdir(path.join(dir, "sub"), { recursive: true });
 		await fs.writeFile(path.join(dir, "root.txt"), "root");
@@ -152,7 +152,7 @@ describe("walkDirectory", () => {
 		expect(names).toEqual(["child.txt", "root.txt"]);
 	});
 
-	test("returns all files when excludeSubPaths is undefined (backward compat)", async () => {
+	test("returns all files when excludeNames is undefined (backward compat)", async () => {
 		const dir = path.join(tmpDir, "excl-undef");
 		await fs.mkdir(path.join(dir, "sub"), { recursive: true });
 		await fs.writeFile(path.join(dir, "root.txt"), "root");

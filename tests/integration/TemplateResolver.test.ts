@@ -30,13 +30,7 @@ describe("FEV-2 — bunx template path resolution", () => {
 	test("../../template from src/infrastructure/adapters resolves to src/template (BUG)", () => {
 		// Simulate the npm package structure:
 		// node_modules/@fisherk2-dev/codice/src/infrastructure/adapters/TemplateResolver.ts
-		const adapterDir = path.join(
-			"/tmp",
-			"codice-package",
-			"src",
-			"infrastructure",
-			"adapters",
-		);
+		const adapterDir = path.join("/tmp", "codice-package", "src", "infrastructure", "adapters");
 		// BUG: ../../template from adapters/ reaches src/template, not template/
 		const badPath = path.resolve(adapterDir, "../../template");
 		// The template dir should be at the package root:
@@ -59,24 +53,14 @@ describe("FEV-2 — bunx template path resolution", () => {
 			fs.mkdirSync(path.join(packageRoot, "template", "obligatorio"), {
 				recursive: true,
 			});
-			fs.writeFileSync(
-				path.join(packageRoot, "template", "obligatorio", "opencode.json"),
-				"{}",
-			);
+			fs.writeFileSync(path.join(packageRoot, "template", "obligatorio", "opencode.json"), "{}");
 
 			// TemplateResolver location in npm package:
-			const resolverDir = path.join(
-				packageRoot,
-				"src",
-				"infrastructure",
-				"adapters",
-			);
+			const resolverDir = path.join(packageRoot, "src", "infrastructure", "adapters");
 
 			// BUG path: ../../template from adapters/ = src/template
 			const sourcePath = path.resolve(resolverDir, "../../template");
-			expect(sourcePath).toBe(
-				path.join(packageRoot, "src", "template"),
-			);
+			expect(sourcePath).toBe(path.join(packageRoot, "src", "template"));
 			// This does not exist
 			expect(fs.existsSync(sourcePath)).toBe(false);
 

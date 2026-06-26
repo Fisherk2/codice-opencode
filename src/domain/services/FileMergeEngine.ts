@@ -38,9 +38,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 
 		// Compute subdirectory exclusions for standard dirs that overlap
 		// with optional sub-paths, so each file is copied only once.
-		const optionalPaths = rules
-			.filter((r) => r.category === "optional")
-			.map((r) => r.path);
+		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
 		// Phase 1: Stage all files
 		for (const rule of rules) {
 			const shouldStage = await this.shouldStage(rule, selected);
@@ -114,19 +112,14 @@ export class FileMergeEngine implements IFileMergeEngine {
 	 *
 	 * @returns Set of immediate subdirectory names to exclude, or undefined.
 	 */
-	private computeExclusions(
-		rule: FileRule,
-		optionalPaths: string[],
-	): Set<string> | undefined {
+	private computeExclusions(rule: FileRule, optionalPaths: string[]): Set<string> | undefined {
 		// Only standard directories get exclusions; mandatory always overwrites everything.
 		if (!rule.isDirectory || rule.category !== "standard") {
 			return undefined;
 		}
 
 		const dirPrefix = `${rule.path}/`;
-		const overlapping = optionalPaths.filter((opt) =>
-			opt.startsWith(dirPrefix),
-		);
+		const overlapping = optionalPaths.filter((opt) => opt.startsWith(dirPrefix));
 		if (overlapping.length === 0) {
 			return undefined;
 		}
