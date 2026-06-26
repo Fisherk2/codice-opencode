@@ -187,7 +187,24 @@
 
 ---
 
-## 7. Summary & Prioritization
+## 7. Known Issues (v1.0.8)
+
+### 7.1 Issue #11 — npm Excludes .gitignore from Package (CRITICAL)
+
+| Item | Detail |
+|------|--------|
+| **Problem** | `bunx @fisherk2-dev/codice` fails with `Template file not found: .gitignore` in all 3 install modes (Clean, Project, Update) |
+| **Root Cause** | npm has hardcoded behavior that excludes `.gitignore` files from packages, even when listed in the `files` field of `package.json`. The file `template/estandar/.gitignore` (2930 bytes) exists in the repository but is not included in the published npm tarball. |
+| **Evidence** | `npm pack --dry-run 2>&1 | grep gitignore` returns no output, while `template/estandar/.gitignore` exists locally |
+| **Affected Files** | 1. `template/estandar/.gitignore` (standard) — **fails**<br>2. `template/obligatorio/.opencode/.gitignore` (inside obligatorio dir) — works<br>3. `template/obligatorio/skills/ui-ux-design-pro/cli/.gitignore` (inside skill) — works |
+| **Pattern** | Same as FEV-2-B (symlinks): npm packaging issue, not code issue. FEV-2-B: npm resolves symlinks → files missing from tarball. FEV-2-C: npm excludes `.gitignore` → files missing from tarball. |
+| **Resolution** | Rename `template/estandar/.gitignore` → `template/estandar/gitignore` and generate `.gitignore` post-installation (same pattern as FEV-2-B symlinks). Create `IGitignoreCreator` port + `BunGitignoreCreator` adapter. |
+| **Status** | 🟡 Planned for v1.0.9 (FEV-2-C) |
+| **Risk** | Critical — blocks all 3 installation modes when using `bunx @fisherk2-dev/codice` |
+
+---
+
+## 8. Summary & Prioritization
 
 ### Planned (v1.1.0)
 | Item | Effort | Impact |
