@@ -100,6 +100,23 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 		expect(optionalPaths).not.toContain(".devin/rules");
 	});
 
+	test("removed .gitignore entry is NOT in standard manifest (FEV-2-C, Issue #11)", () => {
+		const manifestPaths = FILE_RULE_MANIFEST.map((r) => r.path);
+		// .gitignore was removed because npm excludes it from packages.
+		// It is renamed to 'gitignore' (no dot) and generated post-installation
+		// by BunGitignoreCreator. (REF: ADR-FEV2C-6)
+		expect(manifestPaths).not.toContain(".gitignore");
+	});
+
+	test("gitignore file (renamed) exists in template/estandar/ filesystem for post-install generation (FEV-2-C)", () => {
+		const estandarDir = path.resolve(PROJECT_ROOT, "template", "estandar");
+		const gitignorePath = path.join(estandarDir, "gitignore");
+		expect(fs.existsSync(gitignorePath)).toBe(true);
+		// The file should have content (not empty)
+		const content = fs.readFileSync(gitignorePath, "utf-8");
+		expect(content.length).toBeGreaterThan(100);
+	});
+
 	test("removed symlink entries (.opencode/{agents,commands,skills}) are NOT in manifest (FEV-2-B)", () => {
 		const manifestPaths = FILE_RULE_MANIFEST.map((r) => r.path);
 		// These were symlinks → ../{agents,commands,skills}/ that npm resolves
@@ -120,7 +137,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 
 	test.each([
 		["optional", 13],
-		["standard", 11],
+		["standard", 10],
 		["mandatory", 8],
 	])("category '%s' has %i entries", (category, expectedCount) => {
 		const count = FILE_RULE_MANIFEST.filter((r) => r.category === category).length;
