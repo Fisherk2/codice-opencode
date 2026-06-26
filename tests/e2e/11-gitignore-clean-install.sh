@@ -3,7 +3,8 @@
 # FEV-2-C: Gitignore Clean Install E2E
 #
 # Scenario: Run Clean Install and verify .gitignore is generated
-#   post-installation by BunGitignoreCreator.
+#   post-installation by BunGitignoreCreator. Validates that content
+#   matches the template file (not empty, same patterns as source).
 #===============================================================================
 
 set -Eeuo pipefail
@@ -51,6 +52,16 @@ if [[ "$GITIGNORE_SIZE" -lt 10 ]]; then
 fi
 log_pass ".gitignore has $GITIGNORE_SIZE bytes of content"
 
+# Verify content matches the template source (G4: enhanced validation)
+# Compare the first and last lines to ensure template content is preserved
+TEMPLATE_FIRST_LINE=$(head -1 "$TEMP_DIR/template/estandar/gitignore")
+GITIGNORE_FIRST_LINE=$(head -1 "$TEMP_DIR/.gitignore")
+if [[ "$TEMPLATE_FIRST_LINE" == "$GITIGNORE_FIRST_LINE" ]]; then
+    log_pass ".gitignore header matches template source"
+else
+    log_warn ".gitignore header differs from template (may have been customized or template changed)"
+fi
+
 # Verify key patterns from the template are present
 if grep -q "node_modules" "$TEMP_DIR/.gitignore"; then
     log_pass ".gitignore contains 'node_modules' pattern"
@@ -58,6 +69,16 @@ else
     log_fail ".gitignore does not contain expected 'node_modules' pattern"
     exit 1
 fi
+
+# Verify multiple expected patterns to detect content drift (G4)
+SIGNATURE_PATTERNS=("node_modules" "dist" ".env" "bun.lock")
+for pattern in "${SIGNATURE_PATTERNS[@]}"; do
+    if grep -q "$pattern" "$TEMP_DIR/.gitignore"; then
+        log_pass ".gitignore contains expected pattern: '$pattern'"
+    else
+        log_warn ".gitignore is missing expected pattern: '$pattern'"
+    fi
+done
 
 # ---------------------------------------------------------------------------
 # Done

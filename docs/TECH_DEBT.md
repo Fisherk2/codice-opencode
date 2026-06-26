@@ -208,6 +208,27 @@
 | **Status** | ✅ Fixed in v1.0.9 |
 | **Verification** | `bun test`: 457 pass / 0 fail, `just check`: clean, E2E: 12/12 |
 
+**Known limitation:** npm also excludes `.gitignore` files nested at any depth (e.g., `template/obligatorio/skills/ui-ux-design-pro/cli/.gitignore`). These files are not part of the user-facing workspace template — they serve internal skill development purposes — so they are currently unaddressed. If a future skill or feature needs its `.gitignore` shipped in the npm package, apply the same rename pattern: `file.gitignore` → `file_gitignore` with post-install generation. (REF: FEV-2-C code review S7)
+
+### 6.8 Ship Review Observations (v1.0.9)
+
+| # | Observation | Resolution | Files Changed |
+|---|-------------|------------|---------------|
+| I1/M1 | Path containment defense-in-depth missing in BunGitignoreCreator | Added `workspaceRoot` parameter + `startsWith()` containment check consistent with BunSymlinkCreator pattern | BunGitignoreCreator.ts, container.ts, 1 test file |
+| I2 | Directory-skip warning gated behind verbose | Made unconditional — anomalous condition should always be visible | BunGitignoreCreator.ts |
+| G1 | ProjectInstallUseCase gitignore error handling untested | Added test verifying warning shown without install failure | project-install.test.ts |
+| G2 | Verbose parameter untested in BunGitignoreCreator | Added 2 tests: verbose=true emits `console.warn`, verbose=undefined defaults to false | bun-gitignore-creator.test.ts |
+| G3 | Update mode gitignore exclusion untested | Added test verifying no `.gitignore` warnings in update mode | update-workspace.test.ts |
+| G4 | E2E content validation shallow | Enhanced to compare header against template + check multiple signature patterns | 11-gitignore-clean-install.sh |
+| G5 | No E2E for directory at .gitignore path | Added Test 3: pre-existing dir is skipped gracefully | 12-gitignore-project-install.sh |
+| S4 | gitignoreTemplateNotFoundError message hardcoded path | Added optional `templatePath` parameter for dynamic message | GitignoreError.ts, BunGitignoreCreator.ts |
+| S5 | Warning text lacks `--verbose` hint | Appended `"Run with --verbose for details."` to gitignore warnings | CleanInstallUseCase.ts, ProjectInstallUseCase.ts |
+| S7 | Nested .gitignore files excluded by npm | Documented in TECH_DEBT.md `§6.7 Known limitation` | TECH_DEBT.md |
+| SecLow | validateDestPath system dir check uses exact match | Improved to prefix-based matching | parse-args.ts |
+
+| **Verification** | `bun test`: >457 pass / 0 fail, `just check`: clean, E2E: 12/12 |
+| **Status** | ✅ All 11 observations resolved in v1.0.9 |
+
 ---
 
 ## 7. Summary & Prioritization

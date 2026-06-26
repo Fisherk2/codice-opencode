@@ -68,7 +68,7 @@ export function createDependencies(destinationPath?: string, verbose?: boolean):
 	// where the renamed 'gitignore' file lives (no dot prefix).
 	const templateRoot = TemplateResolver.detectTemplateRoot();
 	const templateEstandarDir = path.join(templateRoot, "estandar");
-	const gitignoreCreator = new BunGitignoreCreator(templateEstandarDir, verbose);
+	const gitignoreCreator = new BunGitignoreCreator(destRoot, templateEstandarDir, verbose);
 
 	const cleanInstall = new CleanInstallUseCase(
 		fileSystem,

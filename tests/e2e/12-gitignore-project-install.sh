@@ -5,6 +5,7 @@
 # Scenario: Run Project Install and verify:
 #   1. .gitignore is generated post-installation
 #   2. .gitignore is NOT overwritten if it already exists (idempotent)
+#   3. .gitignore path being a real directory is handled gracefully (G5)
 #===============================================================================
 
 set -Eeuo pipefail
@@ -86,6 +87,40 @@ else
 fi
 
 log_pass "Test 2: .gitignore idempotency — PASSED"
+
+# ---------------------------------------------------------------------------
+# Test 3: Pre-existing directory at .gitignore path is skipped gracefully (G5)
+# ---------------------------------------------------------------------------
+
+log_info "--- Test 3: .gitignore path is a directory (graceful skip) ---"
+
+TEMP_DIR3="$(create_temp_dir)"
+log_info "Test directory: $TEMP_DIR3"
+
+cp -r "$CODICE_ROOT/template" "$TEMP_DIR3/template"
+
+# Pre-create a directory at .gitignore path (user may have created manually)
+mkdir -p "$TEMP_DIR3/.gitignore"
+
+log_info "Running: $CODICE_BINARY --project --force in $TEMP_DIR3 (with .gitignore dir)"
+EXIT_CODE3=0
+(cd "$TEMP_DIR3" && "$CODICE_BINARY" --project --force) 2>/dev/null || EXIT_CODE3=$?
+
+if [[ "$EXIT_CODE3" -ne 0 ]]; then
+    log_fail "Third run exited with code $EXIT_CODE3 (expected 0)"
+    exit 1
+fi
+log_pass "Third run exited with code 0 (graceful skip of .gitignore directory)"
+
+# Verify .gitignore is still a directory (NOT overwritten with file)
+if [[ -d "$TEMP_DIR3/.gitignore" ]]; then
+    log_pass ".gitignore path is still a directory (not overwritten)"
+else
+    log_fail ".gitignore was overwritten! Directory became a file."
+    exit 1
+fi
+
+log_pass "Test 3: .gitignore directory skip — PASSED"
 
 # ---------------------------------------------------------------------------
 # Done

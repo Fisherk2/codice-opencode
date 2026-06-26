@@ -94,7 +94,8 @@ export class ProjectInstallUseCase {
 			this.userPrompt.showWarning(
 				`Could not generate .gitignore: ${gitignoreResult.error.message}. ` +
 					"The workspace was installed successfully. " +
-					"Create a .gitignore file manually or re-run the installer.",
+					"Create a .gitignore file manually or re-run the installer. " +
+					"Run with --verbose for details.",
 			);
 		}
 

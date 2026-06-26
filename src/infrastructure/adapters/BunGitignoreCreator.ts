@@ -21,18 +21,26 @@ const fsPromises = fs.promises;
  *
  * Idempotent: if `.gitignore` already exists (file or symlink), skip.
  * Safe: real directories at `.gitignore` path are skipped with a warning.
+ * Path containment: validates that destPath stays within workspaceRoot for
+ *   defense-in-depth, consistent with BunSymlinkCreator's pattern.
  */
 export class BunGitignoreCreator implements IGitignoreCreator {
+	private readonly workspaceRoot: string;
+
 	private readonly templatePath: string;
 
 	private readonly verbose: boolean;
 
 	/**
+	 * @param workspaceRoot - Absolute path to the workspace root directory.
+	 *                        destPath in createGitignore is validated against
+	 *                        this root for path containment (defense-in-depth).
 	 * @param templatePath - Absolute path to the template estandar directory
 	 *                       containing the `gitignore` file.
 	 * @param verbose - Enable verbose logging to stderr.
 	 */
-	constructor(templatePath: string, verbose?: boolean) {
+	constructor(workspaceRoot: string, templatePath: string, verbose?: boolean) {
+		this.workspaceRoot = path.resolve(workspaceRoot);
 		this.templatePath = templatePath;
 		this.verbose = verbose ?? false;
 	}
@@ -42,9 +50,25 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 	 *
 	 * Reads `gitignore` (no dot) from the template directory and writes
 	 * it to `destPath/.gitignore`. If the file already exists, skip.
+	 * Path containment is validated against the injected workspaceRoot.
 	 */
 	async createGitignore(destPath: string): Promise<Result<void, GitignoreError>> {
 		const resolvedDest = path.resolve(destPath);
+
+		// Defense-in-depth: ensure resolved destination stays within workspace root.
+		// This complements the CLI-level validateDestPath() guard, mirroring the
+		// containment pattern in BunSymlinkCreator.
+		const rootWithSep = this.workspaceRoot.endsWith(path.sep)
+			? this.workspaceRoot
+			: `${this.workspaceRoot}${path.sep}`;
+		if (resolvedDest !== this.workspaceRoot && !resolvedDest.startsWith(rootWithSep)) {
+			return failure(
+				gitignoreWriteError(
+					resolvedDest,
+					`Destination path escapes workspace root: "${resolvedDest}" is outside "${this.workspaceRoot}"`,
+				),
+			);
+		}
 
 		// Resolve template file path
 		const templateFile = path.join(this.templatePath, "gitignore");
@@ -54,8 +78,8 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 		try {
 			const stat = await fsPromises.lstat(destGitignore);
 
-			if (stat.isDirectory() && this.verbose) {
-				// biome-ignore lint/suspicious/noConsole: verbose diagnostic output
+			if (stat.isDirectory()) {
+				// biome-ignore lint/suspicious/noConsole: diagnostic output for anomalous condition
 				console.warn(`[warn] Skipping .gitignore creation: ${destGitignore} is a real directory.`);
 			}
 
@@ -80,7 +104,7 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 			try {
 				await fsPromises.access(this.templatePath, fs.constants.F_OK);
 			} catch {
-				return failure(gitignoreTemplateNotFoundError(resolvedDest));
+				return failure(gitignoreTemplateNotFoundError(resolvedDest, this.templatePath));
 			}
 
 			const nodeErr = error as NodeJS.ErrnoException;

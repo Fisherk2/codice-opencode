@@ -462,6 +462,39 @@ describe("ProjectInstallUseCase", () => {
 			expect(calls.writeVersionFile.length).toBe(0);
 		});
 
+		it("should show warning but still succeed when gitignore creation fails", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const gitignoreCreator = createMockGitignoreCreator();
+			// Configure gitignore mock to return failure
+			(gitignoreCreator.createGitignore as ReturnType<typeof mockFn>).mockResolvedValue({
+				ok: false,
+				error: {
+					destPath: "/tmp/project",
+					message: "Failed to write .gitignore: Permission denied",
+					code: "WRITE_FAILED",
+				},
+			} as Result<void, GitignoreError>);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			// Gitignore failure should NOT cause the install to fail
+			expect(result.ok).toBe(true);
+			// Warning should have been shown about gitignore, including --verbose hint
+			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining(".gitignore"));
+			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining("--verbose"));
+		});
+
 		it("should handle version file write failure gracefully", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.writeVersionFile as ReturnType<typeof mockFn>).mockRejectedValue(

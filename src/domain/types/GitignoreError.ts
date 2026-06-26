@@ -32,11 +32,20 @@ export function gitignoreWriteError(destPath: string, message: string): Gitignor
 
 /**
  * Create a GitignoreError when the template gitignore file is not found.
+ *
+ * @param destPath - Destination path where .gitignore was being created.
+ * @param templatePath - Optional template path for diagnostic context.
  */
-export function gitignoreTemplateNotFoundError(destPath: string): GitignoreError {
+export function gitignoreTemplateNotFoundError(
+	destPath: string,
+	templatePath?: string,
+): GitignoreError {
+	const pathHint = templatePath
+		? ` at: ${templatePath}`
+		: `. Ensure the template directory contains 'gitignore' (no dot prefix).`;
 	return {
 		destPath,
-		message: `Template gitignore file not found. Ensure template/estandar/gitignore exists.`,
+		message: `Template gitignore file not found${pathHint}`,
 		code: "TEMPLATE_NOT_FOUND",
 	};
 }
