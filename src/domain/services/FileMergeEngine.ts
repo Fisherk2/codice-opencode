@@ -44,18 +44,16 @@ export class FileMergeEngine implements IFileMergeEngine {
 		const optionalPaths = rules
 			.filter((r) => r.category === "optional")
 			.map((r) => r.path);
-		const standardDirPaths = rules
-			.filter((r) => r.category === "standard" && r.isDirectory)
-			.map((r) => r.path);
-
 		// Phase 1: Stage all files
 		for (const rule of rules) {
 			const shouldStage = await this.shouldStage(rule, selected);
 			if (!shouldStage) continue;
 
-			// Compute exclusions for this rule
+			// Compute exclusions for standard directory rules only.
+			// Mandatory directories always overwrite everything — exclusions
+			// would contradict their "always copy" semantics.
 			let excludeSubDirs: Set<string> | undefined;
-			if (rule.isDirectory) {
+			if (rule.isDirectory && rule.category === "standard") {
 				// Check if any optional rule is a sub-path of this directory
 				const dirPrefix = `${rule.path}/`;
 				const overlappingOptionals = optionalPaths.filter((opt) =>

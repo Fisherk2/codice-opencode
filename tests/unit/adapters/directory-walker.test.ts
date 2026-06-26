@@ -106,4 +106,72 @@ describe("walkDirectory", () => {
 		const names = files.map((f) => path.basename(f)).sort();
 		expect(names).toEqual(["a.txt", "b.txt"]);
 	});
+
+	// ---------------------------------------------------------------------------
+	// Exclusion: excludeSubPaths parameter
+	// ---------------------------------------------------------------------------
+
+	test("excludes a named subdirectory when excludeSubPaths contains its name", async () => {
+		const dir = path.join(tmpDir, "excl-single");
+		const sub = path.join(dir, "excluded");
+		const keep = path.join(dir, "kept");
+		await fs.mkdir(sub, { recursive: true });
+		await fs.mkdir(keep, { recursive: true });
+		await fs.writeFile(path.join(dir, "root.txt"), "root");
+		await fs.writeFile(path.join(sub, "secret.txt"), "secret");
+		await fs.writeFile(path.join(keep, "visible.txt"), "visible");
+
+		const files = await walkDirectory(dir, false, new Set(["excluded"]));
+		const names = files.map((f) => path.basename(f)).sort();
+		expect(names).toEqual(["root.txt", "visible.txt"]);
+	});
+
+	test("excludes multiple subdirectories when excludeSubPaths contains several names", async () => {
+		const dir = path.join(tmpDir, "excl-multi");
+		await fs.mkdir(path.join(dir, "a"), { recursive: true });
+		await fs.mkdir(path.join(dir, "b"), { recursive: true });
+		await fs.mkdir(path.join(dir, "c"), { recursive: true });
+		await fs.writeFile(path.join(dir, "root.txt"), "root");
+		await fs.writeFile(path.join(dir, "a", "1.txt"), "a1");
+		await fs.writeFile(path.join(dir, "b", "2.txt"), "b2");
+		await fs.writeFile(path.join(dir, "c", "3.txt"), "c3");
+
+		const files = await walkDirectory(dir, false, new Set(["a", "b"]));
+		const names = files.map((f) => path.basename(f)).sort();
+		expect(names).toEqual(["3.txt", "root.txt"]);
+	});
+
+	test("returns all files when excludeSubPaths is empty", async () => {
+		const dir = path.join(tmpDir, "excl-empty");
+		await fs.mkdir(path.join(dir, "sub"), { recursive: true });
+		await fs.writeFile(path.join(dir, "root.txt"), "root");
+		await fs.writeFile(path.join(dir, "sub", "child.txt"), "child");
+
+		const files = await walkDirectory(dir, false, new Set());
+		const names = files.map((f) => path.basename(f)).sort();
+		expect(names).toEqual(["child.txt", "root.txt"]);
+	});
+
+	test("returns all files when excludeSubPaths is undefined (backward compat)", async () => {
+		const dir = path.join(tmpDir, "excl-undef");
+		await fs.mkdir(path.join(dir, "sub"), { recursive: true });
+		await fs.writeFile(path.join(dir, "root.txt"), "root");
+		await fs.writeFile(path.join(dir, "sub", "child.txt"), "child");
+
+		const files = await walkDirectory(dir, false, undefined);
+		const names = files.map((f) => path.basename(f)).sort();
+		expect(names).toEqual(["child.txt", "root.txt"]);
+	});
+
+	test("exclusion does not affect top-level files with similar names", async () => {
+		const dir = path.join(tmpDir, "excl-toplevel");
+		await fs.mkdir(path.join(dir, "docs"), { recursive: true });
+		await fs.writeFile(path.join(dir, "docs.txt"), "a file named docs");
+		await fs.writeFile(path.join(dir, "docs", "readme.md"), "inside docs dir");
+
+		// Excluding "docs" should only skip the directory, not the file
+		const files = await walkDirectory(dir, false, new Set(["docs"]));
+		const names = files.map((f) => path.basename(f));
+		expect(names).toEqual(["docs.txt"]);
+	});
 });
