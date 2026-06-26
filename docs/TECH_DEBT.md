@@ -1,9 +1,9 @@
-# Technical Debt — Códice v1.0.5
+# Technical Debt — Códice v1.0.9
 
-**Generated:** 2026-06-17
+**Generated:** 2026-06-26
 **Status:** Live reference for improvement planning
-**Coverage:** 97.66% functions / 96.52% lines (382 tests, 0 fail, 797 expects)
-**Notes:** v1.0.5 resolves 5 issues (#2, #3, #4, #5, #6) identified post-release plus 10 ship review observations (I1-I2, M1-M2, S1-S8). Two critical bugs (#6, #2) blocked core installation paths. This document tracks both resolved debt and newly discovered fragilities.
+**Coverage:** 97.66% functions / 96.52% lines (457 tests, 0 fail, 967 expects)
+**Notes:** v1.0.9 resolves Issue #11 (npm excludes .gitignore) via FEV-2-C: rename `.gitignore` → `gitignore` + post-installation generation using `IGitignoreCreator` port/adapter pattern. This document tracks both resolved debt and newly discovered fragilities.
 
 ---
 
@@ -116,6 +116,17 @@
 | **Risk** | Low. Current performance far exceeds thresholds (local install ~200ms, API query ~500ms with mock). Risk is regression if template size grows. |
 | **Recommendation** | Add `just bench` recipe with `hyperfine` or `bun:bench` when template grows > 10MB or file count > 200. |
 
+### 5.3 No Isolated Integration Test for npm Packaging
+
+| Item | Detail |
+|------|--------|
+| **Problem** | Current integration tests use the local `template/` directory, which masks packaging issues that only appear in the published npm tarball (`bunx @fisherk2-dev/codice`). Two critical issues (FEV-2-B: symlinks, FEV-2-C: gitignore) were only detected AFTER release because the local test environment differs from the npm package. |
+| **Proposed Solution (v1.1.0)** | Create an isolated integration test that: (1) builds the npm package with `bun pm pack`, (2) installs it in a temp directory, (3) runs the binary, (4) verifies template resolution, gitignore, and symlinks all work. |
+| **Why it matters** | FEV-2-B and FEV-2-C were both npm packaging bugs that no test caught before release. An isolated test would detect these BEFORE shipping. |
+| **Effort** | 4-6h for initial implementation. |
+| **Risk** | Medium. Current workaround is to validate manually with `bunx` before release, but this is error-prone. |
+| **Reference** | FEV-2-C plan (FE2C-T14), `docs/TECH_DEBT.md` section for v1.1.0 |
+
 ---
 
 ## 6. Resolved in v1.0.5
@@ -185,30 +196,26 @@
 | **Verification** | `bun test`: 382 pass / 0 fail, `just check`: clean, E2E: 6/6 |
 | **Status** | ✅ All 10 observations resolved in v1.0.5 |
 
----
-
-## 7. Known Issues (v1.0.8)
-
-### 7.1 Issue #11 — npm Excludes .gitignore from Package (CRITICAL)
+### 6.7 Issue #11 — npm Excludes .gitignore from Package (CRITICAL, resolved in v1.0.9)
 
 | Item | Detail |
 |------|--------|
-| **Problem** | `bunx @fisherk2-dev/codice` fails with `Template file not found: .gitignore` in all 3 install modes (Clean, Project, Update) |
-| **Root Cause** | npm has hardcoded behavior that excludes `.gitignore` files from packages, even when listed in the `files` field of `package.json`. The file `template/estandar/.gitignore` (2930 bytes) exists in the repository but is not included in the published npm tarball. |
-| **Evidence** | `npm pack --dry-run 2>&1 | grep gitignore` returns no output, while `template/estandar/.gitignore` exists locally |
-| **Affected Files** | 1. `template/estandar/.gitignore` (standard) — **fails**<br>2. `template/obligatorio/.opencode/.gitignore` (inside obligatorio dir) — works<br>3. `template/obligatorio/skills/ui-ux-design-pro/cli/.gitignore` (inside skill) — works |
-| **Pattern** | Same as FEV-2-B (symlinks): npm packaging issue, not code issue. FEV-2-B: npm resolves symlinks → files missing from tarball. FEV-2-C: npm excludes `.gitignore` → files missing from tarball. |
-| **Resolution** | Rename `template/estandar/.gitignore` → `template/estandar/gitignore` and generate `.gitignore` post-installation (same pattern as FEV-2-B symlinks). Create `IGitignoreCreator` port + `BunGitignoreCreator` adapter. |
-| **Status** | 🟡 Planned for v1.0.9 (FEV-2-C) |
-| **Risk** | Critical — blocks all 3 installation modes when using `bunx @fisherk2-dev/codice` |
+| **Problem** | `bunx @fisherk2-dev/codice` failed with `Template file not found: .gitignore` in all 3 install modes (Clean, Project, Update). |
+| **Root Cause** | npm has hardcoded behavior that excludes `.gitignore` files from packages, even when listed in the `files` field of `package.json`. The file existed locally (2930 bytes) but was not in the published tarball. |
+| **Evidence** | `npm pack --dry-run 2>&1 | grep gitignore` returned no output. |
+| **Resolution** | Renamed `template/estandar/.gitignore` → `template/estandar/gitignore` (no dot prefix) and generate `.gitignore` post-installation via `BunGitignoreCreator` (same pattern as FEV-2-B symlinks). Created `IGitignoreCreator` port + `BunGitignoreCreator` adapter. |
+| **Files Changed** | `template/estandar/gitignore` (renamed), `FileRuleManifestData.ts` (removed entry), `IGitignoreCreator.ts`, `GitignoreError.ts`, `BunGitignoreCreator.ts`, `CleanInstallUseCase.ts`, `ProjectInstallUseCase.ts`, `container.ts`, 4 test files, 2 E2E scripts |
+| **Status** | ✅ Fixed in v1.0.9 |
+| **Verification** | `bun test`: 457 pass / 0 fail, `just check`: clean, E2E: 12/12 |
 
 ---
 
-## 8. Summary & Prioritization
+## 7. Summary & Prioritization
 
 ### Planned (v1.1.0)
 | Item | Effort | Impact |
 |------|--------|--------|
+| Isolated integration test for npm packaging (simulate `bunx` from temp dir) | 6h | Catches packaging bugs before release |
 | Integration tests for `main.ts` | 4h | Coverage 33% → 95% lines |
 | Explicit constructors in `VersionComparator` + `ClackPromptsAdapter` | 15min | Silence coverage artifact |
 | TypeScript 6.x upgrade | 2h | Modern TS features |
