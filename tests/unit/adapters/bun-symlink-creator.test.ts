@@ -18,6 +18,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { SymlinkSpec } from "../../../src/application/ports/ISymlinkCreator";
+import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
 
 // Use dynamic import so tests exercise module loading from source
 const modulePath = "../../../src/infrastructure/adapters/BunSymlinkCreator";
@@ -296,9 +297,8 @@ describe("BunSymlinkCreator — batch createSymlinks", () => {
 		if (!result.ok) {
 			expect(result.error).toHaveLength(3);
 			// All errors have linkPaths matching their spec
-			for (let i = 0; i < 3; i++) {
-				const err = result.error[i] as SymlinkError;
-				expect(err.linkPath).toBe(specs[i].linkPath);
+			for (let i = 0; i < result.error.length; i++) {
+				expect(result.error[i]!.linkPath).toBe(specs[i]!.linkPath);
 			}
 		}
 	});
