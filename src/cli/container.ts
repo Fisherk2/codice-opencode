@@ -5,6 +5,7 @@
  * into a single Dependencies object.
  */
 
+import * as path from "node:path";
 import type { IUserPrompt } from "../application/ports/IUserPrompt";
 import { CleanInstallUseCase } from "../application/use-cases/CleanInstallUseCase";
 import { ProjectInstallUseCase } from "../application/use-cases/ProjectInstallUseCase";
@@ -13,9 +14,11 @@ import type { IFileSystem } from "../domain/ports/IFileSystem";
 import { FileMergeEngine } from "../domain/services/FileMergeEngine";
 import { VersionComparator } from "../domain/services/VersionComparator";
 import { BunFileSystem } from "../infrastructure/adapters/BunFileSystem";
+import { BunGitignoreCreator } from "../infrastructure/adapters/BunGitignoreCreator";
 import { BunSymlinkCreator } from "../infrastructure/adapters/BunSymlinkCreator";
 import { ClackPromptsAdapter } from "../infrastructure/adapters/ClackPromptsAdapter";
 import { GitHubRestClient } from "../infrastructure/adapters/GitHubRestClient";
+import { TemplateResolver } from "../infrastructure/adapters/TemplateResolver";
 import { DEVIN_SYMLINKS, OPENCODE_SYMLINKS } from "../infrastructure/config/symlinks";
 
 // ---------------------------------------------------------------------------
@@ -46,9 +49,10 @@ export interface Dependencies {
  * Creates adapters, domain services, and use cases.
  *
  * @param destinationPath - Target directory for installation (default: cwd).
+ * @param verbose - Enable verbose logging to stderr.
  * @returns Wired Dependencies container.
  */
-export function createDependencies(destinationPath?: string): Dependencies {
+export function createDependencies(destinationPath?: string, verbose?: boolean): Dependencies {
 	const fileSystem = new BunFileSystem(undefined, destinationPath);
 	const gitHubClient = new GitHubRestClient();
 	const userPrompt = new ClackPromptsAdapter();
@@ -56,8 +60,15 @@ export function createDependencies(destinationPath?: string): Dependencies {
 	const versionComparator = new VersionComparator();
 	// Clean install copies everything including optional .devin/ → all 10 symlinks
 	const destRoot = destinationPath ?? process.cwd();
-	const symlinkCreator = new BunSymlinkCreator(destRoot);
+	const symlinkCreator = new BunSymlinkCreator(destRoot, verbose);
 	const allSymlinks = [...OPENCODE_SYMLINKS, ...DEVIN_SYMLINKS];
+
+	// Gitignore is generated post-installation because npm excludes .gitignore
+	// from packages (Issue #11). Template path resolves to template/estandar/
+	// where the renamed 'gitignore' file lives (no dot prefix).
+	const templateRoot = TemplateResolver.detectTemplateRoot();
+	const templateEstandarDir = path.join(templateRoot, "estandar");
+	const gitignoreCreator = new BunGitignoreCreator(destRoot, templateEstandarDir, verbose);
 
 	const cleanInstall = new CleanInstallUseCase(
 		fileSystem,
@@ -65,6 +76,7 @@ export function createDependencies(destinationPath?: string): Dependencies {
 		userPrompt,
 		symlinkCreator,
 		allSymlinks,
+		gitignoreCreator,
 	);
 	const projectInstall = new ProjectInstallUseCase(
 		fileSystem,
@@ -73,6 +85,7 @@ export function createDependencies(destinationPath?: string): Dependencies {
 		symlinkCreator,
 		OPENCODE_SYMLINKS,
 		DEVIN_SYMLINKS,
+		gitignoreCreator,
 	);
 	const updateWorkspace = new UpdateWorkspaceUseCase(
 		fileSystem,

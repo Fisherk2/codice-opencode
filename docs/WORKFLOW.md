@@ -18,6 +18,7 @@
 | FEV-1 | Resolución de Issues Críticos (v1.0.5) | Issues #6, #2, #3, #4, #5 + Ship review fixes | ✅ Completo |
 | FEV-2 | Resolución de Issues Críticos (v1.0.6) | Issue #8 (bunx template resolution) | ✅ Completo |
 | FEV-2-B | Symlink post-install generation + review fixes | Issue #8 (symlink packaging root cause) | ✅ Completo |
+| FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -529,7 +530,7 @@ Usar rutas relativas correctas: `../obligatorio/skills/xlsx/SKILL.md` en vez de 
 
 ### Fase FEV-2 — Resolución de Issues Críticos (v1.0.6)
 
-**Fecha:** 2026-06-25 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En curso
+**Fecha:** 2026-06-25 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completo
 
 #### Contexto
 
@@ -537,7 +538,7 @@ Inmediatamente después del release de v1.0.5, se reportó la **Issue #8**: `bun
 
 | ID | Título | Severidad | Estado |
 |----|--------|-----------|--------|
-| #8 | Error de instalación del workspace | 🔴 Crítico | 🟡 En curso |
+| #8 | Error de instalación del workspace | 🔴 Crítico | ✅ Resuelto |
 
 #### Diagnóstico Técnico
 
@@ -686,6 +687,127 @@ Tras el release de v1.0.6, se identificó que la Issue #8 tenía una causa raíz
 - [x] Code review: 0 Critical, 0 Important abiertos (10/10 resueltos)
 - [x] Coverage sin pérdida (≥97.66% funciones, ≥96.52% líneas)
 
+---
+
+### Fase FEV-2-C — Gitignore Post-Install Generation
+
+**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completo
+
+#### Contexto
+
+Tras el release de v1.0.8, se identificó la **Issue #11**: `bunx @fisherk2-dev/codice` falla con `Template file not found: .gitignore` en los tres modos de instalación (Clean, Project, Update).
+
+El problema es similar a FEV-2-B (symlinks): npm excluye archivos `.gitignore` del paquete por defecto, incluso cuando están en el campo `files` de `package.json`. Esto causa que el `TemplateResolver` no encuentre el archivo en el tarball publicado.
+
+| ID | Título | Severidad | Estado |
+|----|--------|-----------|--------|
+| #11 | npm excluye archivos .gitignore del paquete | 🔴 Crítico | ✅ Resuelto |
+
+#### Diagnóstico Técnico
+
+**Síntoma:** Al ejecutar `bunx @fisherk2-dev/codice`, el CLI muestra:
+
+```
+❌ Template file not found: .gitignore. Ensure the template directory contains the file under obligatorio/, estandar/, or opcional/.
+```
+
+**Causa raíz:** npm tiene un comportamiento especial con archivos `.gitignore`: los excluye del paquete por defecto. El archivo `template/estandar/.gitignore` existe en el repositorio (2930 bytes), pero no se incluye en el tarball publicado.
+
+**Evidencia:**
+```bash
+# El archivo existe en el repositorio
+$ ls -la template/estandar/.gitignore
+-rw-r--r-- 1 fisherk2 fisherk2 2930 Jun 16 13:36 template/estandar/.gitignore
+
+# PERO no aparece en el paquete npm
+$ npm pack --dry-run 2>&1 | grep gitignore
+(no output)
+
+# El manifest lo incluye
+$ grep -n "gitignore" src/domain/entities/FileRuleManifestData.ts
+116:    path: ".gitignore",
+```
+
+**Archivos afectados:**
+1. `template/estandar/.gitignore` (categoría: standard) — **falla**
+2. `template/obligatorio/.opencode/.gitignore` (dentro de directorio obligatorio) — funciona
+3. `template/obligatorio/skills/ui-ux-design-pro/cli/.gitignore` (dentro de skill) — funciona
+
+#### Solución Propuesta
+
+**Opción A: Renombrar archivos `.gitignore` a `gitignore` (Recomendada)**
+
+Renombrar `template/estandar/.gitignore` a `template/estandar/gitignore` y generar el archivo `.gitignore` post-instalación (similar a como generamos symlinks en FEV-2-B).
+
+**Ventajas:**
+- ✅ Solución probada (patrón FEV-2-B)
+- ✅ No requiere cambios en `package.json`
+- ✅ Mantiene el control sobre el contenido del archivo
+- ✅ Permite personalización post-instalación
+
+**Desventajas:**
+- ⚠️ Requiere crear un nuevo port/adapter (similar a `ISymlinkCreator`)
+- ⚠️ Añade complejidad al código
+
+**Implementación:**
+1. Renombrar `template/estandar/.gitignore` → `template/estandar/gitignore`
+2. Crear port `IGitignoreCreator` con método `createGitignore(destPath: string)`
+3. Crear adapter `BunGitignoreCreator` que:
+   - Lee `template/estandar/gitignore`
+   - Copia el contenido a `destPath/.gitignore`
+   - Es idempotente (no sobrescribe si ya existe)
+4. Integrar en `CleanInstallUseCase` y `ProjectInstallUseCase`
+5. Eliminar entrada `.gitignore` del manifest (categoría: standard)
+6. Añadir tests unitarios e integración
+
+**Esfuerzo estimado:** 4-6 horas
+
+#### Plan de Implementación
+
+| ID | Descripción | Commit | Estado |
+|----|-------------|--------|--------|
+| T0 | Test RED con estructura del paquete npm | `2f5a73b` | ✅ Completo |
+| T1 | Renombrar `template/estandar/.gitignore` → `template/estandar/gitignore` | `2f5a73b` | ✅ Completo |
+| T2 | Crear `IGitignoreCreator` port en `src/application/ports/` | `2f5a73b` | ✅ Completo |
+| T3 | Crear `BunGitignoreCreator` adapter en `src/infrastructure/adapters/` | `2f5a73b` | ✅ Completo |
+| T4 | Crear `GitignoreError` type en `src/domain/types/` | `2f5a73b` | ✅ Completo |
+| T5 | Eliminar entrada `.gitignore` de `FileRuleManifestData.ts` | `2f5a73b` | ✅ Completo |
+| T6 | Integrar `IGitignoreCreator` en `CleanInstallUseCase` | `2f5a73b` | ✅ Completo |
+| T7 | Integrar `IGitignoreCreator` en `ProjectInstallUseCase` | `2f5a73b` | ✅ Completo |
+| T8 | Tests unitarios: `BunGitignoreCreator` (idempotencia, errores) | `2f5a73b` | ✅ Completo |
+| T9 | Tests unitarios: `CleanInstallUseCase` + gitignore | `2f5a73b` | ✅ Completo |
+| T10 | Tests unitarios: `ProjectInstallUseCase` + gitignore | `2f5a73b` | ✅ Completo |
+| T11 | Tests E2E: gitignore existe post-instalación limpia | `2f5a73b` | ✅ Completo |
+| T12 | Tests E2E: gitignore no se sobrescribe en Project Install | `2f5a73b` | ✅ Completo |
+| T13 | ADR-009 documentado en `specs/adr/` | `2f5a73b` | ✅ Completo |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.8 (antes) | v1.0.9 (final) |
+|---------|-----------------|----------------|
+| Tests (pass/fail) | 446 / 0 | 465 / 0 |
+| Expects | 967 | 986 |
+| Coverage (funciones) | 97.66% | 97.66% |
+| Coverage (líneas) | 96.52% | 96.52% |
+| E2E escenarios | 10/10 | 12/12 |
+| `just check` errores | 0 | 0 |
+| Issues críticos abiertos | 1 (#11) | 0 |
+| Ship review findings | — | 0 Critical, 0 Important (2 rounds GO) |
+
+**Criterios de completitud (DoD FEV-2-C):**
+- [x] Issue #11 resuelto: `bunx @fisherk2-dev/codice` funciona en los tres modos
+- [x] Archivo `.gitignore` se genera post-instalación en Clean Install y Project Install
+- [x] NO se genera en Update Workspace (preserva personalizaciones del usuario)
+- [x] `npm pack --dry-run` incluye `gitignore` (sin punto)
+- [x] `bun test`: sin regresión (465 pass, 0 fail, 986 expects)
+- [x] `just check`: 0 errores
+- [x] E2E: 12/12 pasando
+- [x] ADR-009 documentado
+- [x] CHANGELOG actualizado con sección v1.0.9
+- [x] Ship review: 0 Critical findings → GO decision (2 rounds)
+
+---
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -697,8 +819,8 @@ Tras el release de v1.0.6, se identificó que la Issue #8 tenía una causa raíz
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 382 tests, 0 fail, 797 expects
-- **Tests E2E:** 8/8 pasando
+- **Tests unit+int:** 465 tests, 0 fail, 986 expects
+- **Tests E2E:** 12/12 pasando (10 existentes + 2 gitignore)
 - **Coverage:** 97.66% funciones / 96.52% líneas
 - **Domain coverage:** 100% líneas
 - **`just check`:** 0 errores
