@@ -1,48 +1,79 @@
-# Plan: Fase FEV-2-B — Resolución de Symlinks Rotos + Generación Post-Install (v1.0.7)
+# Plan: Fase FEV-2-C — Resolución de `.gitignore` Excluido por npm + Tech Debt: Test Aislado (v1.0.9)
 
 **Fecha:** 2026-06-26 | **Autor:** Moctezuma (Planner Agent) | **Estado:** 🟡 Plan Aprobado
-**Versión objetivo:** v1.0.7
-**Issue principal:** Bug residual post-v1.0.6 — symlinks no preservados por npm
+**Versión objetivo:** v1.0.9
+**Issue principal:** Issue #11 — npm excluye archivos `.gitignore` del paquete
+**Tech Debt (v1.1.0):** Test de integración aislado que simule `bunx` desde directorio temporal
 
 ---
 
 ## Overview
 
-Tras el release de v1.0.6, el usuario reporta que `bunx @fisherk2-dev/codice@latest` aún falla con `Template file not found: .opencode/agents` en los tres modos (Clean, Project, Update).
+Tras el release de v1.0.8, se identificó la **Issue #11**: `bunx @fisherk2-dev/codice@latest` falla con `Template file not found: .gitignore` en los tres modos de instalación (Clean, Project, Update).
 
-**Causa raíz:** El template local tiene 3 symlinks en `template/obligatorio/.opencode/`:
-- `.opencode/agents` → `../agents` (directorio real con 103 archivos .md)
-- `.opencode/commands` → `../commands/`
-- `.opencode/skills` → `../skills/`
+**Causa raíz:** npm tiene un comportamiento hardcoded que **excluye archivos `.gitignore` del paquete por defecto**, incluso cuando están listados en el campo `files` de `package.json`. El archivo `template/estandar/.gitignore` (2930 bytes) existe en el repositorio, pero no se incluye en el tarball publicado.
 
-npm **resuelve (dereference) symlinks al empaquetar el tarball**, por lo que estos 3 paths no existen en el paquete publicado. El manifiesto (`FileRuleManifestData.ts`) lista los 3 paths como obligatorios, y `TemplateResolver.resolvePath()` falla porque `fs.existsSync()` retorna `false` en todas las categorías.
+```bash
+# El archivo existe localmente
+$ ls -la template/estandar/.gitignore
+-rw-r--r-- 1 fisherk2 fisherk2 2930 Jun 16 13:36 template/estandar/.gitignore
+
+# PERO no aparece en el paquete npm
+$ npm pack --dry-run 2>&1 | grep gitignore
+(no output)
+```
+
+**Patrón identificado:** Es el mismo problema que FEV-2-B resolvió con symlinks:
+- **FEV-2-B:** npm resuelve symlinks → archivos no existen en el tarball
+- **FEV-2-C:** npm excluye `.gitignore` → archivos no existen en el tarball
 
 **Decisión del usuario (2026-06-26):**
-- **Enfoque dual:**
-  1. **Eliminar las 3 entradas** del manifiesto (fixea el bug — los archivos reales ya están en `agents/`, `commands/`, `skills/` a nivel raíz).
-  2. **Generar symlinks post-instalación** (recrea la estructura del dev workspace en el destino del usuario, manteniendo `.opencode/agents → ../agents` funcional).
-- **Versión:** v1.0.7 (npm no permite republicar 1.0.6)
-- **Razón:** Combina la solución mínima del bug con la mejora de UX (workspace final idéntico al dev).
+- **Opción 1 (Recomendada):** Renombrar `template/estandar/.gitignore` → `template/estandar/gitignore` y generar `.gitignore` post-instalación (mismo patrón que FEV-2-B para symlinks).
+- **Tech Debt adicional (v1.1.0):** Actualizar `docs/TECH_DEBT.md` para documentar la necesidad de un test de integración aislado que simule `bunx` desde un directorio temporal. Esto evitará futuros bugs de empaquetado que no se detectan con `just dev` (que usa el `template/` local).
+- **Versión:** v1.0.9 (no se puede republicar v1.0.8).
 
-**Objetivo:** Publicar v1.0.7 que funcione correctamente con `bunx` en los 3 modos, sin regresión, con estructura de workspace equivalente al dev, y cerrar el issue residual.
+**Objetivo:** Publicar v1.0.9 que funcione correctamente con `bunx` en los 3 modos, sin regresión, con `.gitignore` generado post-instalación, y dejar documentado el test aislado para v1.1.0.
 
 ---
 
-## Arquitectura de Decisiones (ADR-009)
+## Arquitectura de Decisiones (ADR)
 
 | Decisión | Rationale |
 |----------|-----------|
-| **ADR-FEV2B-1**: Eliminar 3 entradas del manifiesto (`.opencode/agents`, `.opencode/commands`, `.opencode/skills`) | Los symlinks no existen en el tarball de npm. La raíz `agents/`, `commands/`, `skills/` ya cubre la copia de archivos. `opencode.json` no referencia paths explícitos, solo nombres de agentes. |
-| **ADR-FEV2B-2**: NO reemplazar symlinks con directorios reales | Duplica 100+ archivos. El workspace instalado no necesita `.opencode/agents/` como directorio separado — la convención es que opencode busca agentes en `agents/` a nivel raíz. |
-| **ADR-FEV2B-3**: Generar symlinks post-instalación como parte del instalador | El usuario quiere preservar la estructura del dev workspace. El instalador crea symlinks relativos en el destino: `.opencode/agents → ../agents`, `.opencode/commands → ../commands/`, `.opencode/skills → ../skills/`. Bun soporta `fs.symlink()` cross-platform. |
-| **ADR-FEV2B-4**: Versión 1.0.7 (no parche sobre 1.0.6) | npm rechaza republicar la misma versión. Es un patch fix → 1.0.7 es correcto semánticamente. |
-| **ADR-FEV2B-5**: Mantener branch `fix/symlinks-template-paths` | El branch anterior `fix/no-install-issue` tenía 11 commits ya squash-mergeados en main. Se eliminó (local + prune) y se creó uno limpio desde main. |
-| **ADR-FEV2B-6**: Actualizar test de completitud para validar solo paths reales del tarball | El test `file-rule-manifest.test.ts` debe verificar que cada path del manifiesto existe en el paquete npm (simulando la estructura post-resolución de symlinks), no en el dev local. |
-| **ADR-FEV2B-7**: SymlinkGenerator como adapter de infraestructura | Sigue Clean Architecture: puerto `ISymlinkCreator` en `application/ports/`, adaptador `BunSymlinkCreator` en `infrastructure/adapters/`. Aislable, mockeable en tests. |
-| **ADR-FEV2B-8**: Symlinks solo en Clean Install y Project Install (no en Update) | Update Workspace preserva estructura existente. Si el usuario borró `.opencode/agents`, no debe restaurarse en update — solo en install inicial. |
-| **ADR-FEV2B-9**: Symlinks idempotentes | Si el symlink ya existe (install previo), no se sobreescribe ni se reemplaza. Si el destino es un directorio real (usuario lo convirtió), se omite con warning. |
-| **ADR-FEV2B-10**: Generar symlinks para `.devin/` si el usuario seleccionó `.devin` | `template/opcional/.devin/` tiene 7 symlinks: 2 a nivel directorio (`.devin/skills → ../skills`, `.devin/workflows → ../commands/`) y 5 dentro de `.devin/rules/` apuntando a `docs/`, `CONTRIBUTING.md`, y 3 archivos de `skills/`. Si el usuario NO selecciona `.devin` en Project Install, no se generan sus symlinks. **Nota:** el path del manifiesto cambia de `.devin/rules` a `.devin` para reflejar la copia completa del directorio (UX más claro). |
-| **ADR-FEV2B-11**: Cambiar path del manifiesto de `.devin/rules` a `.devin` (UX) | El path actual `.devin/rules` es engañoso: el usuario ve solo "rules" en la TUI pero hay 2 symlinks hermanos (`.devin/skills`, `.devin/workflows`) y 5 symlinks dentro de `.devin/rules/`. Cambiar a `.devin` refleja la copia completa del directorio, elimina confusión, y agrupa toda la configuración de Devin como una sola unidad opcional. |
+| **ADR-FEV2C-1**: Renombrar `.gitignore` → `gitignore` + generar post-instalación | npm excluye `.gitignore` por hardcoded behavior. Renombrar evita la exclusión. La generación post-install es el mismo patrón que FEV-2-B (symlinks) — probado y robusto. |
+| **ADR-FEV2C-2**: Generar `.gitignore` solo en Clean Install y Project Install (NO en Update) | Update Workspace preserva estructura existente. Si el usuario ya tiene un `.gitignore` personalizado, NO debe sobrescribirse. Mismo principio que FEV-2-B (symlinks solo en install inicial). |
+| **ADR-FEV2C-3**: Generación idempotente (skip si ya existe) | Si el usuario tiene un `.gitignore` preexistente, se respeta. No hay rollback. Si la generación falla, se muestra warning pero NO se aborta la instalación. |
+| **ADR-FEV2C-4**: Usar port `IGitignoreCreator` + adapter `BunGitignoreCreator` (Clean Architecture) | Sigue el mismo patrón que `ISymlinkCreator` (FEV-2-B). Aislable, mockeable en tests, y mantiene la separación de capas (application no depende de infra). |
+| **ADR-FEV2C-5**: Crear type `GitignoreError` en domain | Coherencia con `SymlinkError` (FEV-2-B). Errores tipados explícitamente para que los use cases puedan manejarlos sin acoplarse a `fs` de Node/Bun. |
+| **ADR-FEV2C-6**: Eliminar entrada `.gitignore` de `FileRuleManifestData` | La entrada del manifest hace que `TemplateResolver.resolvePath()` falle porque el archivo NO existe en el tarball. Al eliminarla, el manifest coincide con la realidad del paquete npm. |
+| **ADR-FEV2C-7**: Bump a v1.0.9 (no parche sobre v1.0.8) | npm rechaza republicar la misma versión. v1.0.8 ya está publicado con el bug. Es un patch fix → v1.0.9 es correcto semánticamente. |
+| **ADR-FEV2C-8**: Eliminar entrada de `.gitignore` del test de completitud | El test `file-rule-manifest.test.ts` cuenta archivos reales en `template/`. Al renombrar `.gitignore` → `gitignore`, el conteo cambia. El test debe actualizarse para excluir el archivo renombrado (ahora no es `.gitignore` real, es un asset para post-install). |
+| **ADR-FEV2C-9**: Actualizar `docs/TECH_DEBT.md` con deuda del test aislado (v1.1.0) | El test de integración actual (`TemplateResolver.test.ts`) usa `template/` local. Esto oculta bugs de empaquetado que solo aparecen en `bunx`. v1.1.0 añadirá un test que simule `bunx` desde directorio temporal aislado. |
+| **ADR-FEV2C-10**: Generar `.gitignore` ANTES de los symlinks en el flujo de Clean Install | Orden de operaciones: file merge → gitignore generation → symlink generation. Razón: si symlinks fallan, el `.gitignore` ya está en su sitio (atomicidad del archivo crítico). |
+
+---
+
+## Dependency Graph
+
+```mermaid
+graph TD
+    FE2C-T0[Test RED estructura npm] --> FE2C-T1[Renombrar .gitignore → gitignore]
+    FE2C-T1 --> FE2C-T2[Update FileRuleManifestData]
+    FE2C-T2 --> FE2C-T3[Create IGitignoreCreator port]
+    FE2C-T2 --> FE2C-T4[Create GitignoreError type]
+    FE2C-T3 --> FE2C-T5[Test RED BunGitignoreCreator]
+    FE2C-T4 --> FE2C-T5
+    FE2C-T5 --> FE2C-T6[Implement BunGitignoreCreator]
+    FE2C-T6 --> FE2C-T7[Integrate in CleanInstallUseCase]
+    FE2C-T6 --> FE2C-T8[Integrate in ProjectInstallUseCase]
+    FE2C-T8 --> FE2C-T9[Test E2E gitignore]
+    FE2C-T9 --> FE2C-T10[Verify full suite]
+    FE2C-T8 --> FE2C-T10
+    FE2C-T10 --> FE2C-T11[Bump version 1.0.9]
+    FE2C-T11 --> FE2C-T12[Update CHANGELOG]
+    FE2C-T12 --> FE2C-T13[Commit + PR + Tag + Release]
+    FE2C-T13 --> FE2C-T14[Update TECH_DEBT.md isolated test]
+```
 
 ---
 
@@ -50,8 +81,8 @@ npm **resuelve (dereference) symlinks al empaquetar el tarball**, por lo que est
 
 ### Phase 1: Diagnóstico RED (Bloqueante)
 
-#### Task FEV2B-T0: Test RED que reproduce el fallo con symlinks
-**Descripción:** Test que simule la estructura del paquete npm (sin symlinks) y verifique que `resolvePath(".opencode/agents")` falla con el manifiesto actual. El test debe ser RED con el código actual.
+#### Task FE2C-T0: Test RED con estructura del paquete npm
+**Descripción:** Test que simula la estructura del paquete npm (sin `.gitignore`) y verifica que `resolvePath(".gitignore")` falla con el manifiesto actual. El test debe ser RED con el código actual.
 
 **Criterios de Aceptación:**
 - [ ] Test crea directorio temporal con estructura:
@@ -59,18 +90,26 @@ npm **resuelve (dereference) symlinks al empaquetar el tarball**, por lo que est
   tmp/
   ├── template/
   │   ├── obligatorio/
-  │   │   ├── agents/        (real dir)
-  │   │   ├── commands/      (real dir)
-  │   │   ├── skills/        (real dir)
+  │   │   ├── agents/
+  │   │   ├── commands/
+  │   │   ├── skills/
   │   │   └── .opencode/
-  │   │       └── plugins/   (solo esto, sin agents/commands/skills)
+  │   │       └── plugins/
+  │   ├── estandar/
+  │   │   ├── README.md
+  │   │   ├── CHANGELOG.md
+  │   │   ├── docs/
+  │   │   ├── specs/
+  │   │   ├── tasks/
+  │   │   └── LICENSE
+  │   │   (SIN .gitignore — porque npm lo excluye)
   │   └── opcional/
   ```
-- [ ] Test invoca `TemplateResolver.resolvePath(".opencode/agents")` y espera throw.
+- [ ] Test invoca `TemplateResolver.resolvePath(".gitignore")` y espera throw con `TemplateNotFoundError`.
 - [ ] Test es RED con código actual (la entrada existe en el manifiesto).
 
 **Verificación:**
-- [ ] `bun test tests/integration/TemplateResolver.test.ts` — el test falla con error "Template file not found: .opencode/agents".
+- [ ] `bun test tests/integration/TemplateResolver.test.ts` — el test falla con error "Template file not found: .gitignore".
 
 **Dependencias:** Ninguna.
 **Archivos:**
@@ -80,47 +119,68 @@ npm **resuelve (dereference) symlinks al empaquetar el tarball**, por lo que est
 
 ---
 
-### Phase 2: Fix del Manifiesto
+### Phase 2: Fix del Template
 
-#### Task FEV2B-T1: Eliminar 3 entradas de symlinks del manifiesto
-**Descripción:** Remover de `FileRuleManifestData.ts` las entradas para `.opencode/agents`, `.opencode/commands`, `.opencode/skills`. Estas referencian symlinks que no existen en el paquete npm.
+#### Task FE2C-T1: Renombrar `template/estandar/.gitignore` → `template/estandar/gitignore`
+**Descripción:** Renombrar el archivo `.gitignore` a `gitignore` (sin punto) para evitar la exclusión automática de npm.
 
 **Criterios de Aceptación:**
-- [ ] 3 entradas eliminadas de la sección OBLIGATORIO del `FILE_RULE_MANIFEST`.
-- [ ] Entrada `.devin/rules` cambiada a `.devin` (per ADR-FEV2B-11, mejor UX).
-- [ ] Total mandatory: 11 → 8.
-- [ ] Total general: 35 → 32.
-- [ ] Comentario explicativo añadido referenciando el ADR-009.
-- [ ] Test FEV2B-T0 ahora pasa (GREEN).
+- [ ] Archivo `template/estandar/.gitignore` renombrado a `template/estandar/gitignore`.
+- [ ] Contenido idéntico al original (2930 bytes).
+- [ ] Test FE2C-T0 ahora muestra que `gitignore` SÍ existe en la estructura npm simulada.
+- [ ] `git status` muestra el rename correctamente.
+
+**Verificación:**
+- [ ] `ls -la template/estandar/gitignore` — archivo existe.
+- [ ] `ls template/estandar/.gitignore` — archivo NO existe.
+- [ ] `npm pack --dry-run 2>&1 | grep gitignore` — ahora aparece `template/estandar/gitignore`.
+
+**Dependencias:** FE2C-T0.
+**Archivos:**
+- `template/estandar/.gitignore` (eliminado).
+- `template/estandar/gitignore` (nuevo, contenido idéntico).
+
+**Scope:** XS (5min).
+
+---
+
+#### Task FE2C-T2: Eliminar entrada `.gitignore` de `FileRuleManifestData.ts`
+**Descripción:** Remover la entrada para `.gitignore` del `FILE_RULE_MANIFEST`. La generación post-instalación se encarga de crear el archivo `.gitignore` en el destino del usuario.
+
+**Criterios de Aceptación:**
+- [ ] 1 entrada eliminada de la sección ESTANDAR del `FILE_RULE_MANIFEST`.
+- [ ] Comentario explicativo añadido referenciando el ADR-FEV2C-6 y mencionando que se genera post-instalación.
+- [ ] Total standard: 12 → 11.
+- [ ] Total general: 32 → 31.
+- [ ] Test FE2C-T0 ahora pasa (GREEN) — el manifiesto ya no referencia `.gitignore`.
 
 **Verificación:**
 - [ ] `bun test tests/integration/TemplateResolver.test.ts` — todos pasan.
+- [ ] `grep -n "gitignore" src/domain/entities/FileRuleManifestData.ts` — solo aparece el comentario explicativo, no la entrada del path.
 - [ ] `just check` — 0 errores.
 
-**Dependencias:** FEV2B-T0.
+**Dependencias:** FE2C-T1.
 **Archivos:**
-- `src/domain/entities/FileRuleManifestData.ts` (3 entradas eliminadas + comment).
+- `src/domain/entities/FileRuleManifestData.ts` (1 entrada eliminada + comment).
 
 **Scope:** XS (15min).
 
 ---
 
-### Phase 3: Tests de Completitud Actualizados
-
-#### Task FEV2B-T2: Actualizar test de completitud del manifiesto
-**Descripción:** El test `file-rule-manifest.test.ts` cuenta archivos en `template/<categoría>/` y verifica que el manifest tenga al menos esa cantidad. Debe actualizarse para excluir los symlinks `.opencode/{agents,commands,skills}` del conteo de `obligatorio/` (porque no existen en el tarball de npm).
+#### Task FE2C-T2.5: Actualizar test de completitud `file-rule-manifest.test.ts`
+**Descripción:** El test cuenta archivos en `template/estandar/` y verifica que el manifest tenga al menos esa cantidad. Debe actualizarse para excluir `gitignore` del conteo (ahora es un asset para post-install, no un archivo de plantilla).
 
 **Criterios de Aceptación:**
-- [ ] Test modificado para filtrar symlinks al contar archivos en `obligatorio/`.
-- [ ] Conteo esperado: 8 mandatory (después del fix), 11 standard, 13 optional.
-- [ ] Test verifica que las entradas eliminadas NO existen en el manifiesto.
-- [ ] Test sigue detectando cuando se añaden archivos al dir sin actualizar el manifest (regression guard).
+- [ ] Test modificado para excluir `gitignore` (sin punto) del conteo de `estandar/`.
+- [ ] Conteo esperado: 8 mandatory, 11 standard (después del fix), 12 optional.
+- [ ] Test verifica que la entrada `.gitignore` NO existe en el manifiesto.
+- [ ] Test verifica que `gitignore` SÍ existe en el filesystem de `template/estandar/`.
 
 **Verificación:**
 - [ ] `bun test tests/unit/file-rule-manifest.test.ts` — todos pasan.
 - [ ] Si comento una entrada válida del manifest, el test falla (guard funciona).
 
-**Dependencias:** FEV2B-T1.
+**Dependencias:** FE2C-T2.
 **Archivos:**
 - `tests/unit/file-rule-manifest.test.ts` (modificado).
 
@@ -128,225 +188,208 @@ npm **resuelve (dereference) symlinks al empaquetar el tarball**, por lo que est
 
 ---
 
-### Phase 4: Generador de Symlinks (Post-Install Feature)
+### Phase 3: Port-Adapter Pattern (Clean Architecture)
 
-#### Task FEV2B-T3: Crear puerto `ISymlinkCreator`
-**Descripción:** Definir interfaz `ISymlinkCreator` en `src/application/ports/` siguiendo Clean Architecture. La interfaz declara un método para crear symlinks relativos en el destino.
+#### Task FE2C-T3: Crear puerto `IGitignoreCreator`
+**Descripción:** Definir interfaz `IGitignoreCreator` en `src/application/ports/` siguiendo Clean Architecture. La interfaz declara un método para generar el archivo `.gitignore` en el destino.
 
 **Criterios de Aceptación:**
-- [ ] Nuevo archivo `src/application/ports/ISymlinkCreator.ts`.
-- [ ] Interface exporta: `createSymlink(target: string, linkPath: string): Promise<Result<void, SymlinkError>>`.
-- [ ] JSDoc con propósito, parámetros, errores.
-- [ ] Tipo `SymlinkError` definido en `src/domain/types/SymlinkError.ts`.
+- [ ] Nuevo archivo `src/application/ports/IGitignoreCreator.ts`.
+- [ ] Interface exporta: `createGitignore(destPath: string): Promise<Result<void, GitignoreError>>`.
+- [ ] JSDoc con propósito, parámetros, errores, y modo de operación (Clean/Project solamente, NO Update).
+- [ ] Sin imports de `fs` o `Bun` (Clean Architecture: domain/application no depende de infra).
 
 **Verificación:**
 - [ ] `just check` — 0 errores.
 - [ ] `tsc --noEmit` — 0 errores.
 
-**Dependencias:** FEV2B-T2.
+**Dependencias:** FE2C-T2.
 **Archivos:**
-- `src/application/ports/ISymlinkCreator.ts` (nuevo).
-- `src/domain/types/SymlinkError.ts` (nuevo).
+- `src/application/ports/IGitignoreCreator.ts` (nuevo).
 
 **Scope:** XS (20min).
 
 ---
 
-#### Task FEV2B-T4: Test RED para `BunSymlinkCreator` (TDD)
-**Descripción:** Crear tests que cubran: crear symlink nuevo, idempotencia (skip si ya existe), skip si es directorio real con warning, paths relativos correctos, error handling de `fs.symlink`.
+#### Task FE2C-T4: Crear type `GitignoreError` en domain
+**Descripción:** Crear tipo `GitignoreError` en `src/domain/types/` siguiendo el mismo patrón que `SymlinkError` (FEV-2-B).
 
 **Criterios de Aceptación:**
-- [ ] Archivo `tests/unit/adapters/bun-symlink-creator.test.ts`.
+- [ ] Nuevo archivo `src/domain/types/GitignoreError.ts`.
+- [ ] Extiende `Error` con campo `code: GitignoreErrorCode` (enum: `READ_FAILED`, `WRITE_FAILED`, `TEMPLATE_NOT_FOUND`).
+- [ ] Factory functions: `gitignoreReadError(path)`, `gitignoreWriteError(path)`, `gitignoreTemplateNotFoundError(path)`.
+- [ ] Exportado desde el barrel `src/domain/types/index.ts` (si existe).
+- [ ] JSDoc con propósito y casos de uso.
+
+**Verificación:**
+- [ ] `just check` — 0 errores.
+- [ ] `tsc --noEmit` — 0 errores.
+
+**Dependencias:** FE2C-T2.
+**Archivos:**
+- `src/domain/types/GitignoreError.ts` (nuevo).
+
+**Scope:** XS (10min).
+
+---
+
+#### Task FE2C-T5: Test RED para `BunGitignoreCreator` (TDD)
+**Descripción:** Crear tests que cubran: crear `.gitignore` nuevo, idempotencia (skip si ya existe), lectura del template `gitignore`, error handling, validación de paths.
+
+**Criterios de Aceptación:**
+- [ ] Archivo `tests/unit/adapters/bun-gitignore-creator.test.ts`.
 - [ ] 6+ tests cubriendo:
-  1. Crea symlink nuevo: `fs.symlink` llamado con target y link correctos
-  2. Idempotencia: si symlink ya existe, no se sobreescribe
-  3. Skip directorio real: si `linkPath` es un directorio, skip con warning
-  4. Paths relativos: usa paths relativos desde la ubicación del link
-  5. Error de permisos: retorna `Result.err` con `SymlinkError`
-  6. Verifica que el target existe antes de crear
+  1. Crea `.gitignore` nuevo: el archivo se crea con el contenido del template
+  2. Idempotencia: si `.gitignore` ya existe, no se sobreescribe
+  3. Skip directorio: si `destPath/.gitignore` es un directorio, skip con warning
+  4. Read template failed: retorna `Result.err` con `GitignoreError` (READ_FAILED)
+  5. Write failed: retorna `Result.err` con `GitignoreError` (WRITE_FAILED)
+  6. Template not found: retorna `Result.err` con `GitignoreError` (TEMPLATE_NOT_FOUND)
 - [ ] Tests son RED con código actual (la clase no existe).
 
 **Verificación:**
-- [ ] `bun test tests/unit/adapters/bun-symlink-creator.test.ts` — todos fallan porque la clase no existe.
+- [ ] `bun test tests/unit/adapters/bun-gitignore-creator.test.ts` — todos fallan porque la clase no existe.
 
-**Dependencias:** FEV2B-T3.
+**Dependencias:** FE2C-T3, FE2C-T4.
 **Archivos:**
-- `tests/unit/adapters/bun-symlink-creator.test.ts` (nuevo).
+- `tests/unit/adapters/bun-gitignore-creator.test.ts` (nuevo).
 
 **Scope:** S (45min).
 
 ---
 
-#### Task FEV2B-T5: Implementar `BunSymlinkCreator` adapter (TDD GREEN)
-**Descripción:** Crear clase `BunSymlinkCreator` en `src/infrastructure/adapters/` que implementa `ISymlinkCreator` usando `fs.symlinkSync` de Bun/Node.
+#### Task FE2C-T6: Implementar `BunGitignoreCreator` adapter (TDD GREEN)
+**Descripción:** Crear clase `BunGitignoreCreator` en `src/infrastructure/adapters/` que implementa `IGitignoreCreator` usando `Bun.write()` de Bun.
 
 **Criterios de Aceptación:**
-- [ ] Archivo `src/infrastructure/adapters/BunSymlinkCreator.ts`.
-- [ ] Implementa `ISymlinkCreator` con `fs.symlinkSync(target, linkPath)`.
-- [ ] Verifica existencia del target antes de crear (seguridad).
-- [ ] Verifica si el link ya existe (idempotencia).
-- [ ] Verifica si el link es un directorio real (skip con warning).
-- [ ] Usa paths relativos para portabilidad cross-platform.
-- [ ] Captura errores de `EACCES`, `EEXIST`, `ENOENT` y los mapea a `SymlinkError`.
-- [ ] Tests FEV2B-T4 ahora pasan (GREEN).
-- [ ] Exporta también una lista `OPENCODE_SYMLINKS` con los 3 symlinks a crear:
-  ```typescript
-  export const OPENCODE_SYMLINKS: readonly SymlinkSpec[] = [
-    { linkPath: ".opencode/agents", target: "../agents" },
-    { linkPath: ".opencode/commands", target: "../commands/" },
-    { linkPath: ".opencode/skills", target: "../skills/" },
-  ];
-  ```
-- [ ] Exporta también una lista `DEVIN_SYMLINKS` con los 7 symlinks a crear (solo si el usuario seleccionó `.devin/rules`):
-  ```typescript
-  export const DEVIN_SYMLINKS: readonly SymlinkSpec[] = [
-    { linkPath: ".devin/skills", target: "../skills" },
-    { linkPath: ".devin/workflows", target: "../commands/" },
-    { linkPath: ".devin/rules/CODE_STYLE.md", target: "../../docs/CODE_STYLE.md" },
-    { linkPath: ".devin/rules/CONTRIBUTING.md", target: "../../CONTRIBUTING.md" },
-    { linkPath: ".devin/rules/code-review-and-quality.md", target: "../../skills/code-review-and-quality/SKILL.md" },
-    { linkPath: ".devin/rules/incremental-implementation.md", target: "../../skills/incremental-implementation/SKILL.md" },
-    { linkPath: ".devin/rules/test-driven-development.md", target: "../../skills/test-driven-development/SKILL.md" },
-  ];
-  ```
-- [ ] **Inventario total de symlinks en el template:** 10 (3 en `.opencode/`, 7 en `.devin/`). Ver ADR-FEV2B-10.
+- [ ] Archivo `src/infrastructure/adapters/BunGitignoreCreator.ts`.
+- [ ] Implementa `IGitignoreCreator` con:
+  - Constructor: `constructor(templatePath: string, verbose?: boolean)` donde `templatePath` apunta a `template/estandar/gitignore`.
+  - Método: `createGitignore(destPath: string): Promise<Result<void, GitignoreError>>`.
+- [ ] Lee contenido de `template/estandar/gitignore` con `Bun.file().text()`.
+- [ ] Escribe a `destPath/.gitignore` con `Bun.write()`.
+- [ ] Verifica si `.gitignore` ya existe antes de escribir (idempotencia).
+- [ ] Verifica si `destPath/.gitignore` es un directorio real (skip con warning).
+- [ ] Captura errores de `EACCES`, `EISDIR`, `ENOENT` y los mapea a `GitignoreError`.
+- [ ] Si `verbose` es true, log a stderr con timestamp.
+- [ ] Tests FE2C-T5 ahora pasan (GREEN).
 
 **Verificación:**
-- [ ] `bun test tests/unit/adapters/bun-symlink-creator.test.ts` — todos pasan.
+- [ ] `bun test tests/unit/adapters/bun-gitignore-creator.test.ts` — todos pasan.
 - [ ] `just check` — 0 errores.
 
-**Dependencias:** FEV2B-T4.
+**Dependencias:** FE2C-T5.
 **Archivos:**
-- `src/infrastructure/adapters/BunSymlinkCreator.ts` (nuevo).
+- `src/infrastructure/adapters/BunGitignoreCreator.ts` (nuevo).
 
 **Scope:** M (1h).
 
 ---
 
-#### Task FEV2B-T6: Tests para `OPENCODE_SYMLINKS` y `DEVIN_SYMLINKS` constants
-**Descripción:** Tests que validan que las constantes `OPENCODE_SYMLINKS` y `DEVIN_SYMLINKS` contienen los symlinks esperados, con paths válidos y targets correctos.
+### Phase 4: Use Case Integration
+
+#### Task FE2C-T7: Integrar `IGitignoreCreator` en `CleanInstallUseCase`
+**Descripción:** Modificar `CleanInstallUseCase` para que, después de `commitStaging()`, invoque el `IGitignoreCreator` para generar `.gitignore` en el destino (Clean Install copia TODO).
 
 **Criterios de Aceptación:**
-- [ ] Tests en `tests/unit/adapters/bun-symlink-creator.test.ts` o nuevo archivo.
-- [ ] Verifica que `OPENCODE_SYMLINKS.length === 3` y contiene los 3 paths de `.opencode/`.
-- [ ] Verifica que `DEVIN_SYMLINKS.length === 7` y contiene los 7 paths de `.devin/`.
-- [ ] Verifica que todos los targets son relativos y apuntan a paths que existen en el template.
-- [ ] Verifica que `OPENCODE_SYMLINKS` tiene `linkPath` que comienza con `.opencode/`.
-- [ ] Verifica que `DEVIN_SYMLINKS` tiene `linkPath` que comienza con `.devin/`.
-
-**Verificación:**
-- [ ] `bun test` — todos pasan.
-
-**Dependencias:** FEV2B-T5.
-**Archivos:**
-- `tests/unit/adapters/bun-symlink-creator.test.ts` (extendido).
-
-**Scope:** XS (20min).
-
----
-
-#### Task FEV2B-T7: Integrar `ISymlinkCreator` en `CleanInstallUseCase`
-**Descripción:** Modificar `CleanInstallUseCase` para que, después de `commitStaging()`, invoque el `ISymlinkCreator` con `OPENCODE_SYMLINKS + DEVIN_SYMLINKS` (Clean Install copia TODO, incluyendo opcionales).
-
-**Criterios de Aceptación:**
-- [ ] `CleanInstallUseCase` recibe `ISymlinkCreator` por inyección de dependencias.
-- [ ] Después de `commitStaging()` exitoso, llama a `symlinkCreator.createSymlinks([...OPENCODE_SYMLINKS, ...DEVIN_SYMLINKS])` (10 symlinks total).
-- [ ] Si la creación de symlinks falla, no se hace rollback (los archivos ya están copiados). Se muestra warning al usuario.
-- [ ] Tests del use case actualizados con mock de `ISymlinkCreator`.
-- [ ] Test verifica que `createSymlinks` se llama con los 10 symlinks (3 opencode + 7 devin).
+- [ ] `CleanInstallUseCase` recibe `IGitignoreCreator` por inyección de dependencias.
+- [ ] Después de `commitStaging()` exitoso, llama a `gitignoreCreator.createGitignore(destinationPath)`.
+- [ ] Si la creación de `.gitignore` falla, se muestra warning al usuario, NO se hace rollback.
+- [ ] El orden es: file merge → gitignore generation → symlink generation (per ADR-FEV2C-10).
+- [ ] Tests del use case actualizados con mock de `IGitignoreCreator`.
+- [ ] Test verifica que `createGitignore` se llama con el destinationPath correcto.
+- [ ] Test verifica que si `createGitignore` falla con error, el use case retorna `Result.ok` con warning (no aborta).
 
 **Verificación:**
 - [ ] `bun test tests/unit/clean-install.test.ts` — todos pasan.
 - [ ] `just check` — 0 errores.
 
-**Dependencias:** FEV2B-T5.
+**Dependencias:** FE2C-T6.
 **Archivos:**
 - `src/application/use-cases/CleanInstallUseCase.ts` (modificado).
+- `src/cli/container.ts` (DI wiring actualizado).
 - `tests/unit/clean-install.test.ts` (mock actualizado).
 
 **Scope:** M (45min).
 
 ---
 
-#### Task FEV2B-T8: Integrar `ISymlinkCreator` en `ProjectInstallUseCase`
-**Descripción:** Misma integración que FEV2B-T7 pero para `ProjectInstallUseCase`. Los symlinks de `.devin/` solo se crean si el usuario seleccionó `.devin/rules`. NO integrar en `UpdateWorkspaceUseCase` (per ADR-FEV2B-8).
+#### Task FE2C-T8: Integrar `IGitignoreCreator` en `ProjectInstallUseCase`
+**Descripción:** Misma integración que FE2C-T7 pero para `ProjectInstallUseCase`. El `.gitignore` se genera SIEMPRE (es standard, no opcional). NO integrar en `UpdateWorkspaceUseCase` (per ADR-FEV2C-2).
 
 **Criterios de Aceptación:**
-- [ ] `ProjectInstallUseCase` recibe `ISymlinkCreator` por inyección de dependencias.
-- [ ] Después de `commitStaging()` exitoso:
-  - Llama a `symlinkCreator.createSymlinks(OPENCODE_SYMLINKS)` (3 symlinks, siempre).
-  - Si `.devin` está en `selectedOptionals`, llama a `symlinkCreator.createSymlinks(DEVIN_SYMLINKS)` (7 symlinks adicionales).
-- [ ] Si `.devin` NO está seleccionado, NO se crean los 7 symlinks de `.devin/`.
-- [ ] Tests del use case actualizados con mock de `ISymlinkCreator`.
-- [ ] Test verifica: (a) caso con `.devin` seleccionado → 10 symlinks; (b) caso sin `.devin` → solo 3 symlinks.
-- [ ] `UpdateWorkspaceUseCase` NO modificado (no incluye `ISymlinkCreator`).
+- [ ] `ProjectInstallUseCase` recibe `IGitignoreCreator` por inyección de dependencias.
+- [ ] Después de `commitStaging()` exitoso, llama a `gitignoreCreator.createGitignore(destinationPath)`.
+- [ ] El orden es: file merge → gitignore generation → symlink generation.
+- [ ] Si la creación de `.gitignore` falla, se muestra warning al usuario, NO se hace rollback.
+- [ ] `UpdateWorkspaceUseCase` NO modificado (no incluye `IGitignoreCreator`).
+- [ ] Tests del use case actualizados con mock de `IGitignoreCreator`.
+- [ ] Test verifica que `createGitignore` se llama con el destinationPath correcto.
+- [ ] Test verifica que `UpdateWorkspaceUseCase` no llama a `createGitignore` (regression guard).
 
 **Verificación:**
-- [ ] `bun test tests/unit/project-install.test.ts` — todos pasan (incluyendo 2 tests nuevos para los casos a/b).
+- [ ] `bun test tests/unit/project-install.test.ts` — todos pasan.
 - [ ] `bun test tests/unit/update-workspace.test.ts` — sin cambios, sigue pasando.
 - [ ] `just check` — 0 errores.
 
-**Dependencias:** FEV2B-T7.
+**Dependencias:** FE2C-T7.
 **Archivos:**
 - `src/application/use-cases/ProjectInstallUseCase.ts` (modificado).
-- `tests/unit/project-install.test.ts` (mock + 2 tests nuevos).
+- `src/cli/container.ts` (DI wiring actualizado para Project).
+- `tests/unit/project-install.test.ts` (mock actualizado).
+- `tests/unit/update-workspace.test.ts` (regression test añadido).
 
 **Scope:** M (1h).
 
 ---
 
-### Phase 5: Tests E2E y Verificación
+### Phase 5: Testing
 
-#### Task FEV2B-T9: Test E2E con symlinks (Clean Install)
-**Descripción:** Crear test E2E que verifique que tras `Clean Install` con binario compilado, los 10 symlinks existen en el destino (3 de `.opencode/` + 7 de `.devin/`).
+#### Task FE2C-T9: Test E2E con gitignore (Clean Install + Project Install)
+**Descripción:** Crear tests E2E que verifiquen que tras `Clean Install` y `Project Install` con binario compilado, el archivo `.gitignore` existe en el destino con el contenido correcto.
 
 **Criterios de Aceptación:**
-- [ ] Script `tests/e2e/07-symlinks-clean-install.sh`:
+- [ ] Script `tests/e2e/11-gitignore-clean-install.sh`:
   1. Crea directorio temporal vacío.
-  2. Ejecuta binario compilado en modo Clean Install (con `--force` o input simulado).
-  3. Verifica que existen los 3 symlinks de `.opencode/`:
-     - `dest/.opencode/agents` (symlink → `../agents`)
-     - `dest/.opencode/commands` (symlink → `../commands/`)
-     - `dest/.opencode/skills` (symlink → `../skills/`)
-  4. Verifica que existen los 7 symlinks de `.devin/` (Clean Install copia TODO):
-     - `dest/.devin/skills` (symlink → `../skills`)
-     - `dest/.devin/workflows` (symlink → `../commands/`)
-     - `dest/.devin/rules/CODE_STYLE.md` (symlink → `../../docs/CODE_STYLE.md`)
-     - `dest/.devin/rules/CONTRIBUTING.md` (symlink → `../../CONTRIBUTING.md`)
-     - `dest/.devin/rules/code-review-and-quality.md` (symlink → `../../skills/code-review-and-quality/SKILL.md`)
-     - `dest/.devin/rules/incremental-implementation.md` (symlink → `../../skills/incremental-implementation/SKILL.md`)
-     - `dest/.devin/rules/test-driven-development.md` (symlink → `../../skills/test-driven-development/SKILL.md`)
-  5. Verifica que los symlinks resuelven correctamente (los targets existen).
-- [ ] Script integrado en `just test-e2e`.
-- [ ] Total E2E: 7/7 pasando.
+  2. Ejecuta binario compilado en modo Clean Install.
+  3. Verifica que `dest/.gitignore` existe.
+  4. Verifica que el contenido de `dest/.gitignore` coincide con `template/estandar/gitignore` (en el tarball simulado).
+- [ ] Script `tests/e2e/12-gitignore-project-install.sh`:
+  1. Crea directorio temporal vacío.
+  2. Ejecuta binario compilado en modo Project Install.
+  3. Verifica que `dest/.gitignore` existe.
+  4. Verifica que el contenido coincide con el template.
+- [ ] Scripts integrados en `just test-e2e`.
+- [ ] Total E2E: 12/12 pasando (10 existentes + 2 nuevos de gitignore).
 
 **Verificación:**
-- [ ] `just test-e2e` — 7/7 escenarios.
-- [ ] Output captura los 10 symlinks creados.
+- [ ] `just test-e2e` — 12/12 escenarios.
+- [ ] Output captura el `.gitignore` creado.
 
-**Dependencias:** FEV2B-T8.
+**Dependencias:** FE2C-T8.
 **Archivos:**
-- `tests/e2e/07-symlinks-clean-install.sh` (nuevo).
+- `tests/e2e/11-gitignore-clean-install.sh` (nuevo).
+- `tests/e2e/12-gitignore-project-install.sh` (nuevo).
 - `Justfile` (recipe `test-e2e` actualizada).
 
 **Scope:** M (1h 15min).
 
 ---
 
-#### Task FEV2B-T10: Verificar suite completa
+#### Task FE2C-T10: Verificar suite completa
 **Descripción:** Verificar que no hay regresión con todos los tests unit + integration + e2e.
 
 **Criterios de Aceptación:**
-- [ ] `bun test` — 390+ pass, 0 fail (sin regresión, +8 tests de symlinks).
+- [ ] `bun test` — 460+ pass, 0 fail (sin regresión, +14 tests de gitignore).
 - [ ] `just check` — 0 errores (biome ci + tsc --noEmit).
-- [ ] E2E: 7/7 pasando.
+- [ ] E2E: 12/12 pasando.
 - [ ] Coverage: ≥97.66% funciones / ≥96.52% líneas (sin pérdida).
 - [ ] Domain coverage: 100% líneas (mantener).
 
 **Verificación:**
 - [ ] `bun test --coverage` — sin pérdida de coverage.
 
-**Dependencias:** FEV2B-T8, FEV2B-T9.
+**Dependencias:** FE2C-T8, FE2C-T9.
 **Archivos:** (ninguno, solo verificación).
 
 **Scope:** XS (10min).
@@ -355,17 +398,17 @@ npm **resuelve (dereference) symlinks al empaquetar el tarball**, por lo que est
 
 ### Phase 6: Release
 
-#### Task FEV2B-T11: Bump version a 1.0.7
-**Descripción:** Actualizar `package.json` de `1.0.5` a `1.0.7` (patch fix, no se puede republicar 1.0.6).
+#### Task FE2C-T11: Bump version a 1.0.9
+**Descripción:** Actualizar `package.json` de `1.0.8` a `1.0.9` (patch fix, no se puede republicar 1.0.8).
 
 **Criterios de Aceptación:**
-- [ ] `package.json` → `"version": "1.0.7"`.
-- [ ] Commit con mensaje: `chore: bump version to 1.0.7`.
+- [ ] `package.json` → `"version": "1.0.9"`.
+- [ ] Commit con mensaje: `chore: bump version to 1.0.9`.
 
 **Verificación:**
 - [ ] `git diff package.json` muestra solo el bump de versión.
 
-**Dependencias:** FEV2B-T10.
+**Dependencias:** FE2C-T10.
 **Archivos:**
 - `package.json`.
 
@@ -373,20 +416,20 @@ npm **resuelve (dereference) symlinks al empaquetar el tarball**, por lo que est
 
 ---
 
-#### Task FEV2B-T12: Actualizar CHANGELOG con sección v1.0.7
-**Descripción:** Crear entrada `[1.0.7] — 2026-06-26` con la descripción del fix + nueva feature.
+#### Task FE2C-T12: Actualizar CHANGELOG con sección v1.0.9
+**Descripción:** Crear entrada `[1.0.9] — 2026-06-26` con la descripción del fix.
 
 **Criterios de Aceptación:**
 - [ ] `CHANGELOG.md`:
-  - Header `[1.0.7] — 2026-06-26`.
-  - Entry `Fixed`: "Symlinks no preservados por npm: 3 entradas de `.opencode/{agents,commands,skills}` eliminadas del manifiesto (eran symlinks locales que no se incluyen en el tarball)".
-  - Entry `Added`: "Generación de symlinks post-instalación: tras Clean Install o Project Install, se crean symlinks `.opencode/{agents,commands,skills} → ../{agents,commands,skills}/` para preservar la estructura del dev workspace".
-- [ ] Entry `Deprecated`: "v1.0.6 — usar v1.0.7".
+  - Header `[1.0.9] — 2026-06-26`.
+  - Entry `Fixed`: "Issue #11 — `Template file not found: .gitignore` en `bunx @fisherk2-dev/codice` (npm excluye `.gitignore` del paquete). Renombrado a `gitignore` (sin punto) y generado post-instalación (mismo patrón que symlinks en v1.0.7)".
+  - Entry `Deprecated`: "v1.0.8 — usar v1.0.9".
+  - Remover entry `[Unreleased]` con Issue #11 (ahora resuelto).
 
 **Verificación:**
 - [ ] `git diff CHANGELOG.md` muestra la nueva sección.
 
-**Dependencias:** FEV2B-T11.
+**Dependencias:** FE2C-T11.
 **Archivos:**
 - `CHANGELOG.md`.
 
@@ -394,87 +437,105 @@ npm **resuelve (dereference) symlinks al empaquetar el tarball**, por lo que est
 
 ---
 
-#### Task FEV2B-T13: Commit + Push + PR + Tag + Release
+#### Task FE2C-T13: Commit + PR + Tag + Release
 **Descripción:** Hacer commit de los cambios, pushear, crear PR, hacer merge, tag, release pipeline.
 
 **Criterios de Aceptación:**
-- [ ] Commit: `fix(manifest): remove symlink entries + feat(symlinks): post-install generation (#10)`.
-- [ ] `git push origin fix/symlinks-template-paths`.
-- [ ] PR creado en GitHub contra `main`.
+- [ ] Commit: `fix(gitignore): post-install generation + remove manifest entry (#11)`.
+- [ ] Branch: `fix/fev-2-c-gitignore` (base = develop).
+- [ ] `git push origin fix/fev-2-c-gitignore`.
+- [ ] PR creado en GitHub contra `develop` (o `main` según convención actual).
 - [ ] CI pasa (3 platforms: Linux, macOS, Windows).
-- [ ] Squash merge a `main`.
-- [ ] `git tag -a v1.0.7 -m "Release v1.0.7 — Symlink fix + post-install generation"`.
-- [ ] `git push origin v1.0.7` → release pipeline ejecuta.
-- [ ] `npm view @fisherk2-dev/codice version` → `1.0.7`.
-- [ ] `gh release view v1.0.7` muestra 4 assets (linux, macos, windows.exe, checksums).
-- [ ] `git checkout develop && git merge main` (fast-forward).
-- [ ] `git push origin develop`.
-- [ ] Branch local `fix/symlinks-template-paths` eliminado.
+- [ ] Squash merge a base branch.
+- [ ] `git tag -a v1.0.9 -m "Release v1.0.9 — Gitignore post-install generation"`.
+- [ ] `git push origin v1.0.9` → release pipeline ejecuta.
+- [ ] `npm view @fisherk2-dev/codice version` → `1.0.9`.
+- [ ] `gh release view v1.0.9` muestra 4 assets (linux, macos, windows.exe, checksums).
+- [ ] Branch local `fix/fev-2-c-gitignore` eliminado.
+- [ ] `develop` sincronizado con base branch.
 
 **Verificación:**
-- [ ] GitHub Release: https://github.com/Fisherk2/codice-opencode/releases/tag/v1.0.7
-- [ ] npm: `@fisherk2-dev/codice@1.0.7` es el `latest`.
+- [ ] GitHub Release: https://github.com/Fisherk2/codice-opencode/releases/tag/v1.0.9
+- [ ] npm: `@fisherk2-dev/codice@1.0.9` es el `latest`.
 
-**Dependencias:** FEV2B-T12.
+**Dependencias:** FE2C-T12.
 **Archivos:** (git only).
 
 **Scope:** S (15min).
 
 ---
 
-## Dependency Graph
+### Phase 7: Tech Debt Documentation (v1.1.0)
 
-```mermaid
-graph TD
-    FEV2B-T0[Test RED con estructura npm] --> FEV2B-T1[Eliminar 3 entradas del manifiesto]
-    FEV2B-T1 --> FEV2B-T2[Actualizar test de completitud]
-    FEV2B-T2 --> FEV2B-T3[Crear puerto ISymlinkCreator]
-    FEV2B-T3 --> FEV2B-T4[Test RED BunSymlinkCreator]
-    FEV2B-T4 --> FEV2B-T5[Implementar BunSymlinkCreator]
-    FEV2B-T5 --> FEV2B-T6[Tests OPENCODE_SYMLINKS]
-    FEV2B-T5 --> FEV2B-T7[Integrar en CleanInstallUseCase]
-    FEV2B-T7 --> FEV2B-T8[Integrar en ProjectInstallUseCase]
-    FEV2B-T8 --> FEV2B-T9[Test E2E symlinks]
-    FEV2B-T8 --> FEV2B-T10[Verificar suite completa]
-    FEV2B-T9 --> FEV2B-T10
-    FEV2B-T10 --> FEV2B-T11[Bump version 1.0.7]
-    FEV2B-T11 --> FEV2B-T12[Actualizar CHANGELOG]
-    FEV2B-T12 --> FEV2B-T13[Commit + PR + Tag + Release]
-```
+#### Task FE2C-T14: Actualizar `docs/TECH_DEBT.md` con deuda del test aislado
+**Descripción:** Documentar en `docs/TECH_DEBT.md` la necesidad de un test de integración aislado que simule `bunx @fisherk2-dev/codice` desde un directorio temporal. Este test detectará bugs de empaquetado npm que el test actual (`TemplateResolver.test.ts` con `template/` local) no detecta.
+
+**Criterios de Aceptación:**
+- [ ] Nueva sección añadida en `docs/TECH_DEBT.md` (sección 5.3, después de "E2E Coverage Not Captured by `bun --coverage`"):
+  - **Problema:** El test de integración actual usa `template/` local (del CWD). Esto oculta bugs que solo aparecen cuando el binario se ejecuta desde un directorio ajeno (caso real de `bunx`).
+  - **Solución propuesta (v1.1.0):** Test de integración aislado que:
+    1. Build el paquete npm con `bun pm pack`.
+    2. Install el paquete en un directorio temporal (`os.tmpdir()`).
+    3. Run el binario instalado desde el directorio temporal.
+    4. Verify que la resolución de templates, gitignore, y symlinks funciona correctamente.
+  - **Por qué es importante:** FEV-2-B y FEV-2-C fueron bugs que solo se detectaron DESPUÉS del release porque `just dev` (modo source) usa el `template/` local. Un test pre-release habría detectado ambos.
+  - **Esfuerzo estimado:** 4-6 horas.
+  - **Impacto:** Detecta bugs de empaquetado ANTES del release. Reduce tiempo de post-release fixes.
+- [ ] Mover Issue #11 de "Known Issues (v1.0.8)" a "Resolved in v1.0.9" con la descripción del fix.
+- [ ] Actualizar el header del documento con la versión actual: "Technical Debt — Códice v1.0.9".
+- [ ] Actualizar métricas en el header: tests, coverage.
+
+**Verificación:**
+- [ ] `git diff docs/TECH_DEBT.md` muestra la nueva sección.
+- [ ] El documento es coherente con la versión v1.0.9.
+
+**Dependencias:** FE2C-T13.
+**Archivos:**
+- `docs/TECH_DEBT.md` (modificado).
+
+**Scope:** XS (15min).
 
 ---
 
-## Checkpoints
+## Checkpoints (Quality Gates)
 
-### Checkpoint 1: After FEV2B-T1 (Fix del manifiesto)
-- [ ] `FileRuleManifestData.ts` sin las 3 entradas de symlinks.
-- [ ] Test FEV2B-T0 pasa (GREEN).
+### Checkpoint 1: After FE2C-T2 (Template fix)
+- [ ] `template/estandar/gitignore` existe (renombrado).
+- [ ] `template/estandar/.gitignore` NO existe.
+- [ ] Entrada `.gitignore` eliminada de `FileRuleManifestData.ts`.
+- [ ] Test FE2C-T0 pasa (GREEN).
+- [ ] `npm pack --dry-run` incluye `gitignore` (sin punto).
 - [ ] `just check` — 0 errores.
 
-### Checkpoint 2: After FEV2B-T5 (SymlinkCreator implementado)
-- [ ] `ISymlinkCreator` port creado.
-- [ ] `BunSymlinkCreator` adapter implementado.
-- [ ] `OPENCODE_SYMLINKS` constant exportada.
+### Checkpoint 2: After FE2C-T6 (Port + Adapter implementados)
+- [ ] `IGitignoreCreator` port creado.
+- [ ] `GitignoreError` type creado.
+- [ ] `BunGitignoreCreator` adapter implementado.
 - [ ] 6+ tests pasando.
 - [ ] `just check` — 0 errores.
 
-### Checkpoint 3: After FEV2B-T8 (Symlinks integrados en use cases)
-- [ ] `CleanInstallUseCase` genera symlinks post-commit.
-- [ ] `ProjectInstallUseCase` genera symlinks post-commit.
-- [ ] `UpdateWorkspaceUseCase` NO modificado.
+### Checkpoint 3: After FE2C-T8 (Use cases integrados)
+- [ ] `CleanInstallUseCase` genera `.gitignore` post-commit.
+- [ ] `ProjectInstallUseCase` genera `.gitignore` post-commit.
+- [ ] `UpdateWorkspaceUseCase` NO genera `.gitignore` (regression test included).
 - [ ] Tests de use cases pasan.
 - [ ] `just check` — 0 errores.
 
-### Checkpoint 4: After FEV2B-T10 (Verificación integral)
-- [ ] `bun test`: 390+ pass, 0 fail.
+### Checkpoint 4: After FE2C-T10 (Verificación integral)
+- [ ] `bun test`: 460+ pass, 0 fail.
 - [ ] Coverage sin pérdida.
-- [ ] E2E: 7/7 pasando.
+- [ ] E2E: 12/12 pasando.
 
-### Gate FEV-2-B: After FEV2B-T13 (Release publicado)
-- [ ] `npm view @fisherk2-dev/codice version` → `1.0.7`.
+### Gate FEV-2-C: After FE2C-T13 (Release publicado)
+- [ ] `npm view @fisherk2-dev/codice version` → `1.0.9`.
 - [ ] GitHub Release con 4 assets.
 - [ ] CHANGELOG actualizado.
-- [ ] Issue residual cerrado.
+- [ ] Issue #11 cerrado.
+
+### Gate FE2C-T14: After Tech Debt Documentation
+- [ ] `docs/TECH_DEBT.md` actualizado con sección del test aislado.
+- [ ] Issue #11 movido a "Resolved in v1.0.9".
+- [ ] Header del documento actualizado a v1.0.9.
 
 ---
 
@@ -482,32 +543,32 @@ graph TD
 
 | Riesgo | Impacto | Mitigación |
 |--------|---------|------------|
-| **Eliminación de entradas causa regresión en dev local** | Bajo | Los symlinks locales siguen funcionando. El fix solo afecta el paquete npm. `just dev` (modo source) no usa `resolvePath` con la misma lógica. |
-| **Test de completitud demasiado estricto** | Medio | El test cuenta archivos del filesystem local, no del tarball. Ajustar para filtrar symlinks al contar. |
-| **v1.0.7 falla con un nuevo bug residual** | Alto | E2E con binario compilado antes de release. Test manual con `bunx @fisherk2-dev/codice@1.0.7` desde directorio limpio. |
-| **PR no pasa CI en Windows por path separator** | Bajo | El fix FEV-2 anterior ya normalizó paths con `path.sep`. No debería haber regresión. |
-| **Conflicto con develop al hacer merge** | Bajo | develop está sincronizado con main en `6ba9ee6`. Fast-forward merge sin conflictos. |
-| **`fs.symlink` falla en Windows por permisos** | Medio | Bun soporta symlinks en Windows con permisos de admin o Developer Mode. Si falla, warning al usuario y continúa (no es bloqueante). Tests E2E en Windows CI validan. |
-| **Symlink creation deja workspace inconsistente** | Bajo | ADR-FEV2B-9: idempotencia. Si el symlink ya existe o es un directorio real, skip con warning. Los archivos reales ya están copiados por el flujo principal. |
-| **`OPENCODE_SYMLINKS` desactualizado** | Bajo | Constante exportada desde `BunSymlinkCreator.ts`. Test FEV2B-T6 verifica que los 3 paths existen en el template. Si se añade un nuevo symlink, se actualiza la constante y el test. |
+| **Renombrar `.gitignore` rompe tests que asumen el path** | Medio | FE2C-T0 RED test antes de FE2C-T1; actualizar tests que referencien el path. |
+| **Gitignore generation falla en Windows (permisos de archivo)** | Bajo | Idempotent: skip if exists, log warning. No es bloqueante. |
+| **Tests E2E no detectan bug de empaquetado** | Alto | FE2C-T14 (v1.1.0) añade test aislado para prevenir regresión futura. |
+| **v1.0.9 falla con un nuevo bug residual** | Alto | E2E con binario compilado antes de release. Test manual con `bunx @fisherk2-dev/codice@1.0.9` desde directorio limpio. |
+| **`IGitignoreCreator` se acopla a infra accidentalmente** | Bajo | Revisión de código en FE2C-T3 para asegurar que la interface no importa `fs` o `Bun`. |
+| **El test aislado (v1.1.0) requiere infra de CI compleja** | Medio | El test se ejecutará localmente + en CI. La complejidad se documenta en FE2C-T14. |
+| **El orden de operaciones (gitignore antes de symlinks) cambia la atomicidad** | Bajo | Per ADR-FEV2C-10. Si symlinks fallan, el `.gitignore` ya está en su sitio (atomicidad del archivo crítico). El usuario no se queda sin `.gitignore` si los symlinks fallan. |
+| **Conflicto con develop al hacer merge** | Bajo | develop está sincronizado con main. Fast-forward merge sin conflictos. |
 
 ---
 
 ## Métricas Objetivo
 
-| Métrica | v1.0.6 (actual) | Meta v1.0.7 |
+| Métrica | v1.0.8 (actual) | Meta v1.0.9 |
 |---------|-----------------|-------------|
-| Tests (pass/fail) | 382 / 0 | ≥395 / 0 (+13 tests symlinks) |
+| Tests (pass/fail) | 446 / 0 | ≥460 / 0 (+14 tests gitignore) |
 | Coverage (funciones) | 97.66% | ≥97.66% |
 | Coverage (líneas) | 96.52% | ≥96.52% |
-| E2E escenarios | 6/6 | 7/7 (+1 symlinks) |
+| E2E escenarios | 10/10 | 12/12 (+2 gitignore) |
 | `just check` errores | 0 | 0 |
-| Manifest entries (total) | 35 | 32 |
-| Manifest entries (mandatory) | 11 | 8 |
-| Symlinks generados en Clean Install | 0 | 10 (3 opencode + 7 devin) |
-| Symlinks generados en Project Install | 0 | 3-10 (según selección) |
-| Symlinks en Update Workspace | 0 | 0 (preserva existente) |
-| Issues críticos abiertos | 1 (residual) | 0 |
+| Manifest entries (total) | 32 | 31 |
+| Manifest entries (standard) | 12 | 11 |
+| Gitignore generado en Clean Install | ❌ (bug) | ✅ |
+| Gitignore generado en Project Install | ❌ (bug) | ✅ |
+| Gitignore en Update Workspace | ❌ (bug) | ❌ (preserva existente) |
+| Issues críticos abiertos | 1 (#11) | 0 |
 
 ---
 
@@ -515,54 +576,99 @@ graph TD
 
 | Tarea | Scope | Esfuerzo |
 |-------|-------|----------|
-| FEV2B-T0: Test RED con estructura npm | S | 30min |
-| FEV2B-T1: Eliminar 3 entradas del manifiesto | XS | 15min |
-| FEV2B-T2: Actualizar test de completitud | S | 30min |
-| FEV2B-T3: Crear puerto ISymlinkCreator | XS | 20min |
-| FEV2B-T4: Test RED BunSymlinkCreator | S | 45min |
-| FEV2B-T5: Implementar BunSymlinkCreator | M | 1h |
-| FEV2B-T6: Tests OPENCODE_SYMLINKS + DEVIN_SYMLINKS | XS | 20min |
-| FEV2B-T7: Integrar en CleanInstallUseCase | M | 45min |
-| FEV2B-T8: Integrar en ProjectInstallUseCase (10/3 symlinks según selección) | M | 1h |
-| FEV2B-T9: Test E2E con 10 symlinks | M | 1h 15min |
-| FEV2B-T10: Verificar suite completa | XS | 10min |
-| FEV2B-T11: Bump version 1.0.7 | XS | 5min |
-| FEV2B-T12: Actualizar CHANGELOG | XS | 5min |
-| FEV2B-T13: Commit + PR + Tag + Release | S | 15min |
+| FE2C-T0: Test RED con estructura npm | S | 30min |
+| FE2C-T1: Renombrar `.gitignore` → `gitignore` | XS | 5min |
+| FE2C-T2: Eliminar entrada del manifiesto | XS | 15min |
+| FE2C-T2.5: Actualizar test de completitud | S | 30min |
+| FE2C-T3: Crear puerto `IGitignoreCreator` | XS | 20min |
+| FE2C-T4: Crear type `GitignoreError` | XS | 10min |
+| FE2C-T5: Test RED `BunGitignoreCreator` | S | 45min |
+| FE2C-T6: Implementar `BunGitignoreCreator` | M | 1h |
+| FE2C-T7: Integrar en `CleanInstallUseCase` | M | 45min |
+| FE2C-T8: Integrar en `ProjectInstallUseCase` | M | 1h |
+| FE2C-T9: Test E2E con gitignore | M | 1h 15min |
+| FE2C-T10: Verificar suite completa | XS | 10min |
+| FE2C-T11: Bump version 1.0.9 | XS | 5min |
+| FE2C-T12: Actualizar CHANGELOG | XS | 5min |
+| FE2C-T13: Commit + PR + Tag + Release | S | 15min |
+| FE2C-T14: Actualizar TECH_DEBT.md (isolated test) | XS | 15min |
 | **Total** | | **~7h 10min** |
 
 ---
 
 ## Verificación Post-Release
 
-Después de publicar v1.0.7, verificar manualmente con:
+Después de publicar v1.0.9, verificar manualmente con:
 
 ```bash
-# Test 1: Clean Install
+# Test 1: Clean Install (debe generar .gitignore)
 mkdir -p /tmp/test-codice && cd /tmp/test-codice
-bunx @fisherk2-dev/codice@1.0.7
+bunx @fisherk2-dev/codice@1.0.9
 # → Seleccionar "Clean Install" → debe completar sin error
-# → Verificar: ls -la .opencode/ debe mostrar 3 symlinks (agents, commands, skills)
-# → Verificar: readlink .opencode/agents debe retornar ../agents
+# → Verificar: ls -la .gitignore debe existir
+# → Verificar: cat .gitignore debe tener el contenido del template
 
-# Test 2: Project Install (con opcionales)
+# Test 2: Project Install (debe generar .gitignore)
 mkdir -p /tmp/test-codice2 && cd /tmp/test-codice2
-bunx @fisherk2-dev/codice@1.0.7
-# → Seleccionar "Project Install" → seleccionar docs/opencode → debe completar
-# → Verificar symlinks igual que Test 1
+bunx @fisherk2-dev/codice@1.0.9
+# → Seleccionar "Project Install" → debe completar
+# → Verificar .gitignore igual que Test 1
 
-# Test 3: Update Workspace
+# Test 3: Update Workspace (NO debe generar .gitignore, preserva existente)
 mkdir -p /tmp/test-codice3 && cd /tmp/test-codice3
-git init && bunx @fisherk2-dev/codice@1.0.7
+git init
+echo "node_modules/" > .gitignore  # Crear .gitignore del usuario
+bunx @fisherk2-dev/codice@1.0.9
 # → Seleccionar "Update Workspace" → debe completar
-# → Update NO crea symlinks (preserva estructura existente)
+# → Verificar: cat .gitignore debe seguir mostrando "node_modules/" (NO sobrescrito)
 ```
 
 **Criterios de éxito:**
 - [ ] Los 3 modos funcionan sin `Template file not found`.
-- [ ] Tras Clean/Project Install, existen los 3 symlinks en `.opencode/`.
-- [ ] Los symlinks resuelven correctamente a los directorios reales.
-- [ ] Tras Update, los symlinks NO se modifican (si existían, se preservan; si no, no se crean).
+- [ ] Tras Clean/Project Install, existe `.gitignore` con el contenido del template.
+- [ ] Tras Update, el `.gitignore` del usuario NO se sobrescribe.
+
+---
+
+## Notas para v1.1.0 (Tech Debt)
+
+El test aislado propuesto en FE2C-T14 es la pieza que falta para **detectar bugs de empaquetado npm ANTES del release**. Tanto FEV-2-B (symlinks) como FEV-2-C (gitignore) fueron bugs que solo se detectaron DESPUÉS del release porque:
+
+1. `just dev` usa `template/` local (modo source) → oculta el problema del tarball.
+2. Los tests unitarios/integración usan `template/` local → mismo problema.
+3. Los tests E2E compilan el binario y lo ejecutan, pero NO validan el contenido del tarball de npm.
+
+El test aislado (v1.1.0) cerrará esta brecha. Diseño preliminar:
+
+```typescript
+// tests/integration/installed-package.test.ts (v1.1.0)
+describe('Isolated Package Behavior', () => {
+  it('should resolve template correctly when installed via npm in a foreign directory', async () => {
+    // 1. Crear directorio temporal (simula directorio del usuario)
+    const userDir = await fs.mkdtemp(path.join(os.tmpdir(), 'codice-test-'));
+    
+    // 2. Build el paquete npm (equivalente a `bun pm pack`)
+    const tarballPath = await buildPackage(projectRoot);
+    
+    // 3. Install el paquete en userDir
+    await exec(`npm install ${tarballPath}`, { cwd: userDir });
+    
+    // 4. Run el binario instalado
+    const result = await exec('npx codice --version', { cwd: userDir });
+    
+    // 5. Verify
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toMatch(/\d+\.\d+\.\d+/);
+    
+    // 6. Verify que el template se resuelve correctamente
+    const result2 = await exec('npx codice --dry-run', { cwd: userDir });
+    expect(result2.exitCode).toBe(0);
+    expect(result2.stderr).not.toContain('Template file not found');
+  });
+});
+```
+
+Este test se ejecutará en CI antes del release, evitando futuros bugs de empaquetado.
 
 ---
 
