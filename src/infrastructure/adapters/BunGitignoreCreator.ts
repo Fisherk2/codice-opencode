@@ -71,10 +71,11 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 			}
 		}
 
-		// Verify template gitignore file exists, then read it
+		// Read template gitignore file
+		let content: string;
 		try {
-			await fsPromises.access(templateFile, fs.constants.F_OK);
-		} catch {
+			content = await Bun.file(templateFile).text();
+		} catch (error) {
 			// Check if the template dir itself is missing (better error message)
 			try {
 				await fsPromises.access(this.templatePath, fs.constants.F_OK);
@@ -82,12 +83,13 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 				return failure(gitignoreTemplateNotFoundError(resolvedDest));
 			}
 
-			return failure(
-				gitignoreReadError(resolvedDest, `Template gitignore file not found at: ${templateFile}`),
-			);
+			const nodeErr = error as NodeJS.ErrnoException;
+			const msg =
+				nodeErr.code === "ENOENT"
+					? `Template gitignore file not found at: ${templateFile}`
+					: `Failed to read template gitignore: ${nodeErr.message}`;
+			return failure(gitignoreReadError(resolvedDest, msg));
 		}
-
-		const content = await Bun.file(templateFile).text();
 
 		// Write to destPath/.gitignore
 		try {

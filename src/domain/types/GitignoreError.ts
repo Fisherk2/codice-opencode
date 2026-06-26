@@ -1,11 +1,7 @@
 /**
  * Error codes for gitignore creation operations.
  */
-export type GitignoreErrorCode =
-	| "READ_FAILED"
-	| "WRITE_FAILED"
-	| "TEMPLATE_NOT_FOUND"
-	| "PATH_ESCAPE";
+export type GitignoreErrorCode = "READ_FAILED" | "WRITE_FAILED" | "TEMPLATE_NOT_FOUND";
 
 /**
  * Structured error type for gitignore generation operations.
@@ -18,8 +14,6 @@ export interface GitignoreError {
 	readonly message: string;
 	/** Error code for programmatic handling */
 	readonly code: GitignoreErrorCode;
-	/** System error code (e.g., EACCES, EISDIR) if applicable */
-	readonly syscall?: string;
 }
 
 /**
@@ -44,16 +38,5 @@ export function gitignoreTemplateNotFoundError(destPath: string): GitignoreError
 		destPath,
 		message: `Template gitignore file not found. Ensure template/estandar/gitignore exists.`,
 		code: "TEMPLATE_NOT_FOUND",
-	};
-}
-
-/**
- * Create a GitignoreError when the resolved path escapes the workspace root.
- */
-export function gitignorePathEscapeError(destPath: string, resolvedPath: string): GitignoreError {
-	return {
-		destPath,
-		message: `Resolved path escapes workspace root: ${resolvedPath}`,
-		code: "PATH_ESCAPE",
 	};
 }

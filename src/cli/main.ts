@@ -116,7 +116,7 @@ async function main(): Promise<void> {
 	const destinationPath = destination ?? process.cwd();
 
 	// Wire dependencies (needed early for SIGINT cleanup)
-	const deps = createDependencies(destinationPath);
+	const deps = createDependencies(destinationPath, options.verbose);
 
 	// SIGINT handler — immediately exit to avoid races with async cleanup.
 	// The staging directory will be left behind but cleaned up by the caller
