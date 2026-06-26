@@ -3,6 +3,7 @@ import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, writeVersionFileSafe } from "../helpers";
+import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 
@@ -44,6 +45,7 @@ export class ProjectInstallUseCase {
 		private readonly symlinkCreator: ISymlinkCreator,
 		private readonly opencodeSymlinks: readonly SymlinkSpec[],
 		private readonly devinSymlinks: readonly SymlinkSpec[],
+		private readonly gitignoreCreator: IGitignoreCreator,
 	) {}
 
 	/**
@@ -84,6 +86,17 @@ export class ProjectInstallUseCase {
 		const mergeResult = await this.mergeEngine.execute(FILE_RULE_MANIFEST, selectedOptionals);
 		if (!mergeResult.ok) {
 			return failure(new Error(mergeResult.error.message));
+		}
+
+		// Generate .gitignore from template (post-installation, graceful on failure)
+		const gitignoreResult = await this.gitignoreCreator.createGitignore(destinationPath);
+		if (!gitignoreResult.ok) {
+			this.userPrompt.showWarning(
+				`Could not generate .gitignore: ${gitignoreResult.error.message}. ` +
+					"The workspace was installed successfully. " +
+					"Create a .gitignore file manually or re-run the installer. " +
+					"Run with --verbose for details.",
+			);
 		}
 
 		// Create post-installation symlinks

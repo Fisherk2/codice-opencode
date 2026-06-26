@@ -112,12 +112,10 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: false,
 		description: "Environment variable template; user may expand",
 	},
-	{
-		path: ".gitignore",
-		category: "standard",
-		isDirectory: false,
-		description: "Git ignore rules; user may extend for project needs",
-	},
+	// NOTE: .gitignore removed — npm hard-excludes .gitignore from packages
+	// even when listed in package.json "files". Renamed to gitignore (no dot)
+	// and generated post-installation by BunGitignoreCreator in Clean + Project
+	// install modes. (REF: ADR-FEV2C-6, Issue #11)
 	{
 		path: "docs",
 		category: "standard",

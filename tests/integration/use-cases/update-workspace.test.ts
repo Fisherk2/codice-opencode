@@ -307,6 +307,29 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(calls.stageFile.length).toBe(nonOptionalCount);
 		});
 
+		it("should NOT generate or warn about .gitignore (update mode preserves user customization)", async () => {
+			// UpdateWorkspaceUseCase does not have a gitignoreCreator dependency.
+			// This ensures .gitignore is never generated/overwritten during update,
+			// preserving the user's existing .gitignore customization.
+			const { stub: fs } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const engine = new FileMergeEngine(fs);
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// No warnings should contain .gitignore (no gitignore operations in update mode)
+			const warningCalls = (prompt.showWarning as ReturnType<typeof mockFn>).mock.calls;
+			const gitignoreWarnings = warningCalls.filter(
+				(call: unknown[]) =>
+					typeof call[0] === "string" && (call[0] as string).includes(".gitignore"),
+			);
+			expect(gitignoreWarnings.length).toBe(0);
+		});
+
 		it("should handle version file write failure gracefully", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.writeVersionFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full"));

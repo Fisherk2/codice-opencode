@@ -20,12 +20,16 @@ const fsPromises = fs.promises;
 export class BunSymlinkCreator implements ISymlinkCreator {
 	private readonly workspaceRoot: string;
 
+	private readonly verbose: boolean;
+
 	/**
 	 * @param workspaceRoot - Absolute path to the workspace root directory.
 	 *                        Symlinks are created relative to this path.
+	 * @param verbose - Enable verbose logging to stderr.
 	 */
-	constructor(workspaceRoot: string) {
+	constructor(workspaceRoot: string, verbose?: boolean) {
 		this.workspaceRoot = path.resolve(workspaceRoot);
+		this.verbose = verbose ?? false;
 
 		// Verify the workspace root exists — fail early with a clear message
 		if (!fs.existsSync(this.workspaceRoot)) {
@@ -140,6 +144,12 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 
 			// Use relative target path for the symlink (portable across machines)
 			await fsPromises.symlink(target, resolvedLinkPath, symlinkType);
+
+			if (this.verbose) {
+				// biome-ignore lint/suspicious/noConsole: verbose diagnostic output
+				console.warn(`[info] Created symlink: ${linkPath} → ${target}`);
+			}
+
 			return success(undefined);
 		} catch (error) {
 			const nodeError = error as NodeJS.ErrnoException;

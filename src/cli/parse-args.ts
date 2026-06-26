@@ -40,13 +40,16 @@ export function validateDestPath(dest: string): string | null {
 
 	// Reject absolute paths that are well-known system directories.
 	// These are never valid project workspace destinations.
+	// Uses prefix matching — catches both exact matches (e.g. /etc) and
+	// sub-paths within guarded directories (e.g. /etc/cron.d).
 	if (path.isAbsolute(normalized)) {
 		// Check for filesystem root
 		if (normalized === path.sep) {
 			return `Invalid destination path: "${trimmed}" is the filesystem root`;
 		}
-		// Check for common system directories (single level from root)
-		const SYSTEM_DIRS = new Set([
+		// Check for common system directories using prefix matching.
+		// This catches direct matches (/etc) and subdirectories (/etc/cron.d).
+		const SYSTEM_DIRS = [
 			"/etc",
 			"/var",
 			"/usr",
@@ -58,10 +61,12 @@ export function validateDestPath(dest: string): string | null {
 			"/opt",
 			"/sbin",
 			"/root",
-			"/tmp",
-		]);
-		if (SYSTEM_DIRS.has(normalized)) {
-			return `Invalid destination path: "${trimmed}" is a system directory "${normalized}"`;
+			// /tmp intentionally omitted — users commonly install to /tmp for testing
+		];
+		for (const sysDir of SYSTEM_DIRS) {
+			if (normalized === sysDir || normalized.startsWith(`${sysDir}/`)) {
+				return `Invalid destination path: "${trimmed}" is inside a system directory "${sysDir}"`;
+			}
 		}
 	}
 

@@ -3,6 +3,7 @@ import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, writeVersionFileSafe } from "../helpers";
+import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 
@@ -21,12 +22,14 @@ export interface CleanInstallOptions {
  * with the complete template. No classification rules applied;
  * all files are treated as Obligatorio.
  *
- * After file merge, post-installation symlinks are created:
+ * After file merge, the .gitignore file is generated post-installation
+ * (npm excludes .gitignore from packages), followed by symlink creation:
  * - .opencode/{agents,commands,skills} → ../{agents,commands,skills}/
  * - .devin/{skills,workflows,rules/*} → (various target paths)
  *
- * Symlink creation failures are reported as warnings but do not
- * cause rollback — the core files are already committed.
+ * Both gitignore and symlink creation failures are reported as warnings
+ * but do not cause rollback — the core files are already committed.
+ * Reference: ADR-FEV2C-3 (idempotent gitignore generation)
  */
 export class CleanInstallUseCase {
 	/**
@@ -34,6 +37,8 @@ export class CleanInstallUseCase {
 	 * @param mergeEngine - Domain service that orchestrates file merging
 	 * @param userPrompt - Adapter for interactive user prompts
 	 * @param symlinkCreator - Adapter for post-installation symlink generation
+	 * @param symlinks - List of symlink specs to create post-installation
+	 * @param gitignoreCreator - Adapter for post-installation .gitignore generation
 	 */
 	constructor(
 		private readonly fileSystem: IFileSystem,
@@ -41,6 +46,7 @@ export class CleanInstallUseCase {
 		private readonly userPrompt: IUserPrompt,
 		private readonly symlinkCreator: ISymlinkCreator,
 		private readonly symlinks: readonly SymlinkSpec[],
+		private readonly gitignoreCreator: IGitignoreCreator,
 	) {}
 
 	/**
@@ -50,10 +56,11 @@ export class CleanInstallUseCase {
 	 * 1. Validate destination is writable.
 	 * 2. If destination is not empty and force is false, ask user for confirmation.
 	 * 3. Convert all manifest rules to "mandatory" and pass them to FileMergeEngine.
-	 * 4. On success, write the `.codice-version` file.
-	 * 5. On version file failure, clean staging and return an error.
+	 * 4. On merge success, generate .gitignore from template (graceful on failure).
+	 * 5. Create post-installation symlinks (graceful on failure).
+	 * 6. Write the `.codice-version` file. On failure, clean staging and return error.
 	 *
-	 * @param _destinationPath - Target directory for installation (used for error messages).
+	 * @param destinationPath - Target directory for installation.
 	 * @param options - Optional flags.
 	 * @returns Result indicating success or a structured error.
 	 */
@@ -88,6 +95,17 @@ export class CleanInstallUseCase {
 		const mergeResult = await this.mergeEngine.execute(allRules);
 		if (!mergeResult.ok) {
 			return failure(new Error(mergeResult.error.message));
+		}
+
+		// Generate .gitignore from template (post-installation, graceful on failure)
+		const gitignoreResult = await this.gitignoreCreator.createGitignore(destinationPath);
+		if (!gitignoreResult.ok) {
+			this.userPrompt.showWarning(
+				`Could not generate .gitignore: ${gitignoreResult.error.message}. ` +
+					"The workspace was installed successfully. " +
+					"Create a .gitignore file manually or re-run the installer. " +
+					"Run with --verbose for details.",
+			);
 		}
 
 		// Create post-installation symlinks (clean install copies everything,
