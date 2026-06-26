@@ -1,10 +1,12 @@
 import { describe, expect, it, mock as mockFn } from "bun:test";
+import type { IGitignoreCreator } from "../../../src/application/ports/IGitignoreCreator";
 import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { CleanInstallUseCase } from "../../../src/application/use-cases/CleanInstallUseCase";
 import { FILE_RULE_MANIFEST } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
+import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
 
@@ -115,6 +117,24 @@ function createMockPrompt(): IUserPrompt {
 	};
 }
 
+/**
+ * Create a mock IGitignoreCreator that records calls.
+ */
+function createMockGitignoreCreator(): IGitignoreCreator & {
+	gitignoreCalls: string[];
+} {
+	const calls: string[] = [];
+	return {
+		createGitignore: mockFn((destPath: string) => {
+			calls.push(destPath);
+			return Promise.resolve({ ok: true, value: undefined } as Result<void, GitignoreError>);
+		}),
+		get gitignoreCalls() {
+			return calls;
+		},
+	};
+}
+
 describe("CleanInstallUseCase", () => {
 	describe("constructor", () => {
 		it("should create an instance when given valid dependencies", () => {
@@ -122,7 +142,15 @@ describe("CleanInstallUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
 			const symlinkCreator = createMockSymlinkCreator();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS);
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkCreator,
+				TEST_SYMLINKS,
+				gitignoreCreator,
+			);
 			expect(useCase).toBeInstanceOf(CleanInstallUseCase);
 		});
 	});
@@ -133,7 +161,15 @@ describe("CleanInstallUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
 			const symlinkCreator = createMockSymlinkCreator();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS);
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkCreator,
+				TEST_SYMLINKS,
+				gitignoreCreator,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -144,6 +180,43 @@ describe("CleanInstallUseCase", () => {
 			expect(calls.commitStaging).toBe(1);
 			// Version file should be written
 			expect(calls.writeVersionFile.length).toBe(1);
+			// Gitignore should have been generated with the destination path
+			expect(gitignoreCreator.gitignoreCalls).toHaveLength(1);
+			expect(gitignoreCreator.gitignoreCalls[0]).toBe("/tmp/project");
+		});
+
+		it("should show warning but still succeed when gitignore creation fails", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkCreator = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			// Configure gitignore mock to return failure
+			(gitignoreCreator.createGitignore as ReturnType<typeof mockFn>).mockResolvedValue({
+				ok: false,
+				error: {
+					destPath: "/tmp/project",
+					message: "Failed to read template gitignore",
+					code: "READ_FAILED",
+				},
+			} as Result<void, GitignoreError>);
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkCreator,
+				TEST_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			// Gitignore failure should NOT cause the install to fail
+			expect(result.ok).toBe(true);
+			// Warning should have been shown about gitignore
+			expect(prompt.showWarning).toHaveBeenCalledWith(
+				expect.stringContaining(".gitignore"),
+			);
 		});
 
 		it("should create symlinks after successful merge", async () => {
@@ -151,7 +224,15 @@ describe("CleanInstallUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
 			const symlinkCreator = createMockSymlinkCreator();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS);
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkCreator,
+				TEST_SYMLINKS,
+				gitignoreCreator,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -177,7 +258,8 @@ describe("CleanInstallUseCase", () => {
 				ok: false,
 				error: [symlinkError],
 			} as Result<void, SymlinkError[]>);
-			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS);
+						const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS, gitignoreCreator);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -194,7 +276,8 @@ describe("CleanInstallUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
 			const symlinkCreator = createMockSymlinkCreator();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS);
+						const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS, gitignoreCreator);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -212,12 +295,14 @@ describe("CleanInstallUseCase", () => {
 			// User confirms
 			(prompt.confirm as ReturnType<typeof mockFn>).mockResolvedValue(true);
 			const engine = new FileMergeEngine(fs);
+			const gitignoreCreator = createMockGitignoreCreator();
 			const useCase = new CleanInstallUseCase(
 				fs,
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
 				TEST_SYMLINKS,
+				gitignoreCreator,
 			);
 
 			const result = await useCase.execute("/tmp/project");
@@ -236,7 +321,8 @@ describe("CleanInstallUseCase", () => {
 			(prompt.confirm as ReturnType<typeof mockFn>).mockResolvedValue(false);
 			const engine = new FileMergeEngine(fs);
 			const symlinkMock = createMockSymlinkCreator();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS);
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS, gitignoreCreator);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -252,7 +338,8 @@ describe("CleanInstallUseCase", () => {
 			const prompt = createMockPrompt();
 			const engine = new FileMergeEngine(fs);
 			const symlinkMock = createMockSymlinkCreator();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS);
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS, gitignoreCreator);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -268,7 +355,8 @@ describe("CleanInstallUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
 			const symlinkMock = createMockSymlinkCreator();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS);
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS, gitignoreCreator);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -289,7 +377,8 @@ describe("CleanInstallUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
 			const symlinkMock = createMockSymlinkCreator();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS);
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS, gitignoreCreator);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -308,7 +397,8 @@ describe("CleanInstallUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
 			const symlinkMock = createMockSymlinkCreator();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS);
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS, gitignoreCreator);
 
 			const result = await useCase.execute("/tmp/project");
 
