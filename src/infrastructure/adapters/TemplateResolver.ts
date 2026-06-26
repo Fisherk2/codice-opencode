@@ -31,9 +31,10 @@ export class TemplateResolver {
 	 * Auto-detect the template root based on execution mode.
 	 *
 	 * - **Source/bunx mode** (bun run, bunx): resolves the template directory relative
-	 *   to the source file location (`import.meta.dir`). Template is at `src/cli/../../template/`
-	 *   which equals the package/project root. This works for both local development
-	 *   and npm package execution (e.g. `bunx @fisherk2-dev/codice`).
+	 *   to the source file location (`import.meta.dir`). Since this method is defined in
+	 *   `src/infrastructure/adapters/`, the path resolves to `../../../template/` which
+	 *   equals the package/project root. This works for both local development and npm
+	 *   package execution (e.g. `bunx @fisherk2-dev/codice`).
 	 *
 	 * - **Compiled mode** (standalone binary): resolves the template directory
 	 *   relative to the binary location.

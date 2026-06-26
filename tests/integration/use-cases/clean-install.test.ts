@@ -31,7 +31,7 @@ function createMockFileSystem(): {
 		getStagingPath: mockFn((path: string) => `.codice-staging/${path}`),
 		stageFile: mockFn(async (path: string) => {
 			calls.stageFile.push(path);
-		}),
+		}) as (path: string, excludeSubDirs?: Set<string>) => Promise<void>,
 		commitStaging: mockFn(async () => {
 			calls.commitStaging++;
 		}),

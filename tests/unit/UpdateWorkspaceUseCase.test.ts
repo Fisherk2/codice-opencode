@@ -36,7 +36,7 @@ class FakeFileSystem implements IFileSystem {
 	getStagingPath(relativePath: string): string {
 		return `/tmp/staging/${relativePath}`;
 	}
-	async stageFile(_path: string): Promise<void> {}
+	async stageFile(_path: string, _excludeSubDirs?: Set<string>): Promise<void> {}
 	async commitStaging(): Promise<void> {}
 	async cleanStaging(): Promise<void> {}
 	async isWritable(): Promise<boolean> {

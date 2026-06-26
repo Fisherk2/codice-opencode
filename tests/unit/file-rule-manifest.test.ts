@@ -53,15 +53,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 
 		for (const entry of optionalEntries) {
 			const fullPath = path.join(OPCIONAL_DIR, entry.path);
-			const exists = fs.existsSync(fullPath);
-			if (!exists) {
-				// Maybe it's a file we need to find recursively
-				const parentDir = path.dirname(fullPath);
-				const basename = path.basename(fullPath);
-				const found = fs.existsSync(parentDir) &&
-					fs.readdirSync(parentDir).includes(basename);
-				expect(found || exists).toBe(true);
-			}
+			expect(fs.existsSync(fullPath)).toBe(true);
 		}
 	});
 
