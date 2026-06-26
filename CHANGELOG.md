@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Directory support in TemplateResolver**: Native support for copying directories recursively. When a manifest entry points to a directory (e.g., `.devin`), the entire directory tree is copied recursively, preserving structure and handling symlinks correctly.
+- **Optional files menu in Clean Install**: Clean Install now shows the same optional files selection menu as Project Install, allowing users to choose which optional files/directories to include. Previously, Clean Install copied all optional files automatically without user interaction.
+
+### Fixed
+
+- **`.devin` directory not found**: The `.devin` entry in the manifest is a directory (not a file), causing `Template file not found: .devin` in both Clean Install and Project Install modes. `TemplateResolver` now detects directories and copies them recursively.
+- **Inconsistent UX between Clean Install and Project Install**: Clean Install now presents the optional files selection menu, matching Project Install behavior. Users have full control over which optional files to include in both modes.
 
 ## [1.0.9] — 2026-06-26
 

@@ -19,6 +19,7 @@
 | FEV-2 | Resolución de Issues Críticos (v1.0.6) | Issue #8 (bunx template resolution) | ✅ Completo |
 | FEV-2-B | Symlink post-install generation + review fixes | Issue #8 (symlink packaging root cause) | ✅ Completo |
 | FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | ✅ Completo |
+| FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | 🟡 En curso |
 
 ## 2. Desglose por Fase
 
@@ -805,6 +806,113 @@ Renombrar `template/estandar/.gitignore` a `template/estandar/gitignore` y gener
 - [x] ADR-009 documentado
 - [x] CHANGELOG actualizado con sección v1.0.9
 - [x] Ship review: 0 Critical findings → GO decision (2 rounds)
+
+---
+
+### Fase FEV-2-D — Directory Support + Clean Install UX
+
+**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En curso
+
+#### Contexto
+
+Tras el release de v1.0.9, se identificaron dos problemas relacionados con el manejo de directorios opcionales y la UX de Clean Install:
+
+1. **`.devin` directory resolution**: El manifest incluye `.devin` como entrada opcional, pero es un **directorio** (no un archivo). `TemplateResolver` está diseñado para resolver archivos individuales, causando `Template file not found: .devin` en ambos modos de instalación.
+
+2. **Clean Install UX inconsistente**: Clean Install copia todos los archivos opcionales automáticamente sin mostrar el menú de selección, mientras que Project Install sí lo muestra. Esto es inconsistente y confuso para el usuario.
+
+| ID | Título | Severidad | Estado |
+|----|--------|-----------|--------|
+| — | `.devin` directory not found | 🔴 Crítico | 🟡 En curso |
+| — | Clean Install missing optional files menu | 🟡 Medio | 🟡 En curso |
+
+#### Diagnóstico Técnico
+
+##### Problema 1: `.devin` es un directorio, no un archivo
+
+**Síntoma:** Al ejecutar Clean Install o Project Install (seleccionando `.devin`), el CLI muestra:
+
+```
+❌ Template file not found: .devin. Ensure the template directory contains the file under obligatorio/, estandar/, or opcional/.
+```
+
+**Causa raíz:** `FileRuleManifestData.ts` tiene una entrada para `.devin`:
+
+```typescript
+{
+  path: ".devin",
+  category: "optional",
+  // ...
+}
+```
+
+Pero `.devin` es un **directorio** en `template/opcional/`:
+
+```
+template/opcional/.devin/
+├── rules/
+│   ├── agent-browser.md
+│   ├── code-review.md
+│   └── ...
+├── skills -> ../skills (symlink)
+└── workflows -> ../workflows (symlink)
+```
+
+`TemplateResolver.resolvePath()` usa `fs.stat()` para verificar si la ruta existe, pero el código asume que todo en el manifest son **archivos**, no directorios. Cuando intenta resolver `.devin`, falla porque no está diseñado para manejar directorios.
+
+**Solución:** Implementar soporte nativo para directorios en `TemplateResolver`:
+1. Detectar si la ruta es un directorio usando `fs.stat()`
+2. Si es directorio, copiar recursivamente todo el árbol
+3. Implementar copia recursiva de directorios en `BunFileSystem`
+
+##### Problema 2: Clean Install no muestra menú de opcionales
+
+**Síntoma:** Clean Install copia todos los archivos opcionales automáticamente sin preguntar al usuario.
+
+**Causa raíz:** `CleanInstallUseCase` está diseñado para copiar TODO (obligatorio + estándar + opcional) sin interacción. Esto es inconsistente con `ProjectInstallUseCase` que sí muestra el menú de selección de opcionales.
+
+**Solución:** Modificar `CleanInstallUseCase` para mostrar el mismo menú de selección de opcionales que `ProjectInstallUseCase`:
+1. Presentar lista de archivos opcionales al usuario
+2. Copiar solo los seleccionados
+3. Si no selecciona nada, copiar solo obligatorio + estándar
+
+#### Plan de Implementación
+
+| ID | Descripción | Commit | Estado |
+|----|-------------|--------|--------|
+| T1 | Implementar detección de directorios en `TemplateResolver` | `pending` | 🟡 Pendiente |
+| T2 | Implementar copia recursiva de directorios en `BunFileSystem` | `pending` | 🟡 Pendiente |
+| T3 | Actualizar `FileMergeEngine` para manejar directorios | `pending` | 🟡 Pendiente |
+| T4 | Modificar `CleanInstallUseCase` para mostrar menú de opcionales | `pending` | 🟡 Pendiente |
+| T5 | Tests unitarios: `TemplateResolver` con directorios | `pending` | 🟡 Pendiente |
+| T6 | Tests unitarios: `BunFileSystem` copia recursiva | `pending` | 🟡 Pendiente |
+| T7 | Tests unitarios: `CleanInstallUseCase` con menú de opcionales | `pending` | 🟡 Pendiente |
+| T8 | Tests E2E: Clean Install con selección de opcionales | `pending` | 🟡 Pendiente |
+| T9 | Tests E2E: Project Install con `.devin` seleccionado | `pending` | 🟡 Pendiente |
+| T10 | ADR-010 documentado en `specs/adr/` | `pending` | 🟡 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.9 (actual) | Meta v1.0.10 |
+|---------|-----------------|--------------|
+| Tests (pass/fail) | 465 / 0 | ≥465 / 0 |
+| Coverage (funciones) | 97.66% | ≥97.66% |
+| Coverage (líneas) | 96.52% | ≥96.52% |
+| E2E escenarios | 12/12 | 14/14 |
+| `just check` errores | 0 | 0 |
+| Issues críticos abiertos | 0 | 0 |
+
+**Criterios de completitud (DoD FEV-2-D):**
+- [ ] `.devin` directory se copia correctamente en Clean Install y Project Install
+- [ ] Clean Install muestra menú de selección de opcionales (igual que Project Install)
+- [ ] `TemplateResolver` detecta y maneja directorios recursivamente
+- [ ] `BunFileSystem` implementa copia recursiva de directorios
+- [ ] `bun test`: sin regresión (≥465 pass, 0 fail)
+- [ ] `just check`: 0 errores
+- [ ] E2E: 14/14 pasando (12 existentes + 2 nuevos)
+- [ ] ADR-010 documentado
+- [ ] CHANGELOG actualizado con sección v1.0.10
+- [ ] Ship review: 0 Critical findings → GO decision
 
 ---
 
