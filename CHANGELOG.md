@@ -7,9 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Known Issues
 
-- **Issue #11**: `bunx @fisherk2-dev/codice` fails with `Template file not found: .gitignore` in all 3 install modes. npm excludes `.gitignore` files from the package by default. Fix planned for v1.0.9 (FEV-2-C: Gitignore Post-Install Generation).
+## [1.0.9] — 2026-06-26
+
+### Fixed
+
+- **Issue #11** — `bunx @fisherk2-dev/codice` now works correctly in all 3 modes. Root cause: npm hard-excludes `.gitignore` files from packages (not bypassable via `files` or `.npmignore`). Solution: renamed `template/estandar/.gitignore` to `template/estandar/gitignore` (no dot prefix) and generate the `.gitignore` file post-installation via `BunGitignoreCreator` in Clean Install and Project Install modes. Update Workspace preserves the user's existing `.gitignore`.
+- **Symlinks and gitignore**: Both `.opencode/` and `.devin/` symlinks and `.gitignore` are now generated in the correct order after file merge (per ADR-FEV2C-10).
+
+### Added
+
+- `IGitignoreCreator` port in `application/ports/` for Clean Architecture-compliant post-install gitignore generation.
+- `GitignoreError` type in `domain/types/` with 4 error codes (`READ_FAILED`, `WRITE_FAILED`, `TEMPLATE_NOT_FOUND`, `PATH_ESCAPE`) and factory functions.
+- `BunGitignoreCreator` adapter in `infrastructure/adapters/` — reads `gitignore` (no dot) from template and writes `.gitignore` to destination. Idempotent: skips if file already exists, skips real directories.
+- 8 new unit/integration tests for gitignore resolution and generation (6 BunGitignoreCreator + 2 TemplateResolver).
+- 2 new E2E scenarios (11-gitignore-clean-install, 12-gitignore-project-install) verifying `.gitignore` post-install generation and idempotency.
+
+### Deprecated
+
+- **v1.0.8** — deprecated on npm due to Issue #11 (`.gitignore` not found in `bunx` mode).
 
 ## [1.0.8] — 2026-06-26
 
