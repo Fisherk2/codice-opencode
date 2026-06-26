@@ -125,7 +125,8 @@ describe("BunGitignoreCreator — single createGitignore", () => {
 		}
 	});
 
-	test("returns WRITE_FAILED when destination is not writable", async () => {
+	// chmod 0o444 doesn't make dirs unwritable on Windows (admins always have write access)
+	test.skipIf(process.platform === "win32")("returns WRITE_FAILED when destination is not writable", async () => {
 		const { BunGitignoreCreator } = await import(modulePath);
 		const templateDir = path.join(tempDir, "template-write-fail", "estandar");
 		fs.mkdirSync(templateDir, { recursive: true });

@@ -127,7 +127,8 @@ describe("parseArgs", () => {
 		expect(result).toBeNull();
 	});
 
-	it("should reject sub-path inside a system directory (/etc/cron.d)", () => {
+	// /etc/cron.d is a Unix system directory — not applicable on Windows
+	it.skipIf(process.platform === "win32")("should reject sub-path inside a system directory (/etc/cron.d)", () => {
 		const result = validateDestPath("/etc/cron.d");
 		expect(result).toContain("system directory");
 	});
