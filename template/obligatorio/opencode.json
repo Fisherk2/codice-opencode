@@ -342,13 +342,13 @@
 
   "agent": {
     "huitzilopochtli": {
-      "model": "opencode-go/deepseek-v4-flash",
+      "model": "opencode-go/mimo-v2.5",
       "color": "#d3e22b",
       "temperature": 0.5,
       "steps": 20
     },
     "quetzalcoatl": {
-      "model": "opencode-go/kimi-k2.7-code",
+      "model": "opencode-go/qwen3.7-plus",
       "color": "#ffffff",
       "temperature": 0.3,
       "steps": 15

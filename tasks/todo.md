@@ -1,111 +1,211 @@
-# TODO: Fase FEV-1 — Resolución de Issues Críticos (v1.0.5)
+# TODO: Fase FEV-2 — Resolución de Issue #8 (v1.0.6)
 
-**Estado:** ✅ Completado — 5/5 tareas ejecutadas
-**Fecha:** 2026-06-24
-**Dependencias:** F0-F6 ✅ → **FEV-1 ✅ Completado**
-
----
-
-## Tareas Completadas
-
-### ✅ FEV1-T1: TemplateResolver — Añadir soporte para `bunx` (Issue #6)
-**Descripción:** Modificar `TemplateResolver.detectTemplateRoot()` para detectar automáticamente el modo `bunx` (source mode) y resolver la ruta del template desde `node_modules/@fisherk2-dev/codice/template/`.
-
-**Estado:** `completed`
-**Commit:** `9c6728a`
-**Archivos modificados:**
-- `src/infrastructure/adapters/TemplateResolver.ts` — añadida ruta bunx (`../template/`) como primera detección
-- `tests/integration/TemplateResolver.test.ts` — 4 tests (bunx resolution, bunx content, source compat, compiled compat)
-- `tests/e2e/04-update-workspace.sh` — actualizado a nuevo comportamiento
-
-**Verificación:**
-- [x] Tercera ruta `import.meta.dir + '../template/'` añadida
-- [x] Modos source dev y compilado preservados
-- [x] CWD fallback para compatibilidad retroactiva
-- [x] 4 tests unitarios/configuración
+**Estado:** 🟡 Pendiente — 0/10 tareas ejecutadas
+**Fecha:** 2026-06-25
+**Dependencias:** F0-F6 ✅ → FEV-1 ✅ → **FEV-2 🟡 En curso**
 
 ---
 
-### ✅ FEV1-T2: UpdateWorkspaceUseCase — Corregir transformación de reglas (Issue #2)
-**Descripción:** Modificar `buildUpdateRules()` para que **no convierta** reglas `standard` a `mandatory`, preservando la verificación `destinationExists()`.
+## Tareas Pendientes
 
-**Estado:** `completed`
-**Commit:** `073b5dd`
-**Archivos modificados:**
-- `src/application/use-cases/UpdateWorkspaceUseCase.ts` — `map()` mantiene categorías originales
-- `tests/unit/UpdateWorkspaceUseCase.test.ts` — 4 tests de regresión
+### ⏳ FEV2-T0: Reproducir bug del template path con test RED
+**Descripción:** Test que simule la estructura del paquete npm y confirme que `detectTemplateRoot()` produce `src/template` en vez de `template/`.
 
-**Verificación:**
-- [x] Solo `obligatorio` se tratan como `mandatory`
-- [x] `standard` mantienen tipo original
-- [x] `opcional` se excluyen del update
-- [x] E2E test actualizado para verificar preservación de estandar
+**Criterios de Aceptación:**
+- [ ] Test que cree `tmp/{template/obligatorio/opencode.json, src/infrastructure/adapters/TemplateResolver.ts (mock)}`.
+- [ ] Test verifica que `detectTemplateRoot()` retorna la ruta del `template/`.
+- [ ] Test es RED con el código actual, GREEN después de FEV2-T1.
 
----
+**Dependencias:** Ninguna.
+**Archivos:**
+- `tests/integration/TemplateResolver.test.ts` (nuevo test).
 
-### ✅ FEV1-T3: Actualizar permisos en `opencode.json` (Issue #3)
-**Descripción:** Extender la lista `permissions.read.deny` para bloquear archivos de credenciales (`.npmrc`, `.pem`, `*.key`, etc.).
-
-**Estado:** `completed`
-**Commit:** `d22c609`
-**Archivos modificados:**
-- `template/obligatorio/opencode.json` — añadidos patrones de credenciales
-
-**Verificación:**
-- [x] Patrones: `.env*`, `.npmrc`, `.pem`, `*.key`, `*.p12`, `*.pfx`, `credentials.json`, `service-account*.json`
+**Scope:** S (30min).
 
 ---
 
-### ✅ FEV1-T4: Corregir enlaces rotos en documentación (Issue #4)
-**Descripción:** Actualizar rutas relativas en `README.md`, `CONTRIBUTING.md` para reflejar la nueva estructura de directorios (`obligatorio/`, `estandar/`, `opcional/`).
+### ⏳ FEV2-T1: Corregir ruta en `TemplateResolver.detectTemplateRoot()`
+**Descripción:** Cambiar `../../template` a `../../../template`.
 
-**Estado:** `completed`
-**Commit:** `5800568`
-**Archivos modificados:**
-- `README.md` — 6 enlaces de agentes + 1 enlace de catálogo corregidos
-- `CONTRIBUTING.md` — 4 rutas de template corregidas
+**Criterios de Aceptación:**
+- [ ] `src/infrastructure/adapters/TemplateResolver.ts` línea 52 corregida.
+- [ ] JSDoc actualizado.
+- [ ] Test FEV2-T0 ahora pasa (GREEN).
 
-**Verificación:**
-- [x] Enlaces de agentes apuntan a `template/obligatorio/agents/`
-- [x] Catálogo apunta a `template/opcional/docs/opencode/03-agent-index.md`
+**Dependencias:** FEV2-T0.
+**Archivos:**
+- `src/infrastructure/adapters/TemplateResolver.ts`.
+
+**Scope:** XS (15min).
 
 ---
 
-### ✅ FEV1-T5: Añadir TECH_DEBT.md a la plantilla (Issue #5)
-**Descripción:** Crear `template/estandar/docs/TECH_DEBT.md` como placeholder siguiendo misma convención que WORKFLOW.md y TRD.md.
+### ⏳ FEV2-T2: E2E con bunx real en directorio limpio
+**Descripción:** Script E2E que simule instalación vía `bunx` y verifique los 3 modos.
 
-**Estado:** `completed`
-**Commit:** `3292f5c`
-**Archivos nuevos:**
-- `template/estandar/docs/TECH_DEBT.md` — 8 secciones estructuradas
+**Criterios de Aceptación:**
+- [ ] Script `tests/e2e/07-bunx-template-resolution.sh` que prueba los 3 modos en directorio temporal vacío.
+- [ ] Sin "Template file not found" en output.
+- [ ] Integrado en `just test-e2e`.
+
+**Dependencias:** FEV2-T1.
+**Archivos:**
+- `tests/e2e/07-bunx-template-resolution.sh` (nuevo).
+
+**Scope:** M (1h).
+
+---
+
+### ⏳ FEV2-T3: Listar todos los archivos reales de `template/opcional/`
+**Descripción:** Inventario exhaustivo (incluyendo ocultos) de archivos y directorios en `template/opcional/`.
+
+**Criterios de Aceptación:**
+- [ ] Lista generada con `find template/opcional -mindepth 1`.
+- [ ] Categorización: archivos sueltos / directorios / ocultos.
+
+**Dependencias:** Ninguna (paralelo a FEV2-T0).
+**Archivos:** (ninguno, solo inventario).
+
+**Scope:** XS (5min).
+
+---
+
+### ⏳ FEV2-T4: Añadir entradas faltantes al `FileRuleManifestData`
+**Descripción:** Añadir 4 nuevas entradas opcionales:
+- `.gitmessage` (archivo oculto)
+- `docs/opencode` (directorio, agrupa 13 archivos)
+- `.opencode/plugins/sdd-workflow-test.md` (archivo oculto)
+- `.devin/rules` (directorio oculto)
+
+Total: 9 (actuales) + 4 (nuevas) = 13 opcionales.
+
+**Criterios de Aceptación:**
+- [ ] 4 entradas añadidas con descripciones.
+- [ ] Orden: alfabético por `path`.
+- [ ] Tests existentes pasan.
+
+**Dependencias:** FEV2-T3.
+**Archivos:**
+- `src/domain/entities/FileRuleManifestData.ts`.
+
+**Scope:** S (30min).
+
+---
+
+### ⏳ FEV2-T5: Implementar exclusion logic en motor de copia
+**Descripción:** `docs/` (estándar) debe excluir `docs/opencode/` (opcional) para evitar copia doble.
+
+**Criterios de Aceptación:**
+- [ ] Motor de copia (`BunFileSystem.stageFile` o `walkDirectory`) soporta `excludePaths`.
+- [ ] Copia de `docs/` excluye `docs/opencode/`.
+- [ ] Selección de `docs/opencode` opcional copia desde entrada individual.
+- [ ] Sin copia doble.
 
 **Verificación:**
-- [x] Formato consistente con WORKFLOW.md y TRD.md
-- [x] Incluye secciones: coverage, arquitectura, dependencias, tests, proceso, histórico, plan
+- [ ] Test unitario: copiar `docs/` no incluye `docs/opencode/`.
+- [ ] E2E con selección de `docs/opencode`: aparece una sola vez en destino.
+
+**Dependencias:** FEV2-T1, FEV2-T4.
+**Archivos:**
+- `src/infrastructure/adapters/directoryWalker.ts` (parámetro `excludePaths`).
+- `src/application/use-cases/ProjectInstallUseCase.ts` (configuración de exclusion).
+
+**Scope:** M (1h 30min).
+
+---
+
+### ⏳ FEV2-T6: Test de completitud por categoría
+**Descripción:** Test que cuenta archivos en `template/<categoría>/` y verifica que el manifest tenga al menos esa cantidad de entries.
+
+**Criterios de Aceptación:**
+- [ ] Test recursivo en `template/opcional/` (incluyendo ocultos).
+- [ ] Verifica `FILE_RULE_MANIFEST.filter(r => r.category === 'optional').length >= archivos_contados`.
+- [ ] Si se añade archivo sin manifest, el test falla (regression guard).
+
+**Dependencias:** FEV2-T4.
+**Archivos:**
+- `tests/unit/file-rule-manifest.test.ts` (nuevo).
+
+**Scope:** S (45min).
+
+---
+
+### ⏳ FEV2-T7: Bump version a 1.0.6
+**Descripción:** `package.json` → `1.0.6`.
+
+**Criterios de Aceptación:**
+- [ ] `"version": "1.0.6"`.
+- [ ] Commit: `chore: bump version to 1.0.6`.
+
+**Dependencias:** FEV2-T1, FEV2-T2, FEV2-T4, FEV2-T5, FEV2-T6.
+**Archivos:**
+- `package.json`.
+
+**Scope:** XS (5min).
+
+---
+
+### ⏳ FEV2-T8: Actualizar CHANGELOG y crear tag
+**Descripción:** Mover `[Unreleased]` a `[1.0.6] — 2026-06-25`. Crear tag anotado.
+
+**Criterios de Aceptación:**
+- [ ] CHANGELOG con 3 entries: Issue #8 fix, manifest completo, exclusion logic.
+- [ ] `git tag -a v1.0.6 -m "Release v1.0.6 — Issue #8 (bunx + manifest)"`.
+- [ ] `git push origin v1.0.6`.
+
+**Dependencias:** FEV2-T7.
+**Archivos:**
+- `CHANGELOG.md`.
+
+**Scope:** S (10min).
+
+---
+
+### ⏳ FEV2-T9: Verificar release + sync + cleanup
+**Descripción:** Confirmar publicación, merge, eliminar branches.
+
+**Criterios de Aceptación:**
+- [ ] `npm view @fisherk2-dev/codice version` → `1.0.6`.
+- [ ] `gh release view v1.0.6` muestra 4 assets.
+- [ ] `git checkout develop && git merge main` (fast-forward).
+- [ ] `git push origin develop`.
+- [ ] `git branch -d fix/no-install-issue` (local).
+- [ ] `git push origin --delete fix/no-install-issue` (remote).
+- [ ] Solo `main` y `develop`.
+
+**Dependencias:** FEV2-T8.
+**Archivos:** (git only).
+
+**Scope:** S (10min).
 
 ---
 
 ## Checkpoints
 
-### Checkpoint 1: After FEV1-T1 + FEV1-T2 (Issues Críticos)
-- [x] `bunx @fisherk2-dev/codice` funciona en todos los modos (fuente, bunx, compilado).
-- [x] `UpdateWorkspaceUseCase` no sobrescribe archivos `estandar/`.
-- [x] `bun test`: 368 pass, 0 fail (sin regresión).
-- [x] E2E: 6/6 escenarios pasando.
+### Checkpoint 1: After FEV2-T1 (Template path fix)
+- [ ] `TemplateResolver.ts` corregido con `../../../template`.
+- [ ] Tests existentes pasan sin regresión.
+- [ ] `just check` — 0 errores.
 
-### Checkpoint 2: After FEV1-T3 + FEV1-T4 (Seguridad y Calidad)
-- [x] Agente IA no puede leer archivos de credenciales (extendido `permissions.read.deny`).
-- [x] Enlaces en documentación apuntan a rutas correctas.
-- [x] `just check`: Biome 0 errores (solo errores preexistentes de fixtures).
+### Checkpoint 2: After FEV2-T4 + FEV2-T6 (Manifest completo)
+- [ ] 13+ entradas opcionales.
+- [ ] Test de completitud pasa.
+- [ ] Coverage ≥97.66%.
 
-### Gate FEV-1: F5.5 Review Checklist (Final)
-- [x] Todos los issues de FEV-1 resueltos (#6, #2, #3, #4, #5).
-- [x] `bun test`: 368 pass, 0 fail.
-- [x] `just check`: 0 errores (Biome), solo errores preexistentes en fixtures.
-- [x] E2E: 6/6 escenarios pasando.
-- [ ] ADR-007 documentado en `specs/adr/`.
-- [ ] CHANGELOG.md actualizado con sección `[Unreleased]`.
+### Checkpoint 3: After FEV2-T5 (Exclusion logic)
+- [ ] `docs/` no copia `docs/opencode/`.
+- [ ] Selección de `docs/opencode` opcional funciona.
+- [ ] Sin copia doble.
+
+### Checkpoint 4: After FEV2-T2 (E2E bunx)
+- [ ] 7/7 E2E escenarios pasando.
+- [ ] No "Template file not found" en output.
+
+### Gate FEV-2: After FEV2-T8 (Release publicado)
+- [ ] `npm view` → `1.0.6`.
+- [ ] GitHub Release con 4 assets.
+- [ ] CHANGELOG actualizado.
 
 ---
 
-*Última actualización: 2026-06-24*
+*Última actualización: 2026-06-25*

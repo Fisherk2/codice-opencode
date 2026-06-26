@@ -36,13 +36,18 @@ export class FileMergeEngine implements IFileMergeEngine {
 	): Promise<Result<void, MergeError>> {
 		const selected = new Set(selectedOptionals ?? []);
 
+		// Compute subdirectory exclusions for standard dirs that overlap
+		// with optional sub-paths, so each file is copied only once.
+		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
 		// Phase 1: Stage all files
 		for (const rule of rules) {
 			const shouldStage = await this.shouldStage(rule, selected);
 			if (!shouldStage) continue;
 
+			const excludeSubDirs = this.computeExclusions(rule, optionalPaths);
+
 			try {
-				await this.fileSystem.stageFile(rule.path);
+				await this.fileSystem.stageFile(rule.path, excludeSubDirs);
 			} catch (err) {
 				await this.fileSystem.cleanStaging();
 				const message = err instanceof Error ? err.message : "Unknown staging error";
@@ -97,5 +102,35 @@ export class FileMergeEngine implements IFileMergeEngine {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Compute subdirectory exclusions for a standard directory rule that
+	 * overlaps with optional sub-paths. When a standard dir like "docs"
+	 * has an optional sub-path "docs/opencode", the directory walker should
+	 * exclude "opencode" so the optional rule can handle it separately.
+	 *
+	 * @returns Set of immediate subdirectory names to exclude, or undefined.
+	 */
+	private computeExclusions(rule: FileRule, optionalPaths: string[]): Set<string> | undefined {
+		// Only standard directories get exclusions; mandatory always overwrites everything.
+		if (!rule.isDirectory || rule.category !== "standard") {
+			return undefined;
+		}
+
+		const dirPrefix = `${rule.path}/`;
+		const overlapping = optionalPaths.filter((opt) => opt.startsWith(dirPrefix));
+		if (overlapping.length === 0) {
+			return undefined;
+		}
+
+		return new Set<string>(
+			overlapping
+				.map((opt) => {
+					const rest = opt.slice(dirPrefix.length);
+					return rest.split("/")[0] ?? "";
+				})
+				.filter((name) => name !== ""),
+		);
 	}
 }

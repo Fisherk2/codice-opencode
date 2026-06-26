@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] — 2026-06-25
+
+### Fixed
+
+- **Issue #8 (CRITICAL)**: `bunx @fisherk2-dev/codice` failed with `Template file not found: opencode.json` because `TemplateResolver.detectTemplateRoot()` resolved `import.meta.dir` relative to `src/infrastructure/adapters/` instead of the package root. Corrected source-mode detection path from `../../template` to `../../../template` so npm/bunx packages find `template/obligatorio/opencode.json`.
+
+### Added
+
+- **Manifest completeness**: 4 missing optional entries added to `FileRuleManifestData.ts` — `.devin/rules`, `.gitmessage`, `.opencode/plugins/sdd-workflow-test.md`, `docs/opencode`. Total optional entries: 9 → 13.
+- **Manifest completeness test**: `file-rule-manifest.test.ts` with 7 tests covering file existence, path coverage, unique paths, and category count guards. Detects when files are added to `template/opcional/` without updating the manifest.
+- **Exclusion logic in directory walker**: When a standard directory (e.g. `docs/`) overlaps with optional sub-paths (e.g. `docs/opencode/`), the directory walker now excludes those subdirectories to prevent double-copying. The exclusion is computed automatically from the manifest rule overlap.
+
 ## [1.0.5] — 2026-06-25
 
 ### Added

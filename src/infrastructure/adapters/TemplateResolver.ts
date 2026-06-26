@@ -31,9 +31,10 @@ export class TemplateResolver {
 	 * Auto-detect the template root based on execution mode.
 	 *
 	 * - **Source/bunx mode** (bun run, bunx): resolves the template directory relative
-	 *   to the source file location (`import.meta.dir`). Template is at `src/cli/../../template/`
-	 *   which equals the package/project root. This works for both local development
-	 *   and npm package execution (e.g. `bunx @fisherk2-dev/codice`).
+	 *   to the source file location (`import.meta.dir`). Since this method is defined in
+	 *   `src/infrastructure/adapters/`, the path resolves to `../../../template/` which
+	 *   equals the package/project root. This works for both local development and npm
+	 *   package execution (e.g. `bunx @fisherk2-dev/codice`).
 	 *
 	 * - **Compiled mode** (standalone binary): resolves the template directory
 	 *   relative to the binary location.
@@ -46,10 +47,12 @@ export class TemplateResolver {
 	 */
 	static detectTemplateRoot(): string {
 		// Path 1: Source/bunx mode (repo root or npm package)
-		// In both development and bunx execution, import.meta.dir points
-		// to src/cli/ (or tests/integration/), and template is ../../template/
-		// from that location.
-		const sourcePath = path.resolve(import.meta.dir, `../../${TEMPLATE_DIR_NAME}`);
+		// import.meta.dir points to src/infrastructure/adapters/ where
+		// TemplateResolver.ts is defined. From there, ../../../template
+		// reaches the package root's template/ directory.
+		// (FEV-2/Issue #8: path was ../../template which resolved to
+		//  src/template because import.meta.dir is in adapters/, not cli/.)
+		const sourcePath = path.resolve(import.meta.dir, `../../../${TEMPLATE_DIR_NAME}`);
 		if (fs.existsSync(sourcePath)) {
 			return sourcePath;
 		}

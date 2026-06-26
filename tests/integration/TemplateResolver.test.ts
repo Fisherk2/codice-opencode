@@ -19,6 +19,63 @@ import { TemplateResolver } from "../../src/infrastructure/adapters/TemplateReso
 
 const PROJECT_ROOT = path.resolve(import.meta.dir, "../..");
 
+// -----------------------------------------------------------------------
+// FEV-2 (Issue #8): bunx template path arithmetic
+// detectTemplateRoot() in TemplateResolver.ts uses path.resolve() with
+// import.meta.dir. Since the method is defined in src/infrastructure/adapters/,
+// not src/cli/, the relative path `../../template` resolves incorrectly.
+// -----------------------------------------------------------------------
+
+describe("FEV-2 — bunx template path resolution", () => {
+	test("../../template from src/infrastructure/adapters resolves to src/template (BUG)", () => {
+		// Simulate the npm package structure:
+		// node_modules/@fisherk2-dev/codice/src/infrastructure/adapters/TemplateResolver.ts
+		const adapterDir = path.join("/tmp", "codice-package", "src", "infrastructure", "adapters");
+		// BUG: ../../template from adapters/ reaches src/template, not template/
+		const badPath = path.resolve(adapterDir, "../../template");
+		// The template dir should be at the package root:
+		const pkgRoot = path.resolve(adapterDir, "../../..");
+		const correctPath = path.resolve(pkgRoot, "template");
+
+		// BUG proof: ../../template from adapters/ is inside src/, not at root
+		// Normalize to forward slashes for cross-platform comparison
+		expect(badPath).not.toBe(correctPath);
+		expect(badPath.replace(/\\/g, "/")).toContain("/src/template");
+
+		// FIX: ../../../template from adapters/ reaches the root's template/
+		const fixedPath = path.resolve(adapterDir, "../../../template");
+		expect(fixedPath).toBe(correctPath);
+	});
+
+	test("detectTemplateRoot current path '../../template' is wrong for npm package structure", () => {
+		// Simulate npm package: template/ at root, adapters/ in src/
+		const packageRoot = path.resolve(os.tmpdir(), "codice-issue8-test");
+		try {
+			fs.mkdirSync(path.join(packageRoot, "template", "obligatorio"), {
+				recursive: true,
+			});
+			fs.writeFileSync(path.join(packageRoot, "template", "obligatorio", "opencode.json"), "{}");
+
+			// TemplateResolver location in npm package:
+			const resolverDir = path.join(packageRoot, "src", "infrastructure", "adapters");
+
+			// BUG path: ../../template from adapters/ = src/template
+			const sourcePath = path.resolve(resolverDir, "../../template");
+			expect(sourcePath).toBe(path.join(packageRoot, "src", "template"));
+			// This does not exist
+			expect(fs.existsSync(sourcePath)).toBe(false);
+
+			// FIX path: ../../../template from adapters/ = template/
+			const fixPath = path.resolve(resolverDir, "../../../template");
+			expect(fixPath).toBe(path.join(packageRoot, "template"));
+			// This does exist
+			expect(fs.existsSync(fixPath)).toBe(true);
+		} finally {
+			fs.rmSync(packageRoot, { recursive: true, force: true });
+		}
+	});
+});
+
 describe("TemplateResolver — template root detection", () => {
 	test("resolves paths with explicit template root (source mode)", async () => {
 		const explicitRoot = path.join(PROJECT_ROOT, "template");
