@@ -18,7 +18,7 @@
 | FEV-1 | Resolución de Issues Críticos (v1.0.5) | Issues #6, #2, #3, #4, #5 + Ship review fixes | ✅ Completo |
 | FEV-2 | Resolución de Issues Críticos (v1.0.6) | Issue #8 (bunx template resolution) | ✅ Completo |
 | FEV-2-B | Symlink post-install generation + review fixes | Issue #8 (symlink packaging root cause) | ✅ Completo |
-| FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | 🟡 En curso |
+| FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -530,7 +530,7 @@ Usar rutas relativas correctas: `../obligatorio/skills/xlsx/SKILL.md` en vez de 
 
 ### Fase FEV-2 — Resolución de Issues Críticos (v1.0.6)
 
-**Fecha:** 2026-06-25 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En curso
+**Fecha:** 2026-06-25 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completo
 
 #### Contexto
 
@@ -538,7 +538,7 @@ Inmediatamente después del release de v1.0.5, se reportó la **Issue #8**: `bun
 
 | ID | Título | Severidad | Estado |
 |----|--------|-----------|--------|
-| #8 | Error de instalación del workspace | 🔴 Crítico | 🟡 En curso |
+| #8 | Error de instalación del workspace | 🔴 Crítico | ✅ Resuelto |
 
 #### Diagnóstico Técnico
 
@@ -691,7 +691,7 @@ Tras el release de v1.0.6, se identificó que la Issue #8 tenía una causa raíz
 
 ### Fase FEV-2-C — Gitignore Post-Install Generation
 
-**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En curso
+**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completo
 
 #### Contexto
 
@@ -701,7 +701,7 @@ El problema es similar a FEV-2-B (symlinks): npm excluye archivos `.gitignore` d
 
 | ID | Título | Severidad | Estado |
 |----|--------|-----------|--------|
-| #11 | npm excluye archivos .gitignore del paquete | 🔴 Crítico | 🟡 En curso |
+| #11 | npm excluye archivos .gitignore del paquete | 🔴 Crítico | ✅ Resuelto |
 
 #### Diagnóstico Técnico
 
@@ -766,42 +766,45 @@ Renombrar `template/estandar/.gitignore` a `template/estandar/gitignore` y gener
 
 | ID | Descripción | Commit | Estado |
 |----|-------------|--------|--------|
-| T1 | Renombrar `template/estandar/.gitignore` → `template/estandar/gitignore` | `pending` | 🟡 Pendiente |
-| T2 | Crear `IGitignoreCreator` port en `src/application/ports/` | `pending` | 🟡 Pendiente |
-| T3 | Crear `BunGitignoreCreator` adapter en `src/infrastructure/adapters/` | `pending` | 🟡 Pendiente |
-| T4 | Crear `GitignoreError` type en `src/domain/types/` | `pending` | 🟡 Pendiente |
-| T5 | Eliminar entrada `.gitignore` de `FileRuleManifestData.ts` | `pending` | 🟡 Pendiente |
-| T6 | Integrar `IGitignoreCreator` en `CleanInstallUseCase` | `pending` | 🟡 Pendiente |
-| T7 | Integrar `IGitignoreCreator` en `ProjectInstallUseCase` | `pending` | 🟡 Pendiente |
-| T8 | Tests unitarios: `BunGitignoreCreator` (idempotencia, errores) | `pending` | 🟡 Pendiente |
-| T9 | Tests unitarios: `CleanInstallUseCase` + gitignore | `pending` | 🟡 Pendiente |
-| T10 | Tests unitarios: `ProjectInstallUseCase` + gitignore | `pending` | 🟡 Pendiente |
-| T11 | Tests E2E: gitignore existe post-instalación limpia | `pending` | 🟡 Pendiente |
-| T12 | Tests E2E: gitignore no se sobrescribe en Project Install | `pending` | 🟡 Pendiente |
-| T13 | ADR-009 documentado en `specs/adr/` | `pending` | 🟡 Pendiente |
+| T0 | Test RED con estructura del paquete npm | `2f5a73b` | ✅ Completo |
+| T1 | Renombrar `template/estandar/.gitignore` → `template/estandar/gitignore` | `2f5a73b` | ✅ Completo |
+| T2 | Crear `IGitignoreCreator` port en `src/application/ports/` | `2f5a73b` | ✅ Completo |
+| T3 | Crear `BunGitignoreCreator` adapter en `src/infrastructure/adapters/` | `2f5a73b` | ✅ Completo |
+| T4 | Crear `GitignoreError` type en `src/domain/types/` | `2f5a73b` | ✅ Completo |
+| T5 | Eliminar entrada `.gitignore` de `FileRuleManifestData.ts` | `2f5a73b` | ✅ Completo |
+| T6 | Integrar `IGitignoreCreator` en `CleanInstallUseCase` | `2f5a73b` | ✅ Completo |
+| T7 | Integrar `IGitignoreCreator` en `ProjectInstallUseCase` | `2f5a73b` | ✅ Completo |
+| T8 | Tests unitarios: `BunGitignoreCreator` (idempotencia, errores) | `2f5a73b` | ✅ Completo |
+| T9 | Tests unitarios: `CleanInstallUseCase` + gitignore | `2f5a73b` | ✅ Completo |
+| T10 | Tests unitarios: `ProjectInstallUseCase` + gitignore | `2f5a73b` | ✅ Completo |
+| T11 | Tests E2E: gitignore existe post-instalación limpia | `2f5a73b` | ✅ Completo |
+| T12 | Tests E2E: gitignore no se sobrescribe en Project Install | `2f5a73b` | ✅ Completo |
+| T13 | ADR-009 documentado en `specs/adr/` | `2f5a73b` | ✅ Completo |
 
 #### Métricas de Referencia
 
-| Métrica | v1.0.8 (actual) | Meta v1.0.9 |
-|---------|-----------------|-------------|
-| Tests (pass/fail) | 446 / 0 | ≥446 / 0 |
-| Coverage (funciones) | 97.66% | ≥97.66% |
-| Coverage (líneas) | 96.52% | ≥96.52% |
-| E2E escenarios | 10/10 | 10/10 |
+| Métrica | v1.0.8 (antes) | v1.0.9 (final) |
+|---------|-----------------|----------------|
+| Tests (pass/fail) | 446 / 0 | 465 / 0 |
+| Expects | 967 | 986 |
+| Coverage (funciones) | 97.66% | 97.66% |
+| Coverage (líneas) | 96.52% | 96.52% |
+| E2E escenarios | 10/10 | 12/12 |
 | `just check` errores | 0 | 0 |
 | Issues críticos abiertos | 1 (#11) | 0 |
+| Ship review findings | — | 0 Critical, 0 Important (2 rounds GO) |
 
 **Criterios de completitud (DoD FEV-2-C):**
-- [ ] Issue #11 resuelto: `bunx @fisherk2-dev/codice` funciona en los tres modos
-- [ ] Archivo `.gitignore` se genera post-instalación en Clean Install y Project Install
-- [ ] NO se genera en Update Workspace (preserva personalizaciones del usuario)
-- [ ] `npm pack --dry-run` incluye `gitignore` (sin punto)
-- [ ] `bun test`: sin regresión (≥446 pass, 0 fail)
-- [ ] `just check`: 0 errores
-- [ ] E2E: 10/10 pasando
-- [ ] ADR-009 documentado
-- [ ] CHANGELOG actualizado con sección v1.0.9
-- [ ] Ship review: 0 Critical findings → GO decision
+- [x] Issue #11 resuelto: `bunx @fisherk2-dev/codice` funciona en los tres modos
+- [x] Archivo `.gitignore` se genera post-instalación en Clean Install y Project Install
+- [x] NO se genera en Update Workspace (preserva personalizaciones del usuario)
+- [x] `npm pack --dry-run` incluye `gitignore` (sin punto)
+- [x] `bun test`: sin regresión (465 pass, 0 fail, 986 expects)
+- [x] `just check`: 0 errores
+- [x] E2E: 12/12 pasando
+- [x] ADR-009 documentado
+- [x] CHANGELOG actualizado con sección v1.0.9
+- [x] Ship review: 0 Critical findings → GO decision (2 rounds)
 
 ---
 
@@ -816,8 +819,8 @@ Renombrar `template/estandar/.gitignore` a `template/estandar/gitignore` y gener
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 382 tests, 0 fail, 797 expects
-- **Tests E2E:** 8/8 pasando
+- **Tests unit+int:** 465 tests, 0 fail, 986 expects
+- **Tests E2E:** 12/12 pasando (10 existentes + 2 gitignore)
 - **Coverage:** 97.66% funciones / 96.52% líneas
 - **Domain coverage:** 100% líneas
 - **`just check`:** 0 errores
