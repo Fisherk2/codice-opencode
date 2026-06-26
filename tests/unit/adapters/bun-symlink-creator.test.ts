@@ -18,6 +18,12 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { SymlinkSpec } from "../../../src/application/ports/ISymlinkCreator";
+import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
+
+/** Normalize path separators for cross-platform symlink target comparison. */
+function normalizeSlash(p: string): string {
+	return p.replace(/\\/g, "/");
+}
 
 // Use dynamic import so tests exercise module loading from source
 const modulePath = "../../../src/infrastructure/adapters/BunSymlinkCreator";
@@ -52,7 +58,7 @@ describe("BunSymlinkCreator — single createSymlink", () => {
 
 		expect(result.ok).toBe(true);
 		expect(fs.lstatSync(linkPath).isSymbolicLink()).toBe(true);
-		expect(fs.readlinkSync(linkPath)).toBe(relativeTarget);
+		expect(normalizeSlash(fs.readlinkSync(linkPath))).toBe(relativeTarget);
 	});
 
 	test("is idempotent: existing symlink is not overwritten", async () => {
@@ -68,7 +74,7 @@ describe("BunSymlinkCreator — single createSymlink", () => {
 		expect(second.ok).toBe(true);
 
 		// Symlink still points to the same target
-		expect(fs.readlinkSync(path.join(linkDir, "agents"))).toBe("../agents");
+		expect(normalizeSlash(fs.readlinkSync(path.join(linkDir, "agents")))).toBe("../agents");
 	});
 
 	test("skips real directory at linkPath (idempotent safety)", async () => {
@@ -115,7 +121,7 @@ describe("BunSymlinkCreator — single createSymlink", () => {
 		expect(result.ok).toBe(true);
 		const absLinkPath = path.join(workspaceDir, ".opencode", "commands");
 		expect(fs.lstatSync(absLinkPath).isSymbolicLink()).toBe(true);
-		expect(fs.readlinkSync(absLinkPath)).toBe("../commands");
+		expect(normalizeSlash(fs.readlinkSync(absLinkPath))).toBe("../commands");
 	});
 
 	test("is idempotent with broken symlink at linkPath (does not throw EEXIST)", async () => {
@@ -166,7 +172,7 @@ describe("BunSymlinkCreator — single createSymlink", () => {
 		expect(result.ok).toBe(true);
 		const absLinkPath = path.join(workspaceDir, ".opencode", "link-to-file");
 		expect(fs.lstatSync(absLinkPath).isSymbolicLink()).toBe(true);
-		expect(fs.readlinkSync(absLinkPath)).toBe("../readme.md");
+		expect(normalizeSlash(fs.readlinkSync(absLinkPath))).toBe("../readme.md");
 	});
 
 	test("auto-creates parent directory for nested symlink path", async () => {
@@ -250,7 +256,7 @@ describe("BunSymlinkCreator — batch createSymlinks", () => {
 		for (const spec of OPENCODE_SYMLINKS) {
 			const absLinkPath = path.join(workspaceDir, spec.linkPath);
 			expect(fs.lstatSync(absLinkPath).isSymbolicLink()).toBe(true);
-			expect(fs.readlinkSync(absLinkPath)).toBe(spec.target);
+			expect(normalizeSlash(fs.readlinkSync(absLinkPath))).toBe(spec.target);
 		}
 	});
 
@@ -296,8 +302,8 @@ describe("BunSymlinkCreator — batch createSymlinks", () => {
 		if (!result.ok) {
 			expect(result.error).toHaveLength(3);
 			// All errors have linkPaths matching their spec
-			for (let i = 0; i < 3; i++) {
-				expect(result.error[i].linkPath).toBe(specs[i].linkPath);
+			for (let i = 0; i < result.error.length; i++) {
+				expect(result.error[i]!.linkPath).toBe(specs[i]!.linkPath);
 			}
 		}
 	});
