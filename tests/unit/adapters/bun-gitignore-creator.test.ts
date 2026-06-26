@@ -1,7 +1,7 @@
 /**
  * BunGitignoreCreator — gitignore generation adapter tests
  *
- * Covers 8 scenarios:
+ * Covers 10 scenarios:
  * 1. Creates .gitignore new file with content from template
  * 2. Idempotent: skip if .gitignore already exists
  * 3. Skips directory at .gitignore path (user created it manually)
@@ -9,7 +9,9 @@
  * 5. Returns WRITE_FAILED when destination is not writable
  * 6. Returns TEMPLATE_NOT_FOUND when template path doesn't exist
  * 7. Returns WRITE_FAILED when destination escapes workspace root (path traversal)
- * 8. Verbose mode emits creation log to stderr
+ * 8. Does NOT reject path when destPath equals workspace root (exact match allowed)
+ * 9. Verbose mode emits creation log to stderr
+ * 10. Verbose mode undefined defaults to false (no console.warn)
  */
 
 import { afterAll, beforeAll, describe, expect, mock as mockFn, test } from "bun:test";

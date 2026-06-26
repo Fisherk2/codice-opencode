@@ -213,8 +213,9 @@ describe("CleanInstallUseCase", () => {
 
 			// Gitignore failure should NOT cause the install to fail
 			expect(result.ok).toBe(true);
-			// Warning should have been shown about gitignore
+			// Warning should have been shown about gitignore, including --verbose hint
 			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining(".gitignore"));
+			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining("--verbose"));
 		});
 
 		it("should create symlinks after successful merge", async () => {

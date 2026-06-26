@@ -127,6 +127,16 @@ describe("parseArgs", () => {
 		expect(result).toBeNull();
 	});
 
+	it("should reject sub-path inside a system directory (/etc/cron.d)", () => {
+		const result = validateDestPath("/etc/cron.d");
+		expect(result).toContain("system directory");
+	});
+
+	it("should allow /tmp paths (intentionally excluded from system directories)", () => {
+		const result = validateDestPath("/tmp/my-project");
+		expect(result).toBeNull();
+	});
+
 	it("should return null when parseArgs receives --dest with path traversal", () => {
 		const result = parseArgs(["--dest", "../../etc/passwd"]);
 		expect(result).toBeNull();
