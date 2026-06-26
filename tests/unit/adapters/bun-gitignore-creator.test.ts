@@ -129,30 +129,31 @@ describe("BunGitignoreCreator — single createGitignore", () => {
 	test.skipIf(process.platform === "win32")(
 		"returns WRITE_FAILED when destination is not writable",
 		async () => {
-		const { BunGitignoreCreator } = await import(modulePath);
-		const templateDir = path.join(tempDir, "template-write-fail", "estandar");
-		fs.mkdirSync(templateDir, { recursive: true });
-		fs.writeFileSync(path.join(templateDir, "gitignore"), "# content");
+			const { BunGitignoreCreator } = await import(modulePath);
+			const templateDir = path.join(tempDir, "template-write-fail", "estandar");
+			fs.mkdirSync(templateDir, { recursive: true });
+			fs.writeFileSync(path.join(templateDir, "gitignore"), "# content");
 
-		const workspaceWriteFail = path.join(tempDir, "workspace-write-fail");
-		fs.mkdirSync(workspaceWriteFail, { recursive: true });
+			const workspaceWriteFail = path.join(tempDir, "workspace-write-fail");
+			fs.mkdirSync(workspaceWriteFail, { recursive: true });
 
-		// Make workspace read-only (BunGitignoreCreator needs to handle EACCES)
-		fs.chmodSync(workspaceWriteFail, 0o444);
+			// Make workspace read-only (BunGitignoreCreator needs to handle EACCES)
+			fs.chmodSync(workspaceWriteFail, 0o444);
 
-		const creator = new BunGitignoreCreator(workspaceWriteFail, templateDir);
-		const result = await creator.createGitignore(workspaceWriteFail);
+			const creator = new BunGitignoreCreator(workspaceWriteFail, templateDir);
+			const result = await creator.createGitignore(workspaceWriteFail);
 
-		// Restore permissions for cleanup
-		fs.chmodSync(workspaceWriteFail, 0o755);
+			// Restore permissions for cleanup
+			fs.chmodSync(workspaceWriteFail, 0o755);
 
-		expect(result.ok).toBe(false);
-		if (!result.ok) {
-			// Could be WRITE_FAILED for permission error
-			expect(result.error.code).toBe("WRITE_FAILED");
-			expect(result.error.destPath).toBe(workspaceWriteFail);
-		}
-	});
+			expect(result.ok).toBe(false);
+			if (!result.ok) {
+				// Could be WRITE_FAILED for permission error
+				expect(result.error.code).toBe("WRITE_FAILED");
+				expect(result.error.destPath).toBe(workspaceWriteFail);
+			}
+		},
+	);
 
 	test("returns TEMPLATE_NOT_FOUND when template directory does not exist", async () => {
 		const { BunGitignoreCreator } = await import(modulePath);
