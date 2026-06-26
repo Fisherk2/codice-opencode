@@ -46,10 +46,12 @@ export class TemplateResolver {
 	 */
 	static detectTemplateRoot(): string {
 		// Path 1: Source/bunx mode (repo root or npm package)
-		// In both development and bunx execution, import.meta.dir points
-		// to src/cli/ (or tests/integration/), and template is ../../template/
-		// from that location.
-		const sourcePath = path.resolve(import.meta.dir, `../../${TEMPLATE_DIR_NAME}`);
+		// import.meta.dir points to src/infrastructure/adapters/ where
+		// TemplateResolver.ts is defined. From there, ../../../template
+		// reaches the package root's template/ directory.
+		// (FEV-2/Issue #8: path was ../../template which resolved to
+		//  src/template because import.meta.dir is in adapters/, not cli/.)
+		const sourcePath = path.resolve(import.meta.dir, `../../../${TEMPLATE_DIR_NAME}`);
 		if (fs.existsSync(sourcePath)) {
 			return sourcePath;
 		}
