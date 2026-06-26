@@ -153,6 +153,30 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// OPCIONAL (Optional) — only if user opts in
 	// =============================================
 	{
+		path: ".devin/rules",
+		category: "optional",
+		isDirectory: true,
+		description: "Devin rules for AI agent; team-specific customization",
+	},
+	{
+		path: ".gitmessage",
+		category: "optional",
+		isDirectory: false,
+		description: "Git commit message template; team-specific customization",
+	},
+	{
+		path: ".opencode/plugins/sdd-workflow-test.md",
+		category: "optional",
+		isDirectory: false,
+		description: "SDD pipeline workflow test specs; only needed for plugin validation",
+	},
+	{
+		path: "docs/opencode",
+		category: "optional",
+		isDirectory: true,
+		description: "Complete OpenCode configuration guides; user may not need all guides",
+	},
+	{
 		path: "Justfile",
 		category: "optional",
 		isDirectory: false,
