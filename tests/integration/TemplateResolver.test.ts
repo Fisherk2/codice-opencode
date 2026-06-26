@@ -193,3 +193,73 @@ describe("FEV-2-B — npm package structure (no symlinks) resolution", () => {
 		}
 	});
 });
+
+// -----------------------------------------------------------------------
+// FEV-2-C (Issue #11): npm excludes .gitignore from packages even when
+// listed in package.json "files". The file template/estandar/.gitignore
+// exists in the repo (2930 bytes) but is NOT included in the published
+// npm tarball. See docs/TECH_DEBT.md §7.1 for root cause analysis.
+//
+// Solution: Rename .gitignore → gitignore (so npm includes it) and
+// generate the .gitignore file post-installation (Clean + Project modes).
+// -----------------------------------------------------------------------
+
+describe("FEV-2-C — npm package structure (no .gitignore) resolution", () => {
+	test("resolvePath('.gitignore') throws when .gitignore does not exist (RED: reproduces npm package bug)", async () => {
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "codice-fev2c-"));
+		try {
+			// Simulate npm package structure: template root with categories but
+			// WITHOUT .gitignore in any category. npm hard-excludes .gitignore from
+			// packages regardless of package.json "files" or ".npmignore" settings.
+			const estandarDir = path.join(tempDir, "estandar");
+			fs.mkdirSync(estandarDir, { recursive: true });
+			// CRITICAL: DO NOT create .gitignore in estandar/
+			// npm excludes .gitignore from tarballs — this simulates that.
+
+			// Add obligatorio directory with a known file
+			const obligatorioDir = path.join(tempDir, "obligatorio");
+			fs.mkdirSync(obligatorioDir, { recursive: true });
+			fs.writeFileSync(path.join(obligatorioDir, "opencode.json"), "{}");
+
+			const resolver = new TemplateResolver(tempDir);
+
+			// This must throw because .gitignore doesn't exist in any category.
+			// This reproduces the npm package bug: trying to resolve a path
+			// that npm excluded from the tarball.
+			await expect(resolver.resolvePath(".gitignore")).rejects.toThrow(
+				"Template file not found",
+			);
+		} finally {
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		}
+	});
+
+	test("resolvePath('gitignore') succeeds when gitignore (no dot) exists in estandar/ (GREEN: post-fix behavior)", async () => {
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "codice-fev2c-"));
+		try {
+			// After the fix, the file is renamed from .gitignore → gitignore
+			// to avoid npm's hardcoded .gitignore exclusion behavior.
+			const estandarDir = path.join(tempDir, "estandar");
+			fs.mkdirSync(estandarDir, { recursive: true });
+			fs.writeFileSync(
+				path.join(estandarDir, "gitignore"),
+				"# Renamed to avoid npm exclusion\nnode_modules/\n",
+			);
+
+			// Add obligatorio directory with a known file
+			const obligatorioDir = path.join(tempDir, "obligatorio");
+			fs.mkdirSync(obligatorioDir, { recursive: true });
+			fs.writeFileSync(path.join(obligatorioDir, "opencode.json"), "{}");
+
+			const resolver = new TemplateResolver(tempDir);
+
+			// gitignore (no dot) should resolve successfully from estandar/
+			const resolved = await resolver.resolvePath("gitignore");
+			expect(resolved).toBeTruthy();
+			expect(resolved.replace(/\\/g, "/")).toContain("estandar");
+			expect(resolved.replace(/\\/g, "/")).toContain("gitignore");
+		} finally {
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		}
+	});
+});
