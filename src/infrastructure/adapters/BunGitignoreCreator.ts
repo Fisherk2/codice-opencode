@@ -3,7 +3,6 @@ import * as path from "node:path";
 import type { IGitignoreCreator } from "../../application/ports/IGitignoreCreator";
 import {
 	type GitignoreError,
-	gitignorePathEscapeError,
 	gitignoreReadError,
 	gitignoreTemplateNotFoundError,
 	gitignoreWriteError,
@@ -47,11 +46,6 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 	async createGitignore(destPath: string): Promise<Result<void, GitignoreError>> {
 		const resolvedDest = path.resolve(destPath);
 
-		// Defense-in-depth: ensure the resolved destination path does not escape
-		if (resolvedDest !== destPath && !resolvedDest.startsWith(destPath)) {
-			return failure(gitignorePathEscapeError(destPath, resolvedDest));
-		}
-
 		// Resolve template file path
 		const templateFile = path.join(this.templatePath, "gitignore");
 
@@ -60,18 +54,12 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 		try {
 			const stat = await fsPromises.lstat(destGitignore);
 
-			if (stat.isDirectory()) {
-				// Skip real directories — user may have manually created them
-				if (this.verbose) {
-					// biome-ignore lint/suspicious/noConsole: verbose diagnostic output
-					console.warn(
-						`[warn] Skipping .gitignore creation: ${destGitignore} is a real directory.`,
-					);
-				}
-				return success(undefined);
+			if (stat.isDirectory() && this.verbose) {
+				// biome-ignore lint/suspicious/noConsole: verbose diagnostic output
+				console.warn(`[warn] Skipping .gitignore creation: ${destGitignore} is a real directory.`);
 			}
 
-			// File or symlink already exists — idempotent, skip
+			// File, symlink, or directory already exists — idempotent, skip
 			return success(undefined);
 		} catch (error) {
 			// ENOENT means the path does not exist — proceed to create it.
@@ -83,25 +71,23 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 			}
 		}
 
-		// Read template gitignore file
-		let content: string;
+		// Verify template gitignore file exists, then read it
 		try {
 			await fsPromises.access(templateFile, fs.constants.F_OK);
-			const file = Bun.file(templateFile);
-			content = await file.text();
 		} catch {
-			// Check if the template dir itself is missing
+			// Check if the template dir itself is missing (better error message)
 			try {
 				await fsPromises.access(this.templatePath, fs.constants.F_OK);
 			} catch {
 				return failure(gitignoreTemplateNotFoundError(resolvedDest));
 			}
 
-			// Template dir exists but gitignore file is missing
 			return failure(
 				gitignoreReadError(resolvedDest, `Template gitignore file not found at: ${templateFile}`),
 			);
 		}
+
+		const content = await Bun.file(templateFile).text();
 
 		// Write to destPath/.gitignore
 		try {
