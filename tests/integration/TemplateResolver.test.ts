@@ -38,8 +38,9 @@ describe("FEV-2 — bunx template path resolution", () => {
 		const correctPath = path.resolve(pkgRoot, "template");
 
 		// BUG proof: ../../template from adapters/ is inside src/, not at root
+		// Normalize to forward slashes for cross-platform comparison
 		expect(badPath).not.toBe(correctPath);
-		expect(badPath).toContain("/src/template");
+		expect(badPath.replace(/\\/g, "/")).toContain("/src/template");
 
 		// FIX: ../../../template from adapters/ reaches the root's template/
 		const fixedPath = path.resolve(adapterDir, "../../../template");
