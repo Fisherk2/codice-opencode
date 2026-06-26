@@ -55,12 +55,19 @@ export class AtomicStager {
 	 *
 	 * @param resolvedTemplatePath - Already-resolved absolute path within the template directory.
 	 * @param relativeDestPath - The relative destination path (used to build staging path).
+	 * @param excludeSubDirs - Optional set of subdirectory names to exclude when
+	 *                         walking a directory (e.g. Set("opencode") to exclude
+	 *                         docs/opencode/ when staging docs/).
 	 */
-	async stageFile(resolvedTemplatePath: string, relativeDestPath: string): Promise<void> {
+	async stageFile(
+		resolvedTemplatePath: string,
+		relativeDestPath: string,
+		excludeSubDirs?: Set<string>,
+	): Promise<void> {
 		const stat = await fs.stat(resolvedTemplatePath);
 
 		if (stat.isDirectory()) {
-			const files = await walkDirectory(resolvedTemplatePath);
+			const files = await walkDirectory(resolvedTemplatePath, false, excludeSubDirs);
 			for (const filePath of files) {
 				const fileRelative = path.relative(resolvedTemplatePath, filePath);
 				const fullRelative = path.join(relativeDestPath, fileRelative);

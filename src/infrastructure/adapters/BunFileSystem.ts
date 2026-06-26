@@ -77,10 +77,15 @@ export class BunFileSystem implements IFileSystem {
 	/**
 	 * Stage a file or directory by resolving the template path and delegating
 	 * to AtomicStager for the staging write.
+	 *
+	 * @param relativePath - Path relative to template root.
+	 * @param excludeSubDirs - Optional set of subdirectory names to exclude
+	 *                         when staging a directory (e.g. Set("opencode")
+	 *                         to exclude docs/opencode/ from docs/).
 	 */
-	async stageFile(relativePath: string): Promise<void> {
+	async stageFile(relativePath: string, excludeSubDirs?: Set<string>): Promise<void> {
 		const resolved = await this.templateResolver.resolvePath(relativePath);
-		await this.atomicStager.stageFile(resolved, relativePath);
+		await this.atomicStager.stageFile(resolved, relativePath, excludeSubDirs);
 	}
 
 	/**

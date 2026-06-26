@@ -23,8 +23,13 @@ export interface IFileSystem {
 
 	/**
 	 * Stage a file: copy from template to staging directory.
+	 * If the path resolves to a directory and excludeSubDirs is provided,
+	 * subdirectories matching names in the set are excluded from staging.
+	 *
+	 * @param relativePath - Path relative to template root.
+	 * @param excludeSubDirs - Optional set of subdirectory names to skip.
 	 */
-	stageFile(relativePath: string): Promise<void>;
+	stageFile(relativePath: string, excludeSubDirs?: Set<string>): Promise<void>;
 
 	/**
 	 * Atomic rename: promote all staged files to destination.

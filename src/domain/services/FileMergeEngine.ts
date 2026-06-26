@@ -36,13 +36,44 @@ export class FileMergeEngine implements IFileMergeEngine {
 	): Promise<Result<void, MergeError>> {
 		const selected = new Set(selectedOptionals ?? []);
 
+		// Compute exclusions: when a standard directory rule overlaps with optional
+		// sub-paths, the directory should exclude those subdirectories to avoid
+		// double-copying when the user also selects the optional rule.
+		// E.g., "docs" (standard) should exclude "opencode" because "docs/opencode"
+		// is an optional rule. The optional rule handles copying it separately.
+		const optionalPaths = rules
+			.filter((r) => r.category === "optional")
+			.map((r) => r.path);
+		const standardDirPaths = rules
+			.filter((r) => r.category === "standard" && r.isDirectory)
+			.map((r) => r.path);
+
 		// Phase 1: Stage all files
 		for (const rule of rules) {
 			const shouldStage = await this.shouldStage(rule, selected);
 			if (!shouldStage) continue;
 
+			// Compute exclusions for this rule
+			let excludeSubDirs: Set<string> | undefined;
+			if (rule.isDirectory) {
+				// Check if any optional rule is a sub-path of this directory
+				const dirPrefix = `${rule.path}/`;
+				const overlappingOptionals = optionalPaths.filter((opt) =>
+					opt.startsWith(dirPrefix),
+				);
+				if (overlappingOptionals.length > 0) {
+					// Extract the immediate subdirectory name that matches
+					excludeSubDirs = new Set<string>(
+						overlappingOptionals.map((opt) => {
+							const rest = opt.slice(dirPrefix.length);
+							return rest.split("/")[0] ?? ""; // first path segment
+						}).filter((name) => name !== ""),
+					);
+				}
+			}
+
 			try {
-				await this.fileSystem.stageFile(rule.path);
+				await this.fileSystem.stageFile(rule.path, excludeSubDirs);
 			} catch (err) {
 				await this.fileSystem.cleanStaging();
 				const message = err instanceof Error ? err.message : "Unknown staging error";

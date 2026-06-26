@@ -8,9 +8,16 @@ import * as path from "node:path";
  *
  * @param dirPath - Absolute path to the directory to walk.
  * @param verbose - If true, log skipped symlinks to stderr (for debugging/auditing).
+ * @param excludeSubPaths - Optional set of relative path prefixes to exclude
+ *                          (e.g. Set("opencode") excludes any entry named "opencode"
+ *                          or at a path containing "opencode").
  * @returns Array of absolute file paths within the directory tree.
  */
-export async function walkDirectory(dirPath: string, verbose = false): Promise<string[]> {
+export async function walkDirectory(
+	dirPath: string,
+	verbose = false,
+	excludeSubPaths?: Set<string>,
+): Promise<string[]> {
 	const files: string[] = [];
 	const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
@@ -25,9 +32,14 @@ export async function walkDirectory(dirPath: string, verbose = false): Promise<s
 			continue;
 		}
 
+		// Skip entries that match exclusion set
+		if (excludeSubPaths?.has(entry.name)) {
+			continue;
+		}
+
 		const entryPath = path.join(dirPath, entry.name);
 		if (entry.isDirectory()) {
-			const subFiles = await walkDirectory(entryPath, verbose);
+			const subFiles = await walkDirectory(entryPath, verbose, excludeSubPaths);
 			files.push(...subFiles);
 		} else if (entry.isFile()) {
 			files.push(entryPath);
