@@ -13,8 +13,10 @@ import type { IFileSystem } from "../domain/ports/IFileSystem";
 import { FileMergeEngine } from "../domain/services/FileMergeEngine";
 import { VersionComparator } from "../domain/services/VersionComparator";
 import { BunFileSystem } from "../infrastructure/adapters/BunFileSystem";
+import { BunSymlinkCreator } from "../infrastructure/adapters/BunSymlinkCreator";
 import { ClackPromptsAdapter } from "../infrastructure/adapters/ClackPromptsAdapter";
 import { GitHubRestClient } from "../infrastructure/adapters/GitHubRestClient";
+import { DEVIN_SYMLINKS, OPENCODE_SYMLINKS } from "../infrastructure/config/symlinks";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -52,9 +54,26 @@ export function createDependencies(destinationPath?: string): Dependencies {
 	const userPrompt = new ClackPromptsAdapter();
 	const mergeEngine = new FileMergeEngine(fileSystem);
 	const versionComparator = new VersionComparator();
+	// Clean install copies everything including optional .devin/ → all 10 symlinks
+	const destRoot = destinationPath ?? process.cwd();
+	const symlinkCreator = new BunSymlinkCreator(destRoot);
+	const allSymlinks = [...OPENCODE_SYMLINKS, ...DEVIN_SYMLINKS];
 
-	const cleanInstall = new CleanInstallUseCase(fileSystem, mergeEngine, userPrompt);
-	const projectInstall = new ProjectInstallUseCase(fileSystem, mergeEngine, userPrompt);
+	const cleanInstall = new CleanInstallUseCase(
+		fileSystem,
+		mergeEngine,
+		userPrompt,
+		symlinkCreator,
+		allSymlinks,
+	);
+	const projectInstall = new ProjectInstallUseCase(
+		fileSystem,
+		mergeEngine,
+		userPrompt,
+		symlinkCreator,
+		OPENCODE_SYMLINKS,
+		DEVIN_SYMLINKS,
+	);
 	const updateWorkspace = new UpdateWorkspaceUseCase(
 		fileSystem,
 		mergeEngine,

@@ -3,6 +3,7 @@ import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, writeVersionFileSafe } from "../helpers";
+import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 
 /**
@@ -32,11 +33,17 @@ export class ProjectInstallUseCase {
 	 * @param fileSystem - Adapter for filesystem operations (staging, checks)
 	 * @param mergeEngine - Domain service that orchestrates file merging
 	 * @param userPrompt - Adapter for interactive user prompts
+	 * @param symlinkCreator - Adapter for post-installation symlink generation
+	 * @param opencodeSymlinks - Always-created .opencode/ symlinks (3)
+	 * @param devinSymlinks - Conditional .devin/ symlinks (7, created only if .devin selected)
 	 */
 	constructor(
 		private readonly fileSystem: IFileSystem,
 		private readonly mergeEngine: IFileMergeEngine,
 		private readonly userPrompt: IUserPrompt,
+		private readonly symlinkCreator: ISymlinkCreator,
+		private readonly opencodeSymlinks: readonly SymlinkSpec[],
+		private readonly devinSymlinks: readonly SymlinkSpec[],
 	) {}
 
 	/**
@@ -77,6 +84,28 @@ export class ProjectInstallUseCase {
 		const mergeResult = await this.mergeEngine.execute(FILE_RULE_MANIFEST, selectedOptionals);
 		if (!mergeResult.ok) {
 			return failure(new Error(mergeResult.error.message));
+		}
+
+		// Create post-installation symlinks
+		// .opencode/ symlinks are always created (they mirror root dirs)
+		const opencodeResult = await this.symlinkCreator.createSymlinks(this.opencodeSymlinks);
+		if (!opencodeResult.ok) {
+			this.userPrompt.showWarning(
+				`Some .opencode/ symlinks could not be created (${opencodeResult.error.length} failures). ` +
+					"The workspace was installed successfully.",
+			);
+		}
+
+		// .devin/ symlinks are created only if the user selected .devin
+		const hasDevin = selectedOptionals.includes(".devin");
+		if (hasDevin) {
+			const devinResult = await this.symlinkCreator.createSymlinks(this.devinSymlinks);
+			if (!devinResult.ok) {
+				this.userPrompt.showWarning(
+					`Some .devin/ symlinks could not be created (${devinResult.error.length} failures). ` +
+						"The workspace was installed successfully.",
+				);
+			}
 		}
 
 		// Write version file with optional selections recorded

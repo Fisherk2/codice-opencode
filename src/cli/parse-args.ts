@@ -5,6 +5,8 @@
  * Defines all CLI types and the argument parser.
  */
 
+import * as path from "node:path";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -16,6 +18,54 @@ export type Mode = "clean" | "project" | "update" | "interactive";
 export interface CliOptions {
 	readonly force: boolean;
 	readonly verbose: boolean;
+}
+
+/**
+ * Validate a destination path at parse time.
+ *
+ * Checks for obvious path traversal attempts and empty values
+ * so the user gets immediate feedback instead of a confusing downstream error.
+ * Full path containment validation is handled by pathResolver.ts at
+ * installation time — this is an early-fail convenience guard.
+ */
+export function validateDestPath(dest: string): string | null {
+	const trimmed = dest.trim();
+	if (!trimmed) return "Destination path is empty";
+
+	// Reject path traversal attempts at the CLI level
+	const normalized = path.normalize(trimmed);
+	if (normalized.includes("..")) {
+		return `Invalid destination path: "${trimmed}" contains path traversal segments`;
+	}
+
+	// Reject absolute paths that are well-known system directories.
+	// These are never valid project workspace destinations.
+	if (path.isAbsolute(normalized)) {
+		// Check for filesystem root
+		if (normalized === path.sep) {
+			return `Invalid destination path: "${trimmed}" is the filesystem root`;
+		}
+		// Check for common system directories (single level from root)
+		const SYSTEM_DIRS = new Set([
+			"/etc",
+			"/var",
+			"/usr",
+			"/bin",
+			"/boot",
+			"/dev",
+			"/proc",
+			"/sys",
+			"/opt",
+			"/sbin",
+			"/root",
+			"/tmp",
+		]);
+		if (SYSTEM_DIRS.has(normalized)) {
+			return `Invalid destination path: "${trimmed}" is a system directory "${normalized}"`;
+		}
+	}
+
+	return null; // valid
 }
 
 /** Parsed CLI arguments */
@@ -77,7 +127,14 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 			if (i >= args.length) {
 				return null; // --dest (and future value flags) require a value
 			}
-			destination = args[i];
+			const rawDest = args[i];
+			const error = validateDestPath(rawDest);
+			if (error) {
+				// biome-ignore lint/suspicious/noConsole: CLI user-facing error
+				console.error(`[error] ${error}`);
+				return null;
+			}
+			destination = rawDest;
 		} else if (ALLOWED_FLAGS.has(arg)) {
 			flags.add(arg);
 		} else {

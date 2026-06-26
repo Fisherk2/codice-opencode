@@ -3,6 +3,7 @@ import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, writeVersionFileSafe } from "../helpers";
+import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 
 /**
@@ -19,17 +20,27 @@ export interface CleanInstallOptions {
  * Mode 1: Clean Install — overwrites everything in the destination
  * with the complete template. No classification rules applied;
  * all files are treated as Obligatorio.
+ *
+ * After file merge, post-installation symlinks are created:
+ * - .opencode/{agents,commands,skills} → ../{agents,commands,skills}/
+ * - .devin/{skills,workflows,rules/*} → (various target paths)
+ *
+ * Symlink creation failures are reported as warnings but do not
+ * cause rollback — the core files are already committed.
  */
 export class CleanInstallUseCase {
 	/**
 	 * @param fileSystem - Adapter for filesystem operations (staging, checks)
 	 * @param mergeEngine - Domain service that orchestrates file merging
 	 * @param userPrompt - Adapter for interactive user prompts
+	 * @param symlinkCreator - Adapter for post-installation symlink generation
 	 */
 	constructor(
 		private readonly fileSystem: IFileSystem,
 		private readonly mergeEngine: IFileMergeEngine,
 		private readonly userPrompt: IUserPrompt,
+		private readonly symlinkCreator: ISymlinkCreator,
+		private readonly symlinks: readonly SymlinkSpec[],
 	) {}
 
 	/**
@@ -77,6 +88,17 @@ export class CleanInstallUseCase {
 		const mergeResult = await this.mergeEngine.execute(allRules);
 		if (!mergeResult.ok) {
 			return failure(new Error(mergeResult.error.message));
+		}
+
+		// Create post-installation symlinks (clean install copies everything,
+		// including optional .devin/ directory, so ALL 10 symlinks are created)
+		const symlinkResult = await this.symlinkCreator.createSymlinks(this.symlinks);
+
+		if (!symlinkResult.ok) {
+			this.userPrompt.showWarning(
+				`Some symlinks could not be created (${symlinkResult.error.length} failures). ` +
+					"The workspace was installed successfully. Re-run the installer to retry symlink creation.",
+			);
 		}
 
 		// Write version file (with atomic rollback on failure)

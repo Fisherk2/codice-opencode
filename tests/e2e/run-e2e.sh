@@ -117,6 +117,10 @@ TESTS=(
     "$SCRIPT_DIR/04-update-workspace.sh"
     "$SCRIPT_DIR/05-atomic-rollback.sh"
     "$SCRIPT_DIR/06-path-traversal.sh"
+    "$SCRIPT_DIR/07-symlinks-clean-install.sh"
+    "$SCRIPT_DIR/08-symlinks-project-install.sh"
+    "$SCRIPT_DIR/09-symlinks-idempotency.sh"
+    "$SCRIPT_DIR/10-update-no-symlinks.sh"
 )
 
 for test_script in "${TESTS[@]}"; do

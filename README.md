@@ -442,6 +442,8 @@ project-root/
 └── tests/                      # Tests
 ```
 
+**Note:** The `.opencode/agents`, `.opencode/commands`, and `.opencode/skills` directories are symlinks created automatically by the Códice installer after copying template files. This ensures compatibility with npm packaging (which strips symlinks from tarballs).
+
 ---
 
 ## Troubleshooting
@@ -456,6 +458,7 @@ project-root/
 | GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
 | `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
+| Symlinks not created | If `.opencode/agents` is missing after installation, re-run the installer. Symlinks are created during post-installation and require write permissions in the project directory |
 
 ---
 

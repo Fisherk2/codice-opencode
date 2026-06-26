@@ -1,9 +1,12 @@
 import { describe, expect, it, mock as mockFn } from "bun:test";
+import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { CleanInstallUseCase } from "../../../src/application/use-cases/CleanInstallUseCase";
 import { FILE_RULE_MANIFEST } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
+import type { Result } from "../../../src/domain/types/Result";
+import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
 
 /**
  * Create a mock IFileSystem with configurable default behaviors.
@@ -49,6 +52,50 @@ function createMockFileSystem(): {
 	return { stub, calls };
 }
 
+// Symlink specs for testing — matches what the composition root passes
+const TEST_SYMLINKS = [
+	{ target: "../agents", linkPath: ".opencode/agents" },
+	{ target: "../commands", linkPath: ".opencode/commands" },
+	{ target: "../skills", linkPath: ".opencode/skills" },
+	{ target: "../skills", linkPath: ".devin/skills" },
+	{ target: "../commands", linkPath: ".devin/workflows" },
+	{ target: "../../docs/CODE_STYLE.md", linkPath: ".devin/rules/CODE_STYLE.md" },
+	{ target: "../../CONTRIBUTING.md", linkPath: ".devin/rules/CONTRIBUTING.md" },
+	{
+		target: "../../skills/code-review-and-quality/SKILL.md",
+		linkPath: ".devin/rules/code-review-and-quality.md",
+	},
+	{
+		target: "../../skills/incremental-implementation/SKILL.md",
+		linkPath: ".devin/rules/incremental-implementation.md",
+	},
+	{
+		target: "../../skills/test-driven-development/SKILL.md",
+		linkPath: ".devin/rules/test-driven-development.md",
+	},
+];
+
+/**
+ * Create a mock ISymlinkCreator that records calls.
+ */
+function createMockSymlinkCreator(): ISymlinkCreator & {
+	createSymlinksCalls: Array<readonly unknown[]>;
+} {
+	const calls: Array<readonly unknown[]> = [];
+	return {
+		createSymlink: mockFn(() =>
+			Promise.resolve({ ok: true, value: undefined } as Result<void, SymlinkError>),
+		),
+		createSymlinks: mockFn((symlinks: readonly unknown[]) => {
+			calls.push(symlinks);
+			return Promise.resolve({ ok: true, value: undefined } as Result<void, SymlinkError[]>);
+		}),
+		get createSymlinksCalls() {
+			return calls;
+		},
+	};
+}
+
 /**
  * Create a mock IUserPrompt with configurable return values.
  */
@@ -74,7 +121,8 @@ describe("CleanInstallUseCase", () => {
 			const { stub: fs } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt);
+			const symlinkCreator = createMockSymlinkCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS);
 			expect(useCase).toBeInstanceOf(CleanInstallUseCase);
 		});
 	});
@@ -84,7 +132,8 @@ describe("CleanInstallUseCase", () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt);
+			const symlinkCreator = createMockSymlinkCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -97,12 +146,55 @@ describe("CleanInstallUseCase", () => {
 			expect(calls.writeVersionFile.length).toBe(1);
 		});
 
+		it("should create symlinks after successful merge", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkCreator = createMockSymlinkCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			expect(symlinkCreator.createSymlinksCalls).toHaveLength(1);
+			// Verify it was called with the TEST_SYMLINKS array
+			const passedSpecs = symlinkCreator.createSymlinksCalls[0];
+			expect(passedSpecs).toHaveLength(TEST_SYMLINKS.length);
+		});
+
+		it("should show warning but still succeed when symlink creation fails", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkCreator = createMockSymlinkCreator();
+			// Configure mock to return symlink failures
+			const symlinkError: SymlinkError = {
+				target: "../agents",
+				linkPath: ".opencode/agents",
+				message: "Symlink target does not exist",
+			};
+			(symlinkCreator.createSymlinks as ReturnType<typeof mockFn>).mockResolvedValue({
+				ok: false,
+				error: [symlinkError],
+			} as Result<void, SymlinkError[]>);
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS);
+
+			const result = await useCase.execute("/tmp/project");
+
+			// Symlink failure should NOT cause the install to fail
+			expect(result.ok).toBe(true);
+			// Warning should have been shown
+			expect(prompt.showWarning).toHaveBeenCalledTimes(1);
+			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining("symlink"));
+		});
+
 		it("should return an error when destination is not writable", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.isWritable as ReturnType<typeof mockFn>).mockResolvedValue(false);
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt);
+			const symlinkCreator = createMockSymlinkCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkCreator, TEST_SYMLINKS);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -120,7 +212,13 @@ describe("CleanInstallUseCase", () => {
 			// User confirms
 			(prompt.confirm as ReturnType<typeof mockFn>).mockResolvedValue(true);
 			const engine = new FileMergeEngine(fs);
-			const useCase = new CleanInstallUseCase(fs, engine, prompt);
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				TEST_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -137,7 +235,8 @@ describe("CleanInstallUseCase", () => {
 			// User rejects
 			(prompt.confirm as ReturnType<typeof mockFn>).mockResolvedValue(false);
 			const engine = new FileMergeEngine(fs);
-			const useCase = new CleanInstallUseCase(fs, engine, prompt);
+			const symlinkMock = createMockSymlinkCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -152,7 +251,8 @@ describe("CleanInstallUseCase", () => {
 			(fs.isEmpty as ReturnType<typeof mockFn>).mockResolvedValue(false);
 			const prompt = createMockPrompt();
 			const engine = new FileMergeEngine(fs);
-			const useCase = new CleanInstallUseCase(fs, engine, prompt);
+			const symlinkMock = createMockSymlinkCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -167,7 +267,8 @@ describe("CleanInstallUseCase", () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt);
+			const symlinkMock = createMockSymlinkCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -187,7 +288,8 @@ describe("CleanInstallUseCase", () => {
 			);
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt);
+			const symlinkMock = createMockSymlinkCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -205,7 +307,8 @@ describe("CleanInstallUseCase", () => {
 			(fs.writeVersionFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full"));
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new CleanInstallUseCase(fs, engine, prompt);
+			const symlinkMock = createMockSymlinkCreator();
+			const useCase = new CleanInstallUseCase(fs, engine, prompt, symlinkMock, TEST_SYMLINKS);
 
 			const result = await useCase.execute("/tmp/project");
 

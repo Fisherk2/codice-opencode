@@ -44,24 +44,12 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: true,
 		description: "Plugin definitions managed by installer",
 	},
-	{
-		path: ".opencode/agents",
-		category: "mandatory",
-		isDirectory: true,
-		description: "Agent configuration under .opencode",
-	},
-	{
-		path: ".opencode/commands",
-		category: "mandatory",
-		isDirectory: true,
-		description: "Command configuration under .opencode",
-	},
-	{
-		path: ".opencode/skills",
-		category: "mandatory",
-		isDirectory: true,
-		description: "Skill definitions under .opencode",
-	},
+	// NOTE: .opencode/{agents,commands,skills} removed — these were symlinks
+	// (→ ../{agents,commands,skills}/) in the local dev template but npm resolves
+	// symlinks when packaging, so they do not exist in the published tarball.
+	// The real directories (agents/, commands/, skills/) are listed above and DO
+	// ship. Symlinks are generated post-installation by BunSymlinkCreator.
+	// (REF: ADR-FEV2B-1, ADR-FEV2B-9)
 	// NOTE: .opencode/config.json removed — does not exist in template
 	// The .opencode directory is already listed as mandatory above, so
 	// actual files within it (e.g., .gitignore, plugins/) will be
@@ -153,10 +141,11 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// OPCIONAL (Optional) — only if user opts in
 	// =============================================
 	{
-		path: ".devin/rules",
+		path: ".devin",
 		category: "optional",
 		isDirectory: true,
-		description: "Devin rules for AI agent; team-specific customization",
+		description:
+			"Devin configuration directory (rules, skills, workflows); team-specific AI agent customization",
 	},
 	{
 		path: ".gitmessage",

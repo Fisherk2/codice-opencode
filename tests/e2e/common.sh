@@ -182,6 +182,40 @@ setup_binary() {
 # Assertion helpers
 # ---------------------------------------------------------------------------
 
+# Assert that a symbolic link exists at the given path.
+# Usage: assert_symlink_exists "/path/to/symlink"
+assert_symlink_exists() {
+    local path="$1"
+    if [[ ! -L "$path" ]]; then
+        log_fail "Expected symlink to exist: $path"
+        return 1
+    fi
+    log_pass "Symlink exists: $path"
+}
+
+# Assert that a symlink points to the expected target.
+# Usage: assert_symlink_target "/path/to/symlink" "expected/target"
+assert_symlink_target() {
+    local path="$1"
+    local expected_target="$2"
+    if [[ ! -L "$path" ]]; then
+        log_fail "Expected symlink to exist: $path"
+        return 1
+    fi
+    local actual_target
+    actual_target="$(readlink "$path")" || {
+        log_fail "Failed to read symlink: $path"
+        return 1
+    }
+    if [[ "$actual_target" != "$expected_target" ]]; then
+        log_fail "Symlink target mismatch: $path"
+        echo "    Expected: $expected_target" >&2
+        echo "    Actual:   $actual_target" >&2
+        return 1
+    fi
+    log_pass "Symlink target correct: $path → $expected_target"
+}
+
 # Assert that a file exists and is a regular file.
 # Usage: assert_file_exists "/path/to/file"
 assert_file_exists() {

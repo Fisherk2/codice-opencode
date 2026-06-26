@@ -91,6 +91,26 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 		expect(optionalEntries.length).toBeGreaterThanOrEqual(topLevelCount);
 	});
 
+	test("'.devin' (not '.devin/rules') is in optional manifest entries (ADR-FEV2B-11)", () => {
+		const optionalPaths = FILE_RULE_MANIFEST.filter((r) => r.category === "optional").map(
+			(r) => r.path,
+		);
+		// ADR-FEV2B-11: renamed from .devin/rules to .devin for clearer UX
+		expect(optionalPaths).toContain(".devin");
+		expect(optionalPaths).not.toContain(".devin/rules");
+	});
+
+	test("removed symlink entries (.opencode/{agents,commands,skills}) are NOT in manifest (FEV-2-B)", () => {
+		const manifestPaths = FILE_RULE_MANIFEST.map((r) => r.path);
+		// These were symlinks → ../{agents,commands,skills}/ that npm resolves
+		// during packaging. They are absent in the published tarball, so the
+		// manifest entries were removed (ADR-FEV2B-1). Symlinks are generated
+		// post-installation by BunSymlinkCreator.
+		expect(manifestPaths).not.toContain(".opencode/agents");
+		expect(manifestPaths).not.toContain(".opencode/commands");
+		expect(manifestPaths).not.toContain(".opencode/skills");
+	});
+
 	test("all 13 optional manifest entries have unique paths", () => {
 		const optionalEntries = FILE_RULE_MANIFEST.filter((r) => r.category === "optional");
 		const paths = optionalEntries.map((r) => r.path);
@@ -101,7 +121,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 	test.each([
 		["optional", 13],
 		["standard", 11],
-		["mandatory", 11],
+		["mandatory", 8],
 	])("category '%s' has %i entries", (category, expectedCount) => {
 		const count = FILE_RULE_MANIFEST.filter((r) => r.category === category).length;
 		if (category === "optional") {

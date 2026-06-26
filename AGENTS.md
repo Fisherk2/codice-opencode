@@ -119,9 +119,11 @@ src/
 │   ├── entities/
 │   │   ├── FileRule.ts
 │   │   └── WorkspaceVersion.ts
-│   └── services/
-│       ├── FileMergeEngine.ts
-│       └── VersionComparator.ts
+│   ├── services/
+│   │   ├── FileMergeEngine.ts
+│   │   └── VersionComparator.ts
+│   └── types/
+│       └── SymlinkError.ts
 ├── application/
 │   ├── use-cases/
 │   │   ├── CleanInstallUseCase.ts
@@ -130,10 +132,12 @@ src/
 │   └── ports/
 │       ├── IFileSystem.ts
 │       ├── IGitHubClient.ts
-│       └── IUserPrompt.ts
+│       ├── IUserPrompt.ts
+│       └── ISymlinkCreator.ts
 ├── infrastructure/
 │   ├── adapters/
 │   │   ├── BunFileSystem.ts
+│   │   ├── BunSymlinkCreator.ts
 │   │   ├── GitHubRestClient.ts
 │   │   └── ClackPromptsAdapter.ts
 │   └── config/

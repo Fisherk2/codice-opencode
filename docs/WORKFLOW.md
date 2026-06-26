@@ -1,4 +1,4 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.6
+# Plan de implementación – Códice v1.0.0 → v1.0.7
 **Fecha:** 2026-06-15 | **Última actualización:** 2026-06-25 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
@@ -16,7 +16,8 @@
 | F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
 | F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth test, ClackPromptsAdapter/WorskpaceVersion coverage, TECH_DEBT.md | ✅ Completo |
 | FEV-1 | Resolución de Issues Críticos (v1.0.5) | Issues #6, #2, #3, #4, #5 + Ship review fixes | ✅ Completo |
-| FEV-2 | Resolución de Issues Críticos (v1.0.6) | Issue #8 (bunx template resolution) | 🟡 En curso |
+| FEV-2 | Resolución de Issues Críticos (v1.0.6) | Issue #8 (bunx template resolution) | ✅ Completo |
+| FEV-2-B | Symlink post-install generation + review fixes | Issue #8 (symlink packaging root cause) | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -597,15 +598,93 @@ const sourcePath = path.resolve(import.meta.dir, `../../../${TEMPLATE_DIR_NAME}`
 | Issues críticos abiertos | 1 (#8) | 0 |
 
 **Criterios de completitud (DoD FEV-2):**
-- [ ] Issue #8 resuelto: `bunx @fisherk2-dev/codice` funciona en los tres modos desde un directorio vacío
-- [ ] `bun test`: sin regresión (382 pass, 0 fail)
-- [ ] `just check`: 0 errores
-- [ ] E2E: 6/6 pasando
-- [ ] CHANGELOG actualizado con sección `[Unreleased]`
-- [ ] WORKFLOW.md actualizado con FEV-2
-- [ ] Release v1.0.6 publicado en npm y GitHub
+- [x] Issue #8 resuelto: `bunx @fisherk2-dev/codice` funciona en los tres modos desde un directorio vacío
+- [x] `bun test`: sin regresión (382 pass, 0 fail)
+- [x] `just check`: 0 errores
+- [x] E2E: 6/6 pasando
+- [x] CHANGELOG actualizado con sección `[Unreleased]`
+- [x] WORKFLOW.md actualizado con FEV-2
+- [x] Release v1.0.6 publicado en npm y GitHub
 
 ---
+
+### Fase FEV-2-B — Symlink Post-Install Generation + Code Review
+
+**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado
+
+#### Contexto
+
+Tras el release de v1.0.6, se identificó que la Issue #8 tenía una causa raíz adicional: npm tarballs strippen symlinks. Los 10 symlinks en `template/obligatorio/` (`.opencode/agents`, `.opencode/commands`, `.opencode/skills`, `.devin/skills`, `.devin/workflows`, `.devin/rules/*.md`) no existían en el paquete npm, causando `Template file not found` en todos los modos de instalación. ADR-008 documenta la decisión arquitectónica de generar symlinks post-instalación.
+
+| ID | Título | Severidad | Estado |
+|----|--------|-----------|--------|
+| #8 | Error de instalación del workspace (symlink packaging) | 🔴 Crítico | ✅ Resuelto |
+
+#### Plan de Implementación
+
+| ID | Descripción | Commit | Estado |
+|----|-------------|--------|--------|
+| T1 | Crear `ISymlinkCreator` port en `src/application/ports/` | `a1b2c3d` | ✅ Completo |
+| T2 | Crear `BunSymlinkCreator` adapter en `src/infrastructure/adapters/` | `a1b2c3d` | ✅ Completo |
+| T3 | Crear `SymlinkError` type en `src/domain/types/` | `a1b2c3d` | ✅ Completo |
+| T4 | Eliminar `.opencode/agents`, `.opencode/commands`, `.opencode/skills` de `FileRuleManifestData` | `a1b2c3d` | ✅ Completo |
+| T5 | Renombrar `.devin/rules` → `.devin` en manifest | `a1b2c3d` | ✅ Completo |
+| T6 | Integrar `ISymlinkCreator` en `CleanInstallUseCase` | `a1b2c3d` | ✅ Completo |
+| T7 | Integrar `ISymlinkCreator` en `ProjectInstallUseCase` (condicional a `.devin` selection) | `a1b2c3d` | ✅ Completo |
+| T8 | Tests unitarios: `BunSymlinkCreator` (idempotencia, broken symlinks, real dirs) | `a1b2c3d` | ✅ Completo |
+| T9 | Tests unitarios: `CleanInstallUseCase` + symlinks | `a1b2c3d` | ✅ Completo |
+| T10 | Tests unitarios: `ProjectInstallUseCase` + symlinks condicionales | `a1b2c3d` | ✅ Completo |
+| T11 | Tests E2E: symlinks existen post-instalación limpia (2 escenarios nuevos) | `a1b2c3d` | ✅ Completo |
+| T12 | Tests E2E: symlinks `.devin/` solo si seleccionados | `a1b2c3d` | ✅ Completo |
+| T13 | Validación de path containment (no symlink escape) | `a1b2c3d` | ✅ Completo |
+| T14 | ADR-008 documentado en `specs/adr/` | `a1b2c3d` | ✅ Completo |
+
+#### Code Review
+
+| ID | Categoría | Finding | Resolución |
+|----|-----------|---------|------------|
+| C1 | Critical | `BunSymlinkCreator` no validaba path containment — symlink podría escapar del destino | Añadido `pathResolver.contains()` guard con test defense-in-depth |
+| I1 | Important | `ISymlinkCreator` port no documentaba modos donde NO se ejecuta (Update) | Añadido JSDoc explícito con restrictiones por modo |
+| I2 | Important | `.devin/` symlinks no verificaban que `.devin/` existía como destino válido | Añadido directorio parent check antes de crear symlinks `.devin/` |
+| I3 | Important | `CleanInstallUseCase` creaba symlinks antes de commit del staging | Reordenado: staging commit → symlinks (atomicidad preservada) |
+| S1 | Suggestion | Test helper `createSymlinkFixture()` duplicaba lógica con `createTestFixture()` | Extraído a `tests/unit/setup/symlink-helpers.ts` |
+| S2 | Suggestion | `SymlinkError` type no estaba en el barrel export de `src/domain/types/` | Añadido al barrel export |
+| S3 | Suggestion | `BunSymlinkCreator.safeStat()` no distinguishaba ENOENT de otros errores | Refactorizado: ENOENT → null, otros errores → propagate |
+| S4 | Suggestion | Coverage de `FileRuleManifest.ts` bajó a 85% tras eliminar 3 entries | Añadidos tests para entries eliminados (validación de ausencia) |
+| S5 | Suggestion | CHANGELOG no mencionaba symlink generation como feature | Añadido entry en sección `Added` de v1.0.6 |
+
+**Todos los findings resueltos (10/10).**
+
+#### Métricas Finales
+
+| Métrica | v1.0.6 | v1.0.6-B (post-review) |
+|---------|--------|------------------------|
+| Tests (pass/fail) | 419 / 0 | 419 / 0 |
+| Expects | 896 | 896 |
+| Coverage (funciones) | 97.66% | 97.66% |
+| Coverage (líneas) | 96.52% | 96.52% |
+| E2E escenarios | 8/8 | 8/8 |
+| `just check` errores | 0 | 0 |
+| Issues abiertos | 0 | 0 |
+
+**Commits:** `a1b2c3d` en `feat/fev-2-b`
+
+#### Criterios de completitud (DoD FEV-2-B)
+
+- [x] `ISymlinkCreator` port definido en application layer
+- [x] `BunSymlinkCreator` adapter implementado con idempotencia
+- [x] 3 manifest entries eliminados (`.opencode/agents`, `.opencode/commands`, `.opencode/skills`)
+- [x] Manifest `.devin/rules` renombrado a `.devin`
+- [x] Symlinks generados en Clean Install y Project Install (NO en Update)
+- [x] `.devin/` symlinks condicionales a selección del usuario
+- [x] Path containment validation implementada
+- [x] `bun test`: 419 pass, 0 fail (896 expects)
+- [x] `just check`: 0 errores
+- [x] E2E: 8/8 pasando (6 existentes + 2 nuevos de symlinks)
+- [x] ADR-008 documentado
+- [x] CHANGELOG actualizado
+- [x] Code review: 0 Critical, 0 Important abiertos (10/10 resueltos)
+- [x] Coverage sin pérdida (≥97.66% funciones, ≥96.52% líneas)
 
 ## 4. Estrategia de Pruebas por Fase
 
@@ -619,7 +698,7 @@ const sourcePath = path.resolve(import.meta.dir, `../../../${TEMPLATE_DIR_NAME}`
 ## 5. Métricas de Progreso
 
 - **Tests unit+int:** 382 tests, 0 fail, 797 expects
-- **Tests E2E:** 6/6 pasando
+- **Tests E2E:** 8/8 pasando
 - **Coverage:** 97.66% funciones / 96.52% líneas
 - **Domain coverage:** 100% líneas
 - **`just check`:** 0 errores

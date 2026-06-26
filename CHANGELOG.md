@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] — 2026-06-26
+
+### Fixed
+
+- **Issue #8 (CRITICAL)**: `bunx @fisherk2-dev/codice` failed with `Template file not found: .opencode/agents` in all 3 install modes because npm resolves symlinks when creating the tarball. The `.opencode/{agents,commands,skills}` paths were symlinks in the dev template (`→ ../{agents,commands,skills}/`) that were dereferenced during packaging. Removed the 3 manifest entries — the real directories (`agents/`, `commands/`, `skills/`) at the root level remain and cover the same files.
+
+### Added
+
+- **Post-installation symlink generation**: After Clean Install (always) and Project Install (based on selection), the installer now recreates 10 symlinks that npm resolves during packaging:
+  - `.opencode/agents`, `.opencode/commands`, `.opencode/skills` → `../*` (3, always)
+  - `.devin/skills`, `.devin/workflows` → `../*` (2, conditional on `.devin` selection)
+  - `.devin/rules/*` → `../../*` (5, conditional on `.devin` selection)
+- **New port/adapter**: `ISymlinkCreator` port + `BunSymlinkCreator` adapter implementing post-install symlink creation with idempotent, safe behavior (skips existing symlinks and real directories).
+- **Manifest entry `.devin/rules` renamed to `.devin`**: Clearer UX — the entire `.devin/` directory (rules, skills, workflows) is now a single optional unit.
+
+### Changed
+
+- `FILE_RULE_MANIFEST` entries reduced from 35 to 32 (3 symlink entries removed). Mandatory count: 11 → 8.
+
+### Deprecated
+
+- **v1.0.6** — use v1.0.7 which fixes the symlink packaging issue.
+
 ## [1.0.6] — 2026-06-25
 
 ### Fixed

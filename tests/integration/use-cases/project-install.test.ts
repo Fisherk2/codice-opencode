@@ -1,4 +1,5 @@
 import { describe, expect, it, mock as mockFn } from "bun:test";
+import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { ProjectInstallUseCase } from "../../../src/application/use-cases/ProjectInstallUseCase";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
@@ -8,6 +9,8 @@ import {
 } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
+import type { Result } from "../../../src/domain/types/Result";
+import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
 
 /**
  * Create a mock IFileSystem with configurable default behaviors.
@@ -79,13 +82,61 @@ function createMockPrompt(): IUserPrompt {
 
 const optionalRules = getRulesByCategory("optional");
 
+// Symlink specs matching what the composition root passes
+const OPENCODE_ONLY = [
+	{ target: "../agents", linkPath: ".opencode/agents" },
+	{ target: "../commands", linkPath: ".opencode/commands" },
+	{ target: "../skills", linkPath: ".opencode/skills" },
+];
+
+const DEVIN_SYMLINKS = [
+	{ target: "../skills", linkPath: ".devin/skills" },
+	{ target: "../commands", linkPath: ".devin/workflows" },
+	{ target: "../../docs/CODE_STYLE.md", linkPath: ".devin/rules/CODE_STYLE.md" },
+	{ target: "../../CONTRIBUTING.md", linkPath: ".devin/rules/CONTRIBUTING.md" },
+	{
+		target: "../../skills/code-review-and-quality/SKILL.md",
+		linkPath: ".devin/rules/code-review-and-quality.md",
+	},
+	{
+		target: "../../skills/incremental-implementation/SKILL.md",
+		linkPath: ".devin/rules/incremental-implementation.md",
+	},
+	{
+		target: "../../skills/test-driven-development/SKILL.md",
+		linkPath: ".devin/rules/test-driven-development.md",
+	},
+];
+
+/**
+ * Create a mock ISymlinkCreator that records calls.
+ */
+function createMockSymlinkCreator(): ISymlinkCreator & { getCreateSymlinksCalls(): number } {
+	let callCount = 0;
+	return {
+		createSymlink: mockFn(() => Promise.resolve({ ok: true, value: undefined })),
+		createSymlinks: mockFn(() => {
+			callCount++;
+			return Promise.resolve({ ok: true, value: undefined });
+		}),
+		getCreateSymlinksCalls: () => callCount,
+	};
+}
+
 describe("ProjectInstallUseCase", () => {
 	describe("constructor", () => {
 		it("should create an instance when given valid dependencies", () => {
 			const { stub: fs } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 			expect(useCase).toBeInstanceOf(ProjectInstallUseCase);
 		});
 	});
@@ -95,7 +146,14 @@ describe("ProjectInstallUseCase", () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -113,7 +171,14 @@ describe("ProjectInstallUseCase", () => {
 			(fs.isWritable as ReturnType<typeof mockFn>).mockResolvedValue(false);
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -130,7 +195,14 @@ describe("ProjectInstallUseCase", () => {
 			const prompt = createMockPrompt();
 			(prompt.confirm as ReturnType<typeof mockFn>).mockResolvedValue(true);
 			const engine = new FileMergeEngine(fs);
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -145,7 +217,14 @@ describe("ProjectInstallUseCase", () => {
 			const prompt = createMockPrompt();
 			(prompt.confirm as ReturnType<typeof mockFn>).mockResolvedValue(false);
 			const engine = new FileMergeEngine(fs);
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -159,7 +238,14 @@ describe("ProjectInstallUseCase", () => {
 			(fs.isEmpty as ReturnType<typeof mockFn>).mockResolvedValue(false);
 			const prompt = createMockPrompt();
 			const engine = new FileMergeEngine(fs);
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -178,7 +264,14 @@ describe("ProjectInstallUseCase", () => {
 			const firstOptional = optionalRules[0]!;
 			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue([firstOptional.path]);
 			const engine = new FileMergeEngine(fs);
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -197,7 +290,14 @@ describe("ProjectInstallUseCase", () => {
 			const prompt = createMockPrompt();
 			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue([]);
 			const engine = new FileMergeEngine(fs);
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -216,7 +316,14 @@ describe("ProjectInstallUseCase", () => {
 			);
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -232,7 +339,14 @@ describe("ProjectInstallUseCase", () => {
 			const selectedPaths = [optionalRules[0]!.path];
 			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue(selectedPaths);
 			const engine = new FileMergeEngine(fs);
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -253,7 +367,14 @@ describe("ProjectInstallUseCase", () => {
 				async (path: string) => path === firstOptional.path,
 			);
 			const engine = new FileMergeEngine(fs);
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -277,7 +398,14 @@ describe("ProjectInstallUseCase", () => {
 			);
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -297,7 +425,14 @@ describe("ProjectInstallUseCase", () => {
 			);
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
-			const useCase = new ProjectInstallUseCase(fs, engine, prompt);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -305,6 +440,143 @@ describe("ProjectInstallUseCase", () => {
 			if (result.ok) return;
 			expect(result.error.message).toContain("version file");
 			expect(calls.cleanStaging).toBe(1);
+		});
+
+		it("should create .opencode symlinks (3) and .devin symlinks (7) when .devin is selected", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			// Default selectOptional returns ALL optional paths, including .devin
+			const symlinkMock = createMockSymlinkCreator();
+			const engine = new FileMergeEngine(fs);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// createSymlinks called twice: opencode + devin
+			expect(symlinkMock.getCreateSymlinksCalls()).toBe(2);
+		});
+
+		it("should create only .opencode symlinks (3) when .devin is NOT selected", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			// User selects ALL optional paths EXCEPT .devin
+			const noDevinPaths = getRulesByCategory("optional")
+				.map((r) => r.path)
+				.filter((p) => p !== ".devin");
+			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue(noDevinPaths);
+			const symlinkMock = createMockSymlinkCreator();
+			const engine = new FileMergeEngine(fs);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// createSymlinks called only once (opencode only, no devin)
+			expect(symlinkMock.getCreateSymlinksCalls()).toBe(1);
+		});
+
+		it("should show warning but still succeed when .opencode symlinks fail", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			// Do not select .devin so only 1 symlink batch is attempted
+			const noDevinPaths = getRulesByCategory("optional")
+				.map((r) => r.path)
+				.filter((p) => p !== ".devin");
+			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue(noDevinPaths);
+			// Configure symlink mock to fail
+			const symlinkErrorData: SymlinkError = {
+				target: "../agents",
+				linkPath: ".opencode/agents",
+				message: "Disk full",
+			};
+			const symlinkMock = createMockSymlinkCreator();
+			symlinkMock.createSymlinks = mockFn(() =>
+				Promise.resolve({
+					ok: false,
+					error: [symlinkErrorData],
+				} as Result<void, SymlinkError[]>),
+			);
+			const engine = new FileMergeEngine(fs);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			expect(prompt.showWarning).toHaveBeenCalledTimes(1);
+			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining("symlink"));
+		});
+
+		it("should show warning but still succeed when .devin symlinks fail", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			// Default selectOptional returns ALL optional paths, including .devin
+
+			// Configure symlink mock: first call succeeds, second call fails
+			let callCount = 0;
+			const devinErrorData: SymlinkError = {
+				target: "../skills",
+				linkPath: ".devin/skills",
+				message: "Permission denied",
+			};
+			const symlinkMock = createMockSymlinkCreator();
+			symlinkMock.createSymlinks = mockFn(() => {
+				callCount++;
+				if (callCount === 1) {
+					// First call (.opencode symlinks) succeeds
+					return Promise.resolve({ ok: true, value: undefined } as Result<void, SymlinkError[]>);
+				}
+				// Second call (.devin symlinks) fails
+				return Promise.resolve({
+					ok: false,
+					error: [devinErrorData],
+				} as Result<void, SymlinkError[]>);
+			});
+
+			const engine = new FileMergeEngine(fs);
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_ONLY,
+				DEVIN_SYMLINKS,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			// Overall result should succeed (symlink failures are non-fatal)
+			expect(result.ok).toBe(true);
+
+			// Warning should be shown once — only for .devin symlinks
+			expect(prompt.showWarning).toHaveBeenCalledTimes(1);
+			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining("symlink"));
+
+			// Both batches of symlinks should have been attempted
+			expect(symlinkMock.createSymlinks).toHaveBeenCalledTimes(2);
+			expect(symlinkMock.createSymlinks).toHaveBeenNthCalledWith(1, OPENCODE_ONLY);
+			expect(symlinkMock.createSymlinks).toHaveBeenNthCalledWith(2, DEVIN_SYMLINKS);
 		});
 	});
 });

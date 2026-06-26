@@ -14,6 +14,7 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 | [ADR-005](../specs/adr/adr-005-dest-flag-and-workspace.md) | `--dest` Flag and Workspace Directory | Accepted | Safe dev playground via `--dest` + `tests/fixtures/workspace/` |
 | [ADR-006](../specs/adr/adr-006-npm-publication.md) | npm Publication as Primary Distribution | Accepted | `bunx @fisherk2-dev/codice` as primary, binary as offline fallback |
 | [ADR-007](../specs/adr/adr-007-template-resolver-source-mode.md) | Template Resolution for bunx/npm Mode | Accepted | Three-path detection cascade (compiled, bunx/npm, source) |
+| [ADR-008](../specs/adr/adr-008-symlink-post-install.md) | Post-Installation Symlink Generation | Accepted | ISymlinkCreator port + BunSymlinkCreator adapter for npm-compatible symlinks |
 
 > **Note:** `TemplateResolver` and `AtomicStager` are extracted classes (not full ADRs). They are SRP-based refactorings of `BunFileSystem` that follow the existing ADR-003 (atomic staging) pattern.
 
@@ -41,6 +42,7 @@ graph TD
         AS[AtomicStager]
         GH[GitHubRestClient]
         TUI[ClackPromptsAdapter]
+        BSC[BunSymlinkCreator]
 
         FS -->|delegates| TR
         FS -->|delegates| AS
@@ -50,6 +52,7 @@ graph TD
         UC1[CleanInstallUseCase]
         UC2[ProjectInstallUseCase]
         UC3[UpdateWorkspaceUseCase]
+        ISP[ISymlinkCreator]
     end
 
     subgraph "Domain Layer"
@@ -57,6 +60,7 @@ graph TD
         ENT2[WorkspaceVersion Entity]
         SRV1[FileMergeEngine Service]
         SRV2[VersionComparator Service]
+        ERR[SymlinkError]
     end
 
     TUI -->|User Input| UC1
@@ -68,8 +72,12 @@ graph TD
     UC3 -->|Check Version| SRV2
     UC3 -->|Execute| SRV1
     
+    UC1 -->|Post-install| ISP
+    UC2 -->|Post-install| ISP
+    
     SRV1 -->|Read/Write| FS
     SRV2 -->|HTTP GET| GH
+    ISP -.->|implements| BSC
 ```
 
 ## Layer Responsibilities
@@ -78,11 +86,12 @@ graph TD
 - Pure business logic, zero external dependencies
 - Entities: FileRule, WorkspaceVersion
 - Services: FileMergeEngine, VersionComparator
+- Types: SymlinkError
 - Error handling via Result<T, Error>
 
 ### Application Layer (`src/application/`)
 - Use cases orchestrate domain services
-- Port interfaces: IFileSystem, IGitHubClient, IUserPrompt
+- Port interfaces: IFileSystem, IGitHubClient, IUserPrompt, ISymlinkCreator
 - No business rules, only coordination
 
 ### Infrastructure Layer (`src/infrastructure/`)
@@ -92,6 +101,7 @@ graph TD
 - AtomicStager: Atomic staging, commit, and rollback operations (extracted from BunFileSystem v1)
 - GitHubRestClient: Version checking via GitHub API
 - ClackPromptsAdapter: TUI interactions via @clack/prompts
+- BunSymlinkCreator: Post-installation symlink generation implementing ISymlinkCreator
 
 ### CLI Layer (`src/cli/`)
 - Entry point: main.ts

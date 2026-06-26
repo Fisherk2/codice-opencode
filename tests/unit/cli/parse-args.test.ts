@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { parseArgs } from "../../../src/cli/parse-args";
+import { parseArgs, validateDestPath } from "../../../src/cli/parse-args";
 
 describe("parseArgs", () => {
 	it("should return interactive mode when no flags are given", () => {
@@ -101,5 +101,39 @@ describe("parseArgs", () => {
 		expect(result!.destination).toBe("./my-project");
 		expect(result!.options.force).toBe(true);
 		expect(result!.options.verbose).toBe(true);
+	});
+
+	// -----------------------------------------------------------------------
+	// validateDestPath tests
+	// -----------------------------------------------------------------------
+
+	it("should return error for empty path", () => {
+		const result = validateDestPath("");
+		expect(result).toBe("Destination path is empty");
+	});
+
+	it("should return error for path with path traversal (..)", () => {
+		const result = validateDestPath("../../etc/passwd");
+		expect(result).toContain("path traversal");
+	});
+
+	it("should return error for filesystem root (/)", () => {
+		const result = validateDestPath("/");
+		expect(result).toContain("filesystem root");
+	});
+
+	it("should return null for a normal valid path", () => {
+		const result = validateDestPath("/tmp/valid");
+		expect(result).toBeNull();
+	});
+
+	it("should return null when parseArgs receives --dest with path traversal", () => {
+		const result = parseArgs(["--dest", "../../etc/passwd"]);
+		expect(result).toBeNull();
+	});
+
+	it("should return null when parseArgs receives --dest with filesystem root", () => {
+		const result = parseArgs(["--dest", "/"]);
+		expect(result).toBeNull();
 	});
 });

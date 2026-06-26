@@ -150,7 +150,18 @@ just test:e2e
 SKIP_BUILD=1 just test:e2e
 ```
 
-Tests the compiled binary against isolated temporary directories. 6 scenarios: clean install, project install, optional skip, update workspace, atomic rollback, path traversal rejection.
+Tests the compiled binary against isolated temporary directories. 8 scenarios: clean install, project install, optional skip, update workspace, atomic rollback, path traversal rejection, symlinks clean install, and symlinks project install.
+
+**Scenarios:**
+
+1. **Clean Install:** Run binary in empty directory. Assert all template files exist in destination.
+2. **Project Install (Selective):** Pre-populate destination with a file that also exists in template/estandar. Assert the existing file is preserved, not overwritten.
+3. **Project Install (Optional Skip):** Present optional files, simulate skipping one. Assert skipped file is absent, others are present.
+4. **Update Workspace:** Pre-populate with older version. Run update mode. Assert only obligatorio and estandar files are updated; optional files untouched.
+5. **Atomic Rollback (SIGINT):** Simulate a crash mid-operation. Assert destination directory is in its original state, staging directory is absent or cleaned.
+6. **Path Traversal:** Attempt to install to a path outside the allowed base using `../` sequences. Assert exit code 1 and no files written outside boundary.
+7. **Symlinks Clean Install:** Run binary in empty directory. Assert all 10 symlinks exist and resolve correctly.
+8. **Symlinks Project Install:** Pre-populate destination without `.devin`. Run project install with `--force`. Assert `.opencode/` symlinks exist, `.devin/` symlinks absent. Then run again selecting `.devin`. Assert `.devin/` symlinks present.
 
 ### Full Suite
 

@@ -135,3 +135,61 @@ describe("TemplateResolver — template root detection", () => {
 		expect(root).toBe(expectedRoot);
 	});
 });
+
+// -----------------------------------------------------------------------
+// FEV-2-B (Issue #8 residual): npm resolves symlinks when packaging.
+// The template has symlinks .opencode/{agents,commands,skills} → ../{agents,commands,skills}/.
+// npm dereferences these symlinks → paths don't exist in the published tarball.
+// This test reproduces the bug: resolvePath(".opencode/agents") fails when the
+// structure mirrors the npm package (no symlinks).
+// -----------------------------------------------------------------------
+
+describe("FEV-2-B — npm package structure (no symlinks) resolution", () => {
+	test("resolvePath('.opencode/agents') throws when symlinks do not exist (RED: reproduces npm package bug)", async () => {
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "codice-fev2b-"));
+		try {
+			// Simulate npm package structure: template root with categories but
+			// WITHOUT the .opencode/{agents,commands,skills} symlinks.
+			// npm resolves symlinks during packaging, so these paths are absent.
+			const obligatorioDir = path.join(tempDir, "obligatorio");
+			fs.mkdirSync(path.join(obligatorioDir, "agents"), { recursive: true });
+			fs.mkdirSync(path.join(obligatorioDir, "commands"), { recursive: true });
+			fs.mkdirSync(path.join(obligatorioDir, "skills"), { recursive: true });
+			fs.mkdirSync(path.join(obligatorioDir, ".opencode", "plugins"), { recursive: true });
+
+			// CRITICAL: DO NOT create .opencode/{agents,commands,skills}
+			// These are symlinks → ../{agents,commands,skills}/ that npm
+			// resolves during packaging. They are absent in the published tarball.
+
+			const resolver = new TemplateResolver(tempDir);
+
+			// This call must throw because .opencode/agents doesn't exist
+			// in any category directory (obligatorio, estandar, opcional).
+			// This reproduces the npm package bug.
+			await expect(resolver.resolvePath(".opencode/agents")).rejects.toThrow(
+				"Template file not found",
+			);
+		} finally {
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		}
+	});
+
+	test("resolvePath('agents') succeeds when root agents directory exists (the real directory)", async () => {
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "codice-fev2b-"));
+		try {
+			const obligatorioDir = path.join(tempDir, "obligatorio");
+			fs.mkdirSync(path.join(obligatorioDir, "agents"), { recursive: true });
+			fs.writeFileSync(path.join(obligatorioDir, "agents", "test-agent.md"), "# Test Agent");
+
+			const resolver = new TemplateResolver(tempDir);
+
+			// agents/ at the root template level IS in the manifest and DOES exist
+			const resolved = await resolver.resolvePath("agents");
+			expect(resolved).toBeTruthy();
+			expect(resolved).toContain("obligatorio");
+			expect(resolved).toContain("agents");
+		} finally {
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		}
+	});
+});

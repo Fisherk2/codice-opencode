@@ -21,9 +21,17 @@ export function getGitHubApiUrl(): string {
 	const envUrl = process.env.CODICE_GITHUB_API_URL;
 	if (!envUrl) return GITHUB_API_DEFAULT;
 
+	// Allow bypassing URL validation for E2E testing (e.g., http://localhost:4567 mock server)
+	if (process.env.CODICE_BYPASS_URL_VALIDATION === "true") {
+		return envUrl;
+	}
+
 	try {
 		const url = new URL(envUrl);
-		if (url.protocol === "https:" && url.hostname.endsWith("github.com")) {
+		if (
+			url.protocol === "https:" &&
+			(url.hostname === "github.com" || url.hostname.endsWith(".github.com"))
+		) {
 			return envUrl;
 		}
 	} catch {

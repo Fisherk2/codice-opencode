@@ -63,7 +63,7 @@ log_info "Mock GitHub API pointing to $CODICE_GITHUB_API_URL"
 
 log_info "Running: $CODICE_BINARY --update --force in $TEMP_DIR"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --update --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" "$CODICE_BINARY" --update --force) 2>/dev/null || EXIT_CODE=$?
 
 # Stop mock server
 stop_mock_server
