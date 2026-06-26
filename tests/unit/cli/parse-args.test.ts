@@ -128,10 +128,13 @@ describe("parseArgs", () => {
 	});
 
 	// /etc/cron.d is a Unix system directory — not applicable on Windows
-	it.skipIf(process.platform === "win32")("should reject sub-path inside a system directory (/etc/cron.d)", () => {
-		const result = validateDestPath("/etc/cron.d");
-		expect(result).toContain("system directory");
-	});
+	it.skipIf(process.platform === "win32")(
+		"should reject sub-path inside a system directory (/etc/cron.d)",
+		() => {
+			const result = validateDestPath("/etc/cron.d");
+			expect(result).toContain("system directory");
+		},
+	);
 
 	it("should allow /tmp paths (intentionally excluded from system directories)", () => {
 		const result = validateDestPath("/tmp/my-project");
