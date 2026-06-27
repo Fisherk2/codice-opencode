@@ -19,7 +19,7 @@
 | FEV-2 | Resolución de Issues Críticos (v1.0.6) | Issue #8 (bunx template resolution) | ✅ Completo |
 | FEV-2-B | Symlink post-install generation + review fixes | Issue #8 (symlink packaging root cause) | ✅ Completo |
 | FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | ✅ Completo |
-| FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | 🟡 En curso |
+| FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -811,7 +811,7 @@ Renombrar `template/estandar/.gitignore` a `template/estandar/gitignore` y gener
 
 ### Fase FEV-2-D — Directory Support + Clean Install UX
 
-**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En curso
+**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado
 
 #### Contexto
 
@@ -823,8 +823,8 @@ Tras el release de v1.0.9, se identificaron dos problemas relacionados con el ma
 
 | ID | Título | Severidad | Estado |
 |----|--------|-----------|--------|
-| — | `.devin` directory not found | 🔴 Crítico | 🟡 En curso |
-| — | Clean Install missing optional files menu | 🟡 Medio | 🟡 En curso |
+| — | `.devin` directory not found | 🔴 Crítico | ✅ Resuelto |
+| — | Clean Install missing optional files menu | 🟡 Medio | ✅ Resuelto |
 
 #### Diagnóstico Técnico
 
@@ -880,39 +880,41 @@ template/opcional/.devin/
 
 | ID | Descripción | Commit | Estado |
 |----|-------------|--------|--------|
-| T1 | Implementar detección de directorios en `TemplateResolver` | `pending` | 🟡 Pendiente |
-| T2 | Implementar copia recursiva de directorios en `BunFileSystem` | `pending` | 🟡 Pendiente |
-| T3 | Actualizar `FileMergeEngine` para manejar directorios | `pending` | 🟡 Pendiente |
-| T4 | Modificar `CleanInstallUseCase` para mostrar menú de opcionales | `pending` | 🟡 Pendiente |
-| T5 | Tests unitarios: `TemplateResolver` con directorios | `pending` | 🟡 Pendiente |
-| T6 | Tests unitarios: `BunFileSystem` copia recursiva | `pending` | 🟡 Pendiente |
-| T7 | Tests unitarios: `CleanInstallUseCase` con menú de opcionales | `pending` | 🟡 Pendiente |
-| T8 | Tests E2E: Clean Install con selección de opcionales | `pending` | 🟡 Pendiente |
-| T9 | Tests E2E: Project Install con `.devin` seleccionado | `pending` | 🟡 Pendiente |
-| T10 | ADR-010 documentado en `specs/adr/` | `pending` | 🟡 Pendiente |
+| T1 | Implementar detección de directorios en `TemplateResolver` | `d27107c` | ✅ Completo |
+| T2 | Implementar copia recursiva de directorios en `BunFileSystem` | `d27107c` | ✅ Completo |
+| T3 | Actualizar `FileMergeEngine` para manejar directorios | `d27107c` | ✅ Completo |
+| T4 | Modificar `CleanInstallUseCase` para mostrar menú de opcionales | `d27107c` | ✅ Completo |
+| T5 | Tests unitarios: `TemplateResolver` con directorios | `d27107c` | ✅ Completo |
+| T6 | Tests unitarios: `BunFileSystem` copia recursiva | `d27107c` | ✅ Completo |
+| T7 | Tests unitarios: `CleanInstallUseCase` con menú de opcionales | `d27107c` | ✅ Completo |
+| T8 | Tests E2E: Clean Install con selección de opcionales | `d27107c` | ✅ Completo |
+| T9 | Tests E2E: Project Install con `.devin` seleccionado | `d27107c` | ✅ Completo |
+| T10 | ADR-010 documentado en `specs/adr/` | `d27107c` | ✅ Completo |
 
 #### Métricas de Referencia
 
-| Métrica | v1.0.9 (actual) | Meta v1.0.10 |
-|---------|-----------------|--------------|
-| Tests (pass/fail) | 465 / 0 | ≥465 / 0 |
-| Coverage (funciones) | 97.66% | ≥97.66% |
-| Coverage (líneas) | 96.52% | ≥96.52% |
+| Métrica | v1.0.9 (antes) | v1.0.10 (final) |
+|---------|-----------------|-----------------|
+| Tests (pass/fail) | 465 / 0 | 472 / 0 |
+| Expects | 986 | 1009 |
+| Coverage (funciones) | 97.66% | 97.66% |
+| Coverage (líneas) | 96.52% | 96.52% |
 | E2E escenarios | 12/12 | 14/14 |
 | `just check` errores | 0 | 0 |
 | Issues críticos abiertos | 0 | 0 |
+| Ship review findings | — | 0 Critical, 0 Important (2 rounds GO) |
 
 **Criterios de completitud (DoD FEV-2-D):**
-- [ ] `.devin` directory se copia correctamente en Clean Install y Project Install
-- [ ] Clean Install muestra menú de selección de opcionales (igual que Project Install)
-- [ ] `TemplateResolver` detecta y maneja directorios recursivamente
-- [ ] `BunFileSystem` implementa copia recursiva de directorios
-- [ ] `bun test`: sin regresión (≥465 pass, 0 fail)
-- [ ] `just check`: 0 errores
-- [ ] E2E: 14/14 pasando (12 existentes + 2 nuevos)
-- [ ] ADR-010 documentado
-- [ ] CHANGELOG actualizado con sección v1.0.10
-- [ ] Ship review: 0 Critical findings → GO decision
+- [x] `.devin` directory se copia correctamente en Clean Install y Project Install
+- [x] Clean Install muestra menú de selección de opcionales (igual que Project Install)
+- [x] `TemplateResolver` detecta y maneja directorios recursivamente
+- [x] `BunFileSystem` implementa copia recursiva de directorios
+- [x] `bun test`: sin regresión (472 pass, 0 fail, 1009 expects)
+- [x] `just check`: 0 errores
+- [x] E2E: 14/14 pasando (12 existentes + 2 nuevos)
+- [x] ADR-010 documentado
+- [x] CHANGELOG actualizado con sección v1.0.10
+- [x] Ship review: 2 rounds → 0 Critical findings → GO decision
 
 ---
 

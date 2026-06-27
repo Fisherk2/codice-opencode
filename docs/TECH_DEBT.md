@@ -1,9 +1,9 @@
-# Technical Debt — Códice v1.0.10 (planned)
+# Technical Debt — Códice v1.0.10
 
 **Generated:** 2026-06-26
 **Status:** Live reference for improvement planning
-**Coverage:** 97.66% functions / 96.52% lines (465 tests, 0 fail, 986 expects)
-**Notes:** v1.0.10 will address FEV-2-D: directory support in TemplateResolver + optional files menu in Clean Install. This document tracks both resolved debt and newly discovered fragilities.
+**Coverage:** 97.66% functions / 96.52% lines (472 tests, 0 fail, 1009 expects)
+**Notes:** v1.0.10 is released. FEV-2-D (directory support + Clean Install UX) is resolved. This document tracks both resolved debt and newly discovered fragilities.
 
 ---
 
@@ -236,27 +236,28 @@
 | **Problem 1** | `.devin` directory not found in Clean Install and Project Install modes. |
 | **Root Cause** | `FileRuleManifestData.ts` has an entry for `.devin` as if it were a file, but it's actually a directory containing `rules/`, `skills` (symlink), and `workflows` (symlink). `TemplateResolver.resolvePath()` is designed to resolve files, not directories. |
 | **Impact** | Users cannot install the `.devin` optional directory in either Clean Install or Project Install mode. |
-| **Resolution** | Implement native directory support in `TemplateResolver`: detect directories via `fs.stat()`, copy recursively using `BunFileSystem.copyDirectoryRecursive()`. |
-| **Status** | 🟡 In progress (FEV-2-D) |
+| **Resolution** | Implement native directory support in `TemplateResolver`: detect directories via `fs.stat()`, copy recursively using `BunFileSystem.copyDirectoryRecursive()`. Added `noTemplateCopy` field to `FileRule` for manifest entries whose content is generated post-installation. |
+| **Status** | ✅ Fixed in v1.0.10 |
 
 | Item | Detail |
 |------|--------|
 | **Problem 2** | Clean Install copies all optional files automatically without showing the selection menu. |
 | **Root Cause** | `CleanInstallUseCase` is designed to copy everything (obligatorio + estándar + opcional) without user interaction. This is inconsistent with `ProjectInstallUseCase` which shows the optional files selection menu. |
 | **Impact** | Inconsistent UX between Clean Install and Project Install. Users have no control over which optional files to include in Clean Install. |
-| **Resolution** | Modify `CleanInstallUseCase` to show the same optional files selection menu as `ProjectInstallUseCase`. |
-| **Status** | 🟡 In progress (FEV-2-D) |
+| **Resolution** | Modified `CleanInstallUseCase` to show the same optional files selection menu as `ProjectInstallUseCase`. Added `--force` flag support to skip the menu. |
+| **Status** | ✅ Fixed in v1.0.10 |
 
 ---
 
 ## 7. Summary & Prioritization
 
-### Planned (v1.0.10)
-| Item | Effort | Impact |
-|------|--------|--------|
-| Directory support in TemplateResolver (FEV-2-D) | 4h | Fixes `.devin` directory resolution |
-| Optional files menu in Clean Install (FEV-2-D) | 2h | Consistent UX with Project Install |
-| ADR-010: Directory support in template system | 1h | Document architectural decision |
+### Resolved (v1.0.10)
+| Item | Effort | Impact | Status |
+|------|--------|--------|--------|
+| Directory support in TemplateResolver (FEV-2-D) | 4h | Fixes `.devin` directory resolution | ✅ Fixed |
+| Optional files menu in Clean Install (FEV-2-D) | 2h | Consistent UX with Project Install | ✅ Fixed |
+| ADR-010: Directory support in template system | 1h | Document architectural decision | ✅ Complete |
+| Extract shared symlink warning helper | 1h | Eliminates ~24 lines of duplicated code | ✅ Fixed |
 
 ### Planned (v1.1.0)
 | Item | Effort | Impact |

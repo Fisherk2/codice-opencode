@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`noTemplateCopy` flag on `FileRule`**: New optional field that marks manifest entries whose content is generated entirely post-installation (e.g., `.devin/` symlinks via `BunSymlinkCreator`). These entries still appear in the optional file selection UX but skip template file resolution and staging, preventing `Template file not found` errors for npm-stripped content.
 - **Optional files menu in Clean Install**: Clean Install now shows the same optional files selection menu as Project Install, allowing users to choose which optional files to include. Previously, Clean Install copied all optional files automatically without user interaction. Use `--force` to skip the menu and include all optionals.
+- **`.devin` directory support**: `TemplateResolver` now detects and copies directories recursively, resolving the `Template file not found: .devin` error that occurred because `.devin` is a directory (not a file) and npm tarballs strip directory symlinks.
+- **Extracted shared `createSymlinksWithWarning` helper**: Both use cases now delegate symlink guard logic to a shared helper in `src/application/helpers.ts`, eliminating ~24 lines of duplicated warning code across 4 methods.
 
 ### Fixed
 
