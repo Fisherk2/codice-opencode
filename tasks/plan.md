@@ -1,38 +1,26 @@
-# Plan: Fase FEV-2-C — Resolución de `.gitignore` Excluido por npm + Tech Debt: Test Aislado (v1.0.9)
+# Plan: Fase FEV-2-D — Directory Support en TemplateResolver + Optional Files Menu en Clean Install (v1.0.10)
 
-**Fecha:** 2026-06-26 | **Autor:** Moctezuma (Planner Agent) | **Estado:** ✅ Completo
-**Versión objetivo:** v1.0.9
-**Issue principal:** Issue #11 — npm excluye archivos `.gitignore` del paquete
-**Tech Debt (v1.1.0):** Test de integración aislado que simule `bunx` desde directorio temporal
+**Fecha:** 2026-06-26 | **Autor:** Moctezuma (Planner Agent) | **Estado:** 🟡 Plan Aprobado
+**Versión objetivo:** v1.0.10
+**Issues principales:**
+1. `.devin` es un directorio, no un archivo — TemplateResolver falla con "Template file not found"
+2. Clean Install no muestra menú de selección de opcionales (inconsistente con Project Install)
 
 ---
 
 ## Overview
 
-Tras el release de v1.0.8, se identificó la **Issue #11**: `bunx @fisherk2-dev/codice@latest` falla con `Template file not found: .gitignore` en los tres modos de instalación (Clean, Project, Update).
+Tras el release de v1.0.9, se identificaron dos problemas relacionados con el manejo de directorios opcionales y la UX de Clean Install:
 
-**Causa raíz:** npm tiene un comportamiento hardcoded que **excluye archivos `.gitignore` del paquete por defecto**, incluso cuando están listados en el campo `files` de `package.json`. El archivo `template/estandar/.gitignore` (2930 bytes) existe en el repositorio, pero no se incluye en el tarball publicado.
+1. **`.devin` directory resolution**: El manifest incluye `.devin` como entrada opcional con `isDirectory: true`, pero `TemplateResolver.resolvePath()` falla con `Template file not found: .devin` en ambos modos de instalación. El directorio existe en `template/opcional/.devin/` pero contiene symlinks que causan problemas de resolución.
 
-```bash
-# El archivo existe localmente
-$ ls -la template/estandar/.gitignore
--rw-r--r-- 1 fisherk2 fisherk2 2930 Jun 16 13:36 template/estandar/.gitignore
+2. **Clean Install UX inconsistente**: `CleanInstallUseCase` copia todos los archivos opcionales automáticamente sin mostrar el menú de selección, mientras que `ProjectInstallUseCase` sí lo muestra. Esto es inconsistente y confuso para el usuario.
 
-# PERO no aparece en el paquete npm
-$ npm pack --dry-run 2>&1 | grep gitignore
-(no output)
-```
+**Decisiones del usuario (2026-06-26):**
+- **Problema 1:** Implementar soporte nativo para directorios en `TemplateResolver` (NO expandir `.devin` en archivos individuales)
+- **Problema 2:** Clean Install debe mostrar el mismo menú de selección de opcionales que Project Install
 
-**Patrón identificado:** Es el mismo problema que FEV-2-B resolvió con symlinks:
-- **FEV-2-B:** npm resuelve symlinks → archivos no existen en el tarball
-- **FEV-2-C:** npm excluye `.gitignore` → archivos no existen en el tarball
-
-**Decisión del usuario (2026-06-26):**
-- **Opción 1 (Recomendada):** Renombrar `template/estandar/.gitignore` → `template/estandar/gitignore` y generar `.gitignore` post-instalación (mismo patrón que FEV-2-B para symlinks).
-- **Tech Debt adicional (v1.1.0):** Actualizar `docs/TECH_DEBT.md` para documentar la necesidad de un test de integración aislado que simule `bunx` desde un directorio temporal. Esto evitará futuros bugs de empaquetado que no se detectan con `just dev` (que usa el `template/` local).
-- **Versión:** v1.0.9 (no se puede republicar v1.0.8).
-
-**Objetivo:** Publicar v1.0.9 que funcione correctamente con `bunx` en los 3 modos, sin regresión, con `.gitignore` generado post-instalación, y dejar documentado el test aislado para v1.1.0.
+**Objetivo:** Publicar v1.0.10 que resuelva ambos problemas sin regresión, con `.devin` funcionando correctamente y Clean Install mostrando el menú de opcionales.
 
 ---
 
@@ -40,16 +28,16 @@ $ npm pack --dry-run 2>&1 | grep gitignore
 
 | Decisión | Rationale |
 |----------|-----------|
-| **ADR-FEV2C-1**: Renombrar `.gitignore` → `gitignore` + generar post-instalación | npm excluye `.gitignore` por hardcoded behavior. Renombrar evita la exclusión. La generación post-install es el mismo patrón que FEV-2-B (symlinks) — probado y robusto. |
-| **ADR-FEV2C-2**: Generar `.gitignore` solo en Clean Install y Project Install (NO en Update) | Update Workspace preserva estructura existente. Si el usuario ya tiene un `.gitignore` personalizado, NO debe sobrescribirse. Mismo principio que FEV-2-B (symlinks solo en install inicial). |
-| **ADR-FEV2C-3**: Generación idempotente (skip si ya existe) | Si el usuario tiene un `.gitignore` preexistente, se respeta. No hay rollback. Si la generación falla, se muestra warning pero NO se aborta la instalación. |
-| **ADR-FEV2C-4**: Usar port `IGitignoreCreator` + adapter `BunGitignoreCreator` (Clean Architecture) | Sigue el mismo patrón que `ISymlinkCreator` (FEV-2-B). Aislable, mockeable en tests, y mantiene la separación de capas (application no depende de infra). |
-| **ADR-FEV2C-5**: Crear type `GitignoreError` en domain | Coherencia con `SymlinkError` (FEV-2-B). Errores tipados explícitamente para que los use cases puedan manejarlos sin acoplarse a `fs` de Node/Bun. |
-| **ADR-FEV2C-6**: Eliminar entrada `.gitignore` de `FileRuleManifestData` | La entrada del manifest hace que `TemplateResolver.resolvePath()` falle porque el archivo NO existe en el tarball. Al eliminarla, el manifest coincide con la realidad del paquete npm. |
-| **ADR-FEV2C-7**: Bump a v1.0.9 (no parche sobre v1.0.8) | npm rechaza republicar la misma versión. v1.0.8 ya está publicado con el bug. Es un patch fix → v1.0.9 es correcto semánticamente. |
-| **ADR-FEV2C-8**: Eliminar entrada de `.gitignore` del test de completitud | El test `file-rule-manifest.test.ts` cuenta archivos reales en `template/`. Al renombrar `.gitignore` → `gitignore`, el conteo cambia. El test debe actualizarse para excluir el archivo renombrado (ahora no es `.gitignore` real, es un asset para post-install). |
-| **ADR-FEV2C-9**: Actualizar `docs/TECH_DEBT.md` con deuda del test aislado (v1.1.0) | El test de integración actual (`TemplateResolver.test.ts`) usa `template/` local. Esto oculta bugs de empaquetado que solo aparecen en `bunx`. v1.1.0 añadirá un test que simule `bunx` desde directorio temporal aislado. |
-| **ADR-FEV2C-10**: Generar `.gitignore` ANTES de los symlinks en el flujo de Clean Install | Orden de operaciones: file merge → gitignore generation → symlink generation. Razón: si symlinks fallan, el `.gitignore` ya está en su sitio (atomicidad del archivo crítico). |
+| **ADR-FEV2D-1**: Soporte nativo para directorios en `TemplateResolver` | El usuario eligió esta opción vs. expandir `.devin` en archivos individuales. Es más simple, mantiene la estructura del template, y es extensible a futuros directorios opcionales. |
+| **ADR-FEV2D-2**: `TemplateResolver.resolvePath()` debe distinguir entre archivos y directorios en el error | El mensaje actual "Template file not found" es confuso cuando se busca un directorio. Actualizar a "Template file or directory not found". |
+| **ADR-FEV2D-3**: `CleanInstallUseCase` debe usar `selectOptional` antes de ejecutar el merge | Coherencia con `ProjectInstallUseCase`. El usuario debe tener control sobre qué opcionales instalar en Clean Install también. |
+| **ADR-FEV2D-4**: Clean Install con `--force` salta el menú de opcionales (igual que Project) | Consistencia con el comportamiento existente. `--force` se usa para automatización/CI donde no hay interacción. |
+| **ADR-FEV2D-5**: Mantener `AtomicStager.stageFile()` sin cambios (ya maneja directorios) | El código actual ya maneja directorios recursivamente (líneas 67-78 de `AtomicStager.ts`). No se requiere modificación. |
+| **ADR-FEV2D-6**: Validar que `.devin` se copia completamente en tests E2E | Los tests E2E deben verificar que TODOS los archivos de `.devin/rules/` se copian, no solo que el directorio existe. |
+| **ADR-FEV2D-7**: No modificar el manifest (`FileRuleManifestData.ts`) | La entrada `.devin` ya es correcta. El problema es en la resolución, no en la definición. |
+| **ADR-FEV2D-8**: Bump a v1.0.10 (patch sobre v1.0.9) | Correcciones de bugs que no rompen API. Patch increment es correcto semánticamente. |
+| **ADR-FEV2D-9**: Agregar tests E2E para Clean Install con menú de opcionales | Verificar que el nuevo flujo funciona end-to-end con el binario compilado. |
+| **ADR-FEV2D-10**: Documentar ADR-010 en `specs/adr/` | Decisión arquitectónica significativa que debe ser documentada. |
 
 ---
 
@@ -57,485 +45,375 @@ $ npm pack --dry-run 2>&1 | grep gitignore
 
 ```mermaid
 graph TD
-    FE2C-T0[Test RED estructura npm] --> FE2C-T1[Renombrar .gitignore → gitignore]
-    FE2C-T1 --> FE2C-T2[Update FileRuleManifestData]
-    FE2C-T2 --> FE2C-T3[Create IGitignoreCreator port]
-    FE2C-T2 --> FE2C-T4[Create GitignoreError type]
-    FE2C-T3 --> FE2C-T5[Test RED BunGitignoreCreator]
-    FE2C-T4 --> FE2C-T5
-    FE2C-T5 --> FE2C-T6[Implement BunGitignoreCreator]
-    FE2C-T6 --> FE2C-T7[Integrate in CleanInstallUseCase]
-    FE2C-T6 --> FE2C-T8[Integrate in ProjectInstallUseCase]
-    FE2C-T8 --> FE2C-T9[Test E2E gitignore]
-    FE2C-T9 --> FE2C-T10[Verify full suite]
-    FE2C-T8 --> FE2C-T10
-    FE2C-T10 --> FE2C-T11[Bump version 1.0.9]
-    FE2C-T11 --> FE2C-T12[Update CHANGELOG]
-    FE2C-T12 --> FE2C-T13[Commit + PR + Tag + Release]
-    FE2C-T13 --> FE2C-T14[Update TECH_DEBT.md isolated test]
+    FE2D-T1[Investigar causa raíz del fallo .devin] --> FE2D-T2[Mejorar TemplateResolver.resolvePath]
+    FE2D-T2 --> FE2D-T3[Tests unitarios TemplateResolver con directorios]
+    FE2D-T3 --> FE2D-T4[Checkpoint: TemplateResolver funciona]
+    
+    FE2D-T5[Refactorizar CleanInstallUseCase] --> FE2D-T6[Tests unitarios CleanInstall con menú]
+    FE2D-T6 --> FE2D-T7[Checkpoint: Clean Install muestra menú]
+    
+    FE2D-T7 --> FE2D-T8[Tests E2E Clean Install con menú]
+    FE2D-T4 --> FE2D-T9[Tests E2E .devin resolución]
+    
+    FE2D-T8 --> FE2D-T10[Tests E2E .devin Project Install]
+    FE2D-T10 --> FE2D-T11[Verificar suite completa]
+    
+    FE2D-T11 --> FE2D-T12[Bump version 1.0.10]
+    FE2D-T12 --> FE2D-T13[Actualizar CHANGELOG]
+    FE2D-T13 --> FE2D-T14[Documentar ADR-010]
+    FE2D-T14 --> FE2D-T15[Commit + PR + Tag + Release]
 ```
 
 ---
 
 ## Task Breakdown
 
-### Phase 1: Diagnóstico RED (Bloqueante)
+### Phase 1: Diagnóstico e Investigación
 
-#### Task FE2C-T0: Test RED con estructura del paquete npm
-**Descripción:** Test que simula la estructura del paquete npm (sin `.gitignore`) y verifica que `resolvePath(".gitignore")` falla con el manifiesto actual. El test debe ser RED con el código actual.
+#### Task FE2D-T1: Investigar causa raíz del fallo `.devin` resolution
+**Descripción:** Investigar por qué `TemplateResolver.resolvePath(".devin")` falla cuando el directorio existe en `template/opcional/.devin/`. El directorio contiene symlinks (`skills -> ../skills`, `workflows -> ../commands/`) que pueden estar causando problemas en el contexto del binario compilado.
 
 **Criterios de Aceptación:**
-- [ ] Test crea directorio temporal con estructura:
-  ```
-  tmp/
-  ├── template/
-  │   ├── obligatorio/
-  │   │   ├── agents/
-  │   │   ├── commands/
-  │   │   ├── skills/
-  │   │   └── .opencode/
-  │   │       └── plugins/
-  │   ├── estandar/
-  │   │   ├── README.md
-  │   │   ├── CHANGELOG.md
-  │   │   ├── docs/
-  │   │   ├── specs/
-  │   │   ├── tasks/
-  │   │   └── LICENSE
-  │   │   (SIN .gitignore — porque npm lo excluye)
-  │   └── opcional/
-  ```
-- [ ] Test invoca `TemplateResolver.resolvePath(".gitignore")` y espera throw con `TemplateNotFoundError`.
-- [ ] Test es RED con código actual (la entrada existe en el manifiesto).
+- [ ] Ejecutar `bunx @fisherk2-dev/codice@latest` en directorio vacío y reproducir el error
+- [ ] Verificar que `template/opcional/.devin/` existe localmente
+- [ ] Identificar si el problema es con symlinks, path resolution, o permisos
+- [ ] Documentar la causa raíz en un comentario en el código o en el plan
 
 **Verificación:**
-- [ ] `bun test tests/integration/TemplateResolver.test.ts` — el test falla con error "Template file not found: .gitignore".
+- [ ] Error reproducido y documentado
+- [ ] Causa raíz identificada
 
 **Dependencias:** Ninguna.
 **Archivos:**
-- `tests/integration/TemplateResolver.test.ts` (nuevo test).
+- Investigación (no requiere cambios de código aún)
 
 **Scope:** S (30min).
 
 ---
 
-### Phase 2: Fix del Template
+### Phase 2: TemplateResolver - Soporte para Directorios
 
-#### Task FE2C-T1: Renombrar `template/estandar/.gitignore` → `template/estandar/gitignore`
-**Descripción:** Renombrar el archivo `.gitignore` a `gitignore` (sin punto) para evitar la exclusión automática de npm.
-
-**Criterios de Aceptación:**
-- [ ] Archivo `template/estandar/.gitignore` renombrado a `template/estandar/gitignore`.
-- [ ] Contenido idéntico al original (2930 bytes).
-- [ ] Test FE2C-T0 ahora muestra que `gitignore` SÍ existe en la estructura npm simulada.
-- [ ] `git status` muestra el rename correctamente.
-
-**Verificación:**
-- [ ] `ls -la template/estandar/gitignore` — archivo existe.
-- [ ] `ls template/estandar/.gitignore` — archivo NO existe.
-- [ ] `npm pack --dry-run 2>&1 | grep gitignore` — ahora aparece `template/estandar/gitignore`.
-
-**Dependencias:** FE2C-T0.
-**Archivos:**
-- `template/estandar/.gitignore` (eliminado).
-- `template/estandar/gitignore` (nuevo, contenido idéntico).
-
-**Scope:** XS (5min).
-
----
-
-#### Task FE2C-T2: Eliminar entrada `.gitignore` de `FileRuleManifestData.ts`
-**Descripción:** Remover la entrada para `.gitignore` del `FILE_RULE_MANIFEST`. La generación post-instalación se encarga de crear el archivo `.gitignore` en el destino del usuario.
+#### Task FE2D-T2: Mejorar `TemplateResolver.resolvePath()` para directorios
+**Descripción:** Modificar `TemplateResolver.resolvePath()` para manejar correctamente directorios. El método ya usa `fs.existsSync()` que funciona para directorios, pero el mensaje de error es confuso. Además, necesitamos asegurar que el método retorna correctamente cuando encuentra un directorio.
 
 **Criterios de Aceptación:**
-- [ ] 1 entrada eliminada de la sección ESTANDAR del `FILE_RULE_MANIFEST`.
-- [ ] Comentario explicativo añadido referenciando el ADR-FEV2C-6 y mencionando que se genera post-instalación.
-- [ ] Total standard: 12 → 11.
-- [ ] Total general: 32 → 31.
-- [ ] Test FE2C-T0 ahora pasa (GREEN) — el manifiesto ya no referencia `.gitignore`.
+- [ ] `TemplateResolver.resolvePath()` retorna correctamente cuando el path es un directorio
+- [ ] Mensaje de error actualizado: "Template file or directory not found" en lugar de "Template file not found"
+- [ ] Validación de path containment funciona igual para archivos y directorios
+- [ ] Cache funciona igual para archivos y directorios
+- [ ] Comentarios JSDoc actualizados para indicar que soporta ambos
 
 **Verificación:**
-- [ ] `bun test tests/integration/TemplateResolver.test.ts` — todos pasan.
-- [ ] `grep -n "gitignore" src/domain/entities/FileRuleManifestData.ts` — solo aparece el comentario explicativo, no la entrada del path.
-- [ ] `just check` — 0 errores.
+- [ ] `bun test tests/integration/TemplateResolver.test.ts` — todos pasan
+- [ ] `just check` — 0 errores
+- [ ] Test manual: `bunx @fisherk2-dev/codice` en directorio vacío + seleccionar .devin → copia exitosa
 
-**Dependencias:** FE2C-T1.
+**Dependencias:** FE2D-T1.
 **Archivos:**
-- `src/domain/entities/FileRuleManifestData.ts` (1 entrada eliminada + comment).
-
-**Scope:** XS (15min).
-
----
-
-#### Task FE2C-T2.5: Actualizar test de completitud `file-rule-manifest.test.ts`
-**Descripción:** El test cuenta archivos en `template/estandar/` y verifica que el manifest tenga al menos esa cantidad. Debe actualizarse para excluir `gitignore` del conteo (ahora es un asset para post-install, no un archivo de plantilla).
-
-**Criterios de Aceptación:**
-- [ ] Test modificado para excluir `gitignore` (sin punto) del conteo de `estandar/`.
-- [ ] Conteo esperado: 8 mandatory, 11 standard (después del fix), 12 optional.
-- [ ] Test verifica que la entrada `.gitignore` NO existe en el manifiesto.
-- [ ] Test verifica que `gitignore` SÍ existe en el filesystem de `template/estandar/`.
-
-**Verificación:**
-- [ ] `bun test tests/unit/file-rule-manifest.test.ts` — todos pasan.
-- [ ] Si comento una entrada válida del manifest, el test falla (guard funciona).
-
-**Dependencias:** FE2C-T2.
-**Archivos:**
-- `tests/unit/file-rule-manifest.test.ts` (modificado).
-
-**Scope:** S (30min).
-
----
-
-### Phase 3: Port-Adapter Pattern (Clean Architecture)
-
-#### Task FE2C-T3: Crear puerto `IGitignoreCreator`
-**Descripción:** Definir interfaz `IGitignoreCreator` en `src/application/ports/` siguiendo Clean Architecture. La interfaz declara un método para generar el archivo `.gitignore` en el destino.
-
-**Criterios de Aceptación:**
-- [ ] Nuevo archivo `src/application/ports/IGitignoreCreator.ts`.
-- [ ] Interface exporta: `createGitignore(destPath: string): Promise<Result<void, GitignoreError>>`.
-- [ ] JSDoc con propósito, parámetros, errores, y modo de operación (Clean/Project solamente, NO Update).
-- [ ] Sin imports de `fs` o `Bun` (Clean Architecture: domain/application no depende de infra).
-
-**Verificación:**
-- [ ] `just check` — 0 errores.
-- [ ] `tsc --noEmit` — 0 errores.
-
-**Dependencias:** FE2C-T2.
-**Archivos:**
-- `src/application/ports/IGitignoreCreator.ts` (nuevo).
-
-**Scope:** XS (20min).
-
----
-
-#### Task FE2C-T4: Crear type `GitignoreError` en domain
-**Descripción:** Crear tipo `GitignoreError` en `src/domain/types/` siguiendo el mismo patrón que `SymlinkError` (FEV-2-B).
-
-**Criterios de Aceptación:**
-- [ ] Nuevo archivo `src/domain/types/GitignoreError.ts`.
-- [ ] Extiende `Error` con campo `code: GitignoreErrorCode` (enum: `READ_FAILED`, `WRITE_FAILED`, `TEMPLATE_NOT_FOUND`).
-- [ ] Factory functions: `gitignoreReadError(path)`, `gitignoreWriteError(path)`, `gitignoreTemplateNotFoundError(path)`.
-- [ ] Exportado desde el barrel `src/domain/types/index.ts` (si existe).
-- [ ] JSDoc con propósito y casos de uso.
-
-**Verificación:**
-- [ ] `just check` — 0 errores.
-- [ ] `tsc --noEmit` — 0 errores.
-
-**Dependencias:** FE2C-T2.
-**Archivos:**
-- `src/domain/types/GitignoreError.ts` (nuevo).
-
-**Scope:** XS (10min).
-
----
-
-#### Task FE2C-T5: Test RED para `BunGitignoreCreator` (TDD)
-**Descripción:** Crear tests que cubran: crear `.gitignore` nuevo, idempotencia (skip si ya existe), lectura del template `gitignore`, error handling, validación de paths.
-
-**Criterios de Aceptación:**
-- [ ] Archivo `tests/unit/adapters/bun-gitignore-creator.test.ts`.
-- [ ] 6+ tests cubriendo:
-  1. Crea `.gitignore` nuevo: el archivo se crea con el contenido del template
-  2. Idempotencia: si `.gitignore` ya existe, no se sobreescribe
-  3. Skip directorio: si `destPath/.gitignore` es un directorio, skip con warning
-  4. Read template failed: retorna `Result.err` con `GitignoreError` (READ_FAILED)
-  5. Write failed: retorna `Result.err` con `GitignoreError` (WRITE_FAILED)
-  6. Template not found: retorna `Result.err` con `GitignoreError` (TEMPLATE_NOT_FOUND)
-- [ ] Tests son RED con código actual (la clase no existe).
-
-**Verificación:**
-- [ ] `bun test tests/unit/adapters/bun-gitignore-creator.test.ts` — todos fallan porque la clase no existe.
-
-**Dependencias:** FE2C-T3, FE2C-T4.
-**Archivos:**
-- `tests/unit/adapters/bun-gitignore-creator.test.ts` (nuevo).
+- `src/infrastructure/adapters/TemplateResolver.ts` (modificado)
 
 **Scope:** S (45min).
 
 ---
 
-#### Task FE2C-T6: Implementar `BunGitignoreCreator` adapter (TDD GREEN)
-**Descripción:** Crear clase `BunGitignoreCreator` en `src/infrastructure/adapters/` que implementa `IGitignoreCreator` usando `Bun.write()` de Bun.
+#### Task FE2D-T3: Tests unitarios para `TemplateResolver` con directorios
+**Descripción:** Crear tests que cubran la resolución de directorios en `TemplateResolver`, incluyendo el caso de `.devin` con symlinks.
 
 **Criterios de Aceptación:**
-- [ ] Archivo `src/infrastructure/adapters/BunGitignoreCreator.ts`.
-- [ ] Implementa `IGitignoreCreator` con:
-  - Constructor: `constructor(templatePath: string, verbose?: boolean)` donde `templatePath` apunta a `template/estandar/gitignore`.
-  - Método: `createGitignore(destPath: string): Promise<Result<void, GitignoreError>>`.
-- [ ] Lee contenido de `template/estandar/gitignore` con `Bun.file().text()`.
-- [ ] Escribe a `destPath/.gitignore` con `Bun.write()`.
-- [ ] Verifica si `.gitignore` ya existe antes de escribir (idempotencia).
-- [ ] Verifica si `destPath/.gitignore` es un directorio real (skip con warning).
-- [ ] Captura errores de `EACCES`, `EISDIR`, `ENOENT` y los mapea a `GitignoreError`.
-- [ ] Si `verbose` es true, log a stderr con timestamp.
-- [ ] Tests FE2C-T5 ahora pasan (GREEN).
+- [ ] Test: `resolvePath(".devin")` retorna el path correcto cuando es un directorio
+- [ ] Test: `resolvePath("directorio/inexistente")` lanza error con mensaje actualizado
+- [ ] Test: Cache funciona para directorios
+- [ ] Test: Path containment funciona para directorios
+- [ ] Test: Directorio con symlinks internos se resuelve correctamente
+- [ ] 5+ tests nuevos en `tests/integration/TemplateResolver.test.ts`
 
 **Verificación:**
-- [ ] `bun test tests/unit/adapters/bun-gitignore-creator.test.ts` — todos pasan.
-- [ ] `just check` — 0 errores.
+- [ ] `bun test tests/integration/TemplateResolver.test.ts` — todos pasan
+- [ ] Coverage de `TemplateResolver.ts` ≥ 90%
 
-**Dependencias:** FE2C-T5.
+**Dependencias:** FE2D-T2.
 **Archivos:**
-- `src/infrastructure/adapters/BunGitignoreCreator.ts` (nuevo).
+- `tests/integration/TemplateResolver.test.ts` (5+ tests nuevos)
+
+**Scope:** S (1h).
+
+---
+
+#### Checkpoint 1: After FE2D-T3 (TemplateResolver funciona)
+- [ ] `TemplateResolver.resolvePath()` maneja directorios correctamente
+- [ ] Tests unitarios pasan
+- [ ] `just check` — 0 errores
+- [ ] **Quality Gate:** El usuario confirma que el problema de `.devin` está resuelto
+
+---
+
+### Phase 3: CleanInstallUseCase - Menú de Opcionales
+
+#### Task FE2D-T5: Refactorizar `CleanInstallUseCase` para mostrar menú de opcionales
+**Descripción:** Modificar `CleanInstallUseCase` para que muestre el menú de selección de opcionales antes de ejecutar el merge, igual que `ProjectInstallUseCase`. Si `force=true`, saltar el menú (consistente con Project Install).
+
+**Criterios de Aceptación:**
+- [ ] `CleanInstallUseCase` llama a `userPrompt.selectOptional()` antes del merge
+- [ ] Si `options?.force` es `true`, salta el menú (array vacío)
+- [ ] Solo se copian los opcionales seleccionados por el usuario
+- [ ] Obligatorio y Estándar se copian siempre (sin cambios)
+- [ ] El orden de operaciones se mantiene: file merge → gitignore → symlinks
+- [ ] Si el usuario no selecciona ningún opcional, solo se copia obligatorio + estándar
+
+**Verificación:**
+- [ ] `bun test tests/unit/clean-install.test.ts` — todos pasan
+- [ ] Test manual: `bunx @fisherk2-dev/codice` → Clean Install → mostrar menú → seleccionar .devin → copia exitosa
+
+**Dependencias:** FE2D-T3.
+**Archivos:**
+- `src/application/use-cases/CleanInstallUseCase.ts` (modificado)
 
 **Scope:** M (1h).
 
 ---
 
-### Phase 4: Use Case Integration
-
-#### Task FE2C-T7: Integrar `IGitignoreCreator` en `CleanInstallUseCase`
-**Descripción:** Modificar `CleanInstallUseCase` para que, después de `commitStaging()`, invoque el `IGitignoreCreator` para generar `.gitignore` en el destino (Clean Install copia TODO).
+#### Task FE2D-T6: Tests unitarios para `CleanInstallUseCase` con menú de opcionales
+**Descripción:** Crear tests que cubran el nuevo flujo de `CleanInstallUseCase` con menú de opcionales, incluyendo casos edge (force=true, usuario no selecciona nada, selección parcial).
 
 **Criterios de Aceptación:**
-- [ ] `CleanInstallUseCase` recibe `IGitignoreCreator` por inyección de dependencias.
-- [ ] Después de `commitStaging()` exitoso, llama a `gitignoreCreator.createGitignore(destinationPath)`.
-- [ ] Si la creación de `.gitignore` falla, se muestra warning al usuario, NO se hace rollback.
-- [ ] El orden es: file merge → gitignore generation → symlink generation (per ADR-FEV2C-10).
-- [ ] Tests del use case actualizados con mock de `IGitignoreCreator`.
-- [ ] Test verifica que `createGitignore` se llama con el destinationPath correcto.
-- [ ] Test verifica que si `createGitignore` falla con error, el use case retorna `Result.ok` con warning (no aborta).
+- [ ] Test: Clean Install muestra menú de opcionales (verificar llamada a `selectOptional`)
+- [ ] Test: Con `force=true`, NO se muestra menú
+- [ ] Test: Solo se copian los opcionales seleccionados
+- [ ] Test: Si no se selecciona nada, solo se copia obligatorio + estándar
+- [ ] Test: El merge engine recibe las reglas correctas según selección
+- [ ] 4+ tests nuevos/actualizados en `tests/unit/clean-install.test.ts`
 
 **Verificación:**
-- [ ] `bun test tests/unit/clean-install.test.ts` — todos pasan.
-- [ ] `just check` — 0 errores.
+- [ ] `bun test tests/unit/clean-install.test.ts` — todos pasan
+- [ ] Coverage de `CleanInstallUseCase.ts` ≥ 90%
 
-**Dependencias:** FE2C-T6.
+**Dependencias:** FE2D-T5.
 **Archivos:**
-- `src/application/use-cases/CleanInstallUseCase.ts` (modificado).
-- `src/cli/container.ts` (DI wiring actualizado).
-- `tests/unit/clean-install.test.ts` (mock actualizado).
+- `tests/unit/clean-install.test.ts` (4+ tests nuevos/actualizados)
 
-**Scope:** M (45min).
+**Scope:** S (1h).
 
 ---
 
-#### Task FE2C-T8: Integrar `IGitignoreCreator` en `ProjectInstallUseCase`
-**Descripción:** Misma integración que FE2C-T7 pero para `ProjectInstallUseCase`. El `.gitignore` se genera SIEMPRE (es standard, no opcional). NO integrar en `UpdateWorkspaceUseCase` (per ADR-FEV2C-2).
-
-**Criterios de Aceptación:**
-- [ ] `ProjectInstallUseCase` recibe `IGitignoreCreator` por inyección de dependencias.
-- [ ] Después de `commitStaging()` exitoso, llama a `gitignoreCreator.createGitignore(destinationPath)`.
-- [ ] El orden es: file merge → gitignore generation → symlink generation.
-- [ ] Si la creación de `.gitignore` falla, se muestra warning al usuario, NO se hace rollback.
-- [ ] `UpdateWorkspaceUseCase` NO modificado (no incluye `IGitignoreCreator`).
-- [ ] Tests del use case actualizados con mock de `IGitignoreCreator`.
-- [ ] Test verifica que `createGitignore` se llama con el destinationPath correcto.
-- [ ] Test verifica que `UpdateWorkspaceUseCase` no llama a `createGitignore` (regression guard).
-
-**Verificación:**
-- [ ] `bun test tests/unit/project-install.test.ts` — todos pasan.
-- [ ] `bun test tests/unit/update-workspace.test.ts` — sin cambios, sigue pasando.
-- [ ] `just check` — 0 errores.
-
-**Dependencias:** FE2C-T7.
-**Archivos:**
-- `src/application/use-cases/ProjectInstallUseCase.ts` (modificado).
-- `src/cli/container.ts` (DI wiring actualizado para Project).
-- `tests/unit/project-install.test.ts` (mock actualizado).
-- `tests/unit/update-workspace.test.ts` (regression test añadido).
-
-**Scope:** M (1h).
+#### Checkpoint 2: After FE2D-T6 (Clean Install muestra menú)
+- [ ] `CleanInstallUseCase` muestra menú de opcionales
+- [ ] Tests unitarios pasan
+- [ ] `just check` — 0 errores
+- [ ] **Quality Gate:** El usuario confirma que el flujo de Clean Install es correcto
 
 ---
 
-### Phase 5: Testing
+### Phase 4: End-to-End Testing
 
-#### Task FE2C-T9: Test E2E con gitignore (Clean Install + Project Install)
-**Descripción:** Crear tests E2E que verifiquen que tras `Clean Install` y `Project Install` con binario compilado, el archivo `.gitignore` existe en el destino con el contenido correcto.
+#### Task FE2D-T8: Tests E2E para Clean Install con menú de opcionales
+**Descripción:** Crear script E2E que verifique que Clean Install muestra el menú de opcionales y copia solo los seleccionados.
 
 **Criterios de Aceptación:**
-- [ ] Script `tests/e2e/11-gitignore-clean-install.sh`:
-  1. Crea directorio temporal vacío.
-  2. Ejecuta binario compilado en modo Clean Install.
-  3. Verifica que `dest/.gitignore` existe.
-  4. Verifica que el contenido de `dest/.gitignore` coincide con `template/estandar/gitignore` (en el tarball simulado).
-- [ ] Script `tests/e2e/12-gitignore-project-install.sh`:
-  1. Crea directorio temporal vacío.
-  2. Ejecuta binario compilado en modo Project Install.
-  3. Verifica que `dest/.gitignore` existe.
-  4. Verifica que el contenido coincide con el template.
-- [ ] Scripts integrados en `just test-e2e`.
-- [ ] Total E2E: 12/12 pasando (10 existentes + 2 nuevos de gitignore).
+- [ ] Script `tests/e2e/13-clean-install-optional-menu.sh`:
+  1. Crea directorio temporal vacío
+  2. Ejecuta binario compilado en modo Clean Install
+  3. Simula selección de `.devin` en el menú (usando `--force` o mock de input)
+  4. Verifica que `.devin/rules/` se copió
+  5. Verifica que archivos no seleccionados NO se copiaron
+- [ ] Script integrado en `just test-e2e`
+- [ ] Total E2E: 14/14 pasando (12 existentes + 2 nuevos)
 
 **Verificación:**
-- [ ] `just test-e2e` — 12/12 escenarios.
-- [ ] Output captura el `.gitignore` creado.
+- [ ] `just test-e2e` — 14/14 escenarios
+- [ ] Output captura la selección de opcionales
 
-**Dependencias:** FE2C-T8.
+**Dependencias:** FE2D-T6.
 **Archivos:**
-- `tests/e2e/11-gitignore-clean-install.sh` (nuevo).
-- `tests/e2e/12-gitignore-project-install.sh` (nuevo).
-- `Justfile` (recipe `test-e2e` actualizada).
+- `tests/e2e/13-clean-install-optional-menu.sh` (nuevo)
+- `Justfile` (recipe `test-e2e` actualizada)
 
 **Scope:** M (1h 15min).
 
 ---
 
-#### Task FE2C-T10: Verificar suite completa
-**Descripción:** Verificar que no hay regresión con todos los tests unit + integration + e2e.
+#### Task FE2D-T9: Tests E2E para `.devin` resolution
+**Descripción:** Crear script E2E que verifique que `.devin` se copia correctamente en Project Install cuando el usuario lo selecciona.
 
 **Criterios de Aceptación:**
-- [ ] `bun test` — 460+ pass, 0 fail (sin regresión, +14 tests de gitignore).
-- [ ] `just check` — 0 errores (biome ci + tsc --noEmit).
-- [ ] E2E: 12/12 pasando.
-- [ ] Coverage: ≥97.66% funciones / ≥96.52% líneas (sin pérdida).
-- [ ] Domain coverage: 100% líneas (mantener).
+- [ ] Script `tests/e2e/14-devin-directory-copy.sh`:
+  1. Crea directorio temporal vacío
+  2. Ejecuta binario compilado en modo Project Install
+  3. Simula selección de `.devin` en el menú
+  4. Verifica que `.devin/rules/*.md` se copiaron
+  5. Verifica que la estructura del directorio se preservó
+- [ ] Script integrado en `just test-e2e`
+- [ ] Total E2E: 14/14 pasando
 
 **Verificación:**
-- [ ] `bun test --coverage` — sin pérdida de coverage.
+- [ ] `just test-e2e` — 14/14 escenarios
+- [ ] Contenido de `.devin/rules/` verificado contra el template
 
-**Dependencias:** FE2C-T8, FE2C-T9.
+**Dependencias:** FE2D-T3.
+**Archivos:**
+- `tests/e2e/14-devin-directory-copy.sh` (nuevo)
+
+**Scope:** M (1h).
+
+---
+
+#### Task FE2D-T10: Tests E2E para `.devin` en Project Install con selección
+**Descripción:** Verificar que Project Install copia `.devin` correctamente cuando el usuario lo selecciona del menú, y NO lo copia cuando no lo selecciona.
+
+**Criterios de Aceptación:**
+- [ ] Test E2E: Project Install + selección de `.devin` → `.devin/` se copia
+- [ ] Test E2E: Project Install + sin selección de `.devin` → `.devin/` NO se copia
+- [ ] Tests integrados en scripts existentes o nuevos
+
+**Verificación:**
+- [ ] `just test-e2e` — 14/14 escenarios
+
+**Dependencias:** FE2D-T9.
+**Archivos:**
+- Actualización de `tests/e2e/` según necesidad
+
+**Scope:** S (45min).
+
+---
+
+### Phase 5: Verificación Integral
+
+#### Task FE2D-T11: Verificar suite completa sin regresión
+**Descripción:** Ejecutar toda la suite de tests para asegurar que no hay regresión con los cambios de FEV-2-D.
+
+**Criterios de Aceptación:**
+- [ ] `bun test` — ≥465 pass, 0 fail (sin regresión, +9 tests nuevos)
+- [ ] `just check` — 0 errores (biome ci + tsc --noEmit)
+- [ ] E2E: 14/14 pasando
+- [ ] Coverage: ≥97.66% funciones / ≥96.52% líneas (sin pérdida)
+- [ ] Domain coverage: 100% líneas (mantener)
+
+**Verificación:**
+- [ ] `bun test --coverage` — sin pérdida de coverage
+- [ ] `just check` — clean
+- [ ] `just test-e2e` — 14/14
+
+**Dependencias:** FE2D-T8, FE2D-T9, FE2D-T10.
 **Archivos:** (ninguno, solo verificación).
 
 **Scope:** XS (10min).
 
 ---
 
-### Phase 6: Release
+### Phase 6: Release Preparation
 
-#### Task FE2C-T11: Bump version a 1.0.9
-**Descripción:** Actualizar `package.json` de `1.0.8` a `1.0.9` (patch fix, no se puede republicar 1.0.8).
+#### Task FE2D-T12: Bump version a 1.0.10
+**Descripción:** Actualizar `package.json` de `1.0.9` a `1.0.10` (patch fix).
 
 **Criterios de Aceptación:**
-- [ ] `package.json` → `"version": "1.0.9"`.
-- [ ] Commit con mensaje: `chore: bump version to 1.0.9`.
+- [ ] `package.json` → `"version": "1.0.10"`
+- [ ] Commit: `chore: bump version to 1.0.10`
 
 **Verificación:**
-- [ ] `git diff package.json` muestra solo el bump de versión.
+- [ ] `git diff package.json` muestra solo el bump
 
-**Dependencias:** FE2C-T10.
+**Dependencias:** FE2D-T11.
 **Archivos:**
-- `package.json`.
+- `package.json`
 
 **Scope:** XS (5min).
 
 ---
 
-#### Task FE2C-T12: Actualizar CHANGELOG con sección v1.0.9
-**Descripción:** Crear entrada `[1.0.9] — 2026-06-26` con la descripción del fix.
+#### Task FE2D-T13: Actualizar CHANGELOG con sección v1.0.10
+**Descripción:** Crear entrada `[1.0.10]` con la descripción de los fixes.
 
 **Criterios de Aceptación:**
 - [ ] `CHANGELOG.md`:
-  - Header `[1.0.9] — 2026-06-26`.
-  - Entry `Fixed`: "Issue #11 — `Template file not found: .gitignore` en `bunx @fisherk2-dev/codice` (npm excluye `.gitignore` del paquete). Renombrado a `gitignore` (sin punto) y generado post-instalación (mismo patrón que symlinks en v1.0.7)".
-  - Entry `Deprecated`: "v1.0.8 — usar v1.0.9".
-  - Remover entry `[Unreleased]` con Issue #11 (ahora resuelto).
+  - Header `[1.0.10] — 2026-06-26`
+  - Entry `Fixed`: "`.devin` directory resolution — TemplateResolver ahora maneja directorios correctamente"
+  - Entry `Changed`: "Clean Install ahora muestra menú de selección de opcionales (consistente con Project Install)"
+  - Entry `Deprecated`: "v1.0.9 — usar v1.0.10"
 
 **Verificación:**
-- [ ] `git diff CHANGELOG.md` muestra la nueva sección.
+- [ ] `git diff CHANGELOG.md` muestra la nueva sección
 
-**Dependencias:** FE2C-T11.
+**Dependencias:** FE2D-T12.
 **Archivos:**
-- `CHANGELOG.md`.
+- `CHANGELOG.md`
 
 **Scope:** XS (5min).
 
 ---
 
-#### Task FE2C-T13: Commit + PR + Tag + Release
+#### Task FE2D-T14: Documentar ADR-010
+**Descripción:** Crear `specs/adr/adr-010-directory-support.md` documentando la decisión arquitectónica de soporte nativo para directorios en `TemplateResolver`.
+
+**Criterios de Aceptación:**
+- [ ] Archivo `specs/adr/adr-010-directory-support.md` creado
+- [ ] Secciones: Contexto, Decisión, Consecuencias, Alternativas consideradas
+- [ ] Referencia al issue y a la fase FEV-2-D
+- [ ] Actualizar `docs/ARCHITECTURE.md` con referencia a ADR-010
+
+**Verificación:**
+- [ ] Archivo existe y tiene contenido
+- [ ] `docs/ARCHITECTURE.md` referencia ADR-010
+
+**Dependencias:** FE2D-T11.
+**Archivos:**
+- `specs/adr/adr-010-directory-support.md` (nuevo)
+- `docs/ARCHITECTURE.md` (modificado)
+
+**Scope:** S (30min).
+
+---
+
+#### Task FE2D-T15: Commit + PR + Tag + Release
 **Descripción:** Hacer commit de los cambios, pushear, crear PR, hacer merge, tag, release pipeline.
 
 **Criterios de Aceptación:**
-- [ ] Commit: `fix(gitignore): post-install generation + remove manifest entry (#11)`.
-- [ ] Branch: `fix/fev-2-c-gitignore` (base = develop).
-- [ ] `git push origin fix/fev-2-c-gitignore`.
-- [ ] PR creado en GitHub contra `develop` (o `main` según convención actual).
-- [ ] CI pasa (3 platforms: Linux, macOS, Windows).
-- [ ] Squash merge a base branch.
-- [ ] `git tag -a v1.0.9 -m "Release v1.0.9 — Gitignore post-install generation"`.
-- [ ] `git push origin v1.0.9` → release pipeline ejecuta.
-- [ ] `npm view @fisherk2-dev/codice version` → `1.0.9`.
-- [ ] `gh release view v1.0.9` muestra 4 assets (linux, macos, windows.exe, checksums).
-- [ ] Branch local `fix/fev-2-c-gitignore` eliminado.
-- [ ] `develop` sincronizado con base branch.
+- [ ] Commit: `fix(template): support directories in TemplateResolver + Clean Install optional menu`
+- [ ] Branch: `fix/fev-2-d-directory-support` (base = develop)
+- [ ] `git push origin fix/fev-2-d-directory-support`
+- [ ] PR creado en GitHub contra `develop`
+- [ ] CI pasa (3 platforms: Linux, macOS, Windows)
+- [ ] Squash merge a base branch
+- [ ] `git tag -a v1.0.10 -m "Release v1.0.10 — Directory support + Clean Install UX"`
+- [ ] `git push origin v1.0.10` → release pipeline ejecuta
+- [ ] `npm view @fisherk2-dev/codice version` → `1.0.10`
+- [ ] `gh release view v1.0.10` muestra 4 assets
+- [ ] Branch local eliminado
+- [ ] `develop` sincronizado
 
 **Verificación:**
-- [ ] GitHub Release: https://github.com/Fisherk2/codice-opencode/releases/tag/v1.0.9
-- [ ] npm: `@fisherk2-dev/codice@1.0.9` es el `latest`.
+- [ ] GitHub Release publicado
+- [ ] npm `latest` → 1.0.10
 
-**Dependencias:** FE2C-T12.
+**Dependencias:** FE2D-T14.
 **Archivos:** (git only).
 
 **Scope:** S (15min).
 
 ---
 
-### Phase 7: Tech Debt Documentation (v1.1.0)
-
-#### Task FE2C-T14: Actualizar `docs/TECH_DEBT.md` con deuda del test aislado
-**Descripción:** Documentar en `docs/TECH_DEBT.md` la necesidad de un test de integración aislado que simule `bunx @fisherk2-dev/codice` desde un directorio temporal. Este test detectará bugs de empaquetado npm que el test actual (`TemplateResolver.test.ts` con `template/` local) no detecta.
-
-**Criterios de Aceptación:**
-- [ ] Nueva sección añadida en `docs/TECH_DEBT.md` (sección 5.3, después de "E2E Coverage Not Captured by `bun --coverage`"):
-  - **Problema:** El test de integración actual usa `template/` local (del CWD). Esto oculta bugs que solo aparecen cuando el binario se ejecuta desde un directorio ajeno (caso real de `bunx`).
-  - **Solución propuesta (v1.1.0):** Test de integración aislado que:
-    1. Build el paquete npm con `bun pm pack`.
-    2. Install el paquete en un directorio temporal (`os.tmpdir()`).
-    3. Run el binario instalado desde el directorio temporal.
-    4. Verify que la resolución de templates, gitignore, y symlinks funciona correctamente.
-  - **Por qué es importante:** FEV-2-B y FEV-2-C fueron bugs que solo se detectaron DESPUÉS del release porque `just dev` (modo source) usa el `template/` local. Un test pre-release habría detectado ambos.
-  - **Esfuerzo estimado:** 4-6 horas.
-  - **Impacto:** Detecta bugs de empaquetado ANTES del release. Reduce tiempo de post-release fixes.
-- [ ] Mover Issue #11 de "Known Issues (v1.0.8)" a "Resolved in v1.0.9" con la descripción del fix.
-- [ ] Actualizar el header del documento con la versión actual: "Technical Debt — Códice v1.0.9".
-- [ ] Actualizar métricas en el header: tests, coverage.
-
-**Verificación:**
-- [ ] `git diff docs/TECH_DEBT.md` muestra la nueva sección.
-- [ ] El documento es coherente con la versión v1.0.9.
-
-**Dependencias:** FE2C-T13.
-**Archivos:**
-- `docs/TECH_DEBT.md` (modificado).
-
-**Scope:** XS (15min).
-
----
-
 ## Checkpoints (Quality Gates)
 
-### Checkpoint 1: After FE2C-T2 (Template fix)
-- [ ] `template/estandar/gitignore` existe (renombrado).
-- [ ] `template/estandar/.gitignore` NO existe.
-- [ ] Entrada `.gitignore` eliminada de `FileRuleManifestData.ts`.
-- [ ] Test FE2C-T0 pasa (GREEN).
-- [ ] `npm pack --dry-run` incluye `gitignore` (sin punto).
-- [ ] `just check` — 0 errores.
+### Checkpoint 1: After FE2D-T3 (TemplateResolver funciona)
+- [ ] `TemplateResolver.resolvePath()` maneja directorios correctamente
+- [ ] Tests unitarios pasan (5+ nuevos)
+- [ ] `just check` — 0 errores
+- [ ] **Quality Gate:** El usuario confirma que el problema de `.devin` está resuelto
 
-### Checkpoint 2: After FE2C-T6 (Port + Adapter implementados)
-- [ ] `IGitignoreCreator` port creado.
-- [ ] `GitignoreError` type creado.
-- [ ] `BunGitignoreCreator` adapter implementado.
-- [ ] 6+ tests pasando.
-- [ ] `just check` — 0 errores.
+### Checkpoint 2: After FE2D-T6 (Clean Install muestra menú)
+- [ ] `CleanInstallUseCase` muestra menú de opcionales
+- [ ] Tests unitarios pasan (4+ nuevos/actualizados)
+- [ ] `just check` — 0 errores
+- [ ] **Quality Gate:** El usuario confirma que el flujo de Clean Install es correcto
 
-### Checkpoint 3: After FE2C-T8 (Use cases integrados)
-- [ ] `CleanInstallUseCase` genera `.gitignore` post-commit.
-- [ ] `ProjectInstallUseCase` genera `.gitignore` post-commit.
-- [ ] `UpdateWorkspaceUseCase` NO genera `.gitignore` (regression test included).
-- [ ] Tests de use cases pasan.
-- [ ] `just check` — 0 errores.
+### Checkpoint 3: After FE2D-T11 (Verificación integral)
+- [ ] `bun test`: ≥465 pass, 0 fail
+- [ ] Coverage sin pérdida
+- [ ] E2E: 14/14 pasando
 
-### Checkpoint 4: After FE2C-T10 (Verificación integral)
-- [ ] `bun test`: 460+ pass, 0 fail.
-- [ ] Coverage sin pérdida.
-- [ ] E2E: 12/12 pasando.
-
-### Gate FEV-2-C: After FE2C-T13 (Release publicado)
-- [ ] `npm view @fisherk2-dev/codice version` → `1.0.9`.
-- [ ] GitHub Release con 4 assets.
-- [ ] CHANGELOG actualizado.
-- [ ] Issue #11 cerrado.
-
-### Gate FE2C-T14: After Tech Debt Documentation
-- [ ] `docs/TECH_DEBT.md` actualizado con sección del test aislado.
-- [ ] Issue #11 movido a "Resolved in v1.0.9".
-- [ ] Header del documento actualizado a v1.0.9.
+### Gate FEV-2-D: After FE2D-T15 (Release publicado)
+- [ ] `npm view @fisherk2-dev/codice version` → `1.0.10`
+- [ ] GitHub Release con 4 assets
+- [ ] CHANGELOG actualizado
+- [ ] ADR-010 documentado
 
 ---
 
@@ -543,32 +421,29 @@ graph TD
 
 | Riesgo | Impacto | Mitigación |
 |--------|---------|------------|
-| **Renombrar `.gitignore` rompe tests que asumen el path** | Medio | FE2C-T0 RED test antes de FE2C-T1; actualizar tests que referencien el path. |
-| **Gitignore generation falla en Windows (permisos de archivo)** | Bajo | Idempotent: skip if exists, log warning. No es bloqueante. |
-| **Tests E2E no detectan bug de empaquetado** | Alto | FE2C-T14 (v1.1.0) añade test aislado para prevenir regresión futura. |
-| **v1.0.9 falla con un nuevo bug residual** | Alto | E2E con binario compilado antes de release. Test manual con `bunx @fisherk2-dev/codice@1.0.9` desde directorio limpio. |
-| **`IGitignoreCreator` se acopla a infra accidentalmente** | Bajo | Revisión de código en FE2C-T3 para asegurar que la interface no importa `fs` o `Bun`. |
-| **El test aislado (v1.1.0) requiere infra de CI compleja** | Medio | El test se ejecutará localmente + en CI. La complejidad se documenta en FE2C-T14. |
-| **El orden de operaciones (gitignore antes de symlinks) cambia la atomicidad** | Bajo | Per ADR-FEV2C-10. Si symlinks fallan, el `.gitignore` ya está en su sitio (atomicidad del archivo crítico). El usuario no se queda sin `.gitignore` si los symlinks fallan. |
+| **El cambio en `TemplateResolver` rompe tests existentes** | Medio | Tests existentes usan archivos, no directorios. El cambio es retrocompatible. |
+| **Clean Install con menú confunde a usuarios que esperan copia total** | Bajo | El menú es explícito y permite desmarcar todo. Documentación clara. |
+| **`.devin` con symlinks causa errores en Windows** | Bajo | Los symlinks se generan post-instalación. El directorio base se copia sin symlinks. |
+| **El menú de opcionales en Clean Install añade latencia** | Bajo | Solo se muestra una vez. < 100ms de overhead. |
+| **Tests E2E no detectan el problema real** | Alto | Tests E2E validan contenido real, no solo existencia. |
+| **`--force` en Clean Install no copia opcionales** | Bajo | Documentado. `--force` salta interacción = no hay selección = array vacío. |
 | **Conflicto con develop al hacer merge** | Bajo | develop está sincronizado con main. Fast-forward merge sin conflictos. |
 
 ---
 
 ## Métricas Objetivo
 
-| Métrica | v1.0.8 (actual) | Meta v1.0.9 |
-|---------|-----------------|-------------|
-| Tests (pass/fail) | 446 / 0 | ≥460 / 0 (+14 tests gitignore) |
+| Métrica | v1.0.9 (actual) | Meta v1.0.10 |
+|---------|-----------------|--------------|
+| Tests (pass/fail) | 465 / 0 | ≥465 / 0 (+9 tests) |
 | Coverage (funciones) | 97.66% | ≥97.66% |
 | Coverage (líneas) | 96.52% | ≥96.52% |
-| E2E escenarios | 10/10 | 12/12 (+2 gitignore) |
+| E2E escenarios | 12/12 | 14/14 (+2 nuevos) |
 | `just check` errores | 0 | 0 |
-| Manifest entries (total) | 32 | 31 |
-| Manifest entries (standard) | 12 | 11 |
-| Gitignore generado en Clean Install | ❌ (bug) | ✅ |
-| Gitignore generado en Project Install | ❌ (bug) | ✅ |
-| Gitignore en Update Workspace | ❌ (bug) | ❌ (preserva existente) |
-| Issues críticos abiertos | 1 (#11) | 0 |
+| `.devin` resolución en Clean Install | ❌ (bug) | ✅ |
+| `.devin` resolución en Project Install | ❌ (bug) | ✅ |
+| Clean Install muestra menú opcionales | ❌ (bug) | ✅ |
+| Issues críticos abiertos | 0 | 0 |
 
 ---
 
@@ -576,99 +451,55 @@ graph TD
 
 | Tarea | Scope | Esfuerzo |
 |-------|-------|----------|
-| FE2C-T0: Test RED con estructura npm | S | 30min |
-| FE2C-T1: Renombrar `.gitignore` → `gitignore` | XS | 5min |
-| FE2C-T2: Eliminar entrada del manifiesto | XS | 15min |
-| FE2C-T2.5: Actualizar test de completitud | S | 30min |
-| FE2C-T3: Crear puerto `IGitignoreCreator` | XS | 20min |
-| FE2C-T4: Crear type `GitignoreError` | XS | 10min |
-| FE2C-T5: Test RED `BunGitignoreCreator` | S | 45min |
-| FE2C-T6: Implementar `BunGitignoreCreator` | M | 1h |
-| FE2C-T7: Integrar en `CleanInstallUseCase` | M | 45min |
-| FE2C-T8: Integrar en `ProjectInstallUseCase` | M | 1h |
-| FE2C-T9: Test E2E con gitignore | M | 1h 15min |
-| FE2C-T10: Verificar suite completa | XS | 10min |
-| FE2C-T11: Bump version 1.0.9 | XS | 5min |
-| FE2C-T12: Actualizar CHANGELOG | XS | 5min |
-| FE2C-T13: Commit + PR + Tag + Release | S | 15min |
-| FE2C-T14: Actualizar TECH_DEBT.md (isolated test) | XS | 15min |
-| **Total** | | **~7h 10min** |
+| FE2D-T1: Investigar causa raíz | S | 30min |
+| FE2D-T2: Mejorar TemplateResolver | S | 45min |
+| FE2D-T3: Tests unitarios TemplateResolver | S | 1h |
+| FE2D-T5: Refactorizar CleanInstallUseCase | M | 1h |
+| FE2D-T6: Tests unitarios CleanInstall | S | 1h |
+| FE2D-T8: Tests E2E Clean Install menú | M | 1h 15min |
+| FE2D-T9: Tests E2E .devin resolution | M | 1h |
+| FE2D-T10: Tests E2E Project Install .devin | S | 45min |
+| FE2D-T11: Verificar suite completa | XS | 10min |
+| FE2D-T12: Bump version 1.0.10 | XS | 5min |
+| FE2D-T13: Actualizar CHANGELOG | XS | 5min |
+| FE2D-T14: Documentar ADR-010 | S | 30min |
+| FE2D-T15: Commit + PR + Tag + Release | S | 15min |
+| **Total** | | **~8h 20min** |
 
 ---
 
 ## Verificación Post-Release
 
-Después de publicar v1.0.9, verificar manualmente con:
+Después de publicar v1.0.10, verificar manualmente con:
 
 ```bash
-# Test 1: Clean Install (debe generar .gitignore)
-mkdir -p /tmp/test-codice && cd /tmp/test-codice
-bunx @fisherk2-dev/codice@1.0.9
-# → Seleccionar "Clean Install" → debe completar sin error
-# → Verificar: ls -la .gitignore debe existir
-# → Verificar: cat .gitignore debe tener el contenido del template
+# Test 1: Clean Install con menú de opcionales
+mkdir -p /tmp/test-codice-clean && cd /tmp/test-codice-clean
+bunx @fisherk2-dev/codice@1.0.10
+# → Seleccionar "Clean Install" → debe mostrar menú de opcionales
+# → Seleccionar .devin → debe completar sin error
+# → Verificar: ls -la .devin/rules/ debe existir con archivos
 
-# Test 2: Project Install (debe generar .gitignore)
-mkdir -p /tmp/test-codice2 && cd /tmp/test-codice2
-bunx @fisherk2-dev/codice@1.0.9
-# → Seleccionar "Project Install" → debe completar
-# → Verificar .gitignore igual que Test 1
+# Test 2: Project Install con .devin
+mkdir -p /tmp/test-codice-project && cd /tmp/test-codice-project
+bunx @fisherk2-dev/codice@1.0.10
+# → Seleccionar "Project Install" → debe mostrar menú
+# → Seleccionar .devin → debe completar sin error
+# → Verificar: ls -la .devin/rules/ debe existir
 
-# Test 3: Update Workspace (NO debe generar .gitignore, preserva existente)
-mkdir -p /tmp/test-codice3 && cd /tmp/test-codice3
-git init
-echo "node_modules/" > .gitignore  # Crear .gitignore del usuario
-bunx @fisherk2-dev/codice@1.0.9
-# → Seleccionar "Update Workspace" → debe completar
-# → Verificar: cat .gitignore debe seguir mostrando "node_modules/" (NO sobrescrito)
+# Test 3: Project Install sin .devin
+mkdir -p /tmp/test-codice-no-devin && cd /tmp/test-codice-no-devin
+bunx @fisherk2-dev/codice@1.0.10
+# → Seleccionar "Project Install" → debe mostrar menú
+# → NO seleccionar .devin → debe completar
+# → Verificar: ls -la .devin NO debe existir
 ```
 
 **Criterios de éxito:**
-- [ ] Los 3 modos funcionan sin `Template file not found`.
-- [ ] Tras Clean/Project Install, existe `.gitignore` con el contenido del template.
-- [ ] Tras Update, el `.gitignore` del usuario NO se sobrescribe.
-
----
-
-## Notas para v1.1.0 (Tech Debt)
-
-El test aislado propuesto en FE2C-T14 es la pieza que falta para **detectar bugs de empaquetado npm ANTES del release**. Tanto FEV-2-B (symlinks) como FEV-2-C (gitignore) fueron bugs que solo se detectaron DESPUÉS del release porque:
-
-1. `just dev` usa `template/` local (modo source) → oculta el problema del tarball.
-2. Los tests unitarios/integración usan `template/` local → mismo problema.
-3. Los tests E2E compilan el binario y lo ejecutan, pero NO validan el contenido del tarball de npm.
-
-El test aislado (v1.1.0) cerrará esta brecha. Diseño preliminar:
-
-```typescript
-// tests/integration/installed-package.test.ts (v1.1.0)
-describe('Isolated Package Behavior', () => {
-  it('should resolve template correctly when installed via npm in a foreign directory', async () => {
-    // 1. Crear directorio temporal (simula directorio del usuario)
-    const userDir = await fs.mkdtemp(path.join(os.tmpdir(), 'codice-test-'));
-    
-    // 2. Build el paquete npm (equivalente a `bun pm pack`)
-    const tarballPath = await buildPackage(projectRoot);
-    
-    // 3. Install el paquete en userDir
-    await exec(`npm install ${tarballPath}`, { cwd: userDir });
-    
-    // 4. Run el binario instalado
-    const result = await exec('npx codice --version', { cwd: userDir });
-    
-    // 5. Verify
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout).toMatch(/\d+\.\d+\.\d+/);
-    
-    // 6. Verify que el template se resuelve correctamente
-    const result2 = await exec('npx codice --dry-run', { cwd: userDir });
-    expect(result2.exitCode).toBe(0);
-    expect(result2.stderr).not.toContain('Template file not found');
-  });
-});
-```
-
-Este test se ejecutará en CI antes del release, evitando futuros bugs de empaquetado.
+- [ ] Clean Install muestra menú de opcionales
+- [ ] `.devin` se copia correctamente cuando se selecciona
+- [ ] `.devin` NO se copia cuando no se selecciona
+- [ ] Todos los archivos de `.devin/rules/` se preservan
 
 ---
 
