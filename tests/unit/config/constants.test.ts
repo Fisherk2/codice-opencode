@@ -12,7 +12,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { getGitHubApiUrl } from "../../../src/infrastructure/config/constants";
 
-const DEFAULT_URL = "https://api.github.com/repos/fisherk2/11-codice-opencode/releases/latest";
+// NOTE: GITHUB_REPO was "11-codice-opencode" (wrong — returned 404 on API calls).
+// Corrected to "codice-opencode" as part of FEV-3.
+// See: src/infrastructure/config/constants.ts:5
+const DEFAULT_URL = "https://api.github.com/repos/fisherk2/codice-opencode/releases/latest";
 
 describe("getGitHubApiUrl", () => {
 	const ORIGINAL_ENV = process.env.CODICE_GITHUB_API_URL;
