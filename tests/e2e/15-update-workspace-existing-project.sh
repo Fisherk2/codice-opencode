@@ -71,7 +71,8 @@ log_info "Mock GitHub API pointing to $CODICE_GITHUB_API_URL"
 log_info "Running: $CODICE_BINARY --update --force in $TEMP_DIR"
 EXIT_CODE=0
 STDERR_FILE="$TEMP_DIR/stderr.log"
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" "$CODICE_BINARY" --update --force) 2>"$STDERR_FILE" || EXIT_CODE=$?
+STDOUT_FILE="$TEMP_DIR/stdout.log"
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" "$CODICE_BINARY" --update --force) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
 
 # Stop mock server
 stop_mock_server
@@ -176,14 +177,14 @@ if [[ -f "$STDERR_FILE" ]]; then
 fi
 log_pass "No security warnings in stderr"
 
-# 9. Success message in stderr
-log_info "Checking stderr for success message..."
-if [[ -f "$STDERR_FILE" ]]; then
-    if grep -q "Workspace update complete" "$STDERR_FILE" 2>/dev/null; then
-        log_pass "Success message found in stderr"
+# 9. Success message in stdout
+log_info "Checking stdout for success message..."
+if [[ -f "$STDOUT_FILE" ]]; then
+    if grep -q "Workspace update complete" "$STDOUT_FILE" 2>/dev/null; then
+        log_pass "Success message found in stdout"
     else
-        log_fail "Expected 'Workspace update complete' in stderr"
-        echo "    Full stderr: $(cat "$STDERR_FILE")" >&2
+        log_fail "Expected 'Workspace update complete' in stdout"
+        echo "    Full stdout: $(cat "$STDOUT_FILE")" >&2
         exit 1
     fi
 fi

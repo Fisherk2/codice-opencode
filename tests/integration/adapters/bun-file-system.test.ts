@@ -134,6 +134,7 @@ describe("BunFileSystem", () => {
 		});
 
 		it("should return true for symlink pointing to existing target", async () => {
+			if (process.platform === "win32") return; // Windows requires elevated privileges for symlinks
 			const target = path.join(destDir, "symlink-target.txt");
 			await Bun.write(target, "symlink target content");
 			const link = path.join(destDir, "symlink.txt");
@@ -143,6 +144,7 @@ describe("BunFileSystem", () => {
 		});
 
 		it("should return false for broken symlink", async () => {
+			if (process.platform === "win32") return; // Windows requires elevated privileges for symlinks
 			const link = path.join(destDir, "broken-symlink.txt");
 			await fs.symlink(path.join(destDir, "nonexistent-target"), link);
 			const exists = await fsAdapter.destinationExists("broken-symlink.txt");
