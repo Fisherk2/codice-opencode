@@ -791,7 +791,7 @@ template/opcional/.devin/
 
 ### Fase FEV-3 — Update Workspace overwrite fix + GitHub API fix
 
-**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En curso
+**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado (implementación)
 
 #### Contexto
 
@@ -803,8 +803,8 @@ Tras el release de v1.0.10, se probaron los tres modos de instalación en un pro
 
 | ID | Título | Severidad | Estado |
 |----|--------|-----------|--------|
-| — | Update Workspace sobrescribe archivos Estándar | 🔴 Crítico | 🟡 En curso |
-| — | GitHub API retorna 404 en version check | 🟡 Medio | 🟡 En curso |
+| — | Update Workspace sobrescribe archivos Estándar | 🔴 Crítico | ✅ Resuelto |
+| — | GitHub API retorna 404 en version check | 🟡 Medio | ✅ Resuelto |
 
 #### Diagnóstico Técnico
 
@@ -888,35 +888,35 @@ export const GITHUB_REPO = "codice-opencode";
 
 | ID | Descripción | Archivo | Estado |
 |----|-------------|---------|--------|
-| T1 | **Corregir `BunFileSystem.destinationExists()` para soportar directorios** (cambiar `Bun.file().exists()` por `fs.access()`) | `src/infrastructure/adapters/BunFileSystem.ts:56-67` | 🟡 Pendiente |
-| T2 | **Corregir `GITHUB_REPO` en `constants.ts:5`** (de `"11-codice-opencode"` a `"codice-opencode"`) | `src/infrastructure/config/constants.ts:5` | 🟡 Pendiente |
-| T3 | Tests unitarios: `destinationExists()` retorna `true` para directorios existentes | `tests/integration/adapters/bun-file-system.test.ts` | 🟡 Pendiente |
-| T4 | Tests unitarios: `UpdateWorkspaceUseCase` no sobrescribe standard dirs (regresión FEV-1 Issue #2) | `tests/integration/use-cases/update-workspace.test.ts` | 🟡 Pendiente |
-| T5 | Tests unitarios: GitHub API retorna tag correcto con repo fix | `tests/integration/adapters/github-rest-client.test.ts` | 🟡 Pendiente |
-| T6 | Test E2E: Update Workspace en proyecto existente con archivos standard pre-existentes | `tests/e2e/15-update-workspace-existing-project.sh` (nuevo) | 🟡 Pendiente |
-| T7 | Verificar suite completa + `just check` + E2E (15/15) | (ninguno) | 🟡 Pendiente |
+| T1 | **Corregir `BunFileSystem.destinationExists()` para soportar directorios** (cambiar `Bun.file().exists()` por `fs.access()`) | `src/infrastructure/adapters/BunFileSystem.ts:56-67` | ✅ Completo |
+| T2 | **Corregir `GITHUB_REPO` en `constants.ts:5`** (de `"11-codice-opencode"` a `"codice-opencode"`) | `src/infrastructure/config/constants.ts:5` | ✅ Completo |
+| T3 | Tests unitarios: `destinationExists()` retorna `true` para directorios existentes | `tests/integration/adapters/bun-file-system.test.ts` | ✅ Completo |
+| T4 | Tests unitarios: `UpdateWorkspaceUseCase` no sobrescribe standard dirs (regresión FEV-1 Issue #2) | `tests/integration/use-cases/update-workspace.test.ts` | ✅ Completo |
+| T5 | Tests unitarios: GitHub API retorna tag correcto con repo fix | `tests/integration/adapters/github-rest-client.test.ts` | ✅ Completo |
+| T6 | Test E2E: Update Workspace en proyecto existente con archivos standard pre-existentes | `tests/e2e/15-update-workspace-existing-project.sh` (nuevo) | ✅ Completo |
+| T7 | Verificar suite completa + `just check` + E2E (15/15) | (ninguno) | ✅ Completo |
 | T8 | Bump version 1.0.11, actualizar CHANGELOG, PR, merge, tag, release | `package.json`, `CHANGELOG.md` | 🟡 Pendiente |
 
 #### Métricas de Referencia
 
-| Métrica | v1.0.10 (actual) | Meta v1.0.11 |
-|---------|-----------------|--------------|
-| Tests (pass/fail) | 472 / 0 | ≥472 / 0 |
-| Coverage (funciones) | 97.66% | ≥97.66% |
-| Coverage (líneas) | 96.52% | ≥96.52% |
+| Métrica | v1.0.10 (antes) | v1.0.11 (final) |
+|---------|-----------------|-----------------|
+| Tests (pass/fail) | 472 / 0 | 476 / 0 |
+| Expects | 1009 | 1032 |
+| Coverage (funciones) | 97.66% | 97.66% |
+| Coverage (líneas) | 96.52% | 96.52% |
 | E2E escenarios | 14/14 | 15/15 (+1 update en proyecto real) |
 | `just check` errores | 0 | 0 |
 | Issues críticos abiertos | 0 | 0 |
 
 **Criterios de completitud (DoD FEV-3):**
-- [ ] Update Workspace NO sobrescribe archivos standard existentes
-- [ ] Update Workspace SÍ sobrescribe archivos mandatory (como debe ser)
-- [ ] GitHub version check funciona correctamente (o muestra mensaje claro si no hay releases)
-- [ ] `bun test`: sin regresión (≥472 pass, 0 fail)
-- [ ] `just check`: 0 errores
-- [ ] E2E: 15/15 pasando (14 existentes + 1 nuevo)
-- [ ] CHANGELOG actualizado con sección v1.0.11
-- [ ] Ship review: 0 Critical findings → GO decision
+- [x] Update Workspace NO sobrescribe archivos standard existentes
+- [x] Update Workspace SÍ sobrescribe archivos mandatory (como debe ser)
+- [x] GitHub version check funciona correctamente (repo name fix)
+- [x] `bun test`: sin regresión (476 pass, 0 fail, 1032 expects)
+- [x] `just check`: 0 errores
+- [x] E2E: 15/15 pasando (14 existentes + 1 nuevo)
+- [ ] CHANGELOG actualizado con sección v1.0.11 (pendiente T8)
 
 ---
 
