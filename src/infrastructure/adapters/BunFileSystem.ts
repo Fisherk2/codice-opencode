@@ -57,8 +57,12 @@ export class BunFileSystem implements IFileSystem {
 		// resolveDestinationPath throws on path traversal — NOT caught, so it propagates
 		const fullPath = this.atomicStager.resolveDestinationPath(relativePath);
 		try {
-			const file = Bun.file(fullPath);
-			return await file.exists();
+			// fs.access works for both files AND directories.
+			// Bun.file().exists() was the root cause of FEV-1 Issue #2 regression:
+			// it only detects files, returning false for directories and causing
+			// FileMergeEngine.shouldStage() to overwrite existing standard directories.
+			await fs.access(fullPath);
+			return true;
 		} catch {
 			// Filesystem errors (permissions, etc.) treated as "does not exist"
 			// to avoid overwriting inaccessible files

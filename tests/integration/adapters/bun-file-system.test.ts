@@ -107,6 +107,18 @@ describe("BunFileSystem", () => {
 			expect(exists).toBe(true);
 		});
 
+		it("should return true for existing directory (REGRESSION: FEV-1 Issue #2)", async () => {
+			const dirPath = path.join(destDir, "test-dir");
+			await fs.mkdir(dirPath, { recursive: true });
+			const exists = await fsAdapter.destinationExists("test-dir");
+			expect(exists).toBe(true);
+		});
+
+		it("should return false for non-existing directory", async () => {
+			const exists = await fsAdapter.destinationExists("nonexistent-dir");
+			expect(exists).toBe(false);
+		});
+
 		it("should reject path traversal attempts", async () => {
 			expect(fsAdapter.destinationExists("../outside.txt")).rejects.toThrow("Path traversal");
 		});
