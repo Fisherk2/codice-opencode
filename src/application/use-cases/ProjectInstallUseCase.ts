@@ -2,7 +2,7 @@ import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../domain/entities/Fi
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
-import { checkWritable, writeVersionFileSafe } from "../helpers";
+import { checkWritable, createSymlinksWithWarning, writeVersionFileSafe } from "../helpers";
 import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
@@ -166,24 +166,20 @@ export class ProjectInstallUseCase {
 	}
 
 	private async createOpenCodeSymlinks(): Promise<void> {
-		const opencodeResult = await this.symlinkCreator.createSymlinks(this.opencodeSymlinks);
-		if (!opencodeResult.ok) {
-			this.userPrompt.showWarning(
-				`Some .opencode/ symlinks could not be created (${opencodeResult.error.length} failures). ` +
-					"The workspace was installed successfully. " +
-					"Run with --verbose for details.",
-			);
-		}
+		await createSymlinksWithWarning(
+			this.symlinkCreator,
+			this.userPrompt,
+			this.opencodeSymlinks,
+			"opencode",
+		);
 	}
 
 	private async createDevinSymlinks(): Promise<void> {
-		const devinResult = await this.symlinkCreator.createSymlinks(this.devinSymlinks);
-		if (!devinResult.ok) {
-			this.userPrompt.showWarning(
-				`Some .devin/ symlinks could not be created (${devinResult.error.length} failures). ` +
-					"The workspace was installed successfully. " +
-					"Run with --verbose for details.",
-			);
-		}
+		await createSymlinksWithWarning(
+			this.symlinkCreator,
+			this.userPrompt,
+			this.devinSymlinks,
+			"devin",
+		);
 	}
 }
