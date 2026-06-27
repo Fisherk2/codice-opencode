@@ -297,7 +297,9 @@ describe("ProjectInstallUseCase", () => {
 			const prompt = createMockPrompt();
 			// User selects only a stageable optional file (skip .devin which has noTemplateCopy)
 			const stageableOptional = optionalRules.find((r) => !r.noTemplateCopy)!;
-			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue([stageableOptional.path]);
+			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue([
+				stageableOptional.path,
+			]);
 			const engine = new FileMergeEngine(fs);
 			const gitignoreCreator = createMockGitignoreCreator();
 			const useCase = new ProjectInstallUseCase(

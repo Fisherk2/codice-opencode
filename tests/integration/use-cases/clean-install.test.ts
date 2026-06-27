@@ -3,7 +3,10 @@ import type { IGitignoreCreator } from "../../../src/application/ports/IGitignor
 import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { CleanInstallUseCase } from "../../../src/application/use-cases/CleanInstallUseCase";
-import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../../src/domain/entities/FileRuleManifest";
+import {
+	FILE_RULE_MANIFEST,
+	getRulesByCategory,
+} from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
