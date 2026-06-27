@@ -814,39 +814,40 @@ Tras el release de v1.0.10, se probaron los tres modos de instalación en un pro
 
 **Comportamiento esperado:** Solo archivos `mandatory` (obligatorio) deben sobrescribirse. Archivos `standard` (estándar) deben preservarse si ya existen en el destino.
 
-**Análisis del código:**
+**Regresión confirmada:** Este bug es una **regresión de FEV-1 Issue #2** (v1.0.5). El WORKFLOW.md líneas 280-313 documenta que Issue #2 fue resuelto modificando `UpdateWorkspaceUseCase.buildUpdateRules()` para no convertir reglas `standard` a `mandatory`. Sin embargo, ese método ya no existe en el código actual — fue eliminado durante un refactor posterior y reemplazado con un simple `FILE_RULE_MANIFEST.filter()` en la línea 128.
 
-`UpdateWorkspaceUseCase.ts` línea 128:
-```typescript
-const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional");
-```
+**Causa raíz identificada:** `BunFileSystem.destinationExists()` en `src/infrastructure/adapters/BunFileSystem.ts:56-67`:
 
-Esto incluye reglas `mandatory` Y `standard`. Luego ejecuta:
 ```typescript
-const mergeResult = await this.mergeEngine.execute(updateRules);
-```
-
-`FileMergeEngine.shouldStage()` para reglas standard (líneas 94-96):
-```typescript
-if (rule.category === "standard") {
-    const exists = await this.fileSystem.destinationExists(rule.path);
-    return !exists;
+async destinationExists(relativePath: string): Promise<boolean> {
+    const fullPath = this.atomicStager.resolveDestinationPath(relativePath);
+    try {
+        const file = Bun.file(fullPath);
+        return await file.exists();
+    } catch {
+        return false;
+    }
 }
 ```
 
-La lógica parece correcta: si el archivo existe, no debe stagearse. Sin embargo, el usuario reporta que archivos están siendo sobrescritos.
+`Bun.file()` **solo funciona con archivos**, no con directorios. Cuando `FileMergeEngine.shouldStage()` (línea 94-96) verifica `destinationExists("docs")` para una regla standard de directorio, `Bun.file("docs").exists()` retorna `false` aunque el directorio exista. Resultado: `shouldStage()` retorna `true` y el directorio se stagea completo, sobrescribiendo todos los archivos dentro.
 
-**Hipótesis:** El problema puede estar en cómo se manejan los directorios standard (`docs/`, `specs/`, `tasks/`). Cuando `destinationExists("docs")` retorna `true` (el directorio existe), `shouldStage()` retorna `false` y el directorio completo se salta. Pero si el directorio NO existe en el destino, se stagea completo, copiando todos los archivos dentro.
+**Solución:** Cambiar `BunFileSystem.destinationExists()` para usar `fs.stat()` o `fs.access()` (que sí funcionan con directorios):
 
-**Posible causa raíz:** Necesita investigación adicional. Puede haber un bug en:
-1. Cómo `destinationExists()` verifica directorios vs archivos
-2. Cómo `stageFile()` maneja directorios recursivamente
-3. Cómo `AtomicStager.commitStaging()` aplica los cambios
+```typescript
+async destinationExists(relativePath: string): Promise<boolean> {
+    const fullPath = this.atomicStager.resolveDestinationPath(relativePath);
+    try {
+        await fs.access(fullPath);
+        return true;
+    } catch {
+        return false;
+    }
+}
+```
 
-**Archivos a investigar:**
-- `src/infrastructure/adapters/BunFileSystem.ts` — `destinationExists()` y `stageFile()`
-- `src/infrastructure/adapters/AtomicStager.ts` — lógica de staging y commit
-- `src/domain/services/FileMergeEngine.ts` — `shouldStage()` para directorios
+**Archivos a modificar:**
+- `src/infrastructure/adapters/BunFileSystem.ts:56-67` — cambiar `Bun.file().exists()` por `fs.access()`
 
 ##### Problema 2: GitHub API retorna 404
 
@@ -855,47 +856,46 @@ La lógica parece correcta: si el archivo existe, no debe stagearse. Sin embargo
 ⚠️  Warning: Could not check for updates via GitHub. Falling back to the bundled template version.
 ```
 
-**Diagnóstico:**
-```bash
-$ curl -s "https://api.github.com/repos/fisherk2/11-codice-opencode/releases/latest"
-{
-  "message": "Not Found",
-  "documentation_url": "https://docs.github.com/rest/releases/releases#get-the-latest-release"
-}
-```
+**Causa raíz identificada (verificada con curl):** El nombre del repositorio en `src/infrastructure/config/constants.ts:5` es incorrecto:
 
-La API retorna 404. Esto puede significar:
-1. El nombre del repositorio en `constants.ts` es incorrecto
-2. No hay releases publicados en el repositorio
-3. El endpoint `/releases/latest` no funciona para este repositorio
-
-**Análisis de `constants.ts`:**
 ```typescript
-export const GITHUB_OWNER = "fisherk2";
+// constants.ts:5
 export const GITHUB_REPO = "11-codice-opencode";
-const GITHUB_API_DEFAULT = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
 ```
 
-**Hipótesis:** El repositorio puede tener un nombre diferente en GitHub, o los releases se publican con un workflow que no crea el "latest release" automáticamente.
+El repositorio real en GitHub es `fisherk2/codice-opencode` (sin el prefijo `11-`):
 
-**Próximos pasos:**
-1. Verificar el nombre correcto del repositorio en GitHub
-2. Verificar si existen releases publicados
-3. Si no hay releases, el warning es correcto (no hay versión remota)
-4. Si el nombre es incorrecto, actualizar `constants.ts`
+```bash
+$ curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/fisherk2/11-codice-opencode/releases/latest"
+404
+$ curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/fisherk2/codice-opencode/releases/latest"
+200
+$ curl -s "https://api.github.com/repos/fisherk2/codice-opencode/releases/latest" | grep tag_name
+"tag_name": "v1.0.10"
+```
+
+**Solución:** Corregir `GITHUB_REPO` en `constants.ts:5`:
+
+```typescript
+// constants.ts:5 — fix
+export const GITHUB_REPO = "codice-opencode";
+```
+
+**Archivos a modificar:**
+- `src/infrastructure/config/constants.ts:5` — cambiar `GITHUB_REPO` de `"11-codice-opencode"` a `"codice-opencode"`
 
 #### Plan de Implementación
 
-| ID | Descripción | Estado |
-|----|-------------|--------|
-| T1 | Investigar causa raíz del overwrite en Update Workspace | 🟡 Pendiente |
-| T2 | Corregir lógica de Update Workspace para preservar archivos standard existentes | 🟡 Pendiente |
-| T3 | Tests unitarios: Update Workspace no sobrescribe archivos standard | 🟡 Pendiente |
-| T4 | Tests E2E: Update Workspace en proyecto existente | 🟡 Pendiente |
-| T5 | Investigar GitHub API 404 (verificar nombre del repo, releases existentes) | 🟡 Pendiente |
-| T6 | Corregir GitHub API URL o lógica de version check | 🟡 Pendiente |
-| T7 | Tests unitarios: GitHub version check | 🟡 Pendiente |
-| T8 | ADR-011 documentado (si hay decisión arquitectónica nueva) | 🟡 Pendiente |
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| T1 | **Corregir `BunFileSystem.destinationExists()` para soportar directorios** (cambiar `Bun.file().exists()` por `fs.access()`) | `src/infrastructure/adapters/BunFileSystem.ts:56-67` | 🟡 Pendiente |
+| T2 | **Corregir `GITHUB_REPO` en `constants.ts:5`** (de `"11-codice-opencode"` a `"codice-opencode"`) | `src/infrastructure/config/constants.ts:5` | 🟡 Pendiente |
+| T3 | Tests unitarios: `destinationExists()` retorna `true` para directorios existentes | `tests/integration/adapters/bun-file-system.test.ts` | 🟡 Pendiente |
+| T4 | Tests unitarios: `UpdateWorkspaceUseCase` no sobrescribe standard dirs (regresión FEV-1 Issue #2) | `tests/integration/use-cases/update-workspace.test.ts` | 🟡 Pendiente |
+| T5 | Tests unitarios: GitHub API retorna tag correcto con repo fix | `tests/integration/adapters/github-rest-client.test.ts` | 🟡 Pendiente |
+| T6 | Test E2E: Update Workspace en proyecto existente con archivos standard pre-existentes | `tests/e2e/15-update-workspace-existing-project.sh` (nuevo) | 🟡 Pendiente |
+| T7 | Verificar suite completa + `just check` + E2E (15/15) | (ninguno) | 🟡 Pendiente |
+| T8 | Bump version 1.0.11, actualizar CHANGELOG, PR, merge, tag, release | `package.json`, `CHANGELOG.md` | 🟡 Pendiente |
 
 #### Métricas de Referencia
 

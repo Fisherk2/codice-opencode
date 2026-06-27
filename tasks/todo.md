@@ -26,82 +26,87 @@
 
 ## Tareas Pendientes
 
-### ⏳ FEV3-T1: Investigar causa raíz del overwrite en Update Workspace
-**Descripción:** Investigar por qué Update Workspace sobrescribe archivos standard cuando la lógica en `FileMergeEngine.shouldStage()` parece correcta.
+### ⏳ FEV3-T1: Corregir `BunFileSystem.destinationExists()` para soportar directorios
+**Descripción:** Cambiar `Bun.file().exists()` por `fs.access()` en `src/infrastructure/adapters/BunFileSystem.ts:56-67`.
+
+**Causa raíz:** `Bun.file()` solo funciona con archivos, no directorios. Para standard directories (docs/, specs/, tasks/), retorna `false` aunque el directorio exista, causando que `FileMergeEngine.shouldStage()` los stage y sobrescriba su contenido.
 
 **Criterios de Aceptación:**
-- [ ] Identificar la causa raíz exacta del overwrite
-- [ ] Documentar el bug con evidencia
-- [ ] Proponer solución
-
-**Verificación:**
-- [ ] Causa raíz identificada y documentada
-
-**Dependencias:** Ninguna.
-**Archivos:**
-- `src/infrastructure/adapters/BunFileSystem.ts`
-- `src/infrastructure/adapters/AtomicStager.ts`
-- `src/domain/services/FileMergeEngine.ts`
-
-**Scope:** M (2h).
-
----
-
-### ⏳ FEV3-T5: Investigar GitHub API 404
-**Descripción:** Investigar por qué la API de GitHub retorna 404 para el endpoint de latest release.
-
-**Criterios de Aceptación:**
-- [ ] Verificar el nombre correcto del repositorio en GitHub
-- [ ] Verificar si existen releases publicados
-- [ ] Si no hay releases, el warning es correcto
-- [ ] Si el nombre es incorrecto, proponer corrección
-
-**Verificación:**
-- [ ] Causa raíz identificada y documentada
-
-**Dependencias:** Ninguna.
-**Archivos:**
-- `src/infrastructure/config/constants.ts`
-
-**Scope:** S (30min).
-
----
-
-### ⏳ FEV3-T2: Corregir lógica de Update Workspace
-**Descripción:** Corregir la lógica de Update Workspace para preservar archivos standard existentes.
-
-**Criterios de Aceptación:**
-- [ ] Update Workspace NO sobrescribe archivos standard existentes
-- [ ] Update Workspace SÍ sobrescribe archivos mandatory
-- [ ] Update Workspace copia archivos standard que NO existen en el destino
+- [ ] `destinationExists()` retorna `true` para directorios existentes
+- [ ] `destinationExists()` retorna `false` para directorios inexistentes
+- [ ] No se introducen cambios en la API del port
 
 **Verificación:**
 - [ ] `bun test` — todos pasan
 - [ ] `just check` — 0 errores
 
-**Dependencias:** FEV3-T1.
+**Dependencias:** Ninguna.
 **Archivos:**
-- `src/application/use-cases/UpdateWorkspaceUseCase.ts`
+- `src/infrastructure/adapters/BunFileSystem.ts:56-67`
 
-**Scope:** M (2h).
+**Scope:** XS (15min).
 
 ---
 
-### ⏳ FEV3-T3: Tests unitarios: Update Workspace no sobrescribe archivos standard
-**Descripción:** Crear tests que verifiquen que Update Workspace preserva archivos standard existentes.
+### ⏳ FEV3-T2: Corregir `GITHUB_REPO` en `constants.ts:5`
+**Descripción:** Cambiar `GITHUB_REPO` de `"11-codice-opencode"` a `"codice-opencode"`.
+
+**Causa raíz:** El repo real es `fisherk2/codice-opencode` (verificado con curl: 200), no `fisherk2/11-codice-opencode` (404).
 
 **Criterios de Aceptación:**
-- [ ] Test: Update Workspace no sobrescribe README.md existente
-- [ ] Test: Update Workspace no sobrescribe AGENTS.md existente
-- [ ] Test: Update Workspace no sobrescribe directorio docs/ existente
-- [ ] Test: Update Workspace SÍ sobrescribe archivos mandatory
-- [ ] Test: Update Workspace copia archivos standard que NO existen
+- [ ] `GITHUB_REPO = "codice-opencode"` en `constants.ts`
+- [ ] `getGitHubApiUrl()` retorna URL correcta
+- [ ] GitHub version check funciona
+
+**Verificación:**
+- [ ] `bun test` — todos pasan
+- [ ] `just check` — 0 errores
+
+**Dependencias:** Ninguna.
+**Archivos:**
+- `src/infrastructure/config/constants.ts:5`
+
+**Scope:** XS (5min).
+
+---
+
+### ⏳ FEV3-T3: Tests unitarios: `destinationExists()` retorna `true` para directorios
+**Descripción:** Crear tests que verifiquen que `BunFileSystem.destinationExists()` funciona con directorios.
+
+**Criterios de Aceptación:**
+- [ ] Test: `destinationExists("docs")` retorna `true` cuando `docs/` existe
+- [ ] Test: `destinationExists("docs")` retorna `false` cuando `docs/` no existe
+- [ ] Test: `destinationExists("README.md")` retorna `true` cuando existe
+- [ ] Test: `destinationExists("README.md")` retorna `false` cuando no existe
 
 **Verificación:**
 - [ ] `bun test` — todos pasan
 - [ ] Coverage ≥ 90%
 
-**Dependencias:** FEV3-T2.
+**Dependencias:** FEV3-T1.
+**Archivos:**
+- `tests/integration/adapters/bun-file-system.test.ts`
+
+**Scope:** S (30min).
+
+---
+
+### ⏳ FEV3-T4: Tests unitarios: UpdateWorkspaceUseCase no sobrescribe standard
+**Descripción:** Tests de regresión para FEV-1 Issue #2. Verificar que Update Workspace preserva archivos/directorios standard existentes.
+
+**Criterios de Aceptación:**
+- [ ] Test: Update no sobrescribe `README.md` existente
+- [ ] Test: Update no sobrescribe `AGENTS.md` existente
+- [ ] Test: Update no sobrescribe directorio `docs/` existente
+- [ ] Test: Update no sobrescribe directorio `specs/` existente
+- [ ] Test: Update SÍ sobrescribe archivos mandatory
+- [ ] Test: Update copia archivos standard que NO existen
+
+**Verificación:**
+- [ ] `bun test` — todos pasan
+- [ ] Coverage ≥ 90%
+
+**Dependencias:** FEV3-T1.
 **Archivos:**
 - `tests/integration/use-cases/update-workspace.test.ts`
 
@@ -109,65 +114,50 @@
 
 ---
 
-### ⏳ FEV3-T6: Corregir GitHub API URL o lógica de version check
-**Descripción:** Corregir el GitHub API URL o la lógica de version check para que funcione correctamente.
+### ⏳ FEV3-T5: Tests unitarios: GitHub API retorna tag correcto con repo fix
+**Descripción:** Crear tests que verifiquen que el GitHub version check funciona con el repo name corregido.
 
 **Criterios de Aceptación:**
-- [ ] GitHub version check funciona correctamente
-- [ ] Si no hay releases, muestra mensaje claro
-- [ ] Si el nombre del repo es incorrecto, se corrige
-
-**Verificación:**
-- [ ] `bun test` — todos pasan
-- [ ] `just check` — 0 errores
-
-**Dependencias:** FEV3-T5.
-**Archivos:**
-- `src/infrastructure/config/constants.ts`
-
-**Scope:** S (1h).
-
----
-
-### ⏳ FEV3-T7: Tests unitarios: GitHub version check
-**Descripción:** Crear tests que verifiquen que el GitHub version check funciona correctamente.
-
-**Criterios de Aceptación:**
-- [ ] Test: GitHub version check retorna tag correcto
-- [ ] Test: GitHub version check maneja 404 correctamente
-- [ ] Test: GitHub version check maneja timeout correctamente
+- [ ] Test: `getLatestReleaseTag()` retorna `v1.0.10` contra mock 200
+- [ ] Test: `getLatestReleaseTag()` retorna `null` contra mock 404
+- [ ] Test: `getLatestReleaseTag()` retorna `null` contra mock con tag inválido
+- [ ] Test: `getLatestReleaseTag()` retorna `null` en timeout
 
 **Verificación:**
 - [ ] `bun test` — todos pasan
 
-**Dependencias:** FEV3-T6.
+**Dependencias:** FEV3-T2.
 **Archivos:**
 - `tests/integration/adapters/github-rest-client.test.ts`
 
-**Scope:** S (1h).
+**Scope:** S (30min).
 
 ---
 
-### ⏳ FEV3-T4: Tests E2E: Update Workspace en proyecto existente
-**Descripción:** Crear script E2E que verifique que Update Workspace preserva archivos standard existentes en un proyecto real.
+### ⏳ FEV3-T6: Test E2E: Update Workspace en proyecto existente
+**Descripción:** Script E2E que verifique que Update Workspace preserva archivos standard existentes en un proyecto real. Este test debe fallar antes del fix y pasar después.
 
 **Criterios de Aceptación:**
-- [ ] Script `tests/e2e/15-update-workspace-existing-project.sh`
+- [ ] Script `tests/e2e/15-update-workspace-existing-project.sh`:
+  1. Crea directorio temporal con archivos standard pre-existentes
+  2. Ejecuta binario compilado en modo Update Workspace con `--force`
+  3. Verifica que archivos standard NO fueron sobrescritos
+  4. Verifica que archivos mandatory SÍ fueron sobrescritos
 - [ ] Script integrado en `just test-e2e`
 - [ ] Total E2E: 15/15 pasando
 
 **Verificación:**
 - [ ] `just test-e2e` — 15/15 escenarios
 
-**Dependencias:** FEV3-T3, FEV3-T7.
+**Dependencias:** FEV3-T1, FEV3-T2, FEV3-T3, FEV3-T4, FEV3-T5.
 **Archivos:**
 - `tests/e2e/15-update-workspace-existing-project.sh` (nuevo)
 
-**Scope:** M (1h 15min).
+**Scope:** M (1h).
 
 ---
 
-### ⏳ FEV3-T8: Verificar suite completa sin regresión
+### ⏳ FEV3-T7: Verificar suite completa sin regresión
 **Descripción:** Ejecutar toda la suite de tests para asegurar que no hay regresión.
 
 **Criterios de Aceptación:**
@@ -181,60 +171,24 @@
 - [ ] `just check` — clean
 - [ ] `just test-e2e` — 15/15
 
-**Dependencias:** FEV3-T4.
+**Dependencias:** FEV3-T6.
 **Archivos:** (ninguno).
 
 **Scope:** XS (10min).
 
 ---
 
-### ⏳ FEV3-T9: Bump version a 1.0.11
-**Descripción:** `package.json` → `1.0.11`.
+### ⏳ FEV3-T8: Bump version a 1.0.11 y release
+**Descripción:** Bump version, CHANGELOG, commit, PR, merge, tag, release pipeline.
 
 **Criterios de Aceptación:**
-- [ ] `"version": "1.0.11"`
-- [ ] Commit: `chore: bump version to 1.0.11`
-
-**Verificación:**
-- [ ] `git diff package.json` muestra solo el bump
-
-**Dependencias:** FEV3-T8.
-**Archivos:**
-- `package.json`
-
-**Scope:** XS (5min).
-
----
-
-### ⏳ FEV3-T10: Actualizar CHANGELOG con v1.0.11
-**Descripción:** Crear entrada `[1.0.11] — 2026-06-26`.
-
-**Criterios de Aceptación:**
-- [ ] Header `[1.0.11] — 2026-06-26`
-- [ ] Entry `Fixed`: "Update Workspace no sobrescribe archivos Estándar"
-- [ ] Entry `Fixed`: "GitHub version check funciona correctamente"
-
-**Verificación:**
-- [ ] `git diff CHANGELOG.md` muestra la nueva sección
-
-**Dependencias:** FEV3-T9.
-**Archivos:**
-- `CHANGELOG.md`
-
-**Scope:** XS (5min).
-
----
-
-### ⏳ FEV3-T11: Commit + PR + Tag + Release
-**Descripción:** Commit, push, PR, merge, tag, release pipeline.
-
-**Criterios de Aceptación:**
+- [ ] `package.json` → `"version": "1.0.11"`
+- [ ] CHANGELOG.md sección `[1.0.11]`:
+  - `Fixed`: "Update Workspace no sobrescribe archivos Estándar (regresión de FEV-1 #2)"
+  - `Fixed`: "GitHub version check funciona correctamente (repo name fix)"
 - [ ] Branch: `fix/fev-3-update-overwrite`
-- [ ] PR contra `develop`
-- [ ] CI pasa (3 platforms)
-- [ ] Squash merge a develop
-- [ ] PR develop → main
-- [ ] Squash merge a main
+- [ ] PR contra develop → CI pasa → squash merge
+- [ ] PR develop → main → CI pasa → squash merge
 - [ ] Tag `v1.0.11` creado y pusheado
 - [ ] `npm view @fisherk2-dev/codice version` → `1.0.11`
 - [ ] GitHub Release con 4 assets
@@ -245,8 +199,10 @@
 - [ ] GitHub Release publicado
 - [ ] npm `latest` → 1.0.11
 
-**Dependencias:** FEV3-T10.
-**Archivos:** (git only).
+**Dependencias:** FEV3-T7.
+**Archivos:**
+- `package.json`
+- `CHANGELOG.md`
 
 **Scope:** S (15min).
 
@@ -254,23 +210,25 @@
 
 ## Checkpoints
 
-### Checkpoint 1: After FEV3-T1 (Causa raíz identificada)
-- [ ] Causa raíz del overwrite identificada
-- [ ] Documentación del bug completa
-- [ ] **Quality Gate:** Usuario confirma diagnóstico
-
-### Checkpoint 2: After FEV3-T3 (Update Workspace corregido)
-- [ ] Update Workspace no sobrescribe archivos standard
-- [ ] Tests unitarios pasan
+### Checkpoint 1: After FEV3-T1 + FEV3-T2 (Bugs corregidos)
+- [ ] `BunFileSystem.destinationExists()` corregido para directorios
+- [ ] `GITHUB_REPO` corregido en `constants.ts`
+- [ ] `bun test` — todos pasan
 - [ ] `just check` — 0 errores
-- [ ] **Quality Gate:** Usuario confirma corrección
+- [ ] **Quality Gate:** Usuario confirma fixes
 
-### Checkpoint 3: After FEV3-T8 (Verificación integral)
+### Checkpoint 2: After FEV3-T3 + FEV3-T4 + FEV3-T5 (Tests añadidos)
+- [ ] Tests de regresión para directorios pasan
+- [ ] Tests de regresión para Update Workspace pasan
+- [ ] Tests de regresión para GitHub API pasan
+- [ ] Coverage sin pérdida
+
+### Checkpoint 3: After FEV3-T7 (Verificación integral)
 - [ ] `bun test`: ≥472 pass, 0 fail
 - [ ] Coverage sin pérdida
 - [ ] E2E: 15/15 pasando
 
-### Gate FEV-3: After FEV3-T11 (Release publicado)
+### Gate FEV-3: After FEV3-T8 (Release publicado)
 - [ ] `npm view` → `1.0.11`
 - [ ] GitHub Release con 4 assets
 - [ ] CHANGELOG actualizado
@@ -282,18 +240,15 @@
 
 | Tarea | Scope | Esfuerzo |
 |-------|-------|----------|
-| FEV3-T1: Investigar causa raíz overwrite | M | 2h |
-| FEV3-T5: Investigar GitHub API 404 | S | 30min |
-| FEV3-T2: Corregir lógica Update Workspace | M | 2h |
-| FEV3-T3: Tests unitarios Update Workspace | M | 1h |
-| FEV3-T6: Corregir GitHub API URL | S | 1h |
-| FEV3-T7: Tests unitarios GitHub version check | S | 1h |
-| FEV3-T4: Tests E2E Update en proyecto existente | M | 1h 15min |
-| FEV3-T8: Verificar suite completa | XS | 10min |
-| FEV3-T9: Bump version 1.0.11 | XS | 5min |
-| FEV3-T10: Actualizar CHANGELOG | XS | 5min |
-| FEV3-T11: Commit + PR + Tag + Release | S | 15min |
-| **Total** | | **~10h** |
+| FEV3-T1: Corregir `destinationExists()` para directorios | XS | 15min |
+| FEV3-T2: Corregir `GITHUB_REPO` en `constants.ts:5` | XS | 5min |
+| FEV3-T3: Tests unitarios `destinationExists()` | S | 30min |
+| FEV3-T4: Tests unitarios UpdateWorkspaceUseCase (regresión) | M | 1h |
+| FEV3-T5: Tests unitarios GitHub API | S | 30min |
+| FEV3-T6: Test E2E Update en proyecto existente | M | 1h |
+| FEV3-T7: Verificar suite completa | XS | 10min |
+| FEV3-T8: Bump version + CHANGELOG + release | S | 15min |
+| **Total** | | **~3h 45min** |
 
 ---
 
