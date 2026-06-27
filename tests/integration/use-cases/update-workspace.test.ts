@@ -226,8 +226,8 @@ describe("UpdateWorkspaceUseCase", () => {
 
 			const { stub: fs, calls } = createMockFileSystem();
 			// Simulate existing standard files — destinationExists returns true for standard paths
-			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(
-				async (path: string) => standardPaths.includes(path),
+			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(async (path: string) =>
+				standardPaths.includes(path),
 			);
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient("v1.0.0");
@@ -255,8 +255,8 @@ describe("UpdateWorkspaceUseCase", () => {
 
 			const { stub: fs, calls } = createMockFileSystem();
 			// Simulate ALL files existing — mandatory should still be staged
-			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(
-				async (path: string) => allPaths.includes(path),
+			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(async (path: string) =>
+				allPaths.includes(path),
 			);
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient("v1.0.0");

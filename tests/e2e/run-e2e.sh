@@ -125,6 +125,7 @@ TESTS=(
     "$SCRIPT_DIR/12-gitignore-project-install.sh"
     "$SCRIPT_DIR/13-clean-install-optional-menu.sh"
     "$SCRIPT_DIR/14-project-install-optional-selection.sh"
+    "$SCRIPT_DIR/15-update-workspace-existing-project.sh"
 )
 
 for test_script in "${TESTS[@]}"; do
