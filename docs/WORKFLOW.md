@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.7
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-25 | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v1.0.10
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-26 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -19,6 +19,7 @@
 | FEV-2 | Resolución de Issues Críticos (v1.0.6) | Issue #8 (bunx template resolution) | ✅ Completo |
 | FEV-2-B | Symlink post-install generation + review fixes | Issue #8 (symlink packaging root cause) | ✅ Completo |
 | FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | ✅ Completo |
+| FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -195,136 +196,6 @@ F6 completado con 4 tareas de documentación. Sin regresión en tests, cobertura
 - CONTRIBUTING.md: 355 líneas con 12 secciones completas
 
 ---
-
-### Release v1.0.3 — Activo en npm
-
-**Estado:** ✅ Release Ready (v1.0.3 publicado en npm, v1.0.0/1/2 deprecados)
-
-Todas las fases del plan de implementación han sido completadas exitosamente.
-
-**Resumen de fases:**
-
-| Fase | Objetivo | Estado |
-|------|----------|--------|
-| F0 | Preparación (entorno, convenciones, CI/CD) | ✅ Completo |
-| F1 | Infraestructura (adaptadores) | ✅ Completo |
-| F2 | Núcleo/Dominio (entidades, servicios) | ✅ Completo |
-| F3 | Interfaces (CLI, DI, Use Cases) | ✅ Completo |
-| F4 | Pruebas (E2E, CI, coverage) | ✅ Completo |
-| F4.5 | Workspace seguro (`--dest`, `just dev`) | ✅ Completo |
-| F4.6 | Code Review + Refactor (TemplateResolver, AtomicStager) | ✅ Completo |
-| F5 | CI/CD + Cross-platform (builds, release automation) | ✅ Completo |
-| F5.5 | Publicación npm + bunx (paquete @fisherk2-dev/codice) | ✅ Completo |
-| F6 | Documentación (README, CHANGELOG, CONTRIBUTING, ARCHITECTURE) | ✅ Completo |
-
-**Métricas finales v1.0.3:**
-- `bun test`: 343 pass, 0 fail (682 expects)
-- `just check`: 0 errores (biome ci + tsc --noEmit)
-- E2E: 6/6 escenarios pasando
-- Coverage: 96.84% funciones / 94.22% líneas
-- Domain coverage: 100% líneas
-- Último commit: `b659bae` en `release/v.1.0.0` (post-ship review fixes)
-
-**Artefactos de release:**
-| Platform | Binary | Source |
-|----------|--------|--------|
-| Linux (x64) | `dist/codice-linux` | `bun build --compile --target=bun-linux-x64-modern` |
-| macOS (x64) | `dist/codice-macos` | CI build en `macos-latest` |
-| Windows (x64) | `dist/codice-windows.exe` | CI build en `windows-latest` |
-
-**npm package:** `@fisherk2-dev/codice` — v1.0.3 activo, v1.0.0/1/2 deprecados.
-Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/codice`
-
-**Release pipeline:** Crear tag `v1.0.3` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG + publicación automática a npm.
-
-**Success Criteria (SPEC.md):** Todos los SC-1 a SC-21 han sido verificados y cumplen los criterios de aceptación.
-
----
-
-### Release v1.0.4 — Tech Debt & Coverage Closing
-
-**Estado:** ✅ Release Ready
-
-**Tareas ejecutadas en F6.5:**
-
-| ID | Descripción | Estado |
-|----|-------------|--------|
-| F65-T1 | Refactor VersionComparator: métodos privados → funciones exportadas del módulo | ✅ Completo |
-| F65-T2 | 8 tests nuevos para validateVersion y validateVersions | ✅ Completo |
-| F65-T3 | Test defense-in-depth guard pathResolver.ts (líneas 23-26 a 100%) | ✅ Completo |
-| F65-T4 | Tests ClackPromptsAdapter.promptForMode (4 rutas: clean/project/update/cancel) | ✅ Completo |
-| F65-T5 | Tests WorkspaceVersion.fromJSON optionalSelections (array/non-array/missing) | ✅ Completo |
-| F65-T6 | TECH_DEBT.md en docs/ con 6 secciones de deuda técnica catalogada | ✅ Completo |
-
-**Métricas v1.0.4:**
-- `bun test`: 360 pass, 0 fail (711 expects)
-- `just check`: 0 errores (biome ci + tsc --noEmit)
-- E2E: 6/6 escenarios pasando
-- Coverage: 97.66% funciones / 96.52% líneas
-- Domain coverage: 100% líneas
-- Último commit: `4f76a55` en `release/v.1.0.0`
-
-**npm package:** `@fisherk2-dev/codice` — v1.0.4 a publicar.
-Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/codice`
-
-**Release pipeline:** Crear tag `v1.0.4` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG + publicación automática a npm.
-
----
-
-### Release v1.0.5 — FEV-1: Critical Issue Resolution + Ship Review
-
-**Estado:** ✅ Release Ready
-
-**Issues resueltos:**
-
-| ID | Título | Severidad | Solución |
-|----|--------|-----------|----------|
-| #6 | Error en instalación limpia por `bunx` | 🔴 Crítico | Tercera ruta de detección en TemplateResolver (`../template/` relativo a import.meta.dir) |
-| #2 | Update sobrescribe archivos Estándar | 🔴 Crítico | buildUpdateRules ya no convierte standard→mandatory; solo obligatorio se eleva |
-| #3 | Permisos extra para credenciales | 🟡 Medio | Extendido permissions.read.deny con .npmrc, *.pem, *.key, *.p12, *.pfx, etc. |
-| #4 | Enlaces rotos en documentación | 🟡 Medio | Rutas relativas corregidas en README.md, CONTRIBUTING.md, AGENTS.md |
-| #5 | TECH_DEBT.md ausente en plantilla | 🟢 Bajo | Creado template/estandar/docs/TECH_DEBT.md |
-
-**Ship Review (Phase A fan-out):**
-| Reviewer | Findings | Result |
-|----------|----------|--------|
-| code-reviewer | 0 Critical, 2 Important (I1-I2) | ✅ Resuelto (DIP interface, deny docs) |
-| security-auditor | 0 Critical, 2 Medium (M1-M2) | ✅ Resuelto (CWD warning, URL validation) |
-| test-engineer | 0 Critical, 4 Suggestions (S1-S4, S6-S7) | ✅ Resuelto (docs, stubs, validation, logging) |
-| dependency-manager | 0 CVEs, 3 minor/patch updates | ✅ Resuelto (bun update) |
-
-**Post-ship fixes:**
-| ID | Observación | Archivos |
-|----|-------------|----------|
-| I1 | Dependencies interface usa tipos concretos → `IFileSystem`/`IUserPrompt` | container.ts, main.ts, IUserPrompt.ts, 4 test mocks |
-| I2 | Bash deny patterns sin documentar → `_comment` fields | opencode.json |
-| M1 | CWD fallback silencioso → `console.warn` | TemplateResolver.ts |
-| M2 | CODICE_GITHUB_API_URL sin validación → URL guard + warning | constants.ts |
-| S1 | FileRule category sin docs → Spanish mapping en JSDoc | FileRule.ts |
-| S2 | Source-stubs incompletos → +IFileMergeEngine, +IVersionComparator | source-stubs.test.ts |
-| S4 | commitStaging on empty sin comment → clarifying comment | FileMergeEngine.ts |
-| S6 | Symlink skip sin log → verbose param + warning | directoryWalker.ts |
-| S7 | Version file sin validación → type guards | UpdateWorkspaceUseCase.ts |
-| S8 | Dependencies desactualizadas → `bun update` | package.json, bun.lock |
-
-**Documentación actualizada:**
-| Documento | Cambios |
-|-----------|---------|
-| CONTRIBUTING.md | Sección Workspace Template reescrita con procedimientos detallados de USER_GUIDE.md |
-| README.md | Modelos sincronizados con opencode.json; enlace a 00-setup.md post-instalación |
-
-**Métricas v1.0.5:**
-- `bun test`: 382 pass, 0 fail (797 expects)
-- `just check`: 0 errores (biome ci + tsc --noEmit, solo errores pre-existentes de fixtures)
-- E2E: 6/6 escenarios pasando
-- Coverage: 97.66% funciones / 96.52% líneas
-- Domain coverage: 100% líneas
-- Branch: `feat/fev-1`, commits: `690d4a4`, `62a6440`, `3c469e4`
-
-**npm package:** `@fisherk2-dev/codice` — v1.0.5 a publicar.
-Instalación oficial: `bunx @fisherk2-dev/codice@latest` o `npx @fisherk2-dev/codice`
-
-**Release pipeline:** Crear tag `v1.0.5` → GitHub Actions ejecuta `release.yml` → build matrix (3 platforms) → GitHub Release con 3 assets binarios + release notes del CHANGELOG + publicación automática a npm.
 
 ## 3. Desglose por Fase evolutiva
 
@@ -805,6 +676,115 @@ Renombrar `template/estandar/.gitignore` a `template/estandar/gitignore` y gener
 - [x] ADR-009 documentado
 - [x] CHANGELOG actualizado con sección v1.0.9
 - [x] Ship review: 0 Critical findings → GO decision (2 rounds)
+
+---
+
+### Fase FEV-2-D — Directory Support + Clean Install UX
+
+**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado
+
+#### Contexto
+
+Tras el release de v1.0.9, se identificaron dos problemas relacionados con el manejo de directorios opcionales y la UX de Clean Install:
+
+1. **`.devin` directory resolution**: El manifest incluye `.devin` como entrada opcional, pero es un **directorio** (no un archivo). `TemplateResolver` está diseñado para resolver archivos individuales, causando `Template file not found: .devin` en ambos modos de instalación.
+
+2. **Clean Install UX inconsistente**: Clean Install copia todos los archivos opcionales automáticamente sin mostrar el menú de selección, mientras que Project Install sí lo muestra. Esto es inconsistente y confuso para el usuario.
+
+| ID | Título | Severidad | Estado |
+|----|--------|-----------|--------|
+| — | `.devin` directory not found | 🔴 Crítico | ✅ Resuelto |
+| — | Clean Install missing optional files menu | 🟡 Medio | ✅ Resuelto |
+
+#### Diagnóstico Técnico
+
+##### Problema 1: `.devin` es un directorio, no un archivo
+
+**Síntoma:** Al ejecutar Clean Install o Project Install (seleccionando `.devin`), el CLI muestra:
+
+```
+❌ Template file not found: .devin. Ensure the template directory contains the file under obligatorio/, estandar/, or opcional/.
+```
+
+**Causa raíz:** `FileRuleManifestData.ts` tiene una entrada para `.devin`:
+
+```typescript
+{
+  path: ".devin",
+  category: "optional",
+  // ...
+}
+```
+
+Pero `.devin` es un **directorio** en `template/opcional/`:
+
+```
+template/opcional/.devin/
+├── rules/
+│   ├── agent-browser.md
+│   ├── code-review.md
+│   └── ...
+├── skills -> ../skills (symlink)
+└── workflows -> ../workflows (symlink)
+```
+
+`TemplateResolver.resolvePath()` usa `fs.stat()` para verificar si la ruta existe, pero el código asume que todo en el manifest son **archivos**, no directorios. Cuando intenta resolver `.devin`, falla porque no está diseñado para manejar directorios.
+
+**Solución:** Implementar soporte nativo para directorios en `TemplateResolver`:
+1. Detectar si la ruta es un directorio usando `fs.stat()`
+2. Si es directorio, copiar recursivamente todo el árbol
+3. Implementar copia recursiva de directorios en `BunFileSystem`
+
+##### Problema 2: Clean Install no muestra menú de opcionales
+
+**Síntoma:** Clean Install copia todos los archivos opcionales automáticamente sin preguntar al usuario.
+
+**Causa raíz:** `CleanInstallUseCase` está diseñado para copiar TODO (obligatorio + estándar + opcional) sin interacción. Esto es inconsistente con `ProjectInstallUseCase` que sí muestra el menú de selección de opcionales.
+
+**Solución:** Modificar `CleanInstallUseCase` para mostrar el mismo menú de selección de opcionales que `ProjectInstallUseCase`:
+1. Presentar lista de archivos opcionales al usuario
+2. Copiar solo los seleccionados
+3. Si no selecciona nada, copiar solo obligatorio + estándar
+
+#### Plan de Implementación
+
+| ID | Descripción | Commit | Estado |
+|----|-------------|--------|--------|
+| T1 | Implementar detección de directorios en `TemplateResolver` | `d27107c` | ✅ Completo |
+| T2 | Implementar copia recursiva de directorios en `BunFileSystem` | `d27107c` | ✅ Completo |
+| T3 | Actualizar `FileMergeEngine` para manejar directorios | `d27107c` | ✅ Completo |
+| T4 | Modificar `CleanInstallUseCase` para mostrar menú de opcionales | `d27107c` | ✅ Completo |
+| T5 | Tests unitarios: `TemplateResolver` con directorios | `d27107c` | ✅ Completo |
+| T6 | Tests unitarios: `BunFileSystem` copia recursiva | `d27107c` | ✅ Completo |
+| T7 | Tests unitarios: `CleanInstallUseCase` con menú de opcionales | `d27107c` | ✅ Completo |
+| T8 | Tests E2E: Clean Install con selección de opcionales | `d27107c` | ✅ Completo |
+| T9 | Tests E2E: Project Install con `.devin` seleccionado | `d27107c` | ✅ Completo |
+| T10 | ADR-010 documentado en `specs/adr/` | `d27107c` | ✅ Completo |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.9 (antes) | v1.0.10 (final) |
+|---------|-----------------|-----------------|
+| Tests (pass/fail) | 465 / 0 | 472 / 0 |
+| Expects | 986 | 1009 |
+| Coverage (funciones) | 97.66% | 97.66% |
+| Coverage (líneas) | 96.52% | 96.52% |
+| E2E escenarios | 12/12 | 14/14 |
+| `just check` errores | 0 | 0 |
+| Issues críticos abiertos | 0 | 0 |
+| Ship review findings | — | 0 Critical, 0 Important (2 rounds GO) |
+
+**Criterios de completitud (DoD FEV-2-D):**
+- [x] `.devin` directory se copia correctamente en Clean Install y Project Install
+- [x] Clean Install muestra menú de selección de opcionales (igual que Project Install)
+- [x] `TemplateResolver` detecta y maneja directorios recursivamente
+- [x] `BunFileSystem` implementa copia recursiva de directorios
+- [x] `bun test`: sin regresión (472 pass, 0 fail, 1009 expects)
+- [x] `just check`: 0 errores
+- [x] E2E: 14/14 pasando (12 existentes + 2 nuevos)
+- [x] ADR-010 documentado
+- [x] CHANGELOG actualizado con sección v1.0.10
+- [x] Ship review: 2 rounds → 0 Critical findings → GO decision
 
 ---
 

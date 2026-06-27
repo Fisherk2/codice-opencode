@@ -123,6 +123,8 @@ TESTS=(
     "$SCRIPT_DIR/10-update-no-symlinks.sh"
     "$SCRIPT_DIR/11-gitignore-clean-install.sh"
     "$SCRIPT_DIR/12-gitignore-project-install.sh"
+    "$SCRIPT_DIR/13-clean-install-optional-menu.sh"
+    "$SCRIPT_DIR/14-project-install-optional-selection.sh"
 )
 
 for test_script in "${TESTS[@]}"; do
