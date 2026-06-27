@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(No unreleased changes — v1.0.11 is the latest.)
+(No unreleased changes — v1.0.12 is the latest.)
+
+## [1.0.12] — 2026-06-27
+
+### Fixed
+
+- **Windows CI: broken symlink test skipped on Windows**: Symlink tests (`destinationExists`) now skip on Windows where elevated privileges are required for `fs.symlink()`.
+- **E2E: stdout verification for update success message**: E2E scenario 15 now captures both stdout and stderr. Assertion #9 checks for "Workspace update complete" in stdout (where `@clack/prompts` writes it), not stderr.
 
 ## [1.0.11] — 2026-06-26
 
