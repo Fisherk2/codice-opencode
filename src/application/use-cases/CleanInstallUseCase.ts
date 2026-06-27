@@ -86,7 +86,7 @@ export class CleanInstallUseCase {
 		}
 
 		// Phase 6: Post-install steps
-		return await this.runPostInstall(destinationPath, selectedOptionals);
+		return await this.runPostInstall(destinationPath, selectedOptionals, options?.version);
 	}
 
 	/**
@@ -145,6 +145,7 @@ export class CleanInstallUseCase {
 	private async runPostInstall(
 		destinationPath: string,
 		selectedOptionals: readonly string[],
+		version?: string,
 	): Promise<Result<void, Error>> {
 		// Generate .gitignore from template (graceful on failure)
 		await this.createGitignore(destinationPath);
@@ -161,7 +162,7 @@ export class CleanInstallUseCase {
 		const versionResult = await writeVersionFileSafe(
 			this.fileSystem,
 			{
-				installedVersion: "0.0.0",
+				installedVersion: version ?? "0.0.0",
 				installedAt: new Date().toISOString(),
 				optionalSelections: selectedOptionals,
 			},
@@ -191,7 +192,8 @@ export class CleanInstallUseCase {
 		if (!result.ok) {
 			this.userPrompt.showWarning(
 				`Some .opencode/ symlinks could not be created (${result.error.length} failures). ` +
-					"The workspace was installed successfully. Re-run the installer to retry symlink creation.",
+					"The workspace was installed successfully. Re-run the installer to retry symlink creation. " +
+					"Run with --verbose for details.",
 			);
 		}
 	}
@@ -201,7 +203,8 @@ export class CleanInstallUseCase {
 		if (!result.ok) {
 			this.userPrompt.showWarning(
 				`Some .devin/ symlinks could not be created (${result.error.length} failures). ` +
-					"The workspace was installed successfully.",
+					"The workspace was installed successfully. " +
+					"Run with --verbose for details.",
 			);
 		}
 	}

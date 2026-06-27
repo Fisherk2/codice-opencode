@@ -34,14 +34,26 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 # ---------------------------------------------------------------------------
 
 log_info "Running: $CODICE_BINARY --clean --force in $TEMP_DIR"
+STDERR_LOG="$TEMP_DIR/stderr.log"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --clean --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && "$CODICE_BINARY" --clean --force) 2>"$STDERR_LOG" || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
     log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    [[ -s "$STDERR_LOG" ]] && echo "    Stderr: $(cat "$STDERR_LOG")" >&2
     exit 1
 fi
 log_pass "Binary exited with code 0"
+
+# Verify stderr has no security warnings
+if [[ -s "$STDERR_LOG" ]]; then
+    if grep -qi "traversal\|escape\|denied\|EPERM" "$STDERR_LOG"; then
+        log_fail "Security warning detected in stderr"
+        cat "$STDERR_LOG" >&2
+        exit 1
+    fi
+    log_info "Stderr logged (non-security output only)"
+fi
 
 # ---------------------------------------------------------------------------
 # Assertions
@@ -61,6 +73,10 @@ assert_file_exists "$TEMP_DIR/README.md"
 assert_file_exists "$TEMP_DIR/AGENTS.md"
 assert_file_exists "$TEMP_DIR/CHANGELOG.md"
 assert_file_exists "$TEMP_DIR/SPEC.md"
+
+# Verify .gitignore exists (generated post-installation from template)
+log_info "Verifying .gitignore..."
+assert_file_exists "$TEMP_DIR/.gitignore"
 
 # Verify stageable optional files are present (auto-selected via --force)
 log_info "Verifying stageable optional files (auto-selected)..."

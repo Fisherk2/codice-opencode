@@ -12,6 +12,7 @@ import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
+import { DEVIN_SYMLINKS, OPENCODE_SYMLINKS } from "../../../src/infrastructure/config/symlinks";
 
 /** Entries that require actual template file staging (excludes noTemplateCopy) */
 const STAGEABLE_RULES = FILE_RULE_MANIFEST.filter((r) => !r.noTemplateCopy);
@@ -61,33 +62,6 @@ function createMockFileSystem(): {
 
 	return { stub, calls };
 }
-
-// OpenCode symlinks (always created)
-const OPENCODE_SYMLINKS = [
-	{ target: "../agents", linkPath: ".opencode/agents" },
-	{ target: "../commands", linkPath: ".opencode/commands" },
-	{ target: "../skills", linkPath: ".opencode/skills" },
-];
-
-// Devin symlinks (created only if .devin selected)
-const DEVIN_SYMLINKS = [
-	{ target: "../skills", linkPath: ".devin/skills" },
-	{ target: "../commands", linkPath: ".devin/workflows" },
-	{ target: "../../docs/CODE_STYLE.md", linkPath: ".devin/rules/CODE_STYLE.md" },
-	{ target: "../../CONTRIBUTING.md", linkPath: ".devin/rules/CONTRIBUTING.md" },
-	{
-		target: "../../skills/code-review-and-quality/SKILL.md",
-		linkPath: ".devin/rules/code-review-and-quality.md",
-	},
-	{
-		target: "../../skills/incremental-implementation/SKILL.md",
-		linkPath: ".devin/rules/incremental-implementation.md",
-	},
-	{
-		target: "../../skills/test-driven-development/SKILL.md",
-		linkPath: ".devin/rules/test-driven-development.md",
-	},
-];
 
 /** Default mock: selectOptional returns all optional paths */
 function createMockPrompt(): IUserPrompt {
@@ -195,6 +169,10 @@ describe("CleanInstallUseCase", () => {
 			// Gitignore should have been generated with the destination path
 			expect(gitignoreCreator.gitignoreCalls).toHaveLength(1);
 			expect(gitignoreCreator.gitignoreCalls[0]).toBe("/tmp/project");
+			// Should NOT have asked for confirmation (directory is empty)
+			expect(prompt.confirm).not.toHaveBeenCalled();
+			// Success message should have been shown
+			expect(prompt.showSuccess).toHaveBeenCalledWith("Clean installation complete.");
 		});
 
 		it("should show warning but still succeed when gitignore creation fails", async () => {
@@ -464,7 +442,7 @@ describe("CleanInstallUseCase", () => {
 			expect(typeof versionData.installedAt).toBe("string");
 		});
 
-		it("should call selectOptional when force is not set (a)", async () => {
+		it("should call selectOptional when force is not set", async () => {
 			const { stub: fs } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
@@ -489,7 +467,7 @@ describe("CleanInstallUseCase", () => {
 			expect(selectArgs[0].length).toBe(allOptionals.length);
 		});
 
-		it("should skip selectOptional when force=true and auto-select all (a/d)", async () => {
+		it("should skip selectOptional when force=true and auto-select all", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
@@ -515,7 +493,7 @@ describe("CleanInstallUseCase", () => {
 			expect(calls.stageFile.length).toBe(stageableNonOptional.length + stageableOptional.length);
 		});
 
-		it("should stage no optional files when user selects none (b)", async () => {
+		it("should stage no optional files when user selects none", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
@@ -540,10 +518,12 @@ describe("CleanInstallUseCase", () => {
 				(r) => r.category !== "optional",
 			).length;
 			expect(calls.stageFile.length).toBe(mandatoryAndStandardCount);
+			// .devin should NOT be staged (noTemplateCopy + not selected)
+			expect(calls.stageFile).not.toContain(".devin");
 			// .devin symlinks should NOT be created (since user selected nothing)
 		});
 
-		it("should record optionalSelections in version file (c)", async () => {
+		it("should record optionalSelections in version file", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();

@@ -33,14 +33,26 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 # ---------------------------------------------------------------------------
 
 log_info "Running: $CODICE_BINARY --project --force in $TEMP_DIR"
+STDERR_LOG="$TEMP_DIR/stderr.log"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --project --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && "$CODICE_BINARY" --project --force) 2>"$STDERR_LOG" || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
     log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    [[ -s "$STDERR_LOG" ]] && echo "    Stderr: $(cat "$STDERR_LOG")" >&2
     exit 1
 fi
 log_pass "Binary exited with code 0"
+
+# Verify stderr has no security warnings
+if [[ -s "$STDERR_LOG" ]]; then
+    if grep -qi "traversal\|escape\|denied\|EPERM" "$STDERR_LOG"; then
+        log_fail "Security warning detected in stderr"
+        cat "$STDERR_LOG" >&2
+        exit 1
+    fi
+    log_info "Stderr logged (non-security output only)"
+fi
 
 # ---------------------------------------------------------------------------
 # Assertions
@@ -91,12 +103,12 @@ if [[ -z "$VERSION_DATA" ]]; then
 fi
 
 # In project --force mode, optionalSelections should be an empty array
-if echo "$VERSION_DATA" | grep -q '"optionalSelections"\s*:\s*\[[^]]'; then
-    log_fail "optionalSelections should be empty array in --project --force mode"
+if ! echo "$VERSION_DATA" | grep -q '"optionalSelections"\s*:\s*\[\s*\]'; then
+    log_fail "optionalSelections should be an empty array [] in --project --force mode"
     echo "    Version data: $VERSION_DATA" >&2
     exit 1
 fi
-log_pass "optionalSelections is empty array in --project --force mode"
+log_pass "optionalSelections is an empty array in --project --force mode"
 
 # Verify staging directory was cleaned
 if [[ -d "$TEMP_DIR/.codice-staging" ]]; then

@@ -27,7 +27,11 @@ export interface ProjectInstallOptions {
  * 2. If destination is not empty and force is false, ask user for confirmation.
  * 3. Present optional files as a checklist to the user.
  * 4. Pass all manifest rules + selected optional paths to FileMergeEngine.
- * 5. On success, write the `.codice-version` file with optionalSelections.
+ * 5. On merge success, generate .gitignore from template (graceful on failure).
+ * 6. Create post-installation symlinks:
+ *    - .opencode/{agents,commands,skills} — always created.
+ *    - .devin/{skills,workflows,rules/*} — created only if user selected .devin.
+ * 7. Write the `.codice-version` file with optionalSelections.
  */
 export class ProjectInstallUseCase {
 	/**
@@ -59,73 +63,84 @@ export class ProjectInstallUseCase {
 		destinationPath: string,
 		options?: ProjectInstallOptions,
 	): Promise<Result<void, Error>> {
-		// Check writability
+		// Phase 1: Validate destination is writable
 		const writableCheck = await checkWritable(this.fileSystem, destinationPath);
 		if (!writableCheck.ok) return writableCheck;
 
-		// Ask confirmation if destination is not empty
-		const isEmpty = await this.fileSystem.isEmpty();
-		if (!isEmpty && !options?.force) {
-			const confirmed = await this.userPrompt.confirm(
-				`The destination directory "${destinationPath}" is not empty. Some existing files may be overwritten. Continue?`,
-				false,
-			);
-			if (!confirmed) {
-				await this.userPrompt.showCancel("Project installation cancelled by user.");
-				return success(undefined);
-			}
-		}
+		// Phase 2: Confirm overwrite if destination is not empty
+		const confirmed = await this.confirmOverwrite(destinationPath, options?.force);
+		if (!confirmed) return success(undefined);
 
-		// Present optional files as a checklist (skip if force=true — no interaction)
-		const optionalRules = getRulesByCategory("optional");
-		const selectedOptionals = options?.force
-			? []
-			: await this.userPrompt.selectOptional(optionalRules);
+		// Phase 3: Select optional files
+		const selectedOptionals = await this.selectOptionals(options?.force);
 
-		// Execute the merge engine with manifest rules + selected optionals
+		// Phase 4: Execute merge engine with manifest rules + selected optionals
 		const mergeResult = await this.mergeEngine.execute(FILE_RULE_MANIFEST, selectedOptionals);
 		if (!mergeResult.ok) {
 			return failure(new Error(mergeResult.error.message));
 		}
 
-		// Generate .gitignore from template (post-installation, graceful on failure)
-		const gitignoreResult = await this.gitignoreCreator.createGitignore(destinationPath);
-		if (!gitignoreResult.ok) {
-			this.userPrompt.showWarning(
-				`Could not generate .gitignore: ${gitignoreResult.error.message}. ` +
-					"The workspace was installed successfully. " +
-					"Create a .gitignore file manually or re-run the installer. " +
-					"Run with --verbose for details.",
-			);
+		// Phase 5: Post-install steps
+		return await this.runPostInstall(destinationPath, selectedOptionals, options?.version);
+	}
+
+	/**
+	 * Ask for confirmation if destination is not empty.
+	 * Skips prompt when force=true.
+	 * @returns true if the operation should proceed, false if cancelled.
+	 */
+	private async confirmOverwrite(destinationPath: string, force?: boolean): Promise<boolean> {
+		if (force) return true;
+
+		const isEmpty = await this.fileSystem.isEmpty();
+		if (isEmpty) return true;
+
+		const confirmed = await this.userPrompt.confirm(
+			`The destination directory "${destinationPath}" is not empty. Some existing files may be overwritten. Continue?`,
+			false,
+		);
+		if (!confirmed) {
+			await this.userPrompt.showCancel("Project installation cancelled by user.");
+		}
+		return confirmed;
+	}
+
+	/**
+	 * Present optional file checklist, or return empty when force=true.
+	 * In project mode, force skips all optional files (no interaction).
+	 * @returns List of selected optional file paths.
+	 */
+	private async selectOptionals(force?: boolean): Promise<readonly string[]> {
+		if (force) return [];
+		const optionalRules = getRulesByCategory("optional");
+		return await this.userPrompt.selectOptional(optionalRules);
+	}
+
+	/**
+	 * Generate .gitignore, create symlinks, and write version file.
+	 * Gitignore and symlink failures are warnings, not rollback triggers.
+	 */
+	private async runPostInstall(
+		destinationPath: string,
+		selectedOptionals: readonly string[],
+		version?: string,
+	): Promise<Result<void, Error>> {
+		// Generate .gitignore from template (graceful on failure)
+		await this.createGitignore(destinationPath);
+
+		// Create .opencode/ symlinks always
+		await this.createOpenCodeSymlinks();
+
+		// Create .devin/ symlinks only if user selected .devin
+		if (selectedOptionals.includes(".devin")) {
+			await this.createDevinSymlinks();
 		}
 
-		// Create post-installation symlinks
-		// .opencode/ symlinks are always created (they mirror root dirs)
-		const opencodeResult = await this.symlinkCreator.createSymlinks(this.opencodeSymlinks);
-		if (!opencodeResult.ok) {
-			this.userPrompt.showWarning(
-				`Some .opencode/ symlinks could not be created (${opencodeResult.error.length} failures). ` +
-					"The workspace was installed successfully.",
-			);
-		}
-
-		// .devin/ symlinks are created only if the user selected .devin
-		const hasDevin = selectedOptionals.includes(".devin");
-		if (hasDevin) {
-			const devinResult = await this.symlinkCreator.createSymlinks(this.devinSymlinks);
-			if (!devinResult.ok) {
-				this.userPrompt.showWarning(
-					`Some .devin/ symlinks could not be created (${devinResult.error.length} failures). ` +
-						"The workspace was installed successfully.",
-				);
-			}
-		}
-
-		// Write version file with optional selections recorded
+		// Write version file with optionalSelections recorded
 		const versionResult = await writeVersionFileSafe(
 			this.fileSystem,
 			{
-				installedVersion: options?.version ?? "0.0.0",
+				installedVersion: version ?? "0.0.0",
 				installedAt: new Date().toISOString(),
 				optionalSelections: selectedOptionals,
 			},
@@ -136,5 +151,39 @@ export class ProjectInstallUseCase {
 			this.userPrompt.showSuccess("Project installation complete.");
 		}
 		return versionResult;
+	}
+
+	private async createGitignore(destinationPath: string): Promise<void> {
+		const gitignoreResult = await this.gitignoreCreator.createGitignore(destinationPath);
+		if (!gitignoreResult.ok) {
+			this.userPrompt.showWarning(
+				`Could not generate .gitignore: ${gitignoreResult.error.message}. ` +
+					"The workspace was installed successfully. " +
+					"Create a .gitignore file manually or re-run the installer. " +
+					"Run with --verbose for details.",
+			);
+		}
+	}
+
+	private async createOpenCodeSymlinks(): Promise<void> {
+		const opencodeResult = await this.symlinkCreator.createSymlinks(this.opencodeSymlinks);
+		if (!opencodeResult.ok) {
+			this.userPrompt.showWarning(
+				`Some .opencode/ symlinks could not be created (${opencodeResult.error.length} failures). ` +
+					"The workspace was installed successfully. " +
+					"Run with --verbose for details.",
+			);
+		}
+	}
+
+	private async createDevinSymlinks(): Promise<void> {
+		const devinResult = await this.symlinkCreator.createSymlinks(this.devinSymlinks);
+		if (!devinResult.ok) {
+			this.userPrompt.showWarning(
+				`Some .devin/ symlinks could not be created (${devinResult.error.length} failures). ` +
+					"The workspace was installed successfully. " +
+					"Run with --verbose for details.",
+			);
+		}
 	}
 }

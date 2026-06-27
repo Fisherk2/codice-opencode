@@ -13,6 +13,7 @@ import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
+import { DEVIN_SYMLINKS, OPENCODE_SYMLINKS } from "../../../src/infrastructure/config/symlinks";
 
 /** Entries that require actual template file staging (excludes noTemplateCopy) */
 const STAGEABLE_RULES = FILE_RULE_MANIFEST.filter((r) => !r.noTemplateCopy);
@@ -87,32 +88,6 @@ function createMockPrompt(): IUserPrompt {
 
 const optionalRules = getRulesByCategory("optional");
 
-// Symlink specs matching what the composition root passes
-const OPENCODE_ONLY = [
-	{ target: "../agents", linkPath: ".opencode/agents" },
-	{ target: "../commands", linkPath: ".opencode/commands" },
-	{ target: "../skills", linkPath: ".opencode/skills" },
-];
-
-const DEVIN_SYMLINKS = [
-	{ target: "../skills", linkPath: ".devin/skills" },
-	{ target: "../commands", linkPath: ".devin/workflows" },
-	{ target: "../../docs/CODE_STYLE.md", linkPath: ".devin/rules/CODE_STYLE.md" },
-	{ target: "../../CONTRIBUTING.md", linkPath: ".devin/rules/CONTRIBUTING.md" },
-	{
-		target: "../../skills/code-review-and-quality/SKILL.md",
-		linkPath: ".devin/rules/code-review-and-quality.md",
-	},
-	{
-		target: "../../skills/incremental-implementation/SKILL.md",
-		linkPath: ".devin/rules/incremental-implementation.md",
-	},
-	{
-		target: "../../skills/test-driven-development/SKILL.md",
-		linkPath: ".devin/rules/test-driven-development.md",
-	},
-];
-
 /**
  * Create a mock ISymlinkCreator that records calls.
  */
@@ -158,7 +133,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -177,7 +152,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -204,7 +179,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -230,7 +205,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -254,7 +229,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -277,7 +252,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -307,7 +282,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -336,7 +311,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -364,7 +339,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -389,7 +364,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -419,7 +394,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -452,7 +427,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -487,7 +462,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -514,7 +489,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -539,7 +514,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkMock,
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -567,7 +542,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkMock,
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -607,7 +582,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkMock,
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -652,7 +627,7 @@ describe("ProjectInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkMock,
-				OPENCODE_ONLY,
+				OPENCODE_SYMLINKS,
 				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
@@ -668,7 +643,7 @@ describe("ProjectInstallUseCase", () => {
 
 			// Both batches of symlinks should have been attempted
 			expect(symlinkMock.createSymlinks).toHaveBeenCalledTimes(2);
-			expect(symlinkMock.createSymlinks).toHaveBeenNthCalledWith(1, OPENCODE_ONLY);
+			expect(symlinkMock.createSymlinks).toHaveBeenNthCalledWith(1, OPENCODE_SYMLINKS);
 			expect(symlinkMock.createSymlinks).toHaveBeenNthCalledWith(2, DEVIN_SYMLINKS);
 		});
 	});
