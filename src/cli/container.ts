@@ -58,10 +58,9 @@ export function createDependencies(destinationPath?: string, verbose?: boolean):
 	const userPrompt = new ClackPromptsAdapter();
 	const mergeEngine = new FileMergeEngine(fileSystem);
 	const versionComparator = new VersionComparator();
-	// Clean install copies everything including optional .devin/ → all 10 symlinks
+	// Clean install: .opencode/ symlinks always, .devin/ symlinks conditionally
 	const destRoot = destinationPath ?? process.cwd();
 	const symlinkCreator = new BunSymlinkCreator(destRoot, verbose);
-	const allSymlinks = [...OPENCODE_SYMLINKS, ...DEVIN_SYMLINKS];
 
 	// Gitignore is generated post-installation because npm excludes .gitignore
 	// from packages (Issue #11). Template path resolves to template/estandar/
@@ -75,7 +74,8 @@ export function createDependencies(destinationPath?: string, verbose?: boolean):
 		mergeEngine,
 		userPrompt,
 		symlinkCreator,
-		allSymlinks,
+		OPENCODE_SYMLINKS,
+		DEVIN_SYMLINKS,
 		gitignoreCreator,
 	);
 	const projectInstall = new ProjectInstallUseCase(

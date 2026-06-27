@@ -1,3 +1,4 @@
+import type { FileRule } from "../../domain/entities/FileRule";
 import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../domain/entities/FileRuleManifest";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
@@ -19,17 +20,19 @@ export interface CleanInstallOptions {
 
 /**
  * Mode 1: Clean Install — overwrites everything in the destination
- * with the complete template. No classification rules applied;
- * all files are treated as Obligatorio.
+ * with the complete template. All files are treated as Obligatorio.
  *
- * After file merge, the .gitignore file is generated post-installation
- * (npm excludes .gitignore from packages), followed by symlink creation:
- * - .opencode/{agents,commands,skills} → ../{agents,commands,skills}/
- * - .devin/{skills,workflows,rules/*} → (various target paths)
- *
- * Both gitignore and symlink creation failures are reported as warnings
- * but do not cause rollback — the core files are already committed.
- * Reference: ADR-FEV2C-3 (idempotent gitignore generation)
+ * Flow:
+ * 1. Validate destination is writable.
+ * 2. If destination is not empty and force is false, ask user for confirmation.
+ * 3. Show optional file selection menu (skip if force=true — selects all).
+ * 4. Convert obligatorio + estandar + selected optional to mandatory.
+ * 5. Execute the merge engine.
+ * 6. On merge success, generate .gitignore from template (graceful on failure).
+ * 7. Create post-installation symlinks:
+ *    - .opencode/{agents,commands,skills} — always created.
+ *    - .devin/{skills,workflows,rules/*} — created only if user selected .devin.
+ * 8. Write the `.codice-version` file with optionalSelections.
  */
 export class CleanInstallUseCase {
 	/**
@@ -37,7 +40,8 @@ export class CleanInstallUseCase {
 	 * @param mergeEngine - Domain service that orchestrates file merging
 	 * @param userPrompt - Adapter for interactive user prompts
 	 * @param symlinkCreator - Adapter for post-installation symlink generation
-	 * @param symlinks - List of symlink specs to create post-installation
+	 * @param opencodeSymlinks - Always-created .opencode/ symlinks (3)
+	 * @param devinSymlinks - Conditional .devin/ symlinks (7, created only if .devin selected)
 	 * @param gitignoreCreator - Adapter for post-installation .gitignore generation
 	 */
 	constructor(
@@ -45,22 +49,13 @@ export class CleanInstallUseCase {
 		private readonly mergeEngine: IFileMergeEngine,
 		private readonly userPrompt: IUserPrompt,
 		private readonly symlinkCreator: ISymlinkCreator,
-		private readonly symlinks: readonly SymlinkSpec[],
+		private readonly opencodeSymlinks: readonly SymlinkSpec[],
+		private readonly devinSymlinks: readonly SymlinkSpec[],
 		private readonly gitignoreCreator: IGitignoreCreator,
 	) {}
 
 	/**
 	 * Execute a clean installation of the full template.
-	 *
-	 * Flow:
-	 * 1. Validate destination is writable.
-	 * 2. If destination is not empty and force is false, ask user for confirmation.
-	 * 3. Show optional file selection menu (skip if force=true — selects all).
-	 * 4. Convert obligatorio + estandar + selected optional to mandatory.
-	 * 5. Execute the merge engine.
-	 * 6. On merge success, generate .gitignore from template (graceful on failure).
-	 * 7. Create post-installation symlinks (graceful on failure).
-	 * 8. Write the `.codice-version` file with optionalSelections.
 	 *
 	 * @param destinationPath - Target directory for installation.
 	 * @param options - Optional flags.
@@ -70,76 +65,103 @@ export class CleanInstallUseCase {
 		destinationPath: string,
 		options?: CleanInstallOptions,
 	): Promise<Result<void, Error>> {
-		// Check writability
+		// Phase 1: Validate destination is writable
 		const writableCheck = await checkWritable(this.fileSystem, destinationPath);
 		if (!writableCheck.ok) return writableCheck;
 
-		// Ask confirmation if destination is not empty
-		const isEmpty = await this.fileSystem.isEmpty();
-		if (!isEmpty && !options?.force) {
-			const confirmed = await this.userPrompt.confirm(
-				`The destination directory "${destinationPath}" is not empty. All existing files may be overwritten. Continue?`,
-				false,
-			);
-			if (!confirmed) {
-				await this.userPrompt.showCancel("Clean installation cancelled by user.");
-				return success(undefined);
-			}
-		}
+		// Phase 2: Confirm overwrite if destination is not empty
+		const confirmed = await this.confirmOverwrite(destinationPath, options?.force);
+		if (!confirmed) return success(undefined);
 
-		// Show optional file selection (skip if force=true — select all)
-		const optionalRules = getRulesByCategory("optional");
-		const selectedOptionals = options?.force
-			? optionalRules.map((r) => r.path)
-			: await this.userPrompt.selectOptional(optionalRules);
+		// Phase 3: Select optional files
+		const selectedOptionals = await this.selectOptionals(options?.force);
 
-		// Build rules: obligatorio + estandar → mandatory, selected optional → mandatory
-		const allRules = FILE_RULE_MANIFEST.map((rule) => {
-			if (rule.category === "optional") {
-				if (selectedOptionals.includes(rule.path)) {
-					return { ...rule, category: "mandatory" as const };
-				}
-				// Keep unselected optional rules as optional — merge engine skips them
-				// (the selectedOptionals set is intentionally not passed, so only
-				// mandatory-converted rules are staged)
-				return rule;
-			}
-			return { ...rule, category: "mandatory" as const };
-		});
+		// Phase 4: Build merge rules
+		const allRules = this.buildRules(selectedOptionals);
 
-		// Execute the merge engine
+		// Phase 5: Execute merge
 		const mergeResult = await this.mergeEngine.execute(allRules);
 		if (!mergeResult.ok) {
 			return failure(new Error(mergeResult.error.message));
 		}
 
-		// Generate .gitignore from template (post-installation, graceful on failure)
-		const gitignoreResult = await this.gitignoreCreator.createGitignore(destinationPath);
-		if (!gitignoreResult.ok) {
-			this.userPrompt.showWarning(
-				`Could not generate .gitignore: ${gitignoreResult.error.message}. ` +
-					"The workspace was installed successfully. " +
-					"Create a .gitignore file manually or re-run the installer. " +
-					"Run with --verbose for details.",
-			);
+		// Phase 6: Post-install steps
+		return await this.runPostInstall(destinationPath, selectedOptionals);
+	}
+
+	/**
+	 * Ask for confirmation if destination is not empty.
+	 * Skips prompt when force=true.
+	 * @returns true if the operation should proceed, false if cancelled.
+	 */
+	private async confirmOverwrite(destinationPath: string, force?: boolean): Promise<boolean> {
+		if (force) return true;
+
+		const isEmpty = await this.fileSystem.isEmpty();
+		if (isEmpty) return true;
+
+		const confirmed = await this.userPrompt.confirm(
+			`The destination directory "${destinationPath}" is not empty. All existing files may be overwritten. Continue?`,
+			false,
+		);
+		if (!confirmed) {
+			await this.userPrompt.showCancel("Clean installation cancelled by user.");
 		}
+		return confirmed;
+	}
 
-		// Create post-installation symlinks (ALL 10 symlinks are created; symlink
-		// creator is idempotent, so running with .devin not selected still works)
-		const symlinkResult = await this.symlinkCreator.createSymlinks(this.symlinks);
+	/**
+	 * Present optional file checklist, or auto-select all when force=true.
+	 * @returns List of selected optional file paths.
+	 */
+	private async selectOptionals(force?: boolean): Promise<readonly string[]> {
+		const optionalRules = getRulesByCategory("optional");
+		if (force) {
+			return optionalRules.map((r) => r.path);
+		}
+		return await this.userPrompt.selectOptional(optionalRules);
+	}
 
-		if (!symlinkResult.ok) {
-			this.userPrompt.showWarning(
-				`Some symlinks could not be created (${symlinkResult.error.length} failures). ` +
-					"The workspace was installed successfully. Re-run the installer to retry symlink creation.",
-			);
+	/**
+	 * Convert all manifest rules to mandatory, preserving optional selection.
+	 * Selected optionals → mandatory (staged), unselected → optional (skipped by engine).
+	 */
+	private buildRules(selectedOptionals: readonly string[]): FileRule[] {
+		return FILE_RULE_MANIFEST.map((rule) => {
+			if (rule.category === "optional") {
+				if (selectedOptionals.includes(rule.path)) {
+					return { ...rule, category: "mandatory" as const };
+				}
+				return rule;
+			}
+			return { ...rule, category: "mandatory" as const };
+		});
+	}
+
+	/**
+	 * Generate .gitignore, create symlinks, and write version file.
+	 * Gitignore and symlink failures are warnings, not rollback triggers.
+	 */
+	private async runPostInstall(
+		destinationPath: string,
+		selectedOptionals: readonly string[],
+	): Promise<Result<void, Error>> {
+		// Generate .gitignore from template (graceful on failure)
+		await this.createGitignore(destinationPath);
+
+		// Create .opencode/ symlinks always
+		await this.createOpenCodeSymlinks();
+
+		// Create .devin/ symlinks only if user selected .devin
+		if (selectedOptionals.includes(".devin")) {
+			await this.createDevinSymlinks();
 		}
 
 		// Write version file with optionalSelections recorded
 		const versionResult = await writeVersionFileSafe(
 			this.fileSystem,
 			{
-				installedVersion: options?.version ?? "0.0.0",
+				installedVersion: "0.0.0",
 				installedAt: new Date().toISOString(),
 				optionalSelections: selectedOptionals,
 			},
@@ -150,5 +172,37 @@ export class CleanInstallUseCase {
 			this.userPrompt.showSuccess("Clean installation complete.");
 		}
 		return versionResult;
+	}
+
+	private async createGitignore(destinationPath: string): Promise<void> {
+		const gitignoreResult = await this.gitignoreCreator.createGitignore(destinationPath);
+		if (!gitignoreResult.ok) {
+			this.userPrompt.showWarning(
+				`Could not generate .gitignore: ${gitignoreResult.error.message}. ` +
+					"The workspace was installed successfully. " +
+					"Create a .gitignore file manually or re-run the installer. " +
+					"Run with --verbose for details.",
+			);
+		}
+	}
+
+	private async createOpenCodeSymlinks(): Promise<void> {
+		const result = await this.symlinkCreator.createSymlinks(this.opencodeSymlinks);
+		if (!result.ok) {
+			this.userPrompt.showWarning(
+				`Some .opencode/ symlinks could not be created (${result.error.length} failures). ` +
+					"The workspace was installed successfully. Re-run the installer to retry symlink creation.",
+			);
+		}
+	}
+
+	private async createDevinSymlinks(): Promise<void> {
+		const result = await this.symlinkCreator.createSymlinks(this.devinSymlinks);
+		if (!result.ok) {
+			this.userPrompt.showWarning(
+				`Some .devin/ symlinks could not be created (${result.error.length} failures). ` +
+					"The workspace was installed successfully.",
+			);
+		}
 	}
 }

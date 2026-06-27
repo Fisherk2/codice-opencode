@@ -321,10 +321,7 @@ describe("ProjectInstallUseCase", () => {
 			expect(selectArgs[0].length).toBe(optionalRules.length);
 			// Only one optional file was selected, so non-selected optional files are skipped
 			// Mandatory + standard + 1 selected stageable optional
-			// STAGEABLE_RULES excludes noTemplateCopy entries (like .devin).
-			// optionalRules still counts .devin, so we compute:
-			// (STAGEABLE_RULES.length - (optionalRules.length - 1)) + 1 = 30 - 12 + 1 = 19
-			const stageableNonOptional = STAGEABLE_RULES.length - (optionalRules.length - 1);
+			const stageableNonOptional = STAGEABLE_RULES.filter((r) => r.category !== "optional").length;
 			expect(calls.stageFile.length).toBe(stageableNonOptional + 1);
 		});
 

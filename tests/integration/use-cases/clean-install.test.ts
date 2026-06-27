@@ -16,6 +16,8 @@ import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
 /** Entries that require actual template file staging (excludes noTemplateCopy) */
 const STAGEABLE_RULES = FILE_RULE_MANIFEST.filter((r) => !r.noTemplateCopy);
 
+const allOptionalPaths = getRulesByCategory("optional").map((r) => r.path);
+
 /**
  * Create a mock IFileSystem with configurable default behaviors.
  * Each test can override specific methods via the returned object.
@@ -60,11 +62,15 @@ function createMockFileSystem(): {
 	return { stub, calls };
 }
 
-// Symlink specs for testing — matches what the composition root passes
-const TEST_SYMLINKS = [
+// OpenCode symlinks (always created)
+const OPENCODE_SYMLINKS = [
 	{ target: "../agents", linkPath: ".opencode/agents" },
 	{ target: "../commands", linkPath: ".opencode/commands" },
 	{ target: "../skills", linkPath: ".opencode/skills" },
+];
+
+// Devin symlinks (created only if .devin selected)
+const DEVIN_SYMLINKS = [
 	{ target: "../skills", linkPath: ".devin/skills" },
 	{ target: "../commands", linkPath: ".devin/workflows" },
 	{ target: "../../docs/CODE_STYLE.md", linkPath: ".devin/rules/CODE_STYLE.md" },
@@ -82,6 +88,23 @@ const TEST_SYMLINKS = [
 		linkPath: ".devin/rules/test-driven-development.md",
 	},
 ];
+
+/** Default mock: selectOptional returns all optional paths */
+function createMockPrompt(): IUserPrompt {
+	return {
+		showWarning: mockFn(() => {}),
+		showInfo: mockFn(() => {}),
+		confirm: mockFn(() => Promise.resolve(true)),
+		selectOptional: mockFn(() => Promise.resolve([...allOptionalPaths])),
+		showSpinner: mockFn(() => {}),
+		stopSpinner: mockFn(() => {}),
+		showIntro: mockFn(() => {}),
+		showSuccess: mockFn(() => {}),
+		showCancel: mockFn(() => {}),
+		showError: mockFn(() => {}),
+		promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
+	};
+}
 
 /**
  * Create a mock ISymlinkCreator that records calls.
@@ -101,28 +124,6 @@ function createMockSymlinkCreator(): ISymlinkCreator & {
 		get createSymlinksCalls() {
 			return calls;
 		},
-	};
-}
-
-/**
- * Create a mock IUserPrompt with configurable return values.
- * Default selectOptional returns ALL optional paths to match
- * the expected "copy everything" behavior in most tests.
- */
-function createMockPrompt(): IUserPrompt {
-	const allOptionalPaths = getRulesByCategory("optional").map((r) => r.path);
-	return {
-		showWarning: mockFn(() => {}),
-		showInfo: mockFn(() => {}),
-		confirm: mockFn(() => Promise.resolve(true)),
-		selectOptional: mockFn(() => Promise.resolve([...allOptionalPaths])),
-		showSpinner: mockFn(() => {}),
-		stopSpinner: mockFn(() => {}),
-		showIntro: mockFn(() => {}),
-		showSuccess: mockFn(() => {}),
-		showCancel: mockFn(() => {}),
-		showError: mockFn(() => {}),
-		promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
 	};
 }
 
@@ -157,7 +158,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkCreator,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 			expect(useCase).toBeInstanceOf(CleanInstallUseCase);
@@ -176,7 +178,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkCreator,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
@@ -214,7 +217,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkCreator,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
@@ -238,25 +242,26 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkCreator,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
 			const result = await useCase.execute("/tmp/project");
 
 			expect(result.ok).toBe(true);
-			expect(symlinkCreator.createSymlinksCalls).toHaveLength(1);
-			// Verify it was called with the TEST_SYMLINKS array
-			const passedSpecs = symlinkCreator.createSymlinksCalls[0];
-			expect(passedSpecs).toHaveLength(TEST_SYMLINKS.length);
+			expect(symlinkCreator.createSymlinksCalls).toHaveLength(2);
+			// First call should be .opencode symlinks (3), second .devin (7)
+			expect(symlinkCreator.createSymlinksCalls[0]).toHaveLength(OPENCODE_SYMLINKS.length);
+			expect(symlinkCreator.createSymlinksCalls[1]).toHaveLength(DEVIN_SYMLINKS.length);
 		});
 
-		it("should show warning but still succeed when symlink creation fails", async () => {
+		it("should show warning but still succeed when both symlink batches fail", async () => {
 			const { stub: fs } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);
 			const prompt = createMockPrompt();
 			const symlinkCreator = createMockSymlinkCreator();
-			// Configure mock to return symlink failures
+			// Configure mock to return symlink failures for ALL calls
 			const symlinkError: SymlinkError = {
 				target: "../agents",
 				linkPath: ".opencode/agents",
@@ -272,7 +277,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkCreator,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
@@ -280,9 +286,51 @@ describe("CleanInstallUseCase", () => {
 
 			// Symlink failure should NOT cause the install to fail
 			expect(result.ok).toBe(true);
-			// Warning should have been shown
+			// Two warnings: one for opencode, one for devin
+			expect(prompt.showWarning).toHaveBeenCalledTimes(2);
+			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining(".opencode/"));
+			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining(".devin/"));
+		});
+
+		it("should show warning but still succeed when only .devin symlinks fail", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkCreator = createMockSymlinkCreator();
+			// First call (.opencode) succeeds, second call (.devin) fails
+			let callIndex = 0;
+			const devinError: SymlinkError = {
+				target: "../skills",
+				linkPath: ".devin/skills",
+				message: "Permission denied",
+			};
+			(symlinkCreator.createSymlinks as ReturnType<typeof mockFn>).mockImplementation(() => {
+				callIndex++;
+				if (callIndex === 1) {
+					return Promise.resolve({ ok: true, value: undefined } as Result<void, SymlinkError[]>);
+				}
+				return Promise.resolve({
+					ok: false,
+					error: [devinError],
+				} as Result<void, SymlinkError[]>);
+			});
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkCreator,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Only .devin warning should be shown (opencode succeeded)
 			expect(prompt.showWarning).toHaveBeenCalledTimes(1);
-			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining("symlink"));
+			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining(".devin/"));
 		});
 
 		it("should return an error when destination is not writable", async () => {
@@ -297,7 +345,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkCreator,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
@@ -323,7 +372,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				createMockSymlinkCreator(),
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
@@ -349,7 +399,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkMock,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
@@ -373,7 +424,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkMock,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
@@ -397,7 +449,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkMock,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
@@ -409,6 +462,110 @@ describe("CleanInstallUseCase", () => {
 			expect(versionData).toHaveProperty("installedVersion");
 			expect(versionData).toHaveProperty("installedAt");
 			expect(typeof versionData.installedAt).toBe("string");
+		});
+
+		it("should call selectOptional when force is not set (a)", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkMock = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			await useCase.execute("/tmp/project");
+
+			expect(prompt.selectOptional).toHaveBeenCalledTimes(1);
+			const selectArgs = (prompt.selectOptional as ReturnType<typeof mockFn>).mock.calls[0]!;
+			// Should pass all optional rules to the selection prompt
+			const allOptionals = getRulesByCategory("optional");
+			expect(selectArgs[0].length).toBe(allOptionals.length);
+		});
+
+		it("should skip selectOptional when force=true and auto-select all (a/d)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkMock = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			await useCase.execute("/tmp/project", { force: true });
+
+			// selectOptional should NOT be called when force=true
+			expect(prompt.selectOptional).not.toHaveBeenCalled();
+			// All optionals should be staged (including stageable ones)
+			const stageableNonOptional = STAGEABLE_RULES.filter((r) => r.category !== "optional");
+			const stageableOptional = STAGEABLE_RULES.filter((r) => r.category === "optional");
+			expect(calls.stageFile.length).toBe(stageableNonOptional.length + stageableOptional.length);
+		});
+
+		it("should stage no optional files when user selects none (b)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue([]);
+			const symlinkMock = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Only mandatory + standard files should be staged
+			const mandatoryAndStandardCount = STAGEABLE_RULES.filter(
+				(r) => r.category !== "optional",
+			).length;
+			expect(calls.stageFile.length).toBe(mandatoryAndStandardCount);
+			// .devin symlinks should NOT be created (since user selected nothing)
+		});
+
+		it("should record optionalSelections in version file (c)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const selectedPaths: string[] = [getRulesByCategory("optional")[0]!.path];
+			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue(selectedPaths);
+			const symlinkMock = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			await useCase.execute("/tmp/project");
+
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData).toHaveProperty("optionalSelections");
+			expect(versionData.optionalSelections).toEqual(selectedPaths);
 		});
 
 		it("should return error and clean staging when merge engine fails", async () => {
@@ -426,7 +583,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkMock,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
@@ -453,7 +611,8 @@ describe("CleanInstallUseCase", () => {
 				engine,
 				prompt,
 				symlinkMock,
-				TEST_SYMLINKS,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
 				gitignoreCreator,
 			);
 
