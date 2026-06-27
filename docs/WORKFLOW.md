@@ -1,4 +1,4 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.10
+# Plan de implementación – Códice v1.0.0 → v1.0.11
 **Fecha:** 2026-06-15 | **Última actualización:** 2026-06-26 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
@@ -20,6 +20,7 @@
 | FEV-2-B | Symlink post-install generation + review fixes | Issue #8 (symlink packaging root cause) | ✅ Completo |
 | FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | ✅ Completo |
 | FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | ✅ Completo |
+| FEV-3 | Update Workspace overwrite fix + GitHub API fix | Update mode preserves existing standard files + GitHub version check | 🟡 En curso |
 
 ## 2. Desglose por Fase
 
@@ -785,6 +786,137 @@ template/opcional/.devin/
 - [x] ADR-010 documentado
 - [x] CHANGELOG actualizado con sección v1.0.10
 - [x] Ship review: 2 rounds → 0 Critical findings → GO decision
+
+---
+
+### Fase FEV-3 — Update Workspace overwrite fix + GitHub API fix
+
+**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En curso
+
+#### Contexto
+
+Tras el release de v1.0.10, se probaron los tres modos de instalación en un proyecto real (el propio repositorio de Códice). Se identificaron dos problemas:
+
+1. **Update Workspace sobrescribe archivos Estándar**: Al ejecutar Update Workspace en un proyecto existente, archivos clasificados como `standard` (como `README.md`, `AGENTS.md`, `docs/`, `specs/`, `tasks/`) están siendo sobrescritos cuando NO deberían serlo. Solo los archivos `mandatory` (obligatorio) deben sobrescribirse.
+
+2. **GitHub version check falla con 404**: El check de versión contra la API de GitHub retorna 404, mostrando el mensaje "Could not check for updates via GitHub. Falling back to the bundled template version." Esto impide que el usuario sepa si hay una versión más reciente disponible.
+
+| ID | Título | Severidad | Estado |
+|----|--------|-----------|--------|
+| — | Update Workspace sobrescribe archivos Estándar | 🔴 Crítico | 🟡 En curso |
+| — | GitHub API retorna 404 en version check | 🟡 Medio | 🟡 En curso |
+
+#### Diagnóstico Técnico
+
+##### Problema 1: Update Workspace sobrescribe archivos Estándar
+
+**Síntoma:** Al ejecutar `bunx @fisherk2-dev/codice` → Update Workspace en un proyecto existente, archivos como `README.md`, `AGENTS.md`, y directorios como `docs/`, `specs/`, `tasks/` son sobrescritos con el contenido del template.
+
+**Comportamiento esperado:** Solo archivos `mandatory` (obligatorio) deben sobrescribirse. Archivos `standard` (estándar) deben preservarse si ya existen en el destino.
+
+**Análisis del código:**
+
+`UpdateWorkspaceUseCase.ts` línea 128:
+```typescript
+const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional");
+```
+
+Esto incluye reglas `mandatory` Y `standard`. Luego ejecuta:
+```typescript
+const mergeResult = await this.mergeEngine.execute(updateRules);
+```
+
+`FileMergeEngine.shouldStage()` para reglas standard (líneas 94-96):
+```typescript
+if (rule.category === "standard") {
+    const exists = await this.fileSystem.destinationExists(rule.path);
+    return !exists;
+}
+```
+
+La lógica parece correcta: si el archivo existe, no debe stagearse. Sin embargo, el usuario reporta que archivos están siendo sobrescritos.
+
+**Hipótesis:** El problema puede estar en cómo se manejan los directorios standard (`docs/`, `specs/`, `tasks/`). Cuando `destinationExists("docs")` retorna `true` (el directorio existe), `shouldStage()` retorna `false` y el directorio completo se salta. Pero si el directorio NO existe en el destino, se stagea completo, copiando todos los archivos dentro.
+
+**Posible causa raíz:** Necesita investigación adicional. Puede haber un bug en:
+1. Cómo `destinationExists()` verifica directorios vs archivos
+2. Cómo `stageFile()` maneja directorios recursivamente
+3. Cómo `AtomicStager.commitStaging()` aplica los cambios
+
+**Archivos a investigar:**
+- `src/infrastructure/adapters/BunFileSystem.ts` — `destinationExists()` y `stageFile()`
+- `src/infrastructure/adapters/AtomicStager.ts` — lógica de staging y commit
+- `src/domain/services/FileMergeEngine.ts` — `shouldStage()` para directorios
+
+##### Problema 2: GitHub API retorna 404
+
+**Síntoma:** Al ejecutar Update Workspace, aparece:
+```
+⚠️  Warning: Could not check for updates via GitHub. Falling back to the bundled template version.
+```
+
+**Diagnóstico:**
+```bash
+$ curl -s "https://api.github.com/repos/fisherk2/11-codice-opencode/releases/latest"
+{
+  "message": "Not Found",
+  "documentation_url": "https://docs.github.com/rest/releases/releases#get-the-latest-release"
+}
+```
+
+La API retorna 404. Esto puede significar:
+1. El nombre del repositorio en `constants.ts` es incorrecto
+2. No hay releases publicados en el repositorio
+3. El endpoint `/releases/latest` no funciona para este repositorio
+
+**Análisis de `constants.ts`:**
+```typescript
+export const GITHUB_OWNER = "fisherk2";
+export const GITHUB_REPO = "11-codice-opencode";
+const GITHUB_API_DEFAULT = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
+```
+
+**Hipótesis:** El repositorio puede tener un nombre diferente en GitHub, o los releases se publican con un workflow que no crea el "latest release" automáticamente.
+
+**Próximos pasos:**
+1. Verificar el nombre correcto del repositorio en GitHub
+2. Verificar si existen releases publicados
+3. Si no hay releases, el warning es correcto (no hay versión remota)
+4. Si el nombre es incorrecto, actualizar `constants.ts`
+
+#### Plan de Implementación
+
+| ID | Descripción | Estado |
+|----|-------------|--------|
+| T1 | Investigar causa raíz del overwrite en Update Workspace | 🟡 Pendiente |
+| T2 | Corregir lógica de Update Workspace para preservar archivos standard existentes | 🟡 Pendiente |
+| T3 | Tests unitarios: Update Workspace no sobrescribe archivos standard | 🟡 Pendiente |
+| T4 | Tests E2E: Update Workspace en proyecto existente | 🟡 Pendiente |
+| T5 | Investigar GitHub API 404 (verificar nombre del repo, releases existentes) | 🟡 Pendiente |
+| T6 | Corregir GitHub API URL o lógica de version check | 🟡 Pendiente |
+| T7 | Tests unitarios: GitHub version check | 🟡 Pendiente |
+| T8 | ADR-011 documentado (si hay decisión arquitectónica nueva) | 🟡 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.10 (actual) | Meta v1.0.11 |
+|---------|-----------------|--------------|
+| Tests (pass/fail) | 472 / 0 | ≥472 / 0 |
+| Coverage (funciones) | 97.66% | ≥97.66% |
+| Coverage (líneas) | 96.52% | ≥96.52% |
+| E2E escenarios | 14/14 | 15/15 (+1 update en proyecto real) |
+| `just check` errores | 0 | 0 |
+| Issues críticos abiertos | 0 | 0 |
+
+**Criterios de completitud (DoD FEV-3):**
+- [ ] Update Workspace NO sobrescribe archivos standard existentes
+- [ ] Update Workspace SÍ sobrescribe archivos mandatory (como debe ser)
+- [ ] GitHub version check funciona correctamente (o muestra mensaje claro si no hay releases)
+- [ ] `bun test`: sin regresión (≥472 pass, 0 fail)
+- [ ] `just check`: 0 errores
+- [ ] E2E: 15/15 pasando (14 existentes + 1 nuevo)
+- [ ] CHANGELOG actualizado con sección v1.0.11
+- [ ] Ship review: 0 Critical findings → GO decision
 
 ---
 
