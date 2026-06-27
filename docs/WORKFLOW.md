@@ -1,4 +1,4 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.11
+# Plan de implementación – Códice v1.0.0 → v1.0.13
 **Fecha:** 2026-06-15 | **Última actualización:** 2026-06-27 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
@@ -21,6 +21,7 @@
 | FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | ✅ Completo |
 | FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | ✅ Completo |
 | FEV-3 | Update Workspace overwrite fix + GitHub API fix | Update mode preserves existing standard files + GitHub version check | ✅ Completo |
+| FEV-4 | SDD Command Refactor + Governance (v1.0.13) | Issue #15: docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism | 🟡 En progreso |
 
 ## 2. Desglose por Fase
 
@@ -917,6 +918,172 @@ export const GITHUB_REPO = "codice-opencode";
 - [x] `just check`: 0 errores
 - [x] E2E: 15/15 pasando (14 existentes + 1 nuevo)
 - [x] CHANGELOG actualizado con sección v1.0.11
+
+---
+
+### Fase FEV-4 — SDD Command Refactor + Governance (v1.0.13)
+
+**Fecha:** 2026-06-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En progreso
+
+#### Contexto
+
+Issue #15 identifica problemas de gobernanza y determinismo en los comandos del workspace:
+
+1. **`evolve/` ejecuta tareas fuera de su scope:** Al invocarlo, el agente tocó archivos de documentación y redactó `tasks/`, rompiendo el flujo SDD establecido (solo `plan/` debe escribir en `tasks/`).
+2. **Falta un comando de actualización de documentación:** No existe un comando dedicado para sincronizar documentación con el código.
+3. **Falta un comando de diagnóstico:** No existe un comando para analizar issues del repositorio remoto y documentar diagnósticos técnicos.
+4. **Gobernanza de agentes:** Quetzalcoatl escribe en `tasks/` (exclusivo de Moctezuma). Moctezuma escribe fuera de `tasks/`.
+5. **Determinismo del flujo SDD:** Los comandos no sugieren el siguiente paso al finalizar su ejecución.
+
+#### Propuesta de Issue #15
+
+##### 1. Nuevo comando `docs-update/`
+
+**Propósito:** Actualizar, migrar y sincronizar la documentación con el código y archivos de configuración del proyecto.
+
+**Flujo:**
+1. **Pre-flight:** Analizar qué documentos existen en el proyecto y cuáles faltan. Sugerir al usuario cuáles crear (preferentemente usando la estructura del template: `WORKFLOW.md`, `DESIGN.md`, `PRD.md`, `specs/`, etc.).
+2. **Question-tool:** Antes de escribir, resolver dudas y ambigüedades con el usuario sobre contradicciones encontradas entre código/configuración y documentación actual.
+3. **Sincronización:** Actualizar documentación para reflejar el estado actual del código.
+
+**Restricciones:**
+- NO escribir en `tasks/` (exclusivo de `plan/`).
+- NO implementar código.
+- Solo escribir en archivos de documentación.
+
+##### 2. Nuevo comando `diagnosis/`
+
+**Propósito:** Analizar issues del repositorio remoto, detectar problemas y documentar diagnósticos técnicos en `docs/diagnosis/`.
+
+**Flujo:**
+1. **Análisis:** Leer issues abiertas del repositorio remoto (GitHub/GitLab).
+2. **Diagnóstico:** Ejecutar herramientas de análisis, búsqueda y diagnóstico en terminal para entender el problema.
+3. **Question-tool:** Resolver dudas o sugerencias con el usuario antes de documentar.
+4. **Documentación:** Redactar diagnóstico en `docs/diagnosis/` (crear directorio si no existe).
+
+**Restricciones:**
+- NO implementar soluciones.
+- Solo documentar diagnósticos.
+- Vincular desde el issue remoto, no copiar contenido.
+
+**Estructura de `docs/diagnosis/`:**
+```
+docs/diagnosis/
+├── README.md                    # "Si investigaste un problema, documenta el diagnóstico aquí"
+├── diagnosis-template.md        # Template para nuevos diagnósticos
+└── fix01-nuevo-sintoma.md       # Diagnósticos individuales
+```
+
+**Cuándo crear vs. actualizar:**
+
+| Situación | Acción |
+|-----------|--------|
+| Nuevo síntoma, componente desconocido | Crear `docs/diagnosis/fix01-nuevo-sintoma.md` |
+| Síntoma conocido, variación leve | Actualizar archivo existente, añadir sección "Recurrencias" |
+| Solución temporal (workaround) | Documentar con banner `⚠️ WORKAROUND` |
+| Patrón que se repite ≥3 veces | Sugerir automatizar: script, test o alerta |
+
+**NO redactar en:**
+- ❌ `TECH_DEBT.md` — es para decisiones arquitectónicas intencionales, no debugging operativo.
+- ❌ `README.md` — se satura rápido.
+- ❌ Comentarios en código — útiles para el "porqué" de una línea, no para procedimientos.
+
+##### 3. Refactor de `evolve/`
+
+**Propósito actual:** Crear nuevas specs para proyectos maduros con versiones robustas.
+
+**Problema:** `evolve/` y `spec/` son muy similares. `evolve/` ejecuta tareas fuera de su scope (escribir en `tasks/`, implementar código).
+
+**Opciones de refactor:**
+
+| Opción | Descripción | Ventaja | Desventaja |
+|--------|-------------|---------|------------|
+| A | Transferir responsabilidad de `evolve/` a `spec/` | Un solo comando para specs | Pierde distinción entre proyectos nuevos y maduros |
+| B | Simplificar `evolve/` para solo crear specs en proyectos maduros | Mantiene separación | Requiere pre-flight para detectar tipo de proyecto |
+| C | Eliminar `evolve/` y usar `spec/` con pre-flight | Simplifica flujo | Cambia comando existente |
+
+**Recomendación:** Opción B — mantener `evolve/` con scope reducido (solo specs para proyectos maduros) + pre-flight para detectar tipo de proyecto.
+
+##### 4. Gobernanza de Agentes
+
+**Quetzalcoatl (Visionary Sage):**
+- ✅ Puede escribir: documentación (`docs/`, `specs/`, `README.md`, `CHANGELOG.md`, etc.)
+- ❌ NO puede escribir: `tasks/`, código fuente (`src/`), archivos de configuración (`opencode.json`, `package.json`, etc.)
+- ❌ NO puede implementar código.
+
+**Moctezuma (Strategic Planner):**
+- ✅ Puede escribir: SOLO `tasks/` y sus ficheros.
+- ❌ NO puede escribir: documentación, código fuente, archivos de configuración.
+
+**Implementación:** Actualizar permisos en los archivos de agentes (`agents/quetzalcoatl.md`, `agents/moctezuma.md`) para restringir escritura.
+
+##### 5. Determinismo del Flujo SDD
+
+**Problema:** Los comandos no sugieren el siguiente paso al finalizar. El usuario debe consultar documentación para saber qué ejecutar.
+
+**Solución:** Cada comando del ciclo SDD debe sugerir el siguiente comando al finalizar su ejecución.
+
+**Flujo sugerido:**
+
+| Comando | Siguiente sugerencia |
+|---------|---------------------|
+| `spec/` | "Ejecuta `plan/` para redactar el plan de ejecución" |
+| `plan/` | "Ejecuta `build/` para implementar el plan" |
+| `build/` | "Ejecuta `test/` para validar la implementación" |
+| `test/` | "Ejecuta `review/` para revisar el código" |
+| `review/` | "Ejecuta `ship/` para liberar la versión" |
+| `ship/` | "Ejecuta `docs-update/`, `diagnosis/` o `evolve/` para mantenimiento" |
+| `docs-update/` | "Ejecuta `plan/` si hay cambios que requieren implementación" |
+| `diagnosis/` | "Ejecuta `plan/` para implementar la solución diagnosticada" |
+| `evolve/` | "Ejecuta `plan/` para redactar el plan de ejecución" |
+
+**Adicional:** Eliminar referencias de sugerencia de comandos en la configuración de agentes. Los agentes deben sugerir invocación de otros agentes primarios, no comandos específicos.
+
+#### Plan de Implementación
+
+| ID | Descripción | Prioridad | Estado |
+|----|-------------|-----------|--------|
+| F4V4-T1 | Crear comando `docs-update/` en `template/obligatorio/commands/docs-update.md` | Alta | 🟡 Pendiente |
+| F4V4-T2 | Crear comando `diagnosis/` en `template/obligatorio/commands/diagnosis.md` | Alta | 🟡 Pendiente |
+| F4V4-T3 | Refactorizar comando `evolve/` en `template/obligatorio/commands/evolve.md` | Alta | 🟡 Pendiente |
+| F4V4-T4 | Crear directorio `template/estandar/docs/diagnosis/` con `README.md` y `diagnosis-template.md` | Media | 🟡 Pendiente |
+| F4V4-T5 | Actualizar permisos de `agents/quetzalcoatl.md` (prohibir `tasks/`, código, config) | Alta | 🟡 Pendiente |
+| F4V4-T6 | Actualizar permisos de `agents/moctezuma.md` (solo `tasks/`) | Alta | 🟡 Pendiente |
+| F4V4-T7 | Actualizar comandos SDD para sugerir siguiente paso (`spec/`, `plan/`, `build/`, `test/`, `review/`, `ship/`) | Media | 🟡 Pendiente |
+| F4V4-T8 | Eliminar sugerencias de comandos en configuración de agentes primarios | Media | 🟡 Pendiente |
+| F4V4-T9 | Actualizar documentación: `docs/opencode/04-commands.md`, `docs/opencode/USER_GUIDE.md` | Media | 🟡 Pendiente |
+| F4V4-T10 | Actualizar `CHANGELOG.md` con sección v1.0.13 | Alta | 🟡 Pendiente |
+| F4V4-T11 | Bump version a 1.0.13 en `package.json` | Alta | 🟡 Pendiente |
+| F4V4-T12 | Tests: verificar que nuevos comandos existen y tienen estructura correcta | Media | 🟡 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.12 (actual) | Meta v1.0.13 |
+|---------|------------------|--------------|
+| Tests (pass/fail) | 481 / 0 | ≥481 / 0 |
+| Coverage (funciones) | 97.66% | ≥97.66% |
+| Coverage (líneas) | 96.52% | ≥96.52% |
+| E2E escenarios | 15/15 | 15/15 |
+| `just check` errores | 0 | 0 |
+| Issues críticos abiertos | 0 | 0 |
+| Comandos SDD | 10 | 12 (+docs-update, +diagnosis) |
+
+**Criterios de completitud (DoD FEV-4):**
+- [ ] Issue #15 resuelto: gobernanza y determinismo implementados
+- [ ] `docs-update/` creado y funcional
+- [ ] `diagnosis/` creado y funcional
+- [ ] `evolve/` refactorizado con scope reducido
+- [ ] Directorio `docs/diagnosis/` creado con template
+- [ ] Permisos de quetzalcoatl actualizados (no escribe en `tasks/`, código, config)
+- [ ] Permisos de moctezuma actualizados (solo escribe en `tasks/`)
+- [ ] Comandos SDD sugieren siguiente paso
+- [ ] Configuración de agentes sin sugerencias de comandos
+- [ ] Documentación actualizada
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+- [ ] E2E: 15/15 pasando
+- [ ] CHANGELOG actualizado con sección v1.0.13
+- [ ] Versión bump a 1.0.13
 
 ---
 
