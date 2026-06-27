@@ -2,7 +2,7 @@
 export const GITHUB_OWNER = "fisherk2";
 
 /** GitHub repository name */
-export const GITHUB_REPO = "11-codice-opencode";
+export const GITHUB_REPO = "codice-opencode";
 
 const GITHUB_API_DEFAULT = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
 

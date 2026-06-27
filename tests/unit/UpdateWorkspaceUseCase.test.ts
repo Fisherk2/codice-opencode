@@ -45,7 +45,10 @@ class FakeFileSystem implements IFileSystem {
 	async isEmpty(): Promise<boolean> {
 		return true;
 	}
-	async writeVersionFile(_content: string): Promise<void> {}
+	lastWrittenVersion: string | null = null;
+	async writeVersionFile(content: string): Promise<void> {
+		this.lastWrittenVersion = content;
+	}
 	async readVersionFile(): Promise<string | null> {
 		return null;
 	}
@@ -65,6 +68,15 @@ class CaptureMergeEngine implements IFileMergeEngine {
 class FakeGitHubClient implements IGitHubClient {
 	async getLatestReleaseTag(): Promise<string | null> {
 		return "v1.0.5";
+	}
+	async getLatestReleaseNotes(): Promise<string | null> {
+		return null;
+	}
+}
+
+class FakeGitHubClientBadTag implements IGitHubClient {
+	async getLatestReleaseTag(): Promise<string | null> {
+		return "latest"; // not valid semver
 	}
 	async getLatestReleaseNotes(): Promise<string | null> {
 		return null;
@@ -116,9 +128,10 @@ function makeUseCase(
 	mergeEngine: CaptureMergeEngine,
 	gitHub?: FakeGitHubClient,
 	versionComparator?: FakeVersionComparator,
+	fileSystem?: FakeFileSystem,
 ): UpdateWorkspaceUseCase {
 	return new UpdateWorkspaceUseCase(
-		new FakeFileSystem(),
+		fileSystem ?? new FakeFileSystem(),
 		mergeEngine,
 		new FakeUserPrompt(),
 		gitHub ?? new FakeGitHubClient(),
@@ -177,5 +190,18 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 		// There should be at least one 'standard' rule (not converted to mandatory)
 		const standardCount = allCategories.filter((c) => c === "standard").length;
 		expect(standardCount).toBeGreaterThanOrEqual(1);
+	});
+
+	test("should fall back to 0.0.0 when remote tag is not valid semver", async () => {
+		const mergeEngine = new CaptureMergeEngine();
+		const fs = new FakeFileSystem();
+		const gitHub = new FakeGitHubClientBadTag();
+		const useCase = makeUseCase(mergeEngine, gitHub, undefined, fs);
+
+		await useCase.execute("/tmp/fake-dest", { force: true });
+
+		expect(fs.lastWrittenVersion).not.toBeNull();
+		const versionData = JSON.parse(fs.lastWrittenVersion!);
+		expect(versionData.installedVersion).toBe("0.0.0");
 	});
 });

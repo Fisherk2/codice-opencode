@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(No unreleased changes — v1.0.10 is the latest.)
+(No unreleased changes — v1.0.11 is the latest.)
+
+## [1.0.11] — 2026-06-26
+
+### Fixed
+
+- **Update Workspace no sobrescribe directorios standard existentes (regresión de FEV-1 #2)**: `BunFileSystem.destinationExists()` usaba `Bun.file().exists()` que solo funciona con archivos, no con directorios. Cambiado a `fs.access()` que detecta correctamente tanto archivos como directorios. Esto evita que directorios como `docs/`, `specs/` y `tasks/` sean sobrescritos durante una actualización.
+- **GitHub version check funciona correctamente**: El nombre del repositorio en `constants.ts:5` era `"11-codice-opencode"` en vez de `"codice-opencode"`, causando un 404 en la API de GitHub.
 
 ## [1.0.10] — 2026-06-26
 

@@ -220,6 +220,83 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(stagedOptional.length).toBe(0);
 		});
 
+		it("should NOT overwrite standard files that already exist (REGRESSION: FEV-1 #2)", async () => {
+			const standardPaths = getRulesByCategory("standard").map((r) => r.path);
+			const mandatoryPaths = getRulesByCategory("mandatory").map((r) => r.path);
+
+			const { stub: fs, calls } = createMockFileSystem();
+			// Simulate existing standard files — destinationExists returns true for standard paths
+			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(async (path: string) =>
+				standardPaths.includes(path),
+			);
+			const prompt = createMockPrompt();
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const engine = new FileMergeEngine(fs);
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			// Only mandatory files should be staged (standard files already exist)
+			expect(calls.stageFile.length).toBe(mandatoryPaths.length);
+			// Each staged file should be mandatory
+			for (const staged of calls.stageFile) {
+				expect(mandatoryPaths).toContain(staged);
+			}
+			// Standard files should NOT be staged
+			const stagedStandard = calls.stageFile.filter((p) => standardPaths.includes(p));
+			expect(stagedStandard.length).toBe(0);
+		});
+
+		it("should overwrite mandatory files even when they already exist (REGRESSION: FEV-1 #2)", async () => {
+			const mandatoryPaths = getRulesByCategory("mandatory").map((r) => r.path);
+			const allPaths = [...mandatoryPaths, ...getRulesByCategory("standard").map((r) => r.path)];
+
+			const { stub: fs, calls } = createMockFileSystem();
+			// Simulate ALL files existing — mandatory should still be staged
+			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(async (path: string) =>
+				allPaths.includes(path),
+			);
+			const prompt = createMockPrompt();
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const engine = new FileMergeEngine(fs);
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			// Mandatory files are always staged regardless of existence
+			expect(calls.stageFile.length).toBe(mandatoryPaths.length);
+			// Each staged file should be mandatory
+			for (const staged of calls.stageFile) {
+				expect(mandatoryPaths).toContain(staged);
+			}
+		});
+
+		it("should skip entire standard directory if it already exists (all-or-nothing granularity)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			// Simulate: "docs" directory exists (return true), everything else missing
+			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(
+				async (path: string) => path === "docs",
+			);
+			const prompt = createMockPrompt();
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const engine = new FileMergeEngine(fs);
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			// The "docs" directory should NOT be staged (entirely skipped because it exists)
+			const stagedDocs = calls.stageFile.filter(
+				(p: string) => p === "docs" || p.startsWith("docs/"),
+			);
+			expect(stagedDocs.length).toBe(0);
+		});
+
 		it("should write updated version file with preserved optionalSelections", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const prompt = createMockPrompt();

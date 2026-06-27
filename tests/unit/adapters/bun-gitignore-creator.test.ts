@@ -224,6 +224,7 @@ describe("BunGitignoreCreator — single createGitignore", () => {
 
 		// Capture console.warn calls
 		const warnCalls: unknown[][] = [];
+		// biome-ignore lint/suspicious/noConsole: test code — mocking console.warn to verify verbose output behavior
 		const originalWarn = console.warn;
 		console.warn = mockFn((...args: unknown[]) => {
 			warnCalls.push(args);
@@ -255,6 +256,7 @@ describe("BunGitignoreCreator — single createGitignore", () => {
 		fs.mkdirSync(noVerboseRoot, { recursive: true });
 
 		const warnCalls: unknown[][] = [];
+		// biome-ignore lint/suspicious/noConsole: test code — mocking console.warn to verify verbose=false behavior
 		const originalWarn = console.warn;
 		console.warn = mockFn((...args: unknown[]) => {
 			warnCalls.push(args);

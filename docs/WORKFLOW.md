@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.10
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-26 | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v1.0.11
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-27 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -20,6 +20,7 @@
 | FEV-2-B | Symlink post-install generation + review fixes | Issue #8 (symlink packaging root cause) | ✅ Completo |
 | FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | ✅ Completo |
 | FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | ✅ Completo |
+| FEV-3 | Update Workspace overwrite fix + GitHub API fix | Update mode preserves existing standard files + GitHub version check | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -788,6 +789,137 @@ template/opcional/.devin/
 
 ---
 
+### Fase FEV-3 — Update Workspace overwrite fix + GitHub API fix
+
+**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado (implementación)
+
+#### Contexto
+
+Tras el release de v1.0.10, se probaron los tres modos de instalación en un proyecto real (el propio repositorio de Códice). Se identificaron dos problemas:
+
+1. **Update Workspace sobrescribe archivos Estándar**: Al ejecutar Update Workspace en un proyecto existente, archivos clasificados como `standard` (como `README.md`, `AGENTS.md`, `docs/`, `specs/`, `tasks/`) están siendo sobrescritos cuando NO deberían serlo. Solo los archivos `mandatory` (obligatorio) deben sobrescribirse.
+
+2. **GitHub version check falla con 404**: El check de versión contra la API de GitHub retorna 404, mostrando el mensaje "Could not check for updates via GitHub. Falling back to the bundled template version." Esto impide que el usuario sepa si hay una versión más reciente disponible.
+
+| ID | Título | Severidad | Estado |
+|----|--------|-----------|--------|
+| — | Update Workspace sobrescribe archivos Estándar | 🔴 Crítico | ✅ Resuelto |
+| — | GitHub API retorna 404 en version check | 🟡 Medio | ✅ Resuelto |
+
+#### Diagnóstico Técnico
+
+##### Problema 1: Update Workspace sobrescribe archivos Estándar
+
+**Síntoma:** Al ejecutar `bunx @fisherk2-dev/codice` → Update Workspace en un proyecto existente, archivos como `README.md`, `AGENTS.md`, y directorios como `docs/`, `specs/`, `tasks/` son sobrescritos con el contenido del template.
+
+**Comportamiento esperado:** Solo archivos `mandatory` (obligatorio) deben sobrescribirse. Archivos `standard` (estándar) deben preservarse si ya existen en el destino.
+
+**Regresión confirmada:** Este bug es una **regresión de FEV-1 Issue #2** (v1.0.5). El WORKFLOW.md líneas 280-313 documenta que Issue #2 fue resuelto modificando `UpdateWorkspaceUseCase.buildUpdateRules()` para no convertir reglas `standard` a `mandatory`. Sin embargo, ese método ya no existe en el código actual — fue eliminado durante un refactor posterior y reemplazado con un simple `FILE_RULE_MANIFEST.filter()` en la línea 128.
+
+**Causa raíz identificada:** `BunFileSystem.destinationExists()` en `src/infrastructure/adapters/BunFileSystem.ts:56-67`:
+
+```typescript
+async destinationExists(relativePath: string): Promise<boolean> {
+    const fullPath = this.atomicStager.resolveDestinationPath(relativePath);
+    try {
+        const file = Bun.file(fullPath);
+        return await file.exists();
+    } catch {
+        return false;
+    }
+}
+```
+
+`Bun.file()` **solo funciona con archivos**, no con directorios. Cuando `FileMergeEngine.shouldStage()` (línea 94-96) verifica `destinationExists("docs")` para una regla standard de directorio, `Bun.file("docs").exists()` retorna `false` aunque el directorio exista. Resultado: `shouldStage()` retorna `true` y el directorio se stagea completo, sobrescribiendo todos los archivos dentro.
+
+**Solución:** Cambiar `BunFileSystem.destinationExists()` para usar `fs.stat()` o `fs.access()` (que sí funcionan con directorios):
+
+```typescript
+async destinationExists(relativePath: string): Promise<boolean> {
+    const fullPath = this.atomicStager.resolveDestinationPath(relativePath);
+    try {
+        await fs.access(fullPath);
+        return true;
+    } catch {
+        return false;
+    }
+}
+```
+
+**Archivos a modificar:**
+- `src/infrastructure/adapters/BunFileSystem.ts:56-67` — cambiar `Bun.file().exists()` por `fs.access()`
+
+##### Problema 2: GitHub API retorna 404
+
+**Síntoma:** Al ejecutar Update Workspace, aparece:
+```
+⚠️  Warning: Could not check for updates via GitHub. Falling back to the bundled template version.
+```
+
+**Causa raíz identificada (verificada con curl):** El nombre del repositorio en `src/infrastructure/config/constants.ts:5` es incorrecto:
+
+```typescript
+// constants.ts:5
+export const GITHUB_REPO = "11-codice-opencode";
+```
+
+El repositorio real en GitHub es `fisherk2/codice-opencode` (sin el prefijo `11-`):
+
+```bash
+$ curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/fisherk2/11-codice-opencode/releases/latest"
+404
+$ curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/fisherk2/codice-opencode/releases/latest"
+200
+$ curl -s "https://api.github.com/repos/fisherk2/codice-opencode/releases/latest" | grep tag_name
+"tag_name": "v1.0.10"
+```
+
+**Solución:** Corregir `GITHUB_REPO` en `constants.ts:5`:
+
+```typescript
+// constants.ts:5 — fix
+export const GITHUB_REPO = "codice-opencode";
+```
+
+**Archivos a modificar:**
+- `src/infrastructure/config/constants.ts:5` — cambiar `GITHUB_REPO` de `"11-codice-opencode"` a `"codice-opencode"`
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| T1 | **Corregir `BunFileSystem.destinationExists()` para soportar directorios** (cambiar `Bun.file().exists()` por `fs.access()`) | `src/infrastructure/adapters/BunFileSystem.ts:56-67` | ✅ Completo |
+| T2 | **Corregir `GITHUB_REPO` en `constants.ts:5`** (de `"11-codice-opencode"` a `"codice-opencode"`) | `src/infrastructure/config/constants.ts:5` | ✅ Completo |
+| T3 | Tests unitarios: `destinationExists()` retorna `true` para directorios existentes | `tests/integration/adapters/bun-file-system.test.ts` | ✅ Completo |
+| T4 | Tests unitarios: `UpdateWorkspaceUseCase` no sobrescribe standard dirs (regresión FEV-1 Issue #2) | `tests/integration/use-cases/update-workspace.test.ts` | ✅ Completo |
+| T5 | Tests unitarios: GitHub API retorna tag correcto con repo fix | `tests/integration/adapters/github-rest-client.test.ts` | ✅ Completo |
+| T6 | Test E2E: Update Workspace en proyecto existente con archivos standard pre-existentes | `tests/e2e/15-update-workspace-existing-project.sh` (nuevo) | ✅ Completo |
+| T7 | Verificar suite completa + `just check` + E2E (15/15) | (ninguno) | ✅ Completo |
+| T8 | Bump version 1.0.11, actualizar CHANGELOG, PR, merge, tag, release | `package.json`, `CHANGELOG.md` | 🟡 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.10 (antes) | v1.0.11 (final) |
+|---------|-----------------|-----------------|
+| Tests (pass/fail) | 472 / 0 | 476 / 0 |
+| Expects | 1009 | 1032 |
+| Coverage (funciones) | 97.66% | 97.66% |
+| Coverage (líneas) | 96.52% | 96.52% |
+| E2E escenarios | 14/14 | 15/15 (+1 update en proyecto real) |
+| `just check` errores | 0 | 0 |
+| Issues críticos abiertos | 0 | 0 |
+
+**Criterios de completitud (DoD FEV-3):**
+- [x] Update Workspace NO sobrescribe archivos standard existentes
+- [x] Update Workspace SÍ sobrescribe archivos mandatory (como debe ser)
+- [x] GitHub version check funciona correctamente (repo name fix)
+- [x] `bun test`: sin regresión (476 pass, 0 fail, 1032 expects)
+- [x] `just check`: 0 errores
+- [x] E2E: 15/15 pasando (14 existentes + 1 nuevo)
+- [x] CHANGELOG actualizado con sección v1.0.11
+
+---
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -799,8 +931,8 @@ template/opcional/.devin/
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 465 tests, 0 fail, 986 expects
-- **Tests E2E:** 12/12 pasando (10 existentes + 2 gitignore)
+- **Tests unit+int:** 476 tests, 0 fail, 1032 expects
+- **Tests E2E:** 15/15 pasando (14 existentes + 1 update existing project)
 - **Coverage:** 97.66% funciones / 96.52% líneas
 - **Domain coverage:** 100% líneas
 - **`just check`:** 0 errores
@@ -816,3 +948,6 @@ template/opcional/.devin/
 - **F5 total:** 7 tasks, 7 completed + 3 review fixes
 - **Commits FEV-1:** `690d4a4` (ship review fixes), `62a6440` (README models sync), `3c469e4` (CONTRIBUTING/README docs)
 - **FEV-1 total:** 5 issues + 10 ship review fixes + 3 documentation updates = 18 changes
+- **Commits FEV-3:** `d628bd6` (destinationExists fix), `a890d37` (GITHUB_REPO fix), `bb24d42` (regression tests), `5c2e4d0` (E2E), `287b15f` (v1.0.11 bump), `910ae53` (obs fix), `a0f84f1` (review findings)
+- **FEV-3 total:** 2 production fixes + 3 test additions + 1 E2E scenario + 1 doc update = 7 changes
+- **Release ready:** v1.0.11 — all DoD items completed, 476/0 tests, 15/15 E2E, 0 Biome/tsc errors

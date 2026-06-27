@@ -1,188 +1,302 @@
-# Plan: Fase FEV-2-D — Directory Support en TemplateResolver + Optional Files Menu en Clean Install (v1.0.10)
+# Plan: Fase FEV-3 — Update Workspace overwrite fix + GitHub API fix (v1.0.11)
 
-**Fecha:** 2026-06-26 | **Autor:** Moctezuma (Planner Agent) | **Estado:** ✅ Completado
-**Versión objetivo:** v1.0.10
+**Fecha:** 2026-06-26 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Plan Aprobado
+**Versión objetivo:** v1.0.11
 **Issues principales:**
-1. `.devin` es un directorio, no un archivo — TemplateResolver falla con "Template file not found"
-2. Clean Install no muestra menú de selección de opcionales (inconsistente con Project Install)
+1. Update Workspace sobrescribe archivos Estándar (README.md, AGENTS.md, docs/, specs/, tasks/)
+2. GitHub version check retorna 404 — no detecta versión disponible
 
 ---
 
 ## Overview
 
-Tras el release de v1.0.9, se identificaron dos problemas relacionados con el manejo de directorios opcionales y la UX de Clean Install:
+Tras el release de v1.0.10, se probaron los tres modos de instalación en un proyecto real (el propio repositorio de Códice). Se identificaron dos problemas:
 
-1. **`.devin` directory resolution**: El manifest incluye `.devin` como entrada opcional con `isDirectory: true`, pero `TemplateResolver.resolvePath()` falla con `Template file not found: .devin` en ambos modos de instalación. El directorio existe en `template/opcional/.devin/` pero contiene symlinks que causan problemas de resolución.
+1. **Update Workspace sobrescribe archivos Estándar**: Al ejecutar Update Workspace en un proyecto existente, archivos clasificados como `standard` están siendo sobrescritos cuando NO deberían serlo. Solo los archivos `mandatory` (obligatorio) deben sobrescribirse.
 
-2. **Clean Install UX inconsistente**: `CleanInstallUseCase` copia todos los archivos opcionales automáticamente sin mostrar el menú de selección, mientras que `ProjectInstallUseCase` sí lo muestra. Esto es inconsistente y confuso para el usuario.
+2. **GitHub version check falla con 404**: El check de versión contra la API de GitHub retorna 404, mostrando el mensaje "Could not check for updates via GitHub. Falling back to the bundled template version."
 
-**Decisiones del usuario (2026-06-26):**
-- **Problema 1:** Implementar soporte nativo para directorios en `TemplateResolver` (NO expandir `.devin` en archivos individuales)
-- **Problema 2:** Clean Install debe mostrar el mismo menú de selección de opcionales que Project Install
-
-**Objetivo:** Publicar v1.0.10 que resuelva ambos problemas sin regresión, con `.devin` funcionando correctamente y Clean Install mostrando el menú de opcionales.
+**Objetivo:** Publicar v1.0.11 que resuelva ambos problemas sin regresión.
 
 ---
 
-## Resultado Final
+## Arquitectura de Decisiones (ADR)
 
-### Métricas v1.0.10
+| Decisión | Rationale |
+|----------|-----------|
+| **ADR-FEV3-1**: Solo archivos `mandatory` deben sobrescribirse en Update Workspace | El comportamiento esperado es que archivos `standard` se preserven si ya existen. Solo `obligatorio` debe sobrescribirse. |
+| **ADR-FEV3-2**: Investigar `destinationExists()` para directorios | El bug puede estar en cómo se verifica la existencia de directorios vs archivos individuales dentro del directorio. |
+| **ADR-FEV3-3**: Verificar nombre del repositorio en GitHub | El 404 puede deberse a un nombre incorrecto del repositorio en `constants.ts`. |
+| **ADR-FEV3-4**: Bump a v1.0.11 (patch sobre v1.0.10) | Correcciones de bugs que no rompen API. Patch increment es correcto semánticamente. |
 
-| Métrica | v1.0.9 (antes) | v1.0.10 (final) |
-|---------|-----------------|-----------------|
-| Tests (pass/fail) | 465 / 0 | 472 / 0 |
-| Expects | 986 | 1009 |
-| Coverage (funciones) | 97.66% | 97.66% |
-| Coverage (líneas) | 96.52% | 96.52% |
-| E2E escenarios | 12/12 | 14/14 |
-| `just check` errores | 0 | 0 |
-| Issues críticos abiertos | 0 | 0 |
-| Ship review findings | — | 0 Critical, 0 Important (2 rounds GO) |
+---
 
-### Commits
+## Dependency Graph
 
-| Commit | Descripción |
-|--------|-------------|
-| `d27107c` | Core implementation: directory support + Clean Install menu + ADR-010 |
-| `f887f3b` | First code review: 6 findings (I1-I4, S1-S2) |
-| `6aa035d` | Ship review fixes: 11 observations (M1, S4, I1, I2, S1-S3, G2, G6, G8) |
-| `8869dae` | Shared `createSymlinksWithWarning` helper extraction |
-| `cfcce46` | Documentation: WORKFLOW, CHANGELOG, TECH_DEBT for v1.0.10 |
-
-### Ship Review
-
-| Round | Subagents | Verdict |
-|-------|-----------|---------|
-| 1st | code-reviewer, security-auditor, test-engineer, dependency-manager | GO (all APPROVE/PASS) |
-| 2nd | code-reviewer, security-auditor, test-engineer, dependency-manager | GO (all PASS/APPROVE) |
-| 3rd | code-reviewer (1 suggestion) | GO (1 minor suggestion → resolved) |
-
-### DoD FEV-2-D
-
-- [x] `.devin` directory se copia correctamente en Clean Install y Project Install
-- [x] Clean Install muestra menú de selección de opcionales (igual que Project Install)
-- [x] `TemplateResolver` detecta y maneja directorios recursivamente
-- [x] `BunFileSystem` implementa copia recursiva de directorios
-- [x] `bun test`: sin regresión (472 pass, 0 fail, 1009 expects)
-- [x] `just check`: 0 errores
-- [x] E2E: 14/14 pasando (12 existentes + 2 nuevos)
-- [x] ADR-010 documentado
-- [x] CHANGELOG actualizado con sección v1.0.10
-- [x] Ship review: 2 rounds → 0 Critical findings → GO decision
+```mermaid
+graph TD
+    FEV3-T1[Investigar causa raíz del overwrite] --> FEV3-T2[Corregir lógica de Update Workspace]
+    FEV3-T2 --> FEV3-T3[Tests unitarios: Update no sobrescribe standard]
+    FEV3-T3 --> FEV3-T4[Tests E2E: Update en proyecto existente]
+    
+    FEV3-T5[Investigar GitHub API 404] --> FEV3-T6[Corregir GitHub API URL o lógica]
+    FEV3-T6 --> FEV3-T7[Tests unitarios: GitHub version check]
+    
+    FEV3-T4 --> FEV3-T8[Verificar suite completa]
+    FEV3-T7 --> FEV3-T8
+    
+    FEV3-T8 --> FEV3-T9[Bump version 1.0.11]
+    FEV3-T9 --> FEV3-T10[Actualizar CHANGELOG]
+    FEV3-T10 --> FEV3-T11[Commit + PR + Tag + Release]
+```
 
 ---
 
 ## Task Breakdown
 
-### Phase 1: Diagnóstico e Investigación
+> **Nota sobre la regresión:** El Problema 1 es una **regresión de FEV-1 Issue #2** (v1.0.5). El WORKFLOW.md líneas 280-313 documenta que Issue #2 fue resuelto, pero el fix se perdió durante un refactor posterior. Las tareas FEV3-T1/T2 reflejan el fix específico, no una investigación genérica.
 
-#### Task FE2D-T1: Investigar causa raíz del fallo `.devin` resolution ✅
-- **Commit:** `d27107c`
-- **Resultado:** `.devin` es un directorio en `template/opcional/` pero el manifest lo trata como archivo. `TemplateResolver.resolvePath()` falla porque `fs.stat()` no encuentra un archivo en la ruta.
+### Phase 1: Corrección de bugs (causas raíz ya identificadas)
 
----
+#### Task FEV3-T1: Corregir `BunFileSystem.destinationExists()` para soportar directorios
+**Descripción:** Cambiar `BunFileSystem.destinationExists()` en `src/infrastructure/adapters/BunFileSystem.ts:56-67` para usar `fs.access()` en vez de `Bun.file().exists()`. `Bun.file()` solo funciona con archivos, no con directorios, lo que causa que standard directories (docs/, specs/, tasks/) se sobrescriban durante Update Workspace.
 
-### Phase 2: TemplateResolver - Soporte para Directorios
+**Causa raíz:** `Bun.file(fullPath).exists()` retorna `false` cuando `fullPath` es un directorio, incluso si existe. Por lo tanto, `FileMergeEngine.shouldStage()` para reglas standard siempre retorna `!exists = true` para directorios, stageando y sobrescribiendo su contenido.
 
-#### Task FE2D-T2: Mejorar `TemplateResolver.resolvePath()` para directorios ✅
-- **Commit:** `d27107c`
-- **Resultado:** `resolvePath()` ahora detecta directorios via `fs.stat().isDirectory()` y retorna la ruta directamente sin intentar buscar archivos individuales dentro.
+**Criterios de Aceptación:**
+- [ ] `destinationExists()` retorna `true` para directorios existentes
+- [ ] `destinationExists()` retorna `false` para directorios inexistentes
+- [ ] `destinationExists()` sigue funcionando correctamente para archivos
+- [ ] No se introducen cambios en la API del port
 
-#### Task FE2D-T3: Tests unitarios para `TemplateResolver` con directorios ✅
-- **Commit:** `d27107c`
-- **Resultado:** 2 tests nuevos para `noTemplateCopy` rules en `FileMergeEngine`
+**Verificación:**
+- [ ] `bun test` — todos pasan
+- [ ] `just check` — 0 errores
 
-#### Checkpoint 1 ✅ — TemplateResolver funciona
+**Dependencias:** Ninguna.
+**Archivos:**
+- `src/infrastructure/adapters/BunFileSystem.ts:56-67`
 
----
-
-### Phase 3: CleanInstallUseCase - Menú de Opcionales
-
-#### Task FE2D-T5: Refactorizar `CleanInstallUseCase` para mostrar menú de opcionales ✅
-- **Commit:** `d27107c`
-- **Resultado:** CleanInstallUseCase ahora muestra `selectOptional()` antes del merge. `--force` salta el menú.
-
-#### Task FE2D-T6: Tests unitarios para `CleanInstallUseCase` con menú ✅
-- **Commit:** `d27107c`
-- **Resultado:** 17 tests en `clean-install.test.ts` (from 9)
-
-#### Checkpoint 2 ✅ — Clean Install muestra menú
+**Scope:** XS (15min).
 
 ---
 
-### Phase 4: End-to-End Testing
+#### Task FEV3-T2: Corregir `GITHUB_REPO` en `constants.ts:5`
+**Descripción:** Cambiar `GITHUB_REPO` de `"11-codice-opencode"` a `"codice-opencode"` en `src/infrastructure/config/constants.ts:5`. El repo real en GitHub es `fisherk2/codice-opencode`, no `fisherk2/11-codice-opencode`.
 
-#### Task FE2D-T8: Tests E2E para Clean Install con menú de opcionales ✅
-- **Commit:** `d27107c`
-- **Resultado:** `tests/e2e/13-clean-install-optional-menu.sh` (with --force only)
+**Evidencia:**
+```bash
+$ curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/fisherk2/11-codice-opencode/releases/latest"
+404
+$ curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/fisherk2/codice-opencode/releases/latest"
+200
+```
 
-#### Task FE2D-T9: Tests E2E para `.devin` resolution ✅
-- **Commit:** `d27107c`
-- **Resultado:** E2E validated via test 13 + test 14
+**Criterios de Aceptación:**
+- [ ] `GITHUB_REPO = "codice-opencode"` en `constants.ts`
+- [ ] `getGitHubApiUrl()` retorna URL correcta
+- [ ] GitHub version check funciona contra el repo real
 
-#### Task FE2D-T10: Tests E2E para `.devin` en Project Install ✅
-- **Commit:** `d27107c`
-- **Resultado:** `tests/e2e/14-project-install-optional-selection.sh`
+**Verificación:**
+- [ ] `bun test` — todos pasan
+- [ ] `just check` — 0 errores
+- [ ] Test E2E con GitHub mock retorna tag esperado
 
----
+**Dependencias:** Ninguna.
+**Archivos:**
+- `src/infrastructure/config/constants.ts:5`
 
-### Phase 5: Verificación Integral
-
-#### Task FE2D-T11: Verificar suite completa sin regresión ✅
-- **Resultado:** 472 pass, 0 fail, 1009 expects, 14/14 E2E
-
----
-
-### Phase 6: Release Preparation
-
-#### Task FE2D-T12: Bump version a 1.0.10 ✅
-- **Commit:** `d8c0b77`
-
-#### Task FE2D-T13: Actualizar CHANGELOG con sección v1.0.10 ✅
-- **Commits:** `d27107c`, `cfcce46`
-
-#### Task FE2D-T14: Documentar ADR-010 ✅
-- **Commit:** `d27107c`
-- **Archivo:** `specs/adr/adr-010-no-template-copy-flag.md`
-
-#### Task FE2D-T15: Commit + PR + Tag + Release ⏳
-- **Branch:** `fix/fev-2-d-directory-support`
-- **Status:** Ready for push + PR + squash merge + tag v1.0.10
+**Scope:** XS (5min).
 
 ---
 
-## Architecture Decisions (ADRs)
+### Phase 2: Tests unitarios (TDD)
 
-| Decisión | Status |
-|----------|--------|
-| **ADR-FEV2D-1**: Soporte nativo para directorios en `TemplateResolver` | ✅ Implementado |
-| **ADR-FEV2D-2**: Mensaje de error actualizado para directorios | ✅ Implementado |
-| **ADR-FEV2D-3**: `CleanInstallUseCase` usa `selectOptional` antes del merge | ✅ Implementado |
-| **ADR-FEV2D-4**: `--force` salta menú de opcionales | ✅ Implementado |
-| **ADR-FEV2D-5**: `AtomicStager` sin cambios (ya maneja directorios) | ✅ Verificado |
-| **ADR-FEV2D-6**: Tests E2E validan contenido de `.devin` | ✅ Implementado |
-| **ADR-FEV2D-7**: Manifest sin cambios (`noTemplateCopy` flag añadido) | ✅ Implementado |
-| **ADR-FEV2D-8**: Bump a v1.0.10 (patch) | ✅ Implementado |
-| **ADR-FEV2D-9**: Tests E2E para Clean Install con menú | ✅ Implementado |
-| **ADR-FEV2D-10**: Documentar ADR-010 | ✅ Implementado |
+#### Task FEV3-T3: Tests unitarios: `destinationExists()` retorna `true` para directorios
+**Descripción:** Crear tests que verifiquen que `BunFileSystem.destinationExists()` funciona correctamente con directorios. Esto es el test RED que faltaba para evitar que la regresión vuelva a ocurrir.
+
+**Criterios de Aceptación:**
+- [ ] Test: `destinationExists("docs")` retorna `true` cuando `docs/` existe
+- [ ] Test: `destinationExists("docs")` retorna `false` cuando `docs/` no existe
+- [ ] Test: `destinationExists("README.md")` retorna `true` cuando existe
+- [ ] Test: `destinationExists("README.md")` retorna `false` cuando no existe
+
+**Verificación:**
+- [ ] `bun test` — todos pasan
+- [ ] Coverage de `BunFileSystem.destinationExists()` ≥ 90%
+
+**Dependencias:** FEV3-T1.
+**Archivos:**
+- `tests/integration/adapters/bun-file-system.test.ts` (añadir tests)
+
+**Scope:** S (30min).
 
 ---
 
-## Post-Ship Review Fixes (11 observations)
+#### Task FEV3-T4: Tests unitarios: UpdateWorkspaceUseCase no sobrescribe standard
+**Descripción:** Crear tests que verifiquen que `UpdateWorkspaceUseCase` no sobrescribe archivos/directorios standard existentes. Este es el test de regresión para FEV-1 Issue #2.
 
-| ID | Categoría | Finding | Resolución |
-|----|-----------|---------|------------|
-| M1 | Medium | `writeVersionFileSafe` version hardcoded `"0.0.0"` | `options?.version ?? "0.0.0"` fallback |
-| S4 | Suggestion | Symlink warnings lack `--verbose` hint | Added `"Run with --verbose for details."` |
-| I2 | Important | ProjectInstallUseCase methods too long | Refactored with 6 extracted methods |
-| I1 | Important | Symlinks duplicated in test files | Import from `src/infrastructure/config/symlinks` |
-| S1 | Suggestion | Opaque test name suffixes `(a)`, `(b)`, `(c)` | Removed, using descriptive names |
-| G2 | Gap | `showSuccess` assertion missing in happy path | Added `expect(prompt.showSuccess).toHaveBeenCalled()` |
-| G6 | Gap | `confirm.not.toHaveBeenCalled()` missing | Added assertion |
-| G8 | Gap | `.devin` not-staged assertion missing | Added via mock.calls tracking |
-| S2 | Suggestion | E2E test 14 positive assertion shallow | Added `grep '"optionalSelections"\s*:\s*\[\s*\]'` |
-| S3 | Suggestion | E2E test 13 no `.gitignore` check | Added `test -f "$DEST/.gitignore"` |
-| L1 | Learning | E2E tests don't capture stderr | Added stderr capture + security keyword check |
+**Criterios de Aceptación:**
+- [ ] Test: Update no sobrescribe `README.md` existente
+- [ ] Test: Update no sobrescribe `AGENTS.md` existente
+- [ ] Test: Update no sobrescribe directorio `docs/` existente (ni sus archivos)
+- [ ] Test: Update no sobrescribe directorio `specs/` existente
+- [ ] Test: Update SÍ sobrescribe archivos mandatory (regression check)
+- [ ] Test: Update copia archivos standard que NO existen en destino
+
+**Verificación:**
+- [ ] `bun test` — todos pasan
+- [ ] Coverage de UpdateWorkspaceUseCase ≥ 90%
+
+**Dependencias:** FEV3-T1.
+**Archivos:**
+- `tests/integration/use-cases/update-workspace.test.ts` (añadir tests)
+
+**Scope:** M (1h).
+
+---
+
+#### Task FEV3-T5: Tests unitarios: GitHub API retorna tag correcto con repo fix
+**Descripción:** Crear tests que verifiquen que el GitHub version check funciona correctamente con el repo name corregido. Test contra mock server que retorna 200 con tag válido.
+
+**Criterios de Aceptación:**
+- [ ] Test: `getLatestReleaseTag()` retorna `v1.0.10` contra mock 200
+- [ ] Test: `getLatestReleaseTag()` retorna `null` contra mock 404
+- [ ] Test: `getLatestReleaseTag()` retorna `null` contra mock con tag inválido
+- [ ] Test: `getLatestReleaseTag()` retorna `null` en timeout
+
+**Verificación:**
+- [ ] `bun test` — todos pasan
+
+**Dependencias:** FEV3-T2.
+**Archivos:**
+- `tests/integration/adapters/github-rest-client.test.ts` (añadir/actualizar tests)
+
+**Scope:** S (30min).
+
+---
+
+### Phase 3: End-to-End Testing
+
+#### Task FEV3-T6: Test E2E: Update Workspace en proyecto existente
+**Descripción:** Crear script E2E que verifique que Update Workspace preserva archivos standard existentes en un proyecto real. Este test debe fallar antes del fix y pasar después.
+
+**Criterios de Aceptación:**
+- [ ] Script `tests/e2e/15-update-workspace-existing-project.sh`:
+  1. Crea directorio temporal con archivos standard pre-existentes (README.md, AGENTS.md, docs/)
+  2. Ejecuta binario compilado en modo Update Workspace con `--force`
+  3. Verifica que archivos standard NO fueron sobrescritos (contenido original intacto)
+  4. Verifica que archivos mandatory SÍ fueron sobrescritos
+- [ ] Script integrado en `just test-e2e`
+- [ ] Total E2E: 15/15 pasando
+
+**Verificación:**
+- [ ] `just test-e2e` — 15/15 escenarios
+
+**Dependencias:** FEV3-T1, FEV3-T2, FEV3-T3, FEV3-T4, FEV3-T5.
+**Archivos:**
+- `tests/e2e/15-update-workspace-existing-project.sh` (nuevo)
+
+**Scope:** M (1h).
+
+---
+
+### Phase 4: Verificación Integral
+
+#### Task FEV3-T7: Verificar suite completa sin regresión
+**Descripción:** Ejecutar toda la suite de tests para asegurar que no hay regresión con los cambios de FEV-3.
+
+**Criterios de Aceptación:**
+- [ ] `bun test` — ≥472 pass, 0 fail
+- [ ] `just check` — 0 errores
+- [ ] E2E: 15/15 pasando
+- [ ] Coverage: ≥97.66% funciones / ≥96.52% líneas (sin pérdida)
+
+**Verificación:**
+- [ ] `bun test --coverage` — sin pérdida
+- [ ] `just check` — clean
+- [ ] `just test-e2e` — 15/15
+
+**Dependencias:** FEV3-T6.
+**Archivos:** (ninguno).
+
+**Scope:** XS (10min).
+
+---
+
+### Phase 5: Release Preparation
+
+#### Task FEV3-T8: Bump version a 1.0.11 y release
+**Descripción:** Actualizar `package.json` de `1.0.10` a `1.0.11` (patch fix), actualizar CHANGELOG, hacer commit, PR, merge, tag, release pipeline.
+
+**Criterios de Aceptación:**
+- [ ] `package.json` → `"version": "1.0.11"`
+- [ ] CHANGELOG.md sección `[1.0.11]`:
+  - `Fixed`: "Update Workspace no sobrescribe archivos Estándar (regresión de FEV-1 #2)"
+  - `Fixed`: "GitHub version check funciona correctamente (repo name fix)"
+- [ ] Commit: `fix(use-case): preserve standard files in Update + fix GitHub repo URL`
+- [ ] Branch: `fix/fev-3-update-overwrite` (base = develop)
+- [ ] PR contra develop → CI pasa → squash merge
+- [ ] PR develop → main → CI pasa → squash merge
+- [ ] `git tag -a v1.0.11 -m "Release v1.0.11 — Update Workspace fix + GitHub API fix"`
+- [ ] `git push origin v1.0.11` → release pipeline ejecuta
+- [ ] `npm view @fisherk2-dev/codice version` → `1.0.11`
+- [ ] GitHub Release con 4 assets
+- [ ] Branch local eliminado
+- [ ] `develop` sincronizado con `main`
+
+**Verificación:**
+- [ ] GitHub Release publicado
+- [ ] npm `latest` → 1.0.11
+
+**Dependencias:** FEV3-T7.
+**Archivos:**
+- `package.json`
+- `CHANGELOG.md`
+
+**Scope:** S (15min).
+
+---
+
+## Riesgos y Mitigaciones
+
+| Riesgo | Impacto | Mitigación |
+|--------|---------|------------|
+| **El bug de overwrite es más complejo de lo esperado** | Alto | Investigar a fondo antes de implementar. Puede requerir cambios en múltiples capas. |
+| **El nombre del repositorio en GitHub es diferente** | Bajo | Verificar con `gh repo view` antes de cambiar constants.ts. |
+| **No hay releases en GitHub** | Bajo | Si no hay releases, el warning es correcto. Documentar y cerrar. |
+| **Los tests E2E no capturan el bug real** | Alto | Crear test que simule un proyecto real con archivos standard pre-existentes. |
+
+---
+
+## Métricas Objetivo
+
+| Métrica | v1.0.10 (actual) | Meta v1.0.11 |
+|---------|-----------------|--------------|
+| Tests (pass/fail) | 472 / 0 | ≥472 / 0 |
+| Coverage (funciones) | 97.66% | ≥97.66% |
+| Coverage (líneas) | 96.52% | ≥96.52% |
+| E2E escenarios | 14/14 | 15/15 (+1 update en proyecto real) |
+| `just check` errores | 0 | 0 |
+| Update Workspace sobrescribe standard | ❌ (bug) | ✅ |
+| GitHub version check funciona | ❌ (404) | ✅ |
+| Issues críticos abiertos | 0 | 0 |
+
+---
+
+## Resumen de Esfuerzo
+
+| Tarea | Scope | Esfuerzo |
+|-------|-------|----------|
+| FEV3-T1: Corregir `destinationExists()` para directorios | XS | 15min |
+| FEV3-T2: Corregir `GITHUB_REPO` en `constants.ts:5` | XS | 5min |
+| FEV3-T3: Tests unitarios `destinationExists()` | S | 30min |
+| FEV3-T4: Tests unitarios UpdateWorkspaceUseCase (regresión) | M | 1h |
+| FEV3-T5: Tests unitarios GitHub API | S | 30min |
+| FEV3-T6: Test E2E Update en proyecto existente | M | 1h |
+| FEV3-T7: Verificar suite completa | XS | 10min |
+| FEV3-T8: Bump version + CHANGELOG + release | S | 15min |
+| **Total** | | **~3h 45min** |
 
 ---
 
