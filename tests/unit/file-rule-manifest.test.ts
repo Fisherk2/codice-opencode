@@ -91,13 +91,17 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 		expect(optionalEntries.length).toBeGreaterThanOrEqual(topLevelCount);
 	});
 
-	test("'.devin' (not '.devin/rules') is in optional manifest entries (ADR-FEV2B-11)", () => {
-		const optionalPaths = FILE_RULE_MANIFEST.filter((r) => r.category === "optional").map(
-			(r) => r.path,
-		);
-		// ADR-FEV2B-11: renamed from .devin/rules to .devin for clearer UX
-		expect(optionalPaths).toContain(".devin");
-		expect(optionalPaths).not.toContain(".devin/rules");
+	test("'.devin' is in optional manifest entries with noTemplateCopy (FEV-2-D)", () => {
+		const devinEntry = FILE_RULE_MANIFEST.find((r) => r.path === ".devin");
+		// .devin stays in the manifest for user selection tracking but uses
+		// noTemplateCopy=true because npm strips its symlinks during packaging.
+		// All .devin/ content is generated post-installation by BunSymlinkCreator
+		// via DEVIN_SYMLINKS. (REF: ADR-FEV2D-6)
+		expect(devinEntry).toBeDefined();
+		expect(devinEntry!.category).toBe("optional");
+		expect(devinEntry!.noTemplateCopy).toBe(true);
+		expect(devinEntry!.isDirectory).toBe(true);
+		expect(FILE_RULE_MANIFEST.find((r) => r.path === ".devin/rules")).toBeUndefined();
 	});
 
 	test("removed .gitignore entry is NOT in standard manifest (FEV-2-C, Issue #11)", () => {
@@ -128,7 +132,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 		expect(manifestPaths).not.toContain(".opencode/skills");
 	});
 
-	test("all 13 optional manifest entries have unique paths", () => {
+	test("all 12 optional manifest entries have unique paths", () => {
 		const optionalEntries = FILE_RULE_MANIFEST.filter((r) => r.category === "optional");
 		const paths = optionalEntries.map((r) => r.path);
 		const uniquePaths = new Set(paths);
@@ -136,7 +140,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 	});
 
 	test.each([
-		["optional", 13],
+		["optional", 12],
 		["standard", 10],
 		["mandatory", 8],
 	])("category '%s' has %i entries", (category, expectedCount) => {

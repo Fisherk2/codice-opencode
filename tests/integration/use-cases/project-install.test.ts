@@ -14,6 +14,9 @@ import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
 
+/** Entries that require actual template file staging (excludes noTemplateCopy) */
+const STAGEABLE_RULES = FILE_RULE_MANIFEST.filter((r) => !r.noTemplateCopy);
+
 /**
  * Create a mock IFileSystem with configurable default behaviors.
  * Each test can override specific methods via the returned object.
@@ -183,7 +186,7 @@ describe("ProjectInstallUseCase", () => {
 
 			expect(result.ok).toBe(true);
 			// All manifest files should be staged (category rules handle filtering)
-			expect(calls.stageFile.length).toBe(FILE_RULE_MANIFEST.length);
+			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
 			// Commit should have been called
 			expect(calls.commitStaging).toBe(1);
 			// Version file should be written
@@ -236,7 +239,7 @@ describe("ProjectInstallUseCase", () => {
 
 			expect(result.ok).toBe(true);
 			expect(prompt.confirm).toHaveBeenCalledTimes(1);
-			expect(calls.stageFile.length).toBe(FILE_RULE_MANIFEST.length);
+			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
 		});
 
 		it("should skip installation when user rejects the confirmation", async () => {
@@ -292,9 +295,9 @@ describe("ProjectInstallUseCase", () => {
 		it("should present optional files checkbox and use selected paths", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const prompt = createMockPrompt();
-			// User selects only the first optional file
-			const firstOptional = optionalRules[0]!;
-			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue([firstOptional.path]);
+			// User selects only a stageable optional file (skip .devin which has noTemplateCopy)
+			const stageableOptional = optionalRules.find((r) => !r.noTemplateCopy)!;
+			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue([stageableOptional.path]);
 			const engine = new FileMergeEngine(fs);
 			const gitignoreCreator = createMockGitignoreCreator();
 			const useCase = new ProjectInstallUseCase(
@@ -315,8 +318,12 @@ describe("ProjectInstallUseCase", () => {
 			const selectArgs = (prompt.selectOptional as ReturnType<typeof mockFn>).mock.calls[0]!;
 			expect(selectArgs[0].length).toBe(optionalRules.length);
 			// Only one optional file was selected, so non-selected optional files are skipped
-			// Mandatory + standard + selected optional = (FILE_RULE_MANIFEST.length - optionalRules.length) + 1
-			expect(calls.stageFile.length).toBe(FILE_RULE_MANIFEST.length - optionalRules.length + 1);
+			// Mandatory + standard + 1 selected stageable optional
+			// STAGEABLE_RULES excludes noTemplateCopy entries (like .devin).
+			// optionalRules still counts .devin, so we compute:
+			// (STAGEABLE_RULES.length - (optionalRules.length - 1)) + 1 = 30 - 12 + 1 = 19
+			const stageableNonOptional = STAGEABLE_RULES.length - (optionalRules.length - 1);
+			expect(calls.stageFile.length).toBe(stageableNonOptional + 1);
 		});
 
 		it("should skip optional files when user selects none", async () => {

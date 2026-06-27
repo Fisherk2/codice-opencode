@@ -10,6 +10,9 @@ import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
 
+/** Entries that require actual template file staging (excludes noTemplateCopy) */
+const STAGEABLE_RULES = FILE_RULE_MANIFEST.filter((r) => !r.noTemplateCopy);
+
 /**
  * Create a mock IFileSystem with configurable default behaviors.
  * Each test can override specific methods via the returned object.
@@ -175,7 +178,7 @@ describe("CleanInstallUseCase", () => {
 
 			expect(result.ok).toBe(true);
 			// All manifest files should be staged (since all are treated as mandatory)
-			expect(calls.stageFile.length).toBe(FILE_RULE_MANIFEST.length);
+			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
 			// Commit should have been called
 			expect(calls.commitStaging).toBe(1);
 			// Version file should be written
@@ -323,7 +326,7 @@ describe("CleanInstallUseCase", () => {
 			expect(result.ok).toBe(true);
 			expect(prompt.confirm).toHaveBeenCalledTimes(1);
 			// Files should be staged after confirmation
-			expect(calls.stageFile.length).toBe(FILE_RULE_MANIFEST.length);
+			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
 		});
 
 		it("should skip installation when user rejects the confirmation", async () => {
@@ -374,7 +377,7 @@ describe("CleanInstallUseCase", () => {
 			// Should NOT have asked for confirmation
 			expect(prompt.confirm).not.toHaveBeenCalled();
 			// Files should be staged
-			expect(calls.stageFile.length).toBe(FILE_RULE_MANIFEST.length);
+			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
 		});
 
 		it("should write a JSON version file on success", async () => {

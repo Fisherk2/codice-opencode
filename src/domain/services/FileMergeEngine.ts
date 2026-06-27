@@ -41,6 +41,11 @@ export class FileMergeEngine implements IFileMergeEngine {
 		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
 		// Phase 1: Stage all files
 		for (const rule of rules) {
+			// Skip rules with noTemplateCopy flag — their content is generated
+			// entirely post-installation (e.g. .devin/ symlinks via BunSymlinkCreator).
+			// The rule exists only for user selection tracking in the UX.
+			if (rule.noTemplateCopy) continue;
+
 			const shouldStage = await this.shouldStage(rule, selected);
 			if (!shouldStage) continue;
 
