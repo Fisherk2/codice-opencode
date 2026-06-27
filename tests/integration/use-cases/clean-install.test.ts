@@ -3,7 +3,7 @@ import type { IGitignoreCreator } from "../../../src/application/ports/IGitignor
 import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { CleanInstallUseCase } from "../../../src/application/use-cases/CleanInstallUseCase";
-import { FILE_RULE_MANIFEST } from "../../../src/domain/entities/FileRuleManifest";
+import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
@@ -103,13 +103,16 @@ function createMockSymlinkCreator(): ISymlinkCreator & {
 
 /**
  * Create a mock IUserPrompt with configurable return values.
+ * Default selectOptional returns ALL optional paths to match
+ * the expected "copy everything" behavior in most tests.
  */
 function createMockPrompt(): IUserPrompt {
+	const allOptionalPaths = getRulesByCategory("optional").map((r) => r.path);
 	return {
 		showWarning: mockFn(() => {}),
 		showInfo: mockFn(() => {}),
 		confirm: mockFn(() => Promise.resolve(true)),
-		selectOptional: mockFn(() => Promise.resolve([])),
+		selectOptional: mockFn(() => Promise.resolve([...allOptionalPaths])),
 		showSpinner: mockFn(() => {}),
 		stopSpinner: mockFn(() => {}),
 		showIntro: mockFn(() => {}),

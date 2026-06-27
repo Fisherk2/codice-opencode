@@ -1,4 +1,4 @@
-import { FILE_RULE_MANIFEST } from "../../domain/entities/FileRuleManifest";
+import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../domain/entities/FileRuleManifest";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
@@ -55,10 +55,12 @@ export class CleanInstallUseCase {
 	 * Flow:
 	 * 1. Validate destination is writable.
 	 * 2. If destination is not empty and force is false, ask user for confirmation.
-	 * 3. Convert all manifest rules to "mandatory" and pass them to FileMergeEngine.
-	 * 4. On merge success, generate .gitignore from template (graceful on failure).
-	 * 5. Create post-installation symlinks (graceful on failure).
-	 * 6. Write the `.codice-version` file. On failure, clean staging and return error.
+	 * 3. Show optional file selection menu (skip if force=true — selects all).
+	 * 4. Convert obligatorio + estandar + selected optional to mandatory.
+	 * 5. Execute the merge engine.
+	 * 6. On merge success, generate .gitignore from template (graceful on failure).
+	 * 7. Create post-installation symlinks (graceful on failure).
+	 * 8. Write the `.codice-version` file with optionalSelections.
 	 *
 	 * @param destinationPath - Target directory for installation.
 	 * @param options - Optional flags.
@@ -85,11 +87,25 @@ export class CleanInstallUseCase {
 			}
 		}
 
-		// Convert all rules to mandatory so every file overwrites
-		const allRules = FILE_RULE_MANIFEST.map((rule) => ({
-			...rule,
-			category: "mandatory" as const,
-		}));
+		// Show optional file selection (skip if force=true — select all)
+		const optionalRules = getRulesByCategory("optional");
+		const selectedOptionals = options?.force
+			? optionalRules.map((r) => r.path)
+			: await this.userPrompt.selectOptional(optionalRules);
+
+		// Build rules: obligatorio + estandar → mandatory, selected optional → mandatory
+		const allRules = FILE_RULE_MANIFEST.map((rule) => {
+			if (rule.category === "optional") {
+				if (selectedOptionals.includes(rule.path)) {
+					return { ...rule, category: "mandatory" as const };
+				}
+				// Keep unselected optional rules as optional — merge engine skips them
+				// (the selectedOptionals set is intentionally not passed, so only
+				// mandatory-converted rules are staged)
+				return rule;
+			}
+			return { ...rule, category: "mandatory" as const };
+		});
 
 		// Execute the merge engine
 		const mergeResult = await this.mergeEngine.execute(allRules);
@@ -108,8 +124,8 @@ export class CleanInstallUseCase {
 			);
 		}
 
-		// Create post-installation symlinks (clean install copies everything,
-		// including optional .devin/ directory, so ALL 10 symlinks are created)
+		// Create post-installation symlinks (ALL 10 symlinks are created; symlink
+		// creator is idempotent, so running with .devin not selected still works)
 		const symlinkResult = await this.symlinkCreator.createSymlinks(this.symlinks);
 
 		if (!symlinkResult.ok) {
@@ -119,13 +135,13 @@ export class CleanInstallUseCase {
 			);
 		}
 
-		// Write version file (with atomic rollback on failure)
+		// Write version file with optionalSelections recorded
 		const versionResult = await writeVersionFileSafe(
 			this.fileSystem,
 			{
 				installedVersion: options?.version ?? "0.0.0",
 				installedAt: new Date().toISOString(),
-				optionalSelections: [] as string[],
+				optionalSelections: selectedOptionals,
 			},
 			"Installation",
 		);
