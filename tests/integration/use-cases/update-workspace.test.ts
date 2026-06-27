@@ -275,6 +275,28 @@ describe("UpdateWorkspaceUseCase", () => {
 			}
 		});
 
+		it("should skip entire standard directory if it already exists (all-or-nothing granularity)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			// Simulate: "docs" directory exists (return true), everything else missing
+			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(
+				async (path: string) => path === "docs",
+			);
+			const prompt = createMockPrompt();
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const engine = new FileMergeEngine(fs);
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			// The "docs" directory should NOT be staged (entirely skipped because it exists)
+			const stagedDocs = calls.stageFile.filter(
+				(p: string) => p === "docs" || p.startsWith("docs/"),
+			);
+			expect(stagedDocs.length).toBe(0);
+		});
+
 		it("should write updated version file with preserved optionalSelections", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const prompt = createMockPrompt();

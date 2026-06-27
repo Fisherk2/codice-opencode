@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-26
 **Status:** Active reference for improvement planning
-**Current version:** v1.0.10 (472 tests, 0 fail, 1009 expects, 97.66% funcs / 96.52% lines)
+**Current version:** v1.0.11 (476 tests, 0 fail, 1032 expects, 97.66% funcs / 96.52% lines)
 
 ---
 
@@ -20,7 +20,7 @@ All resolved debt has been removed from this document. For historical reference,
 |------|--------|
 | **Uncovered lines** | 85, 93–165 |
 | **What's there** | Runtime execution path: dependency creation, mode dispatch, signal handling, error display, exit code logic |
-| **Why it's low** | CLI entry point is intentionally thin (wiring + orchestration). It is tested via **14 E2E scenarios** but Bun's `--coverage` only measures unit/integration tests. All core logic lives in use cases and adapters which have 100% coverage. |
+| **Why it's low** | CLI entry point is intentionally thin (wiring + orchestration). It is tested via **15 E2E scenarios** but Bun's `--coverage` only measures unit/integration tests. All core logic lives in use cases and adapters which have 100% coverage. |
 | **Risk** | Low. Every line is exercised during E2E. |
 | **Recommendation** | Add integration tests that exercise the full `main()` flow via mock dependencies. Coverage → ~95% lines. |
 | **Target** | v1.1.0 |
@@ -126,6 +126,24 @@ All resolved debt has been removed from this document. For historical reference,
 ### 6.1 Nested `.gitignore` files excluded by npm
 
 npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/skills/ui-ux-design-pro/cli/.gitignore` are not in the published tarball. These serve internal skill development purposes, not user-facing workspace. If a future skill needs its `.gitignore` shipped, apply the rename pattern: `file.gitignore` → `file_gitignore` with post-install generation. (REF: FEV-2-C code review S7)
+
+### 6.2 Standard Directory Updates Are All-or-Nothing
+
+Standard directories (`docs/`, `specs/`, `tasks/`) are treated as a single unit
+during Update Workspace. If the directory exists in the destination, the
+entire directory is skipped — new files added to that directory in a
+template update won't reach existing users. This is consistent with SPEC
+("Estándar copied only if missing") but operates at directory granularity,
+not file granularity.
+
+| Item | Detail |
+|------|--------|
+| **Problem** | `FileMergeEngine.shouldStage()` checks `destinationExists(directory)` and skips the entire directory rule if it exists. New files within a standard directory are never delivered to existing users. |
+| **Root cause** | Standard rules are path-level, not file-level. A rule for `docs/` stages the entire `docs/` tree or skips it entirely. |
+| **Impact** | Low. Users can manually copy new standard files if needed. Template authors should place new content in new directories to ensure delivery. |
+| **Recommendation** | Implement tree-level diffing for standard directories during Update mode: compare template and destination file lists, then stage only new/missing files. |
+| **Target** | v1.2.0+ |
+| **Effort** | 6h |
 
 ---
 

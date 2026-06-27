@@ -119,6 +119,36 @@ describe("BunFileSystem", () => {
 			expect(exists).toBe(false);
 		});
 
+		it("should return false when fs.access throws EACCES (permission denied)", async () => {
+			// Make a subdirectory inaccessible so access() inside it throws EACCES
+			const restrictedDir = path.join(destDir, "no-access-dir");
+			await fs.mkdir(restrictedDir, { recursive: true });
+			await fs.chmod(restrictedDir, 0o000);
+			try {
+				const exists = await fsAdapter.destinationExists("no-access-dir/file.txt");
+				expect(exists).toBe(false);
+			} finally {
+				// Restore permissions so cleanup can remove the directory
+				await fs.chmod(restrictedDir, 0o755);
+			}
+		});
+
+		it("should return true for symlink pointing to existing target", async () => {
+			const target = path.join(destDir, "symlink-target.txt");
+			await Bun.write(target, "symlink target content");
+			const link = path.join(destDir, "symlink.txt");
+			await fs.symlink(target, link);
+			const exists = await fsAdapter.destinationExists("symlink.txt");
+			expect(exists).toBe(true);
+		});
+
+		it("should return false for broken symlink", async () => {
+			const link = path.join(destDir, "broken-symlink.txt");
+			await fs.symlink(path.join(destDir, "nonexistent-target"), link);
+			const exists = await fsAdapter.destinationExists("broken-symlink.txt");
+			expect(exists).toBe(false);
+		});
+
 		it("should reject path traversal attempts", async () => {
 			expect(fsAdapter.destinationExists("../outside.txt")).rejects.toThrow("Path traversal");
 		});

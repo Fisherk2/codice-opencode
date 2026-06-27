@@ -64,8 +64,9 @@ export class BunFileSystem implements IFileSystem {
 			await fs.access(fullPath);
 			return true;
 		} catch {
-			// Filesystem errors (permissions, etc.) treated as "does not exist"
-			// to avoid overwriting inaccessible files
+			// Filesystem errors (ENOENT, EACCES, etc.) treated as "does not exist".
+			// For standard rules this means shouldStage=true, so staging will
+			// attempt the write and surface any real permission errors there.
 			return false;
 		}
 	}

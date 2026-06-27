@@ -40,6 +40,7 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 # Standard files with custom content (should be PRESERVED)
 echo "# CUSTOM README — My Project" > "$TEMP_DIR/README.md"
 echo "# CUSTOM AGENTS — My Agent Config" > "$TEMP_DIR/AGENTS.md"
+echo "# CUSTOM ENV EXAMPLE — My Environment Config" > "$TEMP_DIR/.env.example"
 
 # Standard directories with custom content (should be PRESERVED)
 mkdir -p "$TEMP_DIR/docs"
@@ -115,21 +116,30 @@ if [[ "$PRESERVED_SPECS" != "# Custom Specs" ]]; then
 fi
 log_pass "specs/ directory preserved (standard directory not overwritten)"
 
-# 4. Mandatory files SHOULD be updated (opencode.json must exist with content from template)
+# 4. Standard standalone file preserved (not just standard directories)
+log_info "Checking that standard file .env.example was PRESERVED..."
+PRESERVED_ENV=$(head -1 "$TEMP_DIR/.env.example" 2>/dev/null || echo "")
+if [[ "$PRESERVED_ENV" != "# CUSTOM ENV EXAMPLE — My Environment Config" ]]; then
+    log_fail ".env.example was OVERWRITTEN! Expected standard file to be preserved."
+    echo "    Actual first line: $PRESERVED_ENV" >&2
+    exit 1
+fi
+log_pass ".env.example preserved (standard file not overwritten)"
+
+# 5. Mandatory files SHOULD be updated (opencode.json must match template content)
 log_info "Checking that obligatorio files were UPDATED..."
 if [[ ! -f "$TEMP_DIR/opencode.json" ]]; then
     log_fail "opencode.json was NOT created — expected mandatory file to be overwritten"
     exit 1
 fi
-OPENCODE_LINES=$(wc -l < "$TEMP_DIR/opencode.json" 2>/dev/null || echo "0")
-if [[ "$OPENCODE_LINES" -ge 5 ]]; then
-    log_pass "opencode.json was updated (obligatorio overwritten — correct behavior)"
+if diff -q "$TEMP_DIR/template/obligatorio/opencode.json" "$TEMP_DIR/opencode.json" >/dev/null 2>&1; then
+    log_pass "opencode.json content matches template (obligatorio overwritten — correct behavior)"
 else
-    log_fail "opencode.json is too small after update (lines: $OPENCODE_LINES)"
+    log_fail "opencode.json content differs from template — expected exact match after overwrite"
     exit 1
 fi
 
-# 5. New standard file (tasks/) should be COPIED since it doesn't exist
+# 6. New standard file (tasks/) should be COPIED since it doesn't exist
 log_info "Checking that new standard directory tasks/ was COPIED..."
 if [[ ! -d "$TEMP_DIR/tasks" ]]; then
     log_fail "tasks/ directory was NOT created — expected new standard directory to appear"
@@ -145,7 +155,7 @@ if [[ ! -f "$TEMP_DIR/tasks/todo.md" ]] && [[ ! -f "$TEMP_DIR/tasks/plan.md" ]];
 fi
 log_pass "tasks/ directory was copied (new standard files appear)"
 
-# 6. Optional file preserved
+# 7. Optional file preserved
 log_info "Checking that opcional file was PRESERVED..."
 PRESERVED_SCRIPT=$(head -1 "$TEMP_DIR/scripts/build.sh" 2>/dev/null || echo "")
 if [[ "$PRESERVED_SCRIPT" != "# CUSTOM SCRIPT — My Custom Build" ]]; then
@@ -155,7 +165,7 @@ if [[ "$PRESERVED_SCRIPT" != "# CUSTOM SCRIPT — My Custom Build" ]]; then
 fi
 log_pass "scripts/build.sh preserved (opcional not updated)"
 
-# 7. No security warnings in stderr
+# 8. No security warnings in stderr
 log_info "Checking stderr for security warnings..."
 if [[ -f "$STDERR_FILE" ]]; then
     STDERR_CONTENT=$(cat "$STDERR_FILE" 2>/dev/null || echo "")
@@ -166,7 +176,19 @@ if [[ -f "$STDERR_FILE" ]]; then
 fi
 log_pass "No security warnings in stderr"
 
-# 8. Version file updated
+# 9. Success message in stderr
+log_info "Checking stderr for success message..."
+if [[ -f "$STDERR_FILE" ]]; then
+    if grep -q "Workspace update complete" "$STDERR_FILE" 2>/dev/null; then
+        log_pass "Success message found in stderr"
+    else
+        log_fail "Expected 'Workspace update complete' in stderr"
+        echo "    Full stderr: $(cat "$STDERR_FILE")" >&2
+        exit 1
+    fi
+fi
+
+# 10. Version file updated
 log_info "Checking version file was updated..."
 if [[ ! -f "$TEMP_DIR/.codice-version" ]]; then
     log_fail ".codice-version file is missing!"
