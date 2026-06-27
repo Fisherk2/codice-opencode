@@ -135,16 +135,22 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		description: "Task tracking directory; user may extend",
 	},
 
-	// =============================================
-	// OPCIONAL (Optional) — only if user opts in
-	// =============================================
+	// NOTE: .devin uses noTemplateCopy=true because npm strips its symlinks
+	// during packaging (same root cause as FEV-2-B/FEV-2-C). All .devin/
+	// content is generated post-installation by BunSymlinkCreator via
+	// DEVIN_SYMLINKS. The manifest entry exists only for user selection
+	// tracking in the optional file checklist. (REF: ADR-FEV2D-6)
 	{
 		path: ".devin",
 		category: "optional",
 		isDirectory: true,
+		noTemplateCopy: true,
 		description:
 			"Devin configuration directory (rules, skills, workflows); team-specific AI agent customization",
 	},
+	// =============================================
+	// OPCIONAL (Optional) — only if user opts in
+	// =============================================
 	{
 		path: ".gitmessage",
 		category: "optional",

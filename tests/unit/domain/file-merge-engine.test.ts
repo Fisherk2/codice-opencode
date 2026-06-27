@@ -190,6 +190,56 @@ describe("FileMergeEngine — Optional rules", () => {
 	});
 });
 
+// ---- noTemplateCopy flag ----
+
+describe("FileMergeEngine — noTemplateCopy rules", () => {
+	test("skips staging for noTemplateCopy rule", async () => {
+		const { fs, calls } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+
+		const rules: FileRule[] = [
+			{
+				path: ".devin",
+				category: "optional",
+				isDirectory: true,
+				description: "Virtual entry",
+				noTemplateCopy: true,
+			},
+		];
+		const result = await engine.execute(rules, [".devin"]);
+
+		expect(result.ok).toBe(true);
+		// stageFile should NOT be called for noTemplateCopy rules
+		const stageCalls = calls.filter((c) => c.method === "stageFile");
+		expect(stageCalls.length).toBe(0);
+	});
+
+	test("skips only noTemplateCopy rules, stages others normally", async () => {
+		const { fs, calls } = createMockFs();
+		fs.destinationExists = async () => false;
+		const engine = new FileMergeEngine(fs);
+
+		const rules: FileRule[] = [
+			{ path: "opencode.json", category: "mandatory", isDirectory: false, description: "Config" },
+			{
+				path: ".devin",
+				category: "optional",
+				isDirectory: true,
+				description: "Virtual",
+				noTemplateCopy: true,
+			},
+			{ path: "Justfile", category: "optional", isDirectory: false, description: "Optional file" },
+		];
+		const result = await engine.execute(rules, [".devin", "Justfile"]);
+
+		expect(result.ok).toBe(true);
+		const staged = calls.filter((c) => c.method === "stageFile").map((c) => c.args[0]);
+		// opencode.json (mandatory) and Justfile (optional, selected, missing) should be staged
+		// .devin (noTemplateCopy) should be skipped
+		expect(staged).toEqual(["opencode.json", "Justfile"]);
+	});
+});
+
 // ---- Mixed rules ----
 
 describe("FileMergeEngine — Mixed rules", () => {

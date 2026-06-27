@@ -21,4 +21,11 @@ export interface FileRule {
 	readonly isDirectory: boolean;
 	/** Human-readable rationale for the classification */
 	readonly description: string;
+	/**
+	 * If true, skip template file resolution and staging.
+	 * Used for entries whose content is generated entirely
+	 * post-installation (e.g., symlinks via BunSymlinkCreator).
+	 * The entry exists only for user selection tracking in the UX.
+	 */
+	readonly noTemplateCopy?: boolean;
 }

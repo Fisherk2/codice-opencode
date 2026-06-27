@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+(No unreleased changes — v1.0.10 is the latest.)
+
+## [1.0.10] — 2026-06-26
+
+### Added
+
+- **`noTemplateCopy` flag on `FileRule`**: New optional field that marks manifest entries whose content is generated entirely post-installation (e.g., `.devin/` symlinks via `BunSymlinkCreator`). These entries still appear in the optional file selection UX but skip template file resolution and staging, preventing `Template file not found` errors for npm-stripped content.
+- **Optional files menu in Clean Install**: Clean Install now shows the same optional files selection menu as Project Install, allowing users to choose which optional files to include. Previously, Clean Install copied all optional files automatically without user interaction. Use `--force` to skip the menu and include all optionals.
+- **`.devin` directory support**: `TemplateResolver` now detects and copies directories recursively, resolving the `Template file not found: .devin` error that occurred because `.devin` is a directory (not a file) and npm tarballs strip directory symlinks.
+- **Extracted shared `createSymlinksWithWarning` helper**: Both use cases now delegate symlink guard logic to a shared helper in `src/application/helpers.ts`, eliminating ~24 lines of duplicated warning code across 4 methods.
+
+### Fixed
+
+- **`.devin` directory not found** (CRITICAL): `bunx @fisherk2-dev/codice` failed with `Template file not found: .devin` in all install modes. Root cause: npm strips symlinks from packages during publication, and `.devin/` contains ONLY symlinks. Solution: `.devin` stays in the optional manifest with `noTemplateCopy: true` — its content is generated post-installation by `BunSymlinkCreator` via `DEVIN_SYMLINKS` (7 symlinks), following the same pattern as `.opencode/{agents,commands,skills}` removal in v1.0.6-B.
+- **Inconsistent UX between Clean Install and Project Install**: Clean Install now presents the optional files selection menu, matching Project Install behavior.
 
 ## [1.0.9] — 2026-06-26
 
