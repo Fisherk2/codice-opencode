@@ -1,40 +1,46 @@
-# TODO: Fase FEV-3 — Update Workspace overwrite fix + GitHub API fix (v1.0.11)
+# TODO: Fase FEV-4 — SDD Command Refactor + Governance (v1.0.13)
 
 **Estado:** 🟡 Pendiente — 0/11 tareas ejecutadas
-**Fecha:** 2026-06-26
-**Dependencias:** F0-F6 ✅ → FEV-1 ✅ → FEV-2 ✅ → FEV-2-B ✅ → FEV-2-C ✅ → FEV-2-D ✅ → **FEV-3 🟡 En curso**
-**Branch:** `fix/fev-3-update-overwrite` (a crear desde develop)
-**Issues principales:**
-- Update Workspace sobrescribe archivos Estándar (README.md, AGENTS.md, docs/, specs/, tasks/)
-- GitHub version check retorna 404 — no detecta versión disponible
+**Fecha:** 2026-06-27
+**Dependencias:** F0-F6 ✅ → FEV-1 ✅ → FEV-2 ✅ → FEV-2-B ✅ → FEV-2-C ✅ → FEV-2-D ✅ → FEV-3 ✅ → **FEV-4 🟡 En curso**
+**Branch:** `feat/fev-4-issue-15` (creado desde develop, con commit de docs `d15c538`)
+**Issue principal:** #15 — Gobernanza y determinismo en los comandos del workspace
 
 ---
 
 ## Contexto Rápido
 
-**Bug 1:** Al ejecutar `bunx @fisherk2-dev/codice` → Update Workspace en un proyecto existente, archivos clasificados como `standard` están siendo sobrescritos cuando NO deberían serlo. Solo los archivos `mandatory` (obligatorio) deben sobrescribirse.
+**Issue #15** identifica problemas de gobernanza y determinismo:
+- `evolve/` ejecuta tareas fuera de su scope (escribe en `tasks/`, implementa código)
+- No existe comando dedicado para sincronizar documentación
+- No existe comando para analizar issues y documentar diagnósticos
+- Quetzalcoatl escribe en `tasks/` (exclusivo de Moctezuma)
+- Los comandos no sugieren el siguiente paso
 
-**Bug 2:** El check de versión contra la API de GitHub retorna 404, mostrando el mensaje "Could not check for updates via GitHub. Falling back to the bundled template version."
+**Solución propuesta (Issue #15):**
+1. Crear comando `docs-update/` para sincronizar documentación
+2. Crear comando `diagnosis/` para analizar issues y documentar diagnósticos
+3. Refactorizar `evolve/` con scope reducido (solo specs para proyectos maduros)
+4. Restringir gobernanza: Quetzalcoatl solo docs, Moctezuma solo `tasks/`
+5. Añadir determinismo: comandos sugieren siguiente paso
 
-**Solución:**
-1. **Bug 1:** Investigar causa raíz en `FileMergeEngine.shouldStage()` o `BunFileSystem.destinationExists()` para directorios
-2. **Bug 2:** Verificar nombre del repositorio en `constants.ts` y/o lógica de version check
-
-**Versión:** v1.0.11 (patch sobre v1.0.10)
+**Versión:** v1.0.13 (minor feature sobre v1.0.12)
 
 ---
 
 ## Tareas Pendientes
 
-### ⏳ FEV3-T1: Corregir `BunFileSystem.destinationExists()` para soportar directorios
-**Descripción:** Cambiar `Bun.file().exists()` por `fs.access()` en `src/infrastructure/adapters/BunFileSystem.ts:56-67`.
-
-**Causa raíz:** `Bun.file()` solo funciona con archivos, no directorios. Para standard directories (docs/, specs/, tasks/), retorna `false` aunque el directorio exista, causando que `FileMergeEngine.shouldStage()` los stage y sobrescriba su contenido.
+### ⏳ FEV4-T1: Refactor comando `evolve/` con scope reducido
+**Descripción:** Refactorizar `template/obligatorio/commands/evolve.md` para que solo se enfoque en crear nuevas specs para proyectos maduros. **Eliminar Routes A y B** (responsabilidades transferidas a `docs-update/` y `diagnosis/`). Si el usuario invoca `evolve/` para esas tareas, el agente debe sugerir los comandos apropiados. Añadir pre-flight que detecte madurez del proyecto.
 
 **Criterios de Aceptación:**
-- [ ] `destinationExists()` retorna `true` para directorios existentes
-- [ ] `destinationExists()` retorna `false` para directorios inexistentes
-- [ ] No se introducen cambios en la API del port
+- [ ] `evolve.md` solo crea specs (no escribe en `tasks/`)
+- [ ] **Routes A y B eliminadas completamente**
+- [ ] Si el usuario quiere actualizar docs, el agente sugiere ejecutar `docs-update/`
+- [ ] Si el usuario quiere resolver issues, el agente sugiere ejecutar `diagnosis/`
+- [ ] Pre-flight detecta madurez del proyecto
+- [ ] Si NO es maduro, sugiere usar `spec/`
+- [ ] Restricciones explícitas (no implementar código, no escribir en `tasks/`)
 
 **Verificación:**
 - [ ] `bun test` — todos pasan
@@ -42,21 +48,21 @@
 
 **Dependencias:** Ninguna.
 **Archivos:**
-- `src/infrastructure/adapters/BunFileSystem.ts:56-67`
+- `template/obligatorio/commands/evolve.md` (modificar)
 
-**Scope:** XS (15min).
+**Scope:** M (45min).
 
 ---
 
-### ⏳ FEV3-T2: Corregir `GITHUB_REPO` en `constants.ts:5`
-**Descripción:** Cambiar `GITHUB_REPO` de `"11-codice-opencode"` a `"codice-opencode"`.
-
-**Causa raíz:** El repo real es `fisherk2/codice-opencode` (verificado con curl: 200), no `fisherk2/11-codice-opencode` (404).
+### ⏳ FEV4-T2: Crear comando `docs-update/`
+**Descripción:** Crear `template/obligatorio/commands/docs-update.md` que actualice, migre y sincronice documentación. **Agente: Quetzalcoatl.**
 
 **Criterios de Aceptación:**
-- [ ] `GITHUB_REPO = "codice-opencode"` en `constants.ts`
-- [ ] `getGitHubApiUrl()` retorna URL correcta
-- [ ] GitHub version check funciona
+- [ ] Archivo creado con frontmatter YAML (`agent: quetzalcoatl`)
+- [ ] Pre-flight analiza docs existentes
+- [ ] Question-tool para resolver contradicciones
+- [ ] Restricciones: NO `tasks/`, NO código
+- [ ] Sugerencia: "Ejecuta `/plan` si hay cambios"
 
 **Verificación:**
 - [ ] `bun test` — todos pasan
@@ -64,104 +70,144 @@
 
 **Dependencias:** Ninguna.
 **Archivos:**
-- `src/infrastructure/config/constants.ts:5`
+- `template/obligatorio/commands/docs-update.md` (nuevo)
 
-**Scope:** XS (5min).
+**Scope:** M (45min).
 
 ---
 
-### ⏳ FEV3-T3: Tests unitarios: `destinationExists()` retorna `true` para directorios
-**Descripción:** Crear tests que verifiquen que `BunFileSystem.destinationExists()` funciona con directorios.
+### ⏳ FEV4-T3: Crear comando `diagnosis/`
+**Descripción:** Crear `template/obligatorio/commands/diagnosis.md` que analice issues y documente diagnósticos en `docs/diagnosis/`. **Agente: Quetzalcoatl.**
 
 **Criterios de Aceptación:**
-- [ ] Test: `destinationExists("docs")` retorna `true` cuando `docs/` existe
-- [ ] Test: `destinationExists("docs")` retorna `false` cuando `docs/` no existe
-- [ ] Test: `destinationExists("README.md")` retorna `true` cuando existe
-- [ ] Test: `destinationExists("README.md")` retorna `false` cuando no existe
+- [ ] Archivo creado con frontmatter YAML (`agent: quetzalcoatl`)
+- [ ] Pre-flight identifica issue objetivo
+- [ ] Permite ejecutar comandos de análisis
+- [ ] Crea archivos en `docs/diagnosis/`
+- [ ] Restricciones: NO implementar fixes, NO `tasks/`
+- [ ] Sugerencia: "Ejecuta `/plan` para implementar"
 
 **Verificación:**
 - [ ] `bun test` — todos pasan
-- [ ] Coverage ≥ 90%
+- [ ] `just check` — 0 errores
 
-**Dependencias:** FEV3-T1.
+**Dependencias:** Ninguna.
 **Archivos:**
-- `tests/integration/adapters/bun-file-system.test.ts`
+- `template/obligatorio/commands/diagnosis.md` (nuevo)
+
+**Scope:** M (45min).
+
+---
+
+### ⏳ FEV4-T4: Crear `docs/diagnosis/` con README y template
+**Descripción:** Crear el directorio `template/estandar/docs/diagnosis/` con README y template.
+
+**Criterios de Aceptación:**
+- [ ] Directorio `template/estandar/docs/diagnosis/` creado
+- [ ] `README.md` con propósito explicado
+- [ ] `diagnosis-template.md` con estructura completa
+
+**Verificación:**
+- [ ] `bun test` — todos pasan
+- [ ] `just check` — 0 errores
+
+**Dependencias:** FEV4-T3 (relacionado, pero puede hacerse en paralelo).
+**Archivos:**
+- `template/estandar/docs/diagnosis/README.md` (nuevo)
+- `template/estandar/docs/diagnosis/diagnosis-template.md` (nuevo)
 
 **Scope:** S (30min).
 
 ---
 
-### ⏳ FEV3-T4: Tests unitarios: UpdateWorkspaceUseCase no sobrescribe standard
-**Descripción:** Tests de regresión para FEV-1 Issue #2. Verificar que Update Workspace preserva archivos/directorios standard existentes.
+### ⏳ FEV4-T5: Actualizar permisos de `quetzalcoatl.md`
+**Descripción:** Restringir Quetzalcoatl a solo escribir documentación. NO `tasks/`, NO código, NO config.
 
 **Criterios de Aceptación:**
-- [ ] Test: Update no sobrescribe `README.md` existente
-- [ ] Test: Update no sobrescribe `AGENTS.md` existente
-- [ ] Test: Update no sobrescribe directorio `docs/` existente
-- [ ] Test: Update no sobrescribe directorio `specs/` existente
-- [ ] Test: Update SÍ sobrescribe archivos mandatory
-- [ ] Test: Update copia archivos standard que NO existen
+- [ ] Permisos: solo docs
+- [ ] Prohibido: `tasks/`, `src/`, configs
+- [ ] Sugerencia: invocar Moctezuma para planes
 
 **Verificación:**
 - [ ] `bun test` — todos pasan
-- [ ] Coverage ≥ 90%
+- [ ] `just check` — 0 errores
 
-**Dependencias:** FEV3-T1.
+**Dependencias:** Ninguna.
 **Archivos:**
-- `tests/integration/use-cases/update-workspace.test.ts`
+- `template/obligatorio/agents/quetzalcoatl.md` (modificar)
 
-**Scope:** M (1h).
+**Scope:** S (20min).
 
 ---
 
-### ⏳ FEV3-T5: Tests unitarios: GitHub API retorna tag correcto con repo fix
-**Descripción:** Crear tests que verifiquen que el GitHub version check funciona con el repo name corregido.
+### ⏳ FEV4-T6: Actualizar permisos de `moctezuma.md`
+**Descripción:** Restringir Moctezuma a SOLO escribir en `tasks/`. NO docs, NO código, NO config.
 
 **Criterios de Aceptación:**
-- [ ] Test: `getLatestReleaseTag()` retorna `v1.0.10` contra mock 200
-- [ ] Test: `getLatestReleaseTag()` retorna `null` contra mock 404
-- [ ] Test: `getLatestReleaseTag()` retorna `null` contra mock con tag inválido
-- [ ] Test: `getLatestReleaseTag()` retorna `null` en timeout
+- [ ] Permisos: solo `tasks/`
+- [ ] Prohibido: docs, código, config
+- [ ] Advertencia clara al usuario
 
 **Verificación:**
 - [ ] `bun test` — todos pasan
+- [ ] `just check` — 0 errores
 
-**Dependencias:** FEV3-T2.
+**Dependencias:** Ninguna.
 **Archivos:**
-- `tests/integration/adapters/github-rest-client.test.ts`
+- `template/obligatorio/agents/moctezuma.md` (modificar)
 
-**Scope:** S (30min).
+**Scope:** S (20min).
 
 ---
 
-### ⏳ FEV3-T6: Test E2E: Update Workspace en proyecto existente
-**Descripción:** Script E2E que verifique que Update Workspace preserva archivos standard existentes en un proyecto real. Este test debe fallar antes del fix y pasar después.
+### ⏳ FEV4-T7: Añadir determinismo a comandos SDD
+**Descripción:** Cada comando SDD termina con sugerencia del siguiente paso. Eliminar sugerencias de comandos en agentes.
 
 **Criterios de Aceptación:**
-- [ ] Script `tests/e2e/15-update-workspace-existing-project.sh`:
-  1. Crea directorio temporal con archivos standard pre-existentes
-  2. Ejecuta binario compilado en modo Update Workspace con `--force`
-  3. Verifica que archivos standard NO fueron sobrescritos
-  4. Verifica que archivos mandatory SÍ fueron sobrescritos
-- [ ] Script integrado en `just test-e2e`
-- [ ] Total E2E: 15/15 pasando
+- [ ] Cada comando SDD tiene "Siguiente paso: ejecuta [comando]"
+- [ ] Agentes sin sugerencias de comandos específicos
+- [ ] Agentes sugieren invocar otros agentes primarios
 
 **Verificación:**
-- [ ] `just test-e2e` — 15/15 escenarios
+- [ ] `bun test` — todos pasan
+- [ ] `just check` — 0 errores
 
-**Dependencias:** FEV3-T1, FEV3-T2, FEV3-T3, FEV3-T4, FEV3-T5.
+**Dependencias:** FEV4-T1, T2, T3.
 **Archivos:**
-- `tests/e2e/15-update-workspace-existing-project.sh` (nuevo)
+- `template/obligatorio/commands/{spec,plan,build,test,review,ship,design,code-simplify,webperf}.md` (modificar)
+- `template/obligatorio/agents/{quetzalcoatl,moctezuma,tlaloc}.md` (modificar)
 
-**Scope:** M (1h).
+**Scope:** L (1.5h).
 
 ---
 
-### ⏳ FEV3-T7: Verificar suite completa sin regresión
-**Descripción:** Ejecutar toda la suite de tests para asegurar que no hay regresión.
+### ⏳ FEV4-T8: Actualizar documentación de comandos
+**Descripción:** Actualizar `docs/opencode/04-commands.md` y `docs/opencode/USER_GUIDE.md`.
 
 **Criterios de Aceptación:**
-- [ ] `bun test` — ≥472 pass, 0 fail
+- [ ] `04-commands.md` lista los 12 comandos
+- [ ] `USER_GUIDE.md` incluye nuevos comandos
+- [ ] Documenta el refactor de `evolve/`
+- [ ] Actualiza el flujo determinista
+
+**Verificación:**
+- [ ] `bun test` — todos pasan
+- [ ] `just check` — 0 errores
+
+**Dependencias:** FEV4-T1, T2, T3, T7.
+**Archivos:**
+- `docs/opencode/04-commands.md` (modificar)
+- `docs/opencode/USER_GUIDE.md` (modificar)
+
+**Scope:** M (45min).
+
+---
+
+### ⏳ FEV4-T9: Verificar suite completa sin regresión
+**Descripción:** Ejecutar toda la suite de tests.
+
+**Criterios de Aceptación:**
+- [ ] `bun test` — ≥481 pass, 0 fail
 - [ ] `just check` — 0 errores
 - [ ] E2E: 15/15 pasando
 - [ ] Coverage: ≥97.66% funciones / ≥96.52% líneas
@@ -171,35 +217,25 @@
 - [ ] `just check` — clean
 - [ ] `just test-e2e` — 15/15
 
-**Dependencias:** FEV3-T6.
+**Dependencias:** T1, T2, T3, T4, T5, T6, T7, T8.
 **Archivos:** (ninguno).
 
 **Scope:** XS (10min).
 
 ---
 
-### ⏳ FEV3-T8: Bump version a 1.0.11 y release
-**Descripción:** Bump version, CHANGELOG, commit, PR, merge, tag, release pipeline.
+### ⏳ FEV4-T10: Bump version a 1.0.13 y actualizar CHANGELOG
+**Descripción:** Actualizar `package.json` y CHANGELOG.
 
 **Criterios de Aceptación:**
-- [ ] `package.json` → `"version": "1.0.11"`
-- [ ] CHANGELOG.md sección `[1.0.11]`:
-  - `Fixed`: "Update Workspace no sobrescribe archivos Estándar (regresión de FEV-1 #2)"
-  - `Fixed`: "GitHub version check funciona correctamente (repo name fix)"
-- [ ] Branch: `fix/fev-3-update-overwrite`
-- [ ] PR contra develop → CI pasa → squash merge
-- [ ] PR develop → main → CI pasa → squash merge
-- [ ] Tag `v1.0.11` creado y pusheado
-- [ ] `npm view @fisherk2-dev/codice version` → `1.0.11`
-- [ ] GitHub Release con 4 assets
-- [ ] Branch local eliminado
-- [ ] `develop` sincronizado con `main`
+- [ ] `package.json` → `"version": "1.0.13"`
+- [ ] CHANGELOG.md sección `[1.0.13]` con Added/Changed/Fixed
 
 **Verificación:**
-- [ ] GitHub Release publicado
-- [ ] npm `latest` → 1.0.11
+- [ ] `grep "1.0.13" package.json` → match
+- [ ] CHANGELOG tiene sección `[1.0.13]`
 
-**Dependencias:** FEV3-T7.
+**Dependencias:** T9.
 **Archivos:**
 - `package.json`
 - `CHANGELOG.md`
@@ -208,29 +244,62 @@
 
 ---
 
+### ⏳ FEV4-T11: Commit + PR + Tag + Release
+**Descripción:** Commit, PR a develop, CI, merge, PR a main, CI, merge, tag, release.
+
+**Criterios de Aceptación:**
+- [ ] Commit: `feat(sdd): v1.0.13 — command refactor + governance + determinism`
+- [ ] PR feat/fev-4-issue-15 → develop → CI pasa → squash merge
+- [ ] PR develop → main → CI pasa → squash merge
+- [ ] Tag `v1.0.13` creado y pusheado
+- [ ] `npm view @fisherk2-dev/codice version` → `1.0.13`
+- [ ] GitHub Release con assets
+- [ ] Branch local eliminado
+- [ ] `develop` sincronizado con `main`
+
+**Verificación:**
+- [ ] GitHub Release publicado
+- [ ] npm `latest` → 1.0.13
+- [ ] CI pasa en 3 plataformas
+
+**Dependencias:** T10.
+**Archivos:** (ninguno — solo git operations).
+
+**Scope:** S (20min).
+
+---
+
 ## Checkpoints
 
-### Checkpoint 1: After FEV3-T1 + FEV3-T2 (Bugs corregidos)
-- [ ] `BunFileSystem.destinationExists()` corregido para directorios
-- [ ] `GITHUB_REPO` corregido en `constants.ts`
+### Checkpoint 1: After T1, T2, T3, T4 (Commands creados/refactorizados)
+- [ ] `evolve.md` refactorizado con scope reducido
+- [ ] `docs-update.md` creado
+- [ ] `diagnosis.md` creado
+- [ ] `docs/diagnosis/` con README y template
 - [ ] `bun test` — todos pasan
 - [ ] `just check` — 0 errores
-- [ ] **Quality Gate:** Usuario confirma fixes
 
-### Checkpoint 2: After FEV3-T3 + FEV3-T4 + FEV3-T5 (Tests añadidos)
-- [ ] Tests de regresión para directorios pasan
-- [ ] Tests de regresión para Update Workspace pasan
-- [ ] Tests de regresión para GitHub API pasan
-- [ ] Coverage sin pérdida
+### Checkpoint 2: After T5, T6 (Gobernanza aplicada)
+- [ ] `quetzalcoatl.md` con permisos restrictivos
+- [ ] `moctezuma.md` con permisos restrictivos
+- [ ] `bun test` — todos pasan
+- [ ] `just check` — 0 errores
 
-### Checkpoint 3: After FEV3-T7 (Verificación integral)
-- [ ] `bun test`: ≥472 pass, 0 fail
+### Checkpoint 3: After T7, T8 (Determinismo + docs actualizados)
+- [ ] Todos los comandos SDD sugieren siguiente paso
+- [ ] Agentes sin sugerencias de comandos
+- [ ] `docs/opencode/04-commands.md` y `USER_GUIDE.md` actualizados
+- [ ] `bun test` — todos pasan
+- [ ] `just check` — 0 errores
+
+### Checkpoint 4: After T9 (Verificación integral)
+- [ ] `bun test`: ≥481 pass, 0 fail
 - [ ] Coverage sin pérdida
 - [ ] E2E: 15/15 pasando
 
-### Gate FEV-3: After FEV3-T8 (Release publicado)
-- [ ] `npm view` → `1.0.11`
-- [ ] GitHub Release con 4 assets
+### Gate FEV-4: After T10, T11 (Release publicado)
+- [ ] `npm view` → `1.0.13`
+- [ ] GitHub Release con assets
 - [ ] CHANGELOG actualizado
 - [ ] `main` y `develop` sincronizados
 
@@ -240,16 +309,19 @@
 
 | Tarea | Scope | Esfuerzo |
 |-------|-------|----------|
-| FEV3-T1: Corregir `destinationExists()` para directorios | XS | 15min |
-| FEV3-T2: Corregir `GITHUB_REPO` en `constants.ts:5` | XS | 5min |
-| FEV3-T3: Tests unitarios `destinationExists()` | S | 30min |
-| FEV3-T4: Tests unitarios UpdateWorkspaceUseCase (regresión) | M | 1h |
-| FEV3-T5: Tests unitarios GitHub API | S | 30min |
-| FEV3-T6: Test E2E Update en proyecto existente | M | 1h |
-| FEV3-T7: Verificar suite completa | XS | 10min |
-| FEV3-T8: Bump version + CHANGELOG + release | S | 15min |
-| **Total** | | **~3h 45min** |
+| FEV4-T1: Refactor `evolve/` | M | 45min |
+| FEV4-T2: Crear `docs-update/` | M | 45min |
+| FEV4-T3: Crear `diagnosis/` | M | 45min |
+| FEV4-T4: Crear `docs/diagnosis/` template | S | 30min |
+| FEV4-T5: Permisos `quetzalcoatl.md` | S | 20min |
+| FEV4-T6: Permisos `moctezuma.md` | S | 20min |
+| FEV4-T7: Determinismo en comandos SDD | L | 1.5h |
+| FEV4-T8: Actualizar docs/opencode/ | M | 45min |
+| FEV4-T9: Verificar suite completa | XS | 10min |
+| FEV4-T10: Bump version + CHANGELOG | S | 15min |
+| FEV4-T11: Commit + PR + Tag + Release | S | 20min |
+| **Total** | | **~7h** |
 
 ---
 
-*Última actualización: 2026-06-26*
+*Última actualización: 2026-06-27*
