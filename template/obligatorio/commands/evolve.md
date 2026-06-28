@@ -9,7 +9,7 @@ Determine whether the project is mature enough for `/evolve`. A mature project m
 
 1. **`package.json` (or equivalent)** — project metadata and dependencies
 2. **Version history** — at least one published release or tag
-3. **Existing documentation** — `SPEC.md` or `docs/` with real content (not placeholders)
+3. **Existing documentation** — @SPEC.md, @docs/ or any other documentation with real content (not placeholders)
 4. **Active development** — recent commits, open issues, or ongoing work
 
 Output a summary:
@@ -52,21 +52,16 @@ If the user's request is vague or missing key details, invoke @skills/interview-
 5. **Document architecture impact** — update @specs/adr/ if the change affects architecture
 6. Include updated architecture diagrams using @skills/architecture-diagrams/SKILL.md
 7. For non-trivial decisions, invoke @skills/doubt-driven-development/SKILL.md
-8. **Spec update done — do NOT touch code files.** Now hand off implementation:
+8. If @SPEC.md or @AGENTS.md exceeds **200 lines**, invoke @skills/agent-md-refactor/SKILL.md to modularize
+9. **Spec update done — do NOT touch code files.** Now hand off implementation:
    - If the change is simple (single file, limited scope): tell the user to run `/build`
    - If the change is complex (multi-file, needs planning): tell the user to run `/plan` then `/build`
    - Do not invoke other primary agents (Tlaloc, Moctezuma, etc.) via `task()`
 9. Use the `question` tool to confirm with the user before proceeding
 
-## Suggested Next Step
-
-After completing the spec update:
-
-> Your spec is ready. Run `/plan` to create an execution plan, or run `/build` to start implementing directly for simple changes.
-
 ## Rules
 
-1. `/evolve` is for **existing, mature projects only**. If the project is new or lacks version history, redirect to `/spec`.
+1. `/evolve` is for **existing, mature projects only**. If the project is new or lacks version history, suggest running `/spec` instead.
 2. Use the `question` tool before overwriting any existing documentation — always show the diff or changes first and confirm.
 3. When modifying specs, preserve previous versions or document the change history.
 4. Every evolution should leave the project in a consistent, documented state.
@@ -77,3 +72,9 @@ After completing the spec update:
    - Do NOT update documentation (use `/docs-update` for that).
    - Do NOT resolve issues (use `/diagnosis` for that).
 7. If the user asks for documentation updates or issue resolution, redirect them to the appropriate command instead of attempting it yourself.
+
+## Suggested Next Step
+
+After completing the spec update:
+
+> Your spec is ready. Run `/plan` to create an execution plan, or run `/build` to start implementing directly for simple changes.
