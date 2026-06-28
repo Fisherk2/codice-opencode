@@ -8,7 +8,7 @@ agent: quetzalcoatl
 Scan the project for existing documentation and identify what's present, what's missing, and what may be outdated:
 
 1. Read @SPEC.md — does it reflect current project scope?
-2. Scan @docs/ (skip @opencode/) — list all documents with last-modified dates
+2. Scan @docs/ — list all documents with last-modified dates
 3. Read @CHANGELOG.md — what recent changes might need documentation updates?
 4. Check @specs/ and @specs/adr/ — any ADRs that should be created or updated?
 5. Read @AGENTS.md — does it reference files or conventions that no longer exist?
@@ -56,10 +56,6 @@ If the user's request is vague or missing key details, invoke @skills/interview-
 4. If @SPEC.md or @AGENTS.md exceeds **200 lines**, invoke @skills/agent-md-refactor/SKILL.md to modularize
 5. Use the `question` tool to confirm changes with the user before writing
 
-## Suggested Next Step
-
-> Documentation is up to date. Run `/evolve` to create new specs, or run `/plan` if code changes are needed based on updated documentation.
-
 ## Rules
 
 1. **RESTRICTIONS:**
@@ -69,4 +65,7 @@ If the user's request is vague or missing key details, invoke @skills/interview-
 2. Never overwrite existing documentation without user confirmation — always show the diff or changes first.
 3. Use the `question` tool before writing any file to confirm with the user.
 4. When updating specs, preserve previous versions or document the change history.
-5. Ignore @docs/opencode/ entirely (workspace documentation managed separately).
+
+## Suggested Next Step
+
+> Documentation is up to date. Run `/evolve` to create new specs, or run `/plan` if code changes are needed based on updated documentation.
