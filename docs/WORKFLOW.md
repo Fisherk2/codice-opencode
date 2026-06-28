@@ -963,7 +963,7 @@ Issue #15 identifica problemas de gobernanza y determinismo en los comandos del 
 
 **Restricciones:**
 - NO implementar soluciones.
-- Solo documentar diagnósticos.
+- Solo documentar diagnósticos y soluciones.
 - Vincular desde el issue remoto, no copiar contenido.
 
 **Estructura de `docs/diagnosis/`:**
@@ -1027,13 +1027,16 @@ docs/diagnosis/
 
 | Comando | Siguiente sugerencia |
 |---------|---------------------|
-| `spec/` | "Ejecuta `plan/` para redactar el plan de ejecución" |
+| `spec/` | "Ejecuta `plan/` para redactar el plan de ejecución, o ejecuta `design/` para establecer UI/UX del proyecto" |
+| `design/` | "Ejecuta `plan/` para redactar el plan de ejecución" |
 | `plan/` | "Ejecuta `build/` para implementar el plan" |
 | `build/` | "Ejecuta `test/` para validar la implementación" |
-| `test/` | "Ejecuta `review/` para revisar el código" |
-| `review/` | "Ejecuta `ship/` para liberar la versión" |
-| `ship/` | "Ejecuta `docs-update/`, `diagnosis/` o `evolve/` para mantenimiento" |
-| `docs-update/` | "Ejecuta `plan/` si hay cambios que requieren implementación" |
+| `test/` | "Ejecuta `code-simplify/` para refactorizar y simplificar el código, o ejecuta `webperf/` en caso de que quieras optimizar el rendimiento web del proyecto" |
+| `webperf/` | "Ejecuta `code-simplify/` para refactorizar y simplificar el código" |
+| `code-simplify/` | "Ejecuta `review/` para revisar las últimas implementaciones" |
+| `review/` | "Cambia al agente `tlaloc` para corregir las observaciones, despues puedes continuar ejecutando `ship/` para preparar el lanzamiento en caso de que hayas terminado tu proyecto" |
+| `ship/` | "Ejecuta `docs-update/`, `diagnosis/` o `evolve/` para mantenimiento, si no estas listo para el lanzamiento de tu proyecto, vuelve ejecutar `ship/`" |
+| `docs-update/` | "Ejecuta `evolve/` si quieres implementar nuevos specs" |
 | `diagnosis/` | "Ejecuta `plan/` para implementar la solución diagnosticada" |
 | `evolve/` | "Ejecuta `plan/` para redactar el plan de ejecución" |
 
