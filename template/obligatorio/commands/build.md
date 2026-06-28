@@ -23,3 +23,7 @@ Pick the next pending @tasks/ from the plan. For each task:
 8. Mark the task complete and move to the next one
 
 If any step fails, follow @skills/debugging-and-error-recovery/SKILL.md
+
+## Suggested Next Step
+
+> Implementation complete. Run `/test` to validate the implementation and check for regressions.

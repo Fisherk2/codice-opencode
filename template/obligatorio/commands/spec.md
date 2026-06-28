@@ -57,6 +57,10 @@ During Phase 2, invoke supporting skills as needed:
 
 Do **not** touch @specs/design/ or @docs/DESIGN.md — those belong to `/design`. Ignore @docs/opencode/ entirely (workspace documentation).
 
+## Suggested Next Step
+
+> Your project specs are ready. Run `/plan` to create an execution plan, or run `/design` to establish the UI/UX design of the project.
+
 ## Rules
 
 1. `/spec` is for **projects in conception or design phase**. If the project already has stable code, active versions, or production commits, redirect to `/evolve`

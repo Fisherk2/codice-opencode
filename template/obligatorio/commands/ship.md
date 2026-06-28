@@ -95,3 +95,7 @@ Produce a single output:
 5. **Skip the fan-out only if all of the following are true:** the change touches 2 files or fewer, the diff is under 50 lines, and it does not touch auth, payments, data access, or config/env. Otherwise, default to fan-out. `/ship` is designed for production-bound changes — when the blast radius is non-trivial, run the parallel review even if the diff looks small.
 6. **Skip `accessibility-tester`** if Phase 0 detects no UI files. Do not spawn accessibility checks for CLI tools, APIs, libraries, or other non-UI projects.
 7. After launch, if an incident occurs, follow @skills/incident-response/SKILL.md for triage, communication, and blameless postmortems.
+
+## Suggested Next Step
+
+> Ship evaluation complete. Run `/docs-update`, `/diagnosis`, or `/evolve` for maintenance. If you are not ready to launch, run `/ship` again when ready.

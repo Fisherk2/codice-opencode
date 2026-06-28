@@ -78,6 +78,10 @@ Once all reports are back, synthesize into a comprehensive design specification:
 
 2. Also create or update supporting files in @specs/design/
 
+## Suggested Next Step
+
+> Design specification is ready. Run `/plan` to create an execution plan for the implementation.
+
 ## Rules
 
 1. Phase A personas run in parallel — never sequentially
