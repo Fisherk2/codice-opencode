@@ -202,18 +202,15 @@ Break the workflow into clear numbered steps:
 
 ### 4. Routes and Branching
 
-For commands with multiple paths (like `/evolve`):
+For commands with multiple paths (like `/spec` which handles different project states):
 
 ```markdown
-### Route A — Update Documentation
+### Phase 0: Determine Goal
 
-1. Audit current docs
-2. Update or create specific files
+Use the `question` tool to let the user choose — never decide automatically:
 
-### Route B — Resolve an Issue
-
-1. Understand the issue
-2. Propose a solution
+- **A) New or modified specs** — Create new specs or update existing ones
+- **B) Something else** — Redirect to the appropriate command
 ```
 
 ### 5. Rules Section
@@ -266,7 +263,7 @@ Primary agents that don't write code (Quetzalcoatl, Tezcatlipoca) should redirec
 If a command is used in the wrong context, redirect:
 
 ```markdown
-1. `/evolve` is for **existing projects only**. Redirect to `/spec` for new projects.
+1. `/evolve` is for **mature projects only**. Redirect to `/spec` for new or immature projects.
 ```
 
 ---

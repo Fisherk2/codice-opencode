@@ -63,7 +63,9 @@ The user (or a slash command) is the orchestrator. **Personas do not call other 
 - `/test` → wraps `mictlantecuhtli` with TDD skill
 - `/code-simplify` → wraps `tlaloc` with code simplification skill
 - `/design` → wraps `quetzalcoatl` with UI/UX design skills (fan-out to `ux-researcher` + `frontend-developer` + `accessibility-tester`)
-- `/evolve` → wraps `quetzalcoatl` with living documentation and specs evolution workflow for existing projects
+- `/evolve` → wraps `quetzalcoatl` with spec creation workflow for mature projects with version history
+- `/docs-update` → wraps `quetzalcoatl` with documentation synchronization workflow
+- `/diagnosis` → wraps `quetzalcoatl` with issue analysis and technical diagnosis workflow
 - `/webperf` → wraps `mictlantecuhtli` with web performance audit (delegates to `web-performance-auditor` subagent)
 
 **Slash command (orchestrator — fan-out)** — Pick this only when **independent** investigations can run in parallel and produce reports that a single agent then merges.
@@ -203,12 +205,12 @@ user runs:  /spec  →  /plan  →  /build  →  /test  →  /review  →  /ship
 
 ```
 user runs:  /design  →  /spec  →  /plan  →  /build  →  /test  →  /webperf  →  /code-simplify  →  /review  →  /ship
-user runs:  /evolve  →  /plan  →  /build  →  /test  →  /webperf  →  /code-simplify  →  /review  →  /ship  *(existing project)*
+user runs:  /evolve  →  /plan  →  /build  →  /test  →  /webperf  →  /code-simplify  →  /review  →  /ship  *(mature project)*
 ```
 
 **Use when:** the workflow has dependencies (each step needs the previous step's output) and human judgment between steps adds value.
 
-**Examples in this repo:** the entire DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP lifecycle, with secondary commands `/design` (UI/UX design), `/evolve` (existing project evolution), and `/code-simplify` (code clarity) available as needed.
+**Examples in this repo:** the entire DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP lifecycle, with secondary commands `/design` (UI/UX design), `/evolve` (mature project spec creation), `/docs-update` (documentation sync), `/diagnosis` (issue analysis), and `/code-simplify` (code clarity) available as needed.
 
 **Cost:** one sub-agent context per step. Free for the orchestration layer because there is no orchestrator agent.
 
