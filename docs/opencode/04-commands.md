@@ -202,18 +202,15 @@ Break the workflow into clear numbered steps:
 
 ### 4. Routes and Branching
 
-For commands with multiple paths (like `/evolve`):
+For commands with multiple paths (like `/spec` which handles different project states):
 
 ```markdown
-### Route A — Update Documentation
+### Phase 0: Determine Goal
 
-1. Audit current docs
-2. Update or create specific files
+Use the `question` tool to let the user choose — never decide automatically:
 
-### Route B — Resolve an Issue
-
-1. Understand the issue
-2. Propose a solution
+- **A) New or modified specs** — Create new specs or update existing ones
+- **B) Something else** — Redirect to the appropriate command
 ```
 
 ### 5. Rules Section
@@ -266,7 +263,7 @@ Primary agents that don't write code (Quetzalcoatl, Tezcatlipoca) should redirec
 If a command is used in the wrong context, redirect:
 
 ```markdown
-1. `/evolve` is for **existing projects only**. Redirect to `/spec` for new projects.
+1. `/evolve` is for **mature projects only**. Redirect to `/spec` for new or immature projects.
 ```
 
 ---
@@ -276,8 +273,10 @@ If a command is used in the wrong context, redirect:
 | Command | Agent | Phase | When to Use |
 |---------|-------|-------|-------------|
 | [`/spec`](../../commands/spec.md) | quetzalcoatl | DEFINE | New projects — establish specs from scratch |
-| [`/evolve`](../../commands/evolve.md) | quetzalcoatl | EVOLVE | Existing projects — update living docs |
+| [`/evolve`](../../commands/evolve.md) | quetzalcoatl | EVOLVE | Mature projects — create new or modify specs |
 | [`/design`](../../commands/design.md) | quetzalcoatl | DESIGN | UI/UX projects — design specification |
+| [`/docs-update`](../../commands/docs-update.md) | quetzalcoatl | DOCS | Sync documentation with code changes |
+| [`/diagnosis`](../../commands/diagnosis.md) | quetzalcoatl | DIAGNOSE | Analyze issues and document technical diagnoses |
 | [`/plan`](../../commands/plan.md) | moctezuma | PLAN | After spec — decompose into tasks |
 | [`/build`](../../commands/build.md) | tlaloc | BUILD | After plan — implement incrementally |
 | [`/test`](../../commands/test.md) | mictlantecuhtli | VERIFY | After build — prove it works |

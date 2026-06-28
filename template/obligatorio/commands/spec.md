@@ -7,7 +7,7 @@ agent: quetzalcoatl
 
 1. Read @AGENTS.md — real project-specific rules or placeholder?
 2. Read @SPEC.md — real content or missing?
-3. Scan @docs/ (skip @opencode/) — real documentation or empty templates?
+3. Scan @docs/ — real documentation or empty templates?
 4. Check @specs/ and @specs/adr/ — any existing modular files?
 
 Output a summary:
@@ -55,7 +55,7 @@ During Phase 2, invoke supporting skills as needed:
 - @skills/design-patterns/SKILL.md when applying GoF or enterprise patterns
 - @skills/api-spec-generation/SKILL.md for OpenAPI or AsyncAPI specs
 
-Do **not** touch @specs/design/ or @docs/DESIGN.md — those belong to `/design`. Ignore @docs/opencode/ entirely (workspace documentation).
+Do **not** touch @specs/design/ or @docs/DESIGN.md — those belong to `/design`.  workspace documentation is managed separately.
 
 ## Rules
 
@@ -63,3 +63,7 @@ Do **not** touch @specs/design/ or @docs/DESIGN.md — those belong to `/design`
 2. Never overwrite existing files without user confirmation — always show changes first
 3. @SPEC.md is the single source of truth; modular specs in @specs/ extend it
 4. Use the `question` tool to confirm all changes with the user before writing any file
+
+## Suggested Next Step
+
+> Your project specs are ready. Run `/plan` to create an execution plan, or run `/design` to establish the UI/UX design of the project.

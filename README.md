@@ -30,7 +30,7 @@ A production-grade workspace integrating 45 engineering skills + 1 meta-skill or
 ## Features
 
 - **45 Engineering Skills + 1 Meta-Skill** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, notebooks, and more, organized in 10 SDD phases (3 optional) + Extra
-- **10 Slash Commands** — `/spec`, `/design`, `/evolve`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`
+- **12 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`
 - **6 Main Agents + 96+ Subagents** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 96+ subagents specialized in frontend, backend, DevOps, testing, security, and more
 - **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
 - **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
@@ -258,9 +258,11 @@ flowchart LR
     G --> H["/ship<br/>SHIP"]
     H --> I["Go Live"]
 
-    J["/evolve<br/>EVOLVE (existing project)"] -.-> A
+    J["/evolve<br/>EVOLVE (mature project)"] -.-> A
     K["/design<br/>DESIGN (optional)"] -.-> A
     K -.-> C
+    L["/docs-update<br/>DOCS"] -.-> A
+    M["/diagnosis<br/>DIAGNOSE"] -.-> C
 ```
 
 ### Full Cycle
@@ -269,7 +271,9 @@ flowchart LR
 |------|---------|--------|--------------|-------------|
 | Design (optional) | `/design` | quetzalcoatl | Parallel fan-out: UX research, technical feasibility, accessibility. Merges into design specification in `specs/design/` | ui-ux-design-pro, design-taste-frontend, frontend-ui-engineering |
 | Define (new) | `/spec` | quetzalcoatl | Detects project state (3 cases), clarifies requirements, generates docs (PRD, TRD, ARCHITECTURE, WORKFLOW) and synthesizes into SPEC.md | spec-driven-development, clean-ddd-hexagonal, architecture-diagrams, idea-refine, interview-me |
-| Evolve (existing) | `/evolve` | quetzalcoatl | Detects existing project state, determines route (docs, issues, new specs), updates living documentation. Replaces `/spec` in established projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
+| Evolve (mature) | `/evolve` | quetzalcoatl | Creates new specs or modifies existing ones for mature projects with version history. Redirects to `/spec` for new/immature projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
+| Sync documentation | `/docs-update` | quetzalcoatl | Pre-flight analyzes docs state, question-tool resolves contradictions, then synchronizes docs with current codebase | documentation-and-adrs, agent-md-refactor, architecture-diagrams |
+| Diagnose issues | `/diagnosis` | quetzalcoatl | Analyzes remote issues, executes diagnostic commands, documents root cause in `docs/diagnosis/` with structured template | interview-me, debugging-and-error-recovery |
 | Plan | `/plan` | moctezuma | Analyzes dependencies, cuts vertically, writes tasks with acceptance criteria in `tasks/plan.md` and `tasks/todo.md` | planning-and-task-breakdown, clean-ddd-hexagonal, architecture-diagrams |
 | Build | `/build` | tlaloc | Takes next pending task, applies RED-GREEN-REFACTOR with TDD, runs full suite, commits | incremental-implementation, test-driven-development, solid, error-handling-patterns |
 | Verify | `/test` | mictlantecuhtli | TDD for features (test → implement → refactor). Prove-It for bugs (reproduce → fix → verify). Escalates to incident-response if incident | test-driven-development, error-handling-patterns, browser-testing-with-devtools |
@@ -306,11 +310,13 @@ project-root/
 │   ├── tezcatlipoca.md         #   Smoking Mirror Critic
 │   └── ... (96+ subagent files)
 │
-├── commands/                   # 10 slash commands for OpenCode
+├── commands/                   # 12 slash commands for OpenCode
 │   ├── build.md                #   BUILD
 │   ├── code-simplify.md        #   SIMPLIFY (recommended pre-review)
 │   ├── design.md               #   DESIGN (optional, UI/UX)
-│   ├── evolve.md               #   EVOLVE (existing projects)
+│   ├── diagnosis.md            #   DIAGNOSE (issue analysis)
+│   ├── docs-update.md          #   DOCS (sync documentation)
+│   ├── evolve.md               #   EVOLVE (mature projects)
 │   ├── plan.md                 #   PLAN
 │   ├── review.md               #   REVIEW
 │   ├── ship.md                 #   SHIP

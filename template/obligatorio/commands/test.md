@@ -34,3 +34,7 @@ During testing, invoke supporting skills as the task requires:
 - @skills/performance-analysis/SKILL.md if tests reveal performance concerns
 - @skills/security-and-hardening/SKILL.md when testing security-sensitive features
 - @skills/design-taste-frontend/SKILL.md to verify visual consistency in frontend
+
+## Suggested Next Step
+
+> All tests pass. Run `/code-simplify` to refactor and simplify the code, or run `/webperf` if you want to optimize web performance.

@@ -23,3 +23,7 @@ Before finalizing, use the `question` tool to resolve ambiguities:
 - Let the user dismiss, accept, or modify each disputed finding
 
 Output a structured review with specific file:line references and fix recommendations. Only after user confirmation, delegate fixes to Tlaloc via `/build`.
+
+## Suggested Next Step
+
+> Review complete. Switch to agent `tlaloc` to fix the observations, then run `/ship` to prepare for launch once your project is ready.

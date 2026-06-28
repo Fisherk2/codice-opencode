@@ -31,3 +31,7 @@ The subagent returns a scorecard (only populated with sourced values), a ranked 
 ## Output
 
 Return the full audit report to the user. For remediation of findings, invoke @skills/performance-optimization/SKILL.md for granular optimization guidance and implementation steps.
+
+## Suggested Next Step
+
+> Performance audit complete. Run `/code-simplify` to refactor and simplify the code with performance improvements applied.

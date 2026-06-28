@@ -7,7 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(No unreleased changes — v1.0.12 is the latest.)
+(No unreleased changes beyond v1.0.13.)
+
+## [1.0.13] — 2026-06-27
+
+### Added
+
+- **New `docs-update/` command**: Dedicated command for updating, migrating, and synchronizing documentation with code and configuration files. Includes pre-flight analysis of existing docs, question-tool integration for resolving contradictions, and strict restrictions (no `tasks/` writes, no code implementation).
+- **New `diagnosis/` command**: Analyzes remote repository issues, detects problems, and documents technical diagnostics in `docs/diagnosis/`. Creates structured diagnosis files with metadata, symptoms, root cause analysis, and verification steps. Includes `docs/diagnosis/README.md` and `diagnosis-template.md` in the template.
+- **`docs/diagnosis/` directory in template**: New standard directory for operational technical knowledge. Contains README explaining its purpose and a template for documenting diagnoses.
+
+### Changed
+
+- **Refactored `evolve/` command**: Simplified scope to only create new specs for mature projects with robust versions. Removed ability to write to `tasks/` or implement code. Added pre-flight to detect project maturity level.
+- **Agent governance — Quetzalcoatl**: Updated permissions to prohibit writing to `tasks/`, source code (`src/`), and configuration files. Quetzalcoatl now exclusively writes documentation.
+- **Agent governance — Moctezuma**: Updated permissions to restrict writing exclusively to `tasks/` directory and its files.
+- **SDD determinism**: All SDD lifecycle commands now suggest the next command to execute upon completion (e.g., `spec/` suggests `plan/`, `plan/` suggests `build/`, etc.).
+- **Removed command suggestions from agent configurations**: Primary agents no longer suggest specific commands. Instead, they suggest invoking other primary agents (e.g., Quetzalcoatl suggests invoking Moctezuma for execution planning).
+
+### Fixed
+
+- **Issue #15**: Resolved governance and determinism issues in workspace commands. `evolve/` no longer executes tasks outside its scope (writing to `tasks/`, implementing code). Clear separation of concerns between documentation (Quetzalcoatl), planning (Moctezuma), and implementation (Tlaloc).
 
 ## [1.0.12] — 2026-06-27
 

@@ -17,3 +17,7 @@ Then invoke @skills/planning-and-task-breakdown/SKILL.md.
 6. Use the `question` tool to present the plan for human review before saving. For complex plans, visualize dependencies and flows using @skills/architecture-diagrams/SKILL.md
 
 7. Use the `question` tool to confirm with the user before saving to @tasks/plan.md and @tasks/todo.md
+
+## Suggested Next Step
+
+> The plan is ready. Run `/build` to start implementing the first task from the plan.

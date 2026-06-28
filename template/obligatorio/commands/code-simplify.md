@@ -21,3 +21,7 @@ Simplify recently changed code (or the specified scope) while preserving exact b
 6. Verify all tests pass, the build succeeds, and the diff is clean
 
 If tests fail after a simplification, revert that change and reconsider. Use @skills/code-review-and-quality/SKILL.md to review the result.
+
+## Suggested Next Step
+
+> Code simplified. Run `/review` to review the latest implementations and ensure quality.

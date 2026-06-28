@@ -35,7 +35,7 @@ See [06-mcp-servers.md](./06-mcp-servers.md) for MCP server setup (Context7, Exc
 
 ```bash
 ls .opencode/commands/
-# → build.md  code-simplify.md  design.md  evolve.md  plan.md  review.md  ship.md  spec.md  test.md  webperf.md
+# → build.md  code-simplify.md  design.md  diagnosis.md  docs-update.md  evolve.md  plan.md  review.md  ship.md  spec.md  test.md  webperf.md
 ```
 
 ### Run your first SDD workflow
@@ -43,7 +43,7 @@ ls .opencode/commands/
 | Step | Command | Phase |
 |------|---------|-------|
 | Define what to build (new project) | `/spec "Create a REST API for tasks"` | DEFINE |
-| Evolve existing project | `/evolve "Add user authentication"` | EVOLVE |
+| Evolve mature project | `/evolve "Add user authentication"` | EVOLVE |
 | Design the interface (optional) | `/design "Design dashboard UI"` | DESIGN |
 | Plan the tasks | `/plan` | PLAN |
 | Implement incrementally | `/build` | BUILD |
@@ -59,12 +59,14 @@ See [02-orchestration-patterns.md](./02-orchestration-patterns.md) for the SDD l
 
 ## Commands
 
-Ten slash commands map to the development lifecycle. Each activates the right skills automatically via a primary agent.
+Twelve slash commands map to the development lifecycle. Each activates the right skills automatically via a primary agent.
 
 | Action | Command | Primary Agent | Principle |
 |--------|---------|---------------|-----------|
 | Define what to build (new project) | `/spec` | quetzalcoatl | Spec before code |
-| Evolve existing project | `/evolve` | quetzalcoatl | Document before coding |
+| Evolve mature project | `/evolve` | quetzalcoatl | Create new specs or modify existing ones for mature projects |
+| Sync documentation | `/docs-update` | quetzalcoatl | Update and sync documentation with code changes |
+| Diagnose issues | `/diagnosis` | quetzalcoatl | Analyze issues and document technical diagnoses |
 | Design UI/UX (optional) | `/design` | quetzalcoatl | Design before implementation |
 | Plan how to build it | `/plan` | moctezuma | Small, atomic tasks |
 | Build incrementally | `/build` | tlaloc | One slice at a time |
@@ -287,11 +289,13 @@ project-root/
 │   ├── tezcatlipoca.md         #   Smoking Mirror Critic
 │   └── ... (96+ subagent files)
 │
-├── commands/                   # 10 slash commands for OpenCode
+├── commands/                   # 12 slash commands for OpenCode
 │   ├── build.md                #   BUILD
 │   ├── code-simplify.md        #   SIMPLIFY (recommended pre-review)
 │   ├── design.md               #   DESIGN (optional, UI/UX)
-│   ├── evolve.md               #   EVOLVE (existing projects)
+│   ├── diagnosis.md            #   DIAGNOSE (issue analysis)
+│   ├── docs-update.md          #   DOCS (sync documentation)
+│   ├── evolve.md               #   EVOLVE (mature projects)
 │   ├── plan.md                 #   PLAN
 │   ├── review.md               #   REVIEW
 │   ├── ship.md                 #   SHIP
