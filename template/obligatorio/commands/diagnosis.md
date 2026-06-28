@@ -1,85 +1,67 @@
 ---
-description: Analyze issues and document technical diagnoses
+description: Analyze problems and document technical diagnoses
 agent: quetzalcoatl
 ---
 
-## Pre-Flight: Identify the Target Issue
+## Pre-Flight: Identify the Problem
 
-Determine which issue to diagnose:
+Detect input type:
 
-1. **Check for a provided issue URL or number** — did the user provide a GitHub/GitLab issue link or ID?
-2. **Scan remote repository** — if available, fetch open issues from the project's remote repository
-3. **Read local issue references** — check @tasks/, @docs/diagnosis/, or other local references
+- **Remote issue** — user provided a GitHub/GitLab URL or issue number → fetch and summarize
+- **Local bug** — user describes symptoms or error messages → use as-is
+- **Vague report** — invoke @skills/interview-me/SKILL.md to extract: symptoms, when it started, expected vs actual behavior.
 
-Output a summary:
+**Always use the `question` tool to let the user confirm what problem they want to analyze — never decide automatically, even if the issue or symptoms seem clear or trivial.** The user must answer doubts, suggestions, and ambiguities before proceeding.
+
+Output summary:
 
 ```
-TARGET IDENTIFIED:
-- Issue: [#NNN](url) — Title of the issue
-- Repository: [org/repo]
-- Symptoms: [brief description from issue]
-- Severity: [critical / high / medium / low as reported]
+TARGET: [issue #NNN | local bug | error report]
+Symptoms: [brief description]
+Severity: [critical / high / medium / low]
 ```
 
-If no issue is identified, ask the user to provide one. Do not proceed without a clear target.
+Do not proceed without a clear target.
 
-## Phase 0: Understand the Issue
+## Phase 1: Analyze
 
-If the user's request is vague or missing key details, invoke @skills/interview-me/SKILL.md to extract full context before proceeding.
+Delegate to analysis subagents based on problem type. **No implementation — analysis only.**
 
-Use the `question` tool to clarify:
+| Problem type | Subagent | Skill |
+|-------------|----------|-------|
+| Error / crash / stack trace | `error-detective` | @skills/debugging-and-error-recovery/SKILL.md |
+| Code quality / logic bug | `code-reviewer` | @skills/code-review-and-quality/SKILL.md |
+| Security vulnerability | `security-auditor` | @skills/security-and-hardening/SKILL.md |
+| Performance issue | `web-performance-auditor` | @skills/performance-analysis/SKILL.md |
+| Database / query problem | `database-optimizer` | — |
+| Dependency issue (CVE, license) | — | @skills/dependency-audit/SKILL.md |
 
-1. What are the exact symptoms or error messages?
-2. When did this start? What changed before it started?
-3. Is there a specific environment where it occurs?
-4. What is the expected behavior vs actual behavior?
+For problems spanning multiple domains, invoke subagents **sequentially**. Synthesize findings before documenting.
 
-## Phase 1: Analyze and Diagnose
+Use terminal tools to investigate: check logs, inspect config, test components, run diagnostics.
 
-1. **Reproduce the issue** — if feasible, attempt to reproduce the problem locally
-2. **Execute analysis commands** — use terminal tools to investigate:
-   - Check logs, error outputs, stack traces
-   - Inspect configuration files
-   - Test suspected components
-   - Run diagnostic tools
-3. **Identify root cause** — determine what is causing the issue, not just where it manifests
+Invoke `question-tool` to ask clarifying questions if needed before proceeding to Phase 2.
 
-## Phase 2: Document the Diagnosis
+## Phase 2: Document
 
-Create a diagnosis file in `docs/diagnosis/`. Use the template at `docs/diagnosis/diagnosis-template.md`.
-
-**When to create vs. update:**
+Create diagnosis in `docs/diagnosis/` using @docs/diagnosis/diagnosis-template.md
 
 | Situation | Action |
 |-----------|--------|
-| New symptom, unknown component | Create `docs/diagnosis/fix01-<short-description>.md` |
-| Known symptom, slight variation | Update existing file, add "Recurrences" section |
-| Temporary workaround | Document with banner `⚠️ WORKAROUND` |
-| Pattern recurring ≥3 times | Suggest automation: script, test, or alert |
+| New symptom | Create `fix01-<short-description>.md` |
+| Known symptom, variation | Update existing file, add "Recurrences" |
+| Workaround only | Banner `⚠️ WORKAROUND` |
+| Pattern ≥3 times | Suggest automation |
 
-**What to include in every diagnosis:**
-
-1. **Summary** — one-line description of the problem
-2. **Symptoms** — what the user or system observes
-3. **Root cause** — the underlying issue (not just the symptom)
-4. **Impact** — what is affected and how severely
-5. **Proposed solution** — how to fix it (implementation steps, not code)
-6. **References** — link to the remote issue, related files, stack traces
+**Required sections:** Summary, Symptoms, Root Cause, Impact, Proposed Solution (steps, no code), References.
 
 **Restrictions:**
-- ❌ Do NOT write to `TECH_DEBT.md` (for intentional architectural decisions, not operational debugging).
-- ❌ Do NOT write to `README.md` (saturates quickly).
-- ❌ Do NOT write code comments with procedures (comments explain "why", not procedures).
-- ❌ Do NOT implement the fix — only document the diagnosis.
+- ❌ Do NOT implement fixes — only document diagnosis
+- ❌ Do NOT write to `tasks/`, task files are managed by command `/plan`
+- ❌ Do NOT copy full issue content — link to remote issue instead
+
+Invoke `question-tool` to confirm the diagnosis or ask for clarification if needed to make changes before proceeding with plan creation.
 
 ## Suggested Next Step
 
 > Diagnosis documented in `docs/diagnosis/`. Run `/plan` to create an execution plan for implementing the fix.
-
-## Rules
-
-1. **Link to the remote issue** — include the URL in the diagnosis file. Do NOT copy the full issue content.
-2. **Diagnose only, never implement** — do not write fix code. Only document what needs to change and why.
-3. Do NOT write to `tasks/` (exclusive to `/plan`).
-4. If the diagnosis reveals an existing fix in progress, update the existing diagnosis instead of creating a new one.
-5. Use the `question` tool to confirm the diagnosis with the user before writing the file.
