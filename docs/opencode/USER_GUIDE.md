@@ -287,11 +287,13 @@ project-root/
 │   ├── tezcatlipoca.md         #   Smoking Mirror Critic
 │   └── ... (96+ subagent files)
 │
-├── commands/                   # 10 slash commands for OpenCode
+├── commands/                   # 12 slash commands for OpenCode
 │   ├── build.md                #   BUILD
 │   ├── code-simplify.md        #   SIMPLIFY (recommended pre-review)
 │   ├── design.md               #   DESIGN (optional, UI/UX)
-│   ├── evolve.md               #   EVOLVE (existing projects)
+│   ├── diagnosis.md            #   DIAGNOSE (issue analysis)
+│   ├── docs-update.md          #   DOCS (sync documentation)
+│   ├── evolve.md               #   EVOLVE (mature projects)
 │   ├── plan.md                 #   PLAN
 │   ├── review.md               #   REVIEW
 │   ├── ship.md                 #   SHIP

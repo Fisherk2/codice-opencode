@@ -276,8 +276,10 @@ If a command is used in the wrong context, redirect:
 | Command | Agent | Phase | When to Use |
 |---------|-------|-------|-------------|
 | [`/spec`](../../commands/spec.md) | quetzalcoatl | DEFINE | New projects — establish specs from scratch |
-| [`/evolve`](../../commands/evolve.md) | quetzalcoatl | EVOLVE | Existing projects — update living docs |
+| [`/evolve`](../../commands/evolve.md) | quetzalcoatl | EVOLVE | Mature projects — create new or modify specs |
 | [`/design`](../../commands/design.md) | quetzalcoatl | DESIGN | UI/UX projects — design specification |
+| [`/docs-update`](../../commands/docs-update.md) | quetzalcoatl | DOCS | Sync documentation with code changes |
+| [`/diagnosis`](../../commands/diagnosis.md) | quetzalcoatl | DIAGNOSE | Analyze issues and document technical diagnoses |
 | [`/plan`](../../commands/plan.md) | moctezuma | PLAN | After spec — decompose into tasks |
 | [`/build`](../../commands/build.md) | tlaloc | BUILD | After plan — implement incrementally |
 | [`/test`](../../commands/test.md) | mictlantecuhtli | VERIFY | After build — prove it works |

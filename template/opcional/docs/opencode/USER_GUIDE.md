@@ -23,9 +23,11 @@ flowchart LR
     G --> H["/ship<br/>SHIP"]
     H --> I["Go Live"]
 
-    J["/evolve<br/>EVOLVE (existing project)"] -.-> A
+    J["/evolve<br/>EVOLVE (mature project)"] -.-> A
     K["/design<br/>DESIGN (optional)"] -.-> A
     K -.-> C
+    L["/docs-update<br/>DOCS"] -.-> A
+    M["/diagnosis<br/>DIAGNOSE"] -.-> C
 ```
 
 ### Full Cycle
@@ -34,7 +36,9 @@ flowchart LR
 |------|---------|--------|--------------|-------------|
 | Design (optional) | `/design` | quetzalcoatl | Parallel fan-out: UX research, technical feasibility, accessibility. Merges into design specification in `specs/design/` | ui-ux-design-pro, design-taste-frontend, frontend-ui-engineering |
 | Define (new) | `/spec` | quetzalcoatl | Detects project state (3 cases), clarifies requirements, generates docs (PRD, TRD, ARCHITECTURE, WORKFLOW) and synthesizes into SPEC.md | spec-driven-development, clean-ddd-hexagonal, architecture-diagrams, idea-refine, interview-me |
-| Evolve (existing) | `/evolve` | quetzalcoatl | Detects existing project state, determines route (docs, issues, new specs), updates living documentation. Replaces `/spec` in established projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
+| Evolve (mature) | `/evolve` | quetzalcoatl | Creates new specs or modifies existing ones for mature projects with version history. Redirects to `/spec` for new/immature projects. Routes A/B moved to `/docs-update` and `/diagnosis` | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
+| Sync documentation | `/docs-update` | quetzalcoatl | Pre-flight analyzes docs state, question-tool resolves contradictions, then synchronizes docs with current codebase | documentation-and-adrs, agent-md-refactor, architecture-diagrams |
+| Diagnose issues | `/diagnosis` | quetzalcoatl | Analyzes remote issues, executes diagnostic commands, documents root cause in `docs/diagnosis/` with structured template. Diagnose only, never implement | interview-me, debugging-and-error-recovery |
 | Plan | `/plan` | moctezuma | Analyzes dependencies, cuts vertically, writes tasks with acceptance criteria in `tasks/plan.md` and `tasks/todo.md` | planning-and-task-breakdown, clean-ddd-hexagonal, architecture-diagrams |
 | Build | `/build` | tlaloc | Takes next pending task, applies RED-GREEN-REFACTOR with TDD, runs full suite, commits | incremental-implementation, test-driven-development, solid, error-handling-patterns |
 | Verify | `/test` | mictlantecuhtli | TDD for features (test → implement → refactor). Prove-It for bugs (reproduce → fix → verify). Escalates to incident-response if incident | test-driven-development, error-handling-patterns, browser-testing-with-devtools |
@@ -256,11 +260,13 @@ project-root/
 │   ├── tezcatlipoca.md         #   Smoking Mirror Critic
 │   └── ... (96+ subagent files)
 │
-├── commands/                   # 10 slash commands for OpenCode
+├── commands/                   # 12 slash commands for OpenCode
 │   ├── build.md                #   BUILD
 │   ├── code-simplify.md        #   SIMPLIFY (recommended pre-review)
 │   ├── design.md               #   DESIGN (optional, UI/UX)
-│   ├── evolve.md               #   EVOLVE (existing projects)
+│   ├── diagnosis.md            #   DIAGNOSE (issue analysis)
+│   ├── docs-update.md          #   DOCS (sync documentation)
+│   ├── evolve.md               #   EVOLVE (mature projects)
 │   ├── plan.md                 #   PLAN
 │   ├── review.md               #   REVIEW
 │   ├── ship.md                 #   SHIP
