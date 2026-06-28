@@ -59,6 +59,7 @@ Create diagnosis in `docs/diagnosis/` using @docs/diagnosis/diagnosis-template.m
 - ❌ Do NOT implement fixes — only document diagnosis
 - ❌ Do NOT write to `tasks/`, task files are managed by command `/plan`
 - ❌ Do NOT copy full issue content — link to remote issue instead
+- If the diagnosis reveals an existing fix in progress, update the existing diagnosis instead of creating a new one
 
 Invoke `question-tool` to confirm the diagnosis or ask for clarification if needed to make changes before proceeding with plan creation.
 

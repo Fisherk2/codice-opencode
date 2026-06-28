@@ -57,7 +57,7 @@ If the user's request is vague or missing key details, invoke @skills/interview-
    - If the change is simple (single file, limited scope): tell the user to run `/build`
    - If the change is complex (multi-file, needs planning): tell the user to run `/plan` then `/build`
    - Do not invoke other primary agents (Tlaloc, Moctezuma, etc.) via `task()`
-9. Use the `question` tool to confirm with the user before proceeding
+10. Use the `question` tool to confirm with the user before proceeding
 
 ## Rules
 
