@@ -1,10 +1,10 @@
-# Spec: Códice — Opencode Workspace Installer v1.0.0
+# Spec: Códice — Opencode Workspace Installer v1.0.13
 
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-06-13  
-**Target Release:** v1.0.0  
-**Repository:** `https://github.com/fisherk2/11-codice-opencode`
+**Current Version:** v1.0.13  
+**Repository:** `https://github.com/fisherk2/codice-opencode`
 
 ---
 
@@ -90,6 +90,9 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 | `codice --version` | Version display | Print current binary version and exit with code 0 |
 | `codice --verbose` | Verbose mode | Enable structured logging to stderr for all operations; useful for debugging |
 | `codice --help` | Help display | Show usage instructions, available flags, and link to documentation |
+| `codice --dest <path>` | Destination directory | Specify the target directory for installation (default: current working directory) |
+| `codice --force` | Skip confirmations | Skip confirmation prompts and include all optional files without interactive selection |
+| `codice --mode <mode>` | Direct mode selection | Skip interactive menu and go directly to the specified mode (`clean`, `project`, or `update`) |
 
 ---
 
@@ -98,33 +101,58 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 The directory layout follows Clean Architecture with strict layer boundaries. Dependencies always point inward: Infrastructure → Application → Domain. No domain file may import from application or infrastructure.
 
 ```
-11-codice-opencode/
+codice-opencode/
 ├── src/
 │   ├── domain/                    # Pure business logic, zero external dependencies
 │   │   ├── entities/
 │   │   │   ├── FileRule.ts        # Classification rule entity (Obligatorio/Estándar/Opcional)
+│   │   │   ├── FileRuleManifest.ts # Manifest aggregation and rule lookup
+│   │   │   ├── FileRuleManifestData.ts # Static manifest data (file classification rules)
 │   │   │   └── WorkspaceVersion.ts # Semantic version value object
-│   │   └── services/
-│   │       ├── FileMergeEngine.ts # Strategy-based merge orchestrator
-│   │       └── VersionComparator.ts # Semantic version comparison logic
+│   │   ├── ports/
+│   │   │   ├── IFileMergeEngine.ts # Abstract merge engine interface
+│   │   │   ├── IFileSystem.ts     # Abstract filesystem operations (read, write, staging)
+│   │   │   └── IVersionComparator.ts # Abstract version comparison interface
+│   │   ├── services/
+│   │   │   ├── FileMergeEngine.ts # Strategy-based merge orchestrator
+│   │   │   └── VersionComparator.ts # Semantic version comparison logic
+│   │   └── types/
+│   │       ├── GitignoreError.ts  # Gitignore generation error types
+│   │       ├── MergeError.ts      # File merge error types
+│   │       ├── Result.ts          # Result/Either type for explicit error handling
+│   │       ├── SymlinkError.ts    # Symlink creation error types
+│   │       └── version.ts         # Version constants and utilities
 │   ├── application/               # Use cases, orchestrates domain via ports
+│   │   ├── helpers.ts             # Shared use-case utilities
 │   │   ├── use-cases/
 │   │   │   ├── CleanInstallUseCase.ts      # Mode 1: Overwrite everything
 │   │   │   ├── ProjectInstallUseCase.ts    # Mode 2: Selective merge with prompts
 │   │   │   └── UpdateWorkspaceUseCase.ts   # Mode 3: Standard + Obligatorio with version check
 │   │   └── ports/
-│   │       ├── IFileSystem.ts     # Abstract filesystem operations (read, write, staging)
 │   │       ├── IGitHubClient.ts   # Abstract GitHub API client (releases/latest)
+│   │       ├── IGitignoreCreator.ts # Abstract post-installation gitignore generation
+│   │       ├── ISymlinkCreator.ts # Abstract post-installation symlink generation
 │   │       └── IUserPrompt.ts     # Abstract TUI interactions (select, confirm, checkbox)
 │   ├── infrastructure/            # Concrete adapters for external concerns
 │   │   ├── adapters/
-│   │   │   ├── BunFileSystem.ts   # Bun-native filesystem with atomic staging
+│   │   │   ├── AtomicStager.ts    # Atomic staging, commit, and rollback operations
+│   │   │   ├── BunFileSystem.ts   # Facade implementing IFileSystem, composes TemplateResolver + AtomicStager
+│   │   │   ├── BunGitignoreCreator.ts # Post-installation gitignore generation
+│   │   │   ├── BunSymlinkCreator.ts # Post-installation symlink generation
+│   │   │   ├── ClackPromptsAdapter.ts # @clack/prompts wrapper implementing IUserPrompt
+│   │   │   ├── directoryWalker.ts # Recursive directory traversal with symlink skipping
 │   │   │   ├── GitHubRestClient.ts # Fetch-based GitHub API client with timeout
-│   │   │   └── ClackPromptsAdapter.ts # @clack/prompts wrapper implementing IUserPrompt
+│   │   │   ├── pathResolver.ts    # Path resolution and traversal prevention
+│   │   │   └── TemplateResolver.ts # Template path resolution with category search
 │   │   └── config/
-│   │       └── constants.ts       # Repository URL, API endpoints, timeout values
+│   │       ├── constants.ts       # Repository URL, API endpoints, timeout values
+│   │       └── symlinks.ts        # Symlink definitions and configuration
 │   └── cli/
-│       └── main.ts                # Entry point: parses args, wires dependencies, launches TUI
+│       ├── bin.js                 # Node/Bun entry shim
+│       ├── container.ts           # Dependency injection container
+│       ├── main.ts                # Entry point: orchestrates mode selection and execution
+│       ├── output.ts              # TUI output formatting and logging
+│       └── parse-args.ts          # CLI argument parsing (--dest, --force, --mode, etc.)
 ├── tests/
 │   ├── unit/                      # Domain logic tests (pure functions, entities)
 │   ├── integration/               # Adapter tests with mocked external systems
@@ -137,12 +165,13 @@ The directory layout follows Clean Architecture with strict layer boundaries. De
 ├── dist/                          # Compiled binaries (gitignored, populated by CI)
 ├── docs/                          # Architecture decisions, workflow, PRD, TRD
 ├── specs/                         # Modular specification documents
+│   ├── adr/                       # Architecture Decision Records
 │   ├── spec-file-rules.md
 │   └── spec-cli-commands.md
 ├── Justfile                       # Task definitions
 ├── package.json                   # Bun dependencies and scripts
 ├── tsconfig.json                  # Strict TypeScript configuration
-├── biome.json (or eslint/prettier config) # Linting and formatting rules
+├── biome.json                     # Linting and formatting rules
 └── README.md                      # User-facing installation and usage guide
 ```
 
@@ -157,14 +186,16 @@ The directory layout follows Clean Architecture with strict layer boundaries. De
 2. **Application Layer** (`src/application/`)
    - Contains use cases and port interfaces.
    - Depends only on `domain/`.
-   - Defines contracts (`IFileSystem`, `IGitHubClient`, `IUserPrompt`) that infrastructure must implement.
+   - Defines contracts (`IGitHubClient`, `IGitignoreCreator`, `ISymlinkCreator`, `IUserPrompt`) that infrastructure must implement.
    - Orchestrates domain services but contains no business rules.
 
 3. **Infrastructure Layer** (`src/infrastructure/`)
    - Contains concrete adapters.
    - Depends on `application/ports`.
-   - Houses all side effects: disk I/O, network requests, user prompts.
+   - Houses all side effects: disk I/O, network requests, user prompts, symlink generation, gitignore generation.
    - `BunFileSystem` must implement atomic writes via staging directory + `fs.rename`.
+   - `BunSymlinkCreator` generates symlinks post-installation (npm strips symlinks from tarballs).
+   - `BunGitignoreCreator` generates `.gitignore` post-installation (npm excludes `.gitignore` from tarballs).
 
 4. **CLI Layer** (`src/cli/`)
    - Single entry point `main.ts`.
@@ -279,8 +310,17 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 2. **Project Install (Selective):** Pre-populate destination with a file that also exists in template/estandar. Assert the existing file is preserved, not overwritten.
 3. **Project Install (Optional Skip):** Present optional files, simulate skipping one. Assert skipped file is absent, others are present.
 4. **Update Workspace:** Pre-populate with older version. Run update mode. Assert only obligatorio and estandar files are updated; optional files untouched.
-5. **Atomic Rollback:** Simulate a crash (kill -9) mid-operation. Assert destination directory is in its original state, staging directory is absent or cleaned.
+5. **Atomic Rollback (SIGINT):** Simulate a crash mid-operation. Assert destination directory is in its original state, staging directory is absent or cleaned.
 6. **Path Traversal Rejection:** Attempt to install to a path outside the allowed base using `../` sequences. Assert exit code 1 and no files written outside boundary.
+7. **Symlinks Clean Install:** Run binary in empty directory. Assert all 10 symlinks exist and resolve correctly.
+8. **Symlinks Project Install:** Pre-populate destination without `.devin`. Run project install with `--force`. Assert `.opencode/` symlinks exist, `.devin/` symlinks absent. Then run again selecting `.devin`. Assert `.devin/` symlinks present.
+9. **Symlinks Idempotency:** Run binary twice in the same directory. Assert symlinks are created only once and remain valid.
+10. **Update No Symlinks:** Run update mode on an existing installation. Assert no symlinks are created or modified.
+11. **Gitignore Clean Install:** Run binary in empty directory. Assert `.gitignore` exists in destination with correct content.
+12. **Gitignore Project Install:** Pre-populate destination with an existing `.gitignore`. Run project install. Assert existing `.gitignore` is preserved, not overwritten.
+13. **Clean Install Optional Menu:** Run clean install. Assert optional files menu is presented to the user before copying.
+14. **Project Install Optional Selection:** Run project install with optional files. Assert only selected optional files are copied.
+15. **Update Workspace Existing Project:** Pre-populate destination with standard files. Run update mode. Assert standard files are NOT overwritten (only mandatory files are).
 
 **Success Criteria:**
 - All E2E scenarios pass in CI on Ubuntu runner.
@@ -330,7 +370,7 @@ These actions are explicitly prohibited under all circumstances:
 
 ## Success Criteria
 
-The following conditions are specific, testable, and must all be met for the v1.0.0 release to be considered complete.
+The following conditions are specific, testable, and must all be met for the v1.0.13 release to be considered complete.
 
 ### Functional Criteria
 
@@ -340,7 +380,7 @@ The following conditions are specific, testable, and must all be met for the v1.
 | SC-2 | Clean Install copies every file from `template/` to the destination, overwriting existing files of the same name. | E2E fixture comparison |
 | SC-3 | Project Install copies Obligatorio files unconditionally, Estándar files only if absent, and Opcional files only if selected by user and absent. | Integration test with mock filesystem |
 | SC-4 | Update Workspace copies only Obligatorio and Estándar files, skipping Opcional entirely, and performs a version check first. | E2E scenario with pre-seeded destination |
-| SC-5 | The version check queries `https://api.github.com/repos/fisherk2/11-codice-opencode/releases/latest` and parses the tag name. | Integration test with mock HTTP server |
+| SC-5 | The version check queries `https://api.github.com/repos/fisherk2/codice-opencode/releases/latest` and parses the tag name. | Integration test with mock HTTP server |
 | SC-6 | If the local version equals the remote version, Update Workspace informs the user and exits without copying. | Unit test of VersionComparator + integration test |
 | SC-7 | All file writes are atomic: staging directory created, files written to staging, then renamed to destination. | Integration test with forced interruption |
 | SC-8 | An interrupted operation (Ctrl+C or kill) leaves the destination directory in its pre-operation state. | E2E test with `SIGINT` injection |
@@ -399,6 +439,7 @@ The following architectural decisions have been resolved and are now part of the
 | 6 | **Rollback on Partial Failure** | If a multi-file operation fails mid-way, automatically roll back all already-copied files from the current staging batch. | Guarantees project consistency. Combined with per-file atomic staging, this provides transaction-like safety. |
 | 7 | **Update Notification in Other Modes** | Version checking is **exclusive** to Update Workspace mode. Clean Install and Project Install do not check for newer versions. | Reduces noise and API calls. Users in install mode are assumed to want the bundled version. |
 | 8 | **Primary Distribution Method** | Publish to npm as `@fisherk2-dev/codice`. Use `bunx @fisherk2-dev/codice` as the official installation method. Provide pre-compiled binaries as offline fallback. | Broadens accessibility beyond Bun users. Eliminates installation friction for npm-native workflows. |
+| 9 | **Post-Installation Generation** | Symlinks and `.gitignore` are generated post-installation via dedicated ports (`ISymlinkCreator`, `IGitignoreCreator`) instead of being packaged in the template. | npm resolves symlinks during packaging and excludes `.gitignore` files. Post-install generation guarantees these files exist correctly regardless of distribution method. |
 
 ---
 
