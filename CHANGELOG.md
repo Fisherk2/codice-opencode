@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(No unreleased changes beyond v1.0.14.)
+### Changed
+
+- **Refactored post-install orchestration**: Extracted duplicated `.gitignore` generation, symlink creation, and version file write from `CleanInstallUseCase` and `ProjectInstallUseCase` into a shared `runPostInstallSteps()` helper in `src/application/postInstall.ts`. Both modes now delegate to the same helper; behavioral differences are preserved via options (Clean Install sets `retryHint=true` for re-run hint in warnings; Project Install does not).
+- **`helpers.ts` split**: Extracted `createGitignoreSafe`, `createSymlinksWithWarning`, and `runPostInstallSteps` into new `src/application/postInstall.ts` (159 lines) to comply with the 200-line file limit. `helpers.ts` reduced from 204 to 71 lines.
 
 ## [1.0.14] — 2026-07-09
 

@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.0.14
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-09 | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-09 (FEV-5 actualizado *a posteriori*) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -22,7 +22,7 @@
 | FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | ✅ Completo |
 | FEV-3 | Update Workspace overwrite fix + GitHub API fix | Update mode preserves existing standard files + GitHub version check | ✅ Completo |
 | FEV-4 | SDD Command Refactor + Governance (v1.0.13) | Issue #15: docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism | ✅ Completo |
-| FEV-5 | CI/CD Workflow + GitHub Wiki (v1.0.14) | Issue #23: CI/CD workflow documentation; Issue #25: GitHub Wiki + eliminar docs/opencode/ | 🟡 Pendiente |
+| FEV-5 | CI/CD Workflow + GitHub Wiki (v1.0.14) | Issue #23: CI/CD workflow documentation; Issue #25: GitHub Wiki + eliminar docs/opencode/ | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -1093,7 +1093,7 @@ docs/diagnosis/
 
 ### Fase FEV-5 — CI/CD Workflow + GitHub Wiki (v1.0.14)
 
-**Fecha:** 2026-07-09 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Pendiente
+**Fecha:** 2026-07-09 | **Última actualización:** 2026-07-09 (FEV-5 actualizado *a posteriori*) | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado
 
 #### Contexto
 
@@ -1114,67 +1114,67 @@ Issues #23 y #25 identifican dos problemas de documentación y proceso:
 | ID | Descripción | Prioridad | Estado |
 |----|-------------|-----------|--------|
 | **Track A: Infraestructura** | | | |
-| F5V5-A1 | Modificar `ci.yml` — añadir `develop` a triggers (`push` + `pull_request`) | Alta | 🟡 Pendiente |
-| F5V5-A2 | Modificar `release.yml` — detectar pre-release tags (`beta.*`, `rc.*`) y publicar con `npm publish --tag <prerelease>`, crear GitHub Pre-release en vez de Release | Alta | 🟡 Pendiente |
-| F5V5-A3 | Crear rama `develop` en el repositorio a partir de `main` | Alta | 🟡 Pendiente |
+| F5V5-A1 | Modificar `ci.yml` — añadir `develop` a triggers (`push` + `pull_request`) | Alta | ✅ Completo |
+| F5V5-A2 | Modificar `release.yml` — detectar pre-release tags (`beta.*`, `rc.*`) y publicar con `npm publish --tag <prerelease>`, crear GitHub Pre-release en vez de Release | Alta | ✅ Completo |
+| F5V5-A3 | Crear rama `develop` en el repositorio a partir de `main` | Alta | ✅ Completo |
 | **Track B: Documentación** | | | |
-| F5V5-B1 | Documentar Git Workflow en CONTRIBUTING.md (branch strategy, 3-stage release process, naming conventions) | Alta | 🟡 Pendiente |
-| F5V5-B2 | Definir nomenclatura de versiones npm para test publishes (ej: 1.0.14-beta.1, 1.0.14-rc.1) | Alta | 🟡 Pendiente |
-| F5V5-B3 | Documentar CI/CD Pipeline en CONTRIBUTING.md (ci.yml, release.yml, triggers, troubleshooting) | Media | 🟡 Pendiente |
-| F5V5-B4 | Crear Release Checklist template en CONTRIBUTING.md | Media | 🟡 Pendiente |
+| F5V5-B1 | Documentar Git Workflow en CONTRIBUTING.md (branch strategy, 3-stage release process, naming conventions) | Alta | ✅ Completo |
+| F5V5-B2 | Definir nomenclatura de versiones npm para test publishes (ej: 1.0.14-beta.1, 1.0.14-rc.1) | Alta | ✅ Completo |
+| F5V5-B3 | Documentar CI/CD Pipeline en CONTRIBUTING.md (ci.yml, release.yml, triggers, troubleshooting) | Media | ✅ Completo |
+| F5V5-B4 | Crear Release Checklist template en CONTRIBUTING.md | Media | ✅ Completo |
 
 ##### Issue #25 — GitHub Wiki + Eliminar docs/opencode/
 
 | ID | Descripción | Prioridad | Estado |
 |----|-------------|-----------|--------|
-| F5V5-C1 | Habilitar GitHub Wiki y crear estructura inicial (Home, Getting Started, Workspace Structure) | Alta | 🟡 Pendiente |
-| F5V5-C2 | Migrar contenido de docs/opencode/ a GitHub Wiki (12 archivos) | Alta | 🟡 Pendiente |
-| F5V5-C3 | Referenciar documentación oficial de OpenCode en la Wiki | Media | 🟡 Pendiente |
-| F5V5-C4 | Eliminar `template/opcional/docs/opencode/` del template (12 archivos) | Alta | 🟡 Pendiente |
-| F5V5-C5 | Eliminar `docs/opencode/` de la raíz del proyecto (12 archivos) | Alta | 🟡 Pendiente |
-| F5V5-C6 | Remover entrada `docs/opencode` de FileRuleManifestData.ts (líneas 167-171) | Alta | 🟡 Pendiente |
-| F5V5-C7 | Actualizar 74+ referencias internas (CONTRIBUTING.md, README.md, commands, specs) | Media | 🟡 Pendiente |
-| F5V5-C8 | Actualizar tests E2E para reflejar eliminación de docs/opencode/ | Alta | 🟡 Pendiente |
+| F5V5-C1 | Habilitar GitHub Wiki y crear estructura inicial (Home, Getting Started, Workspace Structure) | Alta | ✅ Completo |
+| F5V5-C2 | Migrar contenido de docs/opencode/ a GitHub Wiki (12 archivos) | Alta | ✅ Completo |
+| F5V5-C3 | Referenciar documentación oficial de OpenCode en la Wiki | Media | ✅ Completo |
+| F5V5-C4 | Eliminar `template/opcional/docs/opencode/` del template (12 archivos) | Alta | ✅ Completo |
+| F5V5-C5 | Eliminar `docs/opencode/` de la raíz del proyecto (12 archivos) | Alta | ✅ Completo |
+| F5V5-C6 | Remover entrada `docs/opencode` de FileRuleManifestData.ts (líneas 167-171) | Alta | ✅ Completo |
+| F5V5-C7 | Actualizar 74+ referencias internas (CONTRIBUTING.md, README.md, commands, specs) | Media | ✅ Completo |
+| F5V5-C8 | Actualizar tests E2E para reflejar eliminación de docs/opencode/ | Alta | ✅ Completo |
 
 ##### Release
 
 | ID | Descripción | Prioridad | Estado |
 |----|-------------|-----------|--------|
-| F5V5-D1 | Actualizar CHANGELOG.md con sección v1.0.14 | Alta | 🟡 Pendiente |
-| F5V5-D2 | Bump version a 1.0.14 en package.json | Alta | 🟡 Pendiente |
+| F5V5-D1 | Actualizar CHANGELOG.md con sección v1.0.14 | Alta | ✅ Completo |
+| F5V5-D2 | Bump version a 1.0.14 en package.json | Alta | ✅ Completo |
 
 #### Métricas de Referencia
 
-| Métrica | v1.0.13 (actual) | Meta v1.0.14 |
-|---------|------------------|--------------|
-| Tests (pass/fail) | 481 / 0 | ≥481 / 0 |
-| Coverage (funciones) | 97.66% | ≥97.66% |
-| Coverage (líneas) | 96.52% | ≥96.52% |
-| E2E escenarios | 15/15 | 15/15 |
-| `just check` errores | 0 | 0 |
-| Issues críticos abiertos | 2 (#23, #25) | 0 |
-| docs/opencode/ references | 74+ | 0 |
-| CI branches soportadas | 1 (`main`) | 2 (`main` + `develop`) |
-| npm dist-tags | 1 (`latest`) | 3 (`latest`, `beta`, `rc`) |
+| Métrica | v1.0.13 (actual) | Meta v1.0.14 | v1.0.14 (final) |
+|---------|------------------|--------------|-----------------|
+| Tests (pass/fail) | 481 / 0 | ≥481 / 0 | 487 / 0 |
+| Coverage (funciones) | 97.66% | ≥97.66% | 98.13% |
+| Coverage (líneas) | 96.52% | ≥96.52% | 96.98% |
+| E2E escenarios | 15/15 | 15/15 | 15/15 |
+| `just check` errores | 0 | 0 | 0 |
+| Issues críticos abiertos | 2 (#23, #25) | 0 | 0 |
+| docs/opencode/ references | 74+ | 0 | 0 |
+| CI branches soportadas | 1 (`main`) | 2 (`main` + `develop`) | 2 (`main` + `develop`) |
+| npm dist-tags | 1 (`latest`) | 3 (`latest`, `beta`, `rc`) | 3 (`latest`, `beta`, `rc`) |
 
 **Criterios de completitud (DoD FEV-5):**
-- [ ] Issue #23 resuelto:
-  - [ ] `ci.yml` corre en PRs a `develop` además de `main`
-  - [ ] `release.yml` publica pre-releases con `--tag beta/rc` y GitHub Pre-release
-  - [ ] Rama `develop` existe en el repositorio
-  - [ ] Git Workflow documentado en CONTRIBUTING.md incluyendo proceso 3-etapas
-  - [ ] Release Checklist presente en CONTRIBUTING.md
-- [ ] Issue #25 resuelto:
-  - [ ] GitHub Wiki habilitada y poblada con contenido migrado
-  - [ ] `docs/opencode/` eliminado de la raíz del proyecto
-  - [ ] `template/opcional/docs/opencode/` eliminado del template
-  - [ ] Entrada `docs/opencode` removida de FileRuleManifestData.ts
-  - [ ] Todas las referencias internas actualizadas (74+ → 0)
-- [ ] Tests E2E pasando sin regresión
-- [ ] `bun test`: sin regresión
-- [ ] `just check`: 0 errores
-- [ ] CHANGELOG actualizado con sección v1.0.14
-- [ ] Versión bump a 1.0.14
+- [x] Issue #23 resuelto:
+  - [x] `ci.yml` corre en PRs a `develop` además de `main`
+  - [x] `release.yml` publica pre-releases con `--tag beta/rc` y GitHub Pre-release
+  - [x] Rama `develop` existe en el repositorio
+  - [x] Git Workflow documentado en CONTRIBUTING.md incluyendo proceso 3-etapas
+  - [x] Release Checklist presente en CONTRIBUTING.md
+- [x] Issue #25 resuelto:
+  - [x] GitHub Wiki habilitada y poblada con contenido migrado
+  - [x] `docs/opencode/` eliminado de la raíz del proyecto
+  - [x] `template/opcional/docs/opencode/` eliminado del template
+  - [x] Entrada `docs/opencode` removida de FileRuleManifestData.ts
+  - [x] Todas las referencias internas actualizadas (74+ → 0)
+- [x] Tests E2E pasando sin regresión
+- [x] `bun test`: sin regresión
+- [x] `just check`: 0 errores
+- [x] CHANGELOG actualizado con sección v1.0.14
+- [x] Versión bump a 1.0.14
 
 ---
 
@@ -1189,9 +1189,9 @@ Issues #23 y #25 identifican dos problemas de documentación y proceso:
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 476 tests, 0 fail, 1032 expects
+- **Tests unit+int:** 487 tests, 0 fail, 1050 expects
 - **Tests E2E:** 15/15 pasando (14 existentes + 1 update existing project)
-- **Coverage:** 97.66% funciones / 96.52% líneas
+- **Coverage:** 98.13% funciones / 96.98% líneas
 - **Domain coverage:** 100% líneas
 - **`just check`:** 0 errores
 - **Fix rate:** 10+ bugs encontrados y corregidos durante desarrollo de E2E
@@ -1212,3 +1212,7 @@ Issues #23 y #25 identifican dos problemas de documentación y proceso:
 - **Commits FEV-4:** `ad8367c` (SDD Command Refactor + Governance v1.0.13) en `main`
 - **FEV-4 total:** 12/12 tasks completadas (docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism)
 - **Release ready:** v1.0.13 — all DoD items completed, 481/0 tests, 15/15 E2E, 12 SDD commands, 0 Biome/tsc errors
+- **Commits FEV-5:** `c5b1ddf` (release v1.0.14), `147d967` (remove docs/opencode/), `3613c37` (update refs), `6340a9a` (wiki pages), `5f90860` (wiki MCP-Servers), `6a56f88` (wiki SDD Pipeline) en `main`
+- **Post-release refactor (2026-07-09):** `5c55e3a` (extract postInstall.ts), `a56b3da` (retryHint tests) en `feat/ci-cd-wiki`
+- **FEV-5 total:** 10 tareas infraestructura + 8 tareas wiki + 2 tareas release = 20 tasks completadas
+- **Release ready:** v1.0.14 — all DoD items completed, 487/0 tests, 15/15 E2E, 98.13% coverage, 0 Biome/tsc errors
