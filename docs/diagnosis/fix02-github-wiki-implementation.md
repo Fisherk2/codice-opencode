@@ -41,58 +41,117 @@ The documentation strategy was not clearly defined during initial development. T
 - **Version:** v1.0.13
 - **Configuration:** template/docs/opencode/ structure
 
-## Proposed Solution
+## Clarification (2026-07-09)
 
-Implementation steps:
+> **Approach confirmed:** The Wiki will be a **customization guide** based on the actual content of `template/obligatorio/`, NOT a copy of OpenCode's official documentation. The existing `docs/opencode/` files are a reflection of what was being documented — but the Wiki will take a different approach: practical, template-driven, and maintainable.
 
-1. **Enable and Structure GitHub Wiki**
-   - Enable Wiki feature in repository settings
-   - Create Wiki home page with overview of the workspace
-   - Structure Wiki with clear sections:
-     - Getting Started
-     - Workspace Structure
-     - Using Agents
-     - Using Commands
-     - Using Skills
-     - Customization Guide
-     - Troubleshooting
+## Goal
 
-2. **Migrate Content from template/docs/opencode/**
-   - Identify which files in template/docs/opencode/ should move to Wiki
-   - Prioritize user-facing documentation (guides, tutorials, how-tos)
-   - Keep only essential reference files in template (if any)
-   - Rewrite content to be Wiki-friendly (markdown with relative links)
+Create a GitHub Wiki that serves as a practical **customization and modification guide** for users who have installed the Códice workspace template. The Wiki should:
 
-3. **Reference Official OpenCode Documentation**
-   - Add links to [OpenCode official docs](https://opencode.ai/docs/) throughout Wiki
-   - Avoid duplicating information that's already in official docs
-   - Focus Wiki content on project-specific guidance and customization
-   - Create a "Prerequisites" section linking to OpenCode installation
+1. **Be organized around `template/obligatorio/`** — Each section maps to a real file or directory in the template
+2. **Explain what each file does, how it's configured, and how to customize it**
+3. **Reference [opencode.ai/docs](https://opencode.ai/docs/)** for official OpenCode documentation (never duplicate it)
+4. **Be easier to follow and maintain** than the current `docs/opencode/` structure
 
-4. **Remove docs/opencode/ from Template and Project Root**
-   - Remove `template/opcional/docs/opencode/` directory (12 files)
-   - Remove `docs/opencode/` directory from project root (12 files)
-   - Remove the `docs/opencode` entry from `FileRuleManifestData.ts` (line 167-171)
-   - Update any internal links that reference these files
-   - Test template installation to ensure no broken references
+## Proposed Wiki Structure
 
-5. **Update CONTRIBUTING.md and README.md**
-   - Add link to GitHub Wiki in README.md
-   - Update CONTRIBUTING.md to reference Wiki for workspace documentation
-   - Add section explaining how to contribute to the Wiki
-   - Document the documentation strategy (Wiki for user guides, official docs for framework)
+The Wiki is organized around the **physical structure of the installed workspace**, not around abstract concepts. Each page maps to real files the user can see and modify.
 
-6. **Create Wiki Contribution Guidelines**
-   - Document how to edit Wiki pages
-   - Establish style guide for Wiki content
-   - Define review process for Wiki changes
-   - Add template for new Wiki pages
+### Home (`Home.md`)
+- What is this workspace? (one paragraph)
+- What problem does it solve?
+- Quick links to key pages
+- Link to official OpenCode docs: [opencode.ai/docs](https://opencode.ai/docs/)
 
-7. **Add Cross-References**
-   - Update template files to reference Wiki instead of local docs
-   - Add Wiki links in agent documentation where appropriate
-   - Update command documentation to link to relevant Wiki pages
-   - Ensure all references are current and accurate
+### Getting Started (`Getting-Started.md`)
+- Prerequisites (link to OpenCode installation docs)
+- How to install via `bunx @fisherk2-dev/codice`
+- What happens after installation (file tree overview)
+- First steps: verify commands, run `/spec`
+- Reference: [opencode.ai/docs/installation](https://opencode.ai/docs/installation)
+
+### Workspace Structure (`Workspace-Structure.md`)
+- Based on the actual tree installed by Códice
+- Each directory explained with: purpose, what files it contains, customization options
+- **Not a static copy** — explains the **patterns** (why root files vs. agents/ vs. commands/ vs. skills/)
+- Reference: [opencode.ai/docs/workspace](https://opencode.ai/docs/workspace)
+
+### Configuration (`Configuration.md`)
+- Based on: `template/obligatorio/opencode.json`
+- Explain each section: `model`, `small_model`, `compaction`, `provider`, `permissions`
+- Common customizations: changing models, adjusting token budgets, adding provider variants
+- Example: switching from NVIDIA to Anthropic Claude
+- Reference: [opencode.ai/docs/configuration](https://opencode.ai/docs/configuration)
+
+### Agents (`Agents.md`)
+- Based on: `template/obligatorio/agents/` (103 files: 6 primary + 97 subagents)
+- Explain the two-tier architecture: Primary agents (huitzilopochtli, quetzalcoatl, etc.) vs. Subagents (96+ domain experts)
+- Show the pattern of an agent file (frontmatter, composition block)
+- **How to add a new subagent**: create file → add to catalog → register in SDD plugin
+- **How to add a new primary agent**: subagent steps + SDD plugin hooks + orchestration docs
+- Reference: [opencode.ai/docs/agents](https://opencode.ai/docs/agents)
+
+### Commands (`Commands.md`)
+- Based on: `template/obligatorio/commands/` (12 files)
+- Explain the SDD lifecycle and how each command maps to a phase
+- Show the frontmatter pattern (`description` + `agent`)
+- **How to add a new command**: create file → update SDD plugin → restart
+- Reference: [opencode.ai/docs/commands](https://opencode.ai/docs/commands)
+
+### Skills (`Skills.md`)
+- Based on: `template/obligatorio/skills/` (46 directories)
+- Explain the skill pattern (SKILL.md with frontmatter + numbered steps)
+- **How to add a new skill**: create directory → SKILL.md → update meta-skill → restart
+- Reference: [opencode.ai/docs/skills](https://opencode.ai/docs/skills)
+
+### Customization Guide (`Customization-Guide.md`)
+- Practical recipes for common modifications:
+  - **"I want to use a different AI model"** → Modify `opencode.json` `model` field
+  - **"I don't need the architecture-diagrams skill"** → Remove from `skills/` and `skills-lock.json`
+  - **"I want to add a custom command"** → Create file in `commands/`, update SDD plugin
+  - **"I want to rename my project"** → Update `README.md`, `package.json`, etc.
+  - **"I want to change agent permissions"** → Modify `opencode.json` `permissions` section
+  - **"I want to add a new provider"** → Add provider config in `opencode.json`
+- Each recipe: what to modify, where the file is, what the change does
+
+### Troubleshooting (`Troubleshooting.md`)
+- Common issues and solutions
+- Based on real user problems encountered during development
+- Links to: [opencode.ai/docs/troubleshooting](https://opencode.ai/docs/troubleshooting)
+
+---
+
+## Implementation Steps
+
+1. **Enable GitHub Wiki** — Enable the Wiki feature in repository settings
+
+2. **Write Wiki content** (9 pages following the structure above) — Content is **original**, written specifically for the Wiki, never copied from OpenCode docs. Each page:
+   - Explains the relevant files from `template/obligatorio/`
+   - Shows how to customize them
+   - Links to `opencode.ai/docs` for official API/configuration reference
+   - Uses the existing `docs/opencode/USER_GUIDE.md` as inspiration for tone and structure, but rewritten to be simpler and template-content-driven
+
+3. **Remove `docs/opencode/`** from both project root and template:
+   - `template/opcional/docs/opencode/` (12 files)
+   - `docs/opencode/` (12 files)
+   - `FileRuleManifestData.ts` entry (lines 167-171)
+
+4. **Update cross-references** (74+ internal links) to point to the Wiki instead of `docs/opencode/`
+
+5. **Update CONTRIBUTING.md and README.md** — Add Wiki link, document documentation strategy
+
+6. **Test** — Template installation must work without broken links
+
+## Key Principles for Wiki Content
+
+| Principle | What it means |
+|-----------|---------------|
+| **Template-driven** | Every page starts from a real file in `template/obligatorio/` |
+| **Customization-focused** | Explain how to modify, not what OpenCode does |
+| **No duplication** | Never copy OpenCode docs — link to them |
+| **Maintainable** | Fewer pages, simpler content, easier to update |
+| **Progressive disclosure** | Home → Getting Started → detailed pages as needed |
 
 ## Workarounds
 
