@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.15] — 2026-07-09
+
+### Fixed
+
+- **Wiki `README.md` removed from GitHub Wiki**: `docs/wiki-source/README.md` es documentación interna del proceso de sincronización, no una página de usuario. Eliminado del wiki remoto.
+- **npm republish blocked**: v1.0.14 no pudo republicarse tras unpublish (política de npm). Release bump a v1.0.15.
+
+### Changed
+
+- **Wiki repo clonado dentro del proyecto**: En vez de `/tmp/wiki`, ahora se clona en `docs/wiki-source/.wiki/` (gitignored). Sincronización con `rsync --exclude='README.md'`.
+- **`.gitignore` actualizado**: Nueva entrada `/docs/wiki-source/.wiki/` para excluir el clon de la Wiki del repo principal.
+- **Instrucciones de sincronización actualizadas**: `docs/wiki-source/README.md` ahora documenta el uso de `rsync` con `--exclude='README.md'`.
+
 ## [1.0.14] — 2026-07-09
 
 ### Added
