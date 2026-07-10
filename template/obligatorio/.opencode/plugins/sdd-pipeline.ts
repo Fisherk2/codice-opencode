@@ -218,10 +218,13 @@ const DESTRUCTIVE_PATTERNS: RegExp[] = [
   /az\s+(vm|group)\s+delete\b/i,               // az vm / group delete
   /gcloud\s+compute\s+instances\s+delete\b/i,  // gcloud compute instances delete
 
-  // ─── Databases ──────────────────────────────────────
+  // ─── Databases (generic) ────────────────────────────
   /(mongo|mongosh)\s+.*\bdropDatabase\b/i,     // mongo / mongosh dropDatabase
   /redis-cli\s+.*(FLUSHALL|FLUSHDB)\b/i,       // redis-cli FLUSHALL / FLUSHDB
   /mysqladmin\s+drop\b/i,                      // mysqladmin drop
+
+  // ─── PostgreSQL CLI ──────────────────────────────────
+  /psql\s+.*-c\s+.*(?:drop|alter\s+system|truncate)/i,  // psql -c destructive
 ]
 
 // Command → SDD phase mapping (module-level to avoid recreating the map on every call)
