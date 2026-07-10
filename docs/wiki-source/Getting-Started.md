@@ -85,7 +85,17 @@ Once the workspace is installed, open your project in OpenCode and follow these 
 
 Start by running the `/help` command to see all available slash commands and their descriptions. This gives you an overview of the entire SDD workflow at a glance.
 
-### 2. Run `/spec` to Define Your Project
+### 2. Activate MCP Servers (Optional)
+
+The template ships with 4 pre-configured MCP servers in `opencode.json`. Only `context7` (documentation queries) is enabled by default. If your project needs browser debugging, spreadsheet manipulation, or Jupyter notebooks:
+
+1. Check [MCP Servers](MCP-Servers) for per-server prerequisites
+2. Set `"enabled": true` for the server you need in `opencode.json`
+3. Restart OpenCode
+
+> Most projects only need `context7` (already enabled). Activate others on demand to conserve context.
+
+### 3. Run `/spec` to Define Your Project
 
 The first SDD cycle phase is specification. Run:
 
@@ -103,7 +113,7 @@ This activates **Quetzalcoatl** (the Visionary Sage), who will:
 
 The `/spec` command is for **new projects or projects in the conception phase**. If your project already has stable code and releases, use `/evolve` instead.
 
-### 3. Run `/plan` to Break the Spec into Tasks
+### 4. Run `/plan` to Break the Spec into Tasks
 
 Once your specification is ready, run:
 
@@ -119,7 +129,7 @@ This activates **Moctezuma** (the Strategist), who will:
 - Save the plan to `tasks/plan.md` and `tasks/todo.md`
 - Present the plan for your review before saving
 
-### 4. Run `/build` to Implement
+### 5. Run `/build` to Implement
 
 With a plan in place, run:
 
@@ -152,9 +162,11 @@ Each command suggests the next logical step when it finishes, guiding you throug
 
 ## Next Steps
 
+- [MCP Servers](MCP-Servers) — Activate pre-configured servers and add new ones
 - [Workspace Structure](Workspace-Structure) — Learn what each file and directory does
 - [Commands](Commands) — Detailed reference for all 12 slash commands
 - [Agents](Agents) — Understand each agent's role, permissions, and recommended models
 - [Customization Guide](Customization-Guide) — Adapt the workspace to your team's workflow
+- [Configuration](Configuration) — Models, permissions, and MCP settings
 
 For OpenCode-specific questions (agent configuration, permission model, MCP servers), refer to the [official OpenCode documentation](https://opencode.ai/docs).

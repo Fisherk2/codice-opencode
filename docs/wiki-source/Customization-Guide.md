@@ -383,6 +383,7 @@ If you have customized an obligatorio file (such as `opencode.json`), make a bac
 ## Links
 
 - [Configuration](Configuration) — Full reference for `opencode.json` settings.
+- [MCP Servers](MCP-Servers) — Pre-configured MCP servers, activation, and per-agent control.
 - [Agents](Agents) — Agent permission model and how to add new agents.
 - [Commands](Commands) — Adding and modifying slash commands.
 - [Workspace Structure](Workspace-Structure) — File classification and update behavior.

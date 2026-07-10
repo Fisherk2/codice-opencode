@@ -192,6 +192,63 @@ If symlinks are consistently missing after every install, verify that your proje
 
 ---
 
+## 7. "MCP server is not connecting" or "MCP tools not showing up"
+
+**Symptom:** After enabling an MCP server in `opencode.json` and restarting OpenCode, the server's tools do not appear in the agent's tool list. Running `opencode mcp list` shows the server with a warning or error status.
+
+**Cause:** Several common scenarios:
+
+| Symptom | Likely Cause |
+|---------|--------------|
+| Server shows "not connected" | Missing dependency (e.g., `uv` not installed for Excel/Jupyter MCP) |
+| Server starts but tools timeout | Network issues for remote servers; slow startup for local servers |
+| Chrome DevTools MCP fails | Chrome is not running with `--remote-debugging-port=9222` |
+| MCP tools interfere with other servers | Too many servers enabled simultaneously, exhausting context |
+
+**Solution:**
+
+1. **Verify prerequisites** — Each MCP server has specific requirements. See [MCP Servers](MCP-Servers) for per-server prerequisites (Python packages, Chrome, Docker, etc.).
+
+2. **Check server status** — Run the OpenCode MCP diagnostics command:
+   ```bash
+   opencode mcp list
+   ```
+   This shows all configured servers and their connection status.
+
+3. **Test the MCP server directly** — For local servers, run the command in your terminal to verify it starts correctly:
+   ```bash
+   # Chrome DevTools MCP
+   npx -y chrome-devtools-mcp@latest --auto-connect
+
+   # Excel MCP
+   uvx excel-mcp-server stdio
+
+   # Jupyter MCP
+   uvx mcp-jupyter-notebook
+   ```
+
+4. **Increase the timeout** — If a server is slow to respond (common for remote servers), add a `timeout` value:
+   ```json
+   {
+     "mcp": {
+       "my-server": {
+         "type": "remote",
+         "url": "https://my-server.com/mcp",
+         "timeout": 15000  // 15 seconds instead of default 5
+       }
+     }
+   }
+   ```
+
+5. **Check for port conflicts** — Chrome DevTools MCP requires port 9222. Verify no other process is using it:
+   ```bash
+   lsof -i :9222
+   ```
+
+6. **Disable other MCP servers temporarily** — Isolate connectivity issues by disabling all MCP servers except the one you are testing. Set `"enabled": false` for others in `opencode.json`.
+
+---
+
 ## General Diagnostics
 
 ### Check your Códice version

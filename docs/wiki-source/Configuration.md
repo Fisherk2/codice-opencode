@@ -262,33 +262,22 @@ This prevents agents from accidentally reading secrets, API keys, or private key
 
 ## MCP Servers — Tool Connectivity
 
-The `mcp` section configures Model Context Protocol servers that extend agent capabilities:
+The `mcp` section configures Model Context Protocol servers that extend agent capabilities. The template ships with **4 pre-configured MCP servers** in `opencode.json`:
 
-```json
-"mcp": {
-  "context7": {
-    "type": "remote",
-    "url": "https://mcp.context7.com/mcp",
-    "enabled": true
-  },
-  "chrome-devtools": {
-    "type": "local",
-    "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
-    "enabled": false
-  },
-  "jupyter": {
-    "type": "local",
-    "command": ["uvx", "mcp-jupyter-notebook"],
-    "enabled": false,
-    "env": {
-      "MCP_JUPYTER_SESSION_MODE": "server",
-      "MCP_JUPYTER_BASE_URL": "http://localhost:8888"
-    }
-  }
-}
-```
+| Server | Type | Default | Purpose |
+|--------|------|---------|---------|
+| `context7` | Remote | ✅ Enabled | Documentation queries |
+| `chrome-devtools` | Local | ❌ Disabled | Web performance & browser debugging |
+| `excel` | Local | ❌ Disabled | Spreadsheet manipulation |
+| `jupyter` | Local | ❌ Disabled | Jupyter notebook automation |
 
-The template enables `context7` (documentation queries) by default. Other MCP servers (`chrome-devtools`, `excel`, `jupyter`) are pre-configured but disabled — set `"enabled": true` to activate them.
+Only `context7` is enabled by default to minimize context consumption. To activate the others:
+
+1. **Install prerequisites** (see [MCP Servers](MCP-Servers) for per-server requirements)
+2. **Set `"enabled": true`** for the server you need in `opencode.json`
+3. **Restart OpenCode**
+
+> **Full guide:** [MCP Servers](MCP-Servers) covers activation steps, per-agent control, prerequisites, and which template features require which MCP server.
 
 ---
 
@@ -350,6 +339,8 @@ If you don't use a particular primary agent:
 
 ## See Also
 
+- [MCP Servers](MCP-Servers) — Pre-configured servers, activation, and per-agent control
 - [Workspace Structure](Workspace-Structure) — Directory layout and file descriptions
 - [opencode.ai/docs/configuration](https://opencode.ai/docs/configuration) — Official OpenCode configuration reference
 - [opencode.ai/docs/permissions](https://opencode.ai/docs/permissions) — Detailed permissions guide
+- [opencode.ai/docs/mcp-servers/](https://opencode.ai/docs/mcp-servers/) — Official OpenCode MCP documentation

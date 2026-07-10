@@ -35,8 +35,9 @@ rm -rf /tmp/wiki
 2. `Getting-Started.md` — Primeros pasos
 3. `Workspace-Structure.md` — Estructura del workspace
 4. `Configuration.md` — Configuración de opencode.json
-5. `Agents.md` — Agentes y guía para añadir nuevos
-6. `Commands.md` — Comandos SDD y guía para añadir nuevos
-7. `Skills.md` — Skills y guía para añadir nuevos
-8. `Customization-Guide.md` — Recetas de customización
-9. `Troubleshooting.md` — Solución de problemas
+5. **`MCP-Servers.md`** — Servidores MCP preconfigurados y activación
+6. `Agents.md` — Agentes y guía para añadir nuevos
+7. `Commands.md` — Comandos SDD y guía para añadir nuevos
+8. `Skills.md` — Skills y guía para añadir nuevos
+9. `Customization-Guide.md` — Recetas de customización
+10. `Troubleshooting.md` — Solución de problemas
