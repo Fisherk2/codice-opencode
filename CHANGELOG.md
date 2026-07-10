@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-07-10
+
+### Added
+
+- **Agent Governance (Issue #26):** No-assumption rule merged into RULES section of all 6 primary agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca). Delegation-first rule merged into RULES for 3 delegating agents (quetzalcoatl, tlaloc, mictlantecuhtli). Delegation philosophy strengthened to "Always delegate first" with sequence/parallel support and last-resort fallback.
+- **Destructive Command Restrictions (Issue #30):** 53 bash command patterns restricted in defense-in-depth configuration — sdd-pipeline.ts (runtime regex check with bash normalization) + opencode.json (declarative policy with 70 deny entries). 15 categories: Filesystem, Git, SQL, Docker, Kubernetes, Permissions, Process, Network, Package Managers, Environment, Disk, IaC, Cloud, Databases, PostgreSQL CLI.
+- **Plugin README:** Updated to document 15 categories with 53 patterns and Defense-in-Depth subsection explaining dual-layer enforcement.
+- **Step counts (Issue #27, FEV-6):** Adjusted for 6 primary agents (huitzilopochtli:25, quetzalcoatl:60, moctezuma:20, tlaloc:90, mictlantecuhtli:60, tezcatlipoca:50).
+- **SECURITY.md (Issue #28, FEV-6):** Created at docs/SECURITY.md and template/estandar/docs/SECURITY.md.
+
+### Changed
+
+- **Coverage artifact (TD-1.2, FEV-6):** Explicit constructors added to VersionComparator and ClackPromptsAdapter to resolve Bun coverage reporting artifact.
+
+### Security
+
+- **Destructive command hardening (Issue #30):** rm -rf, git push --force, DROP DATABASE, mkfs, dd if=, chmod 777, git reset --hard, kubectl delete --all, terraform destroy -auto-approve, redis FLUSHALL, and 40+ additional patterns now blocked at runtime and config level.
+
 ## [1.0.15] — 2026-07-09
 
 ### Fixed
