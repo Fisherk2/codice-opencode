@@ -1,14 +1,14 @@
 /**
  * Shared helpers for use cases (application layer).
  *
- * Extracts duplicated patterns from CleanInstallUseCase,
- * ProjectInstallUseCase, and UpdateWorkspaceUseCase:
+ * Services all three installation modes (Clean, Project, Update):
  * - writability check
  * - version file write with staging rollback
  *
- * Post-installation orchestration (gitignore, symlinks, version file)
- * lives in the separate {@link postInstall} module to keep file size
- * under the 200-line convention.
+ * Post-installation orchestration (gitignore, symlinks, success message)
+ * for Clean and Project install modes lives in the separate
+ * {@link postInstall} module to keep file size under the 200-line
+ * convention. Update mode does not perform post-install generation.
  *
  * @module
  */

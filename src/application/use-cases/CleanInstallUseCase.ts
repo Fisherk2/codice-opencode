@@ -160,7 +160,7 @@ export class CleanInstallUseCase {
 			version,
 			operationLabel: "Installation",
 			successMessage: "Clean installation complete.",
-			retryHint: true, // Clean Install can be re-run to fix symlinks
+			retryHint: true, // Include "Re-run the installer" hint in symlink warning
 		});
 	}
 }
