@@ -41,11 +41,11 @@ Use the `question` tool to clarify interactively:
 
 Invoke @skills/spec-driven-development/SKILL.md to scaffold the project's initial documentation:
 
-1. **AGENTS.md** — Project-level rules, standards, and metadata for AI agents working on this project
-2. **SPEC.md** — Central specification covering objective, commands, project structure, code style, testing strategy, and boundaries. References modular specs in @specs/
-3. **docs/** — Initial scaffold: @docs/ARCHITECTURE.md (with ADR index), @docs/SCHEMA.md, @docs/APPFLOW.md, @docs/CODE_STYLE.md
-4. **specs/spec-<feature>.md** — One modular spec per feature or domain; @SPEC.md references these
-5. **specs/adr/adr-<nnn>.md** — ADRs for key architecture decisions, linked from @docs/ARCHITECTURE.md (use @skills/documentation-and-adrs/SKILL.md)
+1. **@AGENTS.md** — Project-level rules, standards, and metadata for AI agents working on this project
+2. **@SPEC.md** — Central specification covering objective, commands, project structure, code style, testing strategy, and boundaries. References modular specs in @specs/
+3. **@docs/** — Initial scaffold: @docs/ARCHITECTURE.md (with ADR index), @docs/SCHEMA.md, @docs/APPFLOW.md, @docs/CODE_STYLE.md
+4. **@specs/spec-<feature>.md** — One modular spec per feature or domain; @SPEC.md references these
+5. **@specs/adr/adr-<nnn>.md** — ADRs for key architecture decisions, linked from @docs/ARCHITECTURE.md (use @skills/documentation-and-adrs/SKILL.md)
 6. If @AGENTS.md or @SPEC.md exceeds **200 lines**, invoke @skills/agent-md-refactor/SKILL.md to modularize into progressive disclosure files in @specs/
 
 During Phase 2, invoke supporting skills as needed:
@@ -55,7 +55,7 @@ During Phase 2, invoke supporting skills as needed:
 - @skills/design-patterns/SKILL.md when applying GoF or enterprise patterns
 - @skills/api-spec-generation/SKILL.md for OpenAPI or AsyncAPI specs
 
-Do **not** touch specs/design/ or docs/DESIGN.md — those belong to `/design`.  workspace documentation is managed separately.
+Do **not** touch @specs/design/ or @docs/DESIGN.md — those belong to `/design`.  workspace documentation is managed separately.
 
 ## Rules
 
