@@ -2,10 +2,11 @@ import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../domain/entities/Fi
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
-import { checkWritable, createSymlinksWithWarning, writeVersionFileSafe } from "../helpers";
+import { checkWritable } from "../helpers";
 import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
+import { runPostInstallSteps } from "../postInstall";
 
 /**
  * Options for the project install execution.
@@ -117,69 +118,26 @@ export class ProjectInstallUseCase {
 	}
 
 	/**
-	 * Generate .gitignore, create symlinks, and write version file.
-	 * Gitignore and symlink failures are warnings, not rollback triggers.
+	 * Generate .gitignore (warning on failure), create symlinks, and write version file.
+	 * Delegates to shared helper to avoid duplicating post-install orchestration.
 	 */
 	private async runPostInstall(
 		destinationPath: string,
 		selectedOptionals: readonly string[],
 		version?: string,
 	): Promise<Result<void, Error>> {
-		// Generate .gitignore from template (graceful on failure)
-		await this.createGitignore(destinationPath);
-
-		// Create .opencode/ symlinks always
-		await this.createOpenCodeSymlinks();
-
-		// Create .devin/ symlinks only if user selected .devin
-		if (selectedOptionals.includes(".devin")) {
-			await this.createDevinSymlinks();
-		}
-
-		// Write version file with optionalSelections recorded
-		const versionResult = await writeVersionFileSafe(
-			this.fileSystem,
-			{
-				installedVersion: version ?? "0.0.0",
-				installedAt: new Date().toISOString(),
-				optionalSelections: selectedOptionals,
-			},
-			"Installation",
-		);
-
-		if (versionResult.ok) {
-			this.userPrompt.showSuccess("Project installation complete.");
-		}
-		return versionResult;
-	}
-
-	private async createGitignore(destinationPath: string): Promise<void> {
-		const gitignoreResult = await this.gitignoreCreator.createGitignore(destinationPath);
-		if (!gitignoreResult.ok) {
-			this.userPrompt.showWarning(
-				`Could not generate .gitignore: ${gitignoreResult.error.message}. ` +
-					"The workspace was installed successfully. " +
-					"Create a .gitignore file manually or re-run the installer. " +
-					"Run with --verbose for details.",
-			);
-		}
-	}
-
-	private async createOpenCodeSymlinks(): Promise<void> {
-		await createSymlinksWithWarning(
-			this.symlinkCreator,
-			this.userPrompt,
-			this.opencodeSymlinks,
-			"opencode",
-		);
-	}
-
-	private async createDevinSymlinks(): Promise<void> {
-		await createSymlinksWithWarning(
-			this.symlinkCreator,
-			this.userPrompt,
-			this.devinSymlinks,
-			"devin",
-		);
+		return runPostInstallSteps({
+			fileSystem: this.fileSystem,
+			gitignoreCreator: this.gitignoreCreator,
+			symlinkCreator: this.symlinkCreator,
+			userPrompt: this.userPrompt,
+			opencodeSymlinks: this.opencodeSymlinks,
+			devinSymlinks: this.devinSymlinks,
+			destinationPath,
+			selectedOptionals,
+			version,
+			operationLabel: "Installation",
+			successMessage: "Project installation complete.",
+		});
 	}
 }
