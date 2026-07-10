@@ -145,6 +145,7 @@ const normalizeBash = (cmd: string): string =>
 // NOTE: Use \s (single backslash) in regex literals — \\s matches literal backslash+letter
 // NOTE: This is a safety net, not a security boundary. Advanced bypasses (variable expansion,
 //       command substitution) are not covered. Use proper sandboxing for untrusted code.
+// NOTE: [existing] marks patterns present before FEV-7 (v1.0.14) — legacy categorization.
 const DESTRUCTIVE_PATTERNS: RegExp[] = [
   // ─── Filesystem ─────────────────────────────────────
   /rm\s+-[a-z]*r[a-z]*f\b/i,       // [existing] rm -r -f, rm -rf, rm -fir
@@ -178,7 +179,6 @@ const DESTRUCTIVE_PATTERNS: RegExp[] = [
   /kubectl\s+drain\b/i,              // kubectl drain
 
   // ─── Permissions ────────────────────────────────────
-  /chmod\s+-R\s+777\s+\//i,          // [existing] chmod -R 777 /
   /chmod\s+(-R\s+)?777\s+[\/~]/i,    // chmod 777 / (root) or chmod 777 ~/ (home)
   /chown\s+-R\b/i,                   // chown -R
 
@@ -199,7 +199,7 @@ const DESTRUCTIVE_PATTERNS: RegExp[] = [
 
   // ─── Environment ────────────────────────────────────
   /unset\s+PATH\b/i,                 // unset PATH
-  /export\s+PATH\s*=/i,              // export PATH=
+  /export\s+PATH\s*=\s*[^$]/i,       // export PATH= (without $PATH — total replacement)
   /echo\s+.*>>?\s*~\/\.(bash|zsh|profile)rc/i,  // append to shell config
 
   // ─── Disk ───────────────────────────────────────────
