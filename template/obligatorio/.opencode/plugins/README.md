@@ -176,4 +176,4 @@ Primary agents can delegate to subagents via `task()`. Each subagent operates in
 
 ## Source
 
-Plugin: `sdd-pipeline.ts` (~574 lines)
+Plugin: `sdd-pipeline.ts` (~663 lines)

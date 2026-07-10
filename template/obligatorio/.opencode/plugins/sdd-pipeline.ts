@@ -134,9 +134,10 @@ const INTENT_PATTERNS: Record<string, string[]> = {
   ],
 }
 
-/** Normalizes a bash command for safer regex matching — strips comments, collapses whitespace. */
+/** Normalizes a bash command for safer regex matching — strips comments, newlines, collapses whitespace. */
 const normalizeBash = (cmd: string): string =>
   cmd.replace(/#.*/g, '')           // strip comments
+     .replace(/\n/g, '')            // strip newlines
      .replace(/\s+/g, ' ')          // collapse whitespace
      .trim()
 
@@ -178,7 +179,7 @@ const DESTRUCTIVE_PATTERNS: RegExp[] = [
 
   // ─── Permissions ────────────────────────────────────
   /chmod\s+-R\s+777\s+\//i,          // [existing] chmod -R 777 /
-  /chmod\s+(-R\s+)?777\b/i,          // chmod 777 (any target)
+  /chmod\s+(-R\s+)?777\s+[\/~]/i,    // chmod 777 / (root) or chmod 777 ~/ (home)
   /chown\s+-R\b/i,                   // chown -R
 
   // ─── Process ────────────────────────────────────────
