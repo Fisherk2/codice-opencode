@@ -15,6 +15,7 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 | [ADR-006](../specs/adr/adr-006-npm-publication.md) | npm Publication as Primary Distribution | Accepted | `bunx @fisherk2-dev/codice` as primary, binary as offline fallback |
 | [ADR-007](../specs/adr/adr-007-template-resolver-source-mode.md) | Template Resolution for bunx/npm Mode | Accepted | Three-path detection cascade (compiled, bunx/npm, source) |
 | [ADR-008](../specs/adr/adr-008-symlink-post-install.md) | Post-Installation Symlink Generation | Accepted | ISymlinkCreator port + BunSymlinkCreator adapter for npm-compatible symlinks |
+| [ADR-009](../specs/adr/adr-009-gitignore-post-install.md) | Post-Installation Gitignore Generation | Accepted | IGitignoreCreator port + BunGitignoreCreator adapter for npm-compatible gitignore generation |
 | [ADR-010](../specs/adr/adr-010-no-template-copy-flag.md) | noTemplateCopy Flag for Virtual Manifest Entries | Accepted | `noTemplateCopy?` field on FileRule for entries whose content is generated post-installation (e.g., `.devin/` symlinks) |
 
 > **Note:** `TemplateResolver` and `AtomicStager` are extracted classes (not full ADRs). They are SRP-based refactorings of `BunFileSystem` that follow the existing ADR-003 (atomic staging) pattern.
@@ -44,6 +45,7 @@ graph TD
         GH[GitHubRestClient]
         TUI[ClackPromptsAdapter]
         BSC[BunSymlinkCreator]
+        BGC[BunGitignoreCreator]
 
         FS -->|delegates| TR
         FS -->|delegates| AS
@@ -54,6 +56,8 @@ graph TD
         UC2[ProjectInstallUseCase]
         UC3[UpdateWorkspaceUseCase]
         ISP[ISymlinkCreator]
+        IGC[IGitignoreCreator]
+        HLP[helpers.ts]
     end
 
     subgraph "Domain Layer"
@@ -62,6 +66,7 @@ graph TD
         SRV1[FileMergeEngine Service]
         SRV2[VersionComparator Service]
         ERR[SymlinkError]
+        ERR2[GitignoreError]
     end
 
     TUI -->|User Input| UC1
@@ -74,11 +79,14 @@ graph TD
     UC3 -->|Execute| SRV1
     
     UC1 -->|Post-install| ISP
+    UC1 -->|Post-install| IGC
     UC2 -->|Post-install| ISP
+    UC2 -->|Post-install| IGC
     
     SRV1 -->|Read/Write| FS
     SRV2 -->|HTTP GET| GH
     ISP -.->|implements| BSC
+    IGC -.->|implements| BGC
 ```
 
 ## Layer Responsibilities
@@ -92,7 +100,8 @@ graph TD
 
 ### Application Layer (`src/application/`)
 - Use cases orchestrate domain services
-- Port interfaces: IFileSystem, IGitHubClient, IUserPrompt, ISymlinkCreator
+- Port interfaces: IFileSystem, IGitHubClient, IUserPrompt, ISymlinkCreator, IGitignoreCreator
+- Shared helpers: helpers.ts (createSymlinksWithWarning, shared guard logic)
 - No business rules, only coordination
 
 ### Infrastructure Layer (`src/infrastructure/`)
@@ -103,6 +112,7 @@ graph TD
 - GitHubRestClient: Version checking via GitHub API
 - ClackPromptsAdapter: TUI interactions via @clack/prompts
 - BunSymlinkCreator: Post-installation symlink generation implementing ISymlinkCreator
+- BunGitignoreCreator: Post-installation gitignore generation implementing IGitignoreCreator
 
 ### CLI Layer (`src/cli/`)
 - Entry point: main.ts

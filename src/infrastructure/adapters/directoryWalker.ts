@@ -10,10 +10,10 @@ import * as path from "node:path";
  * @param verbose - If true, log skipped symlinks to stderr (for debugging/auditing).
  * @param excludeNames - Optional set of entry names to exclude. Matched against
  *                       each entry's name (not path). Applied recursively at all
- *                       directory levels, so excluding "opencode" skips any entry
- *                       named "opencode" at any depth.
- *                       (e.g. Set("opencode") excludes docs/opencode/ and any
- *                       nested subdir also named "opencode").
+ *                       directory levels, so excluding "node_modules" skips any
+ *                       directory named "node_modules" at any depth.
+ *                       (e.g. Set("node_modules") excludes node_modules/ at any
+ *                       level of the directory tree).
  * @returns Array of absolute file paths within the directory tree.
  */
 export async function walkDirectory(

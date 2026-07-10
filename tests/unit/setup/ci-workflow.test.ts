@@ -12,13 +12,14 @@ describe("CI Workflow Configuration", () => {
 		ciYaml = readTextFile(".github/workflows/ci.yml");
 	});
 
-	test("triggers on push to main", () => {
+	test("triggers on push to main and develop", () => {
 		expect(ciYaml).toContain("push:");
-		expect(ciYaml).toContain("branches: [main]");
+		expect(ciYaml).toContain("branches: [main, develop]");
 	});
 
-	test("triggers on pull_request to main", () => {
+	test("triggers on pull_request to main and develop", () => {
 		expect(ciYaml).toContain("pull_request:");
+		expect(ciYaml).toContain("branches: [main, develop]");
 	});
 
 	test("includes ubuntu runner", () => {

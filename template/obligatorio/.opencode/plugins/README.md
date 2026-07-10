@@ -25,23 +25,7 @@ OpenCode already manages permissions, agent configs, skills, and commands via YA
 | `chat.message` | Detects agent mentions, slash commands, and user intent. Commands have priority over mentions |
 | `tool.execute.before` | Blocks destructive commands + validates subagent names |
 | `tool.execute.after` | Tool auditing with automatic rotation |
-| `experimental.session.compacting` | Re-injects SDD state + persists pipeline state |
-
-## Actual SDK API vs blog post
-
-Based on `@opencode-ai/plugin/dist/index.d.ts` (v1.14.41):
-
-| Blog post / Plan | Actual API | Status |
-|---|---|---|
-| `session.created` | ❌ Does not exist | We use `experimental.chat.system.transform` |
-| `message.created` | `chat.message` | ✅ Corrected |
-| `tool.call` | `tool.execute.before` | ✅ Corrected |
-| `tool.result` | `tool.execute.after` | ✅ Corrected |
-| `experimental.session.compacting` | `experimental.session.compacting` | ✅ Same |
-| `file.written` | ❌ Does not exist | Removed |
-| `error` | ❌ Does not exist | Removed |
-| `session.ended` | ❌ Does not exist | Persistence in `session.compacting` |
-| `command.executed` | `command.execute.before` | Removed (pre-execution only) |
+| `experimental.session.compacting` | Re-injects SDD state into compacted context |
 
 ## Runtime Files
 
@@ -56,20 +40,26 @@ Ignored by git.
 The plugin blocks destructive commands for ALL agents — a global safety net that OpenCode's per-agent permissions don't cover:
 
 ```typescript
-DESTRUCTIVE_PATTERNS = [
-  /rm\s+-rf/i,               // rm -rf
-  /git\s+push\s+--force/i,   // git push --force
-  /drop\s+table/i,           // DROP TABLE
-  /drop\s+database/i,        // DROP DATABASE
+const DESTRUCTIVE_PATTERNS: RegExp[] = [
+  /rm\s+-[a-z]*r[a-z]*f\b/i,       // rm -r -f, rm -rf, rm -fir, etc.
+  /rm\s+-[a-z]*f[a-z]*r\b/i,       // rm -f -r (reversed flag order)
+  /git\s+push\s+(-f|--force)\b/i,   // git push -f, git push --force
+  /drop\s+table\b/i,                // DROP TABLE (with or without IF EXISTS)
+  /drop\s+database\b/i,             // DROP DATABASE
+  /mkfs\b/i,                        // mkfs, mkfs.ext4 — disk formatting
+  /dd\s+if=/i,                      // dd if=/dev/zero of=/dev/sda — disk destruction
+  /chmod\s+-R\s+777\s+\//i,         // chmod -R 777 / — permission destruction
 ]
 ```
 
+Commands are normalized before matching: comments stripped, whitespace collapsed.
+
 ### 2. Subagent Name Validation
 
-The plugin validates that subagent names in `task()` exist in the catalog (**102+ agents**: 96+ subagents + 6 primary). If the LLM invents a name, it receives an error:
+The plugin validates that subagent names in `task()` exist in the catalog (**103 agents**: 97 subagents + 6 primary). If the LLM invents a name, it receives an error:
 
 ```
-Unknown subagent: python-wizard. Use a valid agent name from the catalog.
+Unknown subagent: "python-wizard". Use an agent from the VALID_SUBAGENTS catalog.
 ```
 
 The `VALID_SUBAGENTS` Set contains all valid agent names organized by domain:
@@ -91,7 +81,7 @@ The `VALID_SUBAGENTS` Set contains all valid agent names organized by domain:
 | Documentation & Research | 5 | docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, search-specialist |
 | Product & Business | 9 | business-analyst, product-manager, competitive-analyst, content-marketer, market-researcher, sales-engineer, seo-specialist, trend-analyst, ux-researcher |
 
-Validation checks `args.agent`, `args.name`, `args.type`, or `args.subagent` for the name.
+Validation checks `args.subagent_type`, `args.agent`, `args.name`, `args.type`, or `args.subagent` for the name.
 
 ## What OpenCode Manages (not the plugin)
 
@@ -102,7 +92,7 @@ These are configured in agent file YAML frontmatter and `opencode.json`:
 - **Skill loading**: which skills are available
 - **Command definitions**: slash command definitions
 - **Bash rules**: per-agent bash permission patterns
-- **Subagent delegation**: which agents can delegate to which subagents
+- **Subagent delegation**: which agents can delegate to which subagents (configured per agent, not enforced by the plugin)
 
 ## SDD Phase Suggestions
 
@@ -113,32 +103,6 @@ When an agent is used outside its typical phase, the plugin suggests using the c
 ```
 
 Suggestions are **advisory only** — they never block the agent.
-
-## Intent Detection
-
-`chat.message` detects user intent in free-text messages:
-
-| Pattern | Intent |
-|--------|--------|
-| "create a rest api", "build a cli" | build |
-| "write tests", "add unit tests" | test |
-| "review this code", "check quality" | review |
-| "create a spec", "define requirements" | spec, evolve |
-| "plan this feature" | plan |
-| "optimize performance", "web vitals" | webperf |
-| "update existing", "evolve the project" | evolve |
-
-When an intent is detected, it is stored in `sddState.last_intent` and injected as a visible suggestion in the system prompt:
-
-```
-> **Intent detected:** User wants to `build`. Suggest they use the command.
-```
-
-The intent is consumed after injection (transient, not persisted between sessions).
-
-### Priority: Commands over mentions
-
-Slash commands (`/build`, `/review`) have priority over mentions (`@tlaloc`). If the user writes `@tlaloc /review`, tezcatlipoca is activated (by the command), not tlaloc (by the mention).
 
 ## How it works
 
@@ -166,6 +130,8 @@ Mapping of slash commands to their primary agent:
 /build → tlaloc
 /code-simplify → tlaloc
 /design → quetzalcoatl
+/diagnosis → quetzalcoatl
+/docs-update → quetzalcoatl
 /evolve → quetzalcoatl
 /plan → moctezuma
 /review → tezcatlipoca
@@ -181,17 +147,17 @@ Mapping of slash commands to their primary agent:
 
 ## Subagent Delegation
 
-Primary agents can delegate to subagents via `task()`. Each subagent operates in an isolated subcontext with its **own permissions**, not the parent's. Delegation rules are configured in agent file YAML frontmatter — the plugin only validates the subagent name exists in the catalog.
+Primary agents can delegate to subagents via `task()`. Each subagent operates in an isolated subcontext with its **own permissions**, not the parent's. Delegation rules are configured in each agent file's YAML frontmatter — the plugin only validates the subagent name exists in the catalog, it does not enforce which agents can delegate to which subagents.
 
-| Primary agent | Can delegate? | Typical subagents |
+| Primary agent | Can delegate? | Config source |
 |----------------|:---:|---|
-| huitzilopochtli | ✅ docs + code | Any catalog subagent (flexible) |
-| quetzalcoatl | ✅ docs only | docs-writer, accessibility-tester, ux-researcher, research-analyst |
-| moctezuma | ❌ | (does not delegate) |
-| tlaloc | ✅ docs + code | backend-developer, frontend-developer, test-engineer, etc. |
-| mictlantecuhtli | ✅ docs + code | test-engineer, code-reviewer (when steps exhausted) |
-| tezcatlipoca | ❌ | (does not delegate — only observes and critiques) |
+| huitzilopochtli | ✅ | Agent YAML frontmatter |
+| quetzalcoatl | ✅ | Agent YAML frontmatter |
+| moctezuma | ❌ | Agent YAML frontmatter |
+| tlaloc | ✅ | Agent YAML frontmatter |
+| mictlantecuhtli | ✅ | Agent YAML frontmatter |
+| tezcatlipoca | ❌ | Agent YAML frontmatter |
 
 ## Source
 
-Plugin: `sdd-pipeline.ts` (~534 lines)
+Plugin: `sdd-pipeline.ts` (~574 lines)

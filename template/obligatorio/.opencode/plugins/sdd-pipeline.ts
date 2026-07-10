@@ -44,6 +44,8 @@ const COMMAND_AGENT_MAP: Record<string, string> = {
   "/spec": "quetzalcoatl",
   "/design": "quetzalcoatl",
   "/evolve": "quetzalcoatl",
+  "/diagnosis": "quetzalcoatl",
+  "/docs-update": "quetzalcoatl",
   "/plan": "moctezuma",
   "/build": "tlaloc",
   "/test": "mictlantecuhtli",
@@ -117,6 +119,19 @@ const INTENT_PATTERNS: Record<string, string[]> = {
     "performance audit", "speed", "velocidad", "optimizar pagina",
     "page speed", "carga de pagina", "optimizar rendimiento",
   ],
+  "/diagnosis": [
+    "diagnostico", "diagnosis", "diagnosticar", "analyze issue",
+    "analizar problema", "investigar", "bug report", "issue analysis",
+    "root cause", "causa raiz", "por que falla", "why is it failing",
+    "revisar issue", "check issue", "troubleshoot", "solucionar",
+  ],
+  "/docs-update": [
+    "actualizar docs", "update docs", "update documentation",
+    "sync docs", "sincronizar documentacion", "docs outdated",
+    "migrar docs", "migrate docs", "actualizar documentacion",
+    "sync documentation", "documentacion desactualizada",
+    "regenerar docs", "regenerate docs", "docs update",
+  ],
 }
 
 /** Normalizes a bash command for safer regex matching — strips comments, collapses whitespace. */
@@ -145,6 +160,8 @@ const COMMAND_PHASE_MAP: Record<string, string> = {
   "/spec": "define",
   "/design": "define",
   "/evolve": "define",
+  "/diagnosis": "define",
+  "/docs-update": "define",
   "/plan": "plan",
   "/build": "build",
   "/test": "verify",
@@ -158,7 +175,7 @@ const COMMAND_PHASE_MAP: Record<string, string> = {
 // Valid Subagent Names (for task() validation)
 // ---------------------------------------------------------------------------
 
-// All 102 agents: 96 subagents + 6 primary agents
+// All 103 agents: 97 subagents + 6 primary agents
 // Used to validate task() calls — rejects invented subagent names
 const VALID_SUBAGENTS = new Set([
   // Primary agents
@@ -224,10 +241,10 @@ const INTENT_SUGGESTION_MAP: Record<string, string> = Object.fromEntries(
 const PHASE_SUGGESTIONS: Record<string, Record<string, string>> = {
   idle: {},
   define: {
-    moctezuma: 'Consider /spec, /evolve, or /design to define requirements.',
-    tlaloc: 'Consider /spec or /evolve first to define requirements.',
-    mictlantecuhtli: 'Consider /spec or /evolve first to define requirements.',
-    tezcatlipoca: 'Consider /spec or /evolve first to define requirements.',
+    moctezuma: 'Consider /spec, /evolve, /design, /diagnosis, or /docs-update to define requirements.',
+    tlaloc: 'Consider /spec, /evolve, /diagnosis, or /docs-update to define requirements.',
+    mictlantecuhtli: 'Consider /spec, /evolve, /diagnosis, or /docs-update to define requirements.',
+    tezcatlipoca: 'Consider /spec, /evolve, /diagnosis, or /docs-update to define requirements.',
   },
   plan: {
     quetzalcoatl: 'Consider /spec or /design first to define requirements.',

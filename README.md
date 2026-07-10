@@ -156,7 +156,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   <tr><td colspan="2"><b>Model Guide:</b> GLM 5.2 as default for critical reasoning and code audit. Claude Opus 4.6 for most rigorous pre-merge review. DeepSeek V4 Pro for deep security analysis. GPT-5.5 Pro for maximum depth security audits. Claude Sonnet 4.6 for rapid review cycles.</td></tr>
 </table>
 
-Additionally, over **90 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog](template/opcional/docs/opencode/03-agent-index.md).
+Additionally, over **90 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
 
 ---
 
@@ -178,7 +178,7 @@ That's it. Bun downloads and runs the latest version automatically.
 
 > **Tip:** Use `bunx --fresh @fisherk2-dev/codice` to force download the latest version.
 
-> **Next steps:** After installation, follow the [First Steps Before Opening OpenCode](template/opcional/docs/opencode/00-setup.md#first-steps-before-opening-opencode-after-install-códice-workspace) guide to configure models, install plugin dependencies, and start your first workflow.
+> **Next steps:** After installation, visit the [GitHub Wiki → Getting Started](https://github.com/fisherk2/codice-opencode/wiki/Getting-Started) guide to configure models, install plugin dependencies, and start your first workflow.
 
 ### Offline / Air-gapped Alternative
 

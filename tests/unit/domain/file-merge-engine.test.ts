@@ -354,9 +354,9 @@ describe("FileMergeEngine — Exclusion logic", () => {
 
 		const rules = [
 			rule("docs", "standard", true), // standard directory
-			rule("docs/opencode", "optional", true), // optional sub-path
+			rule("docs/guides", "optional", true), // optional sub-path
 		];
-		const result = await engine.execute(rules, ["docs/opencode"]);
+		const result = await engine.execute(rules, ["docs/guides"]);
 
 		expect(result.ok).toBe(true);
 
@@ -364,10 +364,10 @@ describe("FileMergeEngine — Exclusion logic", () => {
 		const docsStageCall = calls.find((c) => c.method === "stageFile" && c.args[0] === "docs");
 		expect(docsStageCall).toBeDefined();
 
-		// The second argument should be the exclusion set containing "opencode"
+		// The second argument should be the exclusion set containing "guides"
 		const excludeSet = docsStageCall?.args[1] as Set<string> | undefined;
 		expect(excludeSet).toBeDefined();
-		expect(excludeSet?.has("opencode")).toBe(true);
+		expect(excludeSet?.has("guides")).toBe(true);
 	});
 
 	test("does NOT compute exclusions for mandatory directory rules", async () => {

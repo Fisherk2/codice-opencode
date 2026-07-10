@@ -41,6 +41,7 @@ dist/
 /.opencode/plugins/.sdd-audit.log
 /skills-lock.json
 /opencode.json
+/.codice-version
 
 # ─── Sistema ─────────────────────────────────────────────────────────────────
 .DS_Store

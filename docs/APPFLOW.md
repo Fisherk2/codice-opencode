@@ -1,4 +1,4 @@
-# Flujo de Navegación (TUI) – Códice: Opencode Workspace Installer v1.0.0
+# Flujo de Navegación (TUI) – Códice: Opencode Workspace Installer v1.0.13
 **Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Actores y Roles
@@ -17,7 +17,7 @@ graph TD
     C --> Z([Fin con código de error 1])
     B -- Sí --> D[Vista: Menú Principal]
     D --> E{Selección de Usuario}
-    E -- '1. Instalación Limpia' --> F[Vista: Confirmación Destructiva]
+    E -- '1. Instalación Limpia' --> F[Vista: Confirmación + Checklist de Opcionales]
     E -- '2. Instalación a Proyecto' --> G[Vista: Checklist de Opcionales]
     E -- '3. Actualizar Workspace' --> H[Vista: Spinner 'Consultando GitHub...']
     E -- 'Esc / Ctrl+C' --> Z
@@ -47,11 +47,32 @@ graph TD
     O --> Z
 ```
 
+### Flujo 2b: Instalación Limpia (con menú de opcionales)
+```mermaid
+graph TD
+    A([Inicio: Modo Limpia]) --> B{¿Directorio no vacío?}
+    B -- Sí --> C[Warning: Se sobrescribirán archivos existentes]
+    C --> D{¿Usuario confirma?}
+    D -- No --> Z([Fin con código 0])
+    D -- Sí --> E[Vista: Checklist de Opcionales]
+    B -- No --> E
+    E --> F{¿Usuario selecciona opcionales?}
+    F -- Sí --> G[Ejecutar Motor de Fusión Atómica]
+    F -- No --> G
+    G --> H[Generar symlinks post-instalación]
+    H --> I[Generar .gitignore post-instalación]
+    I --> J{¿Éxito?}
+    J -- Sí --> K[Vista: Éxito 'Workspace instalado']
+    J -- No --> L[Vista: Error 'Fallo en instalación. Proyecto intacto.']
+    K --> Z
+    L --> Z
+```
+
 ## 3. Matriz de Navegación TUI
 | Origen (Vista TUI) | Destino (Vista TUI) | Trigger (Tecla/Acción) | Condición | Estado Global Requerido | Rollback/Cancelación |
 |--------------------|---------------------|------------------------|-----------|--------------------------|----------------------|
-| Menú Principal | Confirmación Destructiva | `Enter` en Opción 1 | Directorio destino no está vacío | Ninguno | `Esc` regresa al Menú Principal |
-| Confirmación Destructiva | Ejecución Limpia | `Enter` en "Sí, continuar" | Usuario confirma | `mode='clean'` | `Esc` o `Ctrl+C` aborta sin cambios |
+| Menú Principal | Confirmación + Checklist | `Enter` en Opción 1 | Directorio destino existe | `mode='clean'` | `Esc` regresa al Menú Principal |
+| Confirmación + Checklist | Ejecución Limpia | `Enter` en "Continuar" | Usuario confirma + selecciona opcionales | `mode='clean'`, `selectedOptionals: string[]` | `Esc` o `Ctrl+C` aborta sin cambios |
 | Menú Principal | Checklist Opcionales | `Enter` en Opción 2 | Directorio destino existe | `mode='project'` | `Esc` regresa al Menú Principal |
 | Checklist Opcionales | Ejecución Proyecto | `Enter` en "Continuar" | Al menos 1 selección o default | `selectedOptionals: string[]` | `Esc` regresa al Menú Principal |
 | Menú Principal | Consulta Remota | `Enter` en Opción 3 | Existe `.codice-version` | `localVersion: string` | `Esc` o `Ctrl+C` aborta la petición HTTP |
@@ -75,5 +96,25 @@ graph TD
 | F-03 | HU-03, RF-05 | Consulta Remota | `GitHubRestClient.getLatestRelease()` |
 | F-04 | HU-05, RF-03 | Ejecución Atómica | `AtomicFileWriter.execute()` |
 | F-05 | RF-05 (Seguridad) | Manejo de SIGINT | `process.on('SIGINT', cleanupHandler)` |
+| F-06 | HU-01, RF-01 | Checklist Opcionales (Clean) | `ClackPromptsAdapter.multiselect()` |
+| F-07 | RF-03 | Generación Symlinks Post-Install | `BunSymlinkCreator.createSymlinks()` |
+| F-08 | RF-03 | Generación Gitignore Post-Install | `BunGitignoreCreator.createGitignore()` |
+
+## 7. Flujos No-Interactivos
+
+### Flujo con `--force`
+Cuando se pasa `--force`, el CLI omite todos los prompts de confirmación:
+- Clean Install: no pide confirmación de sobrescritura, incluye todos los opcionales automáticamente
+- Project Install: no muestra menú de opcionales, incluye todos automáticamente
+- Update Workspace: no pide confirmación de actualización
+
+### Flujo con `--dest <path>`
+Cuando se pasa `--dest <path>`, el CLI usa el path especificado como directorio destino en vez de `cwd()`.
+- Valida que el path exista y sea un directorio
+- Valida que el path resuelva dentro del directorio base (prevención de path traversal)
+- Útil para desarrollo seguro: `just dev` usa `--dest tests/fixtures/workspace/`
+
+### Flujo con `--mode <clean|project|update>`
+Cuando se pasa `--mode`, el CLI omite el menú principal y va directamente al modo especificado.
 
 ---

@@ -41,7 +41,7 @@ In other harnesses without an Agent tool, invoke each persona's system prompt se
 Constraints (from OpenCode's subagent model):
 - Subagents cannot spawn other subagents — do not let one persona delegate to another.
 - Each subagent gets its own context window and returns only its report to this main session.
-- If you need teammates that talk to each other instead of just reporting back, use Claude Code Agent Teams and reference these personas as teammate types (see @docs/opencode/02-orchestration-patterns.md).
+- If you need teammates that talk to each other instead of just reporting back, use Claude Code Agent Teams and reference these personas as teammate types (see [GitHub Wiki → Workspace Structure](https://github.com/fisherk2/codice-opencode/wiki/Workspace-Structure)).
 
 **Persona resolution.** If you've defined your own `code-reviewer`, `security-auditor`, `test-engineer`, `dependency-manager`, or `accessibility-tester` in `.opencode/agents/` or `~/.opencode/agents/`, those take precedence over this plugin's versions — `/ship` picks up your customizations automatically. This is intentional: plugin subagents sit at the bottom of Open Code's scope priority table, so user-level definitions win by design.
 

@@ -21,7 +21,6 @@
 # /skills/
 # /references/
 # /commands/
-# /docs/opencode/
 # /.agents/
 # /.opencode/
 # /.windsurf/
@@ -37,6 +36,7 @@
 /.opencode/plugins/.sdd-audit.log
 # /skills-lock.json
 # /opencode.json
+# /.codice-version
 
 # Sistema - Excluye archivos temporales del sistema operativo
 .DS_Store
@@ -115,6 +115,9 @@ config/*secret*.yaml
 config/*local*.yaml
 *.secret.yaml
 *.local.yaml
+
+# npm token (contiene Granular Access Token para publish)
+.npmrc
 
 # Modulos de Node.js
 node_modules/

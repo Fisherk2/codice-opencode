@@ -67,7 +67,6 @@ The `docs/` directory is **Estandar** by default, but contains **Opcional** exce
 | `docs/` (directory itself) | **Estandar** | Container for project documentation. |
 | `docs/DESIGN.md` | **Opcional** | High-level design doc; user may prefer their own format. |
 | `docs/SCHEMA.md` | **Opcional** | Schema reference; user may generate from code instead. |
-| `docs/opencode/` | **Opcional** | OpenCode-specific docs; user may not need them. |
 | `docs/*` (any other file) | **Estandar** | All other documentation files follow Standard rules. |
 
 > **Merge Rule for Mixed Directories:** When processing `docs/`, the engine walks the tree. The directory is created if missing (Standard behavior). Each child is then evaluated against its own `FileRule`. A child marked Opcional inside an Estandar parent does **not** force the parent to become Obligatorio.
@@ -354,12 +353,11 @@ When the user selects **Project Install** or **Update** mode, the TUI presents o
  ◯ Dependencies
    ◯ requirements.txt
 
- ◯ Documentation
-   ◯ docs/DESIGN.md
-   ◯ docs/SCHEMA.md
-   ◯ docs/opencode/
+  ◯ Documentation
+    ◯ docs/DESIGN.md
+    ◯ docs/SCHEMA.md
 
- ◯ Testing & Workflow
+  ◯ Testing & Workflow
    ◯ .opencode/plugins/sdd-workflow-test.md
 
  ◯ Design Specs

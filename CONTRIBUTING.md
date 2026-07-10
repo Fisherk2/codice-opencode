@@ -17,6 +17,10 @@ This document provides guidelines for contributing. Please follow them to make t
 - [Commit Message Convention](#commit-message-convention)
 - [Code Review Expectations](#code-review-expectations)
 - [Pre-Commit Checklist](#pre-commit-checklist)
+- [Git Workflow](#git-workflow)
+- [npm Publishing](#npm-publishing)
+- [CI/CD Pipeline](#cicd-pipeline)
+- [Release Checklist](#release-checklist)
 - [Reporting Issues](#reporting-issues)
 - [Contributing to the Workspace Template](#contributing-to-the-workspace-template)
 
@@ -296,6 +300,160 @@ Before every commit, verify the following:
 
 ---
 
+## Git Workflow
+
+This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release)
+
+### Branch Naming Conventions
+
+| Prefix | Purpose | Example |
+|--------|---------|---------|
+| `feat/` | New features | `feat/task-creation` |
+| `fix/` | Bug fixes | `fix/double-commit` |
+| `chore/` | Maintenance | `chore/update-deps` |
+| `docs/` | Documentation | `docs/api-guide` |
+| `refactor/` | Code restructuring | `refactor/merge-engine` |
+
+### Workflow
+
+1. Feature branches branch from `main`.
+2. Pull Requests go to `develop` first.
+3. Squash merge to `develop` after approval.
+4. After validation on `develop`, create a PR `develop` → `main`.
+5. Squash merge to `main`, then tag for release.
+
+### PR Requirements
+
+Before submitting a PR, verify:
+
+- [ ] Branch is up to date with target
+- [ ] Full test suite passes
+- [ ] `just check` passes
+- [ ] E2E tests pass
+- [ ] CHANGELOG updated if user-facing change
+
+For a detailed CI/CD workflow diagnosis, see [Issue #23](docs/diagnosis/fix01-cicd-workflow-standardization.md).
+
+---
+
+## npm Publishing
+
+### npm dist-tags
+
+The project uses 3 npm dist-tags:
+
+| Tag | Purpose | Example |
+|-----|---------|---------|
+| `latest` | Stable production release | `v1.0.14` |
+| `beta` | Pre-release for testing | `v1.0.14-beta.1` |
+| `rc` | Release candidate | `v1.0.14-rc.1` |
+
+### Version Naming
+
+- **Production:** `v1.0.14` → `npm publish --tag latest`
+- **Beta:** `v1.0.14-beta.1` → `npm publish --tag beta`
+- **RC:** `v1.0.14-rc.1` → `npm publish --tag rc`
+
+### Creating a Test Tag
+
+```bash
+git tag v1.0.14-beta.1
+git push origin v1.0.14-beta.1
+```
+
+This triggers `release.yml` which detects the beta suffix and publishes with `--tag beta`.
+
+### Consuming a Test Package
+
+```bash
+bunx @fisherk2-dev/codice@beta
+# or with npm:
+npx @fisherk2-dev/codice@beta
+```
+
+### Verifying Tags
+
+```bash
+npm view @fisherk2-dev/codice dist-tags
+npm view @fisherk2-dev/codice@beta version
+```
+
+### Warning
+
+Pre-release tags (`beta`, `rc`) can be overwritten. The `latest` tag cannot — always test with `beta` or `rc` first before publishing to `latest`.
+
+---
+
+## CI/CD Pipeline
+
+### Workflows
+
+**ci.yml** (Continuous Integration)
+
+- **Triggers:** push/PR to `main` or `develop`, tags `v*`
+- **Jobs:** quality (3-platform matrix: ubuntu, macos, windows)
+- **Steps:** checkout → setup Bun → install deps → `just check` → `just test` → `just build` → E2E (Linux) → smoke test (macOS/Windows) → upload artifacts
+- **Concurrency:** cancel-in-progress for same branch
+
+**release.yml** (Release)
+
+- **Triggers:** tag push `v*` or `workflow_dispatch`
+- **Jobs:**
+  1. `build` (3-platform matrix) — builds binary, uploads artifact
+  2. `release` (ubuntu, needs build) — downloads artifacts, validates tag format, extracts CHANGELOG, validates version match, detects release type, publishes to npm, creates GitHub Release
+- **Pre-release detection:** tags like `v1.0.14-beta.1` are published with `--tag beta` and GitHub Pre-release
+
+### Troubleshooting CI/CD
+
+1. **CI doesn't trigger on PR to develop** — Check branches in `on.pull_request.branches` in ci.yml
+2. **npm publish fails with "cannot publish over..."** — This is expected if the version was already published. The workflow skips gracefully.
+3. **Tag version doesn't match package.json** — Update package.json first, then create the tag
+4. **Binary artifacts missing from release** — Check the build matrix — all 3 platforms must succeed
+5. **Workflow_dispatch doesn't find the tag** — The tag must exist in the repository before running dispatch
+
+---
+
+## Release Checklist
+
+### Pre-release
+
+- [ ] All PRs merged to `develop`
+- [ ] `just check` passes on `develop`
+- [ ] `just test` passes (all tests)
+- [ ] `just test-e2e` passes
+- [ ] CHANGELOG.md updated with `[Unreleased]` section for the new version
+- [ ] `package.json` version bumped
+- [ ] [Optional] Create and tag `vX.Y.Z-beta.1` for pre-release testing
+
+### Release
+
+- [ ] PR `develop` → `main` created, reviewed, squash-merged
+- [ ] `main` pulled locally
+- [ ] Tag `vX.Y.Z` created and pushed: `git tag v1.0.14 && git push origin v1.0.14`
+- [ ] Monitor release workflow in GitHub Actions
+- [ ] Verify npm package: `npm view @fisherk2-dev/codice@latest`
+- [ ] Verify GitHub Release with binary assets
+
+### Post-release
+
+- [ ] `develop` branch synced with `main`: `git checkout develop && git merge main && git push`
+- [ ] GitHub Wiki synced (if wiki source changed)
+- [ ] Release announced (if applicable)
+
+### Example: v1.0.14 Release
+
+```bash
+# 1. Test with beta
+git tag v1.0.14-beta.1
+git push origin v1.0.14-beta.1
+# Wait for CI, verify on npm
+
+# 2. Production release
+git tag v1.0.14 && git push origin v1.0.14
+```
+
+---
+
 ## Reporting Issues
 
 ### Bug Reports
@@ -320,7 +478,7 @@ When requesting a feature, include:
 
 ## Contributing to the Workspace Template
 
-Códice installs an **OpenCode workspace template** organized into three file categories: **Obligatorio** (always copied), **Estándar** (copied only if missing), and **Opcional** (presented as a checklist). When adding new agents, commands, or skills to the template, follow the procedures below. Each links to the full step-by-step guide in the [USER_GUIDE.md](template/opcional/docs/opencode/USER_GUIDE.md).
+Códice installs an **OpenCode workspace template** organized into three file categories: **Obligatorio** (always copied), **Estándar** (copied only if missing), and **Opcional** (presented as a checklist). When adding new agents, commands, or skills to the template, follow the procedures below.
 
 ### Add a New Agent
 
@@ -333,7 +491,7 @@ Key steps for adding an agent:
 
 1. **Create `agents/<agent-name>.md`** with the appropriate frontmatter format (YAML frontmatter, role, scope, output format, rules)
 2. **Add a `## Composition` block** at the end following the standard format (Invoke directly when / Invoke via / Do not invoke from another persona)
-3. **Update the global catalog** in [docs/opencode/03-agent-index.md](template/opcional/docs/opencode/03-agent-index.md) — add the agent to the corresponding domain section
+3. **Update the global catalog** — add the agent to the corresponding domain section at the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents)
 4. **Update the SUBAGENT DELEGATION tables** of primary agents that can delegate to the new agent (quetzalcoatl, tlaloc, mictlantecuhtli)
 5. **Update huitzilopochtli's catalog** in [agents/huitzilopochtli.md](agents/huitzilopochtli.md) — add the agent to the appropriate domain list
 6. **Add the name to the `VALID_SUBAGENTS` Set** in [.opencode/plugins/sdd-pipeline.ts](.opencode/plugins/sdd-pipeline.ts)
@@ -341,7 +499,7 @@ Key steps for adding an agent:
 
 **Primary agents** require additional steps: add SDD plugin hooks (identity patterns, keyword detection, command mapping, mention patterns, role rules), update orchestration patterns documentation, and add to the agent persona tables.
 
-See [USER_GUIDE.md — Add a New Agent](template/opcional/docs/opencode/USER_GUIDE.md#add-a-new-agent) for the complete step-by-step procedure.
+See the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents) for the complete step-by-step procedure.
 
 ### Add a New Skill
 
@@ -349,15 +507,15 @@ Key steps:
 
 1. **Place the skill in `skills/<skill-name>/SKILL.md`** — use a kebab-case directory name
 2. **Migrate internal `references/`** — if the skill contains a `references/` directory, move all content to the root `references/` folder and delete the empty directory inside the skill
-3. **Create a proper `SKILL.md`** following the format defined in [docs/opencode/05-skills.md](template/opcional/docs/opencode/05-skills.md) — must include YAML frontmatter with valid `name` and `description`
+3. **Create a proper `SKILL.md`** following the format defined in the [GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills) — must include YAML frontmatter with valid `name` and `description`
 4. **Update available skills documentation:**
    - [skills/using-agent-skills/SKILL.md](skills/using-agent-skills/SKILL.md) — add to the "Skill Discovery" tree and "Quick Reference" table
-   - [docs/opencode/USER_GUIDE.md](template/opcional/docs/opencode/USER_GUIDE.md) — add to the appropriate phase table and project structure tree
+   - [GitHub Wiki](https://github.com/fisherk2/codice-opencode/wiki) — add to the appropriate phase table and project structure tree
 5. **Restart your OpenCode session**
 
 Skills must be **specific** (actionable steps), **verifiable** (clear exit criteria), **battle-tested** (based on real engineering workflows), and **minimal** (only content necessary to guide the agent correctly).
 
-See [USER_GUIDE.md — Add a New Skill](template/opcional/docs/opencode/USER_GUIDE.md#add-a-new-skill) for the complete procedure and quality standards.
+See the [GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills) for the complete procedure and quality standards.
 
 ### Add a New Command
 
@@ -368,13 +526,13 @@ Key steps:
 1. **Create `commands/<command-name>.md`** with YAML frontmatter: `description` (action verb + what it does) and `agent` (target primary agent name)
 2. **Write the command flow** as numbered steps — reference skills inline (`@skills/skill-name/SKILL.md`), use the `question` tool at decision points, include handoff instructions if the agent doesn't write code
 3. **Update documentation:**
-   - [docs/opencode/USER_GUIDE.md](template/opcional/docs/opencode/USER_GUIDE.md) — add to the Commands table and project structure tree
+   - [GitHub Wiki](https://github.com/fisherk2/codice-opencode/wiki) — add to the Commands table and project structure tree
    - [README.md](README.md) — add to the full-cycle phase table and update the Mermaid diagram if applicable
 4. **Update the SDD plugin** — add to `COMMAND_AGENT_MAP` in [.opencode/plugins/sdd-pipeline.ts](.opencode/plugins/sdd-pipeline.ts)
-5. **If the command introduces a new SDD phase**, also update [docs/opencode/02-orchestration-patterns.md](template/opcional/docs/opencode/02-orchestration-patterns.md)
+5. **If the command introduces a new SDD phase**, also update the orchestration patterns documentation
 6. **Restart your OpenCode session**
 
-See [USER_GUIDE.md — Add a New Command](template/opcional/docs/opencode/USER_GUIDE.md#add-a-new-command) for the full procedure.
+See the [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) for the full procedure.
 
 ### File Classification
 
@@ -395,11 +553,10 @@ The Códice CLI handles the classification automatically based on the directory 
 
 ### References
 
-- **[USER_GUIDE.md](template/opcional/docs/opencode/USER_GUIDE.md)** — Complete reference guide with detailed procedures for all contributions
-- **[01-agents.md](template/opcional/docs/opencode/01-agents.md)** — Agent configuration, frontmatter format, permissions, modes
-- **[03-agent-index.md](template/opcional/docs/opencode/03-agent-index.md)** — Complete classified catalog of all 102+ agents
-- **[04-commands.md](template/opcional/docs/opencode/04-commands.md)** — Command creation guide, frontmatter format, best practices
-- **[05-skills.md](template/opcional/docs/opencode/05-skills.md)** — Skill creation guide, format specification, nomenclature
+- **[GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents)** — Agent configuration, frontmatter format, permissions, modes
+- **[GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands)** — Command creation guide, frontmatter format, best practices
+- **[GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills)** — Skill creation guide, format specification, nomenclature
+- **[GitHub Wiki → Customization Guide](https://github.com/fisherk2/codice-opencode/wiki/Customization-Guide)** — Practical recipes for customizing the workspace
 
 ---
 

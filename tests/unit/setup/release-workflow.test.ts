@@ -66,6 +66,38 @@ describe("Release Workflow Configuration", () => {
 		expect(releaseYaml).toContain("exit 1");
 	});
 
+	// --- Pre-release detection ---
+
+	test("has pre-release detection step that parses tag suffix", () => {
+		expect(releaseYaml).toContain("Detect release type");
+		expect(releaseYaml).toContain("beta|rc");
+		expect(releaseYaml).toContain("npm_tag");
+	});
+
+	test("pre-release tags set npm_tag to beta or rc using bash variable", () => {
+		expect(releaseYaml).toMatch(/npm_tag=\$\{SUFFIX\}/);
+	});
+
+	test("pre-release detection sets type, npm_tag, and make_latest outputs", () => {
+		expect(releaseYaml).toContain("type=prerelease");
+		expect(releaseYaml).toContain("npm_tag=latest");
+		expect(releaseYaml).toContain("make_latest=true");
+		expect(releaseYaml).toContain("make_latest=false");
+	});
+
+	test("npm publish uses --tag with detected npm_tag", () => {
+		// biome-ignore lint/suspicious/noTemplateCurlyInString: This is a bash variable in a YAML workflow, not a JS template literal
+		expect(releaseYaml).toContain('--tag "${NPM_TAG}"');
+	});
+
+	test("GitHub release uses prerelease flag", () => {
+		expect(releaseYaml).toContain("prerelease:");
+	});
+
+	test("make_latest is dynamically set via release_type output", () => {
+		expect(releaseYaml).toMatch(/make_latest: .*release_type.outputs.make_latest/);
+	});
+
 	// --- npm publish ---
 
 	test("has npm publish step", () => {

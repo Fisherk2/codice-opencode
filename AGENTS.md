@@ -1,4 +1,4 @@
-# AGENTS.MD – Códice: Opencode Workspace Installer v1.0.0
+# AGENTS.MD – Códice: Opencode Workspace Installer v1.0.13
 **Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ---
@@ -48,22 +48,40 @@
 ```mermaid
 graph TD
     subgraph "Infrastructure Layer"
-        FS[BunFileSystem Adapter]
+        FS[BunFileSystem Facade]
+        TR[TemplateResolver]
+        AS[AtomicStager]
+        DW[directoryWalker]
+        PR[pathResolver]
         GH[GitHubRestClient]
         TUI[ClackPromptsAdapter]
+        BSC[BunSymlinkCreator]
+        BGC[BunGitignoreCreator]
+
+        FS -->|delegates| TR
+        FS -->|delegates| AS
+        FS -->|uses| DW
+        FS -->|uses| PR
     end
 
     subgraph "Application Layer"
         UC1[CleanInstallUseCase]
         UC2[ProjectInstallUseCase]
         UC3[UpdateWorkspaceUseCase]
+        ISP[ISymlinkCreator]
+        IGC[IGitignoreCreator]
+        HLP[helpers.ts]
     end
 
     subgraph "Domain Layer"
         ENT1[FileRule Entity]
         ENT2[WorkspaceVersion Entity]
+        ENT3[FileRuleManifest]
         SRV1[FileMergeEngine Service]
         SRV2[VersionComparator Service]
+        ERR1[MergeError]
+        ERR2[SymlinkError]
+        ERR3[GitignoreError]
     end
 
     TUI -->|User Input| UC1
@@ -75,11 +93,18 @@ graph TD
     UC3 -->|Check Version| SRV2
     UC3 -->|Execute| SRV1
     
+    UC1 -->|Post-install| ISP
+    UC1 -->|Post-install| IGC
+    UC2 -->|Post-install| ISP
+    UC2 -->|Post-install| IGC
+    
     SRV1 -->|Read/Write| FS
     SRV2 -->|HTTP GET| GH
+    ISP -.->|implements| BSC
+    IGC -.->|implements| BGC
     
     classDef domain fill:#f9f,stroke:#333,stroke-width:2px;
-    class ENT1,ENT2,SRV1,SRV2 domain;
+    class ENT1,ENT2,ENT3,SRV1,SRV2,ERR1,ERR2,ERR3 domain;
 ```
 
 ### Estrategia de Comunicación entre Módulos
@@ -94,16 +119,17 @@ graph TD
 | @clack/prompts | UX moderna, zero-dependency tree, ideal para binarios | Inquirer (más pesado, UI menos moderna) |
 | Staging + Rename | Atomicidad garantizada, cero corrupción | Journal de reversión (complejo, propenso a fallos) |
 | GitHub REST API | Estándar, no requiere Git instalado, JSON estructurado | Git ls-remote (dependencia externa fuerte) |
+| Post-Install Generation | npm resuelve symlinks y excluye `.gitignore`; la generación post-instalación garantiza compatibilidad | Empaquetar symlinks y dotfiles en npm (imposible, npm los transforma/excluye) |
 
 ---
 
 ## 🔧 Guías de Desarrollo
 
 ### Principios SOLID y Ortogonalidad Aplicados
-- **SRP (Single Responsibility):** Cada clase tiene una única razón para cambiar. `FileMergeEngine` solo fusiona; `AtomicFileWriter` solo garantiza atomicidad.
+- **SRP (Single Responsibility):** Cada clase tiene una única razón para cambiar. `FileMergeEngine` solo fusiona; `AtomicStager` solo garantiza atomicidad.
 - **OCP (Open/Closed):** Nuevas reglas de fusión se añaden como estrategias, sin modificar el motor.
 - **LSP (Liskov Substitution):** Los adaptadores de infraestructura son intercambiables sin romper el contrato.
-- **ISP (Interface Segregation):** Interfaces pequeñas y específicas (`IFileReader`, `IFileWriter` en vez de un `IFileSystem` gigante).
+- **ISP (Interface Segregation):** Interfaces pequeñas y específicas (`IFileSystem`, `IGitHubClient`, `IUserPrompt`, `ISymlinkCreator`, `IGitignoreCreator`).
 - **DIP (Dependency Inversion):** El dominio no conoce Bun ni GitHub; solo interfaces.
 - **Ortogonalidad:** La lógica de versión es independiente de la lógica de fusión. Cambios en una no afectan la otra.
 
@@ -118,32 +144,53 @@ src/
 ├── domain/
 │   ├── entities/
 │   │   ├── FileRule.ts
+│   │   ├── FileRuleManifest.ts
+│   │   ├── FileRuleManifestData.ts
 │   │   └── WorkspaceVersion.ts
+│   ├── ports/
+│   │   ├── IFileMergeEngine.ts
+│   │   ├── IFileSystem.ts
+│   │   └── IVersionComparator.ts
 │   ├── services/
 │   │   ├── FileMergeEngine.ts
 │   │   └── VersionComparator.ts
 │   └── types/
-│       └── SymlinkError.ts
+│       ├── GitignoreError.ts
+│       ├── MergeError.ts
+│       ├── Result.ts
+│       ├── SymlinkError.ts
+│       └── version.ts
 ├── application/
+│   ├── helpers.ts
 │   ├── use-cases/
 │   │   ├── CleanInstallUseCase.ts
 │   │   ├── ProjectInstallUseCase.ts
 │   │   └── UpdateWorkspaceUseCase.ts
 │   └── ports/
-│       ├── IFileSystem.ts
 │       ├── IGitHubClient.ts
-│       ├── IUserPrompt.ts
-│       └── ISymlinkCreator.ts
+│       ├── IGitignoreCreator.ts
+│       ├── ISymlinkCreator.ts
+│       └── IUserPrompt.ts
 ├── infrastructure/
 │   ├── adapters/
+│   │   ├── AtomicStager.ts
 │   │   ├── BunFileSystem.ts
+│   │   ├── BunGitignoreCreator.ts
 │   │   ├── BunSymlinkCreator.ts
+│   │   ├── ClackPromptsAdapter.ts
+│   │   ├── directoryWalker.ts
 │   │   ├── GitHubRestClient.ts
-│   │   └── ClackPromptsAdapter.ts
+│   │   ├── pathResolver.ts
+│   │   └── TemplateResolver.ts
 │   └── config/
-│       └── constants.ts
+│       ├── constants.ts
+│       └── symlinks.ts
 └── cli/
-    └── main.ts
+    ├── bin.js
+    ├── container.ts
+    ├── main.ts
+    ├── output.ts
+    └── parse-args.ts
 ```
 
 - **Nombres descriptivos:** `FileMergeEngine` (no `Merger`), `VersionComparator` (no `VersionCheck`).

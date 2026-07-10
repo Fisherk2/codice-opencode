@@ -1,11 +1,15 @@
 name: CI
 
+# 3-stage CI/CD pipeline:
+#   1. develop  — integration branch, all PRs merge here first
+#   2. main     — production branch, deployable at all times
+#   3. tags v*  — release triggers, published via release.yml
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     tags: ['v*']
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
