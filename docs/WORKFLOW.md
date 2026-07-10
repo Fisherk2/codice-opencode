@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.14
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-09 (FEV-5 actualizado *a posteriori*) | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v1.1.0
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 a FEV-10 planificados) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -23,6 +23,11 @@
 | FEV-3 | Update Workspace overwrite fix + GitHub API fix | Update mode preserves existing standard files + GitHub version check | ✅ Completo |
 | FEV-4 | SDD Command Refactor + Governance (v1.0.13) | Issue #15: docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism | ✅ Completo |
 | FEV-5 | CI/CD Workflow + GitHub Wiki (v1.0.14) | Issue #23: CI/CD workflow documentation; Issue #25: GitHub Wiki + eliminar docs/opencode/ | ✅ Completo |
+| FEV-6 | Quick Configuration + Documentation (v1.1.0) | Issue #27 (steps), Issue #28 (SECURITY.md), TD-1.2 (coverage artifact) | 🟡 Planificado |
+| FEV-7 | Agent Governance & Security Hardening | Issue #26 (system prompts), Issue #30 (command restrictions) | 🟡 Planificado |
+| FEV-8 | Obsidian Subagent | Issue #21 (obsidian-vault-writer + 6 skills) | 🟡 Planificado |
+| FEV-9 | MCP Server Integration | Issue #29 (6 MCP servers) | 🟡 Planificado |
+| FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | 🟡 Planificado |
 
 ## 2. Desglose por Fase
 
@@ -1178,6 +1183,237 @@ Issues #23 y #25 identifican dos problemas de documentación y proceso:
 
 ---
 
+### Fase FEV-6 — Quick Configuration + Documentation (v1.1.0)
+
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Planificado
+
+#### Contexto
+
+Primera fase de v1.1.0. Contiene los items de menor esfuerzo y riesgo: ajuste de configuración de steps para agentes primarios (Issue #27), creación del documento SECURITY.md (Issue #28), y resolución del coverage artifact en VersionComparator y ClackPromptsAdapter (TD-1.2).
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| FEV6-T1 | Ajustar `steps` para 6 agentes primarios (huitzilopochtli:25, quetzalcoatl:60, moctezuma:20, tlaloc:90, mictlantecuhtli:60, tezcatlipoca:50) | `template/obligatorio/opencode.json` | 🟡 Pendiente |
+| FEV6-T2 | Crear `docs/SECURITY.md` para el proyecto | `docs/SECURITY.md` (nuevo) | 🟡 Pendiente |
+| FEV6-T3 | Crear `template/estandar/docs/SECURITY.md` placeholder | `template/estandar/docs/SECURITY.md` (nuevo) | 🟡 Pendiente |
+| FEV6-T4 | Añadir constructores explícitos a VersionComparator + ClackPromptsAdapter | `src/domain/services/VersionComparator.ts`, `src/infrastructure/adapters/ClackPromptsAdapter.ts` | 🟡 Pendiente |
+| FEV6-T5 | Actualizar FileRuleManifestData.ts si SECURITY.md se añade como entrada standard | `src/domain/entities/FileRuleManifestData.ts` | 🟡 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.14 (antes) | Meta v1.1.0 (FEV-6) |
+|---------|-----------------|---------------------|
+| Tests (pass/fail) | 500 / 0 | ≥500 / 0 |
+| Coverage (funciones) | ~98% | ~98% (artifact resuelto) |
+| E2E escenarios | 15/15 | 15/15 |
+| `just check` errores | 0 | 0 |
+
+**Criterios de completitud (DoD FEV-6):**
+- [ ] Issue #27 resuelto: steps actualizados para los 6 agentes primarios
+- [ ] Issue #28 resuelto: SECURITY.md existe en docs/ y template/estandar/docs/
+- [ ] TD-1.2 resuelto: coverage artifact eliminado (constructores explícitos)
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+
+---
+
+### Fase FEV-7 — Agent Governance & Security Hardening
+
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Planificado
+
+#### Contexto
+
+Segunda fase de v1.1.0. Aborda la gobernanza de agentes y la seguridad de comandos. Issue #26 mejora los system prompts de los 6 agentes principales con reglas de no-assumption y delegación prioritaria. Issue #30 analiza 100+ comandos destructivos y añade restricciones al plugin sdd-pipeline.ts y opencode.json.
+
+#### Diagnóstico
+
+**Issue #26 — System Prompts:**
+Los agentes principales actualmente ejecutan tareas sin verificar ambigüedades con el usuario. Se necesita:
+1. Regla de no-assumption: preguntar antes de ejecutar si las instrucciones son ambiguas
+2. Filosofía: preguntar → resolver → sugerir → advertir
+3. Instrucción de delegación-first: priorizar subagentes especializados sobre escritura directa
+
+**Issue #30 — Command Restrictions:**
+El plugin sdd-pipeline.ts y opencode.json tienen restricciones limitadas. Se necesitan añadir comandos destructivos organizados en categorías:
+- Filesystem (`rm -rf`, `shred`, `find -exec rm`)
+- Git (`push --force`, `reset --hard`, `filter-repo`)
+- SQL (`DROP DATABASE`, `TRUNCATE`, `DELETE` sin `WHERE`)
+- Docker (`rm -f`, `rmi -f`, `system prune -a`)
+- Kubernetes (`delete --all`, `drain`)
+- Permissions (`chmod 777`, `chown -R`)
+- Process (`kill -9 1`, `shutdown -h now`)
+- Network (`iptables -F`, `ufw disable`)
+- Package managers (`npm publish`, `pip --force-reinstall`)
+- Environment (`unset PATH`, `echo >> ~/.bashrc`)
+- Disk (`dd`, `mkfs`, `fdisk`)
+- IaC (`terraform destroy -auto-approve`)
+- Cloud (`aws s3 rm --recursive`, `az vm delete`)
+- Databases (`mongo dropDatabase`, `redis FLUSHALL`)
+
+No todos los comandos necesitan restricción — algunos son aceptables con el permiso "ask" por defecto de bash.
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| FEV7-T1 | Añadir regla de no-assumption + question-tool a 6 agentes principales | `template/obligatorio/agents/{huitzilopochtli,quetzalcoatl,moctezuma,tlaloc,mictlantecuhtli,tezcatlipoca}.md` | 🟡 Pendiente |
+| FEV7-T2 | Añadir instrucción de delegación-first a agentes que delegan (quetzalcoatl, tlaloc, mictlantecuhtli) | Mismos 3 archivos | 🟡 Pendiente |
+| FEV7-T3 | Analizar 100+ comandos y seleccionar los pertinentes para restringir | Análisis en diagnóstico | 🟡 Pendiente |
+| FEV7-T4 | Añadir restricciones de comandos al plugin sdd-pipeline.ts | `template/obligatorio/.opencode/plugins/sdd-pipeline.ts` | 🟡 Pendiente |
+| FEV7-T5 | Añadir restricciones de comandos a opencode.json permissions | `template/obligatorio/opencode.json` | 🟡 Pendiente |
+| FEV7-T6 | Actualizar README.md del plugin | Plugin README | 🟡 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.14 (antes) | Meta FEV-7 |
+|---------|-----------------|------------|
+| Agentes con no-assumption rule | 0/6 | 6/6 |
+| Agentes con delegation-first | 0/3 | 3/3 |
+| Comandos destructivos restringidos | ~10 | 50+ |
+| `bun test` | 500 / 0 | ≥500 / 0 |
+| `just check` errores | 0 | 0 |
+
+**Criterios de completitud (DoD FEV-7):**
+- [ ] Issue #26 resuelto: 6 agentes con no-assumption rule
+- [ ] Issue #26 resuelto: 3 agentes delegadores con delegation-first
+- [ ] Issue #30 resuelto: comandos destructivos restringidos en plugin + config
+- [ ] Plugin README actualizado
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+
+---
+
+### Fase FEV-8 — Obsidian Subagent
+
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Planificado
+
+#### Contexto
+
+Issue #21 propone un subagente especializado para administración de vaults de Obsidian. Solo puede ser invocado por Huitzilopochtli. Restricciones: solo edita archivos .md, solo ejecuta obsidian-cli. Incluye instalación de 6 skills de Obsidian/Markdown.
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| FEV8-T1 | Crear subagente obsidian-vault-writer | `template/obligatorio/agents/obsidian-vault-writer.md` (nuevo) | 🟡 Pendiente |
+| FEV8-T2 | Instalar 6 skills de Obsidian/Markdown | Skills directory | 🟡 Pendiente |
+| FEV8-T3 | Actualizar catálogo de Huitzilopochtli | `template/obligatorio/agents/huitzilopochtli.md` | 🟡 Pendiente |
+| FEV8-T4 | Actualizar tablas de delegación de agentes primarios | quetzalcoatl.md, tlaloc.md, mictlantecuhtli.md | 🟡 Pendiente |
+| FEV8-T5 | Añadir a VALID_SUBAGENTS en sdd-pipeline.ts | `template/obligatorio/.opencode/plugins/sdd-pipeline.ts` | 🟡 Pendiente |
+| FEV8-T6 | Actualizar GitHub Wiki → Agents catalog | Wiki | 🟡 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.14 (antes) | Meta FEV-8 |
+|---------|-----------------|------------|
+| Subagentes totales | ~96 | ~97 (+1 obsidian) |
+| Skills Obsidian/Markdown | 0 | 6 |
+| `bun test` | 500 / 0 | ≥500 / 0 |
+
+**Criterios de completitud (DoD FEV-8):**
+- [ ] Issue #21 resuelto: subagente creado con frontmatter correcto
+- [ ] 6 skills instalados y referenciados
+- [ ] Catálogo de Huitzilopochtli actualizado
+- [ ] Tablas de delegación actualizadas
+- [ ] VALID_SUBAGENTS actualizado
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+
+---
+
+### Fase FEV-9 — MCP Server Integration
+
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Planificado
+
+#### Contexto
+
+Issue #29 propone añadir 6 nuevos MCP servers enfocados en documentación y búsqueda web: Docfork, Rtfmbro, Tavily MCP, Firecrawl MCP, Vercel Grep, GitMCP. Cada uno requiere investigación de instalación, configuración en opencode.json, y actualización de documentación.
+
+Además, los 6 agentes principales tienen una sección `## KNOWLEDGE` que actualmente termina con `Context7 → Web search`. Dado que los nuevos MCPs realizan un trabajo similar a Context7, se debe **reemplazar Context7** por la cadena de consulta: **MCP de documentación/websearch → Websearch (built-in de Opencode) → Question-tool (preguntar al usuario como última opción)**.
+
+> **⚠️ RESTRICCIÓN DE LÍNEAS:** El system prompt de cada agente principal NO debe exceder **>150 líneas** en total, o bien **<100 líneas de system prompt sin considerar el YAML de configuración** (este último consume ~30-50 líneas del fichero). La modificación de la sección `## KNOWLEDGE` es de 1 línea, por lo que se mantiene dentro del límite. Si al añadir explicaciones se acerca al límite, usar una sola línea de cadena en lugar de párrafos.
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| FEV9-T1 | Investigar instalación de 6 MCPs (requisitos, API keys, configuración) | Investigación | 🟡 Pendiente |
+| FEV9-T2 | Configurar MCPs en opencode.json | `template/obligatorio/opencode.json` | 🟡 Pendiente |
+| FEV9-T3 | Documentar pasos manuales de pre-instalación | Documentación | 🟡 Pendiente |
+| FEV9-T4 | Actualizar documentación de MCPs (Wiki) | Wiki | 🟡 Pendiente |
+| FEV9-T5 | Actualizar sección `## KNOWLEDGE` de 6 agentes principales: reemplazar `Context7` con cadena MCP → Websearch → Question-tool | `template/obligatorio/agents/{huitzilopochtli,quetzalcoatl,moctezuma,tlaloc,mictlantecuhtli,tezcatlipoca}.md` | 🟡 Pendiente |
+
+**Nueva cadena KNOWLEDGE (FEV9-T5):**
+```
+AGENTS.md → SPEC.md → docs/ → skills/ → MCP de documentación/websearch → Websearch (built-in) → Question-tool
+```
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.14 (antes) | Meta FEV-9 |
+|---------|-----------------|------------|
+| MCP servers configurados | ~5 | ~11 (+6) |
+| Agentes con KNOWLEDGE actualizada | 0/6 | 6/6 |
+| `bun test` | 500 / 0 | ≥500 / 0 |
+
+**Criterios de completitud (DoD FEV-9):**
+- [ ] Issue #29 resuelto: 6 MCPs configurados en opencode.json
+- [ ] Pasos manuales documentados
+- [ ] Wiki actualizada
+- [ ] FEV9-T5 resuelto: 6 agentes con sección `## KNOWLEDGE` actualizada (Context7 → MCP → Websearch → Question-tool)
+- [ ] Límites de líneas respetados: ≤150 líneas total o ≤100 líneas sin YAML
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+
+---
+
+### Fase FEV-10 — Code Quality + Dependency Upgrades
+
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Planificado
+
+#### Contexto
+
+Fase final de v1.1.0. Contiene los items de mayor esfuerzo y riesgo: split de IFileSystem (ISP), integration tests para main.ts, npm packaging test, y upgrades de TypeScript 6.x + Biome 2.x.
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| FEV10-T1 | Split IFileSystem → IFileSystem + IStagingSystem (ISP compliance) | `src/application/ports/IFileSystem.ts`, new `IStagingSystem.ts`, `BunFileSystem.ts`, `AtomicStager.ts`, all use cases | 🟡 Pendiente |
+| FEV10-T2 | Integration tests para main.ts (coverage 33% → 95%) | `tests/integration/cli/main.test.ts` (nuevo) | 🟡 Pendiente |
+| FEV10-T3 | Isolated integration test for npm packaging | `tests/integration/packaging/npm-pack.test.ts` (nuevo) | 🟡 Pendiente |
+| FEV10-T4 | TypeScript 5.x → 6.x upgrade + tsc --noEmit verification | `package.json`, type fixes | 🟡 Pendiente |
+| FEV10-T5 | Biome 1.x → 2.x update + new lint rules | `package.json`, `biome.json` | 🟡 Pendiente |
+| FEV10-T6 | Actualizar TECH_DEBT.md — mover items resueltos | `docs/TECH_DEBT.md` | 🟡 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.14 (antes) | Meta FEV-10 |
+|---------|-----------------|-------------|
+| Tests (pass/fail) | 500 / 0 | ≥520 / 0 |
+| main.ts coverage | 33% lines | ≥90% lines |
+| Coverage (funciones) | ~98% | ≥98.5% |
+| Coverage (líneas) | ~97% | ≥97.5% |
+| TypeScript version | 5.x | 6.x |
+| Biome version | 1.x | 2.x |
+| IFileSystem methods | 12 | <7 |
+| npm packaging test | No existe | Existe y pasa |
+
+**Criterios de completitud (DoD FEV-10):**
+- [ ] TD-2.1 resuelto: IFileSystem split en IFileSystem + IStagingSystem
+- [ ] TD-1.1 resuelto: main.ts coverage ≥ 90% lines
+- [ ] TD-5.3 resuelto: npm packaging test existe y pasa
+- [ ] TD-3.1 resuelto: TypeScript 6.x, tsc --noEmit passes
+- [ ] TD-3.2 resuelto: Biome 2.x, just check passes
+- [ ] TECH_DEBT.md actualizado (items v1.1.0 movidos a Resolved)
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+- [ ] Coverage: ≥ 98.5% funciones, ≥ 97.5% líneas
+
+---
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -1216,3 +1452,5 @@ Issues #23 y #25 identifican dos problemas de documentación y proceso:
 - **Post-release refactor (2026-07-09):** `5c55e3a` (extract postInstall.ts), `a56b3da` (retryHint tests) en `feat/ci-cd-wiki`
 - **FEV-5 total:** 10 tareas infraestructura + 8 tareas wiki + 2 tareas release = 20 tasks completadas
 - **Release ready:** v1.0.14 — all DoD items completed, 487/0 tests, 15/15 E2E, 98.13% coverage, 0 Biome/tsc errors
+
+---
