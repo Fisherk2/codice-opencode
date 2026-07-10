@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.0.13
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-27 | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-09 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -21,7 +21,7 @@
 | FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | ✅ Completo |
 | FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | ✅ Completo |
 | FEV-3 | Update Workspace overwrite fix + GitHub API fix | Update mode preserves existing standard files + GitHub version check | ✅ Completo |
-| FEV-4 | SDD Command Refactor + Governance (v1.0.13) | Issue #15: docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism | 🟡 En progreso |
+| FEV-4 | SDD Command Refactor + Governance (v1.0.13) | Issue #15: docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -923,7 +923,7 @@ export const GITHUB_REPO = "codice-opencode";
 
 ### Fase FEV-4 — SDD Command Refactor + Governance (v1.0.13)
 
-**Fecha:** 2026-06-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En progreso
+**Fecha:** 2026-06-27 → 2026-07-09 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado
 
 #### Contexto
 
@@ -1046,22 +1046,22 @@ docs/diagnosis/
 
 | ID | Descripción | Prioridad | Estado |
 |----|-------------|-----------|--------|
-| F4V4-T1 | Crear comando `docs-update/` en `template/obligatorio/commands/docs-update.md` | Alta | 🟡 Pendiente |
-| F4V4-T2 | Crear comando `diagnosis/` en `template/obligatorio/commands/diagnosis.md` | Alta | 🟡 Pendiente |
-| F4V4-T3 | Refactorizar comando `evolve/` en `template/obligatorio/commands/evolve.md` | Alta | 🟡 Pendiente |
-| F4V4-T4 | Crear directorio `template/estandar/docs/diagnosis/` con `README.md` y `diagnosis-template.md` | Media | 🟡 Pendiente |
-| F4V4-T5 | Actualizar permisos de `agents/quetzalcoatl.md` (prohibir `tasks/`, código, config) | Alta | 🟡 Pendiente |
-| F4V4-T6 | Actualizar permisos de `agents/moctezuma.md` (solo `tasks/`) | Alta | 🟡 Pendiente |
-| F4V4-T7 | Actualizar comandos SDD para sugerir siguiente paso (`spec/`, `plan/`, `build/`, `test/`, `review/`, `ship/`) | Media | 🟡 Pendiente |
-| F4V4-T8 | Eliminar sugerencias de comandos en configuración de agentes primarios | Media | 🟡 Pendiente |
-| F4V4-T9 | Actualizar documentación: `docs/opencode/04-commands.md`, `docs/opencode/USER_GUIDE.md` | Media | 🟡 Pendiente |
-| F4V4-T10 | Actualizar `CHANGELOG.md` con sección v1.0.13 | Alta | 🟡 Pendiente |
-| F4V4-T11 | Bump version a 1.0.13 en `package.json` | Alta | 🟡 Pendiente |
-| F4V4-T12 | Tests: verificar que nuevos comandos existen y tienen estructura correcta | Media | 🟡 Pendiente |
+| F4V4-T1 | Crear comando `docs-update/` en `template/obligatorio/commands/docs-update.md` | Alta | ✅ Completado |
+| F4V4-T2 | Crear comando `diagnosis/` en `template/obligatorio/commands/diagnosis.md` | Alta | ✅ Completado |
+| F4V4-T3 | Refactorizar comando `evolve/` en `template/obligatorio/commands/evolve.md` | Alta | ✅ Completado |
+| F4V4-T4 | Crear directorio `template/estandar/docs/diagnosis/` con `README.md` y `diagnosis-template.md` | Media | ✅ Completado |
+| F4V4-T5 | Actualizar permisos de `agents/quetzalcoatl.md` (prohibir `tasks/`, código, config) | Alta | ✅ Completado |
+| F4V4-T6 | Actualizar permisos de `agents/moctezuma.md` (solo `tasks/`) | Alta | ✅ Completado |
+| F4V4-T7 | Actualizar comandos SDD para sugerir siguiente paso (`spec/`, `plan/`, `build/`, `test/`, `review/`, `ship/`) | Media | ✅ Completado |
+| F4V4-T8 | Eliminar sugerencias de comandos en configuración de agentes primarios | Media | ✅ Completado |
+| F4V4-T9 | Actualizar documentación: `docs/opencode/04-commands.md`, `docs/opencode/USER_GUIDE.md` | Media | ✅ Completado |
+| F4V4-T10 | Actualizar `CHANGELOG.md` con sección v1.0.13 | Alta | ✅ Completado |
+| F4V4-T11 | Bump version a 1.0.13 en `package.json` | Alta | ✅ Completado |
+| F4V4-T12 | Tests: verificar que nuevos comandos existen y tienen estructura correcta | Media | ✅ Completado |
 
 #### Métricas de Referencia
 
-| Métrica | v1.0.12 (actual) | Meta v1.0.13 |
+| Métrica | v1.0.13 (actual) | Meta v1.0.13 |
 |---------|------------------|--------------|
 | Tests (pass/fail) | 481 / 0 | ≥481 / 0 |
 | Coverage (funciones) | 97.66% | ≥97.66% |
@@ -1069,24 +1069,24 @@ docs/diagnosis/
 | E2E escenarios | 15/15 | 15/15 |
 | `just check` errores | 0 | 0 |
 | Issues críticos abiertos | 0 | 0 |
-| Comandos SDD | 10 | 12 (+docs-update, +diagnosis) |
+| Comandos SDD | 12 | 12 (+docs-update, +diagnosis) |
 
 **Criterios de completitud (DoD FEV-4):**
-- [ ] Issue #15 resuelto: gobernanza y determinismo implementados
-- [ ] `docs-update/` creado y funcional
-- [ ] `diagnosis/` creado y funcional
-- [ ] `evolve/` refactorizado con scope reducido
-- [ ] Directorio `docs/diagnosis/` creado con template
-- [ ] Permisos de quetzalcoatl actualizados (no escribe en `tasks/`, código, config)
-- [ ] Permisos de moctezuma actualizados (solo escribe en `tasks/`)
-- [ ] Comandos SDD sugieren siguiente paso
-- [ ] Configuración de agentes sin sugerencias de comandos
-- [ ] Documentación actualizada
-- [ ] `bun test`: sin regresión
-- [ ] `just check`: 0 errores
-- [ ] E2E: 15/15 pasando
-- [ ] CHANGELOG actualizado con sección v1.0.13
-- [ ] Versión bump a 1.0.13
+- [x] Issue #15 resuelto: gobernanza y determinismo implementados
+- [x] `docs-update/` creado y funcional
+- [x] `diagnosis/` creado y funcional
+- [x] `evolve/` refactorizado con scope reducido
+- [x] Directorio `docs/diagnosis/` creado con template
+- [x] Permisos de quetzalcoatl actualizados (no escribe en `tasks/`, código, config)
+- [x] Permisos de moctezuma actualizados (solo escribe en `tasks/`)
+- [x] Comandos SDD sugieren siguiente paso
+- [x] Configuración de agentes sin sugerencias de comandos
+- [x] Documentación actualizada
+- [x] `bun test`: sin regresión
+- [x] `just check`: 0 errores
+- [x] E2E: 15/15 pasando
+- [x] CHANGELOG actualizado con sección v1.0.13
+- [x] Versión bump a 1.0.13
 
 ---
 
@@ -1121,3 +1121,6 @@ docs/diagnosis/
 - **Commits FEV-3:** `d628bd6` (destinationExists fix), `a890d37` (GITHUB_REPO fix), `bb24d42` (regression tests), `5c2e4d0` (E2E), `287b15f` (v1.0.11 bump), `910ae53` (obs fix), `a0f84f1` (review findings)
 - **FEV-3 total:** 2 production fixes + 3 test additions + 1 E2E scenario + 1 doc update = 7 changes
 - **Release ready:** v1.0.11 — all DoD items completed, 476/0 tests, 15/15 E2E, 0 Biome/tsc errors
+- **Commits FEV-4:** `ad8367c` (SDD Command Refactor + Governance v1.0.13) en `main`
+- **FEV-4 total:** 12/12 tasks completadas (docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism)
+- **Release ready:** v1.0.13 — all DoD items completed, 481/0 tests, 15/15 E2E, 12 SDD commands, 0 Biome/tsc errors
