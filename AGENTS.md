@@ -1,280 +1,79 @@
 # AGENTS.MD – Códice: Opencode Workspace Installer v1.0.13
-**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
+
+**Propósito:** Reglas estrictas que los agentes de IA deben seguir en este proyecto.
+**Documentación detallada:** `docs/` y `specs/` (ver índice al final).
 
 ---
 
 ## 🎯 Contexto del Proyecto
 
-### Descripción MVP y Propósito
-**Códice** es un instalador/actualizador de línea de comandos (CLI) compilado con Bun, diseñado para desplegar plantillas de workspace de OpenCode de forma atómica, segura e inteligente. Su propósito técnico es automatizar la gestión de archivos de configuración, agentes, skills y comandos, resolviendo el problema de la fragmentación y pérdida de personalizaciones durante actualizaciones.
+**Códice** es un instalador/actualizador de línea de comandos (CLI) compilado con Bun, diseñado para desplegar plantillas de workspace de OpenCode de forma atómica, segura e inteligente.
 
-### Requisitos Funcionales y No Funcionales
-
-| Categoría | Requisito | Prioridad | Criterio de Aceptación |
-|-----------|-----------|-----------|------------------------|
-| **Funcional** | Menú interactivo con 3 modos (Limpia, Proyecto, Actualizar) | Alta | TUI responde en <100ms, validación de entrada robusta |
-| **Funcional** | Motor de fusión granular (Obligatorio/Estándar/Opcional) | Alta | 100% de archivos clasificados correctamente, cero pérdida de datos |
-| **Funcional** | Atomicidad (Staging + Rename) | Alta | Interrupción no corrompe proyecto destino |
-| **Funcional** | Consulta de versión remota (GitHub API) | Alta | Timeout de 3s, fallback a mensaje de error claro |
-| **No Funcional** | Rendimiento | Alta | Instalación completa <5s (local), consulta API <2s |
-| **No Funcional** | Portabilidad | Alta | Binarios para Linux, macOS, Windows (x64) |
-| **No Funcional** | Seguridad | Alta | Prevención de Path Traversal, sin ejecución de código arbitrario |
-| **No Funcional** | Observabilidad | Media | Logs estructurados en modo `--verbose` |
-
-### Dominio y Límites del Sistema
 - **Dominio:** Gestión de archivos, versionado semántico, interacción TUI.
-- **Límites (In-Scope):** Instalación/actualización del template empaquetado, gestión de versiones local/remota.
-- **Límites (Out-of-Scope):** Instalación de dependencias externas, soporte para múltiples fuentes de template, modificación de archivos del usuario post-instalación.
-
-### Orden de Implementación Propuesto
-1. **Núcleo de Dominio:** Entidades (`FileRule`, `SemanticVersion`), Servicios (`FileMergeEngine`, `VersionComparator`).
-2. **Infraestructura:** Adaptadores (`BunFileSystem`, `GitHubRestClient`, `ClackPromptsAdapter`).
-3. **Casos de Uso:** Orquestación de los 3 modos de instalación.
-4. **CLI Entry Point:** Integración final y compilación.
-5. **Testing & CI/CD:** Pruebas unitarias, E2E, y pipeline de GitHub Actions.
+- **In-Scope:** Instalación/actualización del template empaquetado, gestión de versiones local/remota.
+- **Out-of-Scope:** Instalación de dependencias externas, modificación de archivos del usuario post-instalación.
 
 ---
 
-## 🏗️ Arquitectura y Diseño
+## ⚠️ Reglas Estrictas
 
-### Patrones Arquitectónicos Aplicados
-- **Clean Architecture (Robert C. Martin):** Separación estricta en capas (Domain → Application → Infrastructure) para garantizar que la lógica de negocio sea independiente de frameworks y detalles de implementación.
-- **Dependency Inversion Principle (DIP):** Los casos de uso dependen de interfaces (`IFileSystem`, `IGitHubClient`), no de implementaciones concretas.
-- **Strategy Pattern:** El `FileMergeEngine` utiliza estrategias de fusión (Obligatorio, Estándar, Opcional) intercambiables.
-- **Command Pattern (implícito):** Cada modo de instalación (Limpia, Proyecto, Actualizar) se encapsula como un comando independiente.
+### Arquitectura (Clean Architecture)
+- **Dependencias siempre hacia adentro:** `infrastructure/` → `application/` → `domain/`.
+- **Domain** no importa nada de `application/` ni `infrastructure/`.
+- **Application** depende solo de `domain/` y define interfaces (ports).
+- **Infrastructure** implementa los ports de `application/`.
+- Errores del dominio se retornan como `Result<T, Error>`, nunca excepciones.
 
-### Diagrama de Componentes y Flujo de Datos
+### TypeScript
+- Strict mode. **No `any`.** Usar `unknown` con guards cuando sea necesario.
+- Tipos explícitos en toda función/método público exportado.
+- `readonly` en arrays y propiedades donde no se requiera mutación.
 
-```mermaid
-graph TD
-    subgraph "Infrastructure Layer"
-        FS[BunFileSystem Facade]
-        TR[TemplateResolver]
-        AS[AtomicStager]
-        DW[directoryWalker]
-        PR[pathResolver]
-        GH[GitHubRestClient]
-        TUI[ClackPromptsAdapter]
-        BSC[BunSymlinkCreator]
-        BGC[BunGitignoreCreator]
+### Seguridad (Prohibiciones — Nunca hacer)
+- ❌ Hardcodear rutas absolutas — usar `path.join()` o `path.resolve()`.
+- ❌ Ejecutar código arbitrario del template (shell scripts, eval, binarios).
+- ❌ Side-effects ocultos — funciones no modifican estado global sin ser explícitas.
+- ❌ Acoplamiento temporal — no depender del orden de inicialización de módulos no relacionados.
+- ❌ Ignorar errores — toda excepción se captura, mapea a dominio y propaga.
+- ❌ Usar `any` — siempre tipar explícitamente.
+- ❌ Duplicación de lógica (DRY) — extraer a funciones compartidas.
+- ❌ Comentarios obvios — explicar el *porqué*, nunca el *qué*.
+- ❌ Loggear secrets — ni tokens, ni credenciales, ni API keys.
 
-        FS -->|delegates| TR
-        FS -->|delegates| AS
-        FS -->|uses| DW
-        FS -->|uses| PR
-    end
+### Commits y PRs
+- Todo commit debe incluir `Co-Authored-By: <Agente> <dev@fisherk2.com>` al final.
+- **Agentes principales:** Huitzilopochtli, Quetzalcoatl, Tlaloc, Moctezuma, Mictlantecuhtli, Tezcatlipoca (Lower Camel Case).
+- **Subagentes:** kebab-case (ej: `docs-writer`, `obsidian-vault-writer`).
+- Toda PR debe incluir `**Authored by:** <Agente>` al final de la descripción.
+- Múltiples agentes: listar trailers en orden de involucramiento (mayor a menor).
 
-    subgraph "Application Layer"
-        UC1[CleanInstallUseCase]
-        UC2[ProjectInstallUseCase]
-        UC3[UpdateWorkspaceUseCase]
-        ISP[ISymlinkCreator]
-        IGC[IGitignoreCreator]
-        HLP[helpers.ts]
-    end
-
-    subgraph "Domain Layer"
-        ENT1[FileRule Entity]
-        ENT2[WorkspaceVersion Entity]
-        ENT3[FileRuleManifest]
-        SRV1[FileMergeEngine Service]
-        SRV2[VersionComparator Service]
-        ERR1[MergeError]
-        ERR2[SymlinkError]
-        ERR3[GitignoreError]
-    end
-
-    TUI -->|User Input| UC1
-    TUI -->|User Input| UC2
-    TUI -->|User Input| UC3
-    
-    UC1 -->|Execute| SRV1
-    UC2 -->|Execute| SRV1
-    UC3 -->|Check Version| SRV2
-    UC3 -->|Execute| SRV1
-    
-    UC1 -->|Post-install| ISP
-    UC1 -->|Post-install| IGC
-    UC2 -->|Post-install| ISP
-    UC2 -->|Post-install| IGC
-    
-    SRV1 -->|Read/Write| FS
-    SRV2 -->|HTTP GET| GH
-    ISP -.->|implements| BSC
-    IGC -.->|implements| BGC
-    
-    classDef domain fill:#f9f,stroke:#333,stroke-width:2px;
-    class ENT1,ENT2,ENT3,SRV1,SRV2,ERR1,ERR2,ERR3 domain;
-```
-
-### Estrategia de Comunicación entre Módulos
-- **Inyección de Dependencias:** Los casos de uso reciben las interfaces de infraestructura a través de su constructor.
-- **Result/Either Pattern:** Los servicios del dominio retornan tipos `Result<T, Error>` para manejo explícito de errores sin excepciones.
-- **Event Emitter (opcional):** Para notificar progreso de copia de archivos a la TUI (spinner de carga).
-
-### Justificación Técnica de Elecciones Críticas
-| Decisión | Justificación | Alternativa Descartada |
-|----------|---------------|------------------------|
-| Bun para compilación | Binario nativo, velocidad superior, API de fs moderna | Node.js + pkg (mayor overhead, menor rendimiento) |
-| @clack/prompts | UX moderna, zero-dependency tree, ideal para binarios | Inquirer (más pesado, UI menos moderna) |
-| Staging + Rename | Atomicidad garantizada, cero corrupción | Journal de reversión (complejo, propenso a fallos) |
-| GitHub REST API | Estándar, no requiere Git instalado, JSON estructurado | Git ls-remote (dependencia externa fuerte) |
-| Post-Install Generation | npm resuelve symlinks y excluye `.gitignore`; la generación post-instalación garantiza compatibilidad | Empaquetar symlinks y dotfiles en npm (imposible, npm los transforma/excluye) |
+### Pre-Commit
+- [ ] `just check` — 0 errores (biome ci + tsc --noEmit).
+- [ ] `bun test` — 0 fallos.
+- [ ] Sin tipos `any` en código de producción.
+- [ ] Documentación actualizada si cambió API pública.
 
 ---
 
-## 🔧 Guías de Desarrollo
+## 📚 Índice de Documentación
 
-### Principios SOLID y Ortogonalidad Aplicados
-- **SRP (Single Responsibility):** Cada clase tiene una única razón para cambiar. `FileMergeEngine` solo fusiona; `AtomicStager` solo garantiza atomicidad.
-- **OCP (Open/Closed):** Nuevas reglas de fusión se añaden como estrategias, sin modificar el motor.
-- **LSP (Liskov Substitution):** Los adaptadores de infraestructura son intercambiables sin romper el contrato.
-- **ISP (Interface Segregation):** Interfaces pequeñas y específicas (`IFileSystem`, `IGitHubClient`, `IUserPrompt`, `ISymlinkCreator`, `IGitignoreCreator`).
-- **DIP (Dependency Inversion):** El dominio no conoce Bun ni GitHub; solo interfaces.
-- **Ortogonalidad:** La lógica de versión es independiente de la lógica de fusión. Cambios en una no afectan la otra.
+### docs/
+| Archivo | Contenido |
+|---------|-----------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Diagrama de componentes, capas, ADRs |
+| [CODE_STYLE.md](docs/CODE_STYLE.md) | Convenciones de código, naming, TypeScript, errores |
+| [WORKFLOW.md](docs/WORKFLOW.md) | Plan de implementación por fases (FEV) |
+| [PRD.md](docs/PRD.md) | Product Requirements Document |
+| [TRD.md](docs/TRD.md) | Technical Requirements Document |
+| [TECH_DEBT.md](docs/TECH_DEBT.md) | Deuda técnica y prioridades de mejora |
+| [SECURITY.md](docs/SECURITY.md) | Política de seguridad del proyecto |
+| [APPFLOW.md](docs/APPFLOW.md) | Flujo de aplicación |
+| [SPEC.md](SPEC.md) | Especificación central del proyecto |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Guía de contribución, CI/CD, releases |
 
-### Patrones de Diseño
-- **Factory Method:** Para crear instancias de `FileRule` según el tipo (Obligatorio, Estándar, Opcional).
-- **Template Method:** En los casos de uso, el esqueleto del algoritmo es fijo, pero los pasos específicos varían.
-- **Decorator:** Para añadir logging o métricas a los servicios sin modificar su código.
-
-### Convenciones de Nomenclatura y Estructura
-```
-src/
-├── domain/
-│   ├── entities/
-│   │   ├── FileRule.ts
-│   │   ├── FileRuleManifest.ts
-│   │   ├── FileRuleManifestData.ts
-│   │   └── WorkspaceVersion.ts
-│   ├── ports/
-│   │   ├── IFileMergeEngine.ts
-│   │   ├── IFileSystem.ts
-│   │   └── IVersionComparator.ts
-│   ├── services/
-│   │   ├── FileMergeEngine.ts
-│   │   └── VersionComparator.ts
-│   └── types/
-│       ├── GitignoreError.ts
-│       ├── MergeError.ts
-│       ├── Result.ts
-│       ├── SymlinkError.ts
-│       └── version.ts
-├── application/
-│   ├── helpers.ts
-│   ├── use-cases/
-│   │   ├── CleanInstallUseCase.ts
-│   │   ├── ProjectInstallUseCase.ts
-│   │   └── UpdateWorkspaceUseCase.ts
-│   └── ports/
-│       ├── IGitHubClient.ts
-│       ├── IGitignoreCreator.ts
-│       ├── ISymlinkCreator.ts
-│       └── IUserPrompt.ts
-├── infrastructure/
-│   ├── adapters/
-│   │   ├── AtomicStager.ts
-│   │   ├── BunFileSystem.ts
-│   │   ├── BunGitignoreCreator.ts
-│   │   ├── BunSymlinkCreator.ts
-│   │   ├── ClackPromptsAdapter.ts
-│   │   ├── directoryWalker.ts
-│   │   ├── GitHubRestClient.ts
-│   │   ├── pathResolver.ts
-│   │   └── TemplateResolver.ts
-│   └── config/
-│       ├── constants.ts
-│       └── symlinks.ts
-└── cli/
-    ├── bin.js
-    ├── container.ts
-    ├── main.ts
-    ├── output.ts
-    └── parse-args.ts
-```
-
-- **Nombres descriptivos:** `FileMergeEngine` (no `Merger`), `VersionComparator` (no `VersionCheck`).
-- **Archivos pequeños:** Máximo 200 líneas por archivo. Si crece más, extraer responsabilidades.
-- **Comentarios:** Solo para explicar el *porqué*, nunca el *qué*.
-
-### Checklists de Pre-Commit
-- [ ] ¿El código pasa `bun run lint` sin errores?
-- [ ] ¿Las pruebas unitarias pasan con >80% de cobertura?
-- [ ] ¿Se han añadido tipos explícitos (no `any`)?
-- [ ] ¿Los nombres son descriptivos y siguen la convención?
-- [ ] ¿Se ha actualizado la documentación si cambió la API?
-
-### Estrategia de Manejo de Errores
-- **Fail-Fast:** Validar entradas al inicio de cada función.
-- **Result Pattern:** Retornar `Result<T, Error>` en vez de lanzar excepciones.
-- **Error Messages Accionables:** "Permiso denegado en /path/to/file. Ejecute con sudo o revise permisos." (no "Error 403").
-- **Graceful Degradation:** Si la API de GitHub falla, mostrar mensaje claro y permitir instalación manual.
-
----
-
-## 🧪 Testing y Calidad
-
-### Estrategia de Pruebas en 3 Fases
-| Fase | Alcance | Herramienta | Criterio de Éxito |
-|------|---------|-------------|-------------------|
-| **Unitarias** | Funciones puras del dominio (`VersionComparator`, `FileRule`) | `bun:test` | >90% cobertura, todos los edge cases cubiertos |
-| **Integración** | Interacción entre servicios y adaptadores (mock de fs/GitHub) | `bun:test` + mocks | Flujos completos de fusión y versionado |
-| **E2E** | Ejecución del binario compilado en directorio temporal | Scripts de shell (`bash`/`zx`) | Validación de archivos copiados, versiones, y rollback en fallo |
-
-### Frameworks y Patrones de Testing
-- **Arrange-Act-Assert (AAA):** Estructura clara en cada test.
-- **Fixtures:** Directorios de prueba con estructuras de archivos predefinidas.
-- **Mocking:** Usar `bun:test` mocks para aislar dependencias externas (fs, red).
-- **Snapshot Testing:** Para validar la salida de la TUI (opcional).
-
-### Métricas de Calidad
-- **Cobertura:** >80% en unitarias, >70% en integración.
-- **Complejidad Ciclomática:** <10 por función.
-- **Deuda Técnica:** Monitoreada con SonarQube (opcional) o revisión manual.
-
-### Estrategia de Mockeo
-- **FileSystem Mock:** Simular operaciones de lectura/escritura sin tocar disco real.
-- **GitHub API Mock:** Retornar respuestas predefinidas (éxito, error 404, rate limit).
-- **TUI Mock:** Simular entradas de usuario para probar flujos interactivos.
-
----
-
-## 🔒 Seguridad y Prohibiciones
-
-### Validación de Inputs y Sanitización
-- **Path Traversal Prevention:** Usar `path.resolve()` y verificar que el destino esté dentro del directorio permitido.
-- **Semantic Version Validation:** Validar que los tags de GitHub sigan el formato `vX.Y.Z` usando `semver`.
-- **Input Sanitization:** No confiar en entradas de usuario sin validación explícita.
-
-### Manejo de Secretos
-- **No Hardcode Tokens:** No se soporta autenticación de GitHub. El cliente usa únicamente requests no autenticadas (60 req/hr). Si en el futuro se añade soporte para tokens, usar variables de entorno (`GITHUB_TOKEN`).
-- **No Loggear Secrets:** Excluir tokens y credenciales de los logs, incluso en modo `--verbose`.
-
-### Control de Excepciones y Timeouts
-- **Network Timeout:** 3 segundos para consultas a GitHub API.
-- **Filesystem Errors:** Capturar `EACCES`, `ENOSPC`, y mostrar mensajes accionables.
-- **Graceful Shutdown:** Manejar `SIGINT` (Ctrl+C) para limpiar directorio de staging.
-
-### Lista Explícita de Prácticas Prohibidas
-- ❌ **Hardcodear rutas absolutas:** Siempre usar `path.join()` o `path.resolve()`.
-- ❌ **Ejecutar código arbitrario:** No evaluar scripts del template sin consentimiento explícito.
-- ❌ **Side-effects ocultos:** Las funciones no deben modificar estado global sin ser explícitas.
-- ❌ **Acoplamiento temporal:** No depender del orden de ejecución de módulos no relacionados.
-- ❌ **Ignorar errores:** Nunca capturar excepciones sin manejarlas o loggearlas.
-- ❌ **Usar `any` en TypeScript:** Siempre tipar explícitamente.
-- ❌ **Duplicación de lógica (DRY):** Si copias y pegas, extrae a una función.
-- ❌ **Comentarios obvios:** No comentar `// Incrementa i en 1` para `i++`.
-
----
-
-## 📚 Referencias y Recursos
-- **Clean Architecture** – Robert C. Martin
-- **Clean Code** – Robert C. Martin
-- **Software Development, Design, and Coding** – John F. Dooley
-- **Ingeniería de Software: Un Enfoque Práctico** – Roger S. Pressman
-- **Systems Analysis and Design** – Alan Dennis et al.
-- **Bun Documentation:** https://bun.sh/docs
-- **Clack Prompts:** https://www.clackjs.com/
-- **GitHub REST API:** https://docs.github.com/en/rest
-
----
+### specs/
+| Archivo | Contenido |
+|---------|-----------|
+| [spec-file-rules.md](specs/spec-file-rules.md) | Reglas de clasificación de archivos (Obligatorio/Estándar/Opcional) |
+| [spec-cli-commands.md](specs/spec-cli-commands.md) | Especificación de modos y comandos CLI |
+| [adr/](specs/adr/) | Architecture Decision Records (ADR-001 al ADR-010) |

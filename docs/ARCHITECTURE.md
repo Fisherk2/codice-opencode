@@ -127,7 +127,7 @@ graph TD
 - **Command Pattern**: Each installation mode as independent command
 
 ## References
-- [AGENTS.md](../AGENTS.md) — Full architectural guidelines
+- [AGENTS.md](../AGENTS.md) — Project rules, conventions, and documentation index
 - [SPEC.md](../SPEC.md) — Central specification
 - [WORKFLOW.md](./WORKFLOW.md) — Implementation phases
 - [TECH_DEBT.md](./TECH_DEBT.md) — Known technical debt and improvement priorities

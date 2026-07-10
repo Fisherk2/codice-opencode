@@ -445,7 +445,7 @@ The following architectural decisions have been resolved and are now part of the
 
 ## References
 
-- **AGENTS.md** — Architectural decisions, SOLID principles, security prohibitions, and development conventions.
+- **AGENTS.md** — Strict AI agent rules, project context, and documentation index.
 - **docs/WORKFLOW.md** — Implementation phases, task breakdown, and formal technical review gates.
 - **docs/PRD.md** — Product Requirements Document (if exists).
 - **docs/TRD.md** — Technical Requirements Document (if exists).
