@@ -72,7 +72,7 @@ Task arrives
     │   ├── Improving README? ──→ crafting-effective-readmes
     │   └── Documenting architecture? ──→ architecture-diagrams
     ├── Adding logs/metrics/alerts? ──→ observability-and-instrumentation
-    └── Deploying/launching? ─────────→ shipping-and-launch
+    ├── Deploying/launching? ─────────→ shipping-and-launch
         ├── Handling database migrations? ──→ db-migration
         ├── Need to deprecate old code? ──→ deprecation-and-migration
         └── Handling post-launch incidents? ──→ incident-response
