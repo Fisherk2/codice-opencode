@@ -88,22 +88,41 @@ The Wiki is organized around the **physical structure of the installed workspace
 - Based on: `template/obligatorio/agents/` (103 files: 6 primary + 97 subagents)
 - Explain the two-tier architecture: Primary agents (huitzilopochtli, quetzalcoatl, etc.) vs. Subagents (96+ domain experts)
 - Show the pattern of an agent file (frontmatter, composition block)
-- **How to add a new subagent**: create file → add to catalog → register in SDD plugin
-- **How to add a new primary agent**: subagent steps + SDD plugin hooks + orchestration docs
-- Reference: [opencode.ai/docs/agents](https://opencode.ai/docs/agents)
+- **Step-by-step guide: How to add a new agent to your workspace** (end-user focused):
+  1. Choose the type: subagent (domain expert) or primary agent (entry point)
+  2. Create the agent file in `agents/` with proper frontmatter (role, scope, rules)
+  3. Add a `## Composition` block (Invoke directly when / Invoke via / Do not invoke)
+  4. For subagents: register in `VALID_SUBAGENTS` in `.opencode/plugins/sdd-pipeline.ts`
+  5. For primary agents: add SDD plugin hooks (identity patterns, command mapping, role rules)
+  6. Restart OpenCode session
+  - Includes a **working example**: creating a custom subagent step by step
+  - Reference: [opencode.ai/docs/agents](https://opencode.ai/docs/agents) for frontmatter format
 
 ### Commands (`Commands.md`)
 - Based on: `template/obligatorio/commands/` (12 files)
 - Explain the SDD lifecycle and how each command maps to a phase
 - Show the frontmatter pattern (`description` + `agent`)
-- **How to add a new command**: create file → update SDD plugin → restart
-- Reference: [opencode.ai/docs/commands](https://opencode.ai/docs/commands)
+- **Step-by-step guide: How to add a new command to your workspace** (end-user focused):
+  1. Create the command file in `commands/` with YAML frontmatter (`description` + `agent`)
+  2. Write the numbered steps: reference skills inline, use `question` tool at decisions, include handoff instructions
+  3. Register in `COMMAND_AGENT_MAP` in `.opencode/plugins/sdd-pipeline.ts`
+  4. If it introduces a new SDD phase, add phase suggestion in the plugin
+  5. Restart OpenCode session
+  - Includes a **working example**: creating a custom command step by step
+  - Reference: [opencode.ai/docs/commands](https://opencode.ai/docs/commands) for command format
 
 ### Skills (`Skills.md`)
 - Based on: `template/obligatorio/skills/` (46 directories)
 - Explain the skill pattern (SKILL.md with frontmatter + numbered steps)
-- **How to add a new skill**: create directory → SKILL.md → update meta-skill → restart
-- Reference: [opencode.ai/docs/skills](https://opencode.ai/docs/skills)
+- **Step-by-step guide: How to add a new skill to your workspace** (end-user focused):
+  1. Create `skills/<skill-name>/SKILL.md` (kebab-case directory name)
+  2. Add YAML frontmatter with valid `name` and `description`
+  3. Write the numbered steps (specific, verifiable, battle-tested, minimal)
+  4. If it has a `references/` directory inside, migrate content to root `references/`
+  5. Update `skills/using-agent-skills/SKILL.md` to include it in the discovery tree and quick reference table
+  6. Restart OpenCode session
+  - Includes a **working example**: creating a custom skill step by step
+  - Reference: [opencode.ai/docs/skills](https://opencode.ai/docs/skills) for SKILL.md format
 
 ### Customization Guide (`Customization-Guide.md`)
 - Practical recipes for common modifications:
@@ -152,6 +171,21 @@ The Wiki is organized around the **physical structure of the installed workspace
 | **No duplication** | Never copy OpenCode docs — link to them |
 | **Maintainable** | Fewer pages, simpler content, easier to update |
 | **Progressive disclosure** | Home → Getting Started → detailed pages as needed |
+
+### Audience Distinction
+
+The Wiki and CONTRIBUTING.md serve **different audiences**:
+
+| Document | Audience | Focus | Refs to Códice internals? |
+|----------|----------|-------|--------------------------|
+| **CONTRIBUTING.md** | Contributors to Códice | How to add agents/skills/commands **to the template** (`template/obligatorio/`, `template/estandar/`, `template/opcional/`) | ✅ Yes (template/ dirs, FileRuleManifest, E2E tests) |
+| **GitHub Wiki** | End users of the workspace | How to add agents/skills/commands **to their own project** (after installation) | ❌ No (`agents/`, `commands/`, `skills/`, `.opencode/plugins/`) |
+
+**Key differences:**
+- Wiki guides reference the **installed workspace files** (`agents/`, `commands/`, `skills/`), not `template/` directories
+- Wiki guides skip Códice-specific steps (FileRuleManifest, template packaging, E2E tests)
+- Wiki guides include **working examples** from scratch
+- Wiki guides are simpler and focused on end-user goals, not contribution workflow
 
 ## Workarounds
 
