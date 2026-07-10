@@ -1,5 +1,5 @@
 ---
-description: Design UI/UX specifications — create structured specification documents for design systems, user flows, and component architectures for creative projects
+description: Design UI/UX specifications — create or edit structured specification documents for design systems, user flows, and component architectures for creative projects
 agent: quetzalcoatl
 ---
 
@@ -78,10 +78,6 @@ Once all reports are back, synthesize into a comprehensive design specification:
 
 2. Also create or update supporting files in @specs/design/
 
-## Suggested Next Step
-
-> Design specification is ready. Run `/plan` to create an execution plan for the implementation.
-
 ## Rules
 
 1. Phase A personas run in parallel — never sequentially
@@ -90,3 +86,7 @@ Once all reports are back, synthesize into a comprehensive design specification:
 4. Create supporting files in @specs/design/ for detailed components, styles, and flows
 5. Use the `question` tool to clarify in Phase 0 if the design scope is ambiguous
 6. **Scope boundary**: This command only writes to @docs/DESIGN.md and @specs/design/. If other documentation files need updating (e.g. performance, security, architecture), use the `question` tool to explain the reason and confirm with the user before proceeding
+
+## Suggested Next Step
+
+> Design specification is ready. Run `/plan` to create an execution plan for the implementation.
