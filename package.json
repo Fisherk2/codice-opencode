@@ -25,7 +25,7 @@
   "scripts": {
     "dev": "bun run src/cli/main.ts --verbose",
     "build": "bun build --compile src/cli/main.ts --outfile ./dist/codice-linux",
-    "test": "bun test",
+    "test": "bun test tests/",
     "test:unit": "bun test tests/unit/",
     "test:integration": "bun test tests/integration/",
     "test:coverage": "bun test --coverage",
