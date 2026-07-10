@@ -19,14 +19,18 @@ PROJECT STATE DETECTED:
 - package.json: [exists / missing]
 - Version history: [N releases / tags]
 - SPEC.md: [exists with real content / exists but placeholder / missing]
+- README.md: [exists with real content / exists but placeholder / missing]
+- CHANGELOG.md: [exists with real content / exists but placeholder / missing]
+- CONTRIBUTING.md: [exists with real content / exists but placeholder / missing]
+- docs/SECURITY.md: [exists with real content / exists but placeholder / missing]
 - docs/: [list of docs with real content]
 - Recent activity: [summary of last N commits]
 - MATURITY: [MATURE / IMMATURE]
 ```
 
-**If the project is NOT mature**, suggest using `/spec` instead:
+**If the project is NOT mature**, suggest using `/spec` or `/docs-update` instead:
 
-> This project does not appear mature enough for `/evolve`. `/evolve` is designed for projects with established versions, documentation, and active development. Use `/spec` to create initial specifications for a new project.
+> This project does not appear mature enough for `/evolve`. `/evolve` is designed for projects with established versions, documentation, and active development. Use `/spec` to create initial specifications for a new project or `/docs-update` to enhance existing documentation.
 
 **If the project IS mature**, proceed to the goal determination phase.
 
@@ -52,7 +56,7 @@ If the user's request is vague or missing key details, invoke @skills/interview-
 5. **Document architecture impact** — update @specs/adr/ if the change affects architecture
 6. Include updated architecture diagrams using @skills/architecture-diagrams/SKILL.md
 7. For non-trivial decisions, invoke @skills/doubt-driven-development/SKILL.md
-8. If @SPEC.md or @AGENTS.md exceeds **200 lines**, invoke @skills/agent-md-refactor/SKILL.md to modularize
+8. If @SPEC.md or @AGENTS.md exceeds **200 lines**, invoke @skills/agent-md-refactor/SKILL.md to modularize into @specs/
 9. **Spec update done — do NOT touch code files.** Now hand off implementation:
    - If the change is simple (single file, limited scope): tell the user to run `/build`
    - If the change is complex (multi-file, needs planning): tell the user to run `/plan` then `/build`
@@ -61,7 +65,7 @@ If the user's request is vague or missing key details, invoke @skills/interview-
 
 ## Rules
 
-1. `/evolve` is for **existing, mature projects only**. If the project is new or lacks version history, suggest running `/spec` instead.
+1. `/evolve` is for **existing, mature projects only**. If the project is new, lacks version history, or lacks comprehensive documentation, suggest running `/spec` or `/docs-update` instead.
 2. Use the `question` tool before overwriting any existing documentation — always show the diff or changes first and confirm.
 3. When modifying specs, preserve previous versions or document the change history.
 4. Every evolution should leave the project in a consistent, documented state.
