@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 a FEV-10 planificados) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 ✅ Completo, FEV-7 listo para planificar, FEV-8 a FEV-10 planificados) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -23,8 +23,8 @@
 | FEV-3 | Update Workspace overwrite fix + GitHub API fix | Update mode preserves existing standard files + GitHub version check | ✅ Completo |
 | FEV-4 | SDD Command Refactor + Governance (v1.0.13) | Issue #15: docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism | ✅ Completo |
 | FEV-5 | CI/CD Workflow + GitHub Wiki (v1.0.14) | Issue #23: CI/CD workflow documentation; Issue #25: GitHub Wiki + eliminar docs/opencode/ | ✅ Completo |
-| FEV-6 | Quick Configuration + Documentation (v1.1.0) | Issue #27 (steps), Issue #28 (SECURITY.md), TD-1.2 (coverage artifact) | 🟡 Planificado |
-| FEV-7 | Agent Governance & Security Hardening | Issue #26 (system prompts), Issue #30 (command restrictions) | 🟡 Planificado |
+| FEV-6 | Quick Configuration + Documentation (v1.1.0) | Issue #27 (steps), Issue #28 (SECURITY.md), TD-1.2 (coverage artifact) | ✅ Completo |
+| FEV-7 | Agent Governance & Security Hardening | Issue #26 (system prompts), Issue #30 (command restrictions) | 🟢 Listo para planificar |
 | FEV-8 | Obsidian Subagent | Issue #21 (obsidian-vault-writer + 6 skills) | 🟡 Planificado |
 | FEV-9 | MCP Server Integration | Issue #29 (6 MCP servers) | 🟡 Planificado |
 | FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | 🟡 Planificado |
@@ -1185,7 +1185,7 @@ Issues #23 y #25 identifican dos problemas de documentación y proceso:
 
 ### Fase FEV-6 — Quick Configuration + Documentation (v1.1.0)
 
-**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Planificado
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) → Huitzilopochtli (Supreme Orchestrator) | **Estado:** ✅ Completado
 
 #### Contexto
 
@@ -1195,33 +1195,44 @@ Primera fase de v1.1.0. Contiene los items de menor esfuerzo y riesgo: ajuste de
 
 | ID | Descripción | Archivo | Estado |
 |----|-------------|---------|--------|
-| FEV6-T1 | Ajustar `steps` para 6 agentes primarios (huitzilopochtli:25, quetzalcoatl:60, moctezuma:20, tlaloc:90, mictlantecuhtli:60, tezcatlipoca:50) | `template/obligatorio/opencode.json` | 🟡 Pendiente |
-| FEV6-T2 | Crear `docs/SECURITY.md` para el proyecto | `docs/SECURITY.md` (nuevo) | 🟡 Pendiente |
-| FEV6-T3 | Crear `template/estandar/docs/SECURITY.md` placeholder | `template/estandar/docs/SECURITY.md` (nuevo) | 🟡 Pendiente |
-| FEV6-T4 | Añadir constructores explícitos a VersionComparator + ClackPromptsAdapter | `src/domain/services/VersionComparator.ts`, `src/infrastructure/adapters/ClackPromptsAdapter.ts` | 🟡 Pendiente |
-| FEV6-T5 | Actualizar FileRuleManifestData.ts si SECURITY.md se añade como entrada standard | `src/domain/entities/FileRuleManifestData.ts` | 🟡 Pendiente |
+| FEV6-T1 | Ajustar `steps` para 6 agentes primarios (huitzilopochtli:25, quetzalcoatl:60, moctezuma:20, tlaloc:90, mictlantecuhtli:60, tezcatlipoca:50) | `template/obligatorio/opencode.json` | ✅ Completo |
+| FEV6-T2 | Crear `docs/SECURITY.md` para el proyecto | `docs/SECURITY.md` (nuevo) | ✅ Completo |
+| FEV6-T3 | Crear `template/estandar/docs/SECURITY.md` placeholder | `template/estandar/docs/SECURITY.md` (nuevo) | ✅ Completo |
+| FEV6-T4 | Añadir constructores explícitos a VersionComparator + ClackPromptsAdapter | `src/domain/services/VersionComparator.ts`, `src/infrastructure/adapters/ClackPromptsAdapter.ts` | ✅ Completo |
+| FEV6-T5 | Verificar que `docs/` standard entry cubre `docs/SECURITY.md` (no requiere cambio) | `src/domain/entities/FileRuleManifestData.ts` | ✅ Completo |
 
 #### Métricas de Referencia
 
-| Métrica | v1.0.14 (antes) | Meta v1.1.0 (FEV-6) |
-|---------|-----------------|---------------------|
-| Tests (pass/fail) | 500 / 0 | ≥500 / 0 |
-| Coverage (funciones) | ~98% | ~98% (artifact resuelto) |
-| E2E escenarios | 15/15 | 15/15 |
-| `just check` errores | 0 | 0 |
+| Métrica | v1.0.14 (antes) | Meta v1.1.0 (FEV-6) | v1.1.0 (final) |
+|---------|-----------------|---------------------|----------------|
+| Tests (pass/fail) | 500 / 0 | ≥500 / 0 | 502 / 0 |
+| Coverage (funciones) | ~98% | ~98% (artifact resuelto) | 98.13% |
+| E2E escenarios | 15/15 | 15/15 | 15/15 |
+| `just check` errores | 0 | 0 | 0 |
 
 **Criterios de completitud (DoD FEV-6):**
-- [ ] Issue #27 resuelto: steps actualizados para los 6 agentes primarios
-- [ ] Issue #28 resuelto: SECURITY.md existe en docs/ y template/estandar/docs/
-- [ ] TD-1.2 resuelto: coverage artifact eliminado (constructores explícitos)
-- [ ] `bun test`: sin regresión
-- [ ] `just check`: 0 errores
+- [x] Issue #27 resuelto: steps actualizados para los 6 agentes primarios
+- [x] Issue #28 resuelto: SECURITY.md existe en docs/ y template/estandar/docs/
+- [x] TD-1.2 resuelto: coverage artifact eliminado (constructores explícitos)
+- [x] `bun test`: sin regresión (502 pass, 0 fail)
+- [x] `just check`: 0 errores
+
+**Resultados:**
+
+| ID | Commit | Branch |
+|----|--------|--------|
+| FEV6-T1 | `7116ca1` | `feat/v1.1.0-fev-6` |
+| FEV6-T2 | `d76cfe2` | `feat/v1.1.0-fev-6` |
+| FEV6-T3 | `07f481d` | `feat/v1.1.0-fev-6` |
+| FEV6-T4 | `d3e6ce4` | `feat/v1.1.0-fev-6` |
+| FEV6-T5 | `e38a23b` | `feat/v1.1.0-fev-6` |
+| Review fixes | `25b5fde`, `fe51037`, `844c65b`, `d0d216a`, `3e2f744` | `feat/workspace-enhancement` |
 
 ---
 
 ### Fase FEV-7 — Agent Governance & Security Hardening
 
-**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Planificado
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟢 Listo para planificar
 
 #### Contexto
 
@@ -1452,5 +1463,10 @@ Fase final de v1.1.0. Contiene los items de mayor esfuerzo y riesgo: split de IF
 - **Post-release refactor (2026-07-09):** `5c55e3a` (extract postInstall.ts), `a56b3da` (retryHint tests) en `feat/ci-cd-wiki`
 - **FEV-5 total:** 10 tareas infraestructura + 8 tareas wiki + 2 tareas release = 20 tasks completadas
 - **Release ready:** v1.0.14 — all DoD items completed, 487/0 tests, 15/15 E2E, 98.13% coverage, 0 Biome/tsc errors
+- **Commits FEV-6:** `7116ca1` (steps), `d76cfe2` (SECURITY.md proyecto), `07f481d` (SECURITY.md template), `d3e6ce4` (constructores explícitos), `e38a23b` (verificación manifest) en `feat/v1.1.0-fev-6`
+- **FEV-6 total:** 5/5 tareas completadas (Issue #27, #28, TD-1.2)
+- **FEV-7 status:** 🟢 Listo para planificar — pendientes Issue #26 (system prompts) y #30 (command restrictions)
+- **Tests actuales:** 502 pass, 0 fail, 1092 expects
+- **Coverage:** 98.13% funciones / 96.98% líneas
 
 ---

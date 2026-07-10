@@ -1,8 +1,8 @@
 # TODO: Fase FEV-6 — Quick Configuration + Documentation (v1.1.0)
 
-**Estado:** 🟡 Pendiente — 0/5 tareas ejecutadas
+**Estado:** ✅ Completado — 5/5 tareas ejecutadas
 **Fecha:** 2026-07-10
-**Dependencias:** F0-F6 ✅ → FEV-1 ✅ → FEV-2 ✅ → FEV-2-B ✅ → FEV-2-C ✅ → FEV-2-D ✅ → FEV-3 ✅ → FEV-4 ✅ → FEV-5 ✅ → **FEV-6 🟡 En curso**
+**Dependencias:** F0-F6 ✅ → FEV-1 ✅ → FEV-2 ✅ → FEV-2-B ✅ → FEV-2-C ✅ → FEV-2-D ✅ → FEV-3 ✅ → FEV-4 ✅ → FEV-5 ✅ → **FEV-6 ✅ Completado**
 **Branch:** `feat/v1.1.0-fev-6` (basada en `main`)
 **Issues principales:** #27 (steps) + #28 (SECURITY.md)
 **Tech Debt:** TD-1.2 (coverage artifact)
@@ -25,7 +25,7 @@
 
 ### ⚙️ Phase 1: Configuration (Issue #27)
 
-#### ⏳ FEV6-T1: Adjust `steps` for 6 primary agents
+#### ✅ FEV6-T1: Adjust `steps` for 6 primary agents
 **Descripción:** Modificar solo el campo `steps` de los 6 agentes primarios en `template/obligatorio/opencode.json`.
 
 **Cambios:**
@@ -40,14 +40,14 @@
 | tezcatlipoca | 15 | 50 |
 
 **Criterios de Aceptación:**
-- [ ] 6 valores de `steps` actualizados
-- [ ] Ningún otro campo modificado
-- [ ] JSON válido
+- [x] 6 valores de `steps` actualizados
+- [x] Ningún otro campo modificado
+- [x] JSON válido
 
 **Verificación:**
-- [ ] `bun -e "JSON.parse(require('fs').readFileSync('template/obligatorio/opencode.json', 'utf8'))"` exit 0
-- [ ] `git diff` muestra solo 6 líneas modificadas
-- [ ] `just check` — 0 errores
+- [x] `bun -e "JSON.parse(require('fs').readFileSync('template/obligatorio/opencode.json', 'utf8'))"` exit 0
+- [x] `git diff` muestra solo 6 líneas modificadas
+- [x] `just check` — 0 errores
 
 **Dependencias:** Ninguna.
 **Archivos:** `template/obligatorio/opencode.json` (líneas 348, 354, 360, 364, 372, 378)
@@ -58,18 +58,18 @@
 
 ### 📚 Phase 2: Documentation (Issue #28)
 
-#### ⏳ FEV6-T2: Create `docs/SECURITY.md`
+#### ✅ FEV6-T2: Create `docs/SECURITY.md`
 **Descripción:** Crear el archivo de política de seguridad del proyecto Códice.
 
 **Criterios de Aceptación:**
-- [ ] Archivo `docs/SECURITY.md` existe
-- [ ] 4 secciones: Supported Versions, Reporting a Vulnerability, Response Process, Disclosure Policy
-- [ ] Tabla de versiones soportadas: v1.1.x ✅, v1.0.x ✅
+- [x] Archivo `docs/SECURITY.md` existe
+- [x] 4 secciones: Supported Versions, Reporting a Vulnerability, Response Process, Disclosure Policy
+- [x] Tabla de versiones soportadas: v1.1.x ✅, v1.0.x ✅
 
 **Verificación:**
-- [ ] `test -f docs/SECURITY.md` exit 0
-- [ ] `rg "^## " docs/SECURITY.md` → 4 matches
-- [ ] Manual: archivo legible y accionable
+- [x] `test -f docs/SECURITY.md` exit 0
+- [x] `rg "^## " docs/SECURITY.md` → 4 matches
+- [x] Manual: archivo legible y accionable
 
 **Dependencias:** Ninguna.
 **Archivos:** `docs/SECURITY.md` (nuevo)
@@ -78,19 +78,19 @@
 
 ---
 
-#### ⏳ FEV6-T3: Create `template/estandar/docs/SECURITY.md` placeholder
+#### ✅ FEV6-T3: Create `template/estandar/docs/SECURITY.md` placeholder
 **Descripción:** Crear el placeholder de SECURITY.md para usuarios del workspace.
 
 **Criterios de Aceptación:**
-- [ ] Archivo `template/estandar/docs/SECURITY.md` existe
-- [ ] Contiene enlace al SECURITY.md canónico de Códice
-- [ ] 4 secciones mínimas recomendadas
-- [ ] < 30 líneas (es un placeholder)
+- [x] Archivo `template/estandar/docs/SECURITY.md` existe
+- [x] Contiene enlace al SECURITY.md canónico de Códice
+- [x] 4 secciones mínimas recomendadas
+- [x] < 30 líneas (es un placeholder)
 
 **Verificación:**
-- [ ] `test -f template/estandar/docs/SECURITY.md` exit 0
-- [ ] `wc -l template/estandar/docs/SECURITY.md` < 30
-- [ ] `rg "github.com/fisherk2/codice-opencode/blob/main/docs/SECURITY.md" template/estandar/docs/SECURITY.md` → 1 match
+- [x] `test -f template/estandar/docs/SECURITY.md` exit 0
+- [x] `wc -l template/estandar/docs/SECURITY.md` < 30
+- [x] `rg "github.com/fisherk2/codice-opencode/blob/main/docs/SECURITY.md" template/estandar/docs/SECURITY.md` → 1 match
 
 **Dependencias:** Ninguna.
 **Archivos:** `template/estandar/docs/SECURITY.md` (nuevo)
@@ -101,20 +101,20 @@
 
 ### 🔧 Phase 3: Code Quality (TD-1.2)
 
-#### ⏳ FEV6-T4: Add explicit constructors to resolve coverage artifact
+#### ✅ FEV6-T4: Add explicit constructors to resolve coverage artifact
 **Descripción:** Añadir `constructor() {}` explícito a `VersionComparator` y `ClackPromptsAdapter` con JSDoc explicativo.
 
 **Criterios de Aceptación:**
-- [ ] Constructor explícito en `VersionComparator`
-- [ ] Constructor explícito en `ClackPromptsAdapter`
-- [ ] Ambos con JSDoc (REF: TECH_DEBT.md TD-1.2)
-- [ ] Sin cambio de comportamiento
+- [x] Constructor explícito en `VersionComparator`
+- [x] Constructor explícito en `ClackPromptsAdapter`
+- [x] Ambos con JSDoc (REF: TECH_DEBT.md TD-1.2)
+- [x] Sin cambio de comportamiento
 
 **Verificación:**
-- [ ] `rg "constructor\(\) \{\}" src/domain/services/VersionComparator.ts src/infrastructure/adapters/ClackPromptsAdapter.ts` → 2 matches
-- [ ] `bun test` — 500/0 sin regresión
-- [ ] `bun test --coverage src/domain/services/VersionComparator.ts` → 100% functions
-- [ ] `bun test --coverage src/infrastructure/adapters/ClackPromptsAdapter.ts` → 100% functions
+- [x] `rg "constructor\(\) \{\}" src/domain/services/VersionComparator.ts src/infrastructure/adapters/ClackPromptsAdapter.ts` → 2 matches
+- [x] `bun test` — 500/0 sin regresión
+- [x] `bun test --coverage src/domain/services/VersionComparator.ts` → 100% functions
+- [x] `bun test --coverage src/infrastructure/adapters/ClackPromptsAdapter.ts` → 100% functions
 
 **Dependencias:** Ninguna.
 **Archivos:**
@@ -127,7 +127,7 @@
 
 ### ✅ Phase 4: Verification
 
-#### ⏳ FEV6-T5: Verify `FileRuleManifestData` covers `docs/SECURITY.md`
+#### ✅ FEV6-T5: Verify `FileRuleManifestData` covers `docs/SECURITY.md`
 **Descripción:** Verificar si `docs/` (líneas 120-124 de `FileRuleManifestData.ts`) ya cubre `template/estandar/docs/SECURITY.md`. Se espera que SÍ, dado que `docs/` es standard entry con `isDirectory: true`.
 
 **Análisis esperado:**
@@ -136,15 +136,15 @@
 - No se requiere cambio
 
 **Criterios de Aceptación:**
-- [ ] Verificación ejecutada: `rg "path: \"docs\"" src/domain/entities/FileRuleManifestData.ts` → 1 match
-- [ ] Análisis documentado en commit message
-- [ ] Si NO cubierto: entrada añadida en sección ESTÁNDAR
-- [ ] Si SÍ cubierto: solo commit de verificación o skip
+- [x] Verificación ejecutada: `rg "path: \"docs\"" src/domain/entities/FileRuleManifestData.ts` → 1 match
+- [x] Análisis documentado en commit message
+- [x] Si NO cubierto: entrada añadida en sección ESTÁNDAR
+- [x] Si SÍ cubierto: solo commit de verificación o skip
 
 **Verificación (caso "no change needed"):**
-- [ ] `git diff src/domain/entities/FileRuleManifestData.ts` → empty
-- [ ] `bun test` — 500/0 sin regresión
-- [ ] `just check` — 0 errores
+- [x] `git diff src/domain/entities/FileRuleManifestData.ts` → empty
+- [x] `bun test` — 500/0 sin regresión
+- [x] `just check` — 0 errores
 
 **Dependencias:** FEV6-T2, FEV6-T3.
 **Archivos:** `src/domain/entities/FileRuleManifestData.ts` (verificar, posiblemente modificar)
@@ -156,28 +156,28 @@
 ## Checkpoints
 
 ### Checkpoint 1: After T1, T2, T3, T4
-- [ ] 4 commits atómicos creados
-- [ ] `bun test` — 500 pass, 0 fail
-- [ ] `just check` — 0 errores
-- [ ] `template/obligatorio/opencode.json` JSON válido
-- [ ] `docs/SECURITY.md` existe con 4 secciones
-- [ ] `template/estandar/docs/SECURITY.md` existe con placeholder
-- [ ] Constructores explícitos añadidos
-- [ ] Coverage artifact resuelto (100% functions en ambas clases)
+- [x] 4 commits atómicos creados
+- [x] `bun test` — 500 pass, 0 fail
+- [x] `just check` — 0 errores
+- [x] `template/obligatorio/opencode.json` JSON válido
+- [x] `docs/SECURITY.md` existe con 4 secciones
+- [x] `template/estandar/docs/SECURITY.md` existe con placeholder
+- [x] Constructores explícitos añadidos
+- [x] Coverage artifact resuelto (100% functions en ambas clases)
 
 **Bloqueante para T5:** Si Checkpoint 1 falla, NO proceder.
 
 ### Checkpoint 2: After T5
-- [ ] Análisis de cobertura documentado
-- [ ] Cambio aplicado (o verificado como innecesario)
-- [ ] `bun test` — 500/0 sin regresión
-- [ ] `just check` — 0 errores
+- [x] Análisis de cobertura documentado
+- [x] Cambio aplicado (o verificado como innecesario)
+- [x] `bun test` — 500/0 sin regresión
+- [x] `just check` — 0 errores
 
 ### Gate FEV-6
-- [ ] 4-5 commits en `feat/v1.1.0-fev-6`
-- [ ] Issues #27 y #28 cerrados
-- [ ] TD-1.2 cerrado
-- [ ] Sin regresión
+- [x] 4-5 commits en `feat/v1.1.0-fev-6`
+- [x] Issues #27 y #28 cerrados
+- [x] TD-1.2 cerrado
+- [x] Sin regresión
 
 ---
 
@@ -197,4 +197,4 @@
 
 ---
 
-*Última actualización: 2026-07-10*
+*Última actualización: 2026-07-10 (FEV-6 completado)*
