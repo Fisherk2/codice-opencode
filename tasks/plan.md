@@ -1,26 +1,34 @@
-# Plan: Fase FEV-7 — Agent Governance & Security Hardening (v1.1.0)
+# Plan: Fase FEV-8 — Obsidian Subagent (v1.2.0)
 
 **Fecha:** 2026-07-10 | **Autor:** Moctezuma (Strategic Planner) | **Estado:** 🟡 Listo para implementar
-**Versión objetivo:** v1.1.0
-**Issues principales:** #26 (system prompts) + #30 (command restrictions)
-**Branch:** `feat/v1.1.0-fev-7` (basada en `feat/v1.1.0-fev-6` o `main`)
-**Esfuerzo total estimado:** ~7h
-**Patrones de diseño aplicados:** **Template Method** (regla común de no-assumption) + **Strategy** (delegation-first con fallback por agente)
+**Versión objetivo:** v1.2.0
+**Issue principal:** #21 (obsidian-vault-writer subagent + 6 skills)
+**Branch:** `feat/v1.2.0-fev-8` (basada en `main` con v1.1.0)
+**Esfuerzo total estimado:** ~4-5h
+**Patrones de diseño aplicados:**
+- **Strategy** (vault vs markdown-only mode en el subagente)
+- **Template Method** (workflow común: detectar vault → ejecutar acción → validar)
+- **Factory** (creación condicional de skills via `find-skills`)
 
 ---
 
 ## Overview
 
-FEV-7 es la segunda fase de v1.1.0. Aborda gobernanza de agentes y seguridad de comandos en dos áreas críticas:
+FEV-8 introduce un **subagente especializado en administración de vaults de Obsidian** al workspace template. El subagente opera en **dos modos según el contexto del proyecto** (Strategy pattern):
 
-1. **Issue #26** — Mejorar los system prompts de los 6 agentes primarios con:
-   - Regla de **no-assumption** (preguntar antes de ejecutar si hay ambigüedad)
-   - Operational philosophy: `Ask → Resolve → Suggest → Warn`
-   - Instrucción de **delegation-first** para los 3 agentes que delegan (quetzalcoatl, tlaloc, mictlantecuhtli)
+1. **Vault mode** (proyecto contiene `.obsidian/`): usa `obsidian-cli` para operaciones nativas del vault (índice, backlinks, propiedades, tags, queries Dataview, plugins)
+2. **Markdown-only mode** (proyecto sin `.obsidian/`): opera solo sobre archivos `.md` con `Bun.fs` (lectura/escritura, frontmatter, formato)
 
-2. **Issue #30** — Añadir **50+ restricciones** de comandos destructivos al plugin `sdd-pipeline.ts` (capa runtime) y a `opencode.json` (capa declarativa) en 14 categorías.
+**Restricciones arquitectónicas resueltas con el usuario:**
 
-**Objetivo:** Mejorar la calidad de las decisiones de los agentes, reducir el riesgo de daño operativo por comandos destructivos, y sentar las bases para FEV-8/9/10 sin reescribir archivos.
+| Constraint | Resolución | Justificación |
+|------------|------------|---------------|
+| ¿Quién puede invocarlo? | **Solo Huitzilopochtli** (restrictivo) | Vault admin es operación cross-cutting de orquestación. No es tarea de quetzalcoatl (specs) ni tlaloc (implementación). |
+| ¿Las 6 skills? | **Set propuesto** (obsidian-cli-usage, obsidian-vault-structure, obsidian-frontmatter, obsidian-templater, obsidian-dataview, markdown-style-guide) | Cobertura completa del ciclo de vida del vault. |
+| ¿obsidian-cli? | **Híbrido contextual** — el subagente detecta `.obsidian/` y decide si requiere obsidian-cli | Coherente con SPEC.md línea 359 ("Never execute arbitrary code from the template"). El usuario es responsable de instalar obsidian-cli. |
+| ¿Cómo instalar las skills? | **Vía `find-skills` skill a nivel de proyecto** (no global) | El template distribuye las skills; instalación per-project permite versionarlas. |
+
+**Objetivo:** Extender el workspace template con un subagente especializado que habilite a Huitzilopochtli a delegar tareas de administración de vaults de Obsidian o de colecciones de archivos `.md` (cuando el proyecto no es un vault), preservando la atomicidad de las decisiones de gobernanza y la separación de responsabilidades entre agentes primarios.
 
 ---
 
@@ -28,14 +36,16 @@ FEV-7 es la segunda fase de v1.1.0. Aborda gobernanza de agentes y seguridad de 
 
 | ID | Decisión | Rationale |
 |----|----------|-----------|
-| **ADR-FEV7-1** | Slice 1: añadir regla de no-assumption **idéntica** a los 6 agentes primarios | Aplica Template Method: la regla común garantiza consistencia. Diferencias solo en COMPOSITION (qué invocar y desde dónde). |
-| **ADR-FEV7-2** | Slice 2: añadir delegation-first **solo a 3 agentes** (quetzalcoatl, tlaloc, mictlantecuhtli) | Huitzilopochtli, Moctezuma y Tezcatlipoca NO delegan por diseño (son root/planner/critic). Aplicar la regla a agentes que no delegan causaría confusión. |
-| **ADR-FEV7-3** | Slice 3+4: defense-in-depth (plugin runtime + opencode.json config) | El plugin tiene normalización de bash (strip comments, collapse whitespace) que el config no. El config es visible al usuario como política declarativa. Ambos necesarios. |
-| **ADR-FEV7-4** | Slice 3: agrupar patrones destructivos en `DESTRUCTIVE_PATTERNS` por **categoría** (filesystem, git, sql, docker, k8s, etc.) con comentarios JSDoc por bloque | Mantenibilidad: agregar/eliminar comandos por categoría es trivial. Comentarios explican intención, no implementación. |
-| **ADR-FEV7-5** | Slice 4: en `opencode.json`, denegaciones usan `"command*": "deny"` (prefijo) y `"* command*": "deny"` (cualquier cwd) | OpenCode bash permissions: prefijo `*` matchea cualquier ruta antes del comando; sufijo `*` matchea cualquier argumento. Ambos necesarios para cobertura completa. |
-| **ADR-FEV7-6** | Slice 5: NO modificar la sección `## KNOWLEDGE` de los agentes (eso es FEV-9) | Limitar blast radius. FEV-7 solo añade comportamiento (reglas), no cambia el modelo de consulta. |
-| **ADR-FEV7-7** | Límite: **≤150 líneas totales** por agente (incluyendo YAML) | Decisión del usuario (laxo). FEV-9 puede requerir refactor, pero esa deuda es aceptable. |
-| **ADR-FEV7-8** | Cada slice = 1 commit atómico con Conventional Commits | Trazabilidad + rollback granular. Plugin (591 líneas) y opencode.json (599 líneas) crecen de forma controlada. |
+| **ADR-FEV8-1** | El subagente implementa **Strategy pattern** para vault/markdown-only | El modo de operación depende del contexto del proyecto. Strategy encapsula algoritmos intercambiables; el subagente decide cuál usar en runtime según presencia de `.obsidian/`. |
+| **ADR-FEV8-2** | **Solo Huitzilopochtli** puede invocar obsidian-vault-writer | Vault admin es orquestación. El `opencode.json` ya tiene `permission.task.*: deny` global. Solo Huitzilopochtli tiene `*: allow` en su `task:`. Los demás agentes heredan el deny global. No se requiere deny explícito en los agentes. |
+| **ADR-FEV8-3** | El subagente **NO ejecuta obsidian-cli sin verificar disponibilidad** (`which obsidian`) | Defensa contra SPEC.md línea 359 ("Never execute arbitrary code from the template"). Si obsidian-cli no está instalado, el subagente degrada a markdown-only mode. |
+| **ADR-FEV8-4** | Las 6 skills se **buscan vía `find-skills` skill** y se instalan en `template/obligatorio/skills/` (project-level) | El usuario es explícito sobre no instalar globalmente. El template distribuye las skills; quedan versionadas con el workspace. Si una skill no existe en el catálogo, se crea desde cero siguiendo el formato SKILL.md estándar. |
+| **ADR-FEV8-5** | El subagente tiene `mode: subagent, hidden: true` (como docs-writer) | Solo invocable vía `task()` desde Huitzilopochtli. No aparece en slash commands ni se invoca directamente. |
+| **ADR-FEV8-6** | Permisos del subagente: `write: allow` solo para `*.md`, `*.mdx`. `bash`: muy restrictivo | El subagente solo edita archivos markdown. En vault mode, ejecuta `obsidian *` (allowlist). En markdown-only mode, usa `cat`, `head`, `tail`, `grep`, `find` (allowlist). Todo lo demás: `deny`. |
+| **ADR-FEV8-7** | Tamaño del subagente: **≤200 líneas** (límite CODE_STYLE.md) | El subagente tiene workflow + Strategy, no specs largas. Compacto y enfocado. |
+| **ADR-FEV8-8** | Tamaño de cada skill: **80-150 líneas** | Skills son guías operativas, no docs extensas. Estilo "reference card" para invocación rápida por el subagente. |
+| **ADR-FEV8-9** | Version bump: **v1.1.0 → v1.2.0** (minor, no breaking changes) | Nueva feature (subagente + skills), aditiva. Coherente con semver. |
+| **ADR-FEV8-10** | La actualización del GitHub Wiki es **manual** (fuera del repo) | El wiki es un repo git separado (`fisherk2/codice-opencode.wiki`). FEV8-T7 documenta los cambios necesarios; la subida real es paso manual del maintainer. |
 
 ---
 
@@ -43,580 +53,589 @@ FEV-7 es la segunda fase de v1.1.0. Aborda gobernanza de agentes y seguridad de 
 
 ```mermaid
 graph TD
-    subgraph "Phase 1: Diagnóstico"
-        T0["T0: Análisis de Issues #26 + #30<br/><i>Documento interno</i>"]
+    subgraph "Phase 0: Diagnóstico"
+        T0["T0: Análisis de Issue #21<br/><i>Documento interno</i>"]
     end
 
-    subgraph "Slice 1: No-assumption Rule"
-        T1["T1 (FEV7-T1): Add no-assumption rule<br/>a 6 agentes primarios"]
+    subgraph "Slice 1: Subagent Creation"
+        T1["T1 (FEV8-T1): Create<br/>obsidian-vault-writer.md"]
     end
 
-    subgraph "Slice 2: Delegation-first Rule"
-        T2["T2 (FEV7-T2): Add delegation-first<br/>a quetzalcoatl, tlaloc, mictlantecuhtli"]
-        T3["T3 (FEV7-T3): Verificar límite<br/>≤150 líneas por agente"]
+    subgraph "Slice 2: Skills Installation"
+        T2["T2 (FEV8-T2): Search 6 skills<br/>via find-skills"]
+        T3["T3 (FEV8-T3): Install/create 6 skills<br/>+ update using-agent-skills"]
     end
 
-    subgraph "Slice 3: Plugin Restrictions"
-        T4["T4 (FEV7-T4): 50+ patrones destructivos<br/>en sdd-pipeline.ts"]
+    subgraph "Slice 3: Catalog & Permissions"
+        T4["T4 (FEV8-T4): Update Huitzilopochtli<br/>AVAILABLE SUBAGENTS catalog"]
+        T5["T5 (FEV8-T5): Add to VALID_SUBAGENTS<br/>in sdd-pipeline.ts"]
     end
 
-    subgraph "Slice 4: Config Restrictions"
-        T5["T5 (FEV7-T5): 50+ deny entries<br/>en opencode.json"]
-    end
-
-    subgraph "Slice 5: Documentation"
-        T6["T6 (FEV7-T6): Actualizar<br/>plugin README.md"]
-        T7["T7 (FEV7-T7): Actualizar<br/>CHANGELOG.md v1.1.0"]
-        T8["T8 (FEV7-T8): Bump version<br/>1.1.0 en package.json"]
+    subgraph "Slice 4: Documentation & Release"
+        T6["T6 (FEV8-T6): CHANGELOG v1.2.0<br/>+ bump version"]
+        T7["T7 (FEV8-T7): Document wiki updates<br/>(manual step)"]
     end
 
     T0 --> T1
     T0 --> T2
-    T0 --> T4
-    T1 --> T3
+    T1 --> C1{🔵 Checkpoint 1<br/>Subagent OK}
     T2 --> T3
-    T4 --> T5
-    T3 --> C1{🔵 Checkpoint 1<br/>System Prompts OK}
-    T5 --> C2{🔵 Checkpoint 2<br/>Restrictions OK}
-    C1 --> T6
-    C2 --> T6
-    T6 --> T7
-    T7 --> T8
-    T8 --> C3{🟢 Gate FEV-7<br/>Release Ready}
+    T3 --> C2{🔵 Checkpoint 2<br/>Skills OK}
+    C1 --> T4
+    C1 --> T5
+    C2 --> T4
+    T4 --> C3{🔵 Checkpoint 3<br/>Catalog OK}
+    T5 --> C3
+    C3 --> T6
+    C3 --> T7
+    T6 --> G{🟢 Gate FEV-8<br/>Release Ready}
+    T7 --> G
 
     style T0 fill:#f9e79f,stroke:#d4ac0d
-    style C1 fill:#aed6f1,stroke:#2874a6
-    style C2 fill:#aed6f1,stroke:#2874a6
-    style C3 fill:#abebc6,stroke:#1e8449
     style T1 fill:#fadbd8,stroke:#c0392b
     style T2 fill:#fadbd8,stroke:#c0392b
+    style T3 fill:#fadbd8,stroke:#c0392b
     style T4 fill:#fadbd8,stroke:#c0392b
     style T5 fill:#fadbd8,stroke:#c0392b
     style T6 fill:#d5f5e3,stroke:#229954
     style T7 fill:#d5f5e3,stroke:#229954
-    style T8 fill:#d5f5e3,stroke:#229954
+    style C1 fill:#aed6f1,stroke:#2874a6
+    style C2 fill:#aed6f1,stroke:#2874a6
+    style C3 fill:#aed6f1,stroke:#2874a6
+    style G fill:#abebc6,stroke:#1e8449
 ```
 
-**Critical path:** T0 → T1 → T3 → Checkpoint 1 → T6 → T7 → T8 → Gate (≈ 3.5h)
+**Critical path:** T0 → T1 → C1 → T4/T5 → C3 → T6/T7 → G (≈ 2.5h)
 
 **Parallelizable:**
-- T1 (no-assumption a 6 agentes) ∥ T4 (patrones en plugin) — independientes
-- T2 (delegation-first) depende de T1 (mismo archivo a veces)
-- T5 (config) depende de T4 (mismas categorías)
+- T1 (subagente) ∥ T2 (búsqueda de skills) — independientes
+- T4 (catalog) ∥ T5 (VALID_SUBAGENTS) — modifican archivos distintos
+- T6 (CHANGELOG) ∥ T7 (wiki docs) — independientes
+- T1, T2 no dependen de T0 (pueden empezar inmediatamente)
+
+**Secuencial obligatorio:**
+- T2 → T3 (primero buscar, luego instalar)
+- T1 → T4, T5 (subagente debe existir antes de referenciarlo en catálogos + plugin)
+- T3 → T4 (skills deben existir antes de que el catálogo las mencione)
 
 ---
 
 ## Task Breakdown
 
-### Slice 1: No-assumption Rule (Issue #26 — parte 1)
+### Slice 1: Subagent Creation (Issue #21 — parte 1)
 
-#### Task FEV7-T1: Add no-assumption rule to 6 primary agents
+#### Task FEV8-T1: Create obsidian-vault-writer subagent
 
-**Descripción:** Añadir una sección `## NO-ASSUMPTION RULE` idéntica a los 6 agentes primarios en `template/obligatorio/agents/`. La regla implementa Template Method: el formato y la filosofía son comunes, pero cada agente decide en su `## COMPOSITION` cuándo aplicarla.
+**Descripción:** Crear el subagente `obsidian-vault-writer` en `template/obligatorio/agents/obsidian-vault-writer.md`. Implementa Strategy pattern (vault mode vs markdown-only mode) con Template Method para el workflow común. Permisos restrictivos: solo edita `.md`/`.mdx`, bash allowlist por modo.
 
-**Contenido común a insertar (después de `## RULES` o `### RULES` existente, antes de `## KNOWLEDGE`):**
+**Estructura del archivo (basada en `docs-writer.md` como referencia):**
 
-```markdown
-## NO-ASSUMPTION RULE
-
-When user intent is ambiguous, **ASK before executing**. Never operate under silent assumptions.
-
-**Operational philosophy:** `Ask → Resolve → Suggest → Warn`
-
-- **Ask:** If instructions are ambiguous, use the `question` tool BEFORE acting.
-- **Resolve:** Confirm the exact scope of the task with the user.
-- **Suggest:** Propose alternatives if you detect ambiguity or risk.
-- **Warn:** Inform about non-obvious consequences before proceeding.
+```yaml
+---
+description: "Specialized subagent for Obsidian vault administration and markdown file management. Invoked exclusively by Huitzilopochtli. Operates in vault mode (uses obsidian-cli when .obsidian/ is detected) or markdown-only mode (filesystem-only for non-vault projects). Triggers: 'obsidian', 'vault', 'dataview', 'templater', 'frontmatter', 'note organization', 'tag taxonomy', 'backlinks', 'graph view', 'markdown collection'."
+mode: subagent
+color: "#7C3AED"  # Obsidian purple
+temperature: 0.2  # Deterministic, like docs-writer
+hidden: true
+permission:
+  write:
+    "*": deny
+    "*.md": allow
+    "*.mdx": allow
+    "*.markdown": allow
+  edit:
+    "*": deny
+    "*.md": allow
+    "*.mdx": allow
+    "*.markdown": allow
+  bash:
+    # Vault mode (only if .obsidian/ detected and obsidian-cli available)
+    "obsidian *": ask
+    # Markdown-only mode
+    "cat *": allow
+    "head *": allow
+    "tail *": allow
+    "grep *": allow
+    "find * -name *.md*": allow
+    # Read-only system info
+    "which *": allow
+    "pwd": allow
+    "ls *": allow
+  grep: allow
+  glob: allow
+  skill: allow
+  todowrite: allow
+  webfetch: allow
+  websearch: allow
+  question: allow
+---
 ```
 
-**Archivos a modificar (6):**
+**Contenido del agente (≤200 líneas):**
 
-| # | Archivo | Líneas actuales | Δ esperado |
-|---|---------|-----------------|------------|
-| 1 | `huitzilopochtli.md` | 88 | +12 |
-| 2 | `quetzalcoatl.md` | 104 | +12 |
-| 3 | `moctezuma.md` | 69 | +12 |
-| 4 | `tlaloc.md` | 138 | +12 |
-| 5 | `mictlantecuhtli.md` | 73 | +12 |
-| 6 | `tezcatlipoca.md` | 66 | +12 |
+```markdown
+# Obsidian Vault Writer
+
+You are a specialized subagent for **Obsidian vault administration** and **markdown file management**. You are invoked exclusively by @huitzilopochtli for vault-related orchestration tasks.
+
+## Operational Modes (Strategy Pattern)
+
+You operate in one of two modes based on project context:
+
+### Mode 1: Vault Mode (project contains `.obsidian/`)
+
+**Detection:** Check for `.obsidian/` directory in project root.
+
+**Capabilities when in vault mode:**
+- Use `obsidian-cli` (if installed) for native vault operations: index, backlinks, properties, tags, daily notes, graph analysis
+- Use `obsidian-cli property set/get` for frontmatter manipulation
+- Use `obsidian-cli query` for Dataview-style searches
+- Use `obsidian-cli tag` for tag taxonomy management
+- Use `obsidian-cli template` for Templater scripts
+
+**Fallback:** If `obsidian-cli` is not installed (`which obsidian` returns nothing), degrade to Mode 2.
+
+### Mode 2: Markdown-Only Mode (default fallback)
+
+**Detection:** Project lacks `.obsidian/`, OR obsidian-cli is unavailable.
+
+**Capabilities:**
+- Read/write `.md`, `.mdx`, `.markdown` files via `Bun.fs` (write tool)
+- Manipulate YAML frontmatter (read, parse, update, validate)
+- Apply markdown style conventions (see `markdown-style-guide` skill)
+- Organize notes in folders, manage tag taxonomy manually
+- Cross-reference with grep/find for content search
+
+## Workflow (Template Method)
+
+1. **Detect mode:** Run `ls -la .obsidian/ 2>/dev/null` to check for vault
+2. **Verify obsidian-cli availability:** Run `which obsidian` (vault mode only)
+3. **Load skills:** Invoke `obsidian-vault-structure` or `markdown-style-guide` based on mode
+4. **Execute task:** Apply mode-specific operations
+5. **Validate output:** Ensure frontmatter consistency, link integrity, tag taxonomy
+6. **Report:** Summarize changes to the orchestrator (Huitzilopochtli)
+
+## Skills
+
+This subagent requires these skills (loaded lazily):
+
+- `obsidian-cli-usage` — CLI command reference
+- `obsidian-vault-structure` — folder organization, naming conventions
+- `obsidian-frontmatter` — YAML metadata schema, validation
+- `obsidian-templater` — Templater script syntax
+- `obsidian-dataview` — Dataview query language
+- `markdown-style-guide` — Markdown conventions for consistency
+
+## Restrictions
+
+- **NEVER** write non-markdown files (no code, no config, no binary)
+- **NEVER** modify `.obsidian/` core files (workspace.json, appearance.json, plugins/)
+- **NEVER** delete notes without explicit orchestrator confirmation
+- **NEVER** execute obsidian-cli commands that mutate without `--dry-run` first
+- **NEVER** use `ask` permissions for vault operations; require explicit orchestrator approval
+- ✅ Always preserve user content; only ADD or REFORMAT, never REMOVE
+- ✅ Always validate frontmatter schema before write
+- ✅ Always report back to Huitzilopochtli with a summary of changes
+
+## Composition
+
+- **Invoke directly when:** Never. Subagents are not invoked directly.
+- **Invoke via:** Huitzilopochtli (the only primary agent with `obsidian-vault-writer: allow` in its task delegation).
+- **Do not invoke from:** Quetzalcoatl (specs), Tlaloc (implementation), Mictlantecuhtli (validation), Moctezuma (planning), Tezcatlipoca (review). All other primary agents inherit `task: *: deny` from `opencode.json` (line 405) — no explicit deny entries needed.
+```
 
 **Criterios de Aceptación:**
-- [ ] Los 6 archivos contienen la sección `## NO-ASSUMPTION RULE` con el texto común
-- [ ] La sección está colocada entre `## RULES` y `## KNOWLEDGE` (orden del documento preservado)
-- [ ] NO se modifica ningún otro campo del agente (permisos, modelo, temperature, steps, color)
-- [ ] Cada agente mantiene coherencia con su `## COMPOSITION` (la regla se aplica según el rol)
+- [ ] Archivo `template/obligatorio/agents/obsidian-vault-writer.md` existe
+- [ ] YAML frontmatter válido con: mode: subagent, color, temperature, hidden, permissions
+- [ ] Permissions: `write/edit` solo para `*.md`, `*.mdx`, `*.markdown`; resto `deny`
+- [ ] Permissions: `bash` con allowlist por modo + restrictivo por default
+- [ ] Sección "Operational Modes" describe Strategy pattern (vault vs markdown-only)
+- [ ] Sección "Workflow" implementa Template Method (5-6 pasos)
+- [ ] Sección "Skills" lista las 6 skills requeridas
+- [ ] Sección "Restrictions" con 5+ bullets de "NEVER"
+- [ ] Sección "Composition" con bloque estándar
+- [ ] Tamaño total: ≤200 líneas
 
 **Verificación:**
-- [ ] `rg -c "^## NO-ASSUMPTION RULE" template/obligatorio/agents/{huitzilopochtli,quetzalcoatl,moctezuma,tlaloc,mictlantecuhtli,tezcatlipoca}.md` → 6 matches (uno por archivo)
-- [ ] `rg -A 1 "Ask.*Resolve.*Suggest.*Warn" template/obligatorio/agents/*.md` → 6 matches
-- [ ] `wc -l template/obligatorio/agents/*.md` — todos ≤150 líneas (excepto web-performance-auditor en 208, que NO se modifica)
+- [ ] `rg "mode: subagent" template/obligatorio/agents/obsidian-vault-writer.md` → 1 match
+- [ ] `rg "Operational Modes" template/obligatorio/agents/obsidian-vault-writer.md` → 1 match
+- [ ] `rg -c "NEVER" template/obligatorio/agents/obsidian-vault-writer.md` → ≥5 matches
+- [ ] `wc -l template/obligatorio/agents/obsidian-vault-writer.md` ≤ 200
+- [ ] `bun -e "yaml_parse_check"` exit 0 (valid YAML)
 - [ ] `just check` — 0 errores (lint + tsc)
-- [ ] `bun test` — 502/0 (sin regresión)
-- [ ] `git diff` — solo 6 archivos modificados, ~12 líneas añadidas por archivo
+- [ ] `bun test` — 563/0 (sin regresión)
 
-**Dependencias:** T0 (análisis previo, no como commit, sino como contexto de trabajo).
-**Archivos:** 6 archivos `.md` en `template/obligatorio/agents/`.
-**Scope:** S (5 archivos en 1 commit; el sistema de plugins los lee al inicio, no requiere test).
-**Commit:** `feat(agents): add no-assumption rule to 6 primary agents (#26)`
+**Dependencias:** T0 (análisis previo, no como commit).
+**Archivos:** `template/obligatorio/agents/obsidian-vault-writer.md` (nuevo, 1 archivo).
+**Scope:** M (~200 líneas, 1 commit, decisión arquitectónica importante).
+**Commit:** `feat(agents): add obsidian-vault-writer subagent with Strategy pattern (#21)`
 
 ---
 
-### Slice 2: Delegation-first Rule (Issue #26 — parte 2)
+### Slice 2: Skills Installation (Issue #21 — parte 2)
 
-#### Task FEV7-T2: Add delegation-first instruction to 3 delegating agents
+#### Task FEV8-T2: Search 6 Obsidian/Markdown skills via find-skills
 
-**Descripción:** Añadir una sección `## DELEGATION-FIRST RULE` a los **3 agentes que delegan** (quetzalcoatl, tlaloc, mictlantecuhtli). Implementa Strategy: cada agente tiene su propio catálogo de subagentes y decide cuándo delegar.
+**Descripción:** Usar la skill `find-skills` para buscar en el catálogo público de skills (Anthropic, skills.sh, etc.) las 6 skills necesarias para el subagente `obsidian-vault-writer`. Documentar cuáles se encuentran y cuáles requieren creación desde cero.
 
-**NO se aplica a:**
-- **huitzilopochtli** — ya es el root orchestrator (delegación es su función primaria)
-- **moctezuma** — explícitamente "DO NOT delegate" (RULES)
-- **tezcatlipoca** — explícitamente "DO NOT delegate" (RULES)
+**Skills requeridas (Set propuesto por el usuario):**
 
-**Contenido común a insertar (después de `## NO-ASSUMPTION RULE`, antes de `## KNOWLEDGE`):**
+| # | Skill name | Propósito | ¿Existe en catálogo? |
+|---|-----------|-----------|----------------------|
+| 1 | `obsidian-cli-usage` | Referencia de comandos CLI | TBD (buscar) |
+| 2 | `obsidian-vault-structure` | Organización de carpetas/notas | TBD (buscar) |
+| 3 | `obsidian-frontmatter` | YAML metadata schema | TBD (buscar) |
+| 4 | `obsidian-templater` | Templater script syntax | TBD (buscar) |
+| 5 | `obsidian-dataview` | Dataview query language | TBD (buscar) |
+| 6 | `markdown-style-guide` | Convenciones markdown | TBD (buscar; existe `crafting-effective-readmes` relacionado) |
+
+**Proceso de búsqueda (vía `find-skills`):**
+
+```bash
+# El implementador invoca la skill find-skills (ubicada en .opencode/skills/find-skills/)
+# find-skills se carga y permite:
+#   1. Buscar en el catálogo de Anthropic (skills disponibles públicamente)
+#   2. Buscar en skills.sh (registry público)
+#   3. Buscar en el repositorio de skills de la organización
+#
+# Para cada skill:
+#   - Si existe → marcar como "found" y proceder a T3 (instalar)
+#   - Si no existe → marcar como "to_create" y proceder a T3 (crear desde cero)
+```
+
+**Criterios de Aceptación:**
+- [ ] Reporte de búsqueda completado: 6 skills × 2 fuentes = 12 búsquedas
+- [ ] Documento `tasks/fev8-skills-search.md` con tabla de resultados
+- [ ] Para cada skill: estado `found` (con URL) o `to_create` (con justificación)
+- [ ] Skills marcadas como `found` se descargan a `/tmp/opencode/obsidian-skills/` para inspección
+
+**Verificación:**
+- [ ] `ls /tmp/opencode/obsidian-skills/` contiene los directorios de las skills encontradas
+- [ ] Cada skill encontrada tiene `SKILL.md` con frontmatter `name` y `description` válidos
+- [ ] Reporte incluye: nombre, fuente (URL), versión, fecha de descarga
+
+**Dependencias:** T0.
+**Archivos:** `tasks/fev8-skills-search.md` (nuevo, reporte).
+**Scope:** S (búsqueda + documentación, 1 commit).
+**Commit:** `chore(skills): search 6 obsidian/markdown skills via find-skills (#21)`
+
+> **Nota:** Este commit es informativo. El trabajo real de instalación/creación ocurre en T3.
+
+---
+
+#### Task FEV8-T3: Install/create 6 skills at project level
+
+**Descripción:** Para cada una de las 6 skills:
+- Si fue marcada como `found` en T2: copiarla de `/tmp/opencode/obsidian-skills/` a `template/obligatorio/skills/<skill-name>/`
+- Si fue marcada como `to_create` en T2: crear el archivo `template/obligatorio/skills/<skill-name>/SKILL.md` desde cero
+
+**Paso adicional (CONTRIBUTING.md — Add a New Skill):** Seguir el procedimiento de [CONTRIBUTING.md "Add a New Skill"](CONTRIBUTING.md):
+1. ✅ Colocar cada skill en `template/obligatorio/skills/<skill-name>/SKILL.md` (kebab-case) — paso principal de T3
+2. Migrar cualquier `references/` interna al directorio raíz `references/` (si aplica)
+3. ✅ Crear `SKILL.md` con frontmatter YAML válido (`name`, `description`) — paso principal de T3
+4. **Actualizar `.opencode/skills/using-agent-skills/SKILL.md`**: añadir al árbol "Skill Discovery" + tabla "Quick Reference"
+5. **Actualizar GitHub Wiki** (documentado en FEV8-T7, paso manual)
+6. ✅ Restart OpenCode session — hecho por el usuario al final
+
+**Estructura de cada skill (basada en `crafting-effective-readmes/SKILL.md`):**
+
+```yaml
+---
+name: <skill-name>
+description: <one-line description, action verb + what it does>
+---
+
+# <Skill Title>
+
+## Overview
+<2-3 sentences on what this skill teaches>
+
+## When to Use
+<list of triggers, "use when X">
+
+## Process / Reference
+<actionable content, 50-100 lines>
+
+## Examples
+<1-2 concrete examples>
+
+## Verification
+<how to confirm the skill was applied correctly>
+```
+
+**Criterios de Aceptación:**
+- [ ] 6 skills instaladas en `template/obligatorio/skills/<skill-name>/SKILL.md`
+- [ ] Cada skill tiene frontmatter válido (`name`, `description`)
+- [ ] Cada skill tiene 80-150 líneas (ADR-FEV8-8)
+- [ ] Skills encontradas: instaladas con su contenido original (verificado por diff)
+- [ ] Skills creadas: siguen el formato estándar (verificado por comparación con `crafting-effective-readmes`)
+- [ ] Las 6 skills tienen nombres kebab-case (no espacios, no mayúsculas)
+- [ ] `.opencode/skills/using-agent-skills/SKILL.md` actualizado con las 6 skills en el árbol "Skill Discovery" y la tabla "Quick Reference"
+
+**Estructura de las 6 skills a crear (placeholders de contenido):**
+
+1. **`obsidian-cli-usage/SKILL.md`** — Tabla de comandos CLI más usados (create, read, update, delete, search, property, tag, daily)
+2. **`obsidian-vault-structure/SKILL.md`** — Convenciones de carpetas (Daily Notes, Projects, Areas, Resources, Archives), naming conventions, link patterns
+3. **`obsidian-frontmatter/SKILL.md`** — Schema YAML estándar (title, date, tags, aliases, type, status, related), validación
+4. **`obsidian-templater/SKILL.md`** — Sintaxis de Templater (`<% tp.file.title %>`, `tp.date.now()`, etc.), configuración de folders
+5. **`obsidian-dataview/SKILL.md`** — Query language: TABLE, LIST, TASK, FROM, WHERE, SORT, GROUP BY
+6. **`markdown-style-guide/SKILL.md`** — Convenciones: headings, code blocks, links, tables, lists, callouts, embeds
+
+**Verificación:**
+- [ ] `ls template/obligatorio/skills/{obsidian-cli-usage,obsidian-vault-structure,obsidian-frontmatter,obsidian-templater,obsidian-dataview,markdown-style-guide}/SKILL.md` → 6 archivos existen
+- [ ] `rg -c "^---$" template/obligatorio/skills/{obsidian,markdown}*` → cada skill tiene frontmatter delimitado por `---`
+- [ ] `wc -l template/obligatorio/skills/{obsidian,markdown}*/SKILL.md` → todos entre 80-150 líneas
+- [ ] `bun -e "yaml_parse_check" template/obligatorio/skills/<each>/SKILL.md` exit 0
+- [ ] `rg "obsidian-cli-usage\|obsidian-vault-structure\|obsidian-frontmatter\|obsidian-templater\|obsidian-dataview\|markdown-style-guide" .opencode/skills/using-agent-skills/SKILL.md` → 6 matches
+- [ ] `just check` — 0 errores
+- [ ] `bun test` — sin regresión
+
+**Dependencias:** FEV8-T2 (búsqueda completada).
+**Archivos:** 6 nuevos archivos en `template/obligatorio/skills/<skill-name>/SKILL.md` + `template/obligatorio/.opencode/skills/using-agent-skills/SKILL.md` (modificado).
+**Scope:** M (6 skills files + 1 modificación de using-agent-skills, 1-2 commits).
+**Commit:**
+- `feat(skills): add 6 obsidian/markdown skills (X found, Y created) (#21)` — o dos commits separados si la granularidad ayuda.
+
+---
+
+### Slice 3: Catalog & Permissions (Issue #21 — parte 3)
+
+#### Task FEV8-T4: Update Huitzilopochtli AVAILABLE SUBAGENTS catalog
+
+**Descripción:** Añadir `obsidian-vault-writer` al catálogo de subagentes disponibles de Huitzilopochtli en `template/obligatorio/agents/huitzilopochtli.md`. Actualizar el conteo en la línea "Documentation (5)" → "Documentation (6)".
+
+**Cambio específico:**
+
+```diff
+- - **Documentation** (5): docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, search-specialist
++ - **Documentation** (6): docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, search-specialist, obsidian-vault-writer
+```
+
+**Verificación adicional:** Actualizar el catálogo raíz de Huitzilopochtli en `.opencode/agents/` (si difiere del template) — ver consistencia.
+
+**Criterios de Aceptación:**
+- [ ] `huitzilopochtli.md` contiene `obsidian-vault-writer` en la lista de Documentation
+- [ ] El conteo "(5)" → "(6)"
+- [ ] El conteo total "~96+" → "~97+"
+- [ ] NO se modifica ningún otro campo (descripción, permissions, RULES, KNOWLEDGE)
+
+**Verificación:**
+- [ ] `rg "obsidian-vault-writer" template/obligatorio/agents/huitzilopochtli.md` → 1 match
+- [ ] `rg "Documentation.*6" template/obligatorio/agents/huitzilopochtli.md` → 1 match
+- [ ] `wc -l template/obligatorio/agents/huitzilopochtli.md` ≤ 150 (constraint FEV-7)
+- [ ] `just check` — 0 errores
+- [ ] `bun test` — sin regresión
+
+**Dependencias:** FEV8-T1 (subagente existe), FEV8-T3 (skills existen — referenciados en descripción).
+**Archivos:** `template/obligatorio/agents/huitzilopochtli.md` (1 línea modificada).
+**Scope:** XS (1 línea, 1 commit).
+**Commit:** `feat(agents): add obsidian-vault-writer to Huitzilopochtli catalog (#21)`
+
+---
+
+
+
+#### Task FEV8-T5: Add obsidian-vault-writer to VALID_SUBAGENTS in sdd-pipeline.ts
+
+**Descripción:** Añadir `'obsidian-vault-writer'` al `Set` `VALID_SUBAGENTS` en `template/obligatorio/.opencode/plugins/sdd-pipeline.ts` para que el validador de `task()` lo reconozca. Actualizar el comentario de conteo de 97 → 98 subagentes.
+
+**Cambio específico:**
+
+```diff
+- // All 103 agents: 97 subagents + 6 primary agents
+- // Used to validate task() calls — rejects invented subagent names
++ // All 104 agents: 98 subagents + 6 primary agents
++ // Used to validate task() calls — rejects invented subagent names
+  const VALID_SUBAGENTS = new Set([
+    // Primary agents
+    'huitzilopochtli', 'quetzalcoatl', 'moctezuma', 'tlaloc', 'mictlantecuhtli', 'tezcatlipoca',
+    // Backend & APIs
+    ...
+    // Documentation & Research
+    'docs-writer', 'research-analyst', 'knowledge-synthesizer',
+    'scientific-literature-researcher', 'search-specialist',
++   'obsidian-vault-writer',  // (FEV-8) — Obsidian vault administration
+    // Product & Business
+    ...
+```
+
+**Criterios de Aceptación:**
+- [ ] `sdd-pipeline.ts` contiene `'obsidian-vault-writer'` en `VALID_SUBAGENTS`
+- [ ] Comentario de conteo actualizado: 97 → 98 subagentes, 103 → 104 totales
+- [ ] NO se elimina ningún otro subagente del Set
+- [ ] TypeScript compila sin errores (`tsc --noEmit`)
+- [ ] El validador `task()` reconoce `obsidian-vault-writer` como válido
+
+**Verificación:**
+- [ ] `rg "'obsidian-vault-writer'" template/obligatorio/.opencode/plugins/sdd-pipeline.ts` → 1 match
+- [ ] `rg -c "All 104 agents" template/obligatorio/.opencode/plugins/sdd-pipeline.ts` → 1 match
+- [ ] `rg "VALID_SUBAGENTS" template/obligatorio/.opencode/plugins/sdd-pipeline.ts | wc -l` → el Set no se rompe
+- [ ] `bun -e "tsc --noEmit template/obligatorio/.opencode/plugins/sdd-pipeline.ts"` exit 0
+- [ ] `just check` — 0 errores
+- [ ] `bun test` — sin regresión (563/0)
+- [ ] Test funcional: invocar `task(subagent_type: "obsidian-vault-writer")` desde Huitzilopochtli NO lanza SddError "Unknown subagent"
+
+**Dependencias:** FEV8-T1 (subagente existe con nombre exacto), FEV8-T4 (Huitzilopochtli ya puede invocarlo).
+
+> **Nota sobre permisos:** `opencode.json` línea 405 ya establece `"permission": { "task": { "*": "deny" } }` globalmente. Solo Huitzilopochtli tiene `*: allow` en su `task:`. No se requieren deny explícitos en otros agentes — la restricción "solo Huitzilopochtli" ya está cubierta por el deny global.
+
+**Archivos:** `template/obligatorio/.opencode/plugins/sdd-pipeline.ts` (1 línea añadida + 2 comentarios).
+**Scope:** XS (1 archivo, 1 commit).
+**Commit:** `feat(plugin): add obsidian-vault-writer to VALID_SUBAGENTS (#21)`
+
+---
+
+### Slice 4: Documentation & Release
+
+#### Task FEV8-T6: Update CHANGELOG.md with v1.2.0 entry + bump version
+
+**Descripción:** Añadir entrada v1.2.0 a `CHANGELOG.md` siguiendo Keep a Changelog format. Bumpear versión en `package.json` de `1.1.0` a `1.2.0` (minor, no breaking changes).
+
+**Entrada de CHANGELOG (formato Keep a Changelog):**
 
 ```markdown
-## DELEGATION-FIRST RULE
-
-**Prioritize invoking specialized subagents before writing directly.**
-
-- ✅ **Default:** Invoke subagent via `task()` when one exists in your `## AVAILABLE SUBAGENTS` catalog.
-- ⚠️ **Fallback:** Only write directly if NO specialized subagent exists or the task is trivial.
-- 🚫 **Never:** Write directly without first verifying the available subagent catalog.
-```
-
-**Archivos a modificar (3):**
-
-| # | Archivo | Líneas después de T1 | Δ esperado |
-|---|---------|----------------------|------------|
-| 1 | `quetzalcoatl.md` | ~116 | +10 |
-| 2 | `tlaloc.md` | ~150 | +10 |
-| 3 | `mictlantecuhtli.md` | ~85 | +10 |
-
-**Criterios de Aceptación:**
-- [ ] Los 3 archivos contienen la sección `## DELEGATION-FIRST RULE` con el texto común
-- [ ] La sección está colocada entre `## NO-ASSUMPTION RULE` y `## KNOWLEDGE`
-- [ ] Los otros 3 agentes (huitzilopochtli, moctezuma, tezcatlipoca) **NO** contienen esta sección
-- [ ] Cada agente mantiene coherencia con su `## AVAILABLE SUBAGENTS`
-
-**Verificación:**
-- [ ] `rg -c "^## DELEGATION-FIRST RULE" template/obligatorio/agents/{quetzalcoatl,tlaloc,mictlantecuhtli}.md` → 3 matches
-- [ ] `rg "^## DELEGATION-FIRST RULE" template/obligatorio/agents/{huitzilopochtli,moctezuma,tezcatlipoca}.md` → 0 matches
-- [ ] `rg -A 1 "Default.*Invoke subagent" template/obligatorio/agents/*.md` → 3 matches
-- [ ] `wc -l template/obligatorio/agents/{quetzalcoatl,tlaloc,mictlantecuhtli}.md` — todos ≤150 líneas
-- [ ] `just check` — 0 errores
-- [ ] `bun test` — sin regresión
-- [ ] `git diff` — solo 3 archivos modificados, ~10 líneas añadidas por archivo
-
-**Dependencias:** FEV7-T1 (orden del documento: NO-ASSUMPTION → DELEGATION-FIRST → KNOWLEDGE).
-**Archivos:** 3 archivos `.md` en `template/obligatorio/agents/`.
-**Scope:** S (3 archivos en 1 commit).
-**Commit:** `feat(agents): add delegation-first rule to 3 delegating agents (#26)`
-
----
-
-#### Task FEV7-T3: Verify line limit constraint (≤150 líneas totales)
-
-**Descripción:** Verificar que ninguno de los 6 agentes primarios modificados supere 150 líneas totales (incluyendo YAML). Si alguno supera, refactorizar antes de continuar.
-
-**Estado actual proyectado después de T1 + T2:**
-
-| Agente | Pre-FEV7 | Post-T1 | Post-T2 | ≤150? |
-|--------|----------|---------|---------|-------|
-| huitzilopochtli | 88 | ~100 | ~100 (no T2) | ✅ |
-| quetzalcoatl | 104 | ~116 | ~126 | ✅ |
-| moctezuma | 69 | ~81 | ~81 (no T2) | ✅ |
-| tlaloc | 138 | ~150 | ~160 | ⚠️ **RIESGO** |
-| mictlantecuhtli | 73 | ~85 | ~95 | ✅ |
-| tezcatlipoca | 66 | ~78 | ~78 (no T2) | ✅ |
-
-**Riesgo identificado:** `tlaloc.md` tiene 138 líneas pre-FEV7. Con T1 (+12) y T2 (+10), alcanzaría ~160 líneas, **excediendo el límite de 150**.
-
-**Estrategia de mitigación:**
-1. **Si `tlaloc.md` ≤ 150:** OK, no se requiere acción.
-2. **Si `tlaloc.md` > 150:** Comprimir su `## AVAILABLE SUBAGENTS` moviendo la lista a `references/subagents-tlaloc.md` y dejando solo la primera línea de cada categoría. **NO** eliminar contenido, solo comprimir formato.
-
-**Criterios de Aceptación:**
-- [ ] Los 6 agentes primarios tienen ≤150 líneas (excluyendo web-performance-auditor en 208 que NO se modifica)
-- [ ] Si `tlaloc.md` requirió refactor: el archivo movido a `references/` está enlazado correctamente desde el agente
-- [ ] El contenido semántico de los agentes NO cambia (solo compresión de formato si fue necesario)
-
-**Verificación:**
-- [ ] `wc -l template/obligatorio/agents/{huitzilopochtli,quetzalcoatl,moctezuma,tlaloc,mictlantecuhtli,tezcatlipoca}.md` — todos ≤150
-- [ ] Si refactor: `rg "references/subagents-tlaloc" template/obligatorio/agents/tlaloc.md` → 1 match
-- [ ] `just check` — 0 errores
-- [ ] `bun test` — sin regresión
-
-**Dependencias:** FEV7-T1, FEV7-T2.
-**Archivos:** Posiblemente `tlaloc.md` (modificar) + `references/subagents-tlaloc.md` (nuevo, si refactor).
-**Scope:** XS (verificación + posible compresión).
-**Commit:** `chore(agents): verify line limit constraint (≤150 lines) (#26)` o merge con T2 si no se requirió refactor.
-
----
-
-### Slice 3: Plugin Command Restrictions (Issue #30 — parte 1)
-
-#### Task FEV7-T4: Add 50+ destructive patterns to sdd-pipeline.ts
-
-**Descripción:** Extender el array `DESTRUCTIVE_PATTERNS` en `template/obligatorio/.opencode/plugins/sdd-pipeline.ts` con **50+ patrones adicionales** organizados en 14 categorías. La normalización de bash (strip comments, collapse whitespace) ya está implementada y cubre la mayoría de los bypasses.
-
-**Patrones actuales (7, mantener):**
-```typescript
-/rm\s+-[a-z]*r[a-z]*f\b/i,       // rm -rf variants
-/rm\s+-[a-z]*f[a-z]*r\b/i,       // rm -f -r
-/git\s+push\s+(-f|--force)\b/i,   // git push --force
-/drop\s+table\b/i,                // DROP TABLE
-/drop\s+database\b/i,             // DROP DATABASE
-/mkfs\b/i,                        // mkfs variants
-/dd\s+if=/i,                      // dd if= (disk destruction)
-/chmod\s+-R\s+777\s+\//i,         // chmod -R 777 /
-```
-
-**Patrones nuevos a añadir (50+):**
-
-```typescript
-// ─── Filesystem (extending rm) ────────────────────────────────────
-/shred\s+/i,                      // shred: secure file deletion
-/find\s+.*-exec\s+rm\b/i,         // find -exec rm
-/find\s+.*-delete\b/i,            // find -delete
-
-// ─── Git (extending push --force) ────────────────────────────────
-/git\s+reset\s+--hard\b/i,        // git reset --hard
-/git\s+clean\s+-fd\b/i,           // git clean -fd
-/git\s+filter-repo\b/i,           // git filter-repo (history rewrite)
-/git\s+branch\s+-D\b/i,           // git branch -D (force delete, uppercase)
-/git\s+stash\s+(drop|clear)\b/i,  // git stash drop/clear
-
-// ─── SQL (extending DROP) ────────────────────────────────────────
-/drop\s+schema\b/i,               // DROP SCHEMA
-/truncate\s+(table\s+)?\w+/i,     // TRUNCATE TABLE
-/delete\s+from\s+\w+\s*;?\s*$/i,  // DELETE FROM (without WHERE) — line-end only
-
-// ─── Docker ───────────────────────────────────────────────────────
-/docker\s+(rm|rmi|container\s+rm|image\s+rm)\s+.*-f/i,  // docker rm/rmi -f
-/docker\s+system\s+prune\s+.*-a/i,                      // docker system prune -a
-/docker\s+volume\s+(rm|prune)\b/i,                      // docker volume rm/prune
-
-// ─── Kubernetes ───────────────────────────────────────────────────
-/kubectl\s+delete\s+.*--all\b/i,  // kubectl delete --all
-/kubectl\s+drain\b/i,             // kubectl drain
-
-// ─── Permissions ──────────────────────────────────────────────────
-/chmod\s+(-R\s+)?777\b/i,         // chmod 777 (with or without -R)
-/chown\s+-R\b/i,                  // chown -R (recursive ownership change)
-
-// ─── Process ──────────────────────────────────────────────────────
-/kill\s+-(9|SIGKILL)\s+0\b/i,     // kill -9 0 (all processes)
-/kill\s+-(9|SIGKILL)\s+1\b/i,     // kill -9 1 (init)
-/shutdown\s+(-h|-r|now)\b/i,      // shutdown -h/-r/now
-/\b(reboot|halt|poweroff)\b/i,    // reboot/halt/poweroff
-
-// ─── Network ──────────────────────────────────────────────────────
-/iptables\s+-F\b/i,               // iptables -F (flush all rules)
-/(ufw|firewalld)\s+disable\b/i,   // ufw/firewalld disable
-
-// ─── Package managers ─────────────────────────────────────────────
-/npm\s+publish\b/i,               // npm publish
-/pip\s+install\s+.*--force-reinstall\b/i,  // pip --force-reinstall
-/(apt|apt-get|yum|dnf)\s+(remove|purge)\b/i, // package remove/purge
-
-// ─── Environment ──────────────────────────────────────────────────
-/unset\s+PATH\b/i,                // unset PATH
-/export\s+PATH\s*=/i,             // export PATH= (any modification)
-/echo\s+.*>>?\s*~\/\.(bash|zsh|profile)rc/i,  // append to shell config
-
-// ─── Disk ─────────────────────────────────────────────────────────
-/fdisk\s+\/dev\//i,               // fdisk /dev/sdX
-/wipefs\s+/i,                     // wipefs
-/parted\s+.*mklabel\b/i,          // parted mklabel
-
-// ─── IaC ──────────────────────────────────────────────────────────
-/terraform\s+destroy\s+.*-auto-approve\b/i,  // terraform destroy -auto-approve
-/pulumi\s+destroy\s+.*--yes\b/i,            // pulumi destroy --yes
-
-// ─── Cloud ────────────────────────────────────────────────────────
-/aws\s+s3\s+rm\s+.*--recursive\b/i,           // aws s3 rm --recursive
-/aws\s+(ec2|rds)\s+terminate-/i,              // aws ec2/rds terminate
-/az\s+(vm|group)\s+delete\b/i,                // az vm/group delete
-/gcloud\s+compute\s+instances\s+delete\b/i,  // gcloud compute instances delete
-
-// ─── Databases ────────────────────────────────────────────────────
-/(mongo|mongosh)\s+.*\bdropDatabase\b/i,      // mongo dropDatabase
-/redis-cli\s+.*(FLUSHALL|FLUSHDB)\b/i,        // redis FLUSHALL/FLUSHDB
-/mysqladmin\s+drop\b/i,                       // mysqladmin drop
-```
-
-**Criterios de Aceptación:**
-- [ ] El array `DESTRUCTIVE_PATTERNS` contiene **al menos 50 patrones** (actualmente 8; se añaden 42+ para un total de 50+)
-- [ ] Los patrones están organizados en bloques con comentarios `// ─── Categoría ──`
-- [ ] Cada bloque tiene un comentario JSDoc que explica la intención de la categoría
-- [ ] Los 7 patrones actuales se preservan sin cambios
-- [ ] La normalización de bash (`normalizeBash`) ya cubre strip comments + collapse whitespace (verificado)
-
-**Verificación:**
-- [ ] `rg -c "^/" template/obligatorio/.opencode/plugins/sdd-pipeline.ts | rg "DESTRUCTIVE"` (o contar patrones manualmente)
-- [ ] `rg "// ─" template/obligatorio/.opencode/plugins/sdd-pipeline.ts` → 14+ bloques de categoría
-- [ ] `wc -l template/obligatorio/.opencode/plugins/sdd-pipeline.ts` — debe ser ≤700 líneas (límite 200/archivo se reemplaza por 700/archivo para este plugin, documentado en ADR)
-- [ ] `bun test` — sin regresión (502/0)
-- [ ] `just check` — 0 errores
-- [ ] Tests E2E — 15/15 (los patrones no rompen escenarios válidos)
-
-**Dependencias:** Ninguna (paralelo con T1).
-**Archivos:** `template/obligatorio/.opencode/plugins/sdd-pipeline.ts` (modificar).
-**Scope:** M (1 archivo grande, 1 commit, ~50 líneas añadidas).
-**Commit:** `feat(plugin): add 50+ destructive command patterns (#30)`
-
-**Tests de patrones (no requieren test formal, son regex):**
-- `rm -rf /` → bloqueado
-- `rm  -r  -f /` (doble espacio) → bloqueado (normalización)
-- `rm -fir /` → bloqueado
-- `git push -f origin main` → bloqueado
-- `git push --force origin main` → bloqueado
-- `DROP TABLE users` → bloqueado
-- `TRUNCATE TABLE logs` → bloqueado
-- `git reset --hard HEAD~5` → bloqueado
-- `kubectl delete pods --all` → bloqueado
-- `terraform destroy -auto-approve` → bloqueado
-- `redis-cli FLUSHALL` → bloqueado
-- `npm install package` → **NO** bloqueado (solo `npm publish`)
-- `git status` → **NO** bloqueado
-
----
-
-### Slice 4: Config Command Restrictions (Issue #30 — parte 2)
-
-#### Task FEV7-T5: Add 50+ deny entries to opencode.json permissions
-
-**Descripción:** Añadir las entradas `bash` "deny" correspondientes a los patrones destructivos en `template/obligatorio/opencode.json`. Esta es la capa declarativa (visible al usuario) que complementa la capa runtime del plugin.
-
-**Sintaxis OpenCode bash permissions:**
-- `"command": "deny"` — deniega el comando exacto
-- `"command*": "deny"` — deniega el comando + cualquier argumento
-- `"* command": "deny"` — deniega desde cualquier cwd
-- `"* command*": "deny"` — deniega desde cualquier cwd + cualquier argumento (más común)
-
-**Entradas a añadir en la sección `permission.bash` (después de las deny entries existentes de credentials):**
-
-```json
-// ─── Destructive commands (Issue #30) ──────────────────────────
-"rm -rf *": "deny",
-"rm -fr *": "deny",
-"shred *": "deny",
-"find * -exec rm *": "deny",
-"find * -delete": "deny",
-"git push -f *": "deny",
-"git push --force *": "deny",
-"git reset --hard *": "deny",
-"git clean -fd *": "deny",
-"git filter-repo *": "deny",
-"git branch -D *": "deny",
-"git stash drop": "deny",
-"git stash clear": "deny",
-"drop table *": "deny",
-"drop database *": "deny",
-"drop schema *": "deny",
-"truncate table *": "deny",
-"truncate *": "deny",
-"docker rm -f *": "deny",
-"docker rmi -f *": "deny",
-"docker system prune -a *": "deny",
-"docker volume rm *": "deny",
-"docker volume prune *": "deny",
-"kubectl delete * --all *": "deny",
-"kubectl drain *": "deny",
-"chmod -R 777 *": "deny",
-"chmod 777 *": "deny",
-"chown -R *": "deny",
-"kill -9 0": "deny",
-"kill -9 1": "deny",
-"shutdown -h *": "deny",
-"shutdown -r *": "deny",
-"reboot": "deny",
-"halt": "deny",
-"poweroff": "deny",
-"iptables -F *": "deny",
-"iptables -F": "deny",
-"ufw disable": "deny",
-"firewalld disable": "deny",
-"npm publish *": "deny",
-"npm publish": "deny",
-"pip install * --force-reinstall *": "deny",
-"apt remove *": "deny",
-"apt purge *": "deny",
-"apt-get remove *": "deny",
-"apt-get purge *": "deny",
-"yum remove *": "deny",
-"dnf remove *": "deny",
-"unset PATH": "deny",
-"fdisk /dev/*": "deny",
-"wipefs *": "deny",
-"terraform destroy -auto-approve *": "deny",
-"pulumi destroy --yes *": "deny",
-"aws s3 rm --recursive *": "deny",
-"aws ec2 terminate-instances *": "deny",
-"aws rds delete-db-instance *": "deny",
-"az vm delete *": "deny",
-"az group delete *": "deny",
-"gcloud compute instances delete *": "deny",
-"mongo * dropDatabase": "deny",
-"mongosh * dropDatabase": "deny",
-"redis-cli * FLUSHALL": "deny",
-"redis-cli * FLUSHDB": "deny",
-"mysqladmin drop *": "deny"
-```
-
-> **Nota:** Cada entrada `*` después del comando deniega cualquier argumento. La sintaxis exacta puede requerir ajuste post-testing con `just check` (JSON validation).
-
-**Criterios de Aceptación:**
-- [ ] La sección `permission.bash` contiene **al menos 50 deny entries nuevas** para comandos destructivos
-- [ ] Las deny entries usan la sintaxis correcta de OpenCode (`"command*": "deny"` o `"* command*": "deny"`)
-- [ ] Las deny entries existentes (credentials) NO se modifican
-- [ ] JSON sintácticamente válido
-
-**Verificación:**
-- [ ] `bun -e "JSON.parse(require('fs').readFileSync('template/obligatorio/opencode.json', 'utf8'))"` exit 0
-- [ ] `rg -c "\"deny\"" template/obligatorio/opencode.json` — total deny entries ≥ 50 + 32 (existentes) = 82+
-- [ ] `rg "\"rm -rf \*\"" template/obligatorio/opencode.json` → 1 match
-- [ ] `rg "\"npm publish" template/obligatorio/opencode.json` → 1 match
-- [ ] `just check` — 0 errores
-- [ ] `bun test` — sin regresión
-
-**Dependencias:** FEV7-T4 (las categorías deben coincidir entre plugin y config).
-**Archivos:** `template/obligatorio/opencode.json` (modificar sección `permission.bash`).
-**Scope:** S (1 archivo, 1 commit, ~50 líneas añadidas en 1 sección).
-**Commit:** `feat(config): add 50+ destructive command deny entries (#30)`
-
----
-
-### Slice 5: Documentation & Release
-
-#### Task FEV7-T6: Update plugin README.md
-
-**Descripción:** Actualizar la sección "1. Destructive Command Blocking" de `template/obligatorio/.opencode/plugins/README.md` para reflejar las **14 categorías y 50+ patrones** añadidos en T4.
-
-**Cambios en el README:**
-
-1. **Tabla de contenido:** añadir referencia a las 14 categorías
-2. **Sección "1. Destructive Command Blocking":** reemplazar la lista de 7 patrones con la lista completa de 50+ patrones organizados por categoría
-3. **Nueva subsección "Defense-in-Depth":** explicar que las restricciones viven en 2 capas (plugin runtime + opencode.json declarative) y por qué ambas son necesarias
-
-**Criterios de Aceptación:**
-- [ ] La sección "Destructive Command Blocking" lista 14 categorías con conteo de patrones por categoría
-- [ ] La nueva subsección "Defense-in-Depth" explica las 2 capas
-- [ ] El README mantiene su estructura actual (no se reorganizan secciones)
-- [ ] Longitud del README aumenta ~50-80 líneas (de 163 a ~220-240)
-
-**Verificación:**
-- [ ] `rg "^### .* Filesystem|^### .* Git|^### .* SQL|^### .* Docker|^### .* Kubernetes" template/obligatorio/.opencode/plugins/README.md` → 5+ matches
-- [ ] `rg "Defense-in-Depth" template/obligatorio/.opencode/plugins/README.md` → 1 match
-- [ ] `wc -l template/obligatorio/.opencode/plugins/README.md` ≥ 200 líneas
-- [ ] `just check` — 0 errores
-
-**Dependencias:** FEV7-T4 (los patrones deben estar definidos antes de documentarlos).
-**Archivos:** `template/obligatorio/.opencode/plugins/README.md` (modificar).
-**Scope:** S (1 archivo, 1 commit, ~50 líneas añadidas).
-**Commit:** `docs(plugin): document 50+ destructive command patterns (#30)`
-
----
-
-#### Task FEV7-T7: Update CHANGELOG.md with v1.1.0 entry
-
-**Descripción:** Añadir una entrada para v1.1.0 en `CHANGELOG.md` siguiendo Keep a Changelog format. La entrada debe cubrir los issues #26, #30 y FEV-6 (ya completado, pero mencionado como parte de v1.1.0).
-
-**Estructura de la entrada (en orden Keep a Changelog):**
-
-```markdown
-## [v1.1.0] - 2026-07-10
+## [v1.2.0] - 2026-07-10
 
 ### Added
-- **Agent Governance (Issue #26):** No-assumption rule added to all 6 primary agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca). Delegation-first rule added to 3 delegating agents (quetzalcoatl, tlaloc, mictlantecuhtli). Philosophy: ask → resolve → suggest → warn.
-- **Destructive Command Restrictions (Issue #30):** 50+ bash command patterns restricted in defense-in-depth configuration: sdd-pipeline.ts (runtime check) + opencode.json (declarative policy). Categories: filesystem, git, SQL, Docker, Kubernetes, permissions, process, network, package managers, environment, disk, IaC, cloud, databases.
-- **Plugin README:** Updated to document 14 categories and 50+ patterns.
-- **Step counts (Issue #27, FEV-6):** Adjusted for 6 primary agents (huitzilopochtli:25, quetzalcoatl:60, moctezuma:20, tlaloc:90, mictlantecuhtli:60, tezcatlipoca:50).
-- **SECURITY.md (Issue #28, FEV-6):** Created at docs/SECURITY.md and template/estandar/docs/SECURITY.md.
+- **Obsidian Vault Writer Subagent (Issue #21):** New specialized subagent for Obsidian vault administration and markdown file management. Implements Strategy pattern (vault mode uses `obsidian-cli`; markdown-only mode uses Bun.fs). Invocable exclusively by Huitzilopochtli.
+- **6 Obsidian/Markdown Skills (Issue #21):** `obsidian-cli-usage`, `obsidian-vault-structure`, `obsidian-frontmatter`, `obsidian-templater`, `obsidian-dataview`, `markdown-style-guide`. Installed at project level via `find-skills` skill.
+- **Catalog Update:** obsidian-vault-writer added to Huitzilopochtli's Documentation subagent group (5 → 6).
+- **Plugin Validation:** obsidian-vault-writer added to VALID_SUBAGENTS set in sdd-pipeline.ts (97 → 98 subagents, 103 → 104 total agents).
 
 ### Changed
-- **Coverage artifact (TD-1.2, FEV-6):** Explicit constructors added to VersionComparator and ClackPromptsAdapter to resolve Bun coverage reporting.
+- **Subagent count:** 96 → 97 subagents in workspace template.
+```
 
-### Security
-- **Destructive command hardening (Issue #30):** rm -rf, git push --force, DROP DATABASE, mkfs, dd if=, chmod 777, git reset --hard, kubectl delete --all, terraform destroy -auto-approve, redis FLUSHALL, and 40+ additional patterns now blocked at runtime.
+**Cambio en `package.json`:**
+
+```diff
+- "version": "1.1.0"
++ "version": "1.2.0"
 ```
 
 **Criterios de Aceptación:**
-- [ ] La entrada `[v1.1.0]` existe en CHANGELOG.md con fecha 2026-07-10
-- [ ] Contiene las 4 secciones: Added, Changed, Fixed (si aplica), Security
-- [ ] Las referencias a issues #26, #27, #28, #30 están incluidas
-- [ ] Sigue Keep a Changelog format
-
-**Verificación:**
-- [ ] `rg "^\[?v?1\.1\.0\]? - 2026-07-10" CHANGELOG.md` → 1 match
-- [ ] `rg "Issue #26|Issue #30" CHANGELOG.md` → 2+ matches
-- [ ] Manual: la entrada es legible y resume los cambios
-
-**Dependencias:** FEV7-T1, T2, T4, T5 (todos los cambios implementados).
-**Archivos:** `CHANGELOG.md` (modificar).
-**Scope:** XS (1 archivo, 1 commit, ~30 líneas añadidas).
-**Commit:** `docs(changelog): v1.1.0 entry with agent governance and security hardening`
-
----
-
-#### Task FEV7-T8: Bump version to 1.1.0 in package.json
-
-**Descripción:** Actualizar el campo `version` en `package.json` de `1.0.14` a `1.1.0` (minor version, no breaking changes).
-
-**Criterios de Aceptación:**
-- [ ] `package.json` tiene `"version": "1.1.0"`
+- [ ] Entrada `[v1.2.0]` en CHANGELOG.md con fecha 2026-07-10
+- [ ] 3+ secciones: Added, Changed (y Security si aplica)
+- [ ] Referencia a Issue #21
+- [ ] `package.json` `"version": "1.2.0"`
 - [ ] No se modifica ningún otro campo de `package.json`
 
 **Verificación:**
-- [ ] `rg "\"version\"" package.json` → muestra `"version": "1.1.0"`
-- [ ] `git diff package.json` → solo 1 línea modificada
+- [ ] `rg "v1.2.0.*2026-07-10" CHANGELOG.md` → 1 match
+- [ ] `rg "Issue #21" CHANGELOG.md` → 1+ match
+- [ ] `rg "\"version\"" package.json` → muestra `"version": "1.2.0"`
+- [ ] `git diff package.json` → 1 línea modificada
 - [ ] `just check` — 0 errores
 
-**Dependencias:** FEV7-T7 (CHANGELOG primero, versión después).
-**Archivos:** `package.json` (modificar).
-**Scope:** XS (1 archivo, 1 commit, 1 línea modificada).
-**Commit:** `chore(release): bump version to 1.1.0`
+**Dependencias:** FEV8-T1, T2, T3, T4, T5 (todos los features implementados).
+**Archivos:** `CHANGELOG.md` (modificar), `package.json` (1 línea).
+**Scope:** XS (2 archivos, 1 commit cada uno).
+**Commit:**
+- `docs(changelog): v1.2.0 entry with obsidian-vault-writer subagent (#21)`
+- `chore(release): bump version to 1.2.0`
+
+---
+
+#### Task FEV8-T7: Document wiki updates needed (manual step)
+
+**Descripción:** El GitHub Wiki (`fisherk2/codice-opencode/wiki`) es un repositorio git separado. FEV8-T7 documenta los cambios necesarios para que el maintainer los aplique manualmente (vía GitHub UI o `git push` al wiki repo).
+
+**Cambios necesarios en el Wiki:**
+
+1. **Página "Agents" (Home):** Añadir `obsidian-vault-writer` a la lista de subagentes
+2. **Página "Agents → Documentation":** Nueva subsección con la descripción del subagente
+3. **Página "Agents → Huitzilopochtli":** Actualizar el conteo de Documentation (5 → 6)
+4. **Página "Customization Guide → Add a New Agent":** Referenciar a obsidian-vault-writer como ejemplo de subagente con Strategy pattern
+
+**Documentación interna a crear:**
+
+```markdown
+# Wiki updates for FEV-8 (v1.2.0)
+
+## Page: Home
+Update agent count: 103 → 104
+
+## Page: Agents → Documentation
+Add subsection:
+
+### obsidian-vault-writer
+**Mode:** subagent | **Color:** #7C3AED | **Temperature:** 0.2
+**Invoked by:** Huitzilopochtli (only)
+**Skills required:** obsidian-cli-usage, obsidian-vault-structure, obsidian-frontmatter, obsidian-templater, obsidian-dataview, markdown-style-guide
+**Patterns:** Strategy (vault vs markdown-only), Template Method (workflow)
+
+## Page: Huitzilopochtli
+Update catalog:
+- Documentation (5) → Documentation (6)
+- Add: obsidian-vault-writer
+
+## Page: Customization Guide
+Add cross-reference to obsidian-vault-writer as example.
+```
+
+**Criterios de Aceptación:**
+- [ ] Archivo `docs/wiki-updates/fev-8.md` con la especificación de cambios
+- [ ] Lista de páginas afectadas, contenido a añadir/modificar
+- [ ] Instrucciones para el maintainer sobre cómo aplicar (GitHub UI vs `git clone` + edit + push)
+
+**Verificación:**
+- [ ] `ls docs/wiki-updates/fev-8.md` → existe
+- [ ] Manual: el maintainer puede seguir las instrucciones sin ambigüedad
+
+**Dependencias:** FEV8-T1 (subagente definido), FEV8-T4 (catálogo actualizado).
+**Archivos:** `docs/wiki-updates/fev-8.md` (nuevo).
+**Scope:** XS (1 archivo de specs, 1 commit).
+**Commit:** `docs(wiki): specify wiki updates needed for FEV-8 (#21)`
+
+> **Nota:** El push real al wiki queda fuera del scope de FEV-8. Es un paso manual del maintainer, registrado en `RELEASE_CHECKLIST.md` o en el PR description.
 
 ---
 
 ## Checkpoints (Quality Gates)
 
-### Checkpoint 1: After FEV7-T1, T2, T3 (System Prompts Complete)
+### Checkpoint 1: After FEV8-T1 (Subagent Created)
 
-- [ ] 6 agentes primarios contienen `## NO-ASSUMPTION RULE`
-- [ ] 3 agentes contienen `## DELEGATION-FIRST RULE` (quetzalcoatl, tlaloc, mictlantecuhtli)
-- [ ] 3 agentes NO contienen `## DELEGATION-FIRST RULE` (huitzilopochtli, moctezuma, tezcatlipoca)
-- [ ] Todos los 6 agentes ≤150 líneas totales
-- [ ] `wc -l template/obligatorio/agents/{huitzilopochtli,quetzalcoatl,moctezuma,tlaloc,mictlantecuhtli,tezcatlipoca}.md` — todos ≤150
+- [ ] `template/obligatorio/agents/obsidian-vault-writer.md` existe con YAML válido
+- [ ] Permissions: `write/edit` solo para `*.md*`; `bash` con allowlist restrictiva
+- [ ] Secciones presentes: Role, Operational Modes, Workflow, Skills, Restrictions, Composition
+- [ ] Tamaño ≤200 líneas
 - [ ] `just check` — 0 errores
-- [ ] `bun test` — 502/0 (sin regresión)
+- [ ] `bun test` — 563/0 (sin regresión)
 
-**Bloqueante para T4/T5:** Si Checkpoint 1 falla, NO proceder a Slices 3-4.
+**Bloqueante para T4/T5:** Si Checkpoint 1 falla, NO proceder a Slice 3.
 
-### Checkpoint 2: After FEV7-T4, T5 (Command Restrictions Complete)
+### Checkpoint 2: After FEV8-T2, T3 (Skills Installed)
 
-- [ ] `DESTRUCTIVE_PATTERNS` contiene ≥50 entradas en 14 categorías
-- [ ] `opencode.json` `permission.bash` contiene ≥50 deny entries nuevas
-- [ ] Las categorías coinciden entre plugin y config
-- [ ] JSON válido
+- [ ] 6 skills en `template/obligatorio/skills/<skill-name>/SKILL.md`
+- [ ] Cada skill tiene frontmatter válido (`name`, `description`)
+- [ ] Tamaño de cada skill: 80-150 líneas
+- [ ] Skills `found`: instaladas con contenido original
+- [ ] Skills `to_create`: siguen el formato estándar (verificable por comparación con `crafting-effective-readmes`)
 - [ ] `just check` — 0 errores
-- [ ] `bun test` — 502/0 (sin regresión)
-- [ ] E2E — 15/15 (los patrones no rompen escenarios válidos)
-- [ ] Test manual: `rm -rf /tmp/test` → bloqueado (no se puede probar en test suite)
+- [ ] `bun test` — sin regresión
 
-**Bloqueante para T6/T7/T8:** Si Checkpoint 2 falla, NO proceder a Slice 5.
+**Bloqueante para T4/T5:** Si Checkpoint 2 falla, NO proceder a Slice 3 (las skills son referenciadas por el subagente).
 
-### Gate FEV-7: Phase Complete
+### Checkpoint 3: After FEV8-T4, T5 (Catalog & Plugin Updated)
 
-- [ ] 8 commits atómicos en `feat/v1.1.0-fev-7`
-- [ ] Issue #26 resuelto: 6 agentes con no-assumption rule + 3 con delegation-first
-- [ ] Issue #30 resuelto: 50+ comandos destructivos restringidos (plugin + config)
-- [ ] Plugin README actualizado
-- [ ] CHANGELOG.md v1.1.0 entry presente
-- [ ] Versión bump a 1.1.0
-- [ ] Sin regresión en tests, coverage, ni E2E
-- [ ] Coverage sin pérdida: ≥98.13% funciones / ≥96.98% líneas
-- [ ] Listo para PR a `develop`
+- [ ] `huitzilopochtli.md` incluye `obsidian-vault-writer` en Documentation (6)
+- [ ] `sdd-pipeline.ts` `VALID_SUBAGENTS` incluye `'obsidian-vault-writer'`
+- [ ] Comentario de conteo en `sdd-pipeline.ts`: 97 → 98 subagentes
+- [ ] `using-agent-skills/SKILL.md` actualizado con las 6 skills
+- [ ] `just check` — 0 errores
+- [ ] `bun test` — 563/0 (sin regresión)
+
+**Bloqueante para T6/T7:** Si Checkpoint 3 falla, NO proceder a Slice 4.
+
+### Gate FEV-8: Phase Complete
+
+- [ ] 7 commits atómicos en `feat/v1.2.0-fev-8`
+- [ ] Issue #21 resuelto: subagente + 6 skills + catálogo + plugin validation
+- [ ] `package.json` bumped a `1.2.0`
+- [ ] `CHANGELOG.md` con entrada v1.2.0
+- [ ] `docs/wiki-updates/fev-8.md` documenta cambios pendientes
+- [ ] Sin regresión en tests (563/0), coverage (≥98.13% funciones), ni E2E (15/15)
+- [ ] Listo para PR a `develop` (workflow FEV-5)
 
 ---
 
@@ -626,18 +645,18 @@ Cada tarea se commitea independientemente con Conventional Commits:
 
 | # | Commit | Tipo | Scope | Mensaje |
 |---|--------|------|-------|---------|
-| 1 | T1 | `feat` | `agents` | `feat(agents): add no-assumption rule to 6 primary agents (#26)` |
-| 2 | T2 | `feat` | `agents` | `feat(agents): add delegation-first rule to 3 delegating agents (#26)` |
-| 3 | T3 | `chore` | `agents` | `chore(agents): verify line limit constraint (≤150 lines) (#26)` |
-| 4 | T4 | `feat` | `plugin` | `feat(plugin): add 50+ destructive command patterns (#30)` |
-| 5 | T5 | `feat` | `config` | `feat(config): add 50+ destructive command deny entries (#30)` |
-| 6 | T6 | `docs` | `plugin` | `docs(plugin): document 50+ destructive command patterns (#30)` |
-| 7 | T7 | `docs` | `changelog` | `docs(changelog): v1.1.0 entry with agent governance and security hardening` |
-| 8 | T8 | `chore` | `release` | `chore(release): bump version to 1.1.0` |
+| 1 | T1 | `feat` | `agents` | `feat(agents): add obsidian-vault-writer subagent with Strategy pattern (#21)` |
+| 2 | T2 | `chore` | `skills` | `chore(skills): search 6 obsidian/markdown skills via find-skills (#21)` |
+| 3 | T3 | `feat` | `skills` | `feat(skills): add 6 obsidian/markdown skills (X found, Y created) (#21)` |
+| 4 | T4 | `feat` | `agents` | `feat(agents): add obsidian-vault-writer to Huitzilopochtli catalog (#21)` |
+| 5 | T5 | `feat` | `plugin` | `feat(plugin): add obsidian-vault-writer to VALID_SUBAGENTS (#21)` |
+| 6 | T6a | `docs` | `changelog` | `docs(changelog): v1.2.0 entry with obsidian-vault-writer subagent (#21)` |
+| 7 | T6b | `chore` | `release` | `chore(release): bump version to 1.2.0` |
+| 8 | T7 | `docs` | `wiki` | `docs(wiki): specify wiki updates needed for FEV-8 (#21)` |
 
 **Co-authored-by:** Moctezuma <dev@fisherk2.com> (al final de cada commit message).
 
-**Branch:** `feat/v1.1.0-fev-7` basada en `feat/v1.1.0-fev-6` (o `main` si FEV-6 ya está mergeado).
+**Branch:** `feat/v1.2.0-fev-8` basada en `main` con v1.1.0.
 
 ---
 
@@ -645,36 +664,41 @@ Cada tarea se commitea independientemente con Conventional Commits:
 
 | Riesgo | Impacto | Probabilidad | Mitigación |
 |--------|---------|--------------|------------|
-| Regla de no-assumption hace agentes muy verbales | 🟡 Medio | Media | Regla concisa (~10 líneas). Aplicar solo cuando hay ambigüedad explícita. |
-| Regla de delegation-first hace agentes lentos | 🟡 Medio | Media | Solo aplica a 3 agentes. Subagentes como `task()` son síncronos pero ligeros. |
-| Patrones destructivos tienen falsos positivos | 🟡 Medio | Media | Test E2E valida que `rm archivo.txt` (sin -rf) NO se bloquea. Categorización permite ajustes granulares. |
-| `tlaloc.md` excede 150 líneas | 🟡 Medio | Alta (138 + 22 = 160) | Slice 1+2 (T3) verifica y refactoriza si excede. Estrategia: comprimir AVAILABLE SUBAGENTS a references/. |
-| opencode.json deny entries rompen workflows legítimos | 🟡 Medio | Baja | Solo `rm -rf *` con `*` final (nunca matchea `rm archivo.txt`). Test E2E valida. |
-| Sdd-pipeline.ts excede 200 líneas (CODE_STYLE) | 🟢 Bajo | Alta (591 + 50 = ~641) | CODE_STYLE establece 200 líneas pero `sdd-pipeline.ts` es plugin complejo documentado. ADR-FEV7-4: se mantiene 700 líneas como límite interno, justificado por responsabilidad única del plugin. |
-| Conflict con rama develop al hacer PR | 🟢 Bajo | Baja | Branch desde main, no develop. PR target: develop (workflow FEV-5). |
-| Issue #30 command list incompleta | 🟢 Bajo | Media | Diagnosis fix03-v1.1.0-roadmap.md lista 14 categorías. Si se identifican más en code review, se añaden en FEV-10. |
+| `obsidian-cli` no es una herramienta estándar y puede no estar disponible | 🟡 Medio | Alta | El subagente degrada a markdown-only mode (FEV8-T1 implementa fallback explícito). Documentación explica instalación opcional. |
+| Las 6 skills no existen en el catálogo público | 🟡 Medio | Alta | FEV8-T2 (búsqueda) + FEV8-T3 (creación desde cero) cubren ambos casos. Formato estándar asegura calidad. |
+| El subagente excede 200 líneas (CODE_STYLE.md) | 🟢 Bajo | Media | Estrategia: comprimir Restrictions (consolidar NEVER similares), mover Composition al final sin prólogo. ADR-FEV8-7 fija el límite. |
+| Huitzilopochtli excede 150 líneas al añadir el subagente (FEV-7 constraint) | 🟢 Bajo | Baja | Solo +1 línea al catálogo. Sin riesgo. |
+| Stale `using-agent-skills/SKILL.md` no se actualiza con las 6 skills | 🟠 Medio | Media | Incluir verificación explícita en Checkpoint 3. Code review verify 6 skill names referenced. |
+| Las skills encontradas en el catálogo no son del estilo/calidad del proyecto | 🟡 Medio | Media | Code review verifica que cada skill tenga frontmatter + estructura. Si no, se rechaza y se crea desde cero. |
+| Conflicto con rama develop al hacer PR | 🟢 Bajo | Baja | Branch desde main (con v1.1.0 ya mergeado), PR target develop (workflow FEV-5). |
+| Tamaño del CHANGELOG crece mucho | 🟢 Bajo | Baja | Mantener formato conciso, 1-2 oraciones por bullet. |
+| Wiki se desincroniza con el repo | 🟢 Bajo | Alta | FEV8-T7 documenta los cambios; el maintainer los aplica manualmente como parte del release checklist. |
 
 ---
 
 ## Métricas Objetivo
 
-| Métrica | v1.0.14 (antes) | Meta FEV-7 | v1.1.0 (post-FEV-7) |
-|---------|-----------------|------------|---------------------|
-| Tests (pass/fail) | 502 / 0 | 502 / 0 (sin regresión) | 502 / 0 |
-| Expects | 1092 | 1092+ | 1092+ |
+| Métrica | v1.1.0 (antes) | Meta FEV-8 | v1.2.0 (post-FEV-8) |
+|---------|----------------|------------|---------------------|
+| Tests (pass/fail) | 563 / 0 | 563 / 0 (sin regresión) | 563 / 0 |
 | Coverage (funciones) | 98.13% | ≥98.13% | 98.13%+ |
 | Coverage (líneas) | 96.98% | ≥96.98% | 96.98%+ |
 | `just check` errores | 0 | 0 | 0 |
 | E2E escenarios | 15/15 | 15/15 | 15/15 |
-| Agentes con no-assumption rule | 0/6 | 6/6 | ✅ 6/6 |
-| Agentes con delegation-first | 0/3 | 3/3 | ✅ 3/3 |
-| Comandos destructivos restringidos (plugin) | 8 | 50+ | ✅ 50+ |
-| Comandos destructivos restringidos (config) | 0 | 50+ | ✅ 50+ |
-| sdd-pipeline.ts líneas | 591 | ≤700 | ~640 |
-| opencode.json líneas | 599 | ≤700 | ~660 |
-| Plugin README líneas | 163 | ~220 | ✅ ~220 |
-| Versión en package.json | 1.0.14 | 1.1.0 | ✅ 1.1.0 |
-| Commits atómicos | — | 7-8 | ✅ 8 |
+| Subagentes totales | 97 | 98 (+1 obsidian-vault-writer) | ✅ 98 |
+| Total agentes (sub + primary) | 103 | 104 | ✅ 104 |
+| Skills totales en template | 46 | 52 (+6 obsidian/markdown) | ✅ 52 |
+| Agentes con no-assumption rule | 6/6 | 6/6 (sin cambio) | ✅ 6/6 |
+| Agentes con delegation-first | 3/3 | 3/3 (sin cambio) | ✅ 3/3 |
+| Patrones destructivos restringidos | 53 | 53 (sin cambio) | ✅ 53 |
+| obsidian-vault-writer.md líneas | N/A | ≤200 | ✅ ~150-200 |
+| Huitzilopochtli.md líneas | 91 | ≤150 | ✅ ~92 |
+| quetzalcoatl.md líneas | 107 | ≤150 | ✅ ~108 |
+| tlaloc.md líneas | 143 | ≤160 (con compresión) | ✅ ~144 |
+| mictlantecuhtli.md líneas | 77 | ≤100 | ✅ ~78 |
+| Cada skill .md líneas | — | 80-150 | ✅ ~100-130 |
+| Versión en package.json | 1.1.0 | 1.2.0 | ✅ 1.2.0 |
+| Commits atómicos | — | 7 | ✅ 7 |
 
 ---
 
@@ -682,14 +706,14 @@ Cada tarea se commitea independientemente con Conventional Commits:
 
 | # | Pregunta | Decisión |
 |---|----------|----------|
-| 1 | ¿Aplicar no-assumption a los 6 agentes o solo a los que ejecutan? | ✅ Los 6. La regla es universal; cada agente la modula según su rol en `## COMPOSITION`. |
-| 2 | ¿Aplicar delegation-first a los 6 agentes? | ✅ Solo 3. Huitzilopochtli, Moctezuma y Tezcatlipoca NO delegan por diseño. |
-| 3 | ¿Defense-in-depth (plugin + config) o una sola capa? | ✅ Ambas capas. Plugin tiene normalización de bash que el config no tiene. Config es visible como política declarativa. |
-| 4 | ¿Límite estricto (≤100 sin YAML) o laxo (≤150 total)? | ✅ Laxo (≤150 total). Decisión del usuario. FEV-9 puede requerir refactor. |
-| 5 | ¿Slice 1+2 juntos o separados? | ✅ Separados. Permiten revisión independiente de no-assumption (universal) vs delegation-first (selectivo). |
-| 6 | ¿Plugin README en FEV-7 o FEV-10? | ✅ FEV-7. Documentación acompaña al feature, no se difiere. |
-| 7 | ¿Bump version en FEV-7 o esperar FEV-10? | ✅ FEV-7. v1.1.0 cubre TODO lo de FEV-6 + FEV-7. FEV-8/9/10 se incluyen en v1.2.0. |
-| 8 | ¿Modificar `## KNOWLEDGE` en FEV-7? | ✅ NO. Es alcance de FEV-9 (MCP servers). FEV-7 se limita a reglas de comportamiento. |
+| 1 | ¿Quién invoca obsidian-vault-writer? | ✅ Solo Huitzilopochtli (restrictivo). Los demás agentes heredan `task: *: deny` de `opencode.json`. |
+| 2 | ¿Cuáles son las 6 skills? | ✅ Set propuesto: obsidian-cli-usage, obsidian-vault-structure, obsidian-frontmatter, obsidian-templater, obsidian-dataview, markdown-style-guide. |
+| 3 | ¿Cómo se instala obsidian-cli? | ✅ Híbrido contextual. El subagente detecta `.obsidian/` y degrada a markdown-only si obsidian-cli no está disponible. Usuario responsable de instalar. |
+| 4 | ¿Dónde se instalan las skills? | ✅ A nivel de proyecto, en `template/obligatorio/skills/`, usando `find-skills` skill para buscar. NO global. |
+| 5 | ¿Qué versión de release? | ✅ v1.2.0 (minor). Aditiva, no breaking. |
+| 6 | ¿Se actualiza la Wiki automáticamente? | ✅ No. Wiki es repo separado. FEV8-T7 documenta los cambios; maintainer aplica manualmente. |
+| 7 | ¿Moctezuma y Tezcatlipoca se modifican? | ✅ No. Ya tienen `*: deny` en `task:`. La restricción ya se cumple. |
+| 8 | ¿Se modifica `## KNOWLEDGE` de los agentes? | ✅ No. Es alcance de FEV-9. FEV-8 se limita a estructura y permisos. |
 
 ---
 
@@ -697,33 +721,33 @@ Cada tarea se commitea independientemente con Conventional Commits:
 
 | Tarea | Scope | Esfuerzo |
 |-------|-------|----------|
-| FEV7-T0: Análisis de Issues (no commit) | XS | 20min |
-| FEV7-T1: No-assumption a 6 agentes | S | 30min |
-| FEV7-T2: Delegation-first a 3 agentes | S | 20min |
-| FEV7-T3: Verificar límite de líneas | XS | 15min |
-| FEV7-T4: Patrones en sdd-pipeline.ts | M | 1.5h |
-| FEV7-T5: Deny entries en opencode.json | S | 45min |
-| FEV7-T6: Actualizar plugin README | S | 45min |
-| FEV7-T7: CHANGELOG v1.1.0 | XS | 20min |
-| FEV7-T8: Bump version 1.1.0 | XS | 5min |
-| Checkpoint 1 (validate) | — | 10min |
-| Checkpoint 2 (validate) | — | 10min |
-| Gate FEV-7 (validate) | — | 10min |
-| Commits atómicos (8) | — | 20min |
-| Code review (estimado) | — | 1h |
-| **Total** | | **~6-7h** |
+| FEV8-T0: Análisis Issue #21 (no commit) | XS | 15min |
+| FEV8-T1: Subagent obsidian-vault-writer | M | 1h |
+| FEV8-T2: Búsqueda via find-skills | S | 30min |
+| FEV8-T3: Install/create 6 skills | L | 2h |
+| FEV8-T4: Update Huitzilopochtli catalog | XS | 10min |
+| FEV8-T5: VALID_SUBAGENTS en sdd-pipeline.ts | XS | 10min |
+| FEV8-T6: CHANGELOG + bump version | XS | 15min |
+| FEV8-T7: Documentar wiki updates | XS | 15min |
+| Checkpoint 1 (validate) | — | 5min |
+| Checkpoint 2 (validate) | — | 5min |
+| Checkpoint 3 (validate) | — | 5min |
+| Gate FEV-8 (validate) | — | 5min |
+| Commits atómicos (7) | — | 15min |
+| Code review (estimado) | — | 45min |
+| **Total** | | **~4-5h** |
 
 ---
 
-## Post-FEV-7 (preview de FEV-8)
+## Post-FEV-8 (preview de FEV-9)
 
-FEV-7 sienta las bases para FEV-8 (Obsidian Subagent), que:
-- Creará un nuevo subagente (`obsidian-vault-writer`) que necesitará añadirse a `VALID_SUBAGENTS` en sdd-pipeline.ts
-- Modificará las tablas de delegación de los 3 agentes (quetzalcoatl, tlaloc, mictlantecuhtli) que ya tienen delegation-first
-- Posiblemente actualizará Huitzilopochtli (que también fue modificado en T1)
+FEV-8 sienta las bases para FEV-9 (MCP Server Integration), que:
+- Modificará la sección `## KNOWLEDGE` de los 6 agentes primarios (no tocada en FEV-8)
+- Añadirá 6 nuevos MCP servers a `opencode.json` (compatible con las restricciones de FEV-7)
+- Actualizará el `sdd-pipeline.ts` para detectar MCP servers (compatible con FEV-8 T5)
 
-Las modificaciones a `sdd-pipeline.ts` y `opencode.json` en FEV-7 son **compatibles** con FEV-8 (no se requieren refactor).
+Las modificaciones de FEV-8 son **compatibles** con FEV-9 (no se requieren refactors).
 
 ---
 
-*Última actualización: 2026-07-10 (FEV-7 planificado, listo para implementar)*
+*Última actualización: 2026-07-10 (FEV-8 planificado, listo para implementar)*
