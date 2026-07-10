@@ -130,6 +130,8 @@ Mapping of slash commands to their primary agent:
 /build → tlaloc
 /code-simplify → tlaloc
 /design → quetzalcoatl
+/diagnosis → quetzalcoatl
+/docs-update → quetzalcoatl
 /evolve → quetzalcoatl
 /plan → moctezuma
 /review → tezcatlipoca
