@@ -7,7 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(No unreleased changes beyond v1.0.13.)
+(No unreleased changes beyond v1.0.14.)
+
+## [1.0.14] — 2026-07-09
+
+### Added
+
+- **GitHub Wiki for workspace documentation**: 9 end-user pages (Home, Getting Started, Workspace Structure, Configuration, Agents, Commands, Skills, Customization Guide, Troubleshooting). Source of truth in `docs/wiki-source/`, synced to `https://github.com/fisherk2/codice-opencode/wiki`.
+- **Pre-release tag support in `release.yml`**: Tags like `v1.0.14-beta.1` are detected and published to npm with `--tag beta` and GitHub Pre-release. Tags like `v1.0.14-rc.1` use `--tag rc`. Production tags use `--tag latest` and full GitHub Release.
+- **Git Workflow section in CONTRIBUTING.md**: Documents the 3-stage pipeline (develop → main → tags), branch naming conventions, and PR requirements.
+- **CI/CD Pipeline section in CONTRIBUTING.md**: Documents `ci.yml` and `release.yml` workflows with troubleshooting guide for common issues.
+- **Release Checklist template in CONTRIBUTING.md**: Pre-release, release, and post-release checklists with concrete v1.0.14 example.
+- **npm Publishing section in CONTRIBUTING.md**: dist-tags (latest/beta/rc), version naming, creating and consuming test packages.
+
+### Changed
+
+- **`ci.yml` triggers on `develop` branch**: Push and PR to `develop` now run the full CI pipeline, enabling the 3-stage workflow.
+- **`release.yml` detects pre-release tags**: New `Detect release type` step parses tag suffix and sets npm tag (beta/rc/latest), prerelease flag, and `make_latest` behavior dynamically.
+- **CONTRIBUTING.md expanded**: Added 4 new sections — Git Workflow, npm Publishing, CI/CD Pipeline, Release Checklist (158 lines added).
+
+### Removed
+
+- **`docs/opencode/` from project root**: 12 files deleted (backup saved to `~/.cache/codice-backup/`). Users should refer to the GitHub Wiki or opencode.ai/docs.
+- **`docs/opencode/` from template `opcional`**: 12 files deleted from the template. The Wiki is now the canonical documentation source.
+- **`docs/opencode` entry from `FileRuleManifestData`**: Removed lines 166-171 from the manifest.
+
+### Fixed
+
+- **Issue #23**: CI/CD workflow standardized with 3-stage pipeline (develop → main → tags), pre-release support, and comprehensive documentation.
+- **Issue #25**: GitHub Wiki created and populated; `docs/opencode/` removed from root and template; all internal references updated to point to Wiki or OpenCode docs.
 
 ## [1.0.13] — 2026-06-27
 
