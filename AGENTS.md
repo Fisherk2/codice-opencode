@@ -1,4 +1,4 @@
-# AGENTS.MD – Códice: Opencode Workspace Installer v1.0.13
+# AGENTS.MD – Códice: Opencode Workspace Installer
 
 **Propósito:** Reglas estrictas que los agentes de IA deben seguir en este proyecto.
 **Documentación detallada:** `docs/` y `specs/` (ver índice al final).
