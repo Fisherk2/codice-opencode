@@ -1,4 +1,4 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.13
+# Plan de implementación – Códice v1.0.0 → v1.0.14
 **Fecha:** 2026-06-15 | **Última actualización:** 2026-07-09 | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
@@ -22,6 +22,7 @@
 | FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | ✅ Completo |
 | FEV-3 | Update Workspace overwrite fix + GitHub API fix | Update mode preserves existing standard files + GitHub version check | ✅ Completo |
 | FEV-4 | SDD Command Refactor + Governance (v1.0.13) | Issue #15: docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism | ✅ Completo |
+| FEV-5 | CI/CD Workflow + GitHub Wiki (v1.0.14) | Issue #23: CI/CD workflow documentation; Issue #25: GitHub Wiki + eliminar docs/opencode/ | 🟡 Pendiente |
 
 ## 2. Desglose por Fase
 
@@ -1087,6 +1088,68 @@ docs/diagnosis/
 - [x] E2E: 15/15 pasando
 - [x] CHANGELOG actualizado con sección v1.0.13
 - [x] Versión bump a 1.0.13
+
+---
+
+### Fase FEV-5 — CI/CD Workflow + GitHub Wiki (v1.0.14)
+
+**Fecha:** 2026-07-09 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Pendiente
+
+#### Contexto
+
+Issues #23 y #25 identifican dos problemas de documentación y proceso:
+
+1. **Issue #23 — CI/CD Workflow:** No existe un flujo de trabajo CI/CD documentado para contribuyentes. La infraestructura existe (ci.yml, release.yml) pero no hay guía estandarizada en CONTRIBUTING.md sobre branches, PRs, y releases.
+2. **Issue #25 — GitHub Wiki:** La documentación del workspace existe en tres lugares (`docs/opencode/` raíz, `template/opcional/docs/opencode/`, y lo que debería ser la Wiki). Se propone migrar a GitHub Wiki, eliminar `docs/opencode/` del template y de la raíz, y referenciar la documentación oficial de OpenCode.
+
+#### Diagnósticos
+
+- [fix01-cicd-workflow-standardization.md](docs/diagnosis/fix01-cicd-workflow-standardization.md) — Issue #23
+- [fix02-github-wiki-implementation.md](docs/diagnosis/fix02-github-wiki-implementation.md) — Issue #25
+
+#### Plan de Implementación
+
+| ID | Descripción | Prioridad | Estado |
+|----|-------------|-----------|--------|
+| F5V5-T1 | Documentar Git Workflow en CONTRIBUTING.md (branch strategy, 3-stage release process, naming conventions) | Alta | 🟡 Pendiente |
+| F5V5-T2 | Definir nomenclatura de versiones npm para test publishes (ej: 1.0.14-beta.1, 1.0.14-rc.1) | Alta | 🟡 Pendiente |
+| F5V5-T3 | Documentar CI/CD Pipeline en CONTRIBUTING.md (ci.yml, release.yml, triggers, troubleshooting) | Media | 🟡 Pendiente |
+| F5V5-T4 | Crear Release Checklist template en CONTRIBUTING.md | Media | 🟡 Pendiente |
+| F5V5-T5 | Habilitar GitHub Wiki y crear estructura inicial (Home, Getting Started, Workspace Structure) | Alta | 🟡 Pendiente |
+| F5V5-T6 | Migrar contenido de docs/opencode/ a GitHub Wiki (12 archivos) | Alta | 🟡 Pendiente |
+| F5V5-T7 | Referenciar documentación oficial de OpenCode en la Wiki | Media | 🟡 Pendiente |
+| F5V5-T8 | Eliminar `template/opcional/docs/opencode/` del template (12 archivos) | Alta | 🟡 Pendiente |
+| F5V5-T9 | Eliminar `docs/opencode/` de la raíz del proyecto (12 archivos) | Alta | 🟡 Pendiente |
+| F5V5-T10 | Remover entrada `docs/opencode` de FileRuleManifestData.ts (líneas 167-171) | Alta | 🟡 Pendiente |
+| F5V5-T11 | Actualizar 74+ referencias internas (CONTRIBUTING.md, README.md, commands, specs) | Media | 🟡 Pendiente |
+| F5V5-T12 | Actualizar tests E2E para reflejar eliminación de docs/opencode/ | Alta | 🟡 Pendiente |
+| F5V5-T13 | Actualizar CHANGELOG.md con sección v1.0.14 | Alta | 🟡 Pendiente |
+| F5V5-T14 | Bump version a 1.0.14 en package.json | Alta | 🟡 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.13 (actual) | Meta v1.0.14 |
+|---------|------------------|--------------|
+| Tests (pass/fail) | 481 / 0 | ≥481 / 0 |
+| Coverage (funciones) | 97.66% | ≥97.66% |
+| Coverage (líneas) | 96.52% | ≥96.52% |
+| E2E escenarios | 15/15 | 15/15 |
+| `just check` errores | 0 | 0 |
+| Issues críticos abiertos | 2 (#23, #25) | 0 |
+| docs/opencode/ references | 74+ | 0 |
+
+**Criterios de completitud (DoD FEV-5):**
+- [ ] Issue #23 resuelto: CI/CD workflow documentado en CONTRIBUTING.md
+- [ ] Issue #25 resuelto: GitHub Wiki habilitada y poblada
+- [ ] `docs/opencode/` eliminado de la raíz del proyecto
+- [ ] `template/opcional/docs/opencode/` eliminado del template
+- [ ] Entrada `docs/opencode` removida de FileRuleManifestData.ts
+- [ ] Todas las referencias internas actualizadas (74+ → 0)
+- [ ] Tests E2E pasando sin regresión
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+- [ ] CHANGELOG actualizado con sección v1.0.14
+- [ ] Versión bump a 1.0.14
 
 ---
 
