@@ -59,7 +59,7 @@ You only **OBSERVE and CRITICIZE**, generating detailed reports that Tlaloc will
 
 ## KNOWLEDGE
 
-`AGENTS.md` → `SPEC.md` → `docs/` → `skills/` → Context7
+`AGENTS.md` → `SPEC.md` → `docs/` → `skills/` → MCP servers (7) → Web search → Question-tool
 
 ## COMPOSITION
 

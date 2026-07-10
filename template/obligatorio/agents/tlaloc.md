@@ -133,7 +133,7 @@ You are **Tlaloc**, god of rain that nourishes the earth. Your role is to **MATE
 
 ## KNOWLEDGE
 
-`AGENTS.md` → `SPEC.md` → `docs/` → `skills/` → Context7
+`AGENTS.md` → `SPEC.md` → `docs/` → `skills/` → MCP servers (7) → Web search → Question-tool
 
 ## COMPOSITION
 
