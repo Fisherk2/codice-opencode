@@ -1,16 +1,20 @@
 /**
  * postInstall.ts — shared post-installation orchestration tests
  *
- * Covers 9 scenarios:
+ * Covers 13 scenarios:
  * 1. createGitignoreSafe — success → no warning shown
  * 2. createGitignoreSafe — failure → warning shown
  * 3. createSymlinksWithWarning — success → no warning
  * 4. createSymlinksWithWarning — failure without retryHint → no re-run hint
  * 5. createSymlinksWithWarning — failure with retryHint → re-run hint present
  * 6. runPostInstallSteps — .devin NOT selected → devin symlinks NOT called
- * 7. runPostInstallSteps — version defaults to "0.0.0" when undefined
- * 8. runPostInstallSteps — version file success → showSuccess called
- * 9. runPostInstallSteps — version file failure → returns Failure, no success
+ * 7. runPostInstallSteps — .devin selected → devin symlinks called
+ * 8. runPostInstallSteps — version defaults to "0.0.0" when undefined
+ * 9. runPostInstallSteps — version file success → showSuccess called
+ * 10. runPostInstallSteps — version file failure → returns Failure, no success
+ * 11. runPostInstallSteps — devin symlinks fail → warning shown
+ * 12. runPostInstallSteps — gitignore fails → continues to symlinks + version file
+ * 13. runPostInstallSteps — retryHint=true → re-run hint in opencode warning
  */
 
 import { describe, expect, mock as mockFn, test } from "bun:test";
@@ -287,5 +291,96 @@ describe("runPostInstallSteps", () => {
 
 		expect(result.ok).toBe(false);
 		expect(prompt.successes).toHaveLength(0);
+	});
+
+	test("shows warning when .devin symlinks fail but opencode succeeds", async () => {
+		const prompt = createMockPrompt();
+		let symlinkCalls = 0;
+		const symlinkCreator: ISymlinkCreator & { calls: number } = {
+			get calls() {
+				return symlinkCalls;
+			},
+			createSymlink: mockFn(() =>
+				Promise.resolve({ ok: true, value: undefined } as Result<void, SymlinkError>),
+			),
+			createSymlinks: mockFn(async () => {
+				symlinkCalls++;
+				// First call (opencode) succeeds, second call (devin) fails
+				if (symlinkCalls === 2) {
+					return {
+						ok: false as const,
+						error: [
+							{
+								target: ".devin/skills",
+								linkPath: ".devin/skills",
+								message: "Permission denied",
+							},
+						] satisfies SymlinkError[],
+					};
+				}
+				return { ok: true as const, value: undefined };
+			}) as (symlinks: readonly SymlinkSpec[]) => Promise<Result<void, SymlinkError[]>>,
+		};
+
+		const options = createDefaultPostInstallOptions({
+			symlinkCreator,
+			userPrompt: prompt.stub,
+			selectedOptionals: [".devin"],
+		});
+
+		const result = await runPostInstallSteps(options);
+
+		expect(result.ok).toBe(true);
+		// Both opencode + devin should be attempted
+		expect(symlinkCreator.calls).toBe(2);
+		// Warning should be for .devin/ failure
+		expect(prompt.warnings).toHaveLength(1);
+		expect(prompt.warnings[0]).toContain(".devin/");
+	});
+
+	test("continues to symlinks and version file when gitignore creation fails", async () => {
+		const prompt = createMockPrompt();
+		const gitignoreCreator = createMockGitignoreCreator(true);
+		const symlinkCreator = createMockSymlinkCreator(false);
+		const fs = createMockFileSystem(false);
+		const writeVersionFile = fs.writeVersionFile as ReturnType<typeof mockFn>;
+
+		const options = createDefaultPostInstallOptions({
+			gitignoreCreator,
+			symlinkCreator,
+			fileSystem: fs,
+			userPrompt: prompt.stub,
+			selectedOptionals: [".devin"],
+		});
+
+		const result = await runPostInstallSteps(options);
+
+		expect(result.ok).toBe(true);
+		// Gitignore warning was shown
+		expect(prompt.warnings).toHaveLength(1);
+		expect(prompt.warnings[0]).toContain(".gitignore");
+		// Symlinks still created (opencode + devin)
+		expect(symlinkCreator.calls).toBe(2);
+		// Version file still written
+		expect(writeVersionFile).toHaveBeenCalledTimes(1);
+	});
+
+	test("shows re-run hint in opencode warning when retryHint is true", async () => {
+		const prompt = createMockPrompt();
+		const symlinkCreator = createMockSymlinkCreator(true);
+
+		const options = createDefaultPostInstallOptions({
+			symlinkCreator,
+			userPrompt: prompt.stub,
+			retryHint: true,
+			selectedOptionals: [], // .devin not selected → only opencode symlinks attempted
+		});
+
+		const result = await runPostInstallSteps(options);
+
+		expect(result.ok).toBe(true);
+		// Warning shown with re-run hint
+		expect(prompt.warnings).toHaveLength(1);
+		expect(prompt.warnings[0]).toContain("Re-run the installer to retry symlink creation");
 	});
 });
