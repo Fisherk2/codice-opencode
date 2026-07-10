@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 listo para planificar, FEV-9 a FEV-10 planificados) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 ✅ Completo, FEV-9 🟢 Listo para planificar, FEV-10 🟡 Planificado) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -25,8 +25,8 @@
 | FEV-5 | CI/CD Workflow + GitHub Wiki (v1.0.14) | Issue #23: CI/CD workflow documentation; Issue #25: GitHub Wiki + eliminar docs/opencode/ | ✅ Completo |
 | FEV-6 | Quick Configuration + Documentation (v1.1.0) | Issue #27 (steps), Issue #28 (SECURITY.md), TD-1.2 (coverage artifact) | ✅ Completo |
 | FEV-7 | Agent Governance & Security Hardening | Issue #26 (system prompts), Issue #30 (command restrictions) | ✅ Completo |
-| FEV-8 | Obsidian Subagent | Issue #21 (obsidian-vault-writer + 6 skills) | 🟢 Listo para planificar |
-| FEV-9 | MCP Server Integration | Issue #29 (6 MCP servers) | 🟡 Planificado |
+| FEV-8 | Obsidian Subagent | Issue #21 (obsidian-vault-writer + 6 skills) | ✅ Completo |
+| FEV-9 | MCP Server Integration | Issue #29 (6 MCP servers) | 🟢 Listo para planificar |
 | FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | 🟡 Planificado |
 
 ## 2. Desglose por Fase
@@ -1322,7 +1322,7 @@ No todos los comandos necesitan restricción — algunos son aceptables con el p
 
 ### Fase FEV-8 — Obsidian Subagent
 
-**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟢 Listo para planificar
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) → Huitzilopochtli (Supreme Orchestrator) | **Estado:** ✅ Completado
 
 #### Contexto
 
@@ -1360,29 +1360,29 @@ Issue #21 propone un subagente especializado para administración de vaults de O
 
 ### Fase FEV-9 — MCP Server Integration
 
-**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Planificado
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) → Moctezuma (Strategic Planner) | **Estado:** 🟢 Listo para planificar
 
 #### Contexto
 
-Issue #29 propone añadir 6 nuevos MCP servers enfocados en documentación y búsqueda web: Docfork, Rtfmbro, Tavily MCP, Firecrawl MCP, Vercel Grep, GitMCP. Cada uno requiere investigación de instalación, configuración en opencode.json, y actualización de documentación.
+Issue #29 propone añadir 6 nuevos MCP servers enfocados en documentación y búsqueda web. Se reemplaza **Docfork** (shut down 2026-06-14) con **Grounded Docs MCP Server** (`@arabold/docs-mcp-server`). Los 6 servidores finales son: Grounded Docs, Rtfmbro, Tavily MCP, Firecrawl MCP, Vercel Grep, GitMCP.
 
-Además, los 6 agentes principales tienen una sección `## KNOWLEDGE` que actualmente termina con `Context7 → Web search`. Dado que los nuevos MCPs realizan un trabajo similar a Context7, se debe **reemplazar Context7** por la cadena de consulta: **MCP de documentación/websearch → Websearch (built-in de Opencode) → Question-tool (preguntar al usuario como última opción)**.
+Además, los 6 agentes principales tienen una sección `## KNOWLEDGE` que actualmente termina con `Context7 → Web search`. Dado que los nuevos MCPs realizan un trabajo similar a Context7, se debe **reemplazar Context7** por la cadena de consulta: **MCP servers → Web search → Question-tool**.
 
-> **⚠️ RESTRICCIÓN DE LÍNEAS:** El system prompt de cada agente principal NO debe exceder **>150 líneas** en total, o bien **<100 líneas de system prompt sin considerar el YAML de configuración** (este último consume ~30-50 líneas del fichero). La modificación de la sección `## KNOWLEDGE` es de 1 línea, por lo que se mantiene dentro del límite. Si al añadir explicaciones se acerca al límite, usar una sola línea de cadena en lugar de párrafos.
+> **⚠️ RESTRICCIÓN DE LÍNEAS:** Cada archivo de agente principal debe mantener ≤150 líneas totales. La modificación KNOWLEDGE es de 1 línea.
 
 #### Plan de Implementación
 
 | ID | Descripción | Archivo | Estado |
 |----|-------------|---------|--------|
-| FEV9-T1 | Investigar instalación de 6 MCPs (requisitos, API keys, configuración) | Investigación | 🟡 Pendiente |
-| FEV9-T2 | Configurar MCPs en opencode.json | `template/obligatorio/opencode.json` | 🟡 Pendiente |
-| FEV9-T3 | Documentar pasos manuales de pre-instalación | Documentación | 🟡 Pendiente |
-| FEV9-T4 | Actualizar documentación de MCPs (Wiki) | Wiki | 🟡 Pendiente |
-| FEV9-T5 | Actualizar sección `## KNOWLEDGE` de 6 agentes principales: reemplazar `Context7` con cadena MCP → Websearch → Question-tool | `template/obligatorio/agents/{huitzilopochtli,quetzalcoatl,moctezuma,tlaloc,mictlantecuhtli,tezcatlipoca}.md` | 🟡 Pendiente |
+| FEV9-T1 | Investigar instalación de 6 MCPs (requisitos, API keys, configuración) | Investigación | 🟢 Listo (docfork reemplazado por Grounded Docs) |
+| FEV9-T2 | Añadir 6 MCPs a la sección mcp en opencode.json (enabled: false) | `template/obligatorio/opencode.json` | 🟡 Pendiente |
+| FEV9-T3 | Ampliar Wiki MCP-Servers.md con 6 nuevas secciones de activación | `docs/wiki-source/MCP-Servers.md` | 🟡 Pendiente |
+| FEV9-T4 | Actualizar skill context-engineering con referencia a MCP servers | `template/obligatorio/skills/context-engineering/SKILL.md` | 🟡 Pendiente |
+| FEV9-T5 | Actualizar KNOWLEDGE de 6 agentes: `Context7` → `MCP servers (7) → Web search → Question-tool` | 6 archivos en `template/obligatorio/agents/` | 🟡 Pendiente |
 
 **Nueva cadena KNOWLEDGE (FEV9-T5):**
 ```
-AGENTS.md → SPEC.md → docs/ → skills/ → MCP de documentación/websearch → Websearch (built-in) → Question-tool
+AGENTS.md → SPEC.md → docs/ → skills/ → MCP servers (7) → Web search → Question-tool
 ```
 
 #### Métricas de Referencia
