@@ -10,7 +10,7 @@ MCP (Model Context Protocol) servers extend OpenCode agents with external tools 
 
 ## Pre-Configured MCP Servers
 
-The template ships with **4 MCP servers** pre-configured in `opencode.json`. Only `context7` is enabled by default; the rest are disabled to conserve context and must be activated on demand.
+The template ships with **10 MCP servers** pre-configured in `opencode.json`. Only `context7` is enabled by default; the rest are disabled to conserve context and must be activated on demand.
 
 | Server | Type | Default | Template Feature |
 |--------|------|---------|------------------|
@@ -18,6 +18,12 @@ The template ships with **4 MCP servers** pre-configured in `opencode.json`. Onl
 | `chrome-devtools` | Local | ❌ Disabled | `/webperf` Deep mode, browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`xlsx` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
+| `docs-mcp-server` | Local | ❌ Disabled | Open-source documentation queries |
+| `rtfmbro` | Remote | ❌ Disabled | Version-precise package documentation |
+| `tavily` | Remote | ❌ Disabled | Real-time web search (API key) |
+| `firecrawl` | Remote | ❌ Disabled | Web scraping and crawling (API key) |
+| `vercel-grep` | Remote | ❌ Disabled | GitHub code search across 1M+ repos |
+| `gitmcp` | Remote | ❌ Disabled | GitHub repository documentation |
 
 ---
 
@@ -249,6 +255,226 @@ For lightweight sessions without a full Jupyter server:
 
 ---
 
+### Grounded Docs MCP Server — Open-Source Documentation Queries
+
+Local MCP server that provides up-to-date library documentation. Open-source alternative to Context7. Caches documentation from official sources on demand.
+
+**Pre-configured as:** `"enabled": false` — enable when you need an additional documentation source alongside context7.
+
+```json
+{
+  "mcp": {
+    "docs-mcp-server": {
+      "type": "local",
+      "command": ["npx", "-y", "@arabold/docs-mcp-server"],
+      "enabled": true
+    }
+  }
+}
+```
+
+#### Prerequisites
+
+- Node.js LTS (already present in this workspace)
+- No API key required
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `fetch_docs` | Fetch documentation for a specific library URL |
+| `search_docs` | Search across cached documentation |
+
+> **Repository:** [github.com/arabold/docs-mcp-server](https://github.com/arabold/docs-mcp-server)
+
+---
+
+### Rtfmbro — Version-Precise Package Documentation
+
+Remote MCP server that fetches real-time, version-specific package documentation from GitHub. Ideal for getting exact docs for a specific npm or PyPI version.
+
+**Pre-configured as:** `"enabled": false` — enable when you need version-pinned docs.
+
+```json
+{
+  "mcp": {
+    "rtfmbro": {
+      "type": "remote",
+      "url": "https://rtfmbro.smolosoft.dev/mcp/",
+      "enabled": true
+    }
+  }
+}
+```
+
+#### Prerequisites
+
+- No API key required
+- Package must have a GitHub repository linked in its metadata
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `get_readme` | Fetch README for a specific package version |
+| `get_documentation_tree` | List documentation folder structure |
+| `read_files` | Read specific documentation files |
+
+> **Repository:** [github.com/marckrenn/rtfmbro-mcp](https://github.com/marckrenn/rtfmbro-mcp)
+
+---
+
+### Tavily — Real-Time Web Search
+
+Remote MCP server for AI-optimized web search. Provides search and content extraction with domain filtering, news search, and LLM-friendly results. Requires a free Tavily API key.
+
+**Pre-configured as:** `"enabled": false` — requires API key setup.
+
+#### Prerequisites
+
+- **Tavily API key** — Get one free at [tavily.com](https://www.tavily.com/)
+- Set the environment variable: `export TAVILY_API_KEY=tvly-your-key-here`
+
+```json
+{
+  "mcp": {
+    "tavily": {
+      "type": "remote",
+      "url": "https://mcp.tavily.com/mcp",
+      "headers": {
+        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `tavily_search` | Real-time web search with filtering |
+| `tavily_extract` | Intelligent content extraction from pages |
+
+> **Docs:** [docs.tavily.com/documentation/mcp](https://docs.tavily.com/documentation/mcp)
+
+---
+
+### Firecrawl — Web Scraping and Crawling
+
+Remote MCP server for scraping, crawling, and extracting content from web pages. Supports batch scraping, deep crawling, and structured data extraction. Requires a Firecrawl API key.
+
+**Pre-configured as:** `"enabled": false` — requires API key setup.
+
+#### Prerequisites
+
+- **Firecrawl API key** — Get one free at [firecrawl.dev](https://www.firecrawl.dev/)
+- Set the environment variable: `export FIRECRAWL_API_KEY=fc-your-key-here`
+
+```json
+{
+  "mcp": {
+    "firecrawl": {
+      "type": "remote",
+      "url": "https://mcp.firecrawl.dev/v2/mcp",
+      "headers": {
+        "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `firecrawl_scrape` | Scrape content from a single URL |
+| `firecrawl_search` | Web search with content extraction |
+| `firecrawl_crawl` | Launch an asynchronous crawl |
+| `firecrawl_batch_scrape` | Scrape multiple URLs in parallel |
+
+> **Docs:** [docs.firecrawl.dev/developers-mcp](https://docs.firecrawl.dev/use-cases/developers-mcp)
+
+---
+
+### Vercel Grep — GitHub Code Search
+
+Remote MCP server from Vercel that searches code patterns across 1M+ public GitHub repositories. Returns real-world code snippets ranked by relevance. Ideal for finding usage examples of APIs and libraries.
+
+**Pre-configured as:** `"enabled": false` — enable when you need code search.
+
+```json
+{
+  "mcp": {
+    "vercel-grep": {
+      "type": "remote",
+      "url": "https://mcp.grep.app",
+      "enabled": true
+    }
+  }
+}
+```
+
+#### Prerequisites
+
+- No API key required
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `searchGitHub` | Search code patterns across 1M+ GitHub repos |
+
+> **Blog:** [vercel.com/blog/grep-a-million-github-repositories-via-mcp](https://vercel.com/blog/grep-a-million-github-repositories-via-mcp)
+
+---
+
+### GitMCP — GitHub Repository Documentation
+
+Remote MCP server that transforms any public GitHub repository into a documentation endpoint. Change `github.com` to `gitmcp.io` in a repo URL and your AI agent gets instant access to its README, docs, and code structure.
+
+**Pre-configured as:** `"enabled": false` — enable when you need docs for a specific repository.
+
+```json
+{
+  "mcp": {
+    "gitmcp": {
+      "type": "remote",
+      "url": "https://gitmcp.io/docs",
+      "enabled": true
+    }
+  }
+}
+```
+
+#### Prerequisites
+
+- No API key required
+- Repository must be public
+
+#### URL Formats
+
+| Format | Use Case |
+|--------|----------|
+| `gitmcp.io/{owner}/{repo}` | Specific repository |
+| `{owner}.gitmcp.io/{repo}` | GitHub Pages site |
+| `gitmcp.io/docs` | Generic (AI picks repo from context) |
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `fetch_*_documentation` | Fetch repo-specific documentation |
+| `search_*_documentation` | Semantic search across docs |
+| `search_*_code` | Search repository code |
+
+> **Website:** [gitmcp.io](https://gitmcp.io) | **GitHub:** [github.com/idosal/git-mcp](https://github.com/idosal/git-mcp)
+
+---
+
 ## Per-Agent Control
 
 The template recommends a **disable-globally, enable-per-agent** strategy to conserve context while giving specific agents access to the tools they need.
@@ -330,8 +556,6 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 | **Puppeteer** | Browser automation | `@modelcontextprotocol/server-puppeteer` |
 | **Memory** | Persistent storage | `@modelcontextprotocol/server-memory` |
 | **Sentry** | Error tracking (remote) | `https://mcp.sentry.dev/mcp` (+ OAuth) |
-| **Grep by Vercel** | GitHub code search (remote) | `https://mcp.grep.app` |
-
 > **Avoid the GitHub MCP server:** It consumes a large number of tokens. Use the `gh` CLI via the `bash` tool instead.
 
 ---
@@ -341,6 +565,12 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 | Feature | MCP Required | Without MCP |
 |---------|--------------|-------------|
 | Documentation queries (`find-docs` skill) | `context7` | Falls back to training data |
+| Open-source documentation queries | `docs-mcp-server` | Falls back to context7 |
+| Version-precise package docs | `rtfmbro` | Falls back to generic docs |
+| Real-time web search (API key) | `tavily` | Falls back to training data |
+| Web scraping and crawling (API key) | `firecrawl` | Not available |
+| GitHub code search | `vercel-grep` | Manual GitHub browsing |
+| GitHub repository docs | `gitmcp` | Manual GitHub browsing |
 | `/webperf` Deep mode | `chrome-devtools` | Quick mode (static analysis only) |
 | Browser testing (`browser-testing-with-devtools` skill) | `chrome-devtools` | No runtime browser verification |
 | Spreadsheet manipulation (`xlsx` skill) | `excel` | Manual CSV editing |
