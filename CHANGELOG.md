@@ -14,8 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plugin README:** Updated to document 15 categories with 53 patterns and Defense-in-Depth subsection explaining dual-layer enforcement.
 - **Step counts (Issue #27, FEV-6):** Adjusted for 6 primary agents (huitzilopochtli:25, quetzalcoatl:60, moctezuma:20, tlaloc:90, mictlantecuhtli:60, tezcatlipoca:50).
 - **SECURITY.md (Issue #28, FEV-6):** Created at docs/SECURITY.md and template/estandar/docs/SECURITY.md.
+- **6 new MCP servers (Issue #29, FEV-9):** Expanded MCP catalog from 4 to 10 servers. New additions: `docs-mcp-server` (Grounded Docs, replaces shutdown Docfork), `rtfmbro` (version-precise package docs), `tavily` (real-time web search, TAVILY_API_KEY), `firecrawl` (web scraping, FIRECRAWL_API_KEY), `vercel-grep` (GitHub code search), `gitmcp` (GitHub repo docs). All new servers `enabled: false` (opt-in).
+- **Agent KNOWLEDGE chain updated (Issue #29, FEV-9):** All 6 primary agents now reference MCP server category: `AGENTS.md → SPEC.md → docs/ → skills/ → MCP servers (7) → Web search → Question-tool`.
+- **Wiki expansion (Issue #29, FEV-9):** `MCP-Servers.md` extended from 4 to 10 pre-configured servers with detailed setup sections for each new MCP.
 
 ### Changed
+
+- **`opencode.json` mcp section (Issue #29, FEV-9):** Now lists 10 MCP servers (up from 4). Tavily and Firecrawl include `headers` with `{env:VAR_NAME}` for API key config.
+- **`context-engineering` skill (Issue #29, FEV-9):** Updated MCP Integrations table to reference all 10 servers with link to Wiki.
 
 - **Coverage artifact (TD-1.2, FEV-6):** Explicit constructors added to VersionComparator and ClackPromptsAdapter to resolve Bun coverage reporting artifact.
 
