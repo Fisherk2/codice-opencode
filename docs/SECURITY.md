@@ -12,7 +12,7 @@
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, report them privately through [GitHub Security Advisories](https://github.com/fisherk2/codice-opencode/security/advisories/new) or by email to the maintainer listed in the repository's commit history.
+Instead, report them privately through [GitHub Security Advisories](https://github.com/fisherk2/codice-opencode/security/advisories/new) or by email to [dev@fisherk2.com](mailto:dev@fisherk2.com).
 
 You should receive a response within **48 hours**. If you do not receive a response, please follow up to ensure we received your original message.
 
