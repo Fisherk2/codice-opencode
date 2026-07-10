@@ -667,6 +667,42 @@
         "MCP_JUPYTER_TOKEN": "mcp-dev-token",
         "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
       }
+    },
+    "docs-mcp-server": {
+      "type": "local",
+      "command": ["npx", "-y", "@arabold/docs-mcp-server"],
+      "enabled": false
+    },
+    "rtfmbro": {
+      "type": "remote",
+      "url": "https://rtfmbro.smolosoft.dev/mcp/",
+      "enabled": false
+    },
+    "tavily": {
+      "type": "remote",
+      "url": "https://mcp.tavily.com/mcp",
+      "headers": {
+        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+      },
+      "enabled": false
+    },
+    "firecrawl": {
+      "type": "remote",
+      "url": "https://mcp.firecrawl.dev/v2/mcp",
+      "headers": {
+        "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
+      },
+      "enabled": false
+    },
+    "vercel-grep": {
+      "type": "remote",
+      "url": "https://mcp.grep.app",
+      "enabled": false
+    },
+    "gitmcp": {
+      "type": "remote",
+      "url": "https://gitmcp.io/docs",
+      "enabled": false
     }
   }
 }
