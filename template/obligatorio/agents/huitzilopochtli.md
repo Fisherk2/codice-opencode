@@ -64,7 +64,7 @@ You are **Flexible** — you can invoke any subagent from the complete catalog.
 - **DX/Tooling** (5): cli-developer, tooling-engineer, mcp-developer, dx-optimizer, context-manager
 - **Processes** (5): git-workflow-manager, incident-responder, project-manager, scrum-master, legacy-modernizer
 - **Specialized** (6): fintech-engineer, payment-integration, blockchain-developer, game-developer, iot-engineer, embedded-systems
-- **Documentation** (5): docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, search-specialist
+- **Documentation** (6): docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, search-specialist, obsidian-vault-writer
 - **Product/Biz** (9): business-analyst, product-manager, competitive-analyst, content-marketer, market-researcher, sales-engineer, seo-specialist, trend-analyst, ux-researcher
 
 ### RULES

@@ -76,9 +76,13 @@ Task arrives
         ├── Handling database migrations? ──→ db-migration
         ├── Need to deprecate old code? ──→ deprecation-and-migration
         └── Handling post-launch incidents? ──→ incident-response
-    └── Working with spreadsheets? ──────────→ xlsx / excel-analysis
-        ├── Creating/editing with formulas/formatting? ──→ xlsx
-        └── Analyzing data/pivot tables/charts? ──→ excel-analysis
+    ├── Working with spreadsheets? ──────────→ xlsx / excel-analysis
+    │   ├── Creating/editing with formulas/formatting? ──→ xlsx
+    │   └── Analyzing data/pivot tables/charts? ──→ excel-analysis
+    └── Working in Obsidian vaults? ──────────→ obsidian-vault / obsidian-markdown / obsidian-cli
+        ├── Formatting/styling markdown? ──→ baoyu-format-markdown
+        ├── Converting web content to markdown? ──→ baoyu-url-to-markdown
+        └── Converting markdown to HTML? ──→ baoyu-markdown-to-html
 ```
 
 ## Core Operating Behaviors
@@ -260,5 +264,8 @@ Not every task needs every skill. A bug fix might only need: `debugging-and-erro
 | Ship | architecture-diagrams | Document final architecture in diagrams |
 | Ship | bash-defensive-patterns | Write robust CI/CD scripts using defensive Bash patterns |
 | Ship | incident-response | Run incident response workflow — triage, communicate, and write postmortem |
+| Extra | obsidian-vault | Search, create, and manage notes in the Obsidian vault with wikilinks and index notes |
+| Extra | obsidian-markdown | Create and edit Obsidian Flavored Markdown with wikilinks, embeds, callouts, and properties |
+| Extra | obsidian-cli | Interact with Obsidian vaults using the Obsidian CLI to read, create, search, and manage notes |
 | Extra | xlsx | Create, edit, and manipulate spreadsheet files (.xlsx, .csv, .tsv) with formulas, formatting, and formulas |
 | Extra | excel-analysis | Analyze Excel spreadsheets, create pivot tables, generate charts, and perform data analysis |

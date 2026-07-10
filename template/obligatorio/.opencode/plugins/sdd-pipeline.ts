@@ -248,7 +248,7 @@ const COMMAND_PHASE_MAP: Record<string, string> = {
 // Valid Subagent Names (for task() validation)
 // ---------------------------------------------------------------------------
 
-// All 103 agents: 97 subagents + 6 primary agents
+// All 104 agents: 98 subagents + 6 primary agents
 // Used to validate task() calls — rejects invented subagent names
 const VALID_SUBAGENTS = new Set([
   // Primary agents
@@ -291,6 +291,7 @@ const VALID_SUBAGENTS = new Set([
   // Documentation & Research
   'docs-writer', 'research-analyst', 'knowledge-synthesizer',
   'scientific-literature-researcher', 'search-specialist',
+  'obsidian-vault-writer',  // (FEV-8) — Obsidian vault administration
   // Product & Business
   'business-analyst', 'product-manager', 'competitive-analyst', 'content-marketer',
   'market-researcher', 'sales-engineer', 'seo-specialist', 'trend-analyst', 'ux-researcher',
