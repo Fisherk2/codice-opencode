@@ -85,8 +85,8 @@ export class BunFileSystem implements IFileSystem {
 	 *
 	 * @param relativePath - Path relative to template root.
 	 * @param excludeSubDirs - Optional set of subdirectory names to exclude
-	 *                         when staging a directory (e.g. Set("opencode")
-	 *                         to exclude docs/opencode/ from docs/).
+	 *                         when staging a directory (e.g. Set("node_modules")
+	 *                         to exclude node_modules/ from a staged directory).
 	 */
 	async stageFile(relativePath: string, excludeSubDirs?: Set<string>): Promise<void> {
 		const resolved = await this.templateResolver.resolvePath(relativePath);

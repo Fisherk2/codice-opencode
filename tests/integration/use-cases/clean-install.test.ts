@@ -268,6 +268,10 @@ describe("CleanInstallUseCase", () => {
 			expect(prompt.showWarning).toHaveBeenCalledTimes(2);
 			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining(".opencode/"));
 			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining(".devin/"));
+			// Clean Install sets retryHint=true → warning includes re-run hint
+			expect(prompt.showWarning).toHaveBeenCalledWith(
+				expect.stringContaining("Re-run the installer to retry symlink creation"),
+			);
 		});
 
 		it("should show warning but still succeed when only .devin symlinks fail", async () => {

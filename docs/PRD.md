@@ -1,4 +1,4 @@
-# Product Requirements Document – Códice: Opencode Workspace Installer v1.0.0 (MVP)
+# Product Requirements Document – Códice: Opencode Workspace Installer v1.0.13
 **Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 0. Descripción General
@@ -13,6 +13,11 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - Operaciones atómicas de sistema de archivos (Staging + Rename).
   - Consulta de versión remota vía GitHub Releases API.
   - Orquestación de tareas y pruebas mediante `Justfile`.
+  - Generación post-instalación de symlinks y `.gitignore` (compatibilidad npm/bunx).
+  - Soporte para directorios opcionales (copia recursiva de `.devin/`).
+  - Menú de archivos opcionales en ambos modos de instalación (Limpia y Proyecto).
+  - Flags no-interactivos: `--dest`, `--force`, `--mode`.
+  - Publicación npm como método oficial de distribución (`bunx @fisherk2-dev/codice`).
 - **Alcance del MVP (Out):** 
   - Instalación de dependencias de terceros fuera del template.
   - Soporte para múltiples fuentes de plantillas (solo se soporta el template empaquetado en el binario).

@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v1.0.13
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-06-27 | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v1.0.14
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-09 (FEV-5 actualizado *a posteriori*) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -21,7 +21,8 @@
 | FEV-2-C | Gitignore post-install generation | Issue #11 (npm excludes .gitignore) | ✅ Completo |
 | FEV-2-D | Directory support + Clean Install UX | `.devin` directory resolution + optional files menu in Clean Install | ✅ Completo |
 | FEV-3 | Update Workspace overwrite fix + GitHub API fix | Update mode preserves existing standard files + GitHub version check | ✅ Completo |
-| FEV-4 | SDD Command Refactor + Governance (v1.0.13) | Issue #15: docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism | 🟡 En progreso |
+| FEV-4 | SDD Command Refactor + Governance (v1.0.13) | Issue #15: docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism | ✅ Completo |
+| FEV-5 | CI/CD Workflow + GitHub Wiki (v1.0.14) | Issue #23: CI/CD workflow documentation; Issue #25: GitHub Wiki + eliminar docs/opencode/ | ✅ Completo |
 
 ## 2. Desglose por Fase
 
@@ -923,7 +924,7 @@ export const GITHUB_REPO = "codice-opencode";
 
 ### Fase FEV-4 — SDD Command Refactor + Governance (v1.0.13)
 
-**Fecha:** 2026-06-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 En progreso
+**Fecha:** 2026-06-27 → 2026-07-09 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado
 
 #### Contexto
 
@@ -1046,22 +1047,22 @@ docs/diagnosis/
 
 | ID | Descripción | Prioridad | Estado |
 |----|-------------|-----------|--------|
-| F4V4-T1 | Crear comando `docs-update/` en `template/obligatorio/commands/docs-update.md` | Alta | 🟡 Pendiente |
-| F4V4-T2 | Crear comando `diagnosis/` en `template/obligatorio/commands/diagnosis.md` | Alta | 🟡 Pendiente |
-| F4V4-T3 | Refactorizar comando `evolve/` en `template/obligatorio/commands/evolve.md` | Alta | 🟡 Pendiente |
-| F4V4-T4 | Crear directorio `template/estandar/docs/diagnosis/` con `README.md` y `diagnosis-template.md` | Media | 🟡 Pendiente |
-| F4V4-T5 | Actualizar permisos de `agents/quetzalcoatl.md` (prohibir `tasks/`, código, config) | Alta | 🟡 Pendiente |
-| F4V4-T6 | Actualizar permisos de `agents/moctezuma.md` (solo `tasks/`) | Alta | 🟡 Pendiente |
-| F4V4-T7 | Actualizar comandos SDD para sugerir siguiente paso (`spec/`, `plan/`, `build/`, `test/`, `review/`, `ship/`) | Media | 🟡 Pendiente |
-| F4V4-T8 | Eliminar sugerencias de comandos en configuración de agentes primarios | Media | 🟡 Pendiente |
-| F4V4-T9 | Actualizar documentación: `docs/opencode/04-commands.md`, `docs/opencode/USER_GUIDE.md` | Media | 🟡 Pendiente |
-| F4V4-T10 | Actualizar `CHANGELOG.md` con sección v1.0.13 | Alta | 🟡 Pendiente |
-| F4V4-T11 | Bump version a 1.0.13 en `package.json` | Alta | 🟡 Pendiente |
-| F4V4-T12 | Tests: verificar que nuevos comandos existen y tienen estructura correcta | Media | 🟡 Pendiente |
+| F4V4-T1 | Crear comando `docs-update/` en `template/obligatorio/commands/docs-update.md` | Alta | ✅ Completado |
+| F4V4-T2 | Crear comando `diagnosis/` en `template/obligatorio/commands/diagnosis.md` | Alta | ✅ Completado |
+| F4V4-T3 | Refactorizar comando `evolve/` en `template/obligatorio/commands/evolve.md` | Alta | ✅ Completado |
+| F4V4-T4 | Crear directorio `template/estandar/docs/diagnosis/` con `README.md` y `diagnosis-template.md` | Media | ✅ Completado |
+| F4V4-T5 | Actualizar permisos de `agents/quetzalcoatl.md` (prohibir `tasks/`, código, config) | Alta | ✅ Completado |
+| F4V4-T6 | Actualizar permisos de `agents/moctezuma.md` (solo `tasks/`) | Alta | ✅ Completado |
+| F4V4-T7 | Actualizar comandos SDD para sugerir siguiente paso (`spec/`, `plan/`, `build/`, `test/`, `review/`, `ship/`) | Media | ✅ Completado |
+| F4V4-T8 | Eliminar sugerencias de comandos en configuración de agentes primarios | Media | ✅ Completado |
+| F4V4-T9 | Actualizar documentación: `docs/opencode/04-commands.md`, `docs/opencode/USER_GUIDE.md` | Media | ✅ Completado |
+| F4V4-T10 | Actualizar `CHANGELOG.md` con sección v1.0.13 | Alta | ✅ Completado |
+| F4V4-T11 | Bump version a 1.0.13 en `package.json` | Alta | ✅ Completado |
+| F4V4-T12 | Tests: verificar que nuevos comandos existen y tienen estructura correcta | Media | ✅ Completado |
 
 #### Métricas de Referencia
 
-| Métrica | v1.0.12 (actual) | Meta v1.0.13 |
+| Métrica | v1.0.13 (actual) | Meta v1.0.13 |
 |---------|------------------|--------------|
 | Tests (pass/fail) | 481 / 0 | ≥481 / 0 |
 | Coverage (funciones) | 97.66% | ≥97.66% |
@@ -1069,24 +1070,111 @@ docs/diagnosis/
 | E2E escenarios | 15/15 | 15/15 |
 | `just check` errores | 0 | 0 |
 | Issues críticos abiertos | 0 | 0 |
-| Comandos SDD | 10 | 12 (+docs-update, +diagnosis) |
+| Comandos SDD | 12 | 12 (+docs-update, +diagnosis) |
 
 **Criterios de completitud (DoD FEV-4):**
-- [ ] Issue #15 resuelto: gobernanza y determinismo implementados
-- [ ] `docs-update/` creado y funcional
-- [ ] `diagnosis/` creado y funcional
-- [ ] `evolve/` refactorizado con scope reducido
-- [ ] Directorio `docs/diagnosis/` creado con template
-- [ ] Permisos de quetzalcoatl actualizados (no escribe en `tasks/`, código, config)
-- [ ] Permisos de moctezuma actualizados (solo escribe en `tasks/`)
-- [ ] Comandos SDD sugieren siguiente paso
-- [ ] Configuración de agentes sin sugerencias de comandos
-- [ ] Documentación actualizada
-- [ ] `bun test`: sin regresión
-- [ ] `just check`: 0 errores
-- [ ] E2E: 15/15 pasando
-- [ ] CHANGELOG actualizado con sección v1.0.13
-- [ ] Versión bump a 1.0.13
+- [x] Issue #15 resuelto: gobernanza y determinismo implementados
+- [x] `docs-update/` creado y funcional
+- [x] `diagnosis/` creado y funcional
+- [x] `evolve/` refactorizado con scope reducido
+- [x] Directorio `docs/diagnosis/` creado con template
+- [x] Permisos de quetzalcoatl actualizados (no escribe en `tasks/`, código, config)
+- [x] Permisos de moctezuma actualizados (solo escribe en `tasks/`)
+- [x] Comandos SDD sugieren siguiente paso
+- [x] Configuración de agentes sin sugerencias de comandos
+- [x] Documentación actualizada
+- [x] `bun test`: sin regresión
+- [x] `just check`: 0 errores
+- [x] E2E: 15/15 pasando
+- [x] CHANGELOG actualizado con sección v1.0.13
+- [x] Versión bump a 1.0.13
+
+---
+
+### Fase FEV-5 — CI/CD Workflow + GitHub Wiki (v1.0.14)
+
+**Fecha:** 2026-07-09 | **Última actualización:** 2026-07-09 (FEV-5 actualizado *a posteriori*) | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completado
+
+#### Contexto
+
+Issues #23 y #25 identifican dos problemas de documentación y proceso:
+
+1. **Issue #23 — CI/CD Workflow:** No existe un flujo de trabajo CI/CD estandarizado. La infraestructura actual (ci.yml, release.yml) soporta solo un flujo simple (PR directo a `main` + tag release). Se necesita un proceso 3-etapas (develop → test publish → main) que requiere **modificaciones en `.github/workflows/` además de documentación en CONTRIBUTING.md**. Ver [diagnóstico completo](docs/diagnosis/fix01-cicd-workflow-standardization.md).
+2. **Issue #25 — GitHub Wiki:** La documentación del workspace existe en tres lugares (`docs/opencode/` raíz, `template/opcional/docs/opencode/`, y lo que debería ser la Wiki). Se propone migrar a GitHub Wiki, eliminar `docs/opencode/` del template y de la raíz, y referenciar la documentación oficial de OpenCode.
+
+#### Diagnósticos
+
+- [fix01-cicd-workflow-standardization.md](docs/diagnosis/fix01-cicd-workflow-standardization.md) — Issue #23 (Documentación + Workflows)
+- [fix02-github-wiki-implementation.md](docs/diagnosis/fix02-github-wiki-implementation.md) — Issue #25
+
+#### Plan de Implementación
+
+##### Issue #23 — CI/CD Workflow (Documentación + Workflows)
+
+| ID | Descripción | Prioridad | Estado |
+|----|-------------|-----------|--------|
+| **Track A: Infraestructura** | | | |
+| F5V5-A1 | Modificar `ci.yml` — añadir `develop` a triggers (`push` + `pull_request`) | Alta | ✅ Completo |
+| F5V5-A2 | Modificar `release.yml` — detectar pre-release tags (`beta.*`, `rc.*`) y publicar con `npm publish --tag <prerelease>`, crear GitHub Pre-release en vez de Release | Alta | ✅ Completo |
+| F5V5-A3 | Crear rama `develop` en el repositorio a partir de `main` | Alta | ✅ Completo |
+| **Track B: Documentación** | | | |
+| F5V5-B1 | Documentar Git Workflow en CONTRIBUTING.md (branch strategy, 3-stage release process, naming conventions) | Alta | ✅ Completo |
+| F5V5-B2 | Definir nomenclatura de versiones npm para test publishes (ej: 1.0.14-beta.1, 1.0.14-rc.1) | Alta | ✅ Completo |
+| F5V5-B3 | Documentar CI/CD Pipeline en CONTRIBUTING.md (ci.yml, release.yml, triggers, troubleshooting) | Media | ✅ Completo |
+| F5V5-B4 | Crear Release Checklist template en CONTRIBUTING.md | Media | ✅ Completo |
+
+##### Issue #25 — GitHub Wiki + Eliminar docs/opencode/
+
+| ID | Descripción | Prioridad | Estado |
+|----|-------------|-----------|--------|
+| F5V5-C1 | Habilitar GitHub Wiki y crear estructura inicial (Home, Getting Started, Workspace Structure) | Alta | ✅ Completo |
+| F5V5-C2 | Migrar contenido de docs/opencode/ a GitHub Wiki (12 archivos) | Alta | ✅ Completo |
+| F5V5-C3 | Referenciar documentación oficial de OpenCode en la Wiki | Media | ✅ Completo |
+| F5V5-C4 | Eliminar `template/opcional/docs/opencode/` del template (12 archivos) | Alta | ✅ Completo |
+| F5V5-C5 | Eliminar `docs/opencode/` de la raíz del proyecto (12 archivos) | Alta | ✅ Completo |
+| F5V5-C6 | Remover entrada `docs/opencode` de FileRuleManifestData.ts (líneas 167-171) | Alta | ✅ Completo |
+| F5V5-C7 | Actualizar 74+ referencias internas (CONTRIBUTING.md, README.md, commands, specs) | Media | ✅ Completo |
+| F5V5-C8 | Actualizar tests E2E para reflejar eliminación de docs/opencode/ | Alta | ✅ Completo |
+
+##### Release
+
+| ID | Descripción | Prioridad | Estado |
+|----|-------------|-----------|--------|
+| F5V5-D1 | Actualizar CHANGELOG.md con sección v1.0.14 | Alta | ✅ Completo |
+| F5V5-D2 | Bump version a 1.0.14 en package.json | Alta | ✅ Completo |
+
+#### Métricas de Referencia
+
+| Métrica | v1.0.13 (actual) | Meta v1.0.14 | v1.0.14 (final) |
+|---------|------------------|--------------|-----------------|
+| Tests (pass/fail) | 481 / 0 | ≥481 / 0 | 487 / 0 |
+| Coverage (funciones) | 97.66% | ≥97.66% | 98.13% |
+| Coverage (líneas) | 96.52% | ≥96.52% | 96.98% |
+| E2E escenarios | 15/15 | 15/15 | 15/15 |
+| `just check` errores | 0 | 0 | 0 |
+| Issues críticos abiertos | 2 (#23, #25) | 0 | 0 |
+| docs/opencode/ references | 74+ | 0 | 0 |
+| CI branches soportadas | 1 (`main`) | 2 (`main` + `develop`) | 2 (`main` + `develop`) |
+| npm dist-tags | 1 (`latest`) | 3 (`latest`, `beta`, `rc`) | 3 (`latest`, `beta`, `rc`) |
+
+**Criterios de completitud (DoD FEV-5):**
+- [x] Issue #23 resuelto:
+  - [x] `ci.yml` corre en PRs a `develop` además de `main`
+  - [x] `release.yml` publica pre-releases con `--tag beta/rc` y GitHub Pre-release
+  - [x] Rama `develop` existe en el repositorio
+  - [x] Git Workflow documentado en CONTRIBUTING.md incluyendo proceso 3-etapas
+  - [x] Release Checklist presente en CONTRIBUTING.md
+- [x] Issue #25 resuelto:
+  - [x] GitHub Wiki habilitada y poblada con contenido migrado
+  - [x] `docs/opencode/` eliminado de la raíz del proyecto
+  - [x] `template/opcional/docs/opencode/` eliminado del template
+  - [x] Entrada `docs/opencode` removida de FileRuleManifestData.ts
+  - [x] Todas las referencias internas actualizadas (74+ → 0)
+- [x] Tests E2E pasando sin regresión
+- [x] `bun test`: sin regresión
+- [x] `just check`: 0 errores
+- [x] CHANGELOG actualizado con sección v1.0.14
+- [x] Versión bump a 1.0.14
 
 ---
 
@@ -1101,9 +1189,9 @@ docs/diagnosis/
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 476 tests, 0 fail, 1032 expects
+- **Tests unit+int:** 487 tests, 0 fail, 1050 expects
 - **Tests E2E:** 15/15 pasando (14 existentes + 1 update existing project)
-- **Coverage:** 97.66% funciones / 96.52% líneas
+- **Coverage:** 98.13% funciones / 96.98% líneas
 - **Domain coverage:** 100% líneas
 - **`just check`:** 0 errores
 - **Fix rate:** 10+ bugs encontrados y corregidos durante desarrollo de E2E
@@ -1121,3 +1209,10 @@ docs/diagnosis/
 - **Commits FEV-3:** `d628bd6` (destinationExists fix), `a890d37` (GITHUB_REPO fix), `bb24d42` (regression tests), `5c2e4d0` (E2E), `287b15f` (v1.0.11 bump), `910ae53` (obs fix), `a0f84f1` (review findings)
 - **FEV-3 total:** 2 production fixes + 3 test additions + 1 E2E scenario + 1 doc update = 7 changes
 - **Release ready:** v1.0.11 — all DoD items completed, 476/0 tests, 15/15 E2E, 0 Biome/tsc errors
+- **Commits FEV-4:** `ad8367c` (SDD Command Refactor + Governance v1.0.13) en `main`
+- **FEV-4 total:** 12/12 tasks completadas (docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism)
+- **Release ready:** v1.0.13 — all DoD items completed, 481/0 tests, 15/15 E2E, 12 SDD commands, 0 Biome/tsc errors
+- **Commits FEV-5:** `c5b1ddf` (release v1.0.14), `147d967` (remove docs/opencode/), `3613c37` (update refs), `6340a9a` (wiki pages), `5f90860` (wiki MCP-Servers), `6a56f88` (wiki SDD Pipeline) en `main`
+- **Post-release refactor (2026-07-09):** `5c55e3a` (extract postInstall.ts), `a56b3da` (retryHint tests) en `feat/ci-cd-wiki`
+- **FEV-5 total:** 10 tareas infraestructura + 8 tareas wiki + 2 tareas release = 20 tasks completadas
+- **Release ready:** v1.0.14 — all DoD items completed, 487/0 tests, 15/15 E2E, 98.13% coverage, 0 Biome/tsc errors

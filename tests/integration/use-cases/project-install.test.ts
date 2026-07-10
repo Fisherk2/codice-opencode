@@ -592,6 +592,10 @@ describe("ProjectInstallUseCase", () => {
 			expect(result.ok).toBe(true);
 			expect(prompt.showWarning).toHaveBeenCalledTimes(1);
 			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining("symlink"));
+			// Project Install does NOT set retryHint → no re-run hint in warning
+			expect(prompt.showWarning).not.toHaveBeenCalledWith(
+				expect.stringContaining("Re-run the installer"),
+			);
 		});
 
 		it("should show warning but still succeed when .devin symlinks fail", async () => {
@@ -640,6 +644,10 @@ describe("ProjectInstallUseCase", () => {
 			// Warning should be shown once — only for .devin symlinks
 			expect(prompt.showWarning).toHaveBeenCalledTimes(1);
 			expect(prompt.showWarning).toHaveBeenCalledWith(expect.stringContaining("symlink"));
+			// Project Install does NOT set retryHint → no re-run hint in warning
+			expect(prompt.showWarning).not.toHaveBeenCalledWith(
+				expect.stringContaining("Re-run the installer"),
+			);
 
 			// Both batches of symlinks should have been attempted
 			expect(symlinkMock.createSymlinks).toHaveBeenCalledTimes(2);

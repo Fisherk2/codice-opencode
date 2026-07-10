@@ -1,4 +1,4 @@
-# Technical Requirements Document – Códice: Opencode Workspace Installer v1.0.0 (MVP)
+# Technical Requirements Document – Códice: Opencode Workspace Installer v1.0.13
 **Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Arquitectura de Referencia
@@ -7,38 +7,45 @@ Se aplicará **Clean Architecture** adaptada a una aplicación de línea de coma
 ```mermaid
 graph TD
     subgraph "Infrastructure Layer (Detalles)"
-        FS[FileSystem Adapter<br/>Node:fs / Bun:fs]
-        GH[GitHub API Client<br/>fetch / axios]
+        FS[BunFileSystem Facade<br/>Bun:fs]
+        TR[TemplateResolver<br/>Template path resolution]
+        AS[AtomicStager<br/>Atomic staging + rename]
+        DW[directoryWalker<br/>Recursive traversal]
+        PR[pathResolver<br/>Path validation]
+        GH[GitHub API Client<br/>fetch]
         TUI[TUI Adapter<br/>@clack/prompts]
+        BSC[BunSymlinkCreator<br/>Post-install symlinks]
+        BGC[BunGitignoreCreator<br/>Post-install gitignore]
+        
+        FS -->|delegates| TR
+        FS -->|delegates| AS
+        FS -->|uses| DW
+        FS -->|uses| PR
     end
 
     subgraph "Application Layer (Casos de Uso)"
         UC1[Use Case: Instalación Limpia]
         UC2[Use Case: Instalación a Proyecto]
         UC3[Use Case: Actualizar Workspace]
+        ISP[Port: ISymlinkCreator]
+        IGC[Port: IGitignoreCreator]
+        HLP[helpers.ts<br/>Shared guard logic]
     end
 
     subgraph "Domain Layer (Reglas de Negocio - Core)"
         ENT1[Entity: FileRule<br/>Obligatorio/Estándar/Opcional]
         ENT2[Entity: WorkspaceVersion]
+        ENT3[Entity: FileRuleManifest<br/>Rule aggregation]
         SRV1[Service: FileMergeEngine]
         SRV2[Service: VersionComparator]
+        ERR1[Type: MergeError]
+        ERR2[Type: SymlinkError]
+        ERR3[Type: GitignoreError]
     end
 
     TUI -->|Presenta opciones| UC1
     TUI -->|Presenta opciones| UC2
     TUI -->|Presenta opciones| UC3
-    
-    UC1 -->|Orquesta| SRV1
-    UC2 -->|Orquesta| SRV1
-    UC3 -->|Orquesta| SRV2
-    UC3 -->|Orquesta| SRV1
-    
-    SRV1 -->|Lee/Escribe| FS
-    SRV2 -->|Consulta| GH
-    
-    classDef domain fill:#f9f,stroke:#333,stroke-width:2px;
-    class ENT1,ENT2,SRV1,SRV2 domain;
 ```
 
 - **Dominio/Entidades**: Define las reglas puras (ej: `FileMergeRule`, `SemanticVersion`). No tiene dependencias externas.
@@ -62,6 +69,22 @@ graph TD
 | `FileMergeEngine` | Ejecutar la lógica de copiado atómico y fusión granular. | `executeMerge(source, dest, rules)` | `IFileSystem` | **OCP**: Abierto a nuevas reglas de fusión, cerrado a modificación. |
 | `VersionManager` | Leer versión local y consultar remota. | `getLocalVersion()`, `checkRemoteUpdate()` | `IFileSystem`, `IGitHubClient` | **DIP**: Depende de abstracciones de red/FS, no de implementaciones. |
 | `AtomicFileWriter` | Gestionar el patrón Staging + Rename. | `writeAtomically(data, path)` | `IFileSystem` | **SRP**: Responsable exclusivo de la integridad transaccional de archivos. |
+
+### 3.1 Generadores Post-Instalación
+
+npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el empaquetado. Para garantizar que estos archivos existan correctamente tras la instalación, se generan post-instalación mediante ports dedicados:
+
+| Port | Adapter | Responsabilidad | Integrado en |
+|------|---------|-----------------|--------------|
+| `ISymlinkCreator` | `BunSymlinkCreator` | Crear 10 symlinks para `.opencode/` y `.devin/` (agents, commands, skills, workflows, rules) | `CleanInstallUseCase`, `ProjectInstallUseCase` |
+| `IGitignoreCreator` | `BunGitignoreCreator` | Generar `.gitignore` desde `template/estandar/gitignore` (renombrado para evitar exclusión de npm) | `CleanInstallUseCase`, `ProjectInstallUseCase` |
+
+**Restricciones:**
+- NO se ejecutan en `UpdateWorkspaceUseCase` (preservan personalizaciones del usuario).
+- Son idempotentes: no sobrescriben si el archivo/symlink ya existe.
+- Validan path containment para prevenir symlink escape fuera del directorio destino.
+
+**Referencias:** ADR-008 (symlinks), ADR-009 (gitignore), ADR-010 (noTemplateCopy flag).
 
 ## 4. Contratos de API / Integraciones
 | Endpoint | Método | Request | Response | Autenticación | Rate Limit |

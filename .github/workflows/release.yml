@@ -123,6 +123,24 @@ jobs:
           fi
           echo "Version validated: $TAG_VERSION"
 
+      - name: Detect release type
+        id: release_type
+        shell: bash
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-(beta|rc)\.[0-9]+$ ]]; then
+            SUFFIX="${BASH_REMATCH[1]}"
+            echo "type=prerelease" >> "$GITHUB_OUTPUT"
+            echo "npm_tag=${SUFFIX}" >> "$GITHUB_OUTPUT"
+            echo "make_latest=false" >> "$GITHUB_OUTPUT"
+            echo "Detected pre-release type: ${SUFFIX}"
+          else
+            echo "type=release" >> "$GITHUB_OUTPUT"
+            echo "npm_tag=latest" >> "$GITHUB_OUTPUT"
+            echo "make_latest=true" >> "$GITHUB_OUTPUT"
+            echo "Detected production release"
+          fi
+
       - name: Publish to npm
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -130,7 +148,8 @@ jobs:
         run: |
           trap 'rm -f .npmrc' EXIT
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
-          PUBLISH_OUTPUT=$(npm publish 2>&1) && PUBLISH_EXIT=0 || PUBLISH_EXIT=$?
+          NPM_TAG="${{ steps.release_type.outputs.npm_tag }}"
+          PUBLISH_OUTPUT=$(npm publish --tag "${NPM_TAG}" 2>&1) && PUBLISH_EXIT=0 || PUBLISH_EXIT=$?
           echo "$PUBLISH_OUTPUT"
           if [ $PUBLISH_EXIT -ne 0 ]; then
             if echo "$PUBLISH_OUTPUT" | grep -q "cannot publish over the previously published version"; then
@@ -150,5 +169,6 @@ jobs:
             ./release-assets/codice-macos
             ./release-assets/codice-windows.exe
             ./release-assets/checksums-sha256.txt
-          make_latest: true
+          make_latest: ${{ steps.release_type.outputs.make_latest == 'true' }}
+          prerelease: ${{ steps.release_type.outputs.type == 'prerelease' }}
           fail_on_unmatched_files: false
