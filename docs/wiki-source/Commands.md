@@ -231,8 +231,8 @@ Review the `## Suggested Next Step` blocks in existing commands to see if any sh
 ### Step 6: Update Documentation
 
 Add the new command to:
-- `docs/opencode/04-commands.md` — Command creation documentation
-- `docs/opencode/USER_GUIDE.md` — User-facing command reference
+- [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) — Command creation documentation
+- [GitHub Wiki → Customization Guide](https://github.com/fisherk2/codice-opencode/wiki/Customization-Guide) — User-facing command reference
 - `README.md` — Full-cycle phase table and Mermaid diagram (if applicable)
 
 ### Step 7: Restart OpenCode
@@ -246,7 +246,7 @@ Restart your OpenCode session so it recognizes the new command file.
 | 1 | `commands/<name>.md` | Create command file with frontmatter + numbered steps |
 | 2 | `.opencode/plugins/sdd-pipeline.ts` | Add to `COMMAND_AGENT_MAP` |
 | 3 | `.opencode/plugins/sdd-pipeline.ts` | (Optional) Add to `INTENT_PATTERNS` |
-| 4 | `docs/opencode/02-orchestration-patterns.md` | (If SDD phase is new) Update phase suggestions |
+| 4 | [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) | (If SDD phase is new) Update phase suggestions |
 | 5 | Various command files | Update `## Suggested Next Step` blocks |
 | 6 | User guide + README | Add command to reference tables |
 

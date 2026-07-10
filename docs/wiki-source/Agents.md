@@ -259,7 +259,7 @@ task:
 
 ### Step 5: Update the Agent Index
 
-Add the new agent to the global catalog in `docs/opencode/03-agent-index.md` (or equivalent agent index) under the appropriate domain section.
+Add the new agent to the global catalog on the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents) page under the appropriate domain section.
 
 ### Step 6: Restart OpenCode
 

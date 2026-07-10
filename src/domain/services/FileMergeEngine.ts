@@ -110,8 +110,8 @@ export class FileMergeEngine implements IFileMergeEngine {
 	/**
 	 * Compute subdirectory exclusions for a standard directory rule that
 	 * overlaps with optional sub-paths. When a standard dir like "docs"
-	 * has an optional sub-path "docs/opencode", the directory walker should
-	 * exclude "opencode" so the optional rule can handle it separately.
+	 * has an optional sub-path (e.g. "docs/guides"), the directory walker
+	 * should exclude "guides" so the optional rule can handle it separately.
 	 *
 	 * @returns Set of immediate subdirectory names to exclude, or undefined.
 	 */

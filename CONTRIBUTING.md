@@ -478,7 +478,7 @@ When requesting a feature, include:
 
 ## Contributing to the Workspace Template
 
-Códice installs an **OpenCode workspace template** organized into three file categories: **Obligatorio** (always copied), **Estándar** (copied only if missing), and **Opcional** (presented as a checklist). When adding new agents, commands, or skills to the template, follow the procedures below. Each links to the full step-by-step guide in the [USER_GUIDE.md](template/opcional/docs/opencode/USER_GUIDE.md).
+Códice installs an **OpenCode workspace template** organized into three file categories: **Obligatorio** (always copied), **Estándar** (copied only if missing), and **Opcional** (presented as a checklist). When adding new agents, commands, or skills to the template, follow the procedures below.
 
 ### Add a New Agent
 
@@ -491,7 +491,7 @@ Key steps for adding an agent:
 
 1. **Create `agents/<agent-name>.md`** with the appropriate frontmatter format (YAML frontmatter, role, scope, output format, rules)
 2. **Add a `## Composition` block** at the end following the standard format (Invoke directly when / Invoke via / Do not invoke from another persona)
-3. **Update the global catalog** in [docs/opencode/03-agent-index.md](template/opcional/docs/opencode/03-agent-index.md) — add the agent to the corresponding domain section
+3. **Update the global catalog** — add the agent to the corresponding domain section at the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents)
 4. **Update the SUBAGENT DELEGATION tables** of primary agents that can delegate to the new agent (quetzalcoatl, tlaloc, mictlantecuhtli)
 5. **Update huitzilopochtli's catalog** in [agents/huitzilopochtli.md](agents/huitzilopochtli.md) — add the agent to the appropriate domain list
 6. **Add the name to the `VALID_SUBAGENTS` Set** in [.opencode/plugins/sdd-pipeline.ts](.opencode/plugins/sdd-pipeline.ts)
@@ -499,7 +499,7 @@ Key steps for adding an agent:
 
 **Primary agents** require additional steps: add SDD plugin hooks (identity patterns, keyword detection, command mapping, mention patterns, role rules), update orchestration patterns documentation, and add to the agent persona tables.
 
-See [USER_GUIDE.md — Add a New Agent](template/opcional/docs/opencode/USER_GUIDE.md#add-a-new-agent) for the complete step-by-step procedure.
+See the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents) for the complete step-by-step procedure.
 
 ### Add a New Skill
 
@@ -507,15 +507,15 @@ Key steps:
 
 1. **Place the skill in `skills/<skill-name>/SKILL.md`** — use a kebab-case directory name
 2. **Migrate internal `references/`** — if the skill contains a `references/` directory, move all content to the root `references/` folder and delete the empty directory inside the skill
-3. **Create a proper `SKILL.md`** following the format defined in [docs/opencode/05-skills.md](template/opcional/docs/opencode/05-skills.md) — must include YAML frontmatter with valid `name` and `description`
+3. **Create a proper `SKILL.md`** following the format defined in the [GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills) — must include YAML frontmatter with valid `name` and `description`
 4. **Update available skills documentation:**
    - [skills/using-agent-skills/SKILL.md](skills/using-agent-skills/SKILL.md) — add to the "Skill Discovery" tree and "Quick Reference" table
-   - [docs/opencode/USER_GUIDE.md](template/opcional/docs/opencode/USER_GUIDE.md) — add to the appropriate phase table and project structure tree
+   - [GitHub Wiki](https://github.com/fisherk2/codice-opencode/wiki) — add to the appropriate phase table and project structure tree
 5. **Restart your OpenCode session**
 
 Skills must be **specific** (actionable steps), **verifiable** (clear exit criteria), **battle-tested** (based on real engineering workflows), and **minimal** (only content necessary to guide the agent correctly).
 
-See [USER_GUIDE.md — Add a New Skill](template/opcional/docs/opencode/USER_GUIDE.md#add-a-new-skill) for the complete procedure and quality standards.
+See the [GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills) for the complete procedure and quality standards.
 
 ### Add a New Command
 
@@ -526,13 +526,13 @@ Key steps:
 1. **Create `commands/<command-name>.md`** with YAML frontmatter: `description` (action verb + what it does) and `agent` (target primary agent name)
 2. **Write the command flow** as numbered steps — reference skills inline (`@skills/skill-name/SKILL.md`), use the `question` tool at decision points, include handoff instructions if the agent doesn't write code
 3. **Update documentation:**
-   - [docs/opencode/USER_GUIDE.md](template/opcional/docs/opencode/USER_GUIDE.md) — add to the Commands table and project structure tree
+   - [GitHub Wiki](https://github.com/fisherk2/codice-opencode/wiki) — add to the Commands table and project structure tree
    - [README.md](README.md) — add to the full-cycle phase table and update the Mermaid diagram if applicable
 4. **Update the SDD plugin** — add to `COMMAND_AGENT_MAP` in [.opencode/plugins/sdd-pipeline.ts](.opencode/plugins/sdd-pipeline.ts)
-5. **If the command introduces a new SDD phase**, also update [docs/opencode/02-orchestration-patterns.md](template/opcional/docs/opencode/02-orchestration-patterns.md)
+5. **If the command introduces a new SDD phase**, also update the orchestration patterns documentation
 6. **Restart your OpenCode session**
 
-See [USER_GUIDE.md — Add a New Command](template/opcional/docs/opencode/USER_GUIDE.md#add-a-new-command) for the full procedure.
+See the [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) for the full procedure.
 
 ### File Classification
 
@@ -553,11 +553,10 @@ The Códice CLI handles the classification automatically based on the directory 
 
 ### References
 
-- **[USER_GUIDE.md](template/opcional/docs/opencode/USER_GUIDE.md)** — Complete reference guide with detailed procedures for all contributions
-- **[01-agents.md](template/opcional/docs/opencode/01-agents.md)** — Agent configuration, frontmatter format, permissions, modes
-- **[03-agent-index.md](template/opcional/docs/opencode/03-agent-index.md)** — Complete classified catalog of all 102+ agents
-- **[04-commands.md](template/opcional/docs/opencode/04-commands.md)** — Command creation guide, frontmatter format, best practices
-- **[05-skills.md](template/opcional/docs/opencode/05-skills.md)** — Skill creation guide, format specification, nomenclature
+- **[GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents)** — Agent configuration, frontmatter format, permissions, modes
+- **[GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands)** — Command creation guide, frontmatter format, best practices
+- **[GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills)** — Skill creation guide, format specification, nomenclature
+- **[GitHub Wiki → Customization Guide](https://github.com/fisherk2/codice-opencode/wiki/Customization-Guide)** — Practical recipes for customizing the workspace
 
 ---
 

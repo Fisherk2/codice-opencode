@@ -56,8 +56,8 @@ export class AtomicStager {
 	 * @param resolvedTemplatePath - Already-resolved absolute path within the template directory.
 	 * @param relativeDestPath - The relative destination path (used to build staging path).
 	 * @param excludeSubDirs - Optional set of subdirectory names to exclude when
-	 *                         walking a directory (e.g. Set("opencode") to exclude
-	 *                         docs/opencode/ when staging docs/).
+	 *                         walking a directory (e.g. Set("node_modules") to exclude
+	 *                         node_modules/ when staging a directory).
 	 */
 	async stageFile(
 		resolvedTemplatePath: string,
