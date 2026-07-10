@@ -87,3 +87,6 @@ local.properties
 
 # npm token (contiene Granular Access Token para publish)
 .npmrc
+
+# ─── Wiki sync ─────────────────────────────────────────────────────────────────
+/docs/wiki-source/.wiki/
