@@ -60,6 +60,7 @@ Each command suggests the next logical step when it finishes, guiding you throug
 - [Getting Started](Getting-Started) — Install Códice and run your first SDD cycle
 - [Workspace Structure](Workspace-Structure) — What gets installed and where
 - [Configuration](Configuration) — Understanding `opencode.json` and agent settings
+- [SDD Pipeline](SDD-Pipeline) — How the orchestration plugin works
 - [MCP Servers](MCP-Servers) — Pre-configured servers, activation, and per-agent control
 - [Agents](Agents) — The six primary agents, subagent catalog, and how to add new ones
 - [Commands](Commands) — All 12 SDD slash commands and their workflows

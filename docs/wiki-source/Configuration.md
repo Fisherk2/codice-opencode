@@ -65,15 +65,17 @@ Increasing `reserved` gives the model more room for long responses but triggers 
 
 The `provider` section defines available AI model providers and their per-model options. The template ships with **7 pre-configured providers**:
 
-| Provider | Models Available |
-|----------|-----------------|
-| `anthropic` | Claude Haiku 4.5, Opus 4.6, Sonnet 4, Sonnet 4.6 |
-| `deepseek` | DeepSeek V4 Flash, V4 Flash Free, V4 Pro |
-| `google` | Gemini 3.1 Pro, Gemini 3.5 Flash |
-| `minimax` | MiniMax M2.5, M2.7, M3 |
-| `moonshot` | Kimi K2.5, K2.6 |
-| `openai` | GPT-5, GPT-5.1 Codex, GPT-5.3 Codex, GPT-5.4 Mini, GPT-5.5 Pro |
-| `z-ai` | GLM 5.1 |
+| Provider | Models | Official Docs |
+|----------|--------|---------------|
+| `anthropic` | Claude Haiku 4.5, Opus 4.6, Sonnet 4, Sonnet 4.6 | [docs.anthropic.com](https://docs.anthropic.com/en/docs/about-claude/models) |
+| `deepseek` | DeepSeek V4 Flash, V4 Flash Free, V4 Pro | [api-docs.deepseek.com](https://api-docs.deepseek.com/) |
+| `google` | Gemini 3.1 Pro, Gemini 3.5 Flash | [ai.google.dev](https://ai.google.dev/gemini-api/docs/models) |
+| `minimax` | MiniMax M2.5, M2.7, M3 | [platform.minimaxi.com](https://platform.minimaxi.com/document/Models) |
+| `moonshot` | Kimi K2.5, K2.6 | [platform.moonshot.cn](https://platform.moonshot.cn/docs) |
+| `openai` | GPT-5, GPT-5.1 Codex, GPT-5.3 Codex, GPT-5.4 Mini, GPT-5.5 Pro | [platform.openai.com/docs](https://platform.openai.com/docs/models) |
+| `z-ai` | GLM 5.1 | [open.bigmodel.cn](https://open.bigmodel.cn/dev/api) |
+
+> **⚠️ Provider configurations change frequently.** Each provider has its own parameter naming, model IDs, and authentication methods. The template provides a starting point, but always consult the official provider documentation linked above for the most up-to-date configuration options. Do not treat the examples in this page as authoritative — they may become outdated as providers update their APIs.
 
 ### Per-Model Options
 
@@ -157,7 +159,7 @@ The `budgetTokens` field controls how much the model can think before responding
 
 ## Agent Configuration
 
-The `agent` section configures each primary agent individually:
+The `agent` section configures each primary agent individually. The template assigns specific models, temperatures, and step limits to each agent based on its role in the SDD cycle:
 
 ```json
 "agent": {
@@ -167,11 +169,35 @@ The `agent` section configures each primary agent individually:
     "temperature": 0.5,
     "steps": 20
   },
+  "quetzalcoatl": {
+    "model": "opencode-go/qwen3.7-plus",
+    "color": "#ffffff",
+    "temperature": 0.3,
+    "steps": 15
+  },
+  "moctezuma": {
+    "model": "opencode-go/minimax-m3",
+    "color": "#8B4513",
+    "temperature": 0.1,
+    "steps": 20
+  },
   "tlaloc": {
     "model": "opencode-go/deepseek-v4-flash",
     "color": "#00ffff",
     "temperature": 0.2,
     "steps": 40
+  },
+  "mictlantecuhtli": {
+    "model": "opencode-go/mimo-v2.5",
+    "color": "#2d2d2d",
+    "temperature": 0.2,
+    "steps": 40
+  },
+  "tezcatlipoca": {
+    "model": "opencode-go/glm-5.2",
+    "color": "#ff3134",
+    "temperature": 0.1,
+    "steps": 15
   },
   "build": { "disable": true },
   "plan": { "disable": true },
@@ -179,15 +205,38 @@ The `agent` section configures each primary agent individually:
 }
 ```
 
+### Agent Settings Reference
+
 | Field | Description |
 |-------|-------------|
 | `model` | Override the default model for this specific agent |
-| `color` | UI accent color (hex) for agent messages |
+| `color` | UI accent color (hex) for agent messages in the OpenCode interface |
 | `temperature` | Creativity level (0.0 = deterministic, 1.0 = creative) |
 | `steps` | Maximum execution steps before requiring user approval |
-| `disable` | Hide or disable built-in agents (`build`, `plan`, `general`) |
+| `disable` | Hide or disable built-in OpenCode agents |
 
-The template disables three built-in OpenCode agents (`build`, `plan`, `general`) because the SDD pipeline's custom commands replace their functionality.
+### Why These Settings?
+
+Each agent's configuration reflects its role in the SDD pipeline:
+
+| Agent | Model Choice | Temperature | Steps | Color | Rationale |
+|-------|-------------|:-----------:|:-----:|:-----:|-----------|
+| **Huitzilopochtli** | mimo-v2.5 (balanced) | 0.5 | 20 | 🟡 Yellow | Supreme orchestrator — needs balanced creativity to decide which subagent to invoke. Higher temperature for flexible delegation. Moderate steps because orchestration is quick. |
+| **Quetzalcoatl** | qwen3.7-plus (powerful) | 0.3 | 15 | ⚪ White | Visionary Sage — spec writing and design. Low temperature for precise, structured output. Fewest steps because specs are well-defined templates. |
+| **Moctezuma** | minimax-m3 (fast) | 0.1 | 20 | 🟤 Brown | Strategic Commander — task breakdown. Near-deterministic temperature for structured plan output. Fast model since planning is formulaic. |
+| **Tlaloc** | deepseek-v4-flash (fast) | 0.2 | 40 | 🔵 Cyan | Rain God Builder — code implementation. Low temperature for correct code, high step limit because building is multi-step (test→code→refactor). |
+| **Mictlantecuhtli** | mimo-v2.5 (balanced) | 0.2 | 40 | ⚫ Dark | Underworld Judge — testing and validation. Low temperature for thorough verification. Highest step limit for complex test suites and ship checklist. |
+| **Tezcatlipoca** | glm-5.2 (powerful) | 0.1 | 15 | 🔴 Red | Smoking Mirror Critic — code review. Near-deterministic for objective analysis. Fewest steps because reviews follow a fixed checklist. |
+
+### Disabled Agents
+
+The template disables three built-in OpenCode agents:
+
+| Agent | Why Disabled |
+|-------|-------------|
+| `build` | Replaced by SDD pipeline's custom `/build` command (tlaloc) |
+| `plan` | Replaced by SDD pipeline's custom `/plan` command (moctezuma) |
+| `general` | No specific role — agents huitzilopochtli or tlaloc handle general-purpose tasks better |
 
 ---
 
@@ -212,51 +261,77 @@ Add your own files here if there are documents you want the model to always know
 
 ## Permissions — Security Boundaries
 
-The `permission` section controls what agents can do. It has two subsections:
+The `permission` section controls what agents can do. The template uses a **default-deny** model: most operations require explicit approval, while safe read-only commands are pre-approved.
 
-### `permission.bash` — Shell Command Access
-
-Defines granular allow/deny/ask rules for shell commands. The default configuration permits **safe read-only commands** like `ls`, `grep`, `cat`, `git status`, `curl`, and `jq`, while restricting destructive operations.
-
-```json
-"bash": {
-  "*": "ask",
-  "ls": "allow",
-  "ls *": "allow",
-  "grep *": "allow",
-  "git status": "allow",
-  "cat *": "allow",
-  ...
-  "env": "deny",
-  "env *": "deny"
-}
-```
-
-Three permission levels:
+### Permission Levels
 
 | Level | Meaning |
 |-------|---------|
-| `allow` | Agent can run without asking |
-| `ask` | Agent must ask for approval before running |
-| `deny` | Agent cannot run regardless of approval |
+| `allow` | Agent can execute without asking — used for safe, read-only operations |
+| `ask` | Agent must ask for approval before executing — the default for most operations |
+| `deny` | Agent cannot execute regardless of approval — used for sensitive or destructive operations |
 
-### `permission.read` — File Read Access
+### `permission.bash` — Shell Command Access
 
-Controls which files agents can read. The default denies access to sensitive credential files:
+The bash allowlist permits safe, read-only commands automatically while blocking destructive operations. Commands NOT in the allowlist default to `ask`.
+
+**Fully allowed (no prompt):**
+
+| Category | Commands | Examples |
+|----------|----------|---------|
+| **File reading** | `cat`, `head`, `tail`, `less` equivalents | `cat package.json`, `head -n 20 log.txt` |
+| **File search** | `grep`, `rg`, `ag`, `ack`, `fd`, `find` | `grep -r "TODO" src/` |
+| **File info** | `file`, `stat`, `du`, `ls`, `tree`, `wc` | `ls -la`, `stat config.json` |
+| **Text processing** | `sed`, `awk`, `sort`, `uniq`, `cut`, `tr`, `jq`, `diff`, `tee` | `jq '.name' package.json` |
+| **Git read-only** | `git status`, `git diff`, `git log`, `git show`, `git blame`, `git branch`, `git tag` | `git log --oneline -5` |
+| **GitHub CLI (read)** | `gh repo view`, `gh issue list`, `gh pr list`, `gh release list` | `gh pr view 42` |
+| **Network (read)** | `curl`, `http`, `dig`, `nslookup`, `host` | `curl https://api.example.com` |
+| **Process info** | `ps`, `lsof`, `uptime`, `free`, `uname`, `whoami`, `id`, `pwd` | `lsof -i :3000` |
+| **Archive inspection** | `unzip -l`, `zipinfo`, `tar -tf` | `tar -tf archive.tar.gz` |
+| **Path utilities** | `dirname`, `basename`, `realpath`, `which` | `which node` |
+
+**Always denied (blocked):**
+
+| Pattern | Blocks |
+|---------|--------|
+| `rm -rf`, `rm -fr`, `rm -fir` | Recursive force delete |
+| `git push -f`, `git push --force` | Force push |
+| `DROP TABLE`, `DROP DATABASE` | Database destruction |
+| `mkfs`, `mkfs.*` | Disk formatting |
+| `dd if=` | Disk destruction |
+| `chmod -R 777 /` | Permission destruction |
+| `env`, `env *`, `printenv *` | Environment variable leakage |
+| File read/write of credential files | See [Credential Protection](#credential-protection) below |
+
+### Credential Protection
+
+The template blocks agents from reading or writing sensitive files across multiple categories:
+
+| Category | Protected Patterns |
+|----------|-------------------|
+| **Environment files** | `.env`, `.env.*` (except `.env.example`) |
+| **Package manager secrets** | `.npmrc`, `.git-credentials`, `.netrc` |
+| **SSH keys** | `.ssh/id_*`, `.ssh/config` |
+| **Cloud credentials** | `.aws/credentials`, `.kube/config`, `.docker/config.json` |
+| **Database credentials** | `.pgpass` |
+| **TLS/SSL keys** | `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.gpg`, `*.ovpn` |
+| **Service accounts** | `credentials.json`, `service-account*.json` |
+
+This prevents agents from accidentally reading or exposing secrets during their work, even in verbose or debug modes.
+
+### `permission.task` — Subagent Delegation
+
+The `task` permission controls which subagents a primary agent can invoke. The template sets a global deny:
 
 ```json
-"read": {
-  "*": "allow",
-  "*.env": "deny",
-  ".npmrc": "deny",
-  "*.pem": "deny",
-  "*.key": "deny",
-  "credentials.json": "deny",
-  "service-account*.json": "deny"
+"task": {
+  "*": "deny"
 }
 ```
 
-This prevents agents from accidentally reading secrets, API keys, or private keys during their work.
+This means **no agent can delegate by default**. Primary agents that need delegation (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli) have explicit allow rules in their agent file's YAML frontmatter, not in `opencode.json`. The global deny acts as a safety net — even if an agent file accidentally omits the restriction, delegation is blocked.
+
+> **Official docs:** [opencode.ai/docs/permissions](https://opencode.ai/docs/permissions) — Full reference for the permission system.
 
 ---
 
@@ -339,6 +414,7 @@ If you don't use a particular primary agent:
 
 ## See Also
 
+- [SDD Pipeline](SDD-Pipeline) — How the plugin orchestrates agents, blocks destructive commands, and validates subagents
 - [MCP Servers](MCP-Servers) — Pre-configured servers, activation, and per-agent control
 - [Workspace Structure](Workspace-Structure) — Directory layout and file descriptions
 - [opencode.ai/docs/configuration](https://opencode.ai/docs/configuration) — Official OpenCode configuration reference
