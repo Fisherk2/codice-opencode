@@ -10,8 +10,8 @@ Scan the project for existing documentation and identify what's present, what's 
 1. Read @SPEC.md — does it reflect current project scope?
 2. Scan @docs/ — list all documents with last-modified dates
 3. Read @CHANGELOG.md — what recent changes might need documentation updates?
-4. Read @README.md - does it updated with respect current project?
-5. Read @CONTRIBUTING.md - does it written with a workflow appropriate to contributors?
+4. Read @README.md — is it up to date with respect to the current project?
+5. Read @CONTRIBUTING.md — is it written with a workflow appropriate for contributors?
 6. Check @specs/ and @specs/adr/ — any ADRs that should be created or updated?
 7. Read @AGENTS.md — does it reference files or conventions that no longer exist?
 
@@ -50,10 +50,10 @@ If the user's request is vague or missing key details, invoke @skills/interview-
 1. **Update existing docs** to reflect current codebase state:
    - @docs/ARCHITECTURE.md — update ADR index, layer descriptions, component diagrams
    - @docs/SCHEMA.md — update if data models changed
-   - @docs/DESIGN.md - update if UI/UX project changed
+   - @docs/DESIGN.md — update if UI/UX project changed
    - @docs/APPFLOW.md — update if user flows changed
    - @docs/CODE_STYLE.md — refine conventions based on actual code patterns
-   - @docs/SECURITY.md - update if security policy needs more information about how to report critical issues
+   - @docs/SECURITY.md — update if security policy needs more information about how to report critical issues
 2. **Create missing docs** if gaps were identified:
    - @docs/ARCHITECTURE.md if missing
    - @docs/SCHEMA.md if missing
