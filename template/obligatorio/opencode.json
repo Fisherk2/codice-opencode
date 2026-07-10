@@ -345,13 +345,13 @@
       "model": "opencode-go/mimo-v2.5",
       "color": "#d3e22b",
       "temperature": 0.5,
-      "steps": 20
+      "steps": 25
     },
     "quetzalcoatl": {
       "model": "opencode-go/qwen3.7-plus",
       "color": "#ffffff",
       "temperature": 0.3,
-      "steps": 15
+      "steps": 60
     },
     "moctezuma": {
       "model": "opencode-go/minimax-m3",
@@ -363,19 +363,19 @@
       "model": "opencode-go/deepseek-v4-flash",
       "color": "#00ffff",
       "temperature": 0.2,
-      "steps": 40
+      "steps": 90
     },
     "mictlantecuhtli": {
       "model": "opencode-go/mimo-v2.5",
       "color": "#2d2d2d",
       "temperature": 0.2,
-      "steps": 40
+      "steps": 60
     },
     "tezcatlipoca": {
       "model": "opencode-go/glm-5.2",
       "color": "#ff3134",
       "temperature": 0.1,
-      "steps": 15
+      "steps": 50
     },
     "build": {
       "disable": true
