@@ -1,23 +1,25 @@
-# Security Policy
+# Security Policy — [Project Name]
 
-This is a placeholder. Replace this file with your project's security policy.
+>This is a placeholder. Replace this file with your project's security policy.
 
-**Canonical source:** See the [Códice project SECURITY.md](https://github.com/fisherk2/codice-opencode/blob/main/docs/SECURITY.md) for a complete template.
+## Supported Versions
 
-## Quick Setup
+| Version | Supported |
+|---------|-----------|
+| [1.x]   | ✅ Supported |
+| [< 1]   | ❌ No longer supported |
 
-1. Copy the [official SECURITY.md template](https://github.com/fisherk2/codice-opencode/blob/main/docs/SECURITY.md)
-2. Customize for your project:
-   - Supported versions
-   - Contact email/method for reporting
-   - Response process timeline
-3. Commit to your repository
+## Reporting a Vulnerability
 
-## Minimum Sections
+Report vulnerabilities to <security-contact@example.com> or via
+[GitHub Security Advisories](https://github.com/[org]/[repo]/security/advisories/new).
 
-| Section | Purpose |
-|---------|---------|
-| **Supported Versions** | Which versions receive security updates |
-| **Reporting a Vulnerability** | How to privately report issues |
-| **Response Process** | Expected timeline and steps |
-| **Disclosure Policy** | Coordinated disclosure practices |
+## Response Process
+
+1. **Acknowledgment** — within 48 hours
+2. **Triage** — within 5 business days
+3. **Fix** — timeline based on severity
+
+## Disclosure Policy
+
+Coordinated disclosure. Reporters credited upon request.
