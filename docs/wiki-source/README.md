@@ -2,32 +2,30 @@
 
 Este directorio contiene el **source of truth** para la GitHub Wiki de Códice.
 
-Las 9 páginas aquí se sincronizan manualmente al wiki repo después de cada release:
+El wiki repo está clonado en `docs/wiki-source/.wiki/` (ignorado por git del repo
+principal — ver `.gitignore`). **No se sincroniza `README.md`** porque es
+documentación interna del proceso, no una página de la Wiki.
+
+## Sincronización
+
+Después de cada release, sincronizar los cambios a la Wiki:
 
 ```bash
-# Clonar el wiki repo (solo la primera vez)
-git clone https://github.com/fisherk2/codice-opencode.wiki.git /tmp/wiki
+# Desde la raíz del proyecto
+rsync -a --delete --exclude='README.md' docs/wiki-source/*.md docs/wiki-source/.wiki/
 
-# Sincronizar todas las páginas
-cp docs/wiki-source/*.md /tmp/wiki/
-
-# Si hay que eliminar páginas que ya no existen
-cd /tmp/wiki && git rm --cached *.md 2>/dev/null; true
-cp /ruta/a/codice-opencode/docs/wiki-source/*.md /tmp/wiki/
-
-# Commit y push
-cd /tmp/wiki
+cd docs/wiki-source/.wiki
 git add .
-git commit -m "Sync wiki v$(node -p "require('/ruta/a/codice-opencode/package.json').version")"
+git commit -m "Sync wiki v$(node -p "require('../../package.json').version")"
 git push
-
-# Limpiar
-rm -rf /tmp/wiki
 ```
+
+`--exclude='README.md'` asegura que el README no se suba a la Wiki.
 
 ## Reglas
 - No editar directamente en el wiki repo — siempre en `docs/wiki-source/` primero.
 - Todas las páginas pasan por PR/review en el repo principal antes de sincronizar.
+- `README.md` nunca se sincroniza a la Wiki.
 - Después de cada release, sincronizar a la Wiki.
 
 ## Páginas
