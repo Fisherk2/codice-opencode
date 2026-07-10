@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 ✅ Completo, FEV-7 listo para planificar, FEV-8 a FEV-10 planificados) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 listo para planificar, FEV-9 a FEV-10 planificados) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -24,8 +24,8 @@
 | FEV-4 | SDD Command Refactor + Governance (v1.0.13) | Issue #15: docs-update/, diagnosis/, evolve/ refactor, agent governance, SDD determinism | ✅ Completo |
 | FEV-5 | CI/CD Workflow + GitHub Wiki (v1.0.14) | Issue #23: CI/CD workflow documentation; Issue #25: GitHub Wiki + eliminar docs/opencode/ | ✅ Completo |
 | FEV-6 | Quick Configuration + Documentation (v1.1.0) | Issue #27 (steps), Issue #28 (SECURITY.md), TD-1.2 (coverage artifact) | ✅ Completo |
-| FEV-7 | Agent Governance & Security Hardening | Issue #26 (system prompts), Issue #30 (command restrictions) | 🟢 Listo para planificar |
-| FEV-8 | Obsidian Subagent | Issue #21 (obsidian-vault-writer + 6 skills) | 🟡 Planificado |
+| FEV-7 | Agent Governance & Security Hardening | Issue #26 (system prompts), Issue #30 (command restrictions) | ✅ Completo |
+| FEV-8 | Obsidian Subagent | Issue #21 (obsidian-vault-writer + 6 skills) | 🟢 Listo para planificar |
 | FEV-9 | MCP Server Integration | Issue #29 (6 MCP servers) | 🟡 Planificado |
 | FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | 🟡 Planificado |
 
@@ -1232,11 +1232,13 @@ Primera fase de v1.1.0. Contiene los items de menor esfuerzo y riesgo: ajuste de
 
 ### Fase FEV-7 — Agent Governance & Security Hardening
 
-**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟢 Listo para planificar
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) → Huitzilopochtli (Supreme Orchestrator) | **Estado:** ✅ Completo
 
 #### Contexto
 
 Segunda fase de v1.1.0. Aborda la gobernanza de agentes y la seguridad de comandos. Issue #26 mejora los system prompts de los 6 agentes principales con reglas de no-assumption y delegación prioritaria. Issue #30 analiza 100+ comandos destructivos y añade restricciones al plugin sdd-pipeline.ts y opencode.json.
+
+**Ejecución:** Huitzilopochtli orquestó el análisis, la revisión de código, y la materialización de todos los hallazgos. Quetzalcoatl realizó el code review 5-ejes. Tlaloc implementó los fixes de producción.
 
 #### Diagnóstico
 
@@ -1269,12 +1271,12 @@ No todos los comandos necesitan restricción — algunos son aceptables con el p
 
 | ID | Descripción | Archivo | Estado |
 |----|-------------|---------|--------|
-| FEV7-T1 | Añadir regla de no-assumption + question-tool a 6 agentes principales | `template/obligatorio/agents/{huitzilopochtli,quetzalcoatl,moctezuma,tlaloc,mictlantecuhtli,tezcatlipoca}.md` | 🟡 Pendiente |
-| FEV7-T2 | Añadir instrucción de delegación-first a agentes que delegan (quetzalcoatl, tlaloc, mictlantecuhtli) | Mismos 3 archivos | 🟡 Pendiente |
-| FEV7-T3 | Analizar 100+ comandos y seleccionar los pertinentes para restringir | Análisis en diagnóstico | 🟡 Pendiente |
-| FEV7-T4 | Añadir restricciones de comandos al plugin sdd-pipeline.ts | `template/obligatorio/.opencode/plugins/sdd-pipeline.ts` | 🟡 Pendiente |
-| FEV7-T5 | Añadir restricciones de comandos a opencode.json permissions | `template/obligatorio/opencode.json` | 🟡 Pendiente |
-| FEV7-T6 | Actualizar README.md del plugin | Plugin README | 🟡 Pendiente |
+| FEV7-T1 | Añadir regla de no-assumption + question-tool a 6 agentes principales | `template/obligatorio/agents/{huitzilopochtli,quetzalcoatl,moctezuma,tlaloc,mictlantecuhtli,tezcatlipoca}.md` | ✅ Completo |
+| FEV7-T2 | Añadir instrucción de delegación-first a agentes que delegan (quetzalcoatl, tlaloc, mictlantecuhtli) | Mismos 3 archivos | ✅ Completo |
+| FEV7-T3 | Analizar 100+ comandos y seleccionar los pertinentes para restringir | Análisis en diagnóstico | ✅ Completo |
+| FEV7-T4 | Añadir restricciones de comandos al plugin sdd-pipeline.ts | `template/obligatorio/.opencode/plugins/sdd-pipeline.ts` | ✅ Completo |
+| FEV7-T5 | Añadir restricciones de comandos a opencode.json permissions | `template/obligatorio/opencode.json` | ✅ Completo |
+| FEV7-T6 | Actualizar README.md del plugin | `template/obligatorio/.opencode/plugins/README.md` | ✅ Completo |
 
 #### Métricas de Referencia
 
@@ -1286,19 +1288,41 @@ No todos los comandos necesitan restricción — algunos son aceptables con el p
 | `bun test` | 500 / 0 | ≥500 / 0 |
 | `just check` errores | 0 | 0 |
 
+#### Code Review Findings
+
+| ID | Categoría | Finding | Resolución |
+|----|-----------|---------|------------|
+| I1 | Important | Tests conductuales insuficientes — solo se probaban las listas de patterns, no su comportamiento real de matching | Añadidos 33 tests positivos, 13 negativos, 4 bypass, y 7 `normalizeBash` para `sdd-pipeline.ts` |
+| I2 | Important | `export PATH=` regex bloquea modificaciones seguras (e.g., `export PATH=$PATH:/new/dir`) | Refinado a `/export\s+PATH\s*=\s*[^$]/i` — solo bloquea reemplazos totales |
+| S1 | Suggestion | README line count desactualizado (663 vs 664) | Corregido a 664 |
+| S2 | Suggestion | Convención `[existing]` no documentada en restricciones del plugin | Añadido comentario inline explicando la convención |
+| S3 | Suggestion | `chmod 777` pattern redundante (subset of `chmod [0-7]{3,4}`) | Eliminado — el patrón más amplio ya lo cubre |
+
+#### Métricas Finales
+
+| Métrica | v1.1.0 (antes) | Meta FEV-7 | v1.1.0 (final) |
+|---------|----------------|------------|----------------|
+| Agentes con no-assumption rule | 0/6 | 6/6 | 6/6 |
+| Agentes con delegation-first | 0/3 | 3/3 | 3/3 |
+| Comandos destructivos restringidos | ~10 | 50+ | 50+ |
+| `bun test` | 502 / 0 | ≥500 / 0 | 563 / 0 |
+| `just check` errores | 0 | 0 | 0 |
+| Code review findings | — | — | 5/5 resueltos (0 crit, 0 imp, 0 sug abiertos) |
+
 **Criterios de completitud (DoD FEV-7):**
-- [ ] Issue #26 resuelto: 6 agentes con no-assumption rule
-- [ ] Issue #26 resuelto: 3 agentes delegadores con delegation-first
-- [ ] Issue #30 resuelto: comandos destructivos restringidos en plugin + config
-- [ ] Plugin README actualizado
-- [ ] `bun test`: sin regresión
-- [ ] `just check`: 0 errores
+- [x] Issue #26 resuelto: 6 agentes con no-assumption rule
+- [x] Issue #26 resuelto: 3 agentes delegadores con delegation-first
+- [x] Issue #30 resuelto: comandos destructivos restringidos en plugin + config
+- [x] Plugin README actualizado
+- [x] `bun test`: sin regresión (563 pass, 0 fail, 1204 expects)
+- [x] `just check`: 0 errores
+- [x] Code review: 5/5 hallazgos resueltos (0 Critical, 0 Important, 0 Suggestion abiertos)
 
 ---
 
 ### Fase FEV-8 — Obsidian Subagent
 
-**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Planificado
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟢 Listo para planificar
 
 #### Contexto
 
@@ -1465,8 +1489,11 @@ Fase final de v1.1.0. Contiene los items de mayor esfuerzo y riesgo: split de IF
 - **Release ready:** v1.0.14 — all DoD items completed, 487/0 tests, 15/15 E2E, 98.13% coverage, 0 Biome/tsc errors
 - **Commits FEV-6:** `7116ca1` (steps), `d76cfe2` (SECURITY.md proyecto), `07f481d` (SECURITY.md template), `d3e6ce4` (constructores explícitos), `e38a23b` (verificación manifest) en `feat/v1.1.0-fev-6`
 - **FEV-6 total:** 5/5 tareas completadas (Issue #27, #28, TD-1.2)
-- **FEV-7 status:** 🟢 Listo para planificar — pendientes Issue #26 (system prompts) y #30 (command restrictions)
-- **Tests actuales:** 502 pass, 0 fail, 1092 expects
+- **FEV-7 status:** ✅ Completo — Issues #26 y #30 resueltos con 5 hallazgos de code review (0 crit, 0 imp)
+- **FEV-7 commits:** `5986c89` (code review), `92a9cec` (review fixes: tests, export PATH, README, chmod 777) en `feat/workspace-enhancement`
+- **FEV-7 total:** 6/6 tareas completadas + 5 code review findings resueltos
+- **FEV-8 status:** 🟢 Listo para planificar — Issue #21 (obsidian-vault-writer subagent + 6 skills)
+- **Tests actuales:** 563 pass, 0 fail, 1204 expects
 - **Coverage:** 98.13% funciones / 96.98% líneas
 
 ---
