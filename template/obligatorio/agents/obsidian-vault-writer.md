@@ -81,7 +81,6 @@ You **MUST** invoke these skills when relevant:
 - **Connectivity**: Create meaningful internal links between related notes
 - **Scannability**: Use headers, lists, and tables for easy navigation
 - **Examples**: Include concrete examples for abstract concepts
-- **Bilingual**: Maintain Spanish as primary language, English for technical terms
 
 ## Workflow
 
