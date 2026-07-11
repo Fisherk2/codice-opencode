@@ -142,7 +142,10 @@ describePack("npm package — extracted installation", () => {
 	// -----------------------------------------------------------------------
 
 	itPack("clean install works from extracted package (Test C)", async () => {
-		const installDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-clean-test-"));
+		// Must avoid system directories — macOS os.tmpdir() is /var/folders/
+		// which is blocked by SYSTEM_DIRS in validateDestPath (parse-args.ts:66).
+		// Use process.cwd() which is the CI workspace (always a valid project dir).
+		const installDir = await fs.mkdtemp(path.join(process.cwd(), ".codice-clean-test-"));
 
 		try {
 			const proc = Bun.spawnSync(
