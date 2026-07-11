@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-07-11
 **Status:** Active reference for improvement planning
-**Current version:** v1.1.1 (586 tests, 0 fail, 1255 expects, 100.00% funcs / 98.08% lines)
+**Current version:** v1.1.3 (587 tests, 0 fail, ~1255 expects, 100.00% funcs / 98.08% lines)
 
 ---
 

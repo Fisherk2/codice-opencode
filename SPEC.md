@@ -1,9 +1,9 @@
-# Spec: Códice — Opencode Workspace Installer v1.1.2
+# Spec: Códice — Opencode Workspace Installer v1.1.3
 
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v1.1.2  
+**Current Version:** v1.1.3  
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
 ---
@@ -373,7 +373,7 @@ These actions are explicitly prohibited under all circumstances:
 
 ## Success Criteria
 
-The following conditions are specific, testable, and must all be met for the v1.1.2 release to be considered complete.
+The following conditions are specific, testable, and must all be met for the v1.1.3 release to be considered complete.
 
 ### Functional Criteria
 
