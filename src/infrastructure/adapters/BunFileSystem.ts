@@ -64,7 +64,7 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		} catch (err) {
 			const code = (err as NodeJS.ErrnoException).code;
 			if (code === "ENOENT") return false;
-			if (code === "EACCES") return true; // exists but unreadable — staging will surface real error
+			if (code === "EACCES" || code === "EPERM") return true; // exists but unreadable — staging will surface real error
 			return false; // conservative: staging will fail with clearer message if path is unwritable
 		}
 	}

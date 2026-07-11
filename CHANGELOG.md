@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] — 2026-07-11
+
+### Fixed
+
+- **Windows EPERM in `destinationExists()` (commit `86cb31e`):** On Windows, `fs.access()` throws `EPERM` instead of `EACCES` when a directory has restricted permissions (e.g. `chmod 0o000`). Now both `EACCES` and `EPERM` are treated as "path exists but unreadable", returning `true` so staging surfaces the real error downstream. Fixes CI failure on `windows-latest` runner.
+
 ## [1.1.2] — 2026-07-11
 
 ### Changed
