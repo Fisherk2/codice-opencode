@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 ✅ Completo, FEV-9 ✅ Completo, FEV-10 🟡 Planificado) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 ✅ Completo, FEV-9 ✅ Completo, FEV-10 🟢 Listo para planificar) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -27,7 +27,7 @@
 | FEV-7 | Agent Governance & Security Hardening | Issue #26 (system prompts), Issue #30 (command restrictions) | ✅ Completo |
 | FEV-8 | Obsidian Subagent | Issue #21 (obsidian-vault-writer + 6 skills) | ✅ Completo |
 | FEV-9 | MCP Server Integration | Issue #29 (5 MCP servers) | ✅ Completo |
-| FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | 🟡 Planificado |
+| FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | 🟢 Listo para planificar |
 
 ## 2. Desglose por Fase
 
@@ -1406,7 +1406,7 @@ AGENTS.md → SPEC.md → docs/ → skills/ → MCP servers → Web search → Q
 
 ### Fase FEV-10 — Code Quality + Dependency Upgrades
 
-**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟡 Planificado
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 🟢 Listo para planificar
 
 #### Contexto
 
