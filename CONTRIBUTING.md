@@ -37,9 +37,9 @@ This project adheres to the [Contributor Covenant](https://www.contributor-coven
 ### Workflow
 
 1. **Open an issue first** for substantial changes (new feature, architecture change, breaking change). Discuss before investing time — this avoids wasted effort if the change is not aligned with the project's direction.
-2. **Fork the repository** on GitHub, then create a feature branch from `main`:
+2. **Fork the repository** on GitHub, then create a feature branch from `develop`:
    ```bash
-   git checkout -b feat/my-feature main
+   git checkout -b feat/my-feature develop
    ```
 3. **Write your code**, following the [code style](docs/CODE_STYLE.md). Write or update tests (see [Testing](#testing)).
 4. **Run the full check suite** locally:
@@ -48,10 +48,10 @@ This project adheres to the [Contributor Covenant](https://www.contributor-coven
    just test
    ```
 5. **Commit** using [Conventional Commits](#commit-message-convention).
-6. **Push** and open a Pull Request against `main`. Keep the title descriptive — it becomes the first line of the squashed commit. Reference related issues (`Closes #123`).
-7. **Ensure CI passes** — the workflow runs `just check`, `just test`, and `just test:e2e` automatically.
+6. **Push** and open a Pull Request against `develop`. Keep the title descriptive — it becomes the first line of the squashed commit. Reference related issues (`Closes #123`).
+7. **Ensure CI passes** on all platforms (Linux, macOS, Windows) — the workflow runs `just check`, `just test`, and `just test:e2e` automatically. A failure on any platform blocks the merge.
 8. **Request a review** (2-3 business days). Address feedback categorized as **Critical** (blocks merge), **Important** (should address), or **Suggestion** (nice-to-have).
-9. **Squash merge** — once approved, a maintainer squash-merges into `main`.
+9. **Squash merge** — once approved, a maintainer squash-merges into `develop`.
 
 ---
 
@@ -344,32 +344,121 @@ Before every commit, verify the following:
 
 ## Git Workflow
 
-This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release)
+This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release).
+
+There are **two distinct flows** depending on the type of change:
+
+| Flow | Branches | PR Target | Release Path |
+|------|----------|-----------|--------------|
+| **Normal** | `feat/`, `fix/`, `chore/`, `docs/`, `refactor/` | `develop` | `develop` → `main` → tag |
+| **Hotfix** | `hotfix/` | `main` (direct) | `main` → tag → sync `develop` |
 
 ### Branch Naming Conventions
 
-| Prefix | Purpose | Example |
-|--------|---------|---------|
-| `feat/` | New features | `feat/task-creation` |
-| `fix/` | Bug fixes | `fix/double-commit` |
-| `chore/` | Maintenance | `chore/update-deps` |
-| `docs/` | Documentation | `docs/api-guide` |
-| `refactor/` | Code restructuring | `refactor/merge-engine` |
+| Prefix | Purpose | Branch From | PR To | Example |
+|--------|---------|-------------|-------|---------|
+| `feat/` | New features | `develop` | `develop` | `feat/task-creation` |
+| `fix/` | Bug fixes | `develop` | `develop` | `fix/double-commit` |
+| `chore/` | Maintenance | `develop` | `develop` | `chore/update-deps` |
+| `docs/` | Documentation | `develop` | `develop` | `docs/api-guide` |
+| `refactor/` | Code restructuring | `develop` | `develop` | `refactor/merge-engine` |
+| `hotfix/` | Emergency production fixes | `main` | `main` | `hotfix/critical-security` |
 
-### Workflow
+### Critical Rules
 
-1. Feature branches branch from `main`.
-2. Pull Requests go to `develop` first.
-3. Squash merge to `develop` after approval.
-4. After validation on `develop`, create a PR `develop` → `main`.
-5. Squash merge to `main`, then tag for release.
+1. **🛑 Never work directly on `develop` or `main`.** All changes must go through a dedicated branch and a Pull Request. Direct commits to these branches are forbidden. This rule exists to ensure every change is reviewed by CI before it reaches `develop` or `main`.
+
+2. **✅ Always verify CI on every PR.** A CI failure on any platform (Linux, macOS, Windows) blocks the merge — regardless of whether it is a pre-release (`beta`, `rc`) or a production release. Do not skip or ignore CI failures. If a pre-release CI fails, fix the issue before tagging the production release. Failing to verify CI on a pre-release guarantees the same failure will occur on the production release.
+
+3. **🔄 Post-release sync `develop` ← `main` is mandatory.** If skipped, `develop` and `main` diverge and future PRs will have merge conflicts — even in a single-contributor project. Syncing must happen after EVERY merge to `main`, whether from a normal release or a hotfix.
+
+### Normal Workflow (`feat/` · `fix/` · `chore/` · `docs/` · `refactor/`)
+
+Use for features, bug fixes, maintenance, documentation, and refactoring. These changes go through the full 3-stage pipeline.
+
+```
+develop ──●─────────●─────────●──  (integration)
+           ╲       ╱         ╱
+            ●─────●  ← PRs from feature branches (squash merge)
+                          │
+main ──────●──────────────●──────  (production)
+           │                    │
+           └── PR develop→main ─┘  (squash merge)
+                                    │
+tags                                ● vX.Y.Z
+```
+
+**Steps:**
+
+1. Create a feature branch from `develop`:
+   ```bash
+   git checkout -b feat/my-feature develop
+   ```
+2. Write code, commit using [Conventional Commits](#commit-message-convention).
+3. Run the full check suite locally:
+   ```bash
+   just check
+   just test
+   ```
+4. Push and open a PR **against `develop`**.
+5. Wait for CI to pass on all platforms (Linux, macOS, Windows).
+6. Squash merge into `develop`.
+7. After validation on `develop`, create a PR **from `develop` to `main`**.
+8. Wait for CI to pass on all platforms.
+9. Squash merge into `main`, then [tag for release](#release-checklist).
+
+### Hotfix Workflow (`hotfix/`)
+
+Use for emergency production fixes that cannot wait for the normal 3-stage pipeline. Hotfixes bypass `develop` and go directly to `main`.
+
+```
+main ────●─────────●──────────  (production)
+          ╲       ╱
+           ●─────●  ← PRs from hotfix branches directly to main (squash merge)
+                         │
+                         ● tag vX.Y.Z
+                         │
+develop ──●──────────────●────  (synced from main after release)
+```
+
+**Steps:**
+
+1. Create a hotfix branch from `main`:
+   ```bash
+   git checkout -b hotfix/critical-fix main
+   ```
+2. Make the fix, commit using [Conventional Commits](#commit-message-convention).
+3. Run the full check suite locally:
+   ```bash
+   just check
+   just test
+   ```
+4. Push and open a PR **directly against `main`**.
+5. Wait for CI to pass on all platforms (Linux, macOS, Windows).
+6. Squash merge into `main`, then [tag for release](#release-checklist).
+7. **Post-release: sync `develop` ← `main`**:
+   ```bash
+   git checkout develop
+   git merge main
+   git push origin develop
+   ```
+
+### Why Single-Contributor Merges Must Be Clean
+
+With a single contributor, there is no parallel work. Every commit should follow linearly from the previous one. If merge conflicts occur, they indicate one of:
+
+- Work was done directly on `develop` or `main` (forbidden).
+- A feature branch was created from the wrong base branch.
+- Post-release sync of `develop` ← `main` was skipped.
+
+All three are preventable. Follow the rules above and every PR from `develop` → `main` should be a clean fast-forward merge.
 
 ### PR Requirements
 
-Before submitting a PR, verify:
+Before submitting any PR, verify:
 
 - [ ] Branch is up to date with target
-- [ ] Full test suite passes
+- [ ] Full test suite passes (all platforms in CI)
 - [ ] `just check` passes
 - [ ] E2E tests pass
 - [ ] CHANGELOG updated if user-facing change
@@ -452,6 +541,7 @@ Pre-release tags (`beta`, `rc`) can be overwritten. The `latest` tag cannot — 
 3. **Tag version doesn't match package.json** — Update package.json first, then create the tag
 4. **Binary artifacts missing from release** — Check the build matrix — all 3 platforms must succeed
 5. **Workflow_dispatch doesn't find the tag** — The tag must exist in the repository before running dispatch
+6. **Pre-release has CI failure but production release tag is created anyway** — Do not skip CI failures on pre-releases. If a `beta` or `rc` tag fails CI, fix the issue, create a new pre-release tag, and verify CI passes before creating the production tag. A CI failure on a pre-release **will** recur on the production release — fix it early.
 
 ---
 
@@ -469,10 +559,11 @@ Pre-release tags (`beta`, `rc`) can be overwritten. The `latest` tag cannot — 
 
 ### Release
 
-- [ ] PR `develop` → `main` created, reviewed, squash-merged
+- [ ] PR `develop` → `main` created, reviewed, squash-merged (or `hotfix/` → `main` for hotfixes)
 - [ ] `main` pulled locally
 - [ ] Tag `vX.Y.Z` created and pushed: `git tag v1.0.14 && git push origin v1.0.14`
 - [ ] Monitor release workflow in GitHub Actions
+- [ ] **Wait for CI to pass on all platforms** — a failure even on one platform blocks the release
 - [ ] Verify npm package: `npm view @fisherk2-dev/codice@latest`
 - [ ] Verify GitHub Release with binary assets
 
@@ -602,4 +693,4 @@ The Códice CLI handles the classification automatically based on the directory 
 
 ---
 
-*Last revised: 2026-07-11*
+*Last revised: 2026-07-11 (updated Git Workflow with two flows + CI verification rules)*
