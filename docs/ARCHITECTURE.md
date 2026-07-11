@@ -57,7 +57,9 @@ graph TD
         UC3[UpdateWorkspaceUseCase]
         ISP[ISymlinkCreator]
         IGC[IGitignoreCreator]
+        IST[IStagingSystem]
         HLP[helpers.ts]
+        PI[postInstall.ts]
     end
 
     subgraph "Domain Layer"
@@ -67,6 +69,7 @@ graph TD
         SRV2[VersionComparator Service]
         ERR[SymlinkError]
         ERR2[GitignoreError]
+        ERR3[MergeError]
     end
 
     TUI -->|User Input| UC1
@@ -95,13 +98,13 @@ graph TD
 - Pure business logic, zero external dependencies
 - Entities: FileRule, WorkspaceVersion
 - Services: FileMergeEngine, VersionComparator
-- Types: SymlinkError
+- Types: SymlinkError, GitignoreError, MergeError
 - Error handling via Result<T, Error>
 
 ### Application Layer (`src/application/`)
 - Use cases orchestrate domain services
-- Port interfaces: IFileSystem, IGitHubClient, IUserPrompt, ISymlinkCreator, IGitignoreCreator
-- Shared helpers: helpers.ts (createSymlinksWithWarning, shared guard logic)
+- Port interfaces: IFileSystem, IStagingSystem, IGitHubClient, IUserPrompt, ISymlinkCreator, IGitignoreCreator
+- Shared helpers: helpers.ts (shared guard logic), postInstall.ts (post-installation orchestration)
 - No business rules, only coordination
 
 ### Infrastructure Layer (`src/infrastructure/`)
