@@ -17,8 +17,9 @@ describe("Package.json Configuration", () => {
 	});
 
 	test("has correct version", () => {
-		// Match whatever version is in package.json (no hardcoding)
-		expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/);
+		// Match whatever version is in package.json (no hardcoding).
+		// Accepts production (1.2.3) and pre-release (1.2.3-beta.1) formats.
+		expect(pkg.version).toMatch(/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/);
 	});
 
 	test("has type module", () => {
