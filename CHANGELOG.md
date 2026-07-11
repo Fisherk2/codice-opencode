@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Agent KNOWLEDGE chain updated (Issue #29, FEV-9):** All 6 primary agents now reference MCP server category: `AGENTS.md → SPEC.md → docs/ → skills/ → MCP servers → Web search → Question-tool`.
 - **Wiki expansion (Issue #29, FEV-9):** `MCP-Servers.md` extended from 4 to 9 pre-configured servers with detailed setup sections for each new MCP.
 - **npm packaging integration tests (TD-5.3, FEV-10):** 5 scenarios (A-E) using `bun pm pack` to validate tarball structure, binary version, symlink exclusion, gitignore renaming, and clean install from extracted package.
+- **Obsidian subagent `obsidian-vault-writer` (Issue #21, FEV-8):** New subagent specialized for Obsidian vault administration with YAML frontmatter (role, scope, output_format, rules), `## Composition` block, and strict permissions — only edits `.md` files, only executes obsidian-cli, only deployable via Huitzilopochtli.
+- **3 Obsidian skills (Issue #21, FEV-8):** Installed in `skills/obsidian-cli/`, `skills/obsidian-markdown/`, `skills/obsidian-vault/` — each with SKILL.md following standard template format with YAML frontmatter, description, triggers, steps, and exit criteria.
+- **3 additional skills from public catalog (Issue #21, FEV-8):** Installed alongside Obsidian skills for expanded workspace capability.
+- **Huitzilopochtli catalog updated (Issue #21, FEV-8):** `agents/huitzilopochtli.md` updated with `obsidian-vault-writer` entry in the document authoring/corpus management domain.
+- **Delegation tables updated (Issue #21, FEV-8):** `quetzalcoatl.md`, `tlaloc.md`, `mictlantecuhtli.md` — all three agent delegation tables now include `obsidian-vault-writer` as a delegable subagent.
+- **`VALID_SUBAGENTS` updated (Issue #21, FEV-8):** `obsidian-vault-writer` added to the `VALID_SUBAGENTS` Set in `.opencode/plugins/sdd-pipeline.ts`.
+- **GitHub Wiki Skills.md page updated (Issue #21, FEV-8):** 3 Obsidian skills added to the skills catalog with descriptions and phase assignments.
+- **Path containment validation for vault paths (Issue #21, FEV-8):** Anti-traversal guard implemented to prevent symlink escapes in vault path resolution.
+- **Hardcoded vault path replaced with generic placeholder (Issue #21, FEV-8):** Repository-specific vault path removed in favor of a customizable placeholder for user configuration.
+- **Bilingual principle removed from agent prompts (Issue #21, FEV-8):** `## Bilingual` section stripped from all agent prompts for consistency — English-only agent communication enforced.
 
 ### Changed
 
@@ -28,10 +38,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`IFileSystem` port split (TD-2.1, FEV-10):** Interface Segregation Principle applied — `IFileSystem` reduced from 10 to 6 methods; new `IStagingSystem` port (4 methods) extracted. `BunFileSystem` implements both.
 - **TypeScript 6.0.3 upgrade (TD-3.1, FEV-10):** TypeScript 5.9.3 → 6.0.3. No breaking changes; `tsc --noEmit` passes cleanly.
 - **`main.ts` coverage increase (TD-1.1, FEV-10):** 13 new integration tests raised coverage from 33.04% → 86.21% lines (100% functions). Execution path, error path, parse failure, SIGINT handler, and terminal flag scenarios all covered.
+- **Regex hardening — `chmod 777` broadened (commit 22e3255):** Pattern widened from `/chmod\s+(-R\s+)?777\s+[\/~]/i` to `/chmod\s+(-R\s+)?0*777\b/i` — now blocks `chmod 777` on ANY path, not just root/relative-to-home paths.
+- **Regex hardening — `find -exec` broadened (commit 22e3255):** Pattern expanded to block ALL commands passed to `find -exec` (not just `rm`), covering `curl`, `chmod`, and other payload injection vectors.
+- **Bypass vector closure — `chmod 0777` (commit a7c3d08):** Leading octal zero bypass closed — regex now accepts optional `0*` prefix before `777`.
+- **Bypass vector closure — `find -execdir` (commit a7c3d08):** GNU/BSD `-execdir` variant bypass vector closed — regex now matches both `-exec` and `-execdir`.
+- **`export PATH=` regex refined (FEV-7 code review, commit 92a9cec):** Pattern narrowed to `/export\s+PATH\s*=\s*[^$]/i` — only blocks total replacement exports (e.g., `export PATH=/bad/path`), allows safe appends (e.g., `export PATH=$PATH:/new/dir`).
+- **Redundant `chmod 777` pattern removed (FEV-7 code review, commit 92a9cec):** Deduplicated — the broader `/chmod\s+(-R\s+)?0*777\b/i` pattern already covers all cases.
+- **Plugin README line count updated (FEV-7 code review, commit 92a9cec):** Documentation synced from 663 to 664 lines.
+- **Terminal flag tests parameterized (FEV-10 code review, commit 2821223):** `it.each` pattern applied to terminal flag tests for cleaner, more maintainable test structure.
+- **`destinationExists()` EACCES error code branching (FEV-10 code review, commit 2821223):** `BunFileSystem.destinationExists()` now distinguishes `ENOENT` from `EACCES` via explicit error code branching, enabling precise error diagnosis.
+- **Clarifying comment in `BunFileSystem` (FEV-10 code review, commit 2821223):** Added intent comment for non-ENOENT/non-EACCES fallback path in `destinationExists()`.
+
+### Fixed
+
+- **Side-effect tarball cleanup (FEV-10 code review, commits e440d94→2821223):** `bun pm pack` tarball artifact in CWD now cleaned up properly in test teardown to prevent polluting the workspace.
+- **`biome.json` tabs→spaces formatting reverted (FEV-10 code review, commit 7c4f75b):** Code review Critical finding — Biome auto-format converted indentation from tabs to spaces. Reverted to project-standard tab indentation.
 
 ### Security
 
 - **Destructive command hardening (Issue #30):** rm -rf, git push --force, DROP DATABASE, mkfs, dd if=, chmod 777, git reset --hard, kubectl delete --all, terraform destroy -auto-approve, redis FLUSHALL, and 40+ additional patterns now blocked at runtime and config level.
+- **Post-CHANGELOG regex hardening (commit 22e3255):** `chmod 777` pattern widened from path-restricted to catch-all; `find -exec` broadened to block ALL commands (curl, chmod, etc.), not just `rm`.
+- **Post-CHANGELOG bypass vector closure (commit a7c3d08):** `chmod 0777` (leading octal zero) and `find -execdir` (GNU/BSD variant) bypass vectors both closed with broader regex patterns.
+- **New bypass attempt test cases added (commit a7c3d08):** `find -execdir rm`, `find -execdir curl`, `chmod 0777`, `chmod -R 0777` — all verified blocked at regex level.
+- **33 new behavioral tests for DESTRUCTIVE_PATTERNS (FEV-7 code review, commit 92a9cec):** Comprehensive test suite added covering positive matches (33 patterns), negative matches (13 safe patterns), bypass attempts (4), and `normalizeBash` (7 edge cases) for the destructive command regex engine.
 
 ## [1.0.15] — 2026-07-09
 
