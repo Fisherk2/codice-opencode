@@ -25,28 +25,27 @@ Expandir el catálogo de MCP servers de 4 a 10 en el workspace template. Reempla
 | # | MCP | Key | Tipo | Comando/URL | API Key |
 |---|-----|-----|------|-------------|---------|
 | 1 | docs-mcp-server | Reemplaza Docfork | Local | `npx -y @arabold/docs-mcp-server` | No |
-| 2 | rtfmbro | Package docs | Remote | `https://rtfmbro.smolosoft.dev/mcp/` | No |
-| 3 | tavily | Web search | Remote | `https://mcp.tavily.com/mcp` | TAVILY_API_KEY |
-| 4 | firecrawl | Web scraping | Remote | `https://mcp.firecrawl.dev/v2/mcp` | FIRECRAWL_API_KEY |
-| 5 | vercel-grep | Code search | Remote | `https://mcp.grep.app` | No |
-| 6 | gitmcp | Repo docs | Remote | `https://gitmcp.io/docs` | No |
+| 2 | tavily | Web search | Remote | `https://mcp.tavily.com/mcp` | TAVILY_API_KEY |
+| 3 | firecrawl | Web scraping | Remote | `https://mcp.firecrawl.dev/v2/mcp` | FIRECRAWL_API_KEY |
+| 4 | vercel-grep | Code search | Remote | `https://mcp.grep.app` | No |
+| 5 | gitmcp | Repo docs | Remote | `https://gitmcp.io/docs` | No |
 
 ---
 
 ## Descomposición de Tareas
 
-### T1: `opencode.json` — Añadir 6 nuevas entradas MCP
-**Criterios:** JSON válido, 10 MCPs, solo context7 enabled.
+### T1: `opencode.json` — Añadir 5 nuevas entradas MCP
+**Criterios:** JSON válido, 9 MCPs, 3 enabled (context7, vercel-grep, gitmcp).
 **Archivo:** `template/obligatorio/opencode.json`
-**Commit:** `feat(mcp): add 6 new MCP servers to opencode.json`
+**Commit:** `feat(mcp): add 5 new MCP servers to opencode.json`
 
 ### T2: Wiki — Ampliar `MCP-Servers.md`
-**Criterios:** Tabla con 10 servidores, 6 secciones de activación, tabla Features actualizada.
+**Criterios:** Tabla con 9 servidores, 5 secciones de activación, tabla Features actualizada.
 **Archivo:** `docs/wiki-source/MCP-Servers.md`
-**Commit:** `docs(wiki): add 6 new MCP servers to MCP-Servers.md`
+**Commit:** `docs(wiki): add 5 new MCP servers to MCP-Servers.md`
 
 ### T3: Skill — Actualizar `context-engineering/SKILL.md`
-**Criterios:** Referencia a Context7 reemplazada por mención a 10 MCPs con enlace a Wiki.
+**Criterios:** Referencia a Context7 reemplazada por mención a 9 MCPs con enlace a Wiki.
 **Archivo:** `template/obligatorio/skills/context-engineering/SKILL.md`
 **Commit:** `docs(skills): update context-engineering skill`
 
@@ -55,7 +54,7 @@ Expandir el catálogo de MCP servers de 4 a 10 en el workspace template. Reempla
 **Archivos:** `template/obligatorio/agents/{huitzilopochtli,quetzalcoatl,moctezuma,tlaloc,mictlantecuhtli,tezcatlipoca}.md`
 **Nueva cadena:**
 ```
-AGENTS.md → SPEC.md → docs/ → skills/ → MCP servers (Context7, Docs, Rtfmbro, Tavily, Firecrawl, Grep, GitMCP) → Web search → Question-tool
+AGENTS.md → SPEC.md → docs/ → skills/ → MCP servers → Web search → Question-tool
 ```
 **Commit:** `feat(agents): update KNOWLEDGE chain in 6 primary agents`
 
@@ -85,8 +84,8 @@ T5 (CHANGELOG) ── depende de todo lo anterior
 | Check | Comando |
 |-------|---------|
 | JSON válido | `jq '.' template/obligatorio/opencode.json` |
-| 10 MCPs | `jq '.mcp \| keys \| length' template/obligatorio/opencode.json` |
-| Solo context7 enabled | `jq '[.mcp \| to_entries[] \| select(.value.enabled == true) \| .key]' template/obligatorio/opencode.json` |
+| 9 MCPs | `jq '.mcp \| keys \| length' template/obligatorio/opencode.json` |
+| 3 enabled (context7, vercel-grep, gitmcp) | `jq '[.mcp \| to_entries[] \| select(.value.enabled == true) \| .key]' template/obligatorio/opencode.json` |
 | Tests sin regresión | `bun test tests/` (563 pass, 0 fail) |
 | Agents actualizados | `rg "MCP servers" template/obligatorio/agents/*.md → 6 matches` |
 | Sin cambios en package.json | `git diff package.json → 0 lines` |
@@ -101,5 +100,5 @@ T5 (CHANGELOG) ── depende de todo lo anterior
 | T1: opencode.json | ✅ Completo | `3f827e0` |
 | T2: Wiki | ✅ Completo | `33f3a85` |
 | T3: context-engineering | ✅ Completo | `b99bfde` |
-| T4: 6 agentes KNOWLEDGE | 🔄 En progreso | — |
-| T5: CHANGELOG | ⏳ Pendiente | — |
+| T4: 6 agentes KNOWLEDGE | ✅ Completo | `c64b9b5` |
+| T5: CHANGELOG | ✅ Completo | `3d0cdd3` |
