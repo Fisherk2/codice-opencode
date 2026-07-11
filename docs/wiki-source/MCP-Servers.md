@@ -18,7 +18,7 @@ The template ships with **10 MCP servers** pre-configured in `opencode.json`. On
 | `chrome-devtools` | Local | ❌ Disabled | `/webperf` Deep mode, browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`xlsx` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
-| `docs-mcp-server` | Remote | ❌ Disabled | Open-source documentation queries |
+| `docs-mcp-server` | Local | ❌ Disabled | Open-source documentation queries |
 | `rtfmbro` | Remote | ❌ Disabled | Version-precise package documentation |
 | `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
 | `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
@@ -268,31 +268,27 @@ Local SSE-based MCP server that provides up-to-date library documentation from o
 
 #### Quick Start
 
-1. **Start the Grounded Docs server:**
-   ```bash
-   npx @arabold/docs-mcp-server@latest
-   ```
-   This starts the Web UI at `http://localhost:6280` and the MCP SSE endpoint.
+**Enable the MCP server** in `opencode.json` — no manual server process needed:
 
-2. **Add documentation** via the Web UI at `http://localhost:6280`, or via CLI:
-   ```bash
-   npx @arabold/docs-mcp-server@latest scrape react https://react.dev/reference/react
-   ```
+```json
+{
+  "mcp": {
+    "docs-mcp-server": {
+      "type": "local",
+      "command": ["npx", "-y", "@arabold/docs-mcp-server@latest"],
+      "enabled": true
+    }
+  }
+}
+```
 
-3. **Enable the MCP server** in `opencode.json`:
-   ```json
-   {
-     "mcp": {
-       "docs-mcp-server": {
-         "type": "remote",
-         "url": "http://localhost:6280/sse",
-         "enabled": true
-       }
-     }
-   }
-   ```
+OpenCode manages the server lifecycle automatically via stdio.
 
-4. **Restart OpenCode** for the change to take effect.
+> **Tip:** You can also access the Web UI at `http://localhost:6280` when the server is running to add documentation interactively, or index docs via CLI:
+> ```bash
+> npx @arabold/docs-mcp-server@latest scrape react https://react.dev/reference/react
+> npx @arabold/docs-mcp-server@latest search react "useEffect" --output yaml
+> ```
 
 #### Available Tools
 
@@ -327,6 +323,7 @@ Remote MCP server that fetches real-time, version-specific package documentation
 
 - No API key required
 - Package must have a GitHub repository linked in its metadata
+- **Availability:** The remote hosted service may be temporarily unavailable (owner-maintained). If the connection fails, the server may be down for maintenance.
 
 #### Available Tools
 

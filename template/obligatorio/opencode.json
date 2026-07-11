@@ -669,8 +669,8 @@
       }
     },
     "docs-mcp-server": {
-      "type": "remote",
-      "url": "http://localhost:6280/sse",
+      "type": "local",
+      "command": ["npx", "-y", "@arabold/docs-mcp-server@latest"],
       "enabled": false
     },
     "rtfmbro": {
