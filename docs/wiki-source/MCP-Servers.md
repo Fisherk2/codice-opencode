@@ -18,10 +18,10 @@ The template ships with **10 MCP servers** pre-configured in `opencode.json`. On
 | `chrome-devtools` | Local | ❌ Disabled | `/webperf` Deep mode, browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`xlsx` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
-| `docs-mcp-server` | Local | ❌ Disabled | Open-source documentation queries |
-| `rtfmbro` | Remote | ❌ Disabled | Version-precise package documentation |
-| `tavily` | Remote | ❌ Disabled | Real-time web search (API key) |
-| `firecrawl` | Remote | ❌ Disabled | Web scraping and crawling (API key) |
+| `docs-mcp-server` | HTTP (SSE) | ❌ Disabled | Open-source documentation queries |
+| `rtfmbro` | HTTP | ❌ Disabled | Version-precise package documentation |
+| `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
+| `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
 | `vercel-grep` | Remote | ❌ Disabled | GitHub code search across 1M+ repos |
 | `gitmcp` | Remote | ❌ Disabled | GitHub repository documentation |
 
@@ -257,41 +257,57 @@ For lightweight sessions without a full Jupyter server:
 
 ### Grounded Docs MCP Server — Open-Source Documentation Queries
 
-Local MCP server that provides up-to-date library documentation. Open-source alternative to Context7. Caches documentation from official sources on demand.
+Local SSE-based MCP server that provides up-to-date library documentation from official sources. Open-source alternative to Context7. Indexes docs from websites, GitHub, npm, PyPI, and local files.
 
-**Pre-configured as:** `"enabled": false` — enable when you need an additional documentation source alongside context7.
-
-```json
-{
-  "mcp": {
-    "docs-mcp-server": {
-      "type": "local",
-      "command": ["npx", "-y", "@arabold/docs-mcp-server"],
-      "enabled": true
-    }
-  }
-}
-```
+**Pre-configured as:** `"enabled": false` — requires manual startup of the server first.
 
 #### Prerequisites
 
-- Node.js LTS (already present in this workspace)
+- Node.js 22+ (already present in this workspace)
 - No API key required
+
+#### Quick Start
+
+1. **Start the Grounded Docs server:**
+   ```bash
+   npx @arabold/docs-mcp-server@latest
+   ```
+   This starts the Web UI at `http://localhost:6280` and the MCP SSE endpoint.
+
+2. **Add documentation** via the Web UI at `http://localhost:6280`, or via CLI:
+   ```bash
+   npx @arabold/docs-mcp-server@latest scrape react https://react.dev/reference/react
+   ```
+
+3. **Enable the MCP server** in `opencode.json`:
+   ```json
+   {
+     "mcp": {
+       "docs-mcp-server": {
+         "type": "http",
+         "url": "http://localhost:6280/sse",
+         "enabled": true
+       }
+     }
+   }
+   ```
+
+4. **Restart OpenCode** for the change to take effect.
 
 #### Available Tools
 
 | Tool | Purpose |
 |------|---------|
 | `fetch_docs` | Fetch documentation for a specific library URL |
-| `search_docs` | Search across cached documentation |
+| `search_docs` | Semantic search across indexed documentation |
 
-> **Repository:** [github.com/arabold/docs-mcp-server](https://github.com/arabold/docs-mcp-server)
+> **Repository:** [github.com/arabold/docs-mcp-server](https://github.com/arabold/docs-mcp-server) | **Web:** [grounded.tools](https://grounded.tools)
 
 ---
 
 ### Rtfmbro — Version-Precise Package Documentation
 
-Remote MCP server that fetches real-time, version-specific package documentation from GitHub. Ideal for getting exact docs for a specific npm or PyPI version.
+HTTP (SSE) MCP server that fetches real-time, version-specific package documentation from GitHub. Ideal for getting exact docs for a specific npm or PyPI version.
 
 **Pre-configured as:** `"enabled": false` — enable when you need version-pinned docs.
 
@@ -299,7 +315,7 @@ Remote MCP server that fetches real-time, version-specific package documentation
 {
   "mcp": {
     "rtfmbro": {
-      "type": "remote",
+      "type": "http",
       "url": "https://rtfmbro.smolosoft.dev/mcp/",
       "enabled": true
     }
@@ -332,23 +348,40 @@ Remote MCP server for AI-optimized web search. Provides search and content extra
 
 #### Prerequisites
 
-- **Tavily API key** — Get one free at [tavily.com](https://www.tavily.com/)
-- Set the environment variable: `export TAVILY_API_KEY=tvly-your-key-here`
+- **Tavily API key** — Sign up and get a free API key at [tavily.com](https://www.tavily.com/)
 
-```json
-{
-  "mcp": {
-    "tavily": {
-      "type": "remote",
-      "url": "https://mcp.tavily.com/mcp",
-      "headers": {
-        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
-      },
-      "enabled": true
-    }
-  }
-}
-```
+#### Quick Start
+
+1. **Set your API key** (pick one method):
+
+   **Option A — Environment variable:**
+   ```bash
+   export TAVILY_API_KEY=tvly-your-key-here
+   ```
+   Then enable in `opencode.json`:
+   ```json
+   {
+     "mcp": {
+       "tavily": {
+         "type": "remote",
+         "url": "https://mcp.tavily.com/mcp",
+         "headers": {
+           "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+         },
+         "enabled": true
+       }
+     }
+   }
+   ```
+
+   **Option B — OAuth authentication (recommended):**
+   ```bash
+   opencode mcp auth tavily
+   ```
+   This launches an OAuth flow in your browser. No manual API key handling required.
+
+2. **Enable the server** (if not using OAuth, enable in `opencode.json` as shown above).
+3. **Restart OpenCode** for the change to take effect.
 
 #### Available Tools
 
@@ -365,27 +398,46 @@ Remote MCP server for AI-optimized web search. Provides search and content extra
 
 Remote MCP server for scraping, crawling, and extracting content from web pages. Supports batch scraping, deep crawling, and structured data extraction. Requires a Firecrawl API key.
 
-**Pre-configured as:** `"enabled": false` — requires API key setup.
+**Pre-configured as:** `"enabled": false` — requires setup.
 
-#### Prerequisites
+#### Quick Start
 
-- **Firecrawl API key** — Get one free at [firecrawl.dev](https://www.firecrawl.dev/)
-- Set the environment variable: `export FIRECRAWL_API_KEY=fc-your-key-here`
+1. **Install Firecrawl skills and authenticate:**
 
-```json
-{
-  "mcp": {
-    "firecrawl": {
-      "type": "remote",
-      "url": "https://mcp.firecrawl.dev/v2/mcp",
-      "headers": {
-        "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
-      },
-      "enabled": true
-    }
-  }
-}
-```
+   ```bash
+   npx -y firecrawl-cli@latest init --all -k YOUR_FIRECRAWL_API_KEY
+   ```
+
+   This installs 31 Firecrawl skills across all your AI coding agents.
+
+   > **Get an API key:** Sign up at [firecrawl.dev](https://www.firecrawl.dev/) for a free key.
+
+2. **Authenticate via OAuth:**
+
+   ```bash
+   opencode mcp auth firecrawl
+   ```
+
+   This launches an OAuth flow in your browser, connecting OpenCode to Firecrawl's MCP endpoint.
+
+3. **Enable the MCP server** in `opencode.json` (only needed if not using OAuth):
+
+   ```json
+   {
+     "mcp": {
+       "firecrawl": {
+         "type": "remote",
+         "url": "https://mcp.firecrawl.dev/v2/mcp",
+         "headers": {
+           "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
+         },
+         "enabled": true
+       }
+     }
+   }
+   ```
+
+4. **Restart OpenCode** for the change to take effect.
 
 #### Available Tools
 
