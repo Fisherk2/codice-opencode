@@ -18,8 +18,8 @@ The template ships with **10 MCP servers** pre-configured in `opencode.json`. On
 | `chrome-devtools` | Local | ❌ Disabled | `/webperf` Deep mode, browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`xlsx` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
-| `docs-mcp-server` | HTTP (SSE) | ❌ Disabled | Open-source documentation queries |
-| `rtfmbro` | HTTP | ❌ Disabled | Version-precise package documentation |
+| `docs-mcp-server` | Remote | ❌ Disabled | Open-source documentation queries |
+| `rtfmbro` | Remote | ❌ Disabled | Version-precise package documentation |
 | `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
 | `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
 | `vercel-grep` | Remote | ❌ Disabled | GitHub code search across 1M+ repos |
@@ -284,7 +284,7 @@ Local SSE-based MCP server that provides up-to-date library documentation from o
    {
      "mcp": {
        "docs-mcp-server": {
-         "type": "http",
+         "type": "remote",
          "url": "http://localhost:6280/sse",
          "enabled": true
        }
@@ -307,7 +307,7 @@ Local SSE-based MCP server that provides up-to-date library documentation from o
 
 ### Rtfmbro — Version-Precise Package Documentation
 
-HTTP (SSE) MCP server that fetches real-time, version-specific package documentation from GitHub. Ideal for getting exact docs for a specific npm or PyPI version.
+Remote MCP server that fetches real-time, version-specific package documentation from GitHub. Ideal for getting exact docs for a specific npm or PyPI version.
 
 **Pre-configured as:** `"enabled": false` — enable when you need version-pinned docs.
 
@@ -315,7 +315,7 @@ HTTP (SSE) MCP server that fetches real-time, version-specific package documenta
 {
   "mcp": {
     "rtfmbro": {
-      "type": "http",
+      "type": "remote",
       "url": "https://rtfmbro.smolosoft.dev/mcp/",
       "enabled": true
     }

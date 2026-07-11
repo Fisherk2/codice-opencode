@@ -669,12 +669,12 @@
       }
     },
     "docs-mcp-server": {
-      "type": "http",
+      "type": "remote",
       "url": "http://localhost:6280/sse",
       "enabled": false
     },
     "rtfmbro": {
-      "type": "http",
+      "type": "remote",
       "url": "https://rtfmbro.smolosoft.dev/mcp/",
       "enabled": false
     },
