@@ -58,6 +58,8 @@ export function validateDestPath(dest: string): string | null {
 						"C:\\Program Files",
 						"C:\\Program Files (x86)",
 						"C:\\Users\\Public",
+						"C:\\ProgramData",
+						"C:\\Users",
 					]
 				: [
 						"/etc",
@@ -74,9 +76,14 @@ export function validateDestPath(dest: string): string | null {
 						// /tmp intentionally omitted — users commonly install to /tmp for testing
 					];
 		for (const sysDir of SYSTEM_DIRS) {
-			if (normalized === sysDir || normalized.startsWith(`${sysDir}/`)) {
+			if (normalized === sysDir || normalized.startsWith(`${sysDir}${path.sep}`)) {
 				return `Invalid destination path: "${trimmed}" is inside a system directory "${sysDir}"`;
 			}
+		}
+
+		// Block bare drive roots (C:\, D:\, etc.)
+		if (/^[A-Z]:\\?$/i.test(normalized)) {
+			return `Invalid destination path: "${trimmed}" is a drive root`;
 		}
 	}
 
