@@ -45,7 +45,17 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 
 ## 2. Architectural Debt
 
-*(No architectural debt items currently open.)*
+### 2.1 CleanInstallUseCase / ProjectInstallUseCase duplicación (~80 líneas)
+
+| Item | Detail |
+|------|--------|
+| **Problem** | `CleanInstallUseCase` (162 líneas) y `ProjectInstallUseCase` (139 líneas) comparten same constructor signature (7 parámetros idénticos), mismo flujo `execute()` (checkWritable → confirmOverwrite → selectOptionals → merge → postInstall), y métodos `confirmOverwrite()`/`runPostInstall()` casi idénticos. |
+| **Differences** | (1) `buildRules()`: Clean convierte todo a mandatory; Project pasa manifest tal cual. (2) `selectOptionals()`: Clean con force selecciona todos; Project retorna vacío. (3) Mensajes de confirmación/éxito. |
+| **Proposed fix** | Template Method pattern: extraer clase base `InstallUseCaseBase` con flujo común y hooks para las 3 variaciones. |
+| **Risk** | Low. La duplicación es explícita y ambas clases ya delegaron la lógica compartida a `helpers.ts` y `postInstall.ts`. |
+| **Recommendation** | Aplicar Rule of Three: esperar a un cuarto modo de instalación antes de refactorizar. |
+| **Target** | v1.2.0+ (o cuando surja un nuevo modo) |
+| **Effort** | 4h |
 
 ---
 
@@ -160,6 +170,7 @@ not file granularity.
 | Binary size reduction (74MB → <20MB) | 8-12h | 73% smaller downloads, faster installs, lower CDN costs |
 | E2E coverage instrumentation | 8h | Accurate coverage for entry point |
 | `just bench` performance benchmarks | 4h | Regression detection for SC-9/10/11 |
+| CleanInstall/ProjectInstall Template Method refactor | 4h | Eliminate ~80 lines duplication, prepare for new install modes |
 
 ---
 
