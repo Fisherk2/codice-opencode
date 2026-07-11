@@ -300,67 +300,72 @@ describe("main() — execution path", () => {
 
 	it("exits with EXIT_SUCCESS on clean install with --clean --force", async () => {
 		const testDir = "/tmp/test-main-success";
-		await fs.mkdir(testDir, { recursive: true });
-		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
 
 		try {
-			await main();
-		} catch {
-			// OK
+			await fs.mkdir(testDir, { recursive: true });
+			process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
+
+			try {
+				await main();
+			} catch {
+				// OK
+			}
+
+			expect(execExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
+			const exitCode = (execExitMock.mock.calls[0] as unknown[])[0] as number;
+			// Standard execution path with a writable, empty temp dir should succeed.
+			expect(exitCode).toBe(EXIT_SUCCESS);
+		} finally {
+			await fs.rm(testDir, { recursive: true, force: true });
 		}
-
-		// The install succeeded or failed — either way, process.exit was called
-		expect(execExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
-		const exitCode = (execExitMock.mock.calls[0] as unknown[])[0] as number;
-		// Should exit with SUCCESS if install completed, or ERROR if it failed
-		expect([EXIT_SUCCESS, EXIT_ERROR]).toContain(exitCode);
-
-		await fs.rm(testDir, { recursive: true, force: true });
 	});
 
 	it("triggers EXIT_ERROR when installation fails (read-only destination)", async () => {
 		const readonlyDir = "/tmp/test-main-readonly";
-		await fs.mkdir(readonlyDir, { recursive: true });
-		await fs.chmod(readonlyDir, 0o444);
-		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", readonlyDir];
 
 		try {
-			await main();
-		} catch {
-			// OK
+			await fs.mkdir(readonlyDir, { recursive: true });
+			await fs.chmod(readonlyDir, 0o444);
+			process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", readonlyDir];
+
+			try {
+				await main();
+			} catch {
+				// OK
+			}
+
+			expect(execExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
+			const exitCode = (execExitMock.mock.calls[0] as unknown[])[0] as number;
+			expect(exitCode).toBe(EXIT_ERROR);
+		} finally {
+			await fs.chmod(readonlyDir, 0o755).catch(() => {});
+			await fs.rm(readonlyDir, { recursive: true, force: true });
 		}
-
-		// With a read-only destination, isWritable() returns false,
-		// and the use case should return an error.
-		expect(execExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
-		const exitCode = (execExitMock.mock.calls[0] as unknown[])[0] as number;
-		expect(exitCode).toBe(EXIT_ERROR);
-
-		await fs.chmod(readonlyDir, 0o755);
-		await fs.rm(readonlyDir, { recursive: true, force: true });
 	});
 
 	it("exits with EXIT_ERROR on update with --update when version is missing", async () => {
 		const testDir = "/tmp/test-main-update";
-		await fs.mkdir(testDir, { recursive: true });
-
-		// Mock version check: CODICE_GITHUB_API_URL points to a non-existent
-		// server so the version check fails gracefully.
 		const prevApiUrl = process.env.CODICE_GITHUB_API_URL;
-		process.env.CODICE_GITHUB_API_URL = "http://localhost:1/nonexistent";
-		process.argv = ["bun", "main.ts", "--update", "--force", "--dest", testDir];
 
 		try {
-			await main();
-		} catch {
-			// OK
+			await fs.mkdir(testDir, { recursive: true });
+
+			// Mock version check: CODICE_GITHUB_API_URL points to a non-existent
+			// server so the version check fails gracefully.
+			process.env.CODICE_GITHUB_API_URL = "http://localhost:1/nonexistent";
+			process.argv = ["bun", "main.ts", "--update", "--force", "--dest", testDir];
+
+			try {
+				await main();
+			} catch {
+				// OK
+			}
+
+			expect(execExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
+		} finally {
+			process.env.CODICE_GITHUB_API_URL = prevApiUrl;
+			await fs.rm(testDir, { recursive: true, force: true });
 		}
-
-		// Update should attempt version check, fail, and fall back to local
-		expect(execExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
-
-		process.env.CODICE_GITHUB_API_URL = prevApiUrl;
-		await fs.rm(testDir, { recursive: true, force: true });
 	});
 
 	it("cleans up SIGINT listener in finally block after completion", async () => {
