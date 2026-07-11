@@ -27,5 +27,14 @@
     "noPropertyAccessFromIndexSignature": false
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
-  "exclude": ["node_modules", "dist", "skills", "template", "agents", "references", "commands", "tests/fixtures/workspace" /* dev playground — not part of the test suite */]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "skills",
+    "template",
+    "agents",
+    "references",
+    "commands",
+    "tests/fixtures/workspace" /* dev playground — not part of the test suite */
+  ]
 }

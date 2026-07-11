@@ -44,18 +44,13 @@ export async function packTarball(): Promise<string> {
 
 	// Run bun pm pack in the project root, output to temp dir
 	// --quiet makes the output only the tarball filename
-	const proc = Bun.spawnSync(
-		["bun", "pm", "pack", "--destination", tmpDir, "--quiet"],
-		{
-			cwd: projectRoot,
-		},
-	);
+	const proc = Bun.spawnSync(["bun", "pm", "pack", "--destination", tmpDir, "--quiet"], {
+		cwd: projectRoot,
+	});
 
 	if (proc.exitCode !== 0) {
 		await fs.rm(tmpDir, { recursive: true, force: true });
-		throw new Error(
-			`bun pm pack failed (exit ${proc.exitCode}): ${proc.stderr.toString()}`,
-		);
+		throw new Error(`bun pm pack failed (exit ${proc.exitCode}): ${proc.stderr.toString()}`);
 	}
 
 	// Find the tarball file in the temp directory
@@ -91,9 +86,7 @@ export async function listTarballContents(tarballPath: string): Promise<string[]
 	const proc = Bun.spawnSync(["tar", "tzf", tarballPath]);
 
 	if (proc.exitCode !== 0) {
-		throw new Error(
-			`tar tzf failed (exit ${proc.exitCode}): ${proc.stderr.toString()}`,
-		);
+		throw new Error(`tar tzf failed (exit ${proc.exitCode}): ${proc.stderr.toString()}`);
 	}
 
 	const stdout = proc.stdout.toString();
@@ -120,9 +113,7 @@ export async function extractTarball(tarballPath: string): Promise<string> {
 
 	if (proc.exitCode !== 0) {
 		await fs.rm(extractDir, { recursive: true, force: true });
-		throw new Error(
-			`tar extract failed (exit ${proc.exitCode}): ${proc.stderr.toString()}`,
-		);
+		throw new Error(`tar extract failed (exit ${proc.exitCode}): ${proc.stderr.toString()}`);
 	}
 
 	return path.join(extractDir, "package");
