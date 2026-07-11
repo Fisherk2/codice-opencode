@@ -151,7 +151,7 @@ const DESTRUCTIVE_PATTERNS: RegExp[] = [
   /rm\s+-[a-z]*r[a-z]*f\b/i,       // [existing] rm -r -f, rm -rf, rm -fir
   /rm\s+-[a-z]*f[a-z]*r\b/i,       // [existing] rm -f -r (reversed flags)
   /shred\s+/i,                      // shred — secure file deletion
-  /find\s+.*-exec\s+rm\b/i,         // find -exec rm
+  /find\s+.*-exec\b/i,              // find -exec * — blocks all find -exec, not just rm
   /find\s+.*-delete\b/i,            // find -delete
 
   // ─── Git ────────────────────────────────────────────
@@ -179,7 +179,7 @@ const DESTRUCTIVE_PATTERNS: RegExp[] = [
   /kubectl\s+drain\b/i,              // kubectl drain
 
   // ─── Permissions ────────────────────────────────────
-  /chmod\s+(-R\s+)?777\s+[\/~]/i,    // chmod 777 / (root) or chmod 777 ~/ (home)
+  /chmod\s+(-R\s+)?777\b/i,          // chmod 777 any path (prevents relative path bypass)
   /chown\s+-R\b/i,                   // chown -R
 
   // ─── Process ────────────────────────────────────────

