@@ -121,12 +121,9 @@ export class GitHubRestClient implements IGitHubClient {
 				// Malformed JSON response
 				return null;
 			}
-		} catch (error) {
-			// Handle abort/timeout
-			if (error instanceof DOMException && error.name === "AbortError") {
-				return null;
-			}
-			// Network errors (DNS failure, connection refused, etc.)
+		} catch {
+			// Covers: AbortError (timeout), DNS failure, connection refused,
+			// and any other unexpected error.
 			return null;
 		} finally {
 			clearTimeout(timeoutId);
