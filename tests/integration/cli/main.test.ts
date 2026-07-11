@@ -399,6 +399,19 @@ describe("main() — terminal flags", () => {
 	let origExit: typeof process.exit;
 	let exitMock: ReturnType<typeof mockFn>;
 
+	/**
+	 * Run main() with given argv and catch the __EXIT__ thrown by the mock.
+	 * Returns without rethrowing known __EXIT__ errors.
+	 */
+	async function runWithArgs(...args: string[]): Promise<void> {
+		process.argv = ["bun", "main.ts", ...args];
+		try {
+			await main();
+		} catch (e) {
+			if ((e as Error).message !== "__EXIT__") throw e;
+		}
+	}
+
 	beforeEach(() => {
 		origArgv = process.argv;
 		origExit = process.exit;
@@ -413,74 +426,19 @@ describe("main() — terminal flags", () => {
 		process.exit = origExit;
 	});
 
-	it("exits with EXIT_SUCCESS when --version is passed", async () => {
-		process.argv = ["bun", "main.ts", "--version"];
-
-		try {
-			await main();
-		} catch (e) {
-			if ((e as Error).message !== "__EXIT__") throw e;
-		}
-
-		expect(exitMock).toHaveBeenCalledWith(EXIT_SUCCESS);
-	});
-
-	it("exits with EXIT_SUCCESS when -V is passed", async () => {
-		process.argv = ["bun", "main.ts", "-V"];
-
-		try {
-			await main();
-		} catch (e) {
-			if ((e as Error).message !== "__EXIT__") throw e;
-		}
-
-		expect(exitMock).toHaveBeenCalledWith(EXIT_SUCCESS);
-	});
-
-	it("exits with EXIT_SUCCESS when --help is passed", async () => {
-		process.argv = ["bun", "main.ts", "--help"];
-
-		try {
-			await main();
-		} catch (e) {
-			if ((e as Error).message !== "__EXIT__") throw e;
-		}
-
-		expect(exitMock).toHaveBeenCalledWith(EXIT_SUCCESS);
-	});
-
-	it("exits with EXIT_SUCCESS when -h is passed", async () => {
-		process.argv = ["bun", "main.ts", "-h"];
-
-		try {
-			await main();
-		} catch (e) {
-			if ((e as Error).message !== "__EXIT__") throw e;
-		}
-
-		expect(exitMock).toHaveBeenCalledWith(EXIT_SUCCESS);
-	});
-
-	it("exits with EXIT_USAGE when passed an unrecognized flag", async () => {
-		process.argv = ["bun", "main.ts", "--bogus"];
-
-		try {
-			await main();
-		} catch (e) {
-			if ((e as Error).message !== "__EXIT__") throw e;
-		}
-
-		expect(exitMock).toHaveBeenCalledWith(EXIT_USAGE);
+	it.each([
+		{ flag: "--version", exitCode: EXIT_SUCCESS },
+		{ flag: "-V", exitCode: EXIT_SUCCESS },
+		{ flag: "--help", exitCode: EXIT_SUCCESS },
+		{ flag: "-h", exitCode: EXIT_SUCCESS },
+		{ flag: "--bogus", exitCode: EXIT_USAGE },
+	])("exits with $exitCode when $flag is passed", async ({ flag, exitCode }) => {
+		await runWithArgs(flag);
+		expect(exitMock).toHaveBeenCalledWith(exitCode);
 	});
 
 	it("does not reach parseArgs — process.exit called exactly once for terminal flags", async () => {
-		process.argv = ["bun", "main.ts", "--version"];
-
-		try {
-			await main();
-		} catch (e) {
-			if ((e as Error).message !== "__EXIT__") throw e;
-		}
+		await runWithArgs("--version");
 
 		// process.exit should only be called once (by the version check).
 		// If parseArgs was reached, it would succeed (--version is in ALLOWED_FLAGS)
