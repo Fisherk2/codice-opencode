@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Code review fixes (11 findings resolved):** 4 Important and 7 Suggestion findings from the 5-axis code review by Tezcatlipoca. GitHubRestClient catch simplified (dead AbortError branch removed). UpdateWorkspaceUseCase normalized to use shared confirmOverwrite helper from helpers.ts. Windows system directories added to --dest validation. Symlink path containment normalized with resolveWithinRoot in BunSymlinkCreator. AtomicStager migrated from Bun.file().text() to fs.copyFile() (no full-RAM copy). VERSION extracted to neutral module version.ts decoupling DI container from presentation layer. CleanInstall/ProjectInstall duplication documented in TECH_DEBT.md.
+
 ## [1.1.1] — 2026-07-11
 
 ### Added

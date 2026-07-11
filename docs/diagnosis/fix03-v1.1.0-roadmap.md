@@ -2,9 +2,9 @@
 
 **Issues:** [#21](https://github.com/fisherk2/codice-opencode/issues/21), [#26](https://github.com/fisherk2/codice-opencode/issues/26), [#27](https://github.com/fisherk2/codice-opencode/issues/27), [#28](https://github.com/fisherk2/codice-opencode/issues/28), [#29](https://github.com/fisherk2/codice-opencode/issues/29), [#30](https://github.com/fisherk2/codice-opencode/issues/30)
 **Tech Debt:** docs/TECH_DEBT.md (v1.1.0 items)
-**Date:** 2026-07-10
+**Date:** 2026-07-11
 **Severity:** mixed (configuration → medium, system prompts → high, dependency upgrades → medium)
-**Status:** planned
+**Status:** completed
 
 ---
 

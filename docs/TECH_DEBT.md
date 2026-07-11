@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-11
 **Status:** Active reference for improvement planning
-**Current version:** v1.1.0 (581 tests, 0 fail, 1245 expects, 98.89% funcs / 96.98% lines)
+**Current version:** v1.1.1 (586 tests, 0 fail, 1255 expects, 100.00% funcs / 98.08% lines)
 
 ---
 
@@ -17,6 +17,12 @@
 | **TD-3.1** | TypeScript 6.x upgrade | ✅ 5.9.3 → 6.0.3. No breaking changes (modern tsconfig avoids all deprecated options). |
 | **TD-3.2** | Biome 2.x update | ✅ Already done before FEV-10 (`^2.5.3`, schema 2.5.0). |
 | **TD-5.3** | npm packaging integration tests | ✅ 5 new tests (A-E) using `bun pm pack` to validate tarball structure, symlink exclusion, gitignore exclusion, --version, and clean install from extracted package. |
+
+### v1.1.1 (2026-07-11)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **TD-CR-1** | Code review fixes: GitHubRestClient catch simplification, UpdateWorkspaceUseCase helper normalization, Windows SYSTEM_DIRS, resolveWithinRoot normalization, VERSION module extraction, AtomicStager fs.copyFile, CleanInstall/ProjectInstall duplication documented | ✅ All 11 code review findings resolved (4 Important, 7 Suggestions) |
 
 ### Prior (v1.0.11)
 
@@ -152,7 +158,7 @@ not file granularity.
 
 ## Summary & Prioritization
 
-### v1.1.0 ✅ All resolved
+### v1.1.1 ✅ All resolved
 
 | Item | Resolution |
 |------|------------|

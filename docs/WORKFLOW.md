@@ -1,4 +1,4 @@
-# Plan de implementación – Códice v1.0.0 → v1.1.0
+# Plan de implementación – Códice v1.0.0 → v1.2.0
 **Fecha:** 2026-06-15 | **Última actualización:** 2026-07-11 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 ✅ Completo, FEV-9 ✅ Completo, FEV-10 ✅ Completo, Code review ✅) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
@@ -1484,7 +1484,7 @@ Fase final de v1.1.0. Implementación de 5 items del catálogo TECH_DEBT: cobert
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 581 tests, 0 fail, 1245 expects
+- **Tests unit+int:** 586 tests, 0 fail, 1255 expects
 - **Tests E2E:** 15/15 pasando (14 existentes + 1 update existing project)
 - **Coverage:** 98.89% funciones / 96.98% líneas
 - **Domain coverage:** 100% líneas
@@ -1523,8 +1523,8 @@ Fase final de v1.1.0. Implementación de 5 items del catálogo TECH_DEBT: cobert
 - **FEV-10 status:** ✅ Completo — 5 TECH_DEBT items resueltos
 - **FEV-10 commits:** `a908afd`, `74cb066`, `d8ca221` (tests main.ts), `d56fc68` (TS 6.x), `33131a4` (ISP split), `840dc31` (packaging tests), `65b8f8f` (docs) en `feat/workspace-enhancement`
 - **FEV-10 total:** 6 slices, 5+ items completados
-- **Tests actuales:** 581 pass, 0 fail, 1245 expects
+- **Tests actuales:** 586 pass, 0 fail, 1255 expects
 - **Coverage:** 98.89% funciones / 96.98% líneas
-- **V1.1.0 completado:** ✓ Última fase FEV-10 finalizada. Release candidate ready.
+- **V1.1.1 completado:** ✓ Code review fixes merged. Preparing for v1.1.2 release.
 
 ---
