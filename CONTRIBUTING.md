@@ -83,16 +83,33 @@ just test
 # Run the CLI in development mode (writes to a safe workspace directory)
 just dev
 
-# Run tests continuously while developing
-bun test --watch
+# Run tests continuously while developing (includes --path-ignore-patterns)
+just test-watch
 
 # Check for lint and type errors
 just check
 ```
 
-### Safe Development with `--dest`
+### Safe Development with `just`
 
-The `just dev` command automatically targets the `tests/fixtures/workspace/` directory, keeping your project root safe from accidental overwrites. You can also use the `--dest` flag directly:
+Use `just` commands for all development tasks — they include the necessary flags for a consistent experience:
+
+```bash
+# Run checks and tests
+just check          # Lint + format check + typecheck (0 errors required)
+just test           # All unit + integration tests
+just test-watch     # Tests in watch mode during development
+
+# Build
+just build          # Current platform binary
+just build-all      # Cross-compile for all 3 platforms
+
+# Install and install workspace
+just dev            # Run CLI against safe workspace directory
+just test-e2e       # Full E2E suite (compiles binary first)
+```
+
+The `just dev` command automatically targets the `tests/fixtures/workspace/` directory, keeping your project root safe from accidental overwrites. If you need a custom destination, use `bun run` directly:
 
 ```bash
 bun run src/cli/main.ts --dest ./some-test-directory
@@ -128,6 +145,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full details.
 
 ## Testing
 
+> **⚠️ Always use `just` commands for testing.** Direct `bun test` will pick up test files from external code in `skills/` and `template/obligatorio/skills/`, causing false failures. The `just` recipes include the `--path-ignore-patterns` flag that excludes those directories. Never use bare `bun test` — always use `just test`, `just test:unit`, or any of the recipes below.
+
 Códice uses a three-phase testing strategy:
 
 ### Unit Tests (Domain Logic)
@@ -149,10 +168,10 @@ Tests adapter behavior with mocked external systems (filesystem, network, TUI). 
 ### Packaging Tests (npm tarball)
 
 ```bash
-bun test tests/integration/packaging/
+just test-packaging
 
 # Skip if offline (no npm pack):
-SKIP_NETWORK_TESTS=1 bun test tests/integration/packaging/
+SKIP_NETWORK_TESTS=1 just test-packaging
 ```
 
 5 scenarios that validate the published npm tarball structure:
