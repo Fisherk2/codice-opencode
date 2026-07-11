@@ -408,6 +408,30 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(gitignoreWarnings.length).toBe(0);
 		});
 
+		it("should fall back to '0.0.0' when bundledVersion is invalid semver", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			const gitHub = createMockGitHubClient("v0.5.0");
+			const engine = new FileMergeEngine(fs);
+			const comparator = new VersionComparator();
+			// Pass invalid semver as bundledVersion to trigger fallback
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				"not-a-valid-version",
+			);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			// Version file should contain the fallback "0.0.0"
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedVersion).toBe("0.0.0");
+		});
+
 		it("should handle version file write failure gracefully", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.writeVersionFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full"));
