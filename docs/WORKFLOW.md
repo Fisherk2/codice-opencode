@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 ✅ Completo, FEV-9 🟢 Listo para planificar, FEV-10 🟡 Planificado) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 ✅ Completo, FEV-9 ✅ Completo, FEV-10 🟡 Planificado) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -26,7 +26,7 @@
 | FEV-6 | Quick Configuration + Documentation (v1.1.0) | Issue #27 (steps), Issue #28 (SECURITY.md), TD-1.2 (coverage artifact) | ✅ Completo |
 | FEV-7 | Agent Governance & Security Hardening | Issue #26 (system prompts), Issue #30 (command restrictions) | ✅ Completo |
 | FEV-8 | Obsidian Subagent | Issue #21 (obsidian-vault-writer + 6 skills) | ✅ Completo |
-| FEV-9 | MCP Server Integration | Issue #29 (6 MCP servers) | 🟢 Listo para planificar |
+| FEV-9 | MCP Server Integration | Issue #29 (5 MCP servers) | ✅ Completo |
 | FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | 🟡 Planificado |
 
 ## 2. Desglose por Fase
@@ -1360,11 +1360,11 @@ Issue #21 propone un subagente especializado para administración de vaults de O
 
 ### Fase FEV-9 — MCP Server Integration
 
-**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) → Moctezuma (Strategic Planner) | **Estado:** 🟢 Listo para planificar
+**Fecha:** 2026-07-10 | **Autor:** Quetzalcoatl (Visionary Sage) → Moctezuma (Strategic Planner) | **Estado:** ✅ Completo
 
 #### Contexto
 
-Issue #29 propone añadir 6 nuevos MCP servers enfocados en documentación y búsqueda web. Se reemplaza **Docfork** (shut down 2026-06-14) con **Grounded Docs MCP Server** (`@arabold/docs-mcp-server`). Los 6 servidores finales son: Grounded Docs, Rtfmbro, Tavily MCP, Firecrawl MCP, Vercel Grep, GitMCP.
+Issue #29 propone añadir 5 nuevos MCP servers enfocados en documentación y búsqueda web. Se reemplaza **Docfork** (shut down 2026-06-14) con **Grounded Docs MCP Server** (`@arabold/docs-mcp-server`). Los 5 servidores finales son: Grounded Docs, Tavily, Firecrawl, Vercel Grep, GitMCP.
 
 Además, los 6 agentes principales tienen una sección `## KNOWLEDGE` que actualmente termina con `Context7 → Web search`. Dado que los nuevos MCPs realizan un trabajo similar a Context7, se debe **reemplazar Context7** por la cadena de consulta: **MCP servers → Web search → Question-tool**.
 
@@ -1374,33 +1374,33 @@ Además, los 6 agentes principales tienen una sección `## KNOWLEDGE` que actual
 
 | ID | Descripción | Archivo | Estado |
 |----|-------------|---------|--------|
-| FEV9-T1 | Investigar instalación de 6 MCPs (requisitos, API keys, configuración) | Investigación | 🟢 Listo (docfork reemplazado por Grounded Docs) |
-| FEV9-T2 | Añadir 6 MCPs a la sección mcp en opencode.json (enabled: false) | `template/obligatorio/opencode.json` | 🟡 Pendiente |
-| FEV9-T3 | Ampliar Wiki MCP-Servers.md con 6 nuevas secciones de activación | `docs/wiki-source/MCP-Servers.md` | 🟡 Pendiente |
-| FEV9-T4 | Actualizar skill context-engineering con referencia a MCP servers | `template/obligatorio/skills/context-engineering/SKILL.md` | 🟡 Pendiente |
-| FEV9-T5 | Actualizar KNOWLEDGE de 6 agentes: `Context7` → `MCP servers (7) → Web search → Question-tool` | 6 archivos en `template/obligatorio/agents/` | 🟡 Pendiente |
+| FEV9-T1 | Investigar instalación de 5 MCPs (requisitos, API keys, configuración) | Investigación | ✅ Completo |
+| FEV9-T2 | Añadir 5 MCPs a la sección mcp en opencode.json (vercel-grep y gitmcp enabled) | `template/obligatorio/opencode.json` | ✅ Completo |
+| FEV9-T3 | Ampliar Wiki MCP-Servers.md con 5 nuevas secciones de activación | `docs/wiki-source/MCP-Servers.md` | ✅ Completo |
+| FEV9-T4 | Actualizar skill context-engineering con referencia a MCP servers | `template/obligatorio/skills/context-engineering/SKILL.md` | ✅ Completo |
+| FEV9-T5 | Actualizar KNOWLEDGE de 6 agentes: `Context7` → `MCP servers → Web search → Question-tool` | 6 archivos en `template/obligatorio/agents/` | ✅ Completo |
 
 **Nueva cadena KNOWLEDGE (FEV9-T5):**
 ```
-AGENTS.md → SPEC.md → docs/ → skills/ → MCP servers (7) → Web search → Question-tool
+AGENTS.md → SPEC.md → docs/ → skills/ → MCP servers → Web search → Question-tool
 ```
 
 #### Métricas de Referencia
 
-| Métrica | v1.0.14 (antes) | Meta FEV-9 |
-|---------|-----------------|------------|
-| MCP servers configurados | ~5 | ~11 (+6) |
+| Métrica | v1.0.14 (antes) | Resultado FEV-9 |
+|---------|-----------------|-----------------|
+| MCP servers configurados | 4 | 9 (+5) |
 | Agentes con KNOWLEDGE actualizada | 0/6 | 6/6 |
-| `bun test` | 500 / 0 | ≥500 / 0 |
+| `bun test` | 500 / 0 | 563 / 0 |
 
 **Criterios de completitud (DoD FEV-9):**
-- [ ] Issue #29 resuelto: 6 MCPs configurados en opencode.json
-- [ ] Pasos manuales documentados
-- [ ] Wiki actualizada
-- [ ] FEV9-T5 resuelto: 6 agentes con sección `## KNOWLEDGE` actualizada (Context7 → MCP → Websearch → Question-tool)
-- [ ] Límites de líneas respetados: ≤150 líneas total o ≤100 líneas sin YAML
-- [ ] `bun test`: sin regresión
-- [ ] `just check`: 0 errores
+- [x] Issue #29 resuelto: 5 MCPs configurados en opencode.json
+- [x] Pasos manuales documentados
+- [x] Wiki actualizada
+- [x] FEV9-T5 resuelto: 6 agentes con sección `## KNOWLEDGE` actualizada (Context7 → MCP → Websearch → Question-tool)
+- [x] Límites de líneas respetados: ≤150 líneas total o ≤100 líneas sin YAML
+- [x] `bun test`: sin regresión (563 pass)
+- [x] `just check`: 0 errores
 
 ---
 
@@ -1492,7 +1492,10 @@ Fase final de v1.1.0. Contiene los items de mayor esfuerzo y riesgo: split de IF
 - **FEV-7 status:** ✅ Completo — Issues #26 y #30 resueltos con 5 hallazgos de code review (0 crit, 0 imp)
 - **FEV-7 commits:** `5986c89` (code review), `92a9cec` (review fixes: tests, export PATH, README, chmod 777) en `feat/workspace-enhancement`
 - **FEV-7 total:** 6/6 tareas completadas + 5 code review findings resueltos
-- **FEV-8 status:** 🟢 Listo para planificar — Issue #21 (obsidian-vault-writer subagent + 6 skills)
+- **FEV-8 status:** ✅ Completo — Issue #21 (obsidian-vault-writer subagent + 6 skills)
+- **FEV-9 status:** ✅ Completo — Issue #29 (5 MCP servers, 9 total, 3 enabled by default)
+- **FEV-9 commits:** `3f827e0` (opencode.json), `33f3a85` (Wiki), `b99bfde` (context-engineering), `c64b9b5` (6 agents KNOWLEDGE), `d32bf85` (enable defaults) en `feat/workspace-enhancement`
+- **FEV-9 total:** 5/5 tareas completadas (5 MCPs, 9 total, KNOWLEDGE chain updated)
 - **Tests actuales:** 563 pass, 0 fail, 1204 expects
 - **Coverage:** 98.13% funciones / 96.98% líneas
 
