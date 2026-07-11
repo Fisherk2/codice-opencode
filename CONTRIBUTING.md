@@ -83,16 +83,33 @@ just test
 # Run the CLI in development mode (writes to a safe workspace directory)
 just dev
 
-# Run tests continuously while developing
-bun test --watch
+# Run tests continuously while developing (includes --path-ignore-patterns)
+just test-watch
 
 # Check for lint and type errors
 just check
 ```
 
-### Safe Development with `--dest`
+### Safe Development with `just`
 
-The `just dev` command automatically targets the `tests/fixtures/workspace/` directory, keeping your project root safe from accidental overwrites. You can also use the `--dest` flag directly:
+Use `just` commands for all development tasks — they include the necessary flags for a consistent experience:
+
+```bash
+# Run checks and tests
+just check          # Lint + format check + typecheck (0 errors required)
+just test           # All unit + integration tests
+just test-watch     # Tests in watch mode during development
+
+# Build
+just build          # Current platform binary
+just build-all      # Cross-compile for all 3 platforms
+
+# Install and install workspace
+just dev            # Run CLI against safe workspace directory
+just test-e2e       # Full E2E suite (compiles binary first)
+```
+
+The `just dev` command automatically targets the `tests/fixtures/workspace/` directory, keeping your project root safe from accidental overwrites. If you need a custom destination, use `bun run` directly:
 
 ```bash
 bun run src/cli/main.ts --dest ./some-test-directory
@@ -109,7 +126,9 @@ src/
 │   └── services/    # FileMergeEngine, VersionComparator
 ├── application/     # Use cases + port interfaces
 │   ├── use-cases/   # CleanInstall, ProjectInstall, UpdateWorkspace
-│   └── ports/       # IFileSystem, IGitHubClient, IUserPrompt
+│   ├── ports/       # IFileSystem, IStagingSystem, IGitHubClient, IUserPrompt
+│   ├── postInstall.ts # Post-installation orchestration
+│   └── helpers.ts   # Shared use-case utilities
 ├── infrastructure/  # Adapters (BunFileSystem, GitHubRestClient, ClackPromptsAdapter)
 └── cli/             # Entry point (main.ts, args parsing)
 ```
@@ -125,6 +144,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full details.
 ---
 
 ## Testing
+
+> **⚠️ Always use `just` commands for testing.** Direct `bun test` will pick up test files from external code in `skills/` and `template/obligatorio/skills/`, causing false failures. The `just` recipes include the `--path-ignore-patterns` flag that excludes those directories. Never use bare `bun test` — always use `just test`, `just test:unit`, or any of the recipes below.
 
 Códice uses a three-phase testing strategy:
 
@@ -147,10 +168,10 @@ Tests adapter behavior with mocked external systems (filesystem, network, TUI). 
 ### Packaging Tests (npm tarball)
 
 ```bash
-bun test tests/integration/packaging/
+just test-packaging
 
 # Skip if offline (no npm pack):
-SKIP_NETWORK_TESTS=1 bun test tests/integration/packaging/
+SKIP_NETWORK_TESTS=1 just test-packaging
 ```
 
 5 scenarios that validate the published npm tarball structure:
@@ -175,7 +196,7 @@ just test:e2e
 SKIP_BUILD=1 just test:e2e
 ```
 
-Tests the compiled binary against isolated temporary directories. 8 scenarios: clean install, project install, optional skip, update workspace, atomic rollback, path traversal rejection, symlinks clean install, and symlinks project install.
+Tests the compiled binary against isolated temporary directories. 15 scenarios: clean install, project install, optional skip, update workspace, atomic rollback, path traversal rejection, symlinks clean install, symlinks project install, symlinks idempotency, update no symlinks, gitignore clean install, gitignore project install, clean install optional menu, project install optional selection, and update workspace existing project.
 
 **Scenarios:**
 
@@ -505,7 +526,7 @@ Códice installs an **OpenCode workspace template** organized into three file ca
 
 The project has **two types of agents** with different procedures:
 
-- **Subagent** (~96 currently) — expert in a specific domain, invoked via `task()` from a primary agent
+- **Subagent** (~98 currently) — expert in a specific domain, invoked via `task()` from a primary agent
 - **Primary agent** (6 currently: huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca) — main entry point for slash commands, able to delegate to subagents
 
 Key steps for adding an agent:
@@ -581,4 +602,4 @@ The Códice CLI handles the classification automatically based on the directory 
 
 ---
 
-*Last revised: 2026-06-25*
+*Last revised: 2026-07-11*

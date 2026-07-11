@@ -4,7 +4,7 @@ import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
-import { checkWritable } from "../helpers";
+import { checkWritable, confirmOverwrite } from "../helpers";
 import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
@@ -94,22 +94,17 @@ export class CleanInstallUseCase {
 	/**
 	 * Ask for confirmation if destination is not empty.
 	 * Skips prompt when force=true.
+	 * Delegates to the shared {@link confirmOverwrite} helper.
 	 * @returns true if the operation should proceed, false if cancelled.
 	 */
 	private async confirmOverwrite(destinationPath: string, force?: boolean): Promise<boolean> {
-		if (force) return true;
-
-		const isEmpty = await this.fileSystem.isEmpty();
-		if (isEmpty) return true;
-
-		const confirmed = await this.userPrompt.confirm(
+		return confirmOverwrite(
+			this.fileSystem,
+			this.userPrompt,
 			`The destination directory "${destinationPath}" is not empty. All existing files may be overwritten. Continue?`,
-			false,
+			"Clean installation cancelled by user.",
+			force,
 		);
-		if (!confirmed) {
-			await this.userPrompt.showCancel("Clean installation cancelled by user.");
-		}
-		return confirmed;
 	}
 
 	/**

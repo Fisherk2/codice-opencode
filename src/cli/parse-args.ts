@@ -49,24 +49,41 @@ export function validateDestPath(dest: string): string | null {
 		}
 		// Check for common system directories using prefix matching.
 		// This catches direct matches (/etc) and subdirectories (/etc/cron.d).
-		const SYSTEM_DIRS = [
-			"/etc",
-			"/var",
-			"/usr",
-			"/bin",
-			"/boot",
-			"/dev",
-			"/proc",
-			"/sys",
-			"/opt",
-			"/sbin",
-			"/root",
-			// /tmp intentionally omitted — users commonly install to /tmp for testing
-		];
+		// Platform-specific: Linux/macOS uses UNIX paths, Windows uses DOS paths.
+		const SYSTEM_DIRS =
+			process.platform === "win32"
+				? [
+						"C:\\Windows",
+						"C:\\Windows\\System32",
+						"C:\\Program Files",
+						"C:\\Program Files (x86)",
+						"C:\\Users\\Public",
+						"C:\\ProgramData",
+						"C:\\Users",
+					]
+				: [
+						"/etc",
+						"/var",
+						"/usr",
+						"/bin",
+						"/boot",
+						"/dev",
+						"/proc",
+						"/sys",
+						"/opt",
+						"/sbin",
+						"/root",
+						// /tmp intentionally omitted — users commonly install to /tmp for testing
+					];
 		for (const sysDir of SYSTEM_DIRS) {
-			if (normalized === sysDir || normalized.startsWith(`${sysDir}/`)) {
+			if (normalized === sysDir || normalized.startsWith(`${sysDir}${path.sep}`)) {
 				return `Invalid destination path: "${trimmed}" is inside a system directory "${sysDir}"`;
 			}
+		}
+
+		// Block bare drive roots (C:\, D:\, etc.)
+		if (/^[A-Z]:\\?$/i.test(normalized)) {
+			return `Invalid destination path: "${trimmed}" is a drive root`;
 		}
 	}
 

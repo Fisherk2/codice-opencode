@@ -1,6 +1,6 @@
 {
   "name": "@fisherk2-dev/codice",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "license": "MIT",
   "module": "src/cli/main.ts",
   "type": "module",
@@ -25,10 +25,10 @@
   "scripts": {
     "dev": "bun run src/cli/main.ts --verbose",
     "build": "bun build --compile src/cli/main.ts --outfile ./dist/codice-linux",
-    "test": "bun test tests/",
-    "test:unit": "bun test tests/unit/",
-    "test:integration": "bun test tests/integration/",
-    "test:coverage": "bun test --coverage",
+    "test": "bun test tests/ --path-ignore-patterns=template/obligatorio/skills/**,skills/**",
+    "test:unit": "bun test tests/unit/ --path-ignore-patterns=template/obligatorio/skills/**,skills/**",
+    "test:integration": "bun test tests/integration/ --path-ignore-patterns=template/obligatorio/skills/**,skills/**",
+    "test:coverage": "bun test --coverage --path-ignore-patterns=template/obligatorio/skills/**,skills/**",
     "lint": "bunx @biomejs/biome check src/ tests/",
     "format": "bunx @biomejs/biome format --write src/ tests/",
     "format:check": "bunx @biomejs/biome ci src/ tests/",

@@ -29,9 +29,9 @@ A production-grade workspace integrating 45 engineering skills + 1 meta-skill or
 
 ## Features
 
-- **45 Engineering Skills + 1 Meta-Skill** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, notebooks, and more, organized in 10 SDD phases (3 optional) + Extra
+- **52 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, Obsidian vault management, and more, organized in 10 SDD phases (3 optional) + Extra
 - **12 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`
-- **6 Main Agents + 96+ Subagents** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 96+ subagents specialized in frontend, backend, DevOps, testing, security, and more
+- **6 Main Agents + 98 Subagents** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 98 subagents specialized in frontend, backend, DevOps, testing, security, and more
 - **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
 - **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
 - **MIT License** — Free for personal and commercial projects
@@ -156,7 +156,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   <tr><td colspan="2"><b>Model Guide:</b> GLM 5.2 as default for critical reasoning and code audit. Claude Opus 4.6 for most rigorous pre-merge review. DeepSeek V4 Pro for deep security analysis. GPT-5.5 Pro for maximum depth security audits. Claude Sonnet 4.6 for rapid review cycles.</td></tr>
 </table>
 
-Additionally, over **90 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
+Additionally, over **98 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
 
 ---
 
@@ -301,7 +301,7 @@ project-root/
 ├── requirements.txt            # Python dependencies
 ├── .env.example                # Environment variables template
 │
-├── agents/                     # 102+ agent personas (6 primary + 96+ subagents)
+├── agents/                     # 104 agent persona files (6 primary + 98 subagents)
 │   ├── huitzilopochtli.md      #   Supreme Orchestrator
 │   ├── quetzalcoatl.md         #   Visionary Architect
 │   ├── moctezuma.md            #   Strategic Commander
@@ -332,7 +332,7 @@ project-root/
 │       ├── sdd-pipeline.ts     #     Pipeline state machine
 │       └── sdd-workflow-test.md #   Workflow test specs
 │
-├── skills/                     # 46 skills (45 engineering + 1 meta-skill)
+├── skills/                     # 52 skills (engineering + meta-skill)
 │   ├── using-agent-skills/     #   META: skill discovery
 │   ├── idea-refine/            #   DEFINE / EVOLVE
 │   ├── spec-driven-development/#   DEFINE / EVOLVE
@@ -410,20 +410,7 @@ project-root/
 │   ├── PRD.md                  #   Product requirements
 │   ├── SCHEMA.md               #   Data schema
 │   ├── TRD.md                  #   Technical requirements
-│   ├── WORKFLOW.md             #   Implementation workflow
-│   └── opencode/               #   OpenCode configuration guides
-│       ├── USER_GUIDE.md       #     Complete Reference Guide
-│       ├── 00-setup.md
-│       ├── 01-agents.md
-│       ├── 02-orchestration-patterns.md
-│       ├── 03-agent-index.md
-│       ├── 04-commands.md    #     Command creation guide
-│       ├── 05-skills.md
-│       ├── 06-mcp-servers.md
-│       ├── 07-models.md
-│       ├── 08-rules.md
-│       ├── 09-tools-and-custom-tools.md
-│       └── 10-permissions.md
+│   └── WORKFLOW.md             #   Implementation workflow
 │
 ├── specs/                      # Project specifications
 │   ├── spec-xx.md              #   Feature specs

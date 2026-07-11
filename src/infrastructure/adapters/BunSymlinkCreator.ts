@@ -52,8 +52,9 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 	async createSymlink(target: string, linkPath: string): Promise<Result<void, SymlinkError>> {
 		const resolvedLinkPath = path.resolve(this.workspaceRoot, linkPath);
 
-		// Defense-in-depth: ensure the link path stays within the workspace root
-		if (!resolvedLinkPath.startsWith(this.workspaceRoot + path.sep)) {
+		// Extract root + trailing separator for consistent prefix matching (used twice below).
+		const rootWithSep = path.resolve(this.workspaceRoot) + path.sep;
+		if (!resolvedLinkPath.startsWith(rootWithSep)) {
 			return failure(
 				symlinkError(
 					target,
@@ -71,7 +72,7 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 		const resolvedTarget = path.resolve(linkParentDir, target);
 
 		// Defense-in-depth: ensure the resolved target stays within the workspace root
-		if (!resolvedTarget.startsWith(this.workspaceRoot + path.sep)) {
+		if (!resolvedTarget.startsWith(rootWithSep)) {
 			return failure(
 				symlinkError(
 					target,

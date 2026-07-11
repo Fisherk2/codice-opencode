@@ -143,10 +143,11 @@ export class AtomicStager {
 	 * Creates intermediate directories in the staging path as needed.
 	 */
 	private async writeFileToStaging(sourcePath: string, stagingRelativePath: string): Promise<void> {
-		const content = await Bun.file(sourcePath).text();
 		const stagingPath = this.resolveStagingPath(stagingRelativePath);
 		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
-		await Bun.write(stagingPath, content);
+		// Use copyFile for cross-device-safe copy (avoids loading entire file into RAM).
+		// Bun.write() would also work but loads the full content into memory.
+		await fs.copyFile(sourcePath, stagingPath);
 	}
 
 	/**
@@ -167,14 +168,12 @@ export class AtomicStager {
 
 		// Back up original destination file if it exists
 		try {
-			const destFile = Bun.file(destPath);
-			if (await destFile.exists()) {
-				const backupPath = `${destPath}.codice-backup`;
-				await fs.copyFile(destPath, backupPath);
-				backups.set(destPath, backupPath);
-			}
+			await fs.access(destPath);
+			const backupPath = `${destPath}.codice-backup`;
+			await fs.copyFile(destPath, backupPath);
+			backups.set(destPath, backupPath);
 		} catch {
-			// If we can't copy the original, we can't back it up — proceed anyway
+			// If destPath doesn't exist or can't be read, skip backup — proceed anyway
 		}
 
 		// Atomic rename: staging → destination
@@ -188,10 +187,8 @@ export class AtomicStager {
 	private async restoreBackups(backups: Map<string, string>): Promise<void> {
 		for (const [destPath, backupPath] of backups) {
 			try {
-				const backupFile = Bun.file(backupPath);
-				if (await backupFile.exists()) {
-					await fs.copyFile(backupPath, destPath);
-				}
+				await fs.access(backupPath);
+				await fs.copyFile(backupPath, destPath);
 				await fs.unlink(backupPath);
 			} catch {
 				// If rollback fails for a specific file, continue with others

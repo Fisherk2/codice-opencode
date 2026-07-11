@@ -1,6 +1,6 @@
 # Skills — Agent Knowledge Base
 
-Skills are the workspace's reusable knowledge base. Each skill is a Markdown file that teaches an agent how to perform a specific task domain — from writing robust Bash scripts to designing professional UI/UX, from running incident response to auditing dependencies. Together they form a library of **49 engineering process guides** that agents load on demand.
+Skills are the workspace's reusable knowledge base. Each skill is a Markdown file that teaches an agent how to perform a specific task domain — from writing robust Bash scripts to designing professional UI/UX, from running incident response to auditing dependencies. Together they form a library of **52 engineering process guides** that agents load on demand.
 
 > For the official OpenCode skills documentation, see [opencode.ai/docs/skills](https://opencode.ai/docs/skills).
 
@@ -27,7 +27,7 @@ skills/
 ├── obsidian-vault/SKILL.md              # Vault management and organization
 ├── obsidian-markdown/SKILL.md           # Obsidian Flavored Markdown syntax
 ├── obsidian-cli/SKILL.md                # Obsidian CLI command reference
-└── ... (49 skill directories total)
+└── ... (52 skill directories total)
 ```
 
 ---
@@ -60,7 +60,7 @@ This indexing is automatic — agents discover skills by scanning the `skills/` 
 
 ## Full Skill Catalog
 
-The workspace ships with 49 skills covering the full development lifecycle:
+The workspace ships with 52 skills covering the full development lifecycle:
 
 | Phase | Skill | Purpose |
 |-------|-------|---------|
@@ -112,7 +112,8 @@ The workspace ships with 49 skills covering the full development lifecycle:
 | | `obsidian-markdown` | Create and edit Obsidian Flavored Markdown with wikilinks, embeds, callouts, and properties |
 | | `obsidian-cli` | Interact with Obsidian vaults using the Obsidian CLI to read, create, search, and manage notes |
 | | `xlsx` | Create, edit, and manipulate spreadsheet files |
-| | `excel-analysis` | Analyze data, pivot tables, charts |
+| | `find-docs` | Retrieve up-to-date documentation for any developer technology |
+| | `skill-creator` | Create, edit, and optimize agent skills |
 
 ---
 
