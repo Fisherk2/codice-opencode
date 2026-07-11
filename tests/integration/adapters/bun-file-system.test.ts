@@ -120,6 +120,7 @@ describe("BunFileSystem", () => {
 		});
 
 		it("should return true when fs.access throws EACCES (permission denied) — exists but can't read", async () => {
+			if (process.platform === "win32") return; // Windows uses ACLs, not POSIX chmod; chmod 0o000 has no effect
 			// Make a subdirectory inaccessible so access() inside it throws EACCES
 			const restrictedDir = path.join(destDir, "no-access-dir");
 			await fs.mkdir(restrictedDir, { recursive: true });

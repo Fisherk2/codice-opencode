@@ -1525,6 +1525,7 @@ Fase final de v1.1.0. Implementación de 5 items del catálogo TECH_DEBT: cobert
 - **FEV-10 total:** 6 slices, 5+ items completados
 - **Tests actuales:** 586 pass, 0 fail, 1255 expects
 - **Coverage:** 98.89% funciones / 96.98% líneas
-- **V1.1.1 completado:** ✓ Code review fixes merged. Preparing for v1.1.2 release.
+- **V1.1.2 completado:** ✓ Pre-release verified, production release v1.1.2 published.
+- **V1.1.3 completado:** ✓ Hotfix — EPERM on Windows CI, CONTRIBUTING.md simplified.
 
 ---

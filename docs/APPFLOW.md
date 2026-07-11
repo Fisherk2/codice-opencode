@@ -1,4 +1,4 @@
-# Flujo de Navegación (TUI) – Códice: Opencode Workspace Installer v1.1.2
+# Flujo de Navegación (TUI) – Códice: Opencode Workspace Installer v1.1.3
 **Fecha:** 2026-07-11 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Actores y Roles
