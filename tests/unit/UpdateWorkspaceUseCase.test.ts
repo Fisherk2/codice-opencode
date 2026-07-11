@@ -11,9 +11,11 @@
  */
 
 import { describe, expect, test } from "bun:test";
+import { compare as semverCompare, valid } from "semver";
 import type { IGitHubClient } from "../../src/application/ports/IGitHubClient";
 import type { IUserPrompt } from "../../src/application/ports/IUserPrompt";
 import { UpdateWorkspaceUseCase } from "../../src/application/use-cases/UpdateWorkspaceUseCase";
+import { VERSION } from "../../src/cli/output";
 import type { FileRule } from "../../src/domain/entities/FileRule";
 import type { IFileMergeEngine } from "../../src/domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../src/domain/ports/IFileSystem";
@@ -104,8 +106,16 @@ class FakeUserPrompt implements IUserPrompt {
 }
 
 class FakeVersionComparator implements IVersionComparator {
-	compare(_installed: string, _remote: string): Result<ComparisonResult, Error> {
-		return success("newer");
+	compare(installed: string, remote: string): Result<ComparisonResult, Error> {
+		const validInstalled = valid(installed);
+		const validRemote = valid(remote);
+		if (!validInstalled || !validRemote) {
+			return success("incompatible" as ComparisonResult);
+		}
+		const cmp = semverCompare(validInstalled, validRemote);
+		if (cmp < 0) return success("newer" as ComparisonResult);
+		if (cmp > 0) return success("older" as ComparisonResult);
+		return success("equal" as ComparisonResult);
 	}
 	isUpdateAvailable(_installed: string, _remote: string): boolean {
 		return true;
@@ -129,6 +139,7 @@ function makeUseCase(
 	gitHub?: FakeGitHubClient,
 	versionComparator?: FakeVersionComparator,
 	fileSystem?: FakeFileSystem,
+	bundledVersion = VERSION,
 ): UpdateWorkspaceUseCase {
 	return new UpdateWorkspaceUseCase(
 		fileSystem ?? new FakeFileSystem(),
@@ -136,6 +147,7 @@ function makeUseCase(
 		new FakeUserPrompt(),
 		gitHub ?? new FakeGitHubClient(),
 		versionComparator ?? new FakeVersionComparator(),
+		bundledVersion,
 	);
 }
 
@@ -192,7 +204,7 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 		expect(standardCount).toBeGreaterThanOrEqual(1);
 	});
 
-	test("should fall back to 0.0.0 when remote tag is not valid semver", async () => {
+	test("should use bundled version when remote tag is not valid semver", async () => {
 		const mergeEngine = new CaptureMergeEngine();
 		const fs = new FakeFileSystem();
 		const gitHub = new FakeGitHubClientBadTag();
@@ -202,6 +214,6 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 
 		expect(fs.lastWrittenVersion).not.toBeNull();
 		const versionData = JSON.parse(fs.lastWrittenVersion!);
-		expect(versionData.installedVersion).toBe("0.0.0");
+		expect(versionData.installedVersion).toBe(VERSION);
 	});
 });

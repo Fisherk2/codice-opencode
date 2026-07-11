@@ -23,6 +23,14 @@ export interface UpdateWorkspaceOptions {
  * Mode 3: Update Workspace — update an existing installation
  * to the latest template version. Only Obligatorio and Estándar
  * files are updated; Opcional files are preserved.
+ *
+ * Version logic:
+ * - Compares the installed version (from .codice-version) against the
+ *   bundled template version (the VERSION constant). If installed >= bundled,
+ *   the workspace is considered up to date and no update is performed.
+ * - The GitHub remote version is checked for informational purposes only —
+ *   a newer remote version triggers a suggestion, but the update decision
+ *   is based on bundled vs installed version.
  */
 export class UpdateWorkspaceUseCase {
 	/**
@@ -31,6 +39,7 @@ export class UpdateWorkspaceUseCase {
 	 * @param userPrompt - Adapter for interactive user prompts
 	 * @param gitHubClient - Adapter for GitHub API version checking
 	 * @param versionComparator - Domain service for semantic version comparison
+	 * @param bundledVersion - The version of the template bundled in this binary
 	 */
 	constructor(
 		private readonly fileSystem: IFileSystem & IStagingSystem,
@@ -38,6 +47,7 @@ export class UpdateWorkspaceUseCase {
 		private readonly userPrompt: IUserPrompt,
 		private readonly gitHubClient: IGitHubClient,
 		private readonly versionComparator: IVersionComparator,
+		private readonly bundledVersion: string,
 	) {}
 
 	/**
@@ -98,29 +108,31 @@ export class UpdateWorkspaceUseCase {
 			// No version file found — this is a first update in an existing project
 		}
 
-		// Check GitHub for latest version
+		// Check GitHub for latest version (informational only)
 		const remoteTag = await this.gitHubClient.getLatestReleaseTag();
+		let remoteVersion: string | undefined;
 		if (remoteTag) {
-			// Strip 'v' prefix (GitHub tags use "vX.Y.Z" format)
-			const remoteVersion = remoteTag.startsWith("v") ? remoteTag.slice(1) : remoteTag;
-			const comparison = this.versionComparator.compare(installedVersion, remoteVersion);
-			if (comparison.ok && comparison.value === "equal") {
+			remoteVersion = remoteTag.startsWith("v") ? remoteTag.slice(1) : remoteTag;
+			const remoteComparison = this.versionComparator.compare(installedVersion, remoteVersion);
+			if (remoteComparison.ok && remoteComparison.value === "newer") {
 				await this.userPrompt.showInfo(
-					`Workspace is already up to date at version ${installedVersion}. No update needed.`,
+					`A newer version (v${remoteVersion}) is available on GitHub. The bundled template (v${this.bundledVersion}) will be used for this update.`,
 				);
-				return success(undefined);
-			}
-			if (comparison.ok && comparison.value !== "newer") {
-				// Local is ahead of remote — unusual but not an error
-				await this.userPrompt.showInfo(
-					`Local version (${installedVersion}) is ahead of remote (${remoteVersion}). No update needed.`,
-				);
-				return success(undefined);
 			}
 		} else {
 			await this.userPrompt.showWarning(
 				"Could not check for updates via GitHub. Falling back to the bundled template version.",
 			);
+		}
+
+		// Compare installed version against bundled template version
+		const bundledComparison = this.versionComparator.compare(installedVersion, this.bundledVersion);
+		if (bundledComparison.ok && bundledComparison.value !== "newer") {
+			// Installed >= bundled — workspace is already up to date
+			await this.userPrompt.showInfo(
+				`Workspace is already up to date at version ${installedVersion}. No update needed.`,
+			);
+			return success(undefined);
 		}
 
 		// Get only Obligatorio + Estándar rules (skip Opcional).
@@ -155,7 +167,7 @@ export class UpdateWorkspaceUseCase {
 
 	/**
 	 * Resolve the version string to write to .codice-version.
-	 * Priority: explicit flag > GitHub remote > previously installed > "0.0.0"
+	 * Priority: explicit flag > bundled template > previously installed > "0.0.0"
 	 * Falls back to "0.0.0" if the resolved string is not valid semver.
 	 */
 	private resolveNewVersion(
@@ -164,7 +176,10 @@ export class UpdateWorkspaceUseCase {
 		installedVersion: string,
 	): string {
 		const resolved =
-			options?.version ?? (remoteTag ? remoteTag.replace(/^v/, "") : undefined) ?? installedVersion;
+			options?.version ??
+			this.bundledVersion ??
+			(remoteTag ? remoteTag.replace(/^v/, "") : undefined) ??
+			installedVersion;
 		return valid(resolved) ? resolved : "0.0.0";
 	}
 }
