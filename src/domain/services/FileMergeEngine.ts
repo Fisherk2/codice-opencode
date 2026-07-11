@@ -1,6 +1,7 @@
 import type { FileRule } from "../entities/FileRule";
 import type { IFileMergeEngine } from "../ports/IFileMergeEngine";
 import type { IFileSystem } from "../ports/IFileSystem";
+import type { IStagingSystem } from "../ports/IStagingSystem";
 import type { MergeError } from "../types/MergeError";
 import { commitError, stagingError } from "../types/MergeError";
 import type { Result } from "../types/Result";
@@ -21,7 +22,7 @@ import { failure, success } from "../types/Result";
  * 4. If commit fails → cleanStaging() + return error.
  */
 export class FileMergeEngine implements IFileMergeEngine {
-	constructor(private readonly fileSystem: IFileSystem) {}
+	constructor(private readonly fileSystem: IFileSystem & IStagingSystem) {}
 
 	/**
 	 * Execute all merge rules against the destination directory.

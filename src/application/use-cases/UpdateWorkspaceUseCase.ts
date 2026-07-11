@@ -2,6 +2,7 @@ import { valid } from "semver";
 import { FILE_RULE_MANIFEST } from "../../domain/entities/FileRuleManifest";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
+import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, writeVersionFileSafe } from "../helpers";
@@ -32,7 +33,7 @@ export class UpdateWorkspaceUseCase {
 	 * @param versionComparator - Domain service for semantic version comparison
 	 */
 	constructor(
-		private readonly fileSystem: IFileSystem,
+		private readonly fileSystem: IFileSystem & IStagingSystem,
 		private readonly mergeEngine: IFileMergeEngine,
 		private readonly userPrompt: IUserPrompt,
 		private readonly gitHubClient: IGitHubClient,

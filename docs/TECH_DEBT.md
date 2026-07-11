@@ -1,30 +1,41 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-06-26
+**Last updated:** 2026-07-10
 **Status:** Active reference for improvement planning
-**Current version:** v1.0.11 (476 tests, 0 fail, 1032 expects, 97.66% funcs / 96.52% lines)
+**Current version:** v1.1.0 (581 tests, 0 fail, 1245 expects, 98.89% funcs / 96.98% lines)
 
 ---
 
 ## Resolved
 
-All resolved debt has been removed from this document. For historical reference, see git history prior to v1.0.11.
+### v1.1.0 (FEV-10 — 2026-07-10)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **TD-1.1** | `src/cli/main.ts` coverage | ✅ 33.04% → 86.21% lines (100% functions). 13 new integration tests with mock process.exit, process.on, and real --clean/--update flows. Interactive mode (lines 138-144) and catch block (lines 160-163) remain uncovered — require TTY interaction or unexpected runtime throws. |
+| **TD-2.1** | IFileSystem split (ISP) | ✅ Split into `IFileSystem` (6 methods) + `IStagingSystem` (4 methods). `BunFileSystem` implements both. 15 files modified. |
+| **TD-3.1** | TypeScript 6.x upgrade | ✅ 5.9.3 → 6.0.3. No breaking changes (modern tsconfig avoids all deprecated options). |
+| **TD-3.2** | Biome 2.x update | ✅ Already done before FEV-10 (`^2.5.3`, schema 2.5.0). |
+| **TD-5.3** | npm packaging integration tests | ✅ 5 new tests (A-E) using `bun pm pack` to validate tarball structure, symlink exclusion, gitignore exclusion, --version, and clean install from extracted package. |
+
+### Prior (v1.0.11)
+
+All resolved debt from v1.0.11 and earlier removed. For historical reference, see git history.
 
 ---
 
 ## 1. Coverage Gaps
 
-### 1.1 `src/cli/main.ts` — 33.04% lines (66.67% functions)
+### 1.1 `src/cli/main.ts` — 86.21% lines (100.00% functions)
 
 | Item | Detail |
 |------|--------|
-| **Uncovered lines** | 85, 93–165 |
-| **What's there** | Runtime execution path: dependency creation, mode dispatch, signal handling, error display, exit code logic |
-| **Why it's low** | CLI entry point is intentionally thin (wiring + orchestration). It is tested via **15 E2E scenarios** but Bun's `--coverage` only measures unit/integration tests. All core logic lives in use cases and adapters which have 100% coverage. |
-| **Risk** | Low. Every line is exercised during E2E. |
-| **Recommendation** | Add integration tests that exercise the full `main()` flow via mock dependencies. Coverage → ~95% lines. |
-| **Target** | v1.1.0 |
-| **Effort** | 4h |
+| **Uncovered lines** | 85, 138–144, 160–161, 163 |
+| **What's there** | Line 85: re-export. Lines 138-144: interactive mode (@clack/prompts blocks in non-TTY). Lines 160-161, 163: catch block (defensive, only triggers on unexpected throws). |
+| **Risk** | Low. All three modes (clean, project, update) tested via E2E. Interactive mode tested via `promptForMode` export. Catch block is defense-in-depth. |
+| **Recommendation** | Extract interactive mode body into a testable exported function. Subscribe to TTY-aware test patterns. |
+| **Target** | Future (v1.2.0+) |
+| **Effort** | 2h |
 
 ### 1.2 Coverage artifacts (no real debt)
 
@@ -34,43 +45,13 @@ All resolved debt has been removed from this document. For historical reference,
 
 ## 2. Architectural Debt
 
-### 2.1 `IFileSystem` Port — Staging Methods
-
-| Item | Detail |
-|------|--------|
-| **Problem** | `IFileSystem` includes staging methods (`stageFile`, `commitStaging`, `cleanStaging`) alongside filesystem methods. Per ISP, these should live in a separate `IStagingSystem` port. |
-| **Why it's here** | Early design consolidated operations for simplicity. All 3 use cases consume the same interface. |
-| **Risk** | Low. Cohesion is high — staging IS a filesystem concern. Currently 12 methods. |
-| **Recommendation** | Split into `IFileSystem` + `IStagingSystem` when interface grows beyond 5 methods or when adding a 4th use case. |
-| **Target** | v1.1.0 |
-| **Effort** | 3h |
+*(No architectural debt items currently open.)*
 
 ---
 
 ## 3. Dependency Debt
 
-### 3.1 TypeScript 6.x Upgrade
-
-| Item | Detail |
-|------|--------|
-| **Current** | `"typescript": "^5"` (~5.8.x) |
-| **Available** | TS 6.x (stable) |
-| **Impact** | Major version bump. Breaking changes in type inference, decorators, module resolution. Requires thorough `tsc --noEmit` verification. |
-| **Risk** | Medium. Dev dependency only (runtime is Bun). No production impact. |
-| **Recommendation** | Pin to `^5` for v1.0.x patches. Upgrade to `^6` in v1.1.0 after verification. |
-| **Target** | v1.1.0 |
-| **Effort** | 2h |
-
-### 3.2 Biome `^2` Range Update
-
-| Item | Detail |
-|------|--------|
-| **Current** | `"@biomejs/biome": "^1"` (~1.9.x) |
-| **Available** | Biome 2.x (stable, new linter rules + `organizeImports` assist) |
-| **Risk** | Low. Backward-compatible for formatting. |
-| **Recommendation** | Update to `^2` range in v1.1.0. |
-| **Target** | v1.1.0 |
-| **Effort** | 30min |
+*(No dependency debt items currently open.)*
 
 ---
 
@@ -109,17 +90,11 @@ All resolved debt has been removed from this document. For historical reference,
 | **Target** | Future (v1.2.0+) |
 | **Effort** | 4h |
 
-### 5.3 No Isolated Integration Test for npm Packaging
-
-| Item | Detail |
-|------|--------|
-| **Problem** | Local tests use `template/` directly, masking packaging issues that only appear in the npm tarball. FEV-2-B (symlinks) and FEV-2-C (gitignore) were both caught AFTER release. |
-| **Proposed solution** | Test that: (1) builds npm package with `bun pm pack`, (2) installs in temp dir, (3) runs binary, (4) verifies template resolution, gitignore, and symlinks work. |
-| **Risk** | Medium. Current workaround: manual `bunx` validation before release (error-prone). |
-| **Target** | v1.1.0 |
-| **Effort** | 6h |
+---
 
 ---
+
+
 
 ## 6. Known Limitations
 
@@ -167,16 +142,16 @@ not file granularity.
 
 ## Summary & Prioritization
 
-### v1.1.0
+### v1.1.0 ✅ All resolved
 
-| Item | Effort | Impact |
-|------|--------|--------|
-| Isolated integration test for npm packaging | 6h | Catches packaging bugs before release |
-| Integration tests for `main.ts` | 4h | Coverage 33% → 95% lines |
-| TypeScript 6.x upgrade | 2h | Modern TS features |
-| Biome `^2` range update | 30min | New linter rules + organize imports assist |
-| `IFileSystem` port split (ISP) | 3h | Interface Segregation Principle compliance |
-| Explicit constructors in `VersionComparator` + `ClackPromptsAdapter` | 15min | Silence coverage artifact |
+| Item | Resolution |
+|------|------------|
+| Isolated integration test for npm packaging | ✅ 5 tests (A-E) |
+| Integration tests for `main.ts` | ✅ 33% → 86.21% lines (+13 tests) |
+| TypeScript 6.x upgrade | ✅ 5.9.3 → 6.0.3 |
+| Biome `^2` range update | ✅ Already `^2.5.3` |
+| `IFileSystem` port split (ISP) | ✅ IFileSystem (6) + IStagingSystem (4) |
+| Explicit constructors in `VersionComparator` + `ClackPromptsAdapter` | ✅ Resolved in FEV-6 (v1.1.0) |
 
 ### Future (v1.2.0+)
 

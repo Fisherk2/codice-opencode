@@ -1,6 +1,6 @@
 # Skills — Agent Knowledge Base
 
-Skills are the workspace's reusable knowledge base. Each skill is a Markdown file that teaches an agent how to perform a specific task domain — from writing robust Bash scripts to designing professional UI/UX, from running incident response to auditing dependencies. Together they form a library of **46 engineering process guides** that agents load on demand.
+Skills are the workspace's reusable knowledge base. Each skill is a Markdown file that teaches an agent how to perform a specific task domain — from writing robust Bash scripts to designing professional UI/UX, from running incident response to auditing dependencies. Together they form a library of **49 engineering process guides** that agents load on demand.
 
 > For the official OpenCode skills documentation, see [opencode.ai/docs/skills](https://opencode.ai/docs/skills).
 
@@ -24,7 +24,10 @@ skills/
 ├── security-and-hardening/SKILL.md       # OWASP, input validation, least privilege
 ├── ui-ux-design-pro/SKILL.md             # Professional UI/UX design systems
 ├── using-agent-skills/SKILL.md           # Meta-skill: skill discovery index
-└── ... (46 skill directories total)
+├── obsidian-vault/SKILL.md              # Vault management and organization
+├── obsidian-markdown/SKILL.md           # Obsidian Flavored Markdown syntax
+├── obsidian-cli/SKILL.md                # Obsidian CLI command reference
+└── ... (49 skill directories total)
 ```
 
 ---
@@ -57,7 +60,7 @@ This indexing is automatic — agents discover skills by scanning the `skills/` 
 
 ## Full Skill Catalog
 
-The workspace ships with 46 skills covering the full development lifecycle:
+The workspace ships with 49 skills covering the full development lifecycle:
 
 | Phase | Skill | Purpose |
 |-------|-------|---------|
@@ -105,7 +108,10 @@ The workspace ships with 46 skills covering the full development lifecycle:
 | | `observability-and-instrumentation` | Logging, metrics, tracing, alerting |
 | | `deprecation-and-migration` | Manage deprecation and migration of old APIs |
 | | `incident-response` | Triage, communicate, write blameless postmortems |
-| **Extra** | `xlsx` | Create, edit, and manipulate spreadsheet files |
+| **Extra** | `obsidian-vault` | Search, create, and manage notes in the Obsidian vault with wikilinks and index notes |
+| | `obsidian-markdown` | Create and edit Obsidian Flavored Markdown with wikilinks, embeds, callouts, and properties |
+| | `obsidian-cli` | Interact with Obsidian vaults using the Obsidian CLI to read, create, search, and manage notes |
+| | `xlsx` | Create, edit, and manipulate spreadsheet files |
 | | `excel-analysis` | Analyze data, pivot tables, charts |
 
 ---

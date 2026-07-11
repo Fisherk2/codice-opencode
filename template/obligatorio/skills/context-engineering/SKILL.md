@@ -183,7 +183,7 @@ For richer context, use Model Context Protocol servers:
 
 | MCP Server | What It Provides |
 |-----------|-----------------|
-| **Context7** | Auto-fetches relevant documentation for libraries |
+| **Context7 + additional MCP servers** | Auto-fetches relevant documentation for libraries (see [Wiki](../../../../docs/wiki-source/MCP-Servers.md)) |
 | **Chrome DevTools** | Live browser state, DOM, console, network |
 | **PostgreSQL** | Direct database schema and query results |
 | **Filesystem** | Project file access and search |

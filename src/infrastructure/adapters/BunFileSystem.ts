@@ -1,6 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
+import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import { VERSION_FILE_NAME } from "../config/constants";
 import { AtomicStager } from "./AtomicStager";
 import { TemplateResolver } from "./TemplateResolver";
@@ -15,9 +16,10 @@ import { TemplateResolver } from "./TemplateResolver";
  *
  * Template resolution is delegated to TemplateResolver, and atomic staging
  * operations are delegated to AtomicStager. This class coordinates between
- * the two and implements the IFileSystem port.
+ * the two and implements both IFileSystem (template/destination/version ops)
+ * and IStagingSystem (atomic write staging).
  */
-export class BunFileSystem implements IFileSystem {
+export class BunFileSystem implements IFileSystem, IStagingSystem {
 	private readonly templateResolver: TemplateResolver;
 	private readonly atomicStager: AtomicStager;
 	private readonly destinationRoot: string;
@@ -57,16 +59,19 @@ export class BunFileSystem implements IFileSystem {
 		// resolveDestinationPath throws on path traversal — NOT caught, so it propagates
 		const fullPath = this.atomicStager.resolveDestinationPath(relativePath);
 		try {
-			// fs.access works for both files AND directories.
-			// Bun.file().exists() was the root cause of FEV-1 Issue #2 regression:
-			// it only detects files, returning false for directories and causing
-			// FileMergeEngine.shouldStage() to overwrite existing standard directories.
 			await fs.access(fullPath);
 			return true;
-		} catch {
-			// Filesystem errors (ENOENT, EACCES, etc.) treated as "does not exist".
-			// For standard rules this means shouldStage=true, so staging will
-			// attempt the write and surface any real permission errors there.
+		} catch (err) {
+			const code = (err as NodeJS.ErrnoException).code;
+			// ENOENT = doesn't exist → false (correct)
+			if (code === "ENOENT") return false;
+			// EACCES = exists but no read permission → true (staging will surface real error)
+			if (code === "EACCES") return true;
+			// Other errors (EIO, EROFS, ENOTDIR) → false.
+			// Rationale: treat conservatively — if the path truly exists but can't be
+			// accessed, staging will surface the real error downstream with a clearer
+			// failure message. Returning false only means we attempt to stage the file,
+			// which is safe (the write will fail if the path is unwritable).
 			return false;
 		}
 	}

@@ -12,6 +12,14 @@ import {
 	validateVersions,
 } from "../../../src/domain/services/VersionComparator";
 
+describe("VersionComparator instantiation", () => {
+	test("creates instance with explicit constructor", () => {
+		// REF: TECH_DEBT.md TD-1.2 — explicit constructor to fix Bun coverage artifact
+		const instance = new VersionComparator();
+		expect(instance).toBeInstanceOf(VersionComparator);
+	});
+});
+
 const comparator = new VersionComparator();
 
 describe("validateVersion", () => {

@@ -28,6 +28,7 @@ import {
 	runPostInstallSteps,
 } from "../../../src/application/postInstall";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
+import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
@@ -116,7 +117,7 @@ function createMockSymlinkCreator(shouldFail = false): ISymlinkCreator & { calls
 	};
 }
 
-function createMockFileSystem(writeVersionShouldFail = false): IFileSystem {
+function createMockFileSystem(writeVersionShouldFail = false): IFileSystem & IStagingSystem {
 	return {
 		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),

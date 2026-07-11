@@ -345,13 +345,13 @@
       "model": "opencode-go/mimo-v2.5",
       "color": "#d3e22b",
       "temperature": 0.5,
-      "steps": 20
+      "steps": 25
     },
     "quetzalcoatl": {
       "model": "opencode-go/qwen3.7-plus",
       "color": "#ffffff",
       "temperature": 0.3,
-      "steps": 15
+      "steps": 60
     },
     "moctezuma": {
       "model": "opencode-go/minimax-m3",
@@ -363,19 +363,19 @@
       "model": "opencode-go/deepseek-v4-flash",
       "color": "#00ffff",
       "temperature": 0.2,
-      "steps": 40
+      "steps": 90
     },
     "mictlantecuhtli": {
       "model": "opencode-go/mimo-v2.5",
       "color": "#2d2d2d",
       "temperature": 0.2,
-      "steps": 40
+      "steps": 60
     },
     "tezcatlipoca": {
       "model": "opencode-go/glm-5.2",
       "color": "#ff3134",
       "temperature": 0.1,
-      "steps": 15
+      "steps": 50
     },
     "build": {
       "disable": true
@@ -541,7 +541,80 @@
       "* .pgpass *": "deny",
       "* .git-credentials *": "deny",
       "* .gpg *": "deny",
-      "* .ovpn *": "deny"
+      "* .ovpn *": "deny",
+      "rm -rf *": "deny",
+      "rm -fr *": "deny",
+      "shred *": "deny",
+      "find * -exec rm *": "deny",
+      "find * -delete": "deny",
+      "git push -f *": "deny",
+      "git push --force *": "deny",
+      "git reset --hard *": "deny",
+      "git clean -fd *": "deny",
+      "git filter-repo *": "deny",
+      "git branch -D *": "deny",
+      "git stash drop": "deny",
+      "git stash clear": "deny",
+      "drop table *": "deny",
+      "drop database *": "deny",
+      "drop schema *": "deny",
+      "truncate table *": "deny",
+      "truncate *": "deny",
+      "docker rm -f *": "deny",
+      "docker rmi -f *": "deny",
+      "docker system prune -a *": "deny",
+      "docker volume rm *": "deny",
+      "docker volume prune *": "deny",
+      "kubectl delete * --all *": "deny",
+      "kubectl drain *": "deny",
+      "chmod -R 777 /*": "deny",
+      "chmod 777 /*": "deny",
+      "chmod -R 777 ~/*": "deny",
+      "chmod 777 ~/*": "deny",
+      "chown -R *": "deny",
+      "kill -9 0": "deny",
+      "kill -9 1": "deny",
+      "shutdown -h *": "deny",
+      "shutdown -r *": "deny",
+      "reboot": "deny",
+      "halt": "deny",
+      "poweroff": "deny",
+      "iptables -F *": "deny",
+      "iptables -F": "deny",
+      "ufw disable": "deny",
+      "firewalld disable": "deny",
+      "npm publish *": "deny",
+      "npm publish": "deny",
+      "pip install * --force-reinstall *": "deny",
+      "apt remove *": "deny",
+      "apt purge *": "deny",
+      "apt-get remove *": "deny",
+      "apt-get purge *": "deny",
+      "yum remove *": "deny",
+      "dnf remove *": "deny",
+      "unset PATH": "deny",
+      "export PATH=*": "deny",
+      "mkfs *": "deny",
+      "dd if=*": "deny",
+      "fdisk /dev/*": "deny",
+      "wipefs *": "deny",
+      "parted * mklabel *": "deny",
+      "terraform destroy -auto-approve *": "deny",
+      "pulumi destroy --yes *": "deny",
+      "aws s3 rm --recursive *": "deny",
+      "aws ec2 terminate-instances *": "deny",
+      "aws rds delete-db-instance *": "deny",
+      "az vm delete *": "deny",
+      "az group delete *": "deny",
+      "gcloud compute instances delete *": "deny",
+      "mongo * dropDatabase": "deny",
+      "mongosh * dropDatabase": "deny",
+      "redis-cli * FLUSHALL": "deny",
+      "redis-cli * FLUSHDB": "deny",
+      "mysqladmin drop *": "deny",
+      "psql * -c * drop *": "deny",
+      "psql * -c * alter system *": "deny",
+      "psql * -c * truncate *": "deny"
     },
     "read": {
       "*": "allow",
@@ -594,6 +667,37 @@
         "MCP_JUPYTER_TOKEN": "mcp-dev-token",
         "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
       }
+    },
+    "docs-mcp-server": {
+      "type": "local",
+      "command": ["npx", "-y", "@arabold/docs-mcp-server@latest"],
+      "enabled": false
+    },
+    "tavily": {
+      "type": "remote",
+      "url": "https://mcp.tavily.com/mcp",
+      "headers": {
+        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+      },
+      "enabled": false
+    },
+    "firecrawl": {
+      "type": "remote",
+      "url": "https://mcp.firecrawl.dev/v2/mcp",
+      "headers": {
+        "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
+      },
+      "enabled": false
+    },
+    "vercel-grep": {
+      "type": "remote",
+      "url": "https://mcp.grep.app",
+      "enabled": true
+    },
+    "gitmcp": {
+      "type": "remote",
+      "url": "https://gitmcp.io/docs",
+      "enabled": true
     }
   }
 }

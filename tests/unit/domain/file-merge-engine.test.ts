@@ -11,9 +11,10 @@
 import { describe, expect, test } from "bun:test";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
+import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 
-// ---- Mock IFileSystem ----
+// ---- Mock IFileSystem + IStagingSystem ----
 
 interface CallRecord {
 	method: string;
@@ -21,12 +22,12 @@ interface CallRecord {
 }
 
 function createMockFs(): {
-	fs: IFileSystem;
+	fs: IFileSystem & IStagingSystem;
 	calls: CallRecord[];
 } {
 	const calls: CallRecord[] = [];
 
-	const mockFs: IFileSystem = {
+	const mockFs: IFileSystem & IStagingSystem = {
 		readTemplateFile: async () => "",
 		destinationExists: async (path: string) => {
 			calls.push({ method: "destinationExists", args: [path] });
