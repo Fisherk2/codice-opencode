@@ -1,6 +1,7 @@
-import { describe, expect, it, mock as mockFn } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock as mockFn } from "bun:test";
 import type { Dependencies } from "../../../src/cli/main";
-import { createDependencies, promptForMode, runMode, VERSION } from "../../../src/cli/main";
+import { createDependencies, main, promptForMode, runMode, VERSION } from "../../../src/cli/main";
+import { EXIT_SUCCESS } from "../../../src/cli/output";
 import { failure, success } from "../../../src/domain/types/Result";
 
 // ---------------------------------------------------------------------------
@@ -162,5 +163,99 @@ describe("promptForMode", () => {
 		};
 		const result = await promptForMode(mockPrompt as unknown as Dependencies["userPrompt"]);
 		expect(result).toBeNull();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// main() — terminal flags
+// ---------------------------------------------------------------------------
+
+/**
+ * The terminal flag handling (--version, --help) runs BEFORE the try-catch
+ * block in main(). To stop execution after the flag handler calls
+ * process.exit(), the mock throws an Error. The test catches this and
+ * verifies the exit code.
+ */
+describe("main() — terminal flags", () => {
+	let origArgv: string[];
+	let origExit: typeof process.exit;
+	let exitMock: ReturnType<typeof mockFn>;
+
+	beforeEach(() => {
+		origArgv = process.argv;
+		origExit = process.exit;
+		exitMock = mockFn(() => {
+			throw new Error("__EXIT__");
+		});
+		process.exit = exitMock as unknown as typeof process.exit;
+	});
+
+	afterEach(() => {
+		process.argv = origArgv;
+		process.exit = origExit;
+	});
+
+	it("exits with EXIT_SUCCESS when --version is passed", async () => {
+		process.argv = ["bun", "main.ts", "--version"];
+
+		try {
+			await main();
+		} catch (e) {
+			if ((e as Error).message !== "__EXIT__") throw e;
+		}
+
+		expect(exitMock).toHaveBeenCalledWith(EXIT_SUCCESS);
+	});
+
+	it("exits with EXIT_SUCCESS when -V is passed", async () => {
+		process.argv = ["bun", "main.ts", "-V"];
+
+		try {
+			await main();
+		} catch (e) {
+			if ((e as Error).message !== "__EXIT__") throw e;
+		}
+
+		expect(exitMock).toHaveBeenCalledWith(EXIT_SUCCESS);
+	});
+
+	it("exits with EXIT_SUCCESS when --help is passed", async () => {
+		process.argv = ["bun", "main.ts", "--help"];
+
+		try {
+			await main();
+		} catch (e) {
+			if ((e as Error).message !== "__EXIT__") throw e;
+		}
+
+		expect(exitMock).toHaveBeenCalledWith(EXIT_SUCCESS);
+	});
+
+	it("exits with EXIT_SUCCESS when -h is passed", async () => {
+		process.argv = ["bun", "main.ts", "-h"];
+
+		try {
+			await main();
+		} catch (e) {
+			if ((e as Error).message !== "__EXIT__") throw e;
+		}
+
+		expect(exitMock).toHaveBeenCalledWith(EXIT_SUCCESS);
+	});
+
+	it("does not reach parseArgs — process.exit called exactly once for terminal flags", async () => {
+		process.argv = ["bun", "main.ts", "--version"];
+
+		try {
+			await main();
+		} catch (e) {
+			if ((e as Error).message !== "__EXIT__") throw e;
+		}
+
+		// process.exit should only be called once (by the version check).
+		// If parseArgs was reached, it would succeed (--version is in ALLOWED_FLAGS)
+		// and createDependencies would execute, causing additional side effects.
+		expect(exitMock).toHaveBeenCalledTimes(1);
+		expect(exitMock).toHaveBeenCalledWith(EXIT_SUCCESS);
 	});
 });
