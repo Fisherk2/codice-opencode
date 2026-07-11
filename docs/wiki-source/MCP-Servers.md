@@ -256,7 +256,7 @@ For lightweight sessions without a full Jupyter server:
 
 ### Grounded Docs MCP Server — Open-Source Documentation Queries
 
-Local SSE-based MCP server that provides up-to-date library documentation from official sources. Open-source alternative to Context7. Indexes docs from websites, GitHub, npm, PyPI, and local files.
+Local stdio-based MCP server that provides up-to-date library documentation from official sources. Open-source alternative to Context7. Indexes docs from websites, GitHub, npm, PyPI, and local files.
 
 **Pre-configured as:** `"enabled": false` — requires manual startup of the server first.
 
@@ -299,8 +299,6 @@ OpenCode manages the server lifecycle automatically via stdio.
 > **Repository:** [github.com/arabold/docs-mcp-server](https://github.com/arabold/docs-mcp-server) | **Web:** [grounded.tools](https://grounded.tools)
 
 ---
-
-
 
 ### Tavily — Real-Time Web Search
 
@@ -580,7 +578,6 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 |---------|--------------|-------------|
 | Documentation queries (`find-docs` skill) | `context7` | Falls back to training data |
 | Open-source documentation queries | `docs-mcp-server` | Falls back to context7 |
-| Version-precise package docs | `rtfmbro` | Falls back to generic docs |
 | Real-time web search (API key) | `tavily` | Falls back to training data |
 | Web scraping and crawling (API key) | `firecrawl` | Not available |
 | GitHub code search | `vercel-grep` | Manual GitHub browsing |
