@@ -19,10 +19,13 @@ import * as path from "node:path";
 
 /**
  * Check if packaging tests should be skipped.
- * Set SKIP_NETWORK_TESTS=1 to skip tests that require npm pack.
+ * Set SKIP_NETWORK_TESTS=1 to skip, or automatically skipped on Windows
+ * (Windows lacks native `tar` used by listTarballContents).
  */
 export function skipPackagingTests(): boolean {
-	return process.env.SKIP_NETWORK_TESTS === "1";
+	if (process.env.SKIP_NETWORK_TESTS === "1") return true;
+	if (process.platform === "win32") return true;
+	return false;
 }
 
 // ---------------------------------------------------------------------------
