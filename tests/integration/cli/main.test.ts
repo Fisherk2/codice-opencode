@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock as mockFn } from "bun:test";
+import * as fs from "node:fs/promises";
 import type { Dependencies } from "../../../src/cli/main";
 import { createDependencies, main, promptForMode, runMode, VERSION } from "../../../src/cli/main";
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
 import { EXIT_ERROR, EXIT_INTERRUPT, EXIT_SUCCESS, EXIT_USAGE } from "../../../src/cli/output";
 import { failure, success } from "../../../src/domain/types/Result";
 
