@@ -109,7 +109,9 @@ src/
 │   └── services/    # FileMergeEngine, VersionComparator
 ├── application/     # Use cases + port interfaces
 │   ├── use-cases/   # CleanInstall, ProjectInstall, UpdateWorkspace
-│   └── ports/       # IFileSystem, IGitHubClient, IUserPrompt
+│   ├── ports/       # IFileSystem, IStagingSystem, IGitHubClient, IUserPrompt
+│   ├── postInstall.ts # Post-installation orchestration
+│   └── helpers.ts   # Shared use-case utilities
 ├── infrastructure/  # Adapters (BunFileSystem, GitHubRestClient, ClackPromptsAdapter)
 └── cli/             # Entry point (main.ts, args parsing)
 ```
@@ -175,7 +177,7 @@ just test:e2e
 SKIP_BUILD=1 just test:e2e
 ```
 
-Tests the compiled binary against isolated temporary directories. 8 scenarios: clean install, project install, optional skip, update workspace, atomic rollback, path traversal rejection, symlinks clean install, and symlinks project install.
+Tests the compiled binary against isolated temporary directories. 15 scenarios: clean install, project install, optional skip, update workspace, atomic rollback, path traversal rejection, symlinks clean install, symlinks project install, symlinks idempotency, update no symlinks, gitignore clean install, gitignore project install, clean install optional menu, project install optional selection, and update workspace existing project.
 
 **Scenarios:**
 
@@ -505,7 +507,7 @@ Códice installs an **OpenCode workspace template** organized into three file ca
 
 The project has **two types of agents** with different procedures:
 
-- **Subagent** (~96 currently) — expert in a specific domain, invoked via `task()` from a primary agent
+- **Subagent** (~98 currently) — expert in a specific domain, invoked via `task()` from a primary agent
 - **Primary agent** (6 currently: huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca) — main entry point for slash commands, able to delegate to subagents
 
 Key steps for adding an agent:
@@ -581,4 +583,4 @@ The Códice CLI handles the classification automatically based on the directory 
 
 ---
 
-*Last revised: 2026-06-25*
+*Last revised: 2026-07-11*
