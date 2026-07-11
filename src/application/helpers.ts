@@ -14,6 +14,7 @@
  */
 
 import type { IFileSystem } from "../domain/ports/IFileSystem";
+import type { IStagingSystem } from "../domain/ports/IStagingSystem";
 import { failure, type Result, success } from "../domain/types/Result";
 
 /**
@@ -22,7 +23,7 @@ import { failure, type Result, success } from "../domain/types/Result";
  * If not, returns a Failure with an actionable error message.
  * All three installation modes perform this check at the start.
  *
- * @param fileSystem - Filesystem adapter.
+ * @param fileSystem - Filesystem adapter (IFileSystem).
  * @param destinationPath - Target directory (used for error message).
  * @returns Success if writable, Failure with details otherwise.
  */
@@ -47,13 +48,13 @@ export async function checkWritable(
  * If the write fails, the staging directory is cleaned up
  * automatically and a Failure is returned with the error context.
  *
- * @param fileSystem - Filesystem adapter.
+ * @param fileSystem - Filesystem + staging adapter (IFileSystem & IStagingSystem).
  * @param versionData - Data to serialize as JSON into the version file.
  * @param operationLabel - Human-readable label for rollback message (e.g. "Installation", "Update").
  * @returns Success on write, Failure on error (with staging cleaned).
  */
 export async function writeVersionFileSafe(
-	fileSystem: IFileSystem,
+	fileSystem: IFileSystem & IStagingSystem,
 	versionData: Record<string, unknown>,
 	operationLabel: string,
 ): Promise<Result<void, Error>> {

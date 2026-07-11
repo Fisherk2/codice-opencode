@@ -11,6 +11,7 @@ import { CleanInstallUseCase } from "../application/use-cases/CleanInstallUseCas
 import { ProjectInstallUseCase } from "../application/use-cases/ProjectInstallUseCase";
 import { UpdateWorkspaceUseCase } from "../application/use-cases/UpdateWorkspaceUseCase";
 import type { IFileSystem } from "../domain/ports/IFileSystem";
+import type { IStagingSystem } from "../domain/ports/IStagingSystem";
 import { FileMergeEngine } from "../domain/services/FileMergeEngine";
 import { VersionComparator } from "../domain/services/VersionComparator";
 import { BunFileSystem } from "../infrastructure/adapters/BunFileSystem";
@@ -33,7 +34,7 @@ import { DEVIN_SYMLINKS, OPENCODE_SYMLINKS } from "../infrastructure/config/syml
  * Principle — consumers depend on abstractions, not implementations.
  */
 export interface Dependencies {
-	readonly fileSystem: IFileSystem;
+	readonly fileSystem: IFileSystem & IStagingSystem;
 	readonly userPrompt: IUserPrompt;
 	readonly cleanInstall: CleanInstallUseCase;
 	readonly projectInstall: ProjectInstallUseCase;

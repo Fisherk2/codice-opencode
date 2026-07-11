@@ -8,6 +8,7 @@ import {
 	getRulesByCategory,
 } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
+import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
@@ -24,7 +25,7 @@ const allOptionalPaths = getRulesByCategory("optional").map((r) => r.path);
  * Each test can override specific methods via the returned object.
  */
 function createMockFileSystem(): {
-	stub: IFileSystem;
+	stub: IFileSystem & IStagingSystem;
 	calls: {
 		stageFile: string[];
 		commitStaging: number;
@@ -39,7 +40,7 @@ function createMockFileSystem(): {
 		writeVersionFile: [] as string[],
 	};
 
-	const stub: IFileSystem = {
+	const stub: IFileSystem & IStagingSystem = {
 		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),
 		getStagingPath: mockFn((path: string) => `.codice-staging/${path}`),

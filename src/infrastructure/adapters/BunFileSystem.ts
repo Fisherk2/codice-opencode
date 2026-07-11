@@ -1,6 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
+import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import { VERSION_FILE_NAME } from "../config/constants";
 import { AtomicStager } from "./AtomicStager";
 import { TemplateResolver } from "./TemplateResolver";
@@ -15,9 +16,10 @@ import { TemplateResolver } from "./TemplateResolver";
  *
  * Template resolution is delegated to TemplateResolver, and atomic staging
  * operations are delegated to AtomicStager. This class coordinates between
- * the two and implements the IFileSystem port.
+ * the two and implements both IFileSystem (template/destination/version ops)
+ * and IStagingSystem (atomic write staging).
  */
-export class BunFileSystem implements IFileSystem {
+export class BunFileSystem implements IFileSystem, IStagingSystem {
 	private readonly templateResolver: TemplateResolver;
 	private readonly atomicStager: AtomicStager;
 	private readonly destinationRoot: string;
