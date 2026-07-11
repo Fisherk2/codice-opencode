@@ -168,14 +168,12 @@ export class AtomicStager {
 
 		// Back up original destination file if it exists
 		try {
-			const destFile = Bun.file(destPath);
-			if (await destFile.exists()) {
-				const backupPath = `${destPath}.codice-backup`;
-				await fs.copyFile(destPath, backupPath);
-				backups.set(destPath, backupPath);
-			}
+			await fs.access(destPath);
+			const backupPath = `${destPath}.codice-backup`;
+			await fs.copyFile(destPath, backupPath);
+			backups.set(destPath, backupPath);
 		} catch {
-			// If we can't copy the original, we can't back it up — proceed anyway
+			// If destPath doesn't exist or can't be read, skip backup — proceed anyway
 		}
 
 		// Atomic rename: staging → destination
