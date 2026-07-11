@@ -32,7 +32,10 @@ export function skipPackagingTests(): boolean {
 /**
  * Run `bun pm pack` in the project root to create a tarball.
  *
- * @returns Absolute path to the generated tarball.
+ * Also cleans up the side-effect tarball that `bun pm pack` writes
+ * to CWD regardless of `--destination` (known Bun behavior).
+ *
+ * @returns Absolute path to the generated tarball (in a temp dir).
  * @throws If packing fails.
  */
 export async function packTarball(): Promise<string> {
@@ -61,6 +64,14 @@ export async function packTarball(): Promise<string> {
 	if (!tarball) {
 		await fs.rm(tmpDir, { recursive: true, force: true });
 		throw new Error("No tarball (.tgz) found after bun pm pack");
+	}
+
+	// Clean up side-effect tarball that bun pm pack writes to CWD
+	// despite --destination flag (known Bun limitation)
+	const cwdFiles = await fs.readdir(projectRoot);
+	const sideEffect = cwdFiles.find((f) => f.endsWith(".tgz"));
+	if (sideEffect) {
+		await fs.unlink(path.join(projectRoot, sideEffect));
 	}
 
 	return path.join(tmpDir, tarball);
