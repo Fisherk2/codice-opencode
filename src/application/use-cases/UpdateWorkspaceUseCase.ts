@@ -5,7 +5,7 @@ import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
-import { checkWritable, writeVersionFileSafe } from "../helpers";
+import { checkWritable, confirmOverwrite, writeVersionFileSafe } from "../helpers";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 
@@ -77,14 +77,13 @@ export class UpdateWorkspaceUseCase {
 
 		// Ask for confirmation if not forced
 		if (!options?.force) {
-			const confirmed = await this.userPrompt.confirm(
+			const confirmed = await confirmOverwrite(
+				this.fileSystem,
+				this.userPrompt,
 				`Update workspace in "${destinationPath}"? Obligatorio and Estándar files will be updated. Opcional files will be preserved. Continue?`,
-				true,
+				"Update cancelled by user.",
 			);
-			if (!confirmed) {
-				await this.userPrompt.showCancel("Update cancelled by user.");
-				return success(undefined);
-			}
+			if (!confirmed) return success(undefined);
 		}
 
 		// Read local version info (best-effort)
@@ -146,7 +145,7 @@ export class UpdateWorkspaceUseCase {
 			return failure(new Error(mergeResult.error.message));
 		}
 
-		const safeVersion = this.resolveNewVersion(options, remoteTag, installedVersion);
+		const safeVersion = this.resolveNewVersion(options);
 
 		// Write version file with preserved optional selections
 		const versionResult = await writeVersionFileSafe(
@@ -167,19 +166,13 @@ export class UpdateWorkspaceUseCase {
 
 	/**
 	 * Resolve the version string to write to .codice-version.
-	 * Priority: explicit flag > bundled template > previously installed > "0.0.0"
-	 * Falls back to "0.0.0" if the resolved string is not valid semver.
+	 * Priority: explicit flag > bundled template > fallback to "0.0.0".
+	 *
+	 * The bundled template version is always available (compile-time constant),
+	 * so the chain never reaches the fallback — kept for type safety.
 	 */
-	private resolveNewVersion(
-		options: UpdateWorkspaceOptions | undefined,
-		remoteTag: string | null,
-		installedVersion: string,
-	): string {
-		const resolved =
-			options?.version ??
-			this.bundledVersion ??
-			(remoteTag ? remoteTag.replace(/^v/, "") : undefined) ??
-			installedVersion;
+	private resolveNewVersion(options: UpdateWorkspaceOptions | undefined): string {
+		const resolved = options?.version ?? this.bundledVersion;
 		return valid(resolved) ? resolved : "0.0.0";
 	}
 }

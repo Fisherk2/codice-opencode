@@ -167,13 +167,13 @@ The `agent` section configures each primary agent individually. The template ass
     "model": "opencode-go/mimo-v2.5",
     "color": "#d3e22b",
     "temperature": 0.5,
-    "steps": 20
+    "steps": 25
   },
   "quetzalcoatl": {
     "model": "opencode-go/qwen3.7-plus",
     "color": "#ffffff",
     "temperature": 0.3,
-    "steps": 15
+    "steps": 60
   },
   "moctezuma": {
     "model": "opencode-go/minimax-m3",
@@ -185,19 +185,19 @@ The `agent` section configures each primary agent individually. The template ass
     "model": "opencode-go/deepseek-v4-flash",
     "color": "#00ffff",
     "temperature": 0.2,
-    "steps": 40
+    "steps": 90
   },
   "mictlantecuhtli": {
     "model": "opencode-go/mimo-v2.5",
     "color": "#2d2d2d",
     "temperature": 0.2,
-    "steps": 40
+    "steps": 60
   },
   "tezcatlipoca": {
     "model": "opencode-go/glm-5.2",
     "color": "#ff3134",
     "temperature": 0.1,
-    "steps": 15
+    "steps": 50
   },
   "build": { "disable": true },
   "plan": { "disable": true },
@@ -221,12 +221,12 @@ Each agent's configuration reflects its role in the SDD pipeline:
 
 | Agent | Model Choice | Temperature | Steps | Color | Rationale |
 |-------|-------------|:-----------:|:-----:|:-----:|-----------|
-| **Huitzilopochtli** | mimo-v2.5 (balanced) | 0.5 | 20 | 🟡 Yellow | Supreme orchestrator — needs balanced creativity to decide which subagent to invoke. Higher temperature for flexible delegation. Moderate steps because orchestration is quick. |
-| **Quetzalcoatl** | qwen3.7-plus (powerful) | 0.3 | 15 | ⚪ White | Visionary Sage — spec writing and design. Low temperature for precise, structured output. Fewest steps because specs are well-defined templates. |
+| **Huitzilopochtli** | mimo-v2.5 (balanced) | 0.5 | 25 | 🟡 Yellow | Supreme orchestrator — needs balanced creativity to decide which subagent to invoke. Higher temperature for flexible delegation. Low step count because orchestration is quick. |
+| **Quetzalcoatl** | qwen3.7-plus (powerful) | 0.3 | 60 | ⚪ White | Visionary Sage — spec writing and design. Low temperature for precise, structured output. Higher step count for comprehensive documentation generation. |
 | **Moctezuma** | minimax-m3 (fast) | 0.1 | 20 | 🟤 Brown | Strategic Commander — task breakdown. Near-deterministic temperature for structured plan output. Fast model since planning is formulaic. |
-| **Tlaloc** | deepseek-v4-flash (fast) | 0.2 | 40 | 🔵 Cyan | Rain God Builder — code implementation. Low temperature for correct code, high step limit because building is multi-step (test→code→refactor). |
-| **Mictlantecuhtli** | mimo-v2.5 (balanced) | 0.2 | 40 | ⚫ Dark | Underworld Judge — testing and validation. Low temperature for thorough verification. Highest step limit for complex test suites and ship checklist. |
-| **Tezcatlipoca** | glm-5.2 (powerful) | 0.1 | 15 | 🔴 Red | Smoking Mirror Critic — code review. Near-deterministic for objective analysis. Fewest steps because reviews follow a fixed checklist. |
+| **Tlaloc** | deepseek-v4-flash (fast) | 0.2 | 90 | 🔵 Cyan | Rain God Builder — code implementation. Low temperature for correct code, highest step limit because building is multi-step (test→code→refactor). |
+| **Mictlantecuhtli** | mimo-v2.5 (balanced) | 0.2 | 60 | ⚫ Dark | Underworld Judge — testing and validation. Low temperature for thorough verification. High step limit for complex test suites and ship checklist. |
+| **Tezcatlipoca** | glm-5.2 (powerful) | 0.1 | 50 | 🔴 Red | Smoking Mirror Critic — code review. Near-deterministic for objective analysis. Moderate step count for thorough five-axis review. |
 
 ### Disabled Agents
 
@@ -337,16 +337,21 @@ This means **no agent can delegate by default**. Primary agents that need delega
 
 ## MCP Servers — Tool Connectivity
 
-The `mcp` section configures Model Context Protocol servers that extend agent capabilities. The template ships with **4 pre-configured MCP servers** in `opencode.json`:
+The `mcp` section configures Model Context Protocol servers that extend agent capabilities. The template ships with **9 pre-configured MCP servers** in `opencode.json`. Three are enabled by default; the rest must be activated on demand.
 
 | Server | Type | Default | Purpose |
 |--------|------|---------|---------|
 | `context7` | Remote | ✅ Enabled | Documentation queries |
+| `vercel-grep` | Remote | ✅ Enabled | GitHub code search across 1M+ repos |
+| `gitmcp` | Remote | ✅ Enabled | GitHub repository documentation |
 | `chrome-devtools` | Local | ❌ Disabled | Web performance & browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation |
 | `jupyter` | Local | ❌ Disabled | Jupyter notebook automation |
+| `docs-mcp-server` | Local | ❌ Disabled | Open-source documentation queries |
+| `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
+| `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
 
-Only `context7` is enabled by default to minimize context consumption. To activate the others:
+Three servers are enabled by default (`context7`, `vercel-grep`, `gitmcp`). To activate the others:
 
 1. **Install prerequisites** (see [MCP Servers](MCP-Servers) for per-server requirements)
 2. **Set `"enabled": true`** for the server you need in `opencode.json`

@@ -87,13 +87,13 @@ Start by running the `/help` command to see all available slash commands and the
 
 ### 2. Activate MCP Servers (Optional)
 
-The template ships with 4 pre-configured MCP servers in `opencode.json`. Only `context7` (documentation queries) is enabled by default. If your project needs browser debugging, spreadsheet manipulation, or Jupyter notebooks:
+The template ships with 9 pre-configured MCP servers in `opencode.json`. Three are enabled by default: `context7` (documentation queries), `vercel-grep` (GitHub code search), and `gitmcp` (GitHub repository docs). If your project needs browser debugging, spreadsheet manipulation, web scraping, or other capabilities:
 
 1. Check [MCP Servers](MCP-Servers) for per-server prerequisites
 2. Set `"enabled": true` for the server you need in `opencode.json`
 3. Restart OpenCode
 
-> Most projects only need `context7` (already enabled). Activate others on demand to conserve context.
+> Most projects only need the 3 default servers (already enabled). Activate others on demand to conserve context.
 
 ### 3. Run `/spec` to Define Your Project
 

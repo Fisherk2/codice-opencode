@@ -4,6 +4,7 @@
  * Services all three installation modes (Clean, Project, Update):
  * - writability check
  * - version file write with staging rollback
+ * - confirm overwrite prompt (shared by Clean + Project install)
  *
  * Post-installation orchestration (gitignore, symlinks, success message)
  * for Clean and Project install modes lives in the separate
@@ -16,6 +17,7 @@
 import type { IFileSystem } from "../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../domain/ports/IStagingSystem";
 import { failure, type Result, success } from "../domain/types/Result";
+import type { IUserPrompt } from "./ports/IUserPrompt";
 
 /**
  * Check if the destination directory is writable.
@@ -40,6 +42,40 @@ export async function checkWritable(
 		);
 	}
 	return success(undefined);
+}
+
+/**
+ * Ask the user for confirmation when the destination is not empty.
+ * Skips the prompt when force=true or the directory is effectively empty
+ * (allows .git/ and .codice-version).
+ *
+ * Shared by CleanInstallUseCase and ProjectInstallUseCase to avoid
+ * duplicating the guard pattern.
+ *
+ * @param fileSystem - Filesystem adapter (provides isEmpty check).
+ * @param userPrompt - Adapter for interactive prompts.
+ * @param message - Confirmation message shown to the user.
+ * @param cancelMessage - Message shown if the user cancels.
+ * @param force - If true, skip the prompt. If false or undefined, check isEmpty and prompt.
+ * @returns true if the operation should proceed, false if cancelled.
+ */
+export async function confirmOverwrite(
+	fileSystem: IFileSystem,
+	userPrompt: IUserPrompt,
+	message: string,
+	cancelMessage: string,
+	force?: boolean,
+): Promise<boolean> {
+	if (force) return true;
+
+	const isEmpty = await fileSystem.isEmpty();
+	if (isEmpty) return true;
+
+	const confirmed = await userPrompt.confirm(message, false);
+	if (!confirmed) {
+		await userPrompt.showCancel(cancelMessage);
+	}
+	return confirmed;
 }
 
 /**

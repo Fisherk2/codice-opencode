@@ -176,6 +176,35 @@ describe("CleanInstallUseCase", () => {
 			expect(prompt.showSuccess).toHaveBeenCalledWith("Clean installation complete.");
 		});
 
+		it("should skip confirmation when destination is empty (no prompt)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			// fs.isEmpty already returns true by default
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkCreator = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkCreator,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Should NOT have asked for confirmation (isEmpty short-circuits)
+			expect(prompt.confirm).not.toHaveBeenCalled();
+			// Operation proceeds normally
+			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
+			expect(calls.commitStaging).toBe(1);
+			// Success message shown
+			expect(prompt.showSuccess).toHaveBeenCalledWith("Clean installation complete.");
+		});
+
 		it("should show warning but still succeed when gitignore creation fails", async () => {
 			const { stub: fs } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);

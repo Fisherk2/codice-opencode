@@ -133,6 +133,26 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(calls.stageFile.length).toBe(nonOptionalCount);
 		});
 
+		it("should skip confirmation when directory is empty (no prompt)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			// Override: fs.isEmpty defaults to false in this file, set to true for this test
+			(fs.isEmpty as ReturnType<typeof mockFn>).mockResolvedValue(true);
+			const prompt = createMockPrompt();
+			const engine = new FileMergeEngine(fs);
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Should NOT have asked for confirmation (isEmpty short-circuits)
+			expect(prompt.confirm).not.toHaveBeenCalled();
+			// Operation proceeds normally
+			expect(calls.stageFile.length).toBe(nonOptionalCount);
+			expect(calls.commitStaging).toBe(1);
+		});
+
 		it("should skip installation when user rejects confirmation", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const prompt = createMockPrompt();
@@ -146,6 +166,7 @@ describe("UpdateWorkspaceUseCase", () => {
 
 			expect(result.ok).toBe(true);
 			expect(calls.stageFile.length).toBe(0);
+			expect(prompt.showCancel).toHaveBeenCalledWith("Update cancelled by user.");
 		});
 
 		it("should skip confirmation when force=true", async () => {
@@ -406,6 +427,30 @@ describe("UpdateWorkspaceUseCase", () => {
 					typeof call[0] === "string" && (call[0] as string).includes(".gitignore"),
 			);
 			expect(gitignoreWarnings.length).toBe(0);
+		});
+
+		it("should fall back to '0.0.0' when bundledVersion is invalid semver", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			const gitHub = createMockGitHubClient("v0.5.0");
+			const engine = new FileMergeEngine(fs);
+			const comparator = new VersionComparator();
+			// Pass invalid semver as bundledVersion to trigger fallback
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				"not-a-valid-version",
+			);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			// Version file should contain the fallback "0.0.0"
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedVersion).toBe("0.0.0");
 		});
 
 		it("should handle version file write failure gracefully", async () => {

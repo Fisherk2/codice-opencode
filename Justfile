@@ -19,17 +19,20 @@ format-check:
 check:
     bunx @biomejs/biome ci src/ tests/ && bun run tsc --noEmit
 
+# Exclude template/obligatorio/skills/ and skills/ — external code with own test deps
+IGNORE_PATTERNS := "--path-ignore-patterns=template/obligatorio/skills/**,skills/**"
+
 test:
-    bun test tests/
+    bun test tests/ {{IGNORE_PATTERNS}}
 
 test-unit:
-    bun test tests/unit/
+    bun test tests/unit/ {{IGNORE_PATTERNS}}
 
 test-integration:
-    bun test tests/integration/
+    bun test tests/integration/ {{IGNORE_PATTERNS}}
 
 test-coverage:
-    bun test tests/ --coverage
+    bun test tests/ --coverage {{IGNORE_PATTERNS}}
 
 # Build for current platform (auto-detects OS)
 build:
@@ -64,6 +67,17 @@ build-all:
         exit 1
     fi
     echo "All builds succeeded"
+
+test-watch:
+    bun test tests/ --watch {{IGNORE_PATTERNS}}
+
+test-packaging:
+    bun test tests/integration/packaging/ {{IGNORE_PATTERNS}}
+
+# Skip packaging tests when offline (no npm pack):
+#   SKIP_NETWORK_TESTS=1 just test-packaging
+test-packaging-skip:
+    SKIP_NETWORK_TESTS=1 bun test tests/integration/packaging/ {{IGNORE_PATTERNS}}
 
 test-e2e:
     just build && SKIP_BUILD=1 bash tests/e2e/run-e2e.sh

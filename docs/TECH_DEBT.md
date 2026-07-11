@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-11
 **Status:** Active reference for improvement planning
-**Current version:** v1.1.0 (581 tests, 0 fail, 1245 expects, 98.89% funcs / 96.98% lines)
+**Current version:** v1.1.1 (586 tests, 0 fail, 1255 expects, 100.00% funcs / 98.08% lines)
 
 ---
 
@@ -17,6 +17,12 @@
 | **TD-3.1** | TypeScript 6.x upgrade | ✅ 5.9.3 → 6.0.3. No breaking changes (modern tsconfig avoids all deprecated options). |
 | **TD-3.2** | Biome 2.x update | ✅ Already done before FEV-10 (`^2.5.3`, schema 2.5.0). |
 | **TD-5.3** | npm packaging integration tests | ✅ 5 new tests (A-E) using `bun pm pack` to validate tarball structure, symlink exclusion, gitignore exclusion, --version, and clean install from extracted package. |
+
+### v1.1.1 (2026-07-11)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **TD-CR-1** | Code review fixes: GitHubRestClient catch simplification, UpdateWorkspaceUseCase helper normalization, Windows SYSTEM_DIRS, resolveWithinRoot normalization, VERSION module extraction, AtomicStager fs.copyFile, CleanInstall/ProjectInstall duplication documented | ✅ All 11 code review findings resolved (4 Important, 7 Suggestions) |
 
 ### Prior (v1.0.11)
 
@@ -45,7 +51,17 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 
 ## 2. Architectural Debt
 
-*(No architectural debt items currently open.)*
+### 2.1 CleanInstallUseCase / ProjectInstallUseCase duplicación (~80 líneas)
+
+| Item | Detail |
+|------|--------|
+| **Problem** | `CleanInstallUseCase` (162 líneas) y `ProjectInstallUseCase` (139 líneas) comparten same constructor signature (7 parámetros idénticos), mismo flujo `execute()` (checkWritable → confirmOverwrite → selectOptionals → merge → postInstall), y métodos `confirmOverwrite()`/`runPostInstall()` casi idénticos. |
+| **Differences** | (1) `buildRules()`: Clean convierte todo a mandatory; Project pasa manifest tal cual. (2) `selectOptionals()`: Clean con force selecciona todos; Project retorna vacío. (3) Mensajes de confirmación/éxito. |
+| **Proposed fix** | Template Method pattern: extraer clase base `InstallUseCaseBase` con flujo común y hooks para las 3 variaciones. |
+| **Risk** | Low. La duplicación es explícita y ambas clases ya delegaron la lógica compartida a `helpers.ts` y `postInstall.ts`. |
+| **Recommendation** | Aplicar Rule of Three: esperar a un cuarto modo de instalación antes de refactorizar. |
+| **Target** | v1.2.0+ (o cuando surja un nuevo modo) |
+| **Effort** | 4h |
 
 ---
 
@@ -142,7 +158,7 @@ not file granularity.
 
 ## Summary & Prioritization
 
-### v1.1.0 ✅ All resolved
+### v1.1.1 ✅ All resolved
 
 | Item | Resolution |
 |------|------------|
@@ -160,6 +176,7 @@ not file granularity.
 | Binary size reduction (74MB → <20MB) | 8-12h | 73% smaller downloads, faster installs, lower CDN costs |
 | E2E coverage instrumentation | 8h | Accurate coverage for entry point |
 | `just bench` performance benchmarks | 4h | Regression detection for SC-9/10/11 |
+| CleanInstall/ProjectInstall Template Method refactor | 4h | Eliminate ~80 lines duplication, prepare for new install modes |
 
 ---
 

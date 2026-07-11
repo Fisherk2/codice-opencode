@@ -21,7 +21,7 @@ import { ClackPromptsAdapter } from "../infrastructure/adapters/ClackPromptsAdap
 import { GitHubRestClient } from "../infrastructure/adapters/GitHubRestClient";
 import { TemplateResolver } from "../infrastructure/adapters/TemplateResolver";
 import { DEVIN_SYMLINKS, OPENCODE_SYMLINKS } from "../infrastructure/config/symlinks";
-import { VERSION } from "./output";
+import { VERSION } from "./version";
 
 // ---------------------------------------------------------------------------
 // Types
