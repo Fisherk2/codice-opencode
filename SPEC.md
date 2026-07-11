@@ -1,9 +1,9 @@
-# Spec: Códice — Opencode Workspace Installer v1.0.13
+# Spec: Códice — Opencode Workspace Installer v1.1.1
 
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-06-13  
-**Current Version:** v1.0.13  
+**Current Version:** v1.1.1  
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
 ---
@@ -111,7 +111,8 @@ codice-opencode/
 │   │   │   └── WorkspaceVersion.ts # Semantic version value object
 │   │   ├── ports/
 │   │   │   ├── IFileMergeEngine.ts # Abstract merge engine interface
-│   │   │   ├── IFileSystem.ts     # Abstract filesystem operations (read, write, staging)
+│   │   │   ├── IFileSystem.ts     # Abstract filesystem operations (read, write, exists)
+│   │   │   ├── IStagingSystem.ts  # Abstract staging operations (stage, commit, rollback)
 │   │   │   └── IVersionComparator.ts # Abstract version comparison interface
 │   │   ├── services/
 │   │   │   ├── FileMergeEngine.ts # Strategy-based merge orchestrator
@@ -124,6 +125,7 @@ codice-opencode/
 │   │       └── version.ts         # Version constants and utilities
 │   ├── application/               # Use cases, orchestrates domain via ports
 │   │   ├── helpers.ts             # Shared use-case utilities
+│   │   ├── postInstall.ts         # Post-installation orchestration (gitignore, symlinks, version file)
 │   │   ├── use-cases/
 │   │   │   ├── CleanInstallUseCase.ts      # Mode 1: Overwrite everything
 │   │   │   ├── ProjectInstallUseCase.ts    # Mode 2: Selective merge with prompts
@@ -187,6 +189,7 @@ codice-opencode/
    - Contains use cases and port interfaces.
    - Depends only on `domain/`.
    - Defines contracts (`IGitHubClient`, `IGitignoreCreator`, `ISymlinkCreator`, `IUserPrompt`) that infrastructure must implement.
+   - `postInstall.ts` orchestrates post-installation steps (gitignore generation, symlink creation, version file write) shared across Clean and Project install modes.
    - Orchestrates domain services but contains no business rules.
 
 3. **Infrastructure Layer** (`src/infrastructure/`)
@@ -370,7 +373,7 @@ These actions are explicitly prohibited under all circumstances:
 
 ## Success Criteria
 
-The following conditions are specific, testable, and must all be met for the v1.0.13 release to be considered complete.
+The following conditions are specific, testable, and must all be met for the v1.1.1 release to be considered complete.
 
 ### Functional Criteria
 
