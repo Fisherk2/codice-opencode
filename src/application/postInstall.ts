@@ -13,6 +13,7 @@
  */
 
 import type { IFileSystem } from "../domain/ports/IFileSystem";
+import type { IStagingSystem } from "../domain/ports/IStagingSystem";
 import type { Result } from "../domain/types/Result";
 import { writeVersionFileSafe } from "./helpers";
 import type { IGitignoreCreator } from "./ports/IGitignoreCreator";
@@ -79,7 +80,7 @@ export async function createSymlinksWithWarning(
  * Options for {@link runPostInstallSteps}.
  */
 export interface PostInstallOptions {
-	readonly fileSystem: IFileSystem;
+	readonly fileSystem: IFileSystem & IStagingSystem;
 	readonly gitignoreCreator: IGitignoreCreator;
 	readonly symlinkCreator: ISymlinkCreator;
 	readonly userPrompt: IUserPrompt;

@@ -11,6 +11,14 @@ import type { FileRule } from "../../domain/entities/FileRule";
  * Interactive methods (confirm, selectOptional) return promises.
  */
 export class ClackPromptsAdapter implements IUserPrompt {
+	/**
+	 * Explicit empty constructor.
+	 * Present to avoid Bun's coverage tool counting an implicit constructor
+	 * as an uncovered function. (REF: TECH_DEBT.md TD-1.2)
+	 */
+	// biome-ignore lint/complexity/noUselessConstructor: Needed to fix Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
+	constructor() {}
+
 	private spinner: ReturnType<typeof clack.spinner> | null = null;
 
 	/**

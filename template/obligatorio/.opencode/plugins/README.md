@@ -37,22 +37,38 @@ Ignored by git.
 
 ### 1. Destructive Command Blocking
 
-The plugin blocks destructive commands for ALL agents — a global safety net that OpenCode's per-agent permissions don't cover:
+The plugin blocks destructive commands for ALL agents — a global safety net that OpenCode's per-agent permissions don't cover.
 
-```typescript
-const DESTRUCTIVE_PATTERNS: RegExp[] = [
-  /rm\s+-[a-z]*r[a-z]*f\b/i,       // rm -r -f, rm -rf, rm -fir, etc.
-  /rm\s+-[a-z]*f[a-z]*r\b/i,       // rm -f -r (reversed flag order)
-  /git\s+push\s+(-f|--force)\b/i,   // git push -f, git push --force
-  /drop\s+table\b/i,                // DROP TABLE (with or without IF EXISTS)
-  /drop\s+database\b/i,             // DROP DATABASE
-  /mkfs\b/i,                        // mkfs, mkfs.ext4 — disk formatting
-  /dd\s+if=/i,                      // dd if=/dev/zero of=/dev/sda — disk destruction
-  /chmod\s+-R\s+777\s+\//i,         // chmod -R 777 / — permission destruction
-]
-```
+**53 patterns across 15 categories:**
 
-Commands are normalized before matching: comments stripped, whitespace collapsed.
+| Category | Count | Examples |
+|----------|:-----:|----------|
+| Filesystem | 5 | rm -rf, shred, find -exec rm |
+| Git | 6 | push --force, reset --hard, clean -fd, filter-repo |
+| SQL | 5 | DROP TABLE, DROP DATABASE, TRUNCATE, DELETE FROM |
+| Docker | 3 | docker rm -f, system prune -a, volume rm |
+| Kubernetes | 2 | kubectl delete --all, drain |
+| Permissions | 3 | chmod 777, chown -R |
+| Process | 4 | kill -9 0/1, shutdown, reboot |
+| Network | 2 | iptables -F, ufw disable |
+| Package Managers | 4 | npm publish, pip --force-reinstall, apt remove |
+| Environment | 3 | unset PATH, export PATH=, append to shell rc |
+| Disk | 5 | mkfs, dd if=, fdisk, wipefs, parted mklabel |
+| IaC | 2 | terraform destroy, pulumi destroy |
+| Cloud | 4 | aws s3 rm, az vm/group delete, gcloud compute delete |
+| Databases | 4 | mongo/mongosh dropDatabase, redis FLUSHALL/FLUSHDB, mysqladmin drop |
+| PostgreSQL CLI | 1 | psql -c with drop/alter system/truncate |
+
+Commands are normalized before matching: comments stripped, whitespace collapsed. The full pattern list is in `sdd-pipeline.ts`.
+
+#### Defense-in-Depth
+
+Restrictions are enforced at **two independent layers**:
+
+1. **Plugin (runtime):** `sdd-pipeline.ts` — regex patterns with bash normalization (strip comments, collapse whitespace). Catches bypass attempts like `rm  -r  -f  /` or `rm -fir /`.
+2. **Config (declarative):** `opencode.json` — `permission.bash` deny entries (67+ entries) visible and editable as policy.
+
+Both layers must be updated together when adding new restrictions. The plugin catches creative flag ordering that the config misses; the config provides visibility and auditability.
 
 ### 2. Subagent Name Validation
 
@@ -160,4 +176,4 @@ Primary agents can delegate to subagents via `task()`. Each subagent operates in
 
 ## Source
 
-Plugin: `sdd-pipeline.ts` (~574 lines)
+Plugin: `sdd-pipeline.ts` (~664 lines)

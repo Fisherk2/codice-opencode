@@ -2,17 +2,19 @@ import { describe, expect, it, mock as mockFn } from "bun:test";
 import type { IGitHubClient } from "../../../src/application/ports/IGitHubClient";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { UpdateWorkspaceUseCase } from "../../../src/application/use-cases/UpdateWorkspaceUseCase";
+import { VERSION } from "../../../src/cli/output";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
 import {
 	FILE_RULE_MANIFEST,
 	getRulesByCategory,
 } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
+import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import { VersionComparator } from "../../../src/domain/services/VersionComparator";
 
 function createMockFileSystem(): {
-	stub: IFileSystem;
+	stub: IFileSystem & IStagingSystem;
 	calls: {
 		stageFile: string[];
 		commitStaging: number;
@@ -27,7 +29,7 @@ function createMockFileSystem(): {
 		writeVersionFile: [] as string[],
 	};
 
-	const stub: IFileSystem = {
+	const stub: IFileSystem & IStagingSystem = {
 		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),
 		getStagingPath: mockFn((path: string) => `.codice-staging/${path}`),
@@ -92,7 +94,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient();
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 			expect(useCase).toBeInstanceOf(UpdateWorkspaceUseCase);
 		});
 	});
@@ -105,7 +107,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient();
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -122,7 +124,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient();
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -138,7 +140,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient();
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -152,7 +154,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient();
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -165,7 +167,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
 				JSON.stringify({
-					installedVersion: "1.0.0",
+					installedVersion: VERSION,
 					installedAt: "2026-01-01T00:00:00.000Z",
 					optionalSelections: [],
 				}),
@@ -174,7 +176,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -190,7 +192,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient(null);
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -207,7 +209,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -233,7 +235,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -262,7 +264,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -285,7 +287,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -303,7 +305,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project", { version: "1.0.0" });
 
@@ -323,7 +325,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -336,26 +338,25 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(calls.writeVersionFile.length).toBe(0);
 		});
 
-		it("should skip update when local version is ahead of remote", async () => {
+		it("should skip update when local version is ahead of bundled", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
 				JSON.stringify({
-					installedVersion: "1.0.0",
+					installedVersion: "99.99.99",
 					installedAt: "2026-01-01T00:00:00.000Z",
 					optionalSelections: [],
 				}),
 			);
 			const prompt = createMockPrompt();
 			const engine = new FileMergeEngine(fs);
-			// Remote is older than local
 			const gitHub = createMockGitHubClient("v0.5.0");
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
 			expect(result.ok).toBe(true);
-			// Should inform user that local is ahead
+			// Should inform user that local is ahead of bundled
 			expect(prompt.showInfo).toHaveBeenCalled();
 			// No files should be staged
 			expect(calls.stageFile.length).toBe(0);
@@ -374,7 +375,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -393,7 +394,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -414,7 +415,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator);
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
 
 			const result = await useCase.execute("/tmp/project");
 

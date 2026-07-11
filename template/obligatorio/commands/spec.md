@@ -46,7 +46,7 @@ Invoke @skills/spec-driven-development/SKILL.md to scaffold the project's initia
 3. **@docs/** — Initial scaffold: @docs/ARCHITECTURE.md (with ADR index), @docs/SCHEMA.md, @docs/APPFLOW.md, @docs/CODE_STYLE.md
 4. **@specs/spec-<feature>.md** — One modular spec per feature or domain; @SPEC.md references these
 5. **@specs/adr/adr-<nnn>.md** — ADRs for key architecture decisions, linked from @docs/ARCHITECTURE.md (use @skills/documentation-and-adrs/SKILL.md)
-6. If @AGENTS.md or @SPEC.md exceeds **200 lines**, invoke @skills/agent-md-refactor/SKILL.md to modularize into progressive disclosure files
+6. If @AGENTS.md or @SPEC.md exceeds **200 lines**, invoke @skills/agent-md-refactor/SKILL.md to modularize into progressive disclosure files in @specs/
 
 During Phase 2, invoke supporting skills as needed:
 - @skills/api-and-interface-design/SKILL.md when defining API contracts

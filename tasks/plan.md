@@ -1,785 +1,693 @@
-# Plan: Fase FEV-5 — CI/CD Workflow + GitHub Wiki (v1.0.14)
+# Plan: Fase FEV-10 — Code Quality + Dependency Upgrades (v1.1.0)
 
-**Fecha:** 2026-07-09 | **Autor:** Moctezuma (Strategic Planner) | **Estado:** 🟡 Plan Aprobado
-**Versión objetivo:** v1.0.14
-**Issues principales:** #23 (CI/CD Workflow) + #25 (GitHub Wiki)
-**Branch:** `feat/ci-cd-wiki` (basada en `main`, con 4 commits previos de docs/diagnosis)
+**Fecha:** 2026-07-10 | **Autor:** Moctezuma (Strategic Planner) | **Estado:** 🟢 Aprobado
+**Versión objetivo:** v1.1.0 (cierre de fase)
+**Items TECH_DEBT cubiertos:** TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3
+**Branch:** `feat/v1.1.0-fev-10`
 
----
+## Resumen
 
-## Overview
+Última fase de v1.1.0. Contiene los items de mayor esfuerzo y riesgo del catálogo TECH_DEBT: cobertura de `main.ts`, upgrade de TypeScript 6.x, split del port `IFileSystem` para cumplir ISP, y test de integración para empaquetado npm.
 
-FEV-5 resuelve dos issues complementarios que afectan la sostenibilidad del proyecto:
-
-1. **Issue #23** — Estandarizar el flujo CI/CD con un proceso de 3 etapas (develop → test publish → main) que requiere tanto infraestructura (workflows) como documentación (CONTRIBUTING.md).
-2. **Issue #25** — Migrar la documentación del workspace a GitHub Wiki (customization guide basada en `template/obligatorio/`), eliminar `docs/opencode/` (24 archivos en 2 ubicaciones), y actualizar 74+ referencias internas.
-
-**Objetivo:** Publicar v1.0.14 con CI/CD estandarizado, Wiki poblada, y `docs/opencode/` completamente eliminado sin regresión.
+**Decisiones arquitectónicas confirmadas:**
+- **Orden por riesgo creciente:** foundation → upgrade → refactor → e2e.
+- **TD-2.1 split scope:** Opción A — solo 4 métodos de staging migran a `IStagingSystem`.
 
 ---
 
-## Architecture Decisions (ADR)
+## Estado Actual (línea base verificada)
 
-| Decisión | Rationale |
-|----------|-----------|
-| **ADR-FEV5-1**: `release.yml` usa Strategy implícita en YAML para `npm dist-tag` | El tag determina si se publica como `latest`, `beta`, o `rc` con `prerelease: true` en GitHub. Validación regex pre-publish evita errores. |
-| **ADR-FEV5-2**: Wiki es customization guide, no copia de OpenCode docs | Cada página se basa en archivos reales de `template/obligatorio/`. Enlaza a `opencode.ai/docs` para referencia oficial, nunca duplica. |
-| **ADR-FEV5-3**: Wiki content se almacena en `docs/wiki-source/` del repo principal | Los 9 archivos `.md` pasan por PR/review como cualquier cambio. Tras merge, se sincronizan al wiki repo. Source of truth en el repo principal. |
-| **ADR-FEV5-4**: Rama `develop` se crea desde `main` antes de modificar `ci.yml` | GitHub Actions solo triggerea en branches existentes. T3 debe ejecutarse antes o inmediatamente después de T1. |
-| **ADR-FEV5-5**: `docs/opencode/` se elimina en 4 commits granulares (root, template, manifest, refs) | Cada commit es reversible individualmente. Verificación post-cada paso. |
-| **ADR-FEV5-6**: Tag `v1.0.14-beta.1` se usa para test real del release pipeline | Valida `--tag beta`, `prerelease: true`, y `make_latest: false` antes del release de producción. |
-| **ADR-FEV5-7**: Eliminación de `docs/opencode/` se hace DESPUÉS de Wiki poblada | Evita periodo sin documentación. La Wiki es el replacement; debe existir antes de eliminar el original. |
+| Métrica | Valor | Fuente |
+|---|---|---|
+| Tests | 563 pass, 0 fail, 1204 expects | `bun test tests/` |
+| Coverage (funciones) | 98.89% | `bun test --coverage` |
+| Coverage (líneas) | 96.98% | `bun test --coverage` |
+| `src/cli/main.ts` coverage | 33.04% (líneas 85, 93-165) | idem |
+| `IFileSystem` port | 10 métodos | `src/domain/ports/IFileSystem.ts` |
+| TypeScript | `^5.9.3` | `package.json` |
+| Biome | `^2.5.3` (schema `2.5.0`) | `package.json` + `biome.json` |
+
+**Items ya completados antes de FEV-10:**
+- ✅ **TD-3.2** Biome 1.x → 2.x — `package.json: @biomejs/biome: ^2.5.3`, schema `2.5.0`
+- 🟡 **TD-1.1** (parcial) — `tests/integration/cli/main.test.ts` (166 líneas) cubre `runMode`, `createDependencies`, `promptForMode`; **faltan**: flag handling, parse failure, SIGINT, interactive mode, error path
+
+---
+
+## Restricciones
+
+- **Clean Architecture:** `infrastructure → application → domain`. Domain no importa nada de application o infrastructure.
+- **ISP compliance:** Ningún port debe tener > 6 métodos cohesivos.
+- **Sin regresión:** 563/0 tests, 98.89% funciones, 15/15 E2E.
+- **Coverage artifact:** `main.ts` ≥ 95% lines al cierre.
+- **Conventional Commits** con `Co-Authored-By: <Agente> <dev@fisherk2.com>`.
 
 ---
 
 ## Dependency Graph
 
 ```mermaid
-graph TD
-    %% Phase 1: CI/CD Infrastructure
-    FEV5-T1[ci.yml: develop triggers] --> FEV5-T3[Create develop branch]
-    FEV5-T2[release.yml: pre-release tags] --> FEV5-T4[Git Workflow in CONTRIBUTING.md]
+graph LR
+    S1["Slice 1<br/>TD-1.1<br/>main.ts tests<br/>2.5h"]
+    S2["Slice 2<br/>TD-3.1<br/>TS 6.x<br/>2h"]
+    S3["Slice 3<br/>TD-2.1<br/>IFileSystem split<br/>3.5h"]
+    S4["Slice 4<br/>TD-5.3<br/>npm packaging<br/>4h"]
+    S5["Slice 5<br/>TECH_DEBT update<br/>1.5h"]
 
-    %% Phase 2: CI/CD Documentation
-    FEV5-T4 --> FEV5-T5[npm test publish nomenclature]
-    FEV5-T4 --> FEV5-T6[CI/CD Pipeline docs]
-    FEV5-T4 --> FEV5-T7[Release Checklist]
+    S1 -->|tests verdes| S2
+    S2 -->|tsc verde| S3
+    S3 -->|ISP clean| S4
+    S4 -->|E2E verde| S5
 
-    %% Phase 3: Wiki Content (parallel with Phase 1+2)
-    FEV5-T8[Enable GitHub Wiki] --> FEV5-T9[Home + Getting Started]
-    FEV5-T8 --> FEV5-T10[Workspace Structure + Config]
-    FEV5-T8 --> FEV5-T11[Agents + Commands]
-    FEV5-T8 --> FEV5-T12[Skills + Customization]
-    FEV5-T8 --> FEV5-T13[Troubleshooting + OpenCode refs]
-
-    %% Phase 4: docs/opencode/ Removal (depends on Phase 3)
-    FEV5-T9 --> FEV5-T14[Remove docs/opencode/ root]
-    FEV5-T14 --> FEV5-T15[Remove template copy]
-    FEV5-T14 --> FEV5-T16[Update FileRuleManifestData]
-    FEV5-T14 --> FEV5-T17[Update 74+ references]
-    FEV5-T14 --> FEV5-T18[Update E2E tests]
-
-    %% Phase 5: Release
-    FEV5-T17 --> FEV5-T19[CHANGELOG v1.0.14]
-    FEV5-T18 --> FEV5-T20[Bump version 1.0.14]
-    FEV5-T19 --> FEV5-T21[Commit + PR + Tag + Release]
-    FEV5-T20 --> FEV5-T21
+    style S1 fill:#90EE90
+    style S2 fill:#FFD700
+    style S3 fill:#FFA500
+    style S4 fill:#FF6347
+    style S5 fill:#87CEEB
 ```
 
-**Critical path:** T1 → T4 → T17 → T19 → T21 (≈ 4h)
-**Parallelizable:** Phase 1+2 (T1-T7) puede ejecutarse en paralelo con Phase 3 (T8-T13) → 4-5h ahorrados.
+**Total esfuerzo:** ~13.5h distribuidas en 4-5 sesiones.
 
 ---
 
-## Task Breakdown
+## Descomposición de Tareas (4 Vertical Slices + Cierre)
 
-### Phase 1: CI/CD Infrastructure (Issue #23 Track A)
+### Slice 1 — TD-1.1: main.ts Integration Tests (Foundation, riesgo bajo)
 
-#### Task FEV5-T1: Modify `ci.yml` — Add `develop` branch support
+**Patrón:** TDD (cubrir lo que existe, no cambiar producción).
+**Criterio:** Llevar `src/cli/main.ts` de 33.04% → ≥95% line coverage.
 
-**Descripción:** Añadir `develop` a los triggers de `ci.yml` (push y pull_request) para que el CI corra en PRs contra la rama de integración.
+#### Task 1.1: Cubrir flag handling `--version`/`-V` y `--help`/`-h`
+**Acceptance criteria:**
+- [ ] Test cubre `args.includes("--version") || args.includes("-V")` → `printVersion()` + `process.exit(EXIT_SUCCESS)`
+- [ ] Test cubre `args.includes("--help") || args.includes("-h")` → `printHelp()` + `process.exit(EXIT_SUCCESS)`
+- [ ] Test verifica que `parseArgs` NO se llama cuando flag terminal está presente
+**Verification:** `bun test tests/integration/cli/main.test.ts` — nuevo test verde
+**Files:** `tests/integration/cli/main.test.ts`
+**Estimated scope:** XS (~30min)
 
-**Criterios de Aceptación:**
-- [ ] `on.push.branches` incluye `main` Y `develop`
-- [ ] `on.pull_request.branches` incluye `main` Y `develop`
-- [ ] Tags `v*` siguen triggereando
-- [ ] Comentario explica la estrategia de 2 branches
+#### Task 1.2: Cubrir parse failure
+**Acceptance criteria:**
+- [ ] Test cubre `parseArgs(args) === null` → `console.error("Usage error...")` + `process.exit(EXIT_USAGE)`
+- [ ] Test verifica que el mensaje de error es accionable
+**Verification:** idem
+**Files:** `tests/integration/cli/main.test.ts`
+**Estimated scope:** XS (~20min)
 
-**Verificación:**
-- [ ] `just check` — 0 errores
-- [ ] Push de un commit a `develop` triggerea CI
-- [ ] PR contra `develop` triggerea CI
+#### Task 1.3: Cubrir SIGINT handler
+**Acceptance criteria:**
+- [ ] Test cubre `process.on("SIGINT", handleSigint)` setup + `handleSigint()` invocation
+- [ ] Test cubre doble SIGINT (idempotente: `if (interrupted) return`)
+- [ ] Test cubre `process.exit(EXIT_INTERRUPT)` después del primer SIGINT
+**Verification:** idem
+**Files:** `tests/integration/cli/main.test.ts`
+**Estimated scope:** S (~30min)
 
-**Dependencias:** Ninguna.
-**Archivos:**
-- `.github/workflows/ci.yml` (modificar líneas 3-8)
+#### Task 1.4: Cubrir interactive mode flow
+**Acceptance criteria:**
+- [ ] Test cubre `mode === "interactive"` → `showIntro()` + `promptForMode()`
+- [ ] Test cubre `selected === null` → `showCancel("Installation cancelled.")` + `process.exit(EXIT_INTERRUPT)`
+- [ ] Test cubre selección válida (`"clean"`, `"project"`, `"update"`) → resolución a `executionMode`
+**Verification:** idem
+**Files:** `tests/integration/cli/main.test.ts`
+**Estimated scope:** S (~30min)
 
-**Scope:** S (15min).
+#### Task 1.5: Cubrir success/error path
+**Acceptance criteria:**
+- [ ] Test cubre `result.ok === false` → `showError(result.error.message)` + `process.exit(EXIT_ERROR)`
+- [ ] Test cubre `result.ok === true` → `process.exit(EXIT_SUCCESS)` (sin showError)
+**Verification:** idem
+**Files:** `tests/integration/cli/main.test.ts`
+**Estimated scope:** XS (~20min)
 
----
+#### Task 1.6: Cubrir catch + finally
+**Acceptance criteria:**
+- [ ] Test cubre throw de un error unexpected → `console.error("Fatal error: ...")` + `process.exit(EXIT_ERROR)`
+- [ ] Test cubre `finally` block: `process.off("SIGINT", handleSigint)` se ejecuta siempre
+**Verification:** idem
+**Files:** `tests/integration/cli/main.test.ts`
+**Estimated scope:** XS (~20min)
 
-#### Task FEV5-T2: Modify `release.yml` — Pre-release tag support
-
-**Descripción:** Detectar pre-release tags (`vX.Y.Z-beta.N` o `vX.Y.Z-rc.N`) y publicar con `npm publish --tag beta|rc` + `prerelease: true` en GitHub. Tags de producción (`vX.Y.Z`) publican como `latest` con Release completo.
-
-**Criterios de Aceptación:**
-- [ ] Step `Publish to npm` detecta el sufijo del tag y selecciona el `--tag` correcto
-- [ ] Step `Create Release` configura `prerelease: true` para beta/rc
-- [ ] `make_latest: true` solo para tags sin sufijo
-- [ ] Validación regex impide publicar tags con formato inválido
-- [ ] Logging explícito de qué tipo de release se está creando
-
-**Verificación:**
-- [ ] `just check` — 0 errores
-- [ ] Test con tag real `v1.0.14-beta.1` (push + verify en npm y GitHub)
-- [ ] Cleanup: eliminar tag de prueba después de validar
-
-**Dependencias:** Ninguna.
-**Archivos:**
-- `.github/workflows/release.yml` (modificar pasos 126-154)
-
-**Scope:** S (30min).
-
----
-
-#### Task FEV5-T3: Create `develop` branch in repository
-
-**Descripción:** Crear la rama `develop` desde `main` para que los triggers de `ci.yml` la reconozcan. GitHub Actions solo triggerea en branches existentes.
-
-**Criterios de Aceptación:**
-- [ ] Rama `develop` existe localmente
-- [ ] Rama `develop` pusheada a `origin`
-- [ ] Apunta al mismo commit que `main` (no diverge)
-- [ ] Branch protection configurada (opcional, según prefieras)
-
-**Verificación:**
-- [ ] `git branch -r` muestra `origin/develop`
-- [ ] `git log origin/develop..origin/main` está vacío
-
-**Dependencias:** FEV5-T1 (puede hacerse antes o junto con T1).
-**Archivos:** (ninguno — solo git operations).
-
-**Scope:** XS (5min).
-
----
-
-### Phase 2: CI/CD Documentation (Issue #23 Track B)
-
-#### Task FEV5-T4: Document Git Workflow in CONTRIBUTING.md
-
-**Descripción:** Añadir sección "Git Workflow" a `CONTRIBUTING.md` con la estrategia de branches, el proceso de 3 etapas, y convenciones de naming.
-
-**Criterios de Aceptación:**
-- [ ] Sección "Git Workflow" añadida a `CONTRIBUTING.md`
-- [ ] Documenta: `main` (producción), `develop` (integración), `feat/*` y `fix/*` (PR a develop), `release/*` (PR a develop → main)
-- [ ] Proceso de 3 etapas explícito: feature → develop → release (test) → main (prod)
-- [ ] Tabla de convenciones de naming (feat/, fix/, release/, hotfix/)
-- [ ] Sección "PR Requirements" con checklist
-- [ ] Link a Issue #23 y a `docs/diagnosis/fix01-cicd-workflow-standardization.md`
-
-**Verificación:**
-- [ ] `just check` — 0 errores
-- [ ] Manual: leer la sección y verificar que es autoexplicativa
-
-**Dependencias:** FEV5-T1, FEV5-T2 (el workflow debe estar implementado para documentarlo).
-**Archivos:**
-- `CONTRIBUTING.md` (modificar)
-
-**Scope:** M (45min).
+#### Task 1.7: Verificación Checkpoint A
+**Acceptance:**
+- [ ] `src/cli/main.ts` coverage ≥ 95% lines
+- [ ] 0 regresión en tests (563 → ≥575)
+- [ ] `just check` exit 0
+**Verification commands:**
+```bash
+bun test tests/integration/cli/main.test.ts
+bun test --coverage src/cli/main.ts    # ≥95% lines
+just check                             # 0 errors
+```
 
 ---
 
-#### Task FEV5-T5: Document npm test publish nomenclature in CONTRIBUTING.md
+### Slice 2 — TD-3.1: TypeScript 6.x Upgrade (Foundation, riesgo medio)
 
-**Descripción:** Documentar la convención de versiones para test publishes y cómo verificarlos.
+**Patrón:** Aditivo (cambiar range en `package.json`, verificar compilación).
+**Criterio:** Compilación limpia con TypeScript 6.x, 0 breaking changes sin resolver.
 
-**Criterios de Aceptación:**
-- [ ] Tabla de nomenclatura: `vX.Y.Z-beta.N`, `vX.Y.Z-rc.N`, `vX.Y.Z`
-- [ ] Comandos para crear tag de prueba:
-  ```bash
-  git tag v1.0.14-beta.1
-  git push origin v1.0.14-beta.1
-  ```
-- [ ] Comandos para verificar el paquete:
-  ```bash
-  npm view @fisherk2-dev/codice@beta
-  bunx @fisherk2-dev/codice@beta --version
-  ```
-- [ ] Advertencia: pre-release tags pueden sobrescribirse; `latest` no
-- [ ] Sección "How to consume a test package"
+#### Task 2.1: Verificar versión actual disponible de TS 6.x
+**Acceptance criteria:**
+- [ ] Confirmar que TS 6.x es estable y apropiado para producción
+- [ ] Identificar breaking changes principales (decorators, module resolution, type inference)
+**Verification:** docs oficiales + `npm view typescript versions`
+**Files:** (n/a)
+**Estimated scope:** XS (~10min)
 
-**Verificación:**
-- [ ] `just check` — 0 errores
-- [ ] Manual: la tabla es correcta y los comandos son copy-paste ready
+#### Task 2.2: Bump version en package.json
+**Acceptance criteria:**
+- [ ] `"typescript": "^5.9.3"` → `"^6"`
+- [ ] Commit con mensaje: `chore(deps): upgrade typescript to v6.x`
+**Verification:** `git diff package.json`
+**Files:** `package.json`
+**Estimated scope:** XS (~5min)
 
-**Dependencias:** FEV5-T4.
-**Archivos:**
-- `CONTRIBUTING.md` (añadir sección)
+#### Task 2.3: `bun install` + `just check` para detectar breaking changes
+**Acceptance criteria:**
+- [ ] `bun install` exit 0
+- [ ] `just check` exit 0 (sin errores de tipo introducidos)
+- [ ] Si hay errores: documentar en `docs/diagnosis/` y resolver en Task 2.4
+**Verification:** comandos arriba
+**Files:** (varios si hay fixes)
+**Estimated scope:** S (~30min)
 
-**Scope:** S (20min).
+#### Task 2.4: Resolver errores de tipo introducidos por TS 6.x
+**Acceptance criteria:**
+- [ ] 0 errores de `tsc --noEmit`
+- [ ] Si hay cambios no triviales, documentar en `docs/diagnosis/fixTS6-migration.md`
+**Verification:** `just check` exit 0
+**Files:** (varios según errores)
+**Estimated scope:** M (~60min)
 
----
+#### Task 2.5: Verificar suite completa
+**Acceptance criteria:**
+- [ ] `bun test tests/` 563/0 pass
+- [ ] E2E 15/15 passing (`just test-e2e`)
+**Verification:** comandos arriba
+**Files:** (n/a)
+**Estimated scope:** XS (~10min)
 
-#### Task FEV5-T6: Document CI/CD Pipeline + troubleshooting in CONTRIBUTING.md
-
-**Descripción:** Documentar cada workflow (ci.yml, release.yml), sus triggers, y una sección de troubleshooting para problemas comunes.
-
-**Criterios de Aceptación:**
-- [ ] Sección "CI/CD Pipeline" con subsecciones:
-  - `ci.yml` — triggers, jobs (quality, build, e2e, smoke), artifacts
-  - `release.yml` — triggers, jobs (build, release), artifacts, secrets requeridos
-- [ ] Tabla de triggers (qué evento ejecuta qué workflow)
-- [ ] Sección "Troubleshooting CI/CD" con casos comunes:
-  - CI falla solo en una plataforma
-  - npm publish falla con "cannot publish over previously published version"
-  - Release workflow no se ejecuta después de push de tag
-  - Build de Windows falla por paths con backslash
-- [ ] Link a logs y a `actions/setup-bun` docs si aplica
-
-**Verificación:**
-- [ ] `just check` — 0 errores
-- [ ] Manual: la sección troubleshooting cubre ≥4 casos comunes
-
-**Dependencias:** FEV5-T4.
-**Archivos:**
-- `CONTRIBUTING.md` (añadir sección)
-
-**Scope:** M (30min).
+#### Task 2.6: Verificación Checkpoint B
+**Acceptance:**
+- [ ] `tsc --version` ≥ 6.0
+- [ ] `just check` exit 0
+- [ ] Tests sin regresión (563/0)
 
 ---
 
-#### Task FEV5-T7: Add Release Checklist template in CONTRIBUTING.md
+### Slice 3 — TD-2.1: IFileSystem → IFileSystem + IStagingSystem (Architectural, riesgo medio)
 
-**Descripción:** Crear un checklist pre-release, release, y post-release que los mantenedores deben seguir.
+**Patrón aplicado (de `design-patterns/SKILL.md` + `clean-ddd-hexagonal/SKILL.md`):**
+- **Interface Segregation Principle (ISP):** separar concerns cohesivos en ports distintos
+- **Facade:** `BunFileSystem` se mantiene como fachada que implementa ambos ports
+- **Composition:** `BunFileSystem` ya compone `AtomicStager`; expone 2 caras (IFileSystem + IStagingSystem)
 
-**Criterios de Aceptación:**
-- [ ] Sección "Release Checklist" con 3 subsecciones:
-  - **Pre-release:** tests pass, coverage maintained, CHANGELOG updated, version bumped, branch protection verified
-  - **Release:** create tag, push tag, verify CI, verify npm package, verify GitHub Release
-  - **Post-release:** verify on npm, smoke test binary, update documentation if needed, sync `develop` with `main`
-- [ ] Checklist con checkboxes Markdown (`- [ ]`)
-- [ ] Ejemplo concreto: cómo hacer un release `v1.0.14` con tag `v1.0.14-beta.1` previo
+**Decisión arquitectónica confirmada (Opción A):** Solo los 4 métodos que **mutan via staging** migran a `IStagingSystem`. `destinationExists()` se queda en `IFileSystem` (lee estado del destino, no escribe).
 
-**Verificación:**
-- [ ] `just check` — 0 errores
-- [ ] Manual: el checklist es ejecutable paso a paso
+#### Task 3.1: Crear `IStagingSystem` port en domain
+**Acceptance criteria:**
+- [ ] Archivo `src/domain/ports/IStagingSystem.ts` con 4 métodos:
+  - `getStagingPath(relativePath: string): string`
+  - `stageFile(relativePath: string, excludeSubDirs?: Set<string>): Promise<void>`
+  - `commitStaging(): Promise<void>`
+  - `cleanStaging(): Promise<void>`
+- [ ] JSDoc por método con `@param`, `@returns`, descripción de uso
+- [ ] Cohesión 100%: los 4 métodos son sobre el ciclo de vida del staging
+**Verification:** `tsc --noEmit` exit 0
+**Files:** `src/domain/ports/IStagingSystem.ts` (nuevo)
+**Estimated scope:** S (~20min)
 
-**Dependencias:** FEV5-T4.
-**Archivos:**
-- `CONTRIBUTING.md` (añadir sección)
+#### Task 3.2: Reducir `IFileSystem` a 6 métodos
+**Acceptance criteria:**
+- [ ] `IFileSystem` queda con: `readTemplateFile`, `destinationExists`, `isWritable`, `isEmpty`, `writeVersionFile`, `readVersionFile`
+- [ ] Eliminar los 4 métodos de staging
+- [ ] JSDoc actualizado
+**Verification:** `tsc --noEmit` reportará errores en `BunFileSystem` (esperado) hasta T3.3
+**Files:** `src/domain/ports/IFileSystem.ts`
+**Estimated scope:** XS (~10min)
 
-**Scope:** S (20min).
+#### Task 3.3: `BunFileSystem implements IFileSystem, IStagingSystem`
+**Acceptance criteria:**
+- [ ] Agregar `implements IFileSystem, IStagingSystem` a la declaración de clase
+- [ ] Verificar que los 4 métodos de staging ya existen como delegates a `atomicStager`
+- [ ] `tsc --noEmit` exit 0
+**Verification:** `just check` exit 0
+**Files:** `src/infrastructure/adapters/BunFileSystem.ts`
+**Estimated scope:** S (~20min)
 
----
+#### Task 3.4: Cambiar firma de `FileMergeEngine` y `helpers.ts`
+**Acceptance criteria:**
+- [ ] `FileMergeEngine` constructor acepta `IFileSystem & IStagingSystem` (intersection type)
+- [ ] `helpers.ts` (función que llama `cleanStaging()`) acepta `IStagingSystem`
+- [ ] `tsc --noEmit` exit 0
+**Verification:** idem
+**Files:**
+- `src/domain/services/FileMergeEngine.ts`
+- `src/application/helpers.ts`
+**Estimated scope:** S (~30min)
 
-### Phase 3: Wiki Content Creation (Issue #25 Track C — content)
+#### Task 3.5: Cambiar constructores de los 3 use cases
+**Acceptance criteria:**
+- [ ] `CleanInstallUseCase`, `ProjectInstallUseCase`, `UpdateWorkspaceUseCase` aceptan `IFileSystem & IStagingSystem` (o solo `IStagingSystem` si solo usan staging)
+- [ ] Para Clean/Project: ambos ports (usan `fileSystem` para queries + `stagingSystem` para mutaciones)
+- [ ] Para Update: solo `IStagingSystem` (Update solo muta, no lee template)
+- [ ] `tsc --noEmit` exit 0
+**Verification:** idem
+**Files:**
+- `src/application/use-cases/CleanInstallUseCase.ts`
+- `src/application/use-cases/ProjectInstallUseCase.ts`
+- `src/application/use-cases/UpdateWorkspaceUseCase.ts`
+**Estimated scope:** S (~30min)
 
-#### Task FEV5-T8: Clone wiki repo + create `docs/wiki-source/` directory
+#### Task 3.6: Actualizar `container.ts`
+**Acceptance criteria:**
+- [ ] `createDependencies` pasa la misma instancia `BunFileSystem` casteada a `IStagingSystem` a los use cases que lo necesitan
+- [ ] No se cambia la firma pública de `createDependencies` (no rompe consumidores)
+- [ ] `tsc --noEmit` exit 0
+**Verification:** idem
+**Files:** `src/cli/container.ts`
+**Estimated scope:** S (~15min)
 
-**Descripción:** Verificar que la Wiki está habilitada (ya lo está), clonar el wiki repo para conocer su estructura, y crear el directorio `docs/wiki-source/` en el repo principal como source of truth para las 9 páginas.
+#### Task 3.7: Tests: `bun-file-system.test.ts` — verificar IStagingSystem conformance
+**Acceptance criteria:**
+- [ ] Agregar test que verifica `BunFileSystem` satisface `IStagingSystem` (compile-time check + runtime)
+- [ ] Tests existentes sin regresión
+**Verification:** `bun test tests/integration/adapters/bun-file-system.test.ts` 100% pass
+**Files:** `tests/integration/adapters/bun-file-system.test.ts`
+**Estimated scope:** XS (~20min)
 
-**Criterios de Aceptación:**
-- [ ] Wiki de GitHub habilitada y accesible en `https://github.com/fisherk2/codice-opencode/wiki`
-- [ ] Wiki repo clonado localmente en `/tmp/codice-opencode.wiki` (verificar URL)
-- [ ] Directorio `docs/wiki-source/` creado en el repo principal
-- [ ] `docs/wiki-source/README.md` con instrucciones de sincronización:
-  ```bash
-  # Sync wiki source to wiki repo
-  git clone https://github.com/fisherk2/codice-opencode.wiki.git /tmp/wiki
-  cp docs/wiki-source/*.md /tmp/wiki/
-  cd /tmp/wiki && git add . && git commit -m "Sync wiki" && git push
-  rm -rf /tmp/wiki
-  ```
+#### Task 3.8: Tests: `main.test.ts` mock — añadir IStagingSystem
+**Acceptance criteria:**
+- [ ] `createMockDeps` ahora devuelve un objeto con `fileSystem: IFileSystem & IStagingSystem` (o dos propiedades separadas según cómo se decida en T3.6)
+- [ ] Tests existentes sin regresión
+**Verification:** `bun test tests/integration/cli/main.test.ts` 100% pass
+**Files:** `tests/integration/cli/main.test.ts`
+**Estimated scope:** XS (~15min)
 
-**Verificación:**
-- [ ] `ls docs/wiki-source/README.md` existe
-- [ ] `git clone https://github.com/fisherk2/codice-opencode.wiki.git /tmp/test-wiki` funciona (luego borrar)
-- [ ] Wiki visible en GitHub repo sidebar
+#### Task 3.9: Verificación Checkpoint C
+**Acceptance:**
+- [ ] `just check` exit 0
+- [ ] `bun test tests/` ≥563/0 pass
+- [ ] `just test-e2e` 15/15 passing
+- [ ] ADR-011 creado: `specs/adr/adr-011-ifilesystem-split.md`
+**Verification commands:**
+```bash
+just check
+bun test tests/
+just test-e2e
+rg "interface IFileSystem" src/domain/ports/IFileSystem.ts -A 20 | grep -c "^\s*\w*("   # ≤6 métodos
+```
 
-**Dependencias:** Ninguna.
-**Archivos:**
-- `docs/wiki-source/` (nuevo directorio)
-- `docs/wiki-source/README.md` (instrucciones de sync)
-
-**Scope:** S (15min).
-
----
-
-#### Task FEV5-T9: Create Home + Getting Started Wiki pages
-
-**Descripción:** Escribir las 2 primeras páginas orientadas a nuevos usuarios en `docs/wiki-source/`.
-
-**Criterios de Aceptación:**
-- [ ] `docs/wiki-source/Home.md`:
-  - Qué es el workspace (1 párrafo)
-  - Qué problema resuelve
-  - Quick links a las otras 8 páginas
-  - Link a [opencode.ai/docs](https://opencode.ai/docs/)
-- [ ] `docs/wiki-source/Getting-Started.md`:
-  - Prerequisites (link a OpenCode installation)
-  - Cómo instalar vía `bunx @fisherk2-dev/codice`
-  - Qué pasa después de la instalación (file tree overview)
-  - Primeros pasos: verificar comandos, ejecutar `/spec`
-  - Link a [opencode.ai/docs/installation](https://opencode.ai/docs/installation)
-- [ ] Ambos archivos siguen el principio: **template-driven, no copy**
-
-**Verificación:**
-- [ ] Manual: los archivos se leen fluidamente
-- [ ] No hay duplicación de OpenCode docs (solo enlaces)
-
-**Dependencias:** FEV5-T8.
-**Archivos:**
-- `docs/wiki-source/Home.md` (nuevo)
-- `docs/wiki-source/Getting-Started.md` (nuevo)
-
-**Scope:** M (45min).
-
----
-
-#### Task FEV5-T10: Create Workspace Structure + Configuration Wiki pages
-
-**Descripción:** Escribir las páginas sobre la estructura física del workspace y cómo configurar `opencode.json` en `docs/wiki-source/`.
-
-**Criterios de Aceptación:**
-- [ ] `docs/wiki-source/Workspace-Structure.md`:
-  - Basada en el árbol real instalado por Códice
-  - Cada directorio explicado: propósito, archivos, opciones de customización
-  - Explica los **patrones** (por qué root files vs. agents/ vs. commands/ vs. skills/)
-  - Link a [opencode.ai/docs/workspace](https://opencode.ai/docs/workspace)
-- [ ] `docs/wiki-source/Configuration.md`:
-  - Basada en `template/obligatorio/opencode.json`
-  - Explica cada sección: `model`, `small_model`, `compaction`, `provider`, `permissions`
-  - Customizaciones comunes: cambiar modelos, ajustar token budgets, añadir providers
-  - Ejemplo: switching de NVIDIA a Anthropic Claude
-  - Link a [opencode.ai/docs/configuration](https://opencode.ai/docs/configuration)
-
-**Verificación:**
-- [ ] Manual: la estructura explicada coincide con el árbol real
-- [ ] El ejemplo de configuración es ejecutable
-
-**Dependencias:** FEV5-T8.
-**Archivos:**
-- `docs/wiki-source/Workspace-Structure.md` (nuevo)
-- `docs/wiki-source/Configuration.md` (nuevo)
-
-**Scope:** M (45min).
-
----
-
-#### Task FEV5-T11: Create Agents + Commands Wiki pages (with end-user guides)
-
-**Descripción:** Escribir las páginas sobre agents y commands, **incluyendo guías paso a paso para usuarios finales** sobre cómo añadir nuevos. Archivos en `docs/wiki-source/`.
-
-**Criterios de Aceptación:**
-- [ ] `docs/wiki-source/Agents.md`:
-  - Basada en `template/obligatorio/agents/` (103 files: 6 primary + 97 subagents)
-  - Explica arquitectura de 2 niveles: Primary vs. Subagents
-  - Muestra el patrón de un agent file (frontmatter, composition block)
-  - **Guía paso a paso: Cómo añadir un nuevo agent** (end-user focused):
-    1. Elegir tipo: subagent (domain expert) o primary (entry point)
-    2. Crear el archivo en `agents/` con frontmatter apropiado
-    3. Añadir `## Composition` block
-    4. Para subagents: registrar en `VALID_SUBAGENTS`
-    5. Para primary: añadir SDD plugin hooks
-    6. Restart OpenCode session
-  - **Ejemplo funcional:** crear un subagent custom paso a paso
-  - Link a [opencode.ai/docs/agents](https://opencode.ai/docs/agents)
-- [ ] `docs/wiki-source/Commands.md`:
-  - Basada en `template/obligatorio/commands/` (12 files)
-  - Explica el ciclo SDD y cómo cada comando mapea a una fase
-  - Muestra el patrón de frontmatter (`description` + `agent`)
-  - **Guía paso a paso: Cómo añadir un nuevo command** (end-user focused):
-    1. Crear el archivo en `commands/` con YAML frontmatter
-    2. Escribir los pasos numerados
-    3. Registrar en `COMMAND_AGENT_MAP`
-    4. Si introduce nueva fase, añadir sugerencia en el plugin
-    5. Restart OpenCode session
-  - **Ejemplo funcional:** crear un command custom paso a paso
-  - Link a [opencode.ai/docs/commands](https://opencode.ai/docs/commands)
-
-**Verificación:**
-- [ ] Manual: la guía de "añadir agent" es ejecutable por un usuario no técnico
-- [ ] El ejemplo se compila y funciona
-
-**Dependencias:** FEV5-T8.
-**Archivos:**
-- `docs/wiki-source/Agents.md` (nuevo)
-- `docs/wiki-source/Commands.md` (nuevo)
-
-**Scope:** L (1h).
+#### Task 3.10: ADR-011: Split IFileSystem
+**Acceptance criteria:**
+- [ ] Documento `specs/adr/adr-011-ifilesystem-split.md` con:
+  - **Contexto:** IFileSystem tiene 10 métodos (umbral ISP: 5)
+  - **Decisión:** Split en IFileSystem (6 métodos) + IStagingSystem (4 métodos)
+  - **Consecuencias:** BunFileSystem implementa ambos; use cases inyectan según necesidad
+  - **Alternativas consideradas:** Opción B (incluir destinationExists), Opción C (diferir)
+- [ ] CHANGELOG entry en v1.1.0
+**Verification:** commit con `docs(adr): add ADR-011 for IFileSystem split`
+**Files:**
+- `specs/adr/adr-011-ifilesystem-split.md` (nuevo)
+- `CHANGELOG.md`
+**Estimated scope:** S (~30min)
 
 ---
 
-#### Task FEV5-T12: Create Skills + Customization Guide Wiki pages
+### Slice 4 — TD-5.3: npm Packaging Integration Test (Quality gate, riesgo medio-alto)
 
-**Descripción:** Escribir las páginas sobre skills y la guía de customización con recetas prácticas en `docs/wiki-source/`.
+**Patrón aplicado:** **Template Method** (build → install → run → assert) + **Fixture Pattern** (tarball pre-empaquetado como fallback offline).
 
-**Criterios de Aceptación:**
-- [ ] `docs/wiki-source/Skills.md`:
-  - Basada en `template/obligatorio/skills/` (46 directorios)
-  - Explica el patrón de skill (SKILL.md con frontmatter + pasos numerados)
-  - **Guía paso a paso: Cómo añadir un nuevo skill** (end-user focused):
-    1. Crear `skills/<skill-name>/SKILL.md`
-    2. Añadir YAML frontmatter con `name` y `description`
-    3. Escribir pasos numerados (specific, verifiable, battle-tested, minimal)
-    4. Si tiene `references/`, migrar al root `references/`
-    5. Actualizar `skills/using-agent-skills/SKILL.md`
-    6. Restart OpenCode session
-  - **Ejemplo funcional:** crear un skill custom
-  - Link a [opencode.ai/docs/skills](https://opencode.ai/docs/skills)
-- [ ] `docs/wiki-source/Customization-Guide.md`:
-  - Recetas prácticas para modificaciones comunes:
-    - "Quiero usar un modelo AI diferente" → modificar `opencode.json`
-    - "No necesito el skill architecture-diagrams" → eliminar de `skills/`
-    - "Quiero añadir un command custom" → crear en `commands/`
-    - "Quiero renombrar mi proyecto" → actualizar `README.md`, `package.json`
-    - "Quiero cambiar permisos de agents" → modificar `opencode.json`
-    - "Quiero añadir un nuevo provider" → añadir config en `opencode.json`
-  - Cada receta: qué modificar, dónde está el archivo, qué hace el cambio
+**Criterio:** Test automatizado que valida el comportamiento del paquete npm después de empaquetar (catches FEV-2-B y FEV-2-C bugs **antes** del release).
 
-**Verificación:**
-- [ ] Manual: la guía de skills es ejecutable
-- [ ] Las recetas de customización son copy-paste listas
+#### Task 4.1: Setup: helper `packTarball()`
+**Acceptance criteria:**
+- [ ] Función helper que ejecuta `bun pm pack` o `npm pack` en temp dir
+- [ ] Captura el path del tarball generado
+- [ ] Skip automático si `SKIP_NETWORK_TESTS=1`
+**Verification:** helper testeable independientemente
+**Files:** `tests/integration/packaging/packaging-helpers.ts` (nuevo)
+**Estimated scope:** S (~30min)
 
-**Dependencias:** FEV5-T8.
-**Archivos:**
-- `docs/wiki-source/Skills.md` (nuevo)
-- `docs/wiki-source/Customization-Guide.md` (nuevo)
+#### Task 4.2: Setup: helper `extractAndInspect()`
+**Acceptance criteria:**
+- [ ] Extrae tarball a temp dir
+- [ ] Verifica estructura mínima esperada: `template/`, `package.json`, `bin`
+- [ ] Retorna metadata para los tests
+**Verification:** idem
+**Files:** `tests/integration/packaging/packaging-helpers.ts`
+**Estimated scope:** S (~30min)
 
-**Scope:** L (1h).
+#### Task 4.3: Test A — `npm pack --dry-run` lista archivos esperados
+**Acceptance criteria:**
+- [ ] Test verifica que el tarball incluye: `template/obligatorio/opencode.json`, `template/obligatorio/agents/`, `template/obligatorio/commands/`, `template/estandar/gitignore` (renombrado para evitar exclusion de npm)
+- [ ] Test verifica que NO incluye: `template/estandar/.gitignore`, `template/obligatorio/.opencode/.gitignore`
+**Verification:** test verde
+**Files:** `tests/integration/packaging/npm-pack.test.ts` (nuevo)
+**Estimated scope:** S (~30min)
 
----
+#### Task 4.4: Test B — Install tarball + ejecutar binary `--version`
+**Acceptance criteria:**
+- [ ] Test instala tarball en `node_modules/@fisherk2-dev/codice-test/`
+- [ ] Test ejecuta `node node_modules/@fisherk2-dev/codice-test/dist/codice-linux --version` (o `bun run src/cli/bin.js --version`)
+- [ ] Test verifica exit code 0 y output esperado
+**Verification:** test verde
+**Files:** `tests/integration/packaging/npm-pack.test.ts`
+**Estimated scope:** M (~60min)
 
-#### Task FEV5-T13: Create Troubleshooting Wiki page + verify all 9 pages
+#### Task 4.5: Test C — Ejecutar modo `clean` desde paquete instalado
+**Acceptance criteria:**
+- [ ] Test ejecuta `clean` mode en temp dir
+- [ ] Verifica que template resolution funciona (no `Template file not found`)
+- [ ] Verifica que `.gitignore` se genera post-installation
+- [ ] Verifica que symlinks se generan post-installation
+**Verification:** test verde
+**Files:** `tests/integration/packaging/npm-pack.test.ts`
+**Estimated scope:** M (~60min)
 
-**Descripción:** Escribir la página final de troubleshooting en `docs/wiki-source/` y verificar que todas las páginas enlazan correctamente a OpenCode docs.
+#### Task 4.6: Test D — Verificar que symlinks NO están en el tarball
+**Acceptance criteria:**
+- [ ] Test verifica que el tarball NO contiene symlinks en `template/`
+- [ ] Documenta que los symlinks se generan post-installation (per ADR-008)
+**Verification:** test verde
+**Files:** `tests/integration/packaging/npm-pack.test.ts`
+**Estimated scope:** XS (~20min)
 
-**Criterios de Aceptación:**
-- [ ] `docs/wiki-source/Troubleshooting.md`:
-  - **5+ problemas comunes** con soluciones accionables:
-    1. "Template file not found" → causas y soluciones (bunx, symlinks, gitignore)
-    2. "GitHub version check falla con 404" → verificar repo name, network
-    3. "Permiso denegado al escribir archivos" → permisos, sudo, bind mounts
-    4. "Clean Install en directorio no vacío" → confirmación necesaria
-    5. "Update Workspace no actualiza archivos" → standard vs. mandatory rules
-  - Cada issue: síntoma, causa, solución (en ese orden)
-  - Link a [opencode.ai/docs/faq](https://opencode.ai/docs/faq)
-  - Link a [GitHub Issues](https://github.com/fisherk2/codice-opencode/issues)
-- [ ] Verificación cruzada: cada una de las 8 páginas anteriores tiene al menos 1 link a `opencode.ai/docs/`
-- [ ] Página `_Sidebar.md` (opcional): navegación lateral de la Wiki
-- [ ] Verificar las 9 páginas en `docs/wiki-source/`:
-  - `Home.md`, `Getting-Started.md`, `Workspace-Structure.md`, `Configuration.md`
-  - `Agents.md`, `Commands.md`, `Skills.md`, `Customization-Guide.md`
-  - `Troubleshooting.md`
+#### Task 4.7: Test E — Verificar que `.gitignore` no está en el tarball
+**Acceptance criteria:**
+- [ ] Test verifica que el tarball NO contiene `template/estandar/.gitignore` (npm lo excluye)
+- [ ] Verifica que SÍ contiene `template/estandar/gitignore` (renombrado, sin dot)
+- [ ] Documenta que `.gitignore` se genera post-installation (per ADR-009)
+**Verification:** test verde
+**Files:** `tests/integration/packaging/npm-pack.test.ts`
+**Estimated scope:** XS (~20min)
 
-**Verificación:**
-- [ ] `rg "opencode.ai/docs" docs/wiki-source/` muestra ≥8 matches
-- [ ] `rg "TODO|FIXME" docs/wiki-source/` → 0 matches
-- [ ] Manual: la página de troubleshooting cubre ≥5 problemas comunes
-- [ ] 9 archivos `.md` existen en `docs/wiki-source/`
+#### Task 4.8: Wire-up CI — nuevo job en `ci.yml`
+**Acceptance criteria:**
+- [ ] Job `test-packaging` en `.github/workflows/ci.yml`
+- [ ] Ejecuta solo en Linux (más rápido, evita flakiness de macOS/Windows en tarball extraction)
+- [ ] Setup: `bun install` + ejecutar `bun test tests/integration/packaging/`
+- [ ] Timeout: 5min (los tests de packaging son lentos)
+**Verification:** CI pasa
+**Files:** `.github/workflows/ci.yml`
+**Estimated scope:** S (~20min)
 
-**Dependencias:** FEV5-T9, T10, T11, T12.
-**Archivos:**
-- `docs/wiki-source/Troubleshooting.md` (nuevo)
-- `docs/wiki-source/` (verify todas)
+#### Task 4.9: Documentación en CONTRIBUTING.md
+**Acceptance criteria:**
+- [ ] Sección "Packaging tests" añadida en `CONTRIBUTING.md`
+- [ ] Documenta: cómo correr localmente, cuándo se skip (`SKIP_NETWORK_TESTS=1`), interpretación de fallos
+**Verification:** `rg "Packaging tests" CONTRIBUTING.md` → 1 match
+**Files:** `CONTRIBUTING.md`
+**Estimated scope:** XS (~15min)
 
-**Scope:** M (45min).
-
----
-
-### Phase 4: docs/opencode/ Elimination (Issue #25 Track C — removal)
-
-#### Task FEV5-T14: Remove `docs/opencode/` from project root
-
-**Descripción:** Eliminar el directorio `docs/opencode/` (12 archivos) del proyecto root.
-
-**Criterios de Aceptación:**
-- [ ] `docs/opencode/` eliminado completamente
-- [ ] `git status` muestra 12 archivos eliminados
-- [ ] Commit dedicado: `chore(docs): remove docs/opencode/ from project root`
-- [ ] Backup: copia de seguridad en `~/.cache/codice-backup/docs-opencode-root-$(date)/` antes de eliminar
-
-**Verificación:**
-- [ ] `ls docs/opencode/ 2>&1` → "No such file or directory"
-- [ ] `git log --diff-filter=D --name-only` muestra los 12 archivos
-
-**Dependencias:** FEV5-T9, FEV5-T10, FEV5-T11, FEV5-T12, FEV5-T13 (Wiki debe existir antes).
-**Archivos:**
-- `docs/opencode/` (eliminar)
-
-**Scope:** XS (5min).
-
----
-
-#### Task FEV5-T15: Remove `template/opcional/docs/opencode/`
-
-**Descripción:** Eliminar el directorio `template/opcional/docs/opencode/` (12 archivos) del template.
-
-**Criterios de Aceptación:**
-- [ ] `template/opcional/docs/opencode/` eliminado completamente
-- [ ] `git status` muestra 12 archivos eliminados
-- [ ] Commit dedicado: `chore(template): remove docs/opencode/ from template opcional`
-- [ ] Backup antes de eliminar
-
-**Verificación:**
-- [ ] `ls template/opcional/docs/opencode/ 2>&1` → "No such file or directory"
-- [ ] `git log --diff-filter=D --name-only` muestra los 12 archivos
-
-**Dependencias:** FEV5-T14.
-**Archivos:**
-- `template/opcional/docs/opencode/` (eliminar)
-
-**Scope:** XS (5min).
+#### Task 4.10: Verificación Checkpoint D
+**Acceptance:**
+- [ ] 5 nuevos tests pasan localmente
+- [ ] Job CI agregado
+- [ ] Coverage de Slices 1-4 sin regresión
+**Verification commands:**
+```bash
+bun test tests/integration/packaging/   # 5/5 passing
+just check                              # 0 errors
+just test-e2e                           # 15/15
+```
 
 ---
 
-#### Task FEV5-T16: Remove `docs/opencode` entry from `FileRuleManifestData.ts`
+### Slice 5 — TECH_DEBT.md Update + Release Prep (Cierre, riesgo bajo)
 
-**Descripción:** Eliminar la entrada del manifest que clasificaba `docs/opencode` como `opcional`.
+#### Task 5.1: Mover TD-3.2 a "Resolved"
+**Acceptance criteria:**
+- [ ] Sección `## Resolved` con TD-3.2 fechada 2026-07-10
+**Files:** `docs/TECH_DEBT.md`
+**Estimated scope:** XS (~5min)
 
-**Criterios de Aceptación:**
-- [ ] Líneas 167-171 de `src/domain/entities/FileRuleManifestData.ts` eliminadas
-- [ ] `bun test` sigue pasando
-- [ ] `just check` sin errores
-- [ ] Commit dedicado: `chore(manifest): remove docs/opencode from FileRuleManifestData`
+#### Task 5.2: Mover TD-1.1, TD-2.1, TD-3.1, TD-5.3 a "Resolved"
+**Acceptance criteria:**
+- [ ] 4 items con fecha, commit ref, métricas verificadas
+**Files:** `docs/TECH_DEBT.md`
+**Estimated scope:** XS (~10min)
 
-**Verificación:**
-- [ ] `rg "docs/opencode" src/` → 0 matches
-- [ ] `bun test` — sin regresión (481/0)
+#### Task 5.3: Actualizar `docs/WORKFLOW.md` con resumen FEV-10
+**Acceptance criteria:**
+- [ ] Sección FEV-10 marcada ✅ Completo
+- [ ] Métricas finales, commits, code review findings
+**Files:** `docs/WORKFLOW.md`
+**Estimated scope:** S (~20min)
 
-**Dependencias:** FEV5-T14, FEV5-T15.
-**Archivos:**
-- `src/domain/entities/FileRuleManifestData.ts` (modificar)
+#### Task 5.4: CHANGELOG entries v1.1.0 FEV-10
+**Acceptance criteria:**
+- [ ] Sección `v1.1.0` con entries de FEV-10
+- [ ] Categorías: Added, Changed, Fixed
+**Files:** `CHANGELOG.md`
+**Estimated scope:** XS (~15min)
 
-**Scope:** XS (5min).
+#### Task 5.5: Tag + release v1.1.0
+**Acceptance criteria:**
+- [ ] PR `feat/v1.1.0-fev-10` → `develop` (squash merge)
+- [ ] PR `develop` → `main` (squash merge)
+- [ ] Tag `v1.1.0` creado y pusheado
+- [ ] Release workflow publica binarios + npm
+- [ ] `npm view @fisherk2-dev/codice@latest version` → `1.1.0`
+**Files:** (git + npm)
+**Estimated scope:** S (~20min)
 
----
-
-#### Task FEV5-T17: Update 74+ internal references
-
-**Descripción:** Actualizar todas las referencias a `docs/opencode/` en CONTRIBUTING.md, README.md, comandos, specs, y código fuente.
-
-**Criterios de Aceptación:**
-- [ ] `rg "docs/opencode" CONTRIBUTING.md README.md specs/ docs/ template/obligatorio/commands/ template/obligatorio/agents/ src/ tests/` → 0 matches
-- [ ] Referencias reemplazadas con:
-  - Links a Wiki: `https://github.com/fisherk2/codice-opencode/wiki/[Page]`
-  - Links a OpenCode docs: `https://opencode.ai/docs/`
-- [ ] Commit dedicado: `docs(refs): replace docs/opencode/ references with Wiki links`
-- [ ] Reporte de cambios: `git diff --stat HEAD~1` muestra archivos modificados
-
-**Verificación:**
-- [ ] `rg "docs/opencode" .` (excluyendo `.git/`, `dist/`, `docs/wiki-source/`, `docs/diagnosis/`) → 0 matches
-- [ ] `rg "opencode.ai/docs" .` → ≥10 matches (cross-references añadidas)
-
-**Dependencias:** FEV5-T14, FEV5-T15, FEV5-T16.
-**Archivos:**
-- `CONTRIBUTING.md` (modificar)
-- `README.md` (modificar)
-- `specs/spec-file-rules.md` (modificar)
-- `template/obligatorio/commands/*.md` (modificar donde aplique)
-- `src/**/*.ts` (modificar comentarios donde aplique)
-
-**Scope:** M (45min).
-
----
-
-#### Task FEV5-T18: Update E2E tests to reflect docs/opencode/ removal
-
-**Descripción:** Los E2E tests verifican que el template se instala correctamente. Tras eliminar `docs/opencode/`, los tests deben actualizarse para no esperar esos archivos.
-
-**Criterios de Aceptación:**
-- [ ] `tests/e2e/*.sh` actualizado para no verificar existencia de `docs/opencode/` en el destino
-- [ ] `tests/fixtures/` limpiado de fixtures que dependan de `docs/opencode/`
-- [ ] `just test-e2e` sigue pasando con 15/15 escenarios
-- [ ] Commit dedicado: `test(e2e): remove docs/opencode/ assertions`
-
-**Verificación:**
-- [ ] `rg "docs/opencode" tests/` → 0 matches
-- [ ] `just test-e2e` — 15/15 pasando
-- [ ] `bun test` — sin regresión (481/0)
-
-**Dependencias:** FEV5-T14, FEV5-T15, FEV5-T16.
-**Archivos:**
-- `tests/e2e/*.sh` (modificar donde aplique)
-- `tests/fixtures/` (modificar donde aplique)
-
-**Scope:** M (30min).
+#### Task 5.6: Verificación Checkpoint E (cierre v1.1.0)
+**Acceptance:**
+- [ ] `git tag v1.1.0 && git push --tags` exit 0
+- [ ] `npm view @fisherk2-dev/codice@latest version` → `1.1.0`
+- [ ] GitHub Release visible con 3 binarios
+**Verification commands:**
+```bash
+git tag v1.1.0 && git push --tags
+npm view @fisherk2-dev/codice@latest version
+```
 
 ---
 
-### Phase 5: Release (v1.0.14)
+## Quality Gates Summary
 
-#### Task FEV5-T19: Update CHANGELOG.md with v1.0.14 section
+### Checkpoint A (post Slice 1)
+```bash
+bun test tests/integration/cli/main.test.ts   # 100% pass
+bun test --coverage src/cli/main.ts            # ≥95% lines
+just check                                      # 0 errors
+```
 
-**Descripción:** Añadir sección `[1.0.14]` al CHANGELOG con Added/Changed/Fixed/Removed.
+### Checkpoint B (post Slice 2)
+```bash
+tsc --version                                   # ≥ 6.0
+just check                                      # 0 errors
+bun test tests/                                  # 563/0 pass
+```
 
-**Criterios de Aceptación:**
-- [ ] Sección `## [1.0.14] - 2026-07-XX` añadida
-- [ ] Subsecciones:
-  - `### Added`:
-    - "GitHub Wiki for workspace documentation"
-    - "Pre-release tag support in release.yml (beta/rc)"
-    - "Git Workflow section in CONTRIBUTING.md"
-    - "Release Checklist template"
-  - `### Changed`:
-    - "ci.yml now triggers on develop branch"
-    - "release.yml detects pre-release tags"
-    - "CONTRIBUTING.md expanded with CI/CD docs"
-  - `### Removed`:
-    - "docs/opencode/ from project root"
-    - "docs/opencode/ from template opcional"
-    - "docs/opencode entry from FileRuleManifestData"
-  - `### Fixed`:
-    - "Issue #23: CI/CD workflow standardization"
-    - "Issue #25: GitHub Wiki + docs duplication"
+### Checkpoint C (post Slice 3)
+```bash
+just check                                      # 0 errors
+bun test tests/                                  # ≥563/0 pass
+just test-e2e                                    # 15/15 passing
+rg -c "^\s*\w*(\w*\(|\w*):" src/domain/ports/IFileSystem.ts   # ≤6
+```
 
-**Verificación:**
-- [ ] `head -50 CHANGELOG.md` muestra la nueva sección
-- [ ] Formato Keep a Changelog respetado
+### Checkpoint D (post Slice 4)
+```bash
+bun test tests/integration/packaging/           # 5/5 passing
+just check                                       # 0 errors
+just test-e2e                                    # 15/15
+```
 
-**Dependencias:** FEV5-T17, FEV5-T18.
-**Archivos:**
-- `CHANGELOG.md` (modificar)
-
-**Scope:** S (10min).
-
----
-
-#### Task FEV5-T20: Bump version to 1.0.14 in package.json
-
-**Descripción:** Actualizar `package.json` de `1.0.13` a `1.0.14`.
-
-**Criterios de Aceptación:**
-- [ ] `package.json` → `"version": "1.0.14"`
-- [ ] `just check` sin errores
-- [ ] `bun test` sin regresión
-
-**Verificación:**
-- [ ] `grep "1.0.14" package.json` → match
-- [ ] `bun pm pkg get version` → `1.0.14`
-
-**Dependencias:** FEV5-T17, FEV5-T18.
-**Archivos:**
-- `package.json` (modificar)
-
-**Scope:** XS (5min).
+### Checkpoint E (post Slice 5, cierre v1.1.0)
+```bash
+git tag v1.1.0 && git push --tags                # exit 0
+npm view @fisherk2-dev/codice@latest version     # 1.1.0
+```
 
 ---
 
-#### Task FEV5-T21: Commit + PR + Tag + Release
+## Métricas Finales Esperadas
 
-**Descripción:** Crear PRs, ejecutar test publish con `v1.0.14-beta.1`, validar pipeline, crear release de producción con `v1.0.14`.
-
-**Criterios de Aceptación:**
-- [ ] **Test publish:** tag `v1.0.14-beta.1` pusheado → release pipeline ejecuta → npm package publicado con `--tag beta` → GitHub Pre-release creado → validar con `npm view @fisherk2-dev/codice@beta`
-- [ ] Cleanup del tag beta después de validar
-- [ ] **Production release:** PR `feat/ci-cd-wiki` → `develop` → CI pasa → squash merge
-- [ ] PR `develop` → `main` → CI pasa → squash merge
-- [ ] Tag `v1.0.14` creado y pusheado → release pipeline ejecuta → npm `latest` actualizado → GitHub Release con assets
-- [ ] Rama `feat/ci-cd-wiki` eliminada localmente tras merge
-- [ ] `develop` sincronizado con `main`
-
-**Verificación:**
-- [ ] `npm view @fisherk2-dev/codice version` → `1.0.14`
-- [ ] `npm view @fisherk2-dev/codice dist-tags` → `{ latest: '1.0.14' }`
-- [ ] GitHub Release v1.0.14 visible con 3 binarios + checksums
-- [ ] Wiki poblada y visible en repo
-
-**Dependencias:** FEV5-T19, FEV5-T20.
-**Archivos:** (ninguno — solo git + GitHub UI).
-
-**Scope:** S (30min).
+| Métrica | Actual (v1.1.0-FEV-9) | Meta FEV-10 | v1.1.0 Final |
+|---|---|---|---|
+| Tests (pass/fail) | 563 / 0 | ≥580 / 0 | ≥580 / 0 |
+| main.ts coverage (lines) | 33.04% | ≥95% | ≥95% |
+| Coverage (funciones) | 98.89% | ≥98.5% | ≥98.5% |
+| Coverage (líneas) | 96.98% | ≥97% | ≥97% |
+| IFileSystem métodos | 10 | ≤6 | ≤6 |
+| IStagingSystem métodos | (no existe) | 4 | 4 |
+| TypeScript | 5.9.x | 6.x | 6.x |
+| Biome | 2.5.x | 2.5.x (mantener) | 2.5.x |
+| E2E escenarios | 15/15 | 15/15 | 15/15 |
+| Packaging tests | 0 | 5 | 5 |
+| `just check` errores | 0 | 0 | 0 |
+| TECH_DEBT items abiertos | 5 | 0 | 0 |
 
 ---
 
-## Checkpoints (Quality Gates)
+## Patrones de Diseño Aplicados
 
-### Checkpoint 1: After T1, T2, T3 (CI/CD Infrastructure)
-- [ ] `ci.yml` triggerea en PRs a `develop`
-- [ ] `release.yml` parsea correctamente tag `v1.0.14-beta.1` (test real ejecutado en T21)
-- [ ] Rama `develop` existe en `origin`
-- [ ] `just check` — 0 errores
-
-### Checkpoint 2: After T4, T5, T6, T7 (CI/CD Documentation)
-- [ ] `CONTRIBUTING.md` tiene 4 secciones nuevas: Git Workflow, npm nomenclature, CI/CD Pipeline, Release Checklist
-- [ ] Cada sección es ejecutable (copy-paste ready)
-- [ ] Links a OpenCode docs presentes
-- [ ] `just check` — 0 errores
-
-### Checkpoint 3: After T8-T13 (Wiki Content - docs/wiki-source/)
-- [ ] `docs/wiki-source/` con 9 archivos `.md` listos para sync a la Wiki
-- [ ] Cada página sigue el principio: template-driven, no duplication
-- [ ] ≥8 referencias a `opencode.ai/docs/` en docs/wiki-source/
-- [ ] Wiki repo clonado y accesible (`git clone https://github.com/fisherk2/codice-opencode.wiki.git`)
-- [ ] `docs/wiki-source/README.md` con instrucciones de sync
-- [ ] Wiki visible en GitHub repo sidebar (ya habilitada)
-
-### Checkpoint 4: After T14-T18 (docs/opencode/ Removal)
-- [ ] `docs/opencode/` eliminado de root y template
-- [ ] `FileRuleManifestData.ts` sin entrada `docs/opencode`
-- [ ] `rg "docs/opencode" .` → 0 matches (excluyendo diagnosis backups)
-- [ ] `bun test` — 481/0 sin regresión
-- [ ] `just test-e2e` — 15/15 pasando
-
-### Gate FEV-5: After T19, T20, T21 (Release Published)
-- [ ] `npm view @fisherk2-dev/codice version` → `1.0.14`
-- [ ] GitHub Release v1.0.14 con 3 binarios + checksums
-- [ ] CHANGELOG actualizado con sección v1.0.14
-- [ ] `main` y `develop` sincronizados
-- [ ] Wiki importada y visible
+| Patrón | Slice | Aplicación |
+|---|---|---|
+| **TDD / Mock Injection** | S1 | Cobertura de `main.ts` con mocks de `Dependencies` |
+| **Template Method** | S4 | Packaging test: build → install → run → assert |
+| **Facade** | S3 | `BunFileSystem` implementa ambos ports (IFileSystem + IStagingSystem) |
+| **Interface Segregation** | S3 | 4 métodos de staging cohesionan en `IStagingSystem` |
+| **Composition Over Inheritance** | S3 | `BunFileSystem` compone `AtomicStager` y `TemplateResolver` (sin herencia) |
+| **Dependency Injection** | S3 | `container.ts` wires ambos ports a los use cases |
+| **Fixture Pattern** | S4 | Tarball pre-empaquetado como fallback offline |
+| **Strategy** | S3 | Los 4 métodos de staging forman una estrategia cohesiva |
+| **Repository per Aggregate** | S3 | Análogo: "one port per aggregate cohesion" (clean-ddd-hexagonal) |
 
 ---
 
-## Risgos y Mitigaciones
+## Riesgos y Mitigaciones
 
-| Riesgo | Impacto | Mitigación |
-|--------|---------|------------|
-| `release.yml` publica accidentalmente con `--tag latest` cuando es beta | 🔴 Crítico | Validación regex en step pre-publish. Test con `v1.0.14-beta.1` antes del release de producción. |
-| 74+ referencias internas no actualizadas completamente | 🟡 Medio | Script `rg` antes de commit. Verificación post-commit con `rg "docs/opencode" .` → 0. |
-| Branch protection en `main` bloquea creación de `develop` | 🟡 Medio | Documentar pasos manuales en T3 (GitHub UI: Settings → Branches → Add rule para develop). |
-| E2E tests dependen de `docs/opencode/` | 🟡 Medio | T18 actualiza tests en paralelo con T14-T15. Ejecutar `just test-e2e` antes de commit. |
-| Wiki content creation es subjetivo (9 páginas, contenido extenso) | 🟢 Bajo | Dividir en 5 sub-tareas (T9-T13) para review incremental. Cada commit revisable. |
-| `npm publish` falla por "cannot publish over previously published version" | 🟡 Medio | Ya manejado en `release.yml` actual con check de error específico. |
-| Tag de prueba `v1.0.14-beta.1` queda en `origin` accidentalmente | 🟢 Bajo | Cleanup explícito en T21 después de validar. |
-
----
-
-## Métricas Objetivo
-
-| Métrica | v1.0.13 (actual) | Meta v1.0.14 |
-|---------|------------------|--------------|
-| Tests (pass/fail) | 481 / 0 | ≥481 / 0 |
-| Coverage (funciones) | 97.66% | ≥97.66% |
-| Coverage (líneas) | 96.52% | ≥96.52% |
-| E2E escenarios | 15/15 | 15/15 |
-| `just check` errores | 0 | 0 |
-| Issues críticos abiertos | 0 | 0 |
-| CI branches soportadas | 1 (`main`) | 2 (`main` + `develop`) |
-| npm dist-tags | 1 (`latest`) | 3 (`latest`, `beta`, `rc`) |
-| docs/opencode/ archivos | 24 (12+12) | 0 |
-| Referencias rotas a docs/opencode/ | 74+ | 0 |
-| Wiki pages | 0 | 9 |
-| ADRs nuevos | 10 | 11 (+ADR-011 si se decide documentar FEV-5) |
+| Riesgo | Probabilidad | Impacto | Mitigación |
+|---|---|---|---|
+| TS 6.x introduce breaking changes no detectadas | Media | Alto | Slice 2 aislado, ANTES del refactor TD-2.1 |
+| IFileSystem split rompe 3 use cases (constructor signatures) | Media | Medio | T3.4-T3.6 en una sola sesión con `tsc --noEmit` continuo |
+| `BunFileSystem implements IFileSystem, IStagingSystem` requiere sintaxis TS válida para intersection types | Baja | Bajo | Verificar con `tsc --noEmit` antes de continuar |
+| npm packaging test es lento (>60s) | Media | Bajo | Marcar como `@slow`; ejecutar solo en CI, no local por default |
+| `bun pm pack` o `npm pack` no disponible offline | Baja | Medio | Usar fixture local de tarball si network falla |
+| `BunFileSystem` cambios rompen E2E tests | Baja | Alto | E2E en Checkpoint C; rollback si falla |
+| Tests de packaging flaky en CI | Media | Medio | Solo Linux; timeout 5min; retry policy |
 
 ---
 
-## Resumen de Esfuerzo
+## Out of Scope (explícitamente NO en este plan)
 
-| Tarea | Scope | Esfuerzo |
-|-------|-------|----------|
-| FEV5-T1: ci.yml develop triggers | S | 15min |
-| FEV5-T2: release.yml pre-release tags | S | 30min |
-| FEV5-T3: Create develop branch | XS | 5min |
-| FEV5-T4: Git Workflow docs | M | 45min |
-| FEV5-T5: npm nomenclature docs | S | 20min |
-| FEV5-T6: CI/CD Pipeline docs | M | 30min |
-| FEV5-T7: Release Checklist | S | 20min |
-| FEV5-T8: Clone wiki repo + create docs/wiki-source/ | S | 15min |
-| FEV5-T9: Home + Getting Started | M | 45min |
-| FEV5-T10: Workspace + Config | M | 45min |
-| FEV5-T11: Agents + Commands | L | 1h |
-| FEV5-T12: Skills + Customization | L | 1h |
-| FEV5-T13: Troubleshooting + refs | S | 30min |
-| FEV5-T14: Remove root docs/opencode/ | XS | 5min |
-| FEV5-T15: Remove template docs/opencode/ | XS | 5min |
-| FEV5-T16: Update FileRuleManifestData | XS | 5min |
-| FEV5-T17: Update 74+ references | M | 45min |
-| FEV5-T18: Update E2E tests | M | 30min |
-| FEV5-T19: CHANGELOG v1.0.14 | S | 10min |
-| FEV5-T20: Bump version 1.0.14 | XS | 5min |
-| FEV5-T21: Commit + PR + Tag + Release | S | 30min |
-| **Total** | | **~12h** |
+- ❌ Cambios en `template/` (FEV-9 ya consolidó el template)
+- ❌ Nuevos MCP servers (cubierto por FEV-9)
+- ❌ Binary size reduction (TECH_DEBT 7.1 — futuro v1.2.0+)
+- ❌ E2E coverage instrumentation (TECH_DEBT 5.1 — futuro v1.2.0+)
+- ❌ Performance benchmarks (TECH_DEBT 5.2 — futuro v1.2.0+)
+- ❌ Estandar directory tree-diffing (TECH_DEBT 6.2 — futuro v1.2.0+)
+- ❌ Refactor de otros ports (IUserPrompt, IGitHubClient, etc.) — no en TECH_DEBT
 
 ---
 
-## Open Questions (Resolved)
+## Orden de Ejecución y Dependencias
 
-| # | Pregunta | Decisión |
-|---|----------|----------|
-| 1 | ¿Wiki content commiteado o manual? | ✅ Commiteado en `docs/wiki-source/` del repo principal, sincronizado a Wiki vía git push al wiki repo |
-| 2 | ¿Test con tag real o dry-run? | ✅ Test real con `v1.0.14-beta.1` |
-| 3 | ¿Orden de Phase 1+2 vs Phase 3? | ✅ Phase 1+2 primero (foundation), Phase 3 paralelo, Phase 4 después de Phase 3 |
+```
+T1.1 (flag handling)
+T1.2 (parse failure)         ─┐
+T1.3 (SIGINT)                │ paralelizables
+T1.4 (interactive mode)      │ en la misma sesión
+T1.5 (success/error)         │
+T1.6 (catch + finally)       ─┘
+ ↓
+T1.7 (Checkpoint A verification)
+ ↓
+T2.1 (verificar TS 6.x)
+T2.2 (bump version)          ──── Slice 2 completo antes de Slice 3
+T2.3 (bun install + check)
+T2.4 (resolver breaking changes)
+T2.5 (verificar tests)
+ ↓
+T2.6 (Checkpoint B verification)
+ ↓
+T3.1 (IStagingSystem nuevo)
+T3.2 (reducir IFileSystem)
+T3.3 (BunFileSystem implements)     ──── Slice 3 completo antes de Slice 4
+T3.4 (FileMergeEngine + helpers)
+T3.5 (3 use cases)
+T3.6 (container)
+T3.7 (bun-file-system test)
+T3.8 (main.test mock)
+ ↓
+T3.9 (Checkpoint C verification)
+ ↓
+T3.10 (ADR-011 + CHANGELOG)
+ ↓
+T4.1 (packTarball helper)
+T4.2 (extractAndInspect helper)
+T4.3 (Test A: dry-run)
+T4.4 (Test B: install + --version)  ──── Slice 4 completo antes de Slice 5
+T4.5 (Test C: clean mode)
+T4.6 (Test D: no symlinks in tarball)
+T4.7 (Test E: no .gitignore in tarball)
+T4.8 (CI job)
+T4.9 (CONTRIBUTING.md)
+ ↓
+T4.10 (Checkpoint D verification)
+ ↓
+T5.1 (TECH_DEBT TD-3.2)
+T5.2 (TECH_DEBT otros 4)
+T5.3 (WORKFLOW.md)
+T5.4 (CHANGELOG)
+T5.5 (tag + release)
+ ↓
+T5.6 (Checkpoint E verification)
+```
 
 ---
 
-*Última actualización: 2026-07-09*
+## Verificación Post-Implementación
+
+| Check | Comando | Criterio |
+|---|---|---|
+| Tests sin regresión | `bun test tests/` | ≥580 / 0 |
+| main.ts coverage | `bun test --coverage src/cli/main.ts` | ≥95% lines |
+| Coverage global | `bun test --coverage` | ≥98.5% funciones, ≥97% líneas |
+| IFileSystem methods | `rg -c "^\s*[a-z]\w*\s*\(" src/domain/ports/IFileSystem.ts` | ≤6 |
+| IStagingSystem methods | `rg -c "^\s*[a-z]\w*\s*\(" src/domain/ports/IStagingSystem.ts` | =4 |
+| BunFileSystem implements | `rg "implements" src/infrastructure/adapters/BunFileSystem.ts` | `IFileSystem, IStagingSystem` |
+| TypeScript version | `tsc --version` | ≥ 6.0 |
+| Packaging tests | `bun test tests/integration/packaging/` | 5/5 |
+| E2E | `just test-e2e` | 15/15 |
+| Biome lint | `just lint` | 0 errors |
+| Tech debt open | `rg "^\|" docs/TECH_DEBT.md \| grep -c "🟡\|🔴"` | 0 |
+| ADRs documentados | `ls specs/adr/adr-011*` | existe |
+| Release tag | `git tag -l "v1.1.0"` | existe |
+| npm latest | `npm view @fisherk2-dev/codice@latest version` | `1.1.0` |
+
+---
+
+## Progreso (a llenar durante implementación)
+
+| Slice | Tarea | Estado | Commit |
+|---|---|---|---|
+| 1 | T1.1 — flag handling | 🟡 Pendiente | — |
+| 1 | T1.2 — parse failure | 🟡 Pendiente | — |
+| 1 | T1.3 — SIGINT | 🟡 Pendiente | — |
+| 1 | T1.4 — interactive mode | 🟡 Pendiente | — |
+| 1 | T1.5 — success/error | 🟡 Pendiente | — |
+| 1 | T1.6 — catch + finally | 🟡 Pendiente | — |
+| 1 | T1.7 — Checkpoint A | 🟡 Pendiente | — |
+| 2 | T2.1 — verify TS 6.x | 🟡 Pendiente | — |
+| 2 | T2.2 — bump version | 🟡 Pendiente | — |
+| 2 | T2.3 — bun install + check | 🟡 Pendiente | — |
+| 2 | T2.4 — resolve breaking | 🟡 Pendiente | — |
+| 2 | T2.5 — verify tests | 🟡 Pendiente | — |
+| 2 | T2.6 — Checkpoint B | 🟡 Pendiente | — |
+| 3 | T3.1 — IStagingSystem port | 🟡 Pendiente | — |
+| 3 | T3.2 — reducir IFileSystem | 🟡 Pendiente | — |
+| 3 | T3.3 — BunFileSystem implements | 🟡 Pendiente | — |
+| 3 | T3.4 — FileMergeEngine + helpers | 🟡 Pendiente | — |
+| 3 | T3.5 — 3 use cases | 🟡 Pendiente | — |
+| 3 | T3.6 — container | 🟡 Pendiente | — |
+| 3 | T3.7 — bun-file-system test | 🟡 Pendiente | — |
+| 3 | T3.8 — main.test mock | 🟡 Pendiente | — |
+| 3 | T3.9 — Checkpoint C | 🟡 Pendiente | — |
+| 3 | T3.10 — ADR-011 + CHANGELOG | 🟡 Pendiente | — |
+| 4 | T4.1 — packTarball helper | 🟡 Pendiente | — |
+| 4 | T4.2 — extractAndInspect helper | 🟡 Pendiente | — |
+| 4 | T4.3 — Test A: dry-run | 🟡 Pendiente | — |
+| 4 | T4.4 — Test B: install + --version | 🟡 Pendiente | — |
+| 4 | T4.5 — Test C: clean mode | 🟡 Pendiente | — |
+| 4 | T4.6 — Test D: no symlinks | 🟡 Pendiente | — |
+| 4 | T4.7 — Test E: no .gitignore | 🟡 Pendiente | — |
+| 4 | T4.8 — CI job | 🟡 Pendiente | — |
+| 4 | T4.9 — CONTRIBUTING.md | 🟡 Pendiente | — |
+| 4 | T4.10 — Checkpoint D | 🟡 Pendiente | — |
+| 5 | T5.1 — TECH_DEBT TD-3.2 | 🟡 Pendiente | — |
+| 5 | T5.2 — TECH_DEBT otros 4 | 🟡 Pendiente | — |
+| 5 | T5.3 — WORKFLOW.md | 🟡 Pendiente | — |
+| 5 | T5.4 — CHANGELOG entries | 🟡 Pendiente | — |
+| 5 | T5.5 — tag + release | 🟡 Pendiente | — |
+| 5 | T5.6 — Checkpoint E | 🟡 Pendiente | — |
+
+---
+
+## Suggested Next Step
+
+> El plan está listo. Run `/build` para iniciar la implementación del Slice 1 (Task 1.1: flag handling en `main.test.ts`).

@@ -63,6 +63,11 @@ describe("ClackPromptsAdapter", () => {
 		adapter.stopSpinner();
 	});
 
+	it("creates instance with explicit constructor", () => {
+		// REF: TECH_DEBT.md TD-1.2 — explicit constructor to fix Bun coverage artifact
+		expect(adapter).toBeInstanceOf(ClackPromptsAdapter);
+	});
+
 	describe("showWarning", () => {
 		it("should display a warning message via note()", () => {
 			adapter.showWarning("Disk space is low");

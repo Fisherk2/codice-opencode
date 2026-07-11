@@ -1,6 +1,7 @@
 import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../domain/entities/FileRuleManifest";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
+import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable } from "../helpers";
 import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
@@ -44,7 +45,7 @@ export class ProjectInstallUseCase {
 	 * @param devinSymlinks - Conditional .devin/ symlinks (7, created only if .devin selected)
 	 */
 	constructor(
-		private readonly fileSystem: IFileSystem,
+		private readonly fileSystem: IFileSystem & IStagingSystem,
 		private readonly mergeEngine: IFileMergeEngine,
 		private readonly userPrompt: IUserPrompt,
 		private readonly symlinkCreator: ISymlinkCreator,

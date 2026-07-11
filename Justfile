@@ -20,7 +20,7 @@ check:
     bunx @biomejs/biome ci src/ tests/ && bun run tsc --noEmit
 
 test:
-    bun test
+    bun test tests/
 
 test-unit:
     bun test tests/unit/
@@ -29,7 +29,7 @@ test-integration:
     bun test tests/integration/
 
 test-coverage:
-    bun test --coverage
+    bun test tests/ --coverage
 
 # Build for current platform (auto-detects OS)
 build:

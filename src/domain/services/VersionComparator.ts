@@ -57,6 +57,13 @@ export function validateVersions(
  */
 export class VersionComparator implements IVersionComparator {
 	/**
+	 * Explicit empty constructor.
+	 * Present to avoid Bun's coverage tool counting an implicit constructor
+	 * as an uncovered function. (REF: TECH_DEBT.md TD-1.2)
+	 */
+	// biome-ignore lint/complexity/noUselessConstructor: Needed to fix Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
+	constructor() {}
+	/**
 	 * Compare a local version against a remote version.
 	 *
 	 * @param local - Installed version string (e.g. "1.0.0")

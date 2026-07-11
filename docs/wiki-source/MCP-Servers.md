@@ -10,7 +10,7 @@ MCP (Model Context Protocol) servers extend OpenCode agents with external tools 
 
 ## Pre-Configured MCP Servers
 
-The template ships with **4 MCP servers** pre-configured in `opencode.json`. Only `context7` is enabled by default; the rest are disabled to conserve context and must be activated on demand.
+The template ships with **9 MCP servers** pre-configured in `opencode.json`. Three are enabled by default (`context7`, `vercel-grep`, `gitmcp`); the rest are disabled to conserve context and must be activated on demand.
 
 | Server | Type | Default | Template Feature |
 |--------|------|---------|------------------|
@@ -18,6 +18,11 @@ The template ships with **4 MCP servers** pre-configured in `opencode.json`. Onl
 | `chrome-devtools` | Local | ❌ Disabled | `/webperf` Deep mode, browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`xlsx` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
+| `docs-mcp-server` | Local | ❌ Disabled | Open-source documentation queries |
+| `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
+| `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
+| `vercel-grep` | Remote | ✅ Enabled | GitHub code search across 1M+ repos |
+| `gitmcp` | Remote | ✅ Enabled | GitHub repository documentation |
 
 ---
 
@@ -25,7 +30,7 @@ The template ships with **4 MCP servers** pre-configured in `opencode.json`. Onl
 
 MCP servers add tokens to every conversation turn. The more servers and tools you enable, the faster you'll reach the context limit.
 
-**Rule of thumb:** Enable only what you need for your current task. Disable servers globally and activate them per-agent when possible (see [Per-Agent Control](#per-agent-control) below).
+**Rule of thumb:** Keep only what you need enabled. Currently 3 servers are on by default (`context7`, `vercel-grep`, `gitmcp`). Disable servers you don't use and activate them per-agent when possible (see [Per-Agent Control](#per-agent-control) below).
 
 ---
 
@@ -249,6 +254,239 @@ For lightweight sessions without a full Jupyter server:
 
 ---
 
+### Grounded Docs MCP Server — Open-Source Documentation Queries
+
+Local stdio-based MCP server that provides up-to-date library documentation from official sources. Open-source alternative to Context7. Indexes docs from websites, GitHub, npm, PyPI, and local files.
+
+**Pre-configured as:** `"enabled": false` — requires manual startup of the server first.
+
+#### Prerequisites
+
+- Node.js 22+ (already present in this workspace)
+- No API key required
+
+#### Quick Start
+
+**Enable the MCP server** in `opencode.json` — no manual server process needed:
+
+```json
+{
+  "mcp": {
+    "docs-mcp-server": {
+      "type": "local",
+      "command": ["npx", "-y", "@arabold/docs-mcp-server@latest"],
+      "enabled": true
+    }
+  }
+}
+```
+
+OpenCode manages the server lifecycle automatically via stdio.
+
+> **Tip:** You can also access the Web UI at `http://localhost:6280` when the server is running to add documentation interactively, or index docs via CLI:
+> ```bash
+> npx @arabold/docs-mcp-server@latest scrape react https://react.dev/reference/react
+> npx @arabold/docs-mcp-server@latest search react "useEffect" --output yaml
+> ```
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `fetch_docs` | Fetch documentation for a specific library URL |
+| `search_docs` | Semantic search across indexed documentation |
+
+> **Repository:** [github.com/arabold/docs-mcp-server](https://github.com/arabold/docs-mcp-server) | **Web:** [grounded.tools](https://grounded.tools)
+
+---
+
+### Tavily — Real-Time Web Search
+
+Remote MCP server for AI-optimized web search. Provides search and content extraction with domain filtering, news search, and LLM-friendly results. Requires a free Tavily API key.
+
+**Pre-configured as:** `"enabled": false` — requires API key setup.
+
+#### Prerequisites
+
+- **Tavily API key** — Sign up and get a free API key at [tavily.com](https://www.tavily.com/)
+
+#### Quick Start
+
+1. **Set your API key** (pick one method):
+
+   **Option A — Environment variable:**
+   ```bash
+   export TAVILY_API_KEY=tvly-your-key-here
+   ```
+   Then enable in `opencode.json`:
+   ```json
+   {
+     "mcp": {
+       "tavily": {
+         "type": "remote",
+         "url": "https://mcp.tavily.com/mcp",
+         "headers": {
+           "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+         },
+         "enabled": true
+       }
+     }
+   }
+   ```
+
+   **Option B — OAuth authentication (recommended):**
+   ```bash
+   opencode mcp auth tavily
+   ```
+   This launches an OAuth flow in your browser. No manual API key handling required.
+
+2. **Enable the server** (if not using OAuth, enable in `opencode.json` as shown above).
+3. **Restart OpenCode** for the change to take effect.
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `tavily_search` | Real-time web search with filtering |
+| `tavily_extract` | Intelligent content extraction from pages |
+
+> **Docs:** [docs.tavily.com/documentation/mcp](https://docs.tavily.com/documentation/mcp)
+
+---
+
+### Firecrawl — Web Scraping and Crawling
+
+Remote MCP server for scraping, crawling, and extracting content from web pages. Supports batch scraping, deep crawling, and structured data extraction. Requires a Firecrawl API key.
+
+**Pre-configured as:** `"enabled": false` — requires setup.
+
+#### Quick Start
+
+1. **Install Firecrawl skills and authenticate:**
+
+   ```bash
+   npx -y firecrawl-cli@latest init --all -k YOUR_FIRECRAWL_API_KEY
+   ```
+
+   This installs 31 Firecrawl skills across all your AI coding agents.
+
+   > **Get an API key:** Sign up at [firecrawl.dev](https://www.firecrawl.dev/) for a free key.
+
+2. **Authenticate via OAuth:**
+
+   ```bash
+   opencode mcp auth firecrawl
+   ```
+
+   This launches an OAuth flow in your browser, connecting OpenCode to Firecrawl's MCP endpoint.
+
+3. **Enable the MCP server** in `opencode.json` (only needed if not using OAuth):
+
+   ```json
+   {
+     "mcp": {
+       "firecrawl": {
+         "type": "remote",
+         "url": "https://mcp.firecrawl.dev/v2/mcp",
+         "headers": {
+           "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
+         },
+         "enabled": true
+       }
+     }
+   }
+   ```
+
+4. **Restart OpenCode** for the change to take effect.
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `firecrawl_scrape` | Scrape content from a single URL |
+| `firecrawl_search` | Web search with content extraction |
+| `firecrawl_crawl` | Launch an asynchronous crawl |
+| `firecrawl_batch_scrape` | Scrape multiple URLs in parallel |
+
+> **Docs:** [docs.firecrawl.dev/developers-mcp](https://docs.firecrawl.dev/use-cases/developers-mcp)
+
+---
+
+### Vercel Grep — GitHub Code Search
+
+Remote MCP server from Vercel that searches code patterns across 1M+ public GitHub repositories. Returns real-world code snippets ranked by relevance. Ideal for finding usage examples of APIs and libraries.
+
+**Pre-configured as:** `"enabled": true` — no setup needed.
+
+```json
+{
+  "mcp": {
+    "vercel-grep": {
+      "type": "remote",
+      "url": "https://mcp.grep.app",
+      "enabled": true
+    }
+  }
+}
+```
+
+#### Prerequisites
+
+- No API key required
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `searchGitHub` | Search code patterns across 1M+ GitHub repos |
+
+> **Blog:** [vercel.com/blog/grep-a-million-github-repositories-via-mcp](https://vercel.com/blog/grep-a-million-github-repositories-via-mcp)
+
+---
+
+### GitMCP — GitHub Repository Documentation
+
+Remote MCP server that transforms any public GitHub repository into a documentation endpoint. Change `github.com` to `gitmcp.io` in a repo URL and your AI agent gets instant access to its README, docs, and code structure.
+
+**Pre-configured as:** `"enabled": true` — no setup needed.
+
+```json
+{
+  "mcp": {
+    "gitmcp": {
+      "type": "remote",
+      "url": "https://gitmcp.io/docs",
+      "enabled": true
+    }
+  }
+}
+```
+
+#### Prerequisites
+
+- No API key required
+- Repository must be public
+
+#### URL Formats
+
+| Format | Use Case |
+|--------|----------|
+| `gitmcp.io/{owner}/{repo}` | Specific repository |
+| `{owner}.gitmcp.io/{repo}` | GitHub Pages site |
+| `gitmcp.io/docs` | Generic (AI picks repo from context) |
+
+#### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `fetch_*_documentation` | Fetch repo-specific documentation |
+| `search_*_documentation` | Semantic search across docs |
+| `search_*_code` | Search repository code |
+
+> **Website:** [gitmcp.io](https://gitmcp.io) | **GitHub:** [github.com/idosal/git-mcp](https://github.com/idosal/git-mcp)
+
+---
+
 ## Per-Agent Control
 
 The template recommends a **disable-globally, enable-per-agent** strategy to conserve context while giving specific agents access to the tools they need.
@@ -330,8 +568,6 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 | **Puppeteer** | Browser automation | `@modelcontextprotocol/server-puppeteer` |
 | **Memory** | Persistent storage | `@modelcontextprotocol/server-memory` |
 | **Sentry** | Error tracking (remote) | `https://mcp.sentry.dev/mcp` (+ OAuth) |
-| **Grep by Vercel** | GitHub code search (remote) | `https://mcp.grep.app` |
-
 > **Avoid the GitHub MCP server:** It consumes a large number of tokens. Use the `gh` CLI via the `bash` tool instead.
 
 ---
@@ -341,6 +577,11 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 | Feature | MCP Required | Without MCP |
 |---------|--------------|-------------|
 | Documentation queries (`find-docs` skill) | `context7` | Falls back to training data |
+| Open-source documentation queries | `docs-mcp-server` | Falls back to context7 |
+| Real-time web search (API key) | `tavily` | Falls back to training data |
+| Web scraping and crawling (API key) | `firecrawl` | Not available |
+| GitHub code search | `vercel-grep` | Manual GitHub browsing |
+| GitHub repository docs | `gitmcp` | Manual GitHub browsing |
 | `/webperf` Deep mode | `chrome-devtools` | Quick mode (static analysis only) |
 | Browser testing (`browser-testing-with-devtools` skill) | `chrome-devtools` | No runtime browser verification |
 | Spreadsheet manipulation (`xlsx` skill) | `excel` | Manual CSV editing |
