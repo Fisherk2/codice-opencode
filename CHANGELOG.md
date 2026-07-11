@@ -7,9 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] — 2026-07-11
+
+### Changed
+
+- **`confirmOverwrite()` DRY extraction (commits `ede8389`, `bd17d3b`, `eaf5c5d`):** Shared helper extracted from duplicated confirmation logic in `CleanInstallUseCase`, `ProjectInstallUseCase`, and `UpdateWorkspaceUseCase`. Eliminates ~40 lines of duplicated guard code (force → isEmpty → prompt → cancel). All 3 use cases now delegate to the same helper.
+- **`VERSION` module extraction (commit `eaf5c5d`):** Architectural fix — `VERSION` constant moved from `output.ts` (presentation layer) to neutral `src/cli/version.ts`. `container.ts` (DI wiring) and `output.ts` now both import from the neutral module, removing an import across layer boundaries.
+- **`GitHubRestClient` error handling simplification (commits `da30dce`→`57e075a`):** Consolidated separate `404`/`403`/other HTTP error branches into a single `if (!response.ok) return null`. Removed dead `AbortError` branch — both abort and network-error paths returned the same `null`. Comment documents the design rationale.
+- **`AtomicStager` I/O primitive change (commit `eaf5c5d`):** Switched from `Bun.file(source).text()` + `Bun.write(dest, content)` to `fs.copyFile(source, dest)` for staging template files. Kernel-level copy avoids loading entire files into JavaScript heap, preventing OOM on large templates and improving cross-device safety.
+- **`BunSymlinkCreator` path normalization (commit `eaf5c5d`):** Extracted `rootWithSep` local variable for consistent prefix matching (used twice). Matches the `pathResolver.ts:22` pattern.
+- **`FileRuleManifestData` comment condensation (commit `eaf5c5d`):** 3 verbose NOTE blocks (~30 lines) shortened to concise ADR references (~5 lines). Historical context preserved in ADRs.
+
 ### Fixed
 
-- **Code review fixes (11 findings resolved):** 4 Important and 7 Suggestion findings from the 5-axis code review by Tezcatlipoca. GitHubRestClient catch simplified (dead AbortError branch removed). UpdateWorkspaceUseCase normalized to use shared confirmOverwrite helper from helpers.ts. Windows system directories added to --dest validation. Symlink path containment normalized with resolveWithinRoot in BunSymlinkCreator. AtomicStager migrated from Bun.file().text() to fs.copyFile() (no full-RAM copy). VERSION extracted to neutral module version.ts decoupling DI container from presentation layer. CleanInstall/ProjectInstall duplication documented in TECH_DEBT.md.
+- **Windows system directory validation (commit `c0842ae`):** Path prefix matching used hardcoded `/` which is never produced by `path.normalize()` on Windows (uses `\`). Fixed to `path.sep`. Also added missing system directories: `C:\ProgramData`, `C:\Users`. Added bare drive root check (`/^[A-Z]:\\?$/i`) covering `D:\`, `E:\`, etc.
+- **`AtomicStager` backup detection consistency (commits `2d7496f`→`3d693b4`):** `Bun.file().exists()` returns `false` for directories — switched to `fs.access()` in both `renameStagedFile` and `restoreBackups`. Same bug class as FEV-3 Issue #2.
+- **`restoreBackups` Bun.file().exists() (ship review fix):** Remaining `Bun.file().exists()` call in the rollback path switched to `fs.access()` for API consistency with the rest of the file.
+
+### Security
+
+- **Windows system directory protection expanded:** Added `C:\ProgramData`, `C:\Users`, and drive root check to the `--dest` validation blocklist. Covers non-C: drives via regex pattern.
+- **Symlink path containment hardened:** `BunSymlinkCreator` normalizes `workspaceRoot` via `path.resolve()` before appending trailing separator for prefix matching. Ensures consistent containment checking regardless of constructor input format (trailing `..`, no trailing separator, etc.).
+
+### Tests
+
+- **7 new tests (commit `3d693b4`):** `confirmOverwrite()` unit tests (4 — force, empty, confirm, cancel), `VERSION` semver format validation (2), `resolveNewVersion()` fallback to `"0.0.0"` (1 integration).
+- **3 isEmpty skip path integration tests:** Clean Install, Project Install, and Update Workspace — all verify the `isEmpty()` check skips the confirmation prompt when the destination directory is empty.
+- **showCancel assertion added** to the update rejection test.
+- **Coverage:** 100.00% functions / 97.99% lines (596 tests, 1289 expects).
 
 ## [1.1.1] — 2026-07-11
 

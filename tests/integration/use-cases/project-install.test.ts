@@ -169,6 +169,32 @@ describe("ProjectInstallUseCase", () => {
 			expect(calls.writeVersionFile.length).toBe(1);
 		});
 
+		it("should skip confirmation when destination is empty (no prompt)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			// fs.isEmpty already returns true by default
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Should NOT have asked for confirmation (isEmpty short-circuits)
+			expect(prompt.confirm).not.toHaveBeenCalled();
+			// Operation proceeds normally
+			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
+			expect(calls.commitStaging).toBe(1);
+		});
+
 		it("should return an error when destination is not writable", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.isWritable as ReturnType<typeof mockFn>).mockResolvedValue(false);

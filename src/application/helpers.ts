@@ -56,7 +56,7 @@ export async function checkWritable(
  * @param userPrompt - Adapter for interactive prompts.
  * @param message - Confirmation message shown to the user.
  * @param cancelMessage - Message shown if the user cancels.
- * @param force - If true, skip the prompt.
+ * @param force - If true, skip the prompt. If false or undefined, check isEmpty and prompt.
  * @returns true if the operation should proceed, false if cancelled.
  */
 export async function confirmOverwrite(

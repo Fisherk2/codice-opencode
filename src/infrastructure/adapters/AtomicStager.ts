@@ -187,10 +187,8 @@ export class AtomicStager {
 	private async restoreBackups(backups: Map<string, string>): Promise<void> {
 		for (const [destPath, backupPath] of backups) {
 			try {
-				const backupFile = Bun.file(backupPath);
-				if (await backupFile.exists()) {
-					await fs.copyFile(backupPath, destPath);
-				}
+				await fs.access(backupPath);
+				await fs.copyFile(backupPath, destPath);
 				await fs.unlink(backupPath);
 			} catch {
 				// If rollback fails for a specific file, continue with others
