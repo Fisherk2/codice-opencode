@@ -10,7 +10,7 @@ MCP (Model Context Protocol) servers extend OpenCode agents with external tools 
 
 ## Pre-Configured MCP Servers
 
-The template ships with **9 MCP servers** pre-configured in `opencode.json`. Only `context7` is enabled by default; the rest are disabled to conserve context and must be activated on demand.
+The template ships with **9 MCP servers** pre-configured in `opencode.json`. Three are enabled by default (`context7`, `vercel-grep`, `gitmcp`); the rest are disabled to conserve context and must be activated on demand.
 
 | Server | Type | Default | Template Feature |
 |--------|------|---------|------------------|
@@ -21,8 +21,8 @@ The template ships with **9 MCP servers** pre-configured in `opencode.json`. Onl
 | `docs-mcp-server` | Local | ❌ Disabled | Open-source documentation queries |
 | `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
 | `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
-| `vercel-grep` | Remote | ❌ Disabled | GitHub code search across 1M+ repos |
-| `gitmcp` | Remote | ❌ Disabled | GitHub repository documentation |
+| `vercel-grep` | Remote | ✅ Enabled | GitHub code search across 1M+ repos |
+| `gitmcp` | Remote | ✅ Enabled | GitHub repository documentation |
 
 ---
 
@@ -30,7 +30,7 @@ The template ships with **9 MCP servers** pre-configured in `opencode.json`. Onl
 
 MCP servers add tokens to every conversation turn. The more servers and tools you enable, the faster you'll reach the context limit.
 
-**Rule of thumb:** Enable only what you need for your current task. Disable servers globally and activate them per-agent when possible (see [Per-Agent Control](#per-agent-control) below).
+**Rule of thumb:** Keep only what you need enabled. Currently 3 servers are on by default (`context7`, `vercel-grep`, `gitmcp`). Disable servers you don't use and activate them per-agent when possible (see [Per-Agent Control](#per-agent-control) below).
 
 ---
 
@@ -418,7 +418,7 @@ Remote MCP server for scraping, crawling, and extracting content from web pages.
 
 Remote MCP server from Vercel that searches code patterns across 1M+ public GitHub repositories. Returns real-world code snippets ranked by relevance. Ideal for finding usage examples of APIs and libraries.
 
-**Pre-configured as:** `"enabled": false` — enable when you need code search.
+**Pre-configured as:** `"enabled": true` — no setup needed.
 
 ```json
 {
@@ -450,7 +450,7 @@ Remote MCP server from Vercel that searches code patterns across 1M+ public GitH
 
 Remote MCP server that transforms any public GitHub repository into a documentation endpoint. Change `github.com` to `gitmcp.io` in a repo URL and your AI agent gets instant access to its README, docs, and code structure.
 
-**Pre-configured as:** `"enabled": false` — enable when you need docs for a specific repository.
+**Pre-configured as:** `"enabled": true` — no setup needed.
 
 ```json
 {
