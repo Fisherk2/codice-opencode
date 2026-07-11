@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] — 2026-07-11
+
+### Added
+
+- **Documentation synchronization (hotfix/update-docs):** Comprehensive documentation audit and update across 14 files. SPEC.md updated to v1.1.1 with `IStagingSystem` port and `postInstall.ts` (FEV-10 ISP split). README.md removed stale `docs/opencode/` references (deleted in v1.0.14), updated skill count (46→52) and agent count (96+→98+ subagents). CONTRIBUTING.md updated E2E scenario count (8→15), added `IStagingSystem`/`postInstall.ts` to project structure. ARCHITECTURE.md diagram updated with `IStagingSystem`, `postInstall.ts`, `MergeError`. Wiki-source: Getting-Started.md and Configuration.md updated MCP server count (4→9, 3 enabled by default), step counts synced with FEV-6 values. Agents.md, Workspace-Structure.md, SDD-Pipeline.md updated agent count (103→104). Skills.md fixed duplicate `excel-analysis` entry, updated skill count (49→52). APPFLOW.md and CODE_STYLE.md version headers and dates updated.
+
+### Fixed
+
+- **Update Workspace version comparison (commit `b66c585`):** `UpdateWorkspaceUseCase` now compares against the bundled template version (from `package.json`) instead of querying the GitHub remote API. This eliminates the dependency on network availability during update mode and ensures the comparison always reflects the actual template being installed.
+- **CI version validation (commit `6f36616`):** Pre-release suffix (e.g., `-beta.1`, `-rc.1`) is now stripped before comparing tag version against `package.json` version, preventing false mismatches during pre-release CI runs.
+- **CI Bun version (commit `77c0410`):** `BUN_VERSION` environment variable bumped from `1.1` to `1.3` in CI workflows for lockfile compatibility.
+
 ## [1.1.0] — 2026-07-10
 
 ### Added
