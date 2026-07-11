@@ -41,16 +41,25 @@ OpenCode already manages permissions, agent configs, skills, and commands via YA
 
 ### 1. Destructive Command Blocking
 
-The plugin blocks dangerous commands for ALL agents — a global safety net that OpenCode's per-agent permissions don't cover:
+The plugin blocks dangerous commands for ALL agents — a global safety net that OpenCode's per-agent permissions don't cover. It covers **53 bash command patterns** across **15 categories**:
 
-| Pattern | Blocks |
-|---------|--------|
-| `rm -rf`, `rm -fr`, `rm -fir` | Recursive force delete |
-| `git push -f`, `git push --force` | Force push to remote |
-| `DROP TABLE`, `DROP DATABASE` | Database destruction |
-| `mkfs`, `mkfs.ext4`, etc. | Disk formatting |
-| `dd if=` | Raw disk writes |
-| `chmod -R 777 /` | Permission destruction |
+| Category | Examples |
+|----------|----------|
+| Filesystem | `rm -rf`, `rm -fr`, `rm -fir`, `shred`, `find -exec rm` |
+| Git | `git push -f`, `git push --force`, `git reset --hard` |
+| SQL | `DROP TABLE`, `DROP DATABASE`, `TRUNCATE` |
+| Docker | `docker rm -f`, `docker rmi -f`, `docker system prune -a` |
+| Kubernetes | `kubectl delete --all`, `kubectl drain` |
+| Permissions | `chmod 777`, `chmod -R 777`, `chown -R` |
+| Process | `kill -9 1`, `shutdown -h now` |
+| Network | `iptables -F`, `ufw disable` |
+| Package Managers | `npm publish`, `pip --force-reinstall` |
+| Environment | `export PATH=` (total replacement), `unset PATH` |
+| Disk | `dd if=`, `mkfs`, `mkfs.ext4`, `fdisk` |
+| IaC | `terraform destroy -auto-approve` |
+| Cloud | `aws s3 rm --recursive`, `az vm delete` |
+| Databases | `mongo dropDatabase`, `redis FLUSHALL` |
+| PostgreSQL CLI | `dropdb`, `pg_dropcluster` |
 
 Commands are normalized before pattern matching: comments are stripped and whitespace is collapsed. This prevents common evasion techniques like inline comments (`rm -rf && # safe`).
 
@@ -58,7 +67,7 @@ Commands are normalized before pattern matching: comments are stripped and white
 
 ### 2. Subagent Name Validation
 
-When an agent uses `task()` to delegate to a subagent, the plugin validates that the subagent name exists in the catalog (**103 agents**: 97 subagents + 6 primary). If the LLM invents a name, it receives an error:
+When an agent uses `task()` to delegate to a subagent, the plugin validates that the subagent name exists in the catalog (**104 agents**: 98 subagents + 6 primary). If the LLM invents a name, it receives an error:
 
 ```
 Unknown subagent: "python-wizard". Use an agent from the VALID_SUBAGENTS catalog.

@@ -4,12 +4,12 @@ The Códice workspace defines a two-tier agent hierarchy that governs how AI ass
 
 ## Architecture Overview
 
-The workspace ships with **103 agents** organized into two levels:
+The workspace ships with **104 agents** organized into two levels:
 
 | Level | Count | Role | How They're Invoked |
 |-------|-------|------|---------------------|
 | **Primary Agents** | 6 | Entry points for slash commands | Via `/command` from the user |
-| **Subagents** | ~97 | Domain specialists | Via `task()` from a primary agent |
+| **Subagents** | ~98 | Domain specialists | Via `task()` from a primary agent |
 
 ### Two-Tier Model
 
@@ -153,7 +153,7 @@ task:
 
 ## Subagents
 
-Subagents cover 97+ domain specialties organized into categories:
+Subagents cover 98+ domain specialties organized into categories:
 
 | Category | Example Agents | Count |
 |----------|---------------|-------|
@@ -165,7 +165,7 @@ Subagents cover 97+ domain specialties organized into categories:
 | Testing & QA | test-engineer, code-reviewer, accessibility-tester, chaos-engineer, web-performance-auditor | ~7 |
 | AI / ML | ai-engineer, llm-architect, mlops-engineer, machine-learning-engineer, nlp-engineer, prompt-engineer | ~6 |
 | DX & Tooling | cli-developer, tooling-engineer, mcp-developer, dx-optimizer, context-manager | ~5 |
-| Documentation & Research | docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher | ~5 |
+| Documentation & Research | docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, obsidian-vault-writer | ~5 |
 | Product & Business | product-manager, business-analyst, competitive-analyst, content-marketer, seo-specialist, ux-researcher | ~9 |
 | Specialized Domains | fintech-engineer, payment-integration, blockchain-developer, game-developer, iot-engineer, embedded-systems | ~6 |
 | Processes | git-workflow-manager, incident-responder, project-manager, scrum-master, legacy-modernizer | ~5 |
