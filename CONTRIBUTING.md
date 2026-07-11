@@ -144,6 +144,27 @@ just test:integration
 
 Tests adapter behavior with mocked external systems (filesystem, network, TUI). Uses temporary directories and mock HTTP servers.
 
+### Packaging Tests (npm tarball)
+
+```bash
+bun test tests/integration/packaging/
+
+# Skip if offline (no npm pack):
+SKIP_NETWORK_TESTS=1 bun test tests/integration/packaging/
+```
+
+5 scenarios that validate the published npm tarball structure:
+
+| Test | What It Verifies |
+|------|------------------|
+| **A** | Tarball includes required template files (opencode.json, agents, estandar docs) |
+| **B** | Binary `--version` works from an extracted package |
+| **C** | Clean install runs correctly from the extracted package |
+| **D** | Symlinks are NOT in the tarball (they are generated post-installation per ADR-008) |
+| **E** | `.gitignore` files are excluded by npm (renamed `gitignore` without dot is present per ADR-009) |
+
+These tests run `bun pm pack` to create a tarball, extract it, and verify the contents and runtime behavior. They catch packaging bugs (symlinks stripped by npm, `.gitignore` excluded) before release.
+
 ### End-to-End Tests (Compiled Binary)
 
 ```bash
