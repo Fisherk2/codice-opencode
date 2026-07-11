@@ -119,14 +119,15 @@ describe("BunFileSystem", () => {
 			expect(exists).toBe(false);
 		});
 
-		it("should return false when fs.access throws EACCES (permission denied)", async () => {
+		it("should return true when fs.access throws EACCES (permission denied) — exists but can't read", async () => {
 			// Make a subdirectory inaccessible so access() inside it throws EACCES
 			const restrictedDir = path.join(destDir, "no-access-dir");
 			await fs.mkdir(restrictedDir, { recursive: true });
 			await fs.chmod(restrictedDir, 0o000);
 			try {
 				const exists = await fsAdapter.destinationExists("no-access-dir/file.txt");
-				expect(exists).toBe(false);
+				// EACCES = path exists but no read permission → true (staging will surface the real error)
+				expect(exists).toBe(true);
 			} finally {
 				// Restore permissions so cleanup can remove the directory
 				await fs.chmod(restrictedDir, 0o755);

@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-10 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 ✅ Completo, FEV-9 ✅ Completo, FEV-10 ✅ Completo) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-11 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 ✅ Completo, FEV-9 ✅ Completo, FEV-10 ✅ Completo, Code review ✅) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -1446,12 +1446,20 @@ Fase final de v1.1.0. Implementación de 5 items del catálogo TECH_DEBT: cobert
 - `33131a4` — refactor(domain): split IFileSystem into IFileSystem + IStagingSystem (15 files)
 - `840dc31` — test(packaging): 5 npm packaging integration tests (A-E)
 - `65b8f8f` — docs(contributing): packaging tests section
-- *próximo* — docs(tech-debt): mark FEV-10 items as resolved
+- `e440d94` — fix(test): clean up side-effect tarball from bun pm pack in CWD
+- `cfcc2ef` — style: fix biome formatting in packaging-helpers.ts and biome.json
+- `7c4f75b` — fix: revert biome.json to tab indentation (code review critical)
+- `7244828` — simplify(test): parameterize terminal flag tests with it.each
+- `2821223` — fix: address all 5 code review findings (Important #1-#3, Suggestion #4-#5)
 
-**Hallazgos de code review:**
-- Biome lint warning `noUselessEscapeInRegex` en destructive-patterns.test.ts (pre-existente, no relacionado)
-- Import ordering fix en main.test.ts (biome organizeImports)
-- main.ts catch block e interactive mode no cubiertos (requieren TTY o throws inesperados)
+**Hallazgos de code review (Tezcatlipoca, 2026-07-11):**
+- 🔴 **Critical**: `biome.json` reformatted tabs→spaces por Biome — revertido en 7c4f75b
+- ⚠️ **Important #1**: Read-only test sin cleanup defensivo — resuelto en 2821223 (try/finally)
+- ⚠️ **Important #2**: Env var `CODICE_GITHUB_API_URL` no restaurada — resuelto en 2821223 (try/finally)
+- ⚠️ **Important #3**: `destinationExists()` no distingue ENOENT de EACCES — resuelto en 2821223 (error code branching)
+- 💡 **Suggestion #4**: Test éxito acepta ambos exit codes — resuelto en 2821223 (assert EXIT_SUCCESS)
+- 💡 **Suggestion #5**: Comentario verboso en BunFileSystem — resuelto en 2821223 (reducido a 2 líneas)
+- Pre-existing: Biome lint warning `noUselessEscapeInRegex` (no relacionado)
 
 #### Criterios de completitud (DoD FEV-10)
 - [x] TD-2.1 resuelto: IFileSystem split en IFileSystem (6) + IStagingSystem (4)
@@ -1476,9 +1484,9 @@ Fase final de v1.1.0. Implementación de 5 items del catálogo TECH_DEBT: cobert
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 487 tests, 0 fail, 1050 expects
+- **Tests unit+int:** 581 tests, 0 fail, 1245 expects
 - **Tests E2E:** 15/15 pasando (14 existentes + 1 update existing project)
-- **Coverage:** 98.13% funciones / 96.98% líneas
+- **Coverage:** 98.89% funciones / 96.98% líneas
 - **Domain coverage:** 100% líneas
 - **`just check`:** 0 errores
 - **Fix rate:** 10+ bugs encontrados y corregidos durante desarrollo de E2E

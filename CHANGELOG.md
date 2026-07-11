@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **5 new MCP servers (Issue #29, FEV-9):** Expanded MCP catalog from 4 to 9 servers. New additions: `docs-mcp-server` (Grounded Docs, replaces shutdown Docfork), `tavily` (real-time web search, TAVILY_API_KEY), `firecrawl` (web scraping, FIRECRAWL_API_KEY), `vercel-grep` (GitHub code search), `gitmcp` (GitHub repo docs). Three servers enabled by default: `context7`, `vercel-grep`, `gitmcp`.
 - **Agent KNOWLEDGE chain updated (Issue #29, FEV-9):** All 6 primary agents now reference MCP server category: `AGENTS.md → SPEC.md → docs/ → skills/ → MCP servers → Web search → Question-tool`.
 - **Wiki expansion (Issue #29, FEV-9):** `MCP-Servers.md` extended from 4 to 9 pre-configured servers with detailed setup sections for each new MCP.
+- **npm packaging integration tests (TD-5.3, FEV-10):** 5 scenarios (A-E) using `bun pm pack` to validate tarball structure, binary version, symlink exclusion, gitignore renaming, and clean install from extracted package.
 
 ### Changed
 
@@ -24,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`context-engineering` skill (Issue #29, FEV-9):** Updated MCP Integrations table to reference all 9 servers with link to Wiki.
 
 - **Coverage artifact (TD-1.2, FEV-6):** Explicit constructors added to VersionComparator and ClackPromptsAdapter to resolve Bun coverage reporting artifact.
+- **`IFileSystem` port split (TD-2.1, FEV-10):** Interface Segregation Principle applied — `IFileSystem` reduced from 10 to 6 methods; new `IStagingSystem` port (4 methods) extracted. `BunFileSystem` implements both.
+- **TypeScript 6.0.3 upgrade (TD-3.1, FEV-10):** TypeScript 5.9.3 → 6.0.3. No breaking changes; `tsc --noEmit` passes cleanly.
+- **`main.ts` coverage increase (TD-1.1, FEV-10):** 13 new integration tests raised coverage from 33.04% → 86.21% lines (100% functions). Execution path, error path, parse failure, SIGINT handler, and terminal flag scenarios all covered.
 
 ### Security
 

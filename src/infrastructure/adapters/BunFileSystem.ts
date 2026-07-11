@@ -1,4 +1,3 @@
-import { EACCES, ENOENT } from "node:constants";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
@@ -65,9 +64,9 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		} catch (err) {
 			const code = (err as NodeJS.ErrnoException).code;
 			// ENOENT = doesn't exist → false (correct)
-			if (code === ENOENT) return false;
+			if (code === "ENOENT") return false;
 			// EACCES = exists but no read permission → true (staging will surface real error)
-			if (code === EACCES) return true;
+			if (code === "EACCES") return true;
 			// Other errors → defer to staging (current behavior for EIO, EROFS, etc.)
 			return false;
 		}
