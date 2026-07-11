@@ -116,12 +116,16 @@ jobs:
         run: |
           TAG="${{ github.ref_name }}"
           TAG_VERSION="${TAG#v}"
+          # Strip pre-release suffix for comparison (e.g., 1.1.0-beta.1 -> 1.1.0)
+          TAG_VERSION_BASE="${TAG_VERSION%-*}"
+          # If no pre-release suffix, base equals full version
+          [ "$TAG_VERSION" = "$TAG_VERSION_BASE" ] && TAG_VERSION_BASE="$TAG_VERSION"
           PKG_VERSION="$(jq -r '.version' package.json)"
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "ERROR: Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+          if [ "$TAG_VERSION_BASE" != "$PKG_VERSION" ]; then
+            echo "ERROR: Tag version ($TAG_VERSION_BASE) does not match package.json version ($PKG_VERSION)"
             exit 1
           fi
-          echo "Version validated: $TAG_VERSION"
+          echo "Version validated: $TAG_VERSION (base: $TAG_VERSION_BASE)"
 
       - name: Detect release type
         id: release_type
