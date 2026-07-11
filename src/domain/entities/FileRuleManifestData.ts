@@ -44,16 +44,8 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: true,
 		description: "Plugin definitions managed by installer",
 	},
-	// NOTE: .opencode/{agents,commands,skills} removed — these were symlinks
-	// (→ ../{agents,commands,skills}/) in the local dev template but npm resolves
-	// symlinks when packaging, so they do not exist in the published tarball.
-	// The real directories (agents/, commands/, skills/) are listed above and DO
-	// ship. Symlinks are generated post-installation by BunSymlinkCreator.
-	// (REF: ADR-FEV2B-1, ADR-FEV2B-9)
-	// NOTE: .opencode/config.json removed — does not exist in template
-	// The .opencode directory is already listed as mandatory above, so
-	// actual files within it (e.g., .gitignore, plugins/) will be
-	// included when the directory is walked at stage time.
+	// NOTE: .opencode/{agents,commands,skills} were symlinks stripped by npm.
+	// Real dirs listed above; symlinks generated post-install (ADR-008).
 	{
 		path: "skills",
 		category: "mandatory",
@@ -112,10 +104,8 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: false,
 		description: "Environment variable template; user may expand",
 	},
-	// NOTE: .gitignore removed — npm hard-excludes .gitignore from packages
-	// even when listed in package.json "files". Renamed to gitignore (no dot)
-	// and generated post-installation by BunGitignoreCreator in Clean + Project
-	// install modes. (REF: ADR-FEV2C-6, Issue #11)
+	// NOTE: .gitignore renamed to gitignore (no dot). npm excludes .gitignore
+	// from packages. Generated post-install by BunGitignoreCreator (ADR-009).
 	{
 		path: "docs",
 		category: "standard",
@@ -135,11 +125,8 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		description: "Task tracking directory; user may extend",
 	},
 
-	// NOTE: .devin uses noTemplateCopy=true because npm strips its symlinks
-	// during packaging (same root cause as FEV-2-B/FEV-2-C). All .devin/
-	// content is generated post-installation by BunSymlinkCreator via
-	// DEVIN_SYMLINKS. The manifest entry exists only for user selection
-	// tracking in the optional file checklist. (REF: ADR-FEV2D-6)
+	// NOTE: .devin uses noTemplateCopy=true. Symlinks generated post-install
+	// by BunSymlinkCreator. Entry exists only for UX selection tracking (ADR-010).
 	{
 		path: ".devin",
 		category: "optional",

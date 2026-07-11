@@ -143,10 +143,11 @@ export class AtomicStager {
 	 * Creates intermediate directories in the staging path as needed.
 	 */
 	private async writeFileToStaging(sourcePath: string, stagingRelativePath: string): Promise<void> {
-		const content = await Bun.file(sourcePath).text();
 		const stagingPath = this.resolveStagingPath(stagingRelativePath);
 		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
-		await Bun.write(stagingPath, content);
+		// Use copyFile for cross-device-safe copy (avoids loading entire file into RAM).
+		// Bun.write() would also work but loads the full content into memory.
+		await fs.copyFile(sourcePath, stagingPath);
 	}
 
 	/**

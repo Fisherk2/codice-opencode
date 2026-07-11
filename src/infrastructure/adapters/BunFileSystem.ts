@@ -63,16 +63,9 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 			return true;
 		} catch (err) {
 			const code = (err as NodeJS.ErrnoException).code;
-			// ENOENT = doesn't exist → false (correct)
 			if (code === "ENOENT") return false;
-			// EACCES = exists but no read permission → true (staging will surface real error)
-			if (code === "EACCES") return true;
-			// Other errors (EIO, EROFS, ENOTDIR) → false.
-			// Rationale: treat conservatively — if the path truly exists but can't be
-			// accessed, staging will surface the real error downstream with a clearer
-			// failure message. Returning false only means we attempt to stage the file,
-			// which is safe (the write will fail if the path is unwritable).
-			return false;
+			if (code === "EACCES") return true; // exists but unreadable — staging will surface real error
+			return false; // conservative: staging will fail with clearer message if path is unwritable
 		}
 	}
 

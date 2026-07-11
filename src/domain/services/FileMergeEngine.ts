@@ -29,6 +29,8 @@ export class FileMergeEngine implements IFileMergeEngine {
 	 *
 	 * @param rules - Ordered list of classification rules to apply.
 	 * @param selectedOptionals - Paths of optional files the user opted into.
+	 *   Only relevant when rules include optional-category entries. When omitted,
+	 *   no optional rules are staged (equivalent to passing an empty array).
 	 * @returns Result<void, MergeError> — success if all operations complete.
 	 */
 	async execute(
