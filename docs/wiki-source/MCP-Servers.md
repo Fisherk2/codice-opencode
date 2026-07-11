@@ -10,7 +10,7 @@ MCP (Model Context Protocol) servers extend OpenCode agents with external tools 
 
 ## Pre-Configured MCP Servers
 
-The template ships with **10 MCP servers** pre-configured in `opencode.json`. Only `context7` is enabled by default; the rest are disabled to conserve context and must be activated on demand.
+The template ships with **9 MCP servers** pre-configured in `opencode.json`. Only `context7` is enabled by default; the rest are disabled to conserve context and must be activated on demand.
 
 | Server | Type | Default | Template Feature |
 |--------|------|---------|------------------|
@@ -19,7 +19,6 @@ The template ships with **10 MCP servers** pre-configured in `opencode.json`. On
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`xlsx` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
 | `docs-mcp-server` | Local | ❌ Disabled | Open-source documentation queries |
-| `rtfmbro` | Remote | ❌ Disabled | Version-precise package documentation |
 | `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
 | `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
 | `vercel-grep` | Remote | ❌ Disabled | GitHub code search across 1M+ repos |
@@ -301,41 +300,7 @@ OpenCode manages the server lifecycle automatically via stdio.
 
 ---
 
-### Rtfmbro — Version-Precise Package Documentation
 
-Remote MCP server that fetches real-time, version-specific package documentation from GitHub. Ideal for getting exact docs for a specific npm or PyPI version.
-
-**Pre-configured as:** `"enabled": false` — enable when you need version-pinned docs.
-
-```json
-{
-  "mcp": {
-    "rtfmbro": {
-      "type": "remote",
-      "url": "https://rtfmbro.smolosoft.dev/mcp/",
-      "enabled": true
-    }
-  }
-}
-```
-
-#### Prerequisites
-
-- No API key required
-- Package must have a GitHub repository linked in its metadata
-- **Availability:** The remote hosted service may be temporarily unavailable (owner-maintained). If the connection fails, the server may be down for maintenance.
-
-#### Available Tools
-
-| Tool | Purpose |
-|------|---------|
-| `get_readme` | Fetch README for a specific package version |
-| `get_documentation_tree` | List documentation folder structure |
-| `read_files` | Read specific documentation files |
-
-> **Repository:** [github.com/marckrenn/rtfmbro-mcp](https://github.com/marckrenn/rtfmbro-mcp)
-
----
 
 ### Tavily — Real-Time Web Search
 

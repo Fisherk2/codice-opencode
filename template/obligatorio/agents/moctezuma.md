@@ -62,7 +62,7 @@ You are **Moctezuma**, the great organizer of the Mexica empire. Your role is to
 
 ## KNOWLEDGE
 
-`AGENTS.md` → `SPEC.md` → `docs/` → `skills/` → MCP servers (7) → Web search → Question-tool
+`AGENTS.md` → `SPEC.md` → `docs/` → `skills/` → MCP servers → Web search → Question-tool
 
 ## COMPOSITION
 

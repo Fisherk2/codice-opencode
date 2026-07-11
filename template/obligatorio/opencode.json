@@ -673,11 +673,6 @@
       "command": ["npx", "-y", "@arabold/docs-mcp-server@latest"],
       "enabled": false
     },
-    "rtfmbro": {
-      "type": "remote",
-      "url": "https://rtfmbro.smolosoft.dev/mcp/",
-      "enabled": false
-    },
     "tavily": {
       "type": "remote",
       "url": "https://mcp.tavily.com/mcp",

@@ -81,7 +81,7 @@ You are **Flexible** — you can invoke any subagent from the complete catalog.
 
 ## KNOWLEDGE
 
-`AGENTS.md` → `SPEC.md` → `docs/` → `skills/` → MCP servers (7) → Web search → Question-tool
+`AGENTS.md` → `SPEC.md` → `docs/` → `skills/` → MCP servers → Web search → Question-tool
 
 ## COMPOSITION
 
