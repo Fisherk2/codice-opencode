@@ -91,20 +91,12 @@ export class GitHubRestClient implements IGitHubClient {
 				},
 			});
 
-			// Handle HTTP errors gracefully
-			if (!response.ok) {
-				if (response.status === 404) {
-					// No release found — this is not an error for the user
-					return null;
-				}
-				if (response.status === 403) {
-					// Rate limited — too many requests
-					// In verbose mode, log this for debugging
-					return null;
-				}
-				// Other HTTP errors
-				return null;
-			}
+			// Any HTTP error (404, 403, 5xx, etc.) → null.
+			// All error codes are treated identically: the installer falls back
+			// to the bundled local template. Distinguishing between 404 (no
+			// release), 403 (rate limit), and other codes adds no value here
+			// because the fallback behavior is the same in every case.
+			if (!response.ok) return null;
 
 			// Check content-length before reading body to prevent OOM
 			const contentLength = response.headers.get("content-length");
