@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, mock as mockFn } from "bun:test";
 import type { Dependencies } from "../../../src/cli/main";
 import { createDependencies, main, promptForMode, runMode, VERSION } from "../../../src/cli/main";
-import { EXIT_SUCCESS } from "../../../src/cli/output";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+import { EXIT_INTERRUPT, EXIT_SUCCESS, EXIT_USAGE } from "../../../src/cli/output";
 import { failure, success } from "../../../src/domain/types/Result";
 
 // ---------------------------------------------------------------------------
@@ -167,6 +169,112 @@ describe("promptForMode", () => {
 });
 
 // ---------------------------------------------------------------------------
+// main() — SIGINT handling
+// ---------------------------------------------------------------------------
+
+/**
+ * SIGINT tests require a NON-throwing process.exit mock because the
+ * handler is invoked as a callback. If it threw, the error would be
+ * unhandled (process.on callbacks don't catch errors).
+ *
+ * main() is called with --clean --force to reach the handler registration
+ * at line 132 (before that, it's too early; with --version, it never
+ * gets past the terminal flag check).
+ */
+describe("main() — SIGINT handling", () => {
+	let origOn: typeof process.on;
+	let origOff: typeof process.off;
+	let origExit2: typeof process.exit;
+	let capturedHandler: (() => void) | null;
+	let sigintExitMock: ReturnType<typeof mockFn>;
+	const testDir = "/tmp/test-codice-sigint";
+
+	beforeEach(async () => {
+		origOn = process.on;
+		origOff = process.off;
+		origExit2 = process.exit;
+		capturedHandler = null;
+		sigintExitMock = mockFn(() => {}); // no throw — needed for callback
+
+		// Mock process.on to capture the SIGINT handler
+		const onMock = mockFn((_event: string, handler: (..._args: unknown[]) => void) => {
+			if (_event === "SIGINT") capturedHandler = handler as () => void;
+			return process;
+		});
+		process.on = onMock as unknown as typeof process.on;
+		// Mock process.off to prevent actual removal
+		process.off = mockFn(() => process) as unknown as typeof process.off;
+		process.exit = sigintExitMock as unknown as typeof process.exit;
+
+		// Ensure clean test directory
+		await fs.mkdir(testDir, { recursive: true });
+	});
+
+	afterEach(async () => {
+		process.on = origOn;
+		process.off = origOff;
+		process.exit = origExit2;
+		await fs.rm(testDir, { recursive: true, force: true });
+	});
+
+	it("registers SIGINT handler on process.on", async () => {
+		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
+
+		try {
+			await main();
+		} catch {
+			// OK — main may reject if install finishes or fails
+		}
+
+		expect(capturedHandler).not.toBeNull();
+		// Verify the first exit was SUCCESS (install completed) or ERROR (install failed)
+		expect(sigintExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("calls process.exit with EXIT_INTERRUPT on SIGINT", async () => {
+		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
+
+		try {
+			await main();
+		} catch {
+			// OK
+		}
+
+		expect(capturedHandler).not.toBeNull();
+
+		const callCountBefore = sigintExitMock.mock.calls.length;
+		capturedHandler!();
+
+		// Should have incremented by exactly 1
+		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
+		const lastCall = sigintExitMock.mock.calls[callCountBefore] as unknown[];
+		expect(lastCall[0]).toBe(EXIT_INTERRUPT);
+	});
+
+	it("double SIGINT is idempotent — only first triggers exit", async () => {
+		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
+
+		try {
+			await main();
+		} catch {
+			// OK
+		}
+
+		expect(capturedHandler).not.toBeNull();
+
+		const callCountBefore = sigintExitMock.mock.calls.length;
+
+		// First SIGINT — should call process.exit
+		capturedHandler!();
+		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
+
+		// Second SIGINT — should be idempotent
+		capturedHandler!();
+		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
+	});
+});
+
+// ---------------------------------------------------------------------------
 // main() — terminal flags
 // ---------------------------------------------------------------------------
 
@@ -241,6 +349,18 @@ describe("main() — terminal flags", () => {
 		}
 
 		expect(exitMock).toHaveBeenCalledWith(EXIT_SUCCESS);
+	});
+
+	it("exits with EXIT_USAGE when passed an unrecognized flag", async () => {
+		process.argv = ["bun", "main.ts", "--bogus"];
+
+		try {
+			await main();
+		} catch (e) {
+			if ((e as Error).message !== "__EXIT__") throw e;
+		}
+
+		expect(exitMock).toHaveBeenCalledWith(EXIT_USAGE);
 	});
 
 	it("does not reach parseArgs — process.exit called exactly once for terminal flags", async () => {
