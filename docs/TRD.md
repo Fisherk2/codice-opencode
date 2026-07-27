@@ -1,5 +1,5 @@
-# Technical Requirements Document – Códice: Opencode Workspace Installer v1.0.13
-**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Technical Requirements Document – Códice: Opencode Workspace Installer v1.1.3
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-07-27 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Arquitectura de Referencia
 Se aplicará **Clean Architecture** adaptada a una aplicación de línea de comandos (CLI). Esto garantiza que la lógica de negocio (reglas de fusión, comparación de versiones) esté completamente desacoplada de los detalles de implementación (sistema de archivos, red, librería de TUI).
@@ -29,7 +29,9 @@ graph TD
         UC3[Use Case: Actualizar Workspace]
         ISP[Port: ISymlinkCreator]
         IGC[Port: IGitignoreCreator]
+        IST[Port: IStagingSystem]
         HLP[helpers.ts<br/>Shared guard logic]
+        PI[postInstall.ts<br/>Post-install orchestration]
     end
 
     subgraph "Domain Layer (Reglas de Negocio - Core)"
@@ -67,8 +69,8 @@ graph TD
 |------------|-----------------|----------------------|--------------|--------------------------|
 | `CLI Entrypoint` | Parsear argumentos e iniciar el flujo TUI. | `main()` | `@clack/prompts`, Use Cases | **SRP**: Solo maneja la capa de presentación CLI. |
 | `FileMergeEngine` | Ejecutar la lógica de copiado atómico y fusión granular. | `executeMerge(source, dest, rules)` | `IFileSystem` | **OCP**: Abierto a nuevas reglas de fusión, cerrado a modificación. |
-| `VersionManager` | Leer versión local y consultar remota. | `getLocalVersion()`, `checkRemoteUpdate()` | `IFileSystem`, `IGitHubClient` | **DIP**: Depende de abstracciones de red/FS, no de implementaciones. |
-| `AtomicFileWriter` | Gestionar el patrón Staging + Rename. | `writeAtomically(data, path)` | `IFileSystem` | **SRP**: Responsable exclusivo de la integridad transaccional de archivos. |
+| `VersionComparator` | Comparar versiones semánticas local vs remota. | `compareVersions(local, remote)` | `IVersionComparator` | **DIP**: Depende de abstracciones, no de implementaciones. |
+| `AtomicStager` | Gestionar el patrón Staging + Rename. | `stageFile()`, `commit()`, `rollback()` | `IStagingSystem` | **SRP**: Responsable exclusivo de la integridad transaccional de archivos. |
 
 ### 3.1 Generadores Post-Instalación
 
@@ -113,17 +115,24 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 ## 7. Matriz de Trazabilidad
 | PRD REQ-ID | TRD Componente | API/DB | Estado |
 |------------|----------------|--------|--------|
-| RF-01 (Menú TUI) | `CLI Entrypoint`, `@clack/prompts` | N/A | Especificado |
-| RF-02 (Motor de Fusión) | `FileMergeEngine`, `AtomicFileWriter` | `fs` | Especificado |
-| RF-03 (Atomicidad) | `AtomicFileWriter` | `fs` | Especificado |
-| RF-04 (Versión Local) | `VersionManager` | `.codice-version` | Especificado |
-| RF-05 (Versión Remota)| `VersionManager`, `IGitHubClient` | GitHub REST API | Especificado |
+| RF-01 (Menú TUI) | `CLI Entrypoint`, `@clack/prompts` | N/A | Implementado |
+| RF-02 (Motor de Fusión) | `FileMergeEngine`, `AtomicStager` | `fs` | Implementado |
+| RF-03 (Atomicidad) | `AtomicStager` | `fs` | Implementado |
+| RF-04 (Versión Local) | `VersionComparator` | `.codice-version` | Implementado |
+| RF-05 (Versión Remota)| `VersionComparator`, `IGitHubClient` | GitHub REST API | Implementado |
 
 ## 8. ADRs (Architecture Decision Records)
 | ADR-ID | Contexto | Decisión | Consecuencias | Alternativas Descartadas |
 |--------|----------|----------|---------------|--------------------------|
-| **ADR-001** | Distribución del template | Empaquetar el template dentro del binario de Bun. | Binario más grande (~10-15MB), pero instalación offline instantánea y sin dependencias de red para el caso base. | Descarga dinámica desde GitHub (añade fragilidad de red). |
-| **ADR-002** | Integridad de archivos | Patrón de Directorio Temporal + Intercambio Atómico (`fs.rename`). | Garantiza que el proyecto del usuario nunca quede corrupto por una interrupción. Requiere espacio en disco temporal. | Journal de reversión (demasiado complejo y propenso a fallos parciales). |
-| **ADR-003** | Control de flujo de tareas | Uso de `Justfile` en lugar de `Makefile` o scripts npm. | Sintaxis más moderna, mejor manejo de variables de entorno y dependencias entre tareas. | `Makefile` (sintaxis obsoleta, problemas con tabs), `npm scripts` (demasiado anidado). |
+| **ADR-001** | Estructura del proyecto | Clean Architecture con 4 capas (Domain, Application, Infrastructure, CLI) | Dependencias siempre hacia adentro. Domain sin dependencias externas. | Arquitectura plana por carpetas funcionales. |
+| **ADR-002** | Runtime y compilación | Bun como runtime y compilador a binario nativo | Binario único sin dependencias de runtime. Startup time superior. | Node.js + pkg, Deno compile. |
+| **ADR-003** | Integridad de archivos | Patrón Staging Directory + Rename Atómico (`fs.rename`) | Garantiza que el proyecto nunca quede corrupto por interrupción. Requiere espacio temporal en disco. | Journal de reversión (demasiado complejo). |
+| **ADR-004** | Interfaz TUI | @clack/prompts para prompts interactivos | Zero-dependency tree, ideal para binarios compilados, spinners y prompts modernos. | Inquirer.js (árbol de dependencias pesado), prompts (menos moderno). |
+| **ADR-005** | Desarrollo seguro | Flag `--dest` + directorio `tests/fixtures/workspace/` | `just dev` escribe en playground seguro, no en la raíz del proyecto. | Modificar CWD manualmente (propenso a errores). |
+| **ADR-006** | Distribución | Publicación npm como método primario (`bunx @fisherk2-dev/codice`) | Amplía accesibilidad más allá de usuarios Bun. Binarios como fallback offline. | Solo binarios (requiere descarga manual), solo source (requiere Bun). |
+| **ADR-007** | Resolución de template | Cascada de 3 rutas para detección (compilado, bunx/npm, source) | Funciona en todos los modos de distribución sin configuración manual. | Ruta hardcoded (frágil), variable de entorno (incómodo para usuarios). |
+| **ADR-008** | Symlinks post-install | `ISymlinkCreator` port + `BunSymlinkCreator` adapter | Symlinks se generan post-instalación, evitando el strippng de npm. Idempotente. | Empaquetar symlinks en template (npm los resuelve). |
+| **ADR-009** | Gitignore post-install | `IGitignoreCreator` port + `BunGitignoreCreator` adapter | `.gitignore` se genera post-instalación, evitando la exclusión de npm. | Renombrar a `.gitignore.txt` (confuso), empaquetar como otro nombre. |
+| **ADR-010** | Entries virtuales en manifest | Flag `noTemplateCopy` para entries cuyo contenido se genera post-instalación | Entries como `.devin/` aparecen en UX de selección pero skipan resolución de template. | Eliminar del manifest (pierde visibilidad en UX). |
 
 ---
