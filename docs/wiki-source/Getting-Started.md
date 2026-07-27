@@ -70,9 +70,9 @@ your-project/
 ├── .opencode/
 │   ├── plugins/               # SDD pipeline and orchestrator plugins
 │   └── agents/ → agents/      # Symlink to agents directory
-├── agents/                    # 6 primary agents + 96+ subagents
+├── agents/                    # 6 primary agents + 98 subagents
 ├── commands/                  # 12 SDD slash commands
-└── skills/                    # 45+ engineering skills
+└── skills/                    # 52 engineering skills
 ```
 
 For a detailed breakdown of every file and directory, see [Workspace Structure](Workspace-Structure).
