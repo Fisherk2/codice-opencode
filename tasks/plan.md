@@ -1,21 +1,30 @@
-# Implementation Plan: FEV-11 — Binary Removal (v1.2.0)
+# Implementation Plan: FEV-12 — References Restructuring (v1.2.0)
 
-**Phase:** FEV-11 (v1.2 Phase 1)
-**Issue:** [#46](https://github.com/fisherk2/codice-opencode/issues/46)
-**Date:** 2026-07-27
+**Phase:** FEV-12 (v1.2 Phase 2)
+**Issues:** [#54](https://github.com/fisherk2/codice-opencode/issues/54) — Reubicar ficheros de references/, [#52](https://github.com/fisherk2/codice-opencode/issues/52) — Implementación de la sección reference
+**Date:** 2026-07-28
 **Author:** Moctezuma (Strategic Planner)
-**Diagnosis:** [fix04-v1.2-phase1-binary-removal.md](../diagnosis/fix04-v1.2-phase1-binary-removal.md)
-**Methodology:** Vertical slicing + Clean Architecture compliance
+**Diagnosis:** [fix05-v1.2-phase2-references.md](../diagnosis/fix05-v1.2-phase2-references.md)
+**Methodology:** Vertical slicing + Clean Architecture compliance + Strategy/Adapter patterns
 
 ---
 
 ## Overview
 
-Remove all binary compilation and distribution logic from Códice. The only installation method will be via package managers (npm/bunx). This simplifies the codebase, reduces maintenance burden by ~30%, and aligns with ADR-006 (npm-first distribution).
+Reestructurar el sistema de references del workspace OpenCode para resolver dos problemas complementarios:
 
-**Breaking change scope:** Affects <5% of users (air-gapped environments, users without Bun/Node.js). No functionality loss — npm/bunx provides identical features.
+1. **Issue #54 (Estructura):** Las 59 references están centralizadas en `template/obligatorio/references/`, desconectadas de sus skills. Esto dificulta entender qué reference pertenece a qué skill y hace inviable la instalación de las próximas 100+ skills. **Solución:** Mover cada reference a `template/obligatorio/skills/<skill>/references/`, co-localizándolas con su skill consumidora.
 
-**Version:** v1.2.0 (minor bump, npm/bunx remains primary)
+2. **Issue #52 (Configuración):** OpenCode soporta una sección `reference` nativa en `opencode.json` que permite configurar directorios locales y repositorios Git como fuentes de material de referencia. **Solución:** Añadir esta sección con un entry por cada skill que tenga subdirectorio `references/`, exponiendo las references co-localizadas vía la API nativa de OpenCode.
+
+**Restricciones del usuario:**
+- No eliminar ningún archivo de references (preservar todo el contenido)
+- Para huérfanos: primero verificar cross-references entre archivos de references, luego asignar a la skill más coherente
+- No bumpear versión (v1.2.0 se lanzará cuando todas las FEV estén completas)
+
+**Cambio arquitectónico:** El template pasa de tener un directorio monolítico `references/` a un modelo federado donde cada skill es self-contained. Esto se alinea con el principio de Cohesion (cada skill contiene su knowledge base).
+
+**Versión:** Sin bump — el release v1.2.0 será coordinado al cerrar FEV-12 + FEV-13 + FEV-14 + FEV-15.
 
 ---
 
@@ -23,655 +32,875 @@ Remove all binary compilation and distribution logic from Códice. The only inst
 
 | Decision | Rationale |
 |----------|-----------|
-| **Eliminate `build`/`build-all`/`release` recipes** | No binaries = no build commands. Justfile becomes dev/test focused. |
-| **Migrate E2E to `bunx`/`bun run`** | Replace `bun build --compile` with `bunx @fisherk2-dev/codice` for published tests, `bun run src/cli/main.ts` for local dev. |
-| **Keep historical binaries in past releases** | Don't break existing URLs. Only stop attaching binaries to v1.2.0+ releases. |
-| **Remove SC-15 (binaries for 3 platforms)** | Success criteria no longer applies — npm is the only distribution. |
-| **Update SC-16** | Replace "compiled binaries" with "npm tarball < 5MB" as the size criterion. |
-| **Add ADR-011** | Document the binary removal as a formal architectural decision. |
+| **References co-localizadas con skills** | Issue #54 explícito. Skills self-contained = mejor discoverability y mantenibilidad. |
+| **Sección `reference` con un entry por skill** | Issue #52 + elección del usuario. Expone las references vía la API nativa de OpenCode, sin reinventar el mecanismo. |
+| **NO eliminar archivos huérfanos** | Decisión del usuario: preservar todo el contenido. Para huérfanos puros, asignar a la skill más coherente. |
+| **Detección por 3 niveles** | (1) Mención directa del archivo en SKILL.md, (2) cross-references entre archivos de references, (3) análisis de contenido (keywords) para huérfanos puros. |
+| **Sin bump de versión** | Decisión del usuario: esperar al cierre de todas las FEVs para un release coordinado. |
+| **`git mv` para mover archivos** | Preserva historial de git. Permite `git log --follow` en cada archivo. |
+| **References como `mandatory` por skill** | Las references co-localizadas se instalan siempre con su skill padre (no son opcionales). El manifest de skills ya las cubre transitivamente. |
+| **Eliminación de `references/` del FileRuleManifestData** | Ya no es un entry top-level. Pasa a ser un sub-path transitivo de cada skill. |
+| **Estrategia: Análisis automático + revisión humana** | Script de análisis para propuesta inicial (rápido), tabla markdown para revisión del usuario (controlado). |
 
 ---
 
 ## Dependency Graph
 
 ```
-Phase 1: Foundation (no dependencies)
-├── Task 1.1: Audit binary-related code
-├── Task 1.2: Add ADR-011
-└── Task 1.3: Update SPEC.md (SC-15, SC-16)
+Phase 1: Discovery & Mapping (no dependencies)
+├── Task 1.1: Script de análisis automático (3 niveles de detección)
+├── Task 1.2: Análisis de cross-references entre archivos
+└── Task 1.3: Generar tabla de mapping y revisar con usuario
 
-Phase 2: Source Code Removal (depends on 1.1)
-├── Task 2.1: Remove binary compilation from src/
-├── Task 2.2: Remove dist/ references
-└── Task 2.3: Update package.json (remove bin, scripts.build)
+Phase 2: Template Restructuring (depends on 1.3 approval)
+├── Task 2.1: Crear subdirectorios skills/<name>/references/
+├── Task 2.2: Mover archivos con git mv
+└── Task 2.3: Verificar directorio references/ quede vacío y eliminarlo
 
-Phase 3: Build System (depends on Phase 2)
-├── Task 3.1: Remove Justfile recipes
-├── Task 3.2: Update CI workflow (ci.yml)
-└── Task 3.3: Update Release workflow (release.yml)
+Phase 3: Source Code Updates (depends on Phase 2)
+├── Task 3.1: FileRuleManifestData.ts — eliminar entry `references`
+├── Task 3.2: Tests unitarios actualizados (manifest + walker)
+├── Task 3.3: Tests E2E actualizados (path expectations)
+└── Task 3.4: Verificar directoryWalker.ts (sin cambios esperados)
 
-Phase 4: Tests (depends on Phase 3)
-├── Task 4.1: Migrate E2E tests to bunx/bun run
-├── Task 4.2: Remove binary-specific E2E tests
-└── Task 4.3: Verify all tests pass
+Phase 4: Configuration Enhancement (depends on Phase 2, parallel with Phase 3)
+├── Task 4.1: Diseñar estructura `reference` section (un entry por skill con references/)
+├── Task 4.2: Añadir `reference` section a opencode.json
+└── Task 4.3: Validar JSON schema y formato OpenCode
 
-Phase 5: Documentation (depends on Phase 4)
-├── Task 5.1: Update README.md
-├── Task 5.2: Update CONTRIBUTING.md
-├── Task 5.3: Update Wiki (Getting-Started.md)
-├── Task 5.4: Update TECH_DEBT.md
-└── Task 5.5: Update CHANGELOG.md
+Phase 5: Documentation Updates (parallel with Phase 3 + 4)
+├── Task 5.1: docs/wiki-source/Workspace-Structure.md
+├── Task 5.2: docs/wiki-source/Skills.md (documentar references/ por skill)
+├── Task 5.3: docs/wiki-source/Configuration.md (documentar sección `reference`)
+├── Task 5.4: CONTRIBUTING.md (eliminar paso de extracción)
+├── Task 5.5: README.md (workspace structure tree)
+├── Task 5.6: docs/diagnosis/fix05-* — actualizar con resultados
+└── Task 5.7: Crear ADR-012 (References Co-location)
 
-Phase 6: Release (depends on Phase 5)
-├── Task 6.1: Bump version to 1.2.0
-├── Task 6.2: Create release PR
-├── Task 6.3: Tag v1.2.0
-└── Task 6.4: Publish to npm
+Phase 6: Verification (depends on all)
+├── Task 6.1: just check (lint + format + tsc)
+├── Task 6.2: just test (unit + integration)
+├── Task 6.3: just test:e2e (15/15 scenarios)
+├── Task 6.4: Coverage report (sin regresión)
+├── Task 6.5: just dev — instalación manual en workspace/
+├── Task 6.6: Branch + PR + commit message
+├── Task 6.7: Code Review 5-ejes por Tezcatlipoca
+└── Task 6.8: Ship Review + GO/NO-GO Decision
 ```
 
-**Implementation order:** Build foundations first (audit), remove code, update build system, migrate tests, update docs, release.
+**Implementation order:** Discovery → Restructure → Code → Config → Docs → Verify → Code Review → Ship. Fases 3, 4, 5 pueden ejecutarse en paralelo si se desea.
 
 ---
 
 ## Task List
 
-### Phase 1: Foundation
+### Phase 1: Discovery & Mapping
 
-#### Task 1.1: Audit binary-related code
-**Description:** Comprehensive search for all binary-related references in the codebase. Document findings in `docs/diagnosis/fix04-audit-results.md`.
+#### Task 1.1: Script de análisis automático (3 niveles de detección)
+**Description:** Crear un script TypeScript (`scripts/analyze-references.ts` o similar) que mapee cada uno de los 59 archivos de `template/obligatorio/references/` a su skill más probable. Usar 3 niveles de detección en orden de prioridad.
+
+**Algoritmo de 3 niveles:**
+
+```typescript
+// Nivel 1: Mención directa en SKILL.md de cualquier skill
+//   → grep -l "<filename>" template/obligatorio/skills/*/SKILL.md
+//   → Si match único, asignar a esa skill
+//   → Si match múltiple, revisar manualmente
+
+// Nivel 2: Cross-references entre archivos de references/
+//   → grep -l "<filename>" template/obligatorio/references/*.md
+//   → Si el archivo A referencia al archivo B, agrupar en la misma skill
+//   → Usar la skill del archivo B (o del primero del grupo) como destino
+
+// Nivel 3: Análisis de contenido (huérfanos puros)
+//   → Para archivos sin match en Nivel 1 o 2, analizar contenido
+//   → Comparar keywords contra descripciones de los 52 skills
+//   → Asignar a la skill con mayor overlap semántico
+```
 
 **Acceptance criteria:**
-- [ ] List of all files containing `bun build`, `compile`, `binary`, `dist/` references
-- [ ] Identification of binary-specific tests in `tests/e2e/`
-- [ ] Documentation of CI/CD binary generation steps
-- [ ] Markdown table of all locations to be modified
+- [ ] Script `scripts/analyze-references.ts` creado (o herramienta equivalente)
+- [ ] Output: tabla markdown con 59 filas (filename → proposed skill → confidence level)
+- [ ] Confidence levels: HIGH (Nivel 1 match), MEDIUM (Nivel 2 grouping), LOW (Nivel 3 content analysis)
+- [ ] Identifica archivos que necesitan revisión manual
+- [ ] No modifica archivos, solo lee
 
 **Verification:**
-- [ ] `grep -r "bun build --compile" src/ tests/` returns no false negatives
-- [ ] `grep -r "binary" docs/ README.md CONTRIBUTING.md` returns no false negatives
-- [ ] Audit document is comprehensive (covers all 9 task areas from diagnosis)
+- [ ] Script ejecuta sin errores: `bun run scripts/analyze-references.ts`
+- [ ] Output guardado en `docs/diagnosis/fix05-mapping-table.md`
+- [ ] Cobertura: 59 archivos analizados, 0 omitidos
+- [ ] HIGH confidence: ≥40 archivos (criterio: la mayoría de references mencionan skills directamente)
 
 **Dependencies:** None
 
 **Files likely touched:**
-- `docs/diagnosis/fix04-audit-results.md` (new)
+- `scripts/analyze-references.ts` (nuevo)
+- `docs/diagnosis/fix05-mapping-table.md` (nuevo)
 
-**Estimated scope:** S (1-2 files)
+**Estimated scope:** M (script + output)
 
 ---
 
-#### Task 1.2: Add ADR-011 — Binary Removal
-**Description:** Document the architectural decision to remove binary compilation as ADR-011 in `specs/adr/`.
+#### Task 1.2: Análisis de cross-references entre archivos de references/
+**Description:** Ejecutar grep recursivo para identificar qué archivos de references/ se referencian entre sí. Esto es crítico para el Nivel 2 del algoritmo: archivos que se complementan deben ir a la misma skill.
+
+**Algoritmo:**
+
+```bash
+# Para cada archivo en references/, buscar menciones en OTROS archivos de references/
+for ref in template/obligatorio/references/*.md; do
+  basename=$(basename "$ref" .md)
+  # Buscar menciones del nombre en otros archivos de references/
+  matches=$(grep -l "$basename" template/obligatorio/references/*.md | grep -v "$ref")
+  echo "$basename → references: $matches"
+done
+```
 
 **Acceptance criteria:**
-- [ ] File `specs/adr/adr-011-binary-removal.md` created
-- [ ] Status: Accepted
-- [ ] Context: Why binaries were removed
-- [ ] Decision: npm/bunx as sole distribution
-- [ ] Consequences: Reduced maintenance, migration path for affected users
-- [ ] References: Issue #46, ADR-006, diagnosis fix04
+- [ ] Mapa de cross-references generado (formato: archivo → archivos que lo referencian)
+- [ ] Grupos identificados (archivos que se referencian mutuamente)
+- [ ] Documentado en `docs/diagnosis/fix05-cross-references.md`
 
 **Verification:**
-- [ ] File follows ADR template structure
-- [ ] Cross-references are valid
-- [ ] `docs/ARCHITECTURE.md` updated to include ADR-011 in the table
+- [ ] Output del grep: todos los archivos procesados
+- [ ] Grupos visualizados claramente (tabla o grafo)
+- [ ] Casos especiales: archivos sin cross-references (candidatos a Nivel 3)
 
-**Dependencies:** None (can be parallel with 1.1)
+**Dependencies:** Task 1.1
 
 **Files likely touched:**
-- `specs/adr/adr-011-binary-removal.md` (new)
-- `docs/ARCHITECTURE.md` (add ADR-011 entry)
+- `docs/diagnosis/fix05-cross-references.md` (nuevo)
 
-**Estimated scope:** S (1-2 files)
+**Estimated scope:** S (análisis + documento)
 
 ---
 
-#### Task 1.3: Update SPEC.md (SC-15, SC-16)
-**Description:** Remove or update binary-related success criteria from SPEC.md.
+#### Task 1.3: Generar tabla de mapping final y revisar con usuario
+**Description:** Consolidar los resultados de T1.1 y T1.2 en una tabla de mapping final. Para archivos con confidence LOW o huérfanos, usar la decisión del usuario: asignar a la skill más coherente basándose en el contenido.
 
 **Acceptance criteria:**
-- [ ] SC-15 removed: "Compiled binaries are produced for Linux, macOS, and Windows x64"
-- [ ] SC-16 updated: Replace binary criteria with "npm tarball size < 5MB"
-- [ ] SC-1, SC-2, SC-3 remain unchanged (functional criteria)
-- [ ] Runtime Constraints section updated: remove "compiled binary must run on Linux/macOS/Windows"
+- [ ] Tabla `docs/diagnosis/fix05-mapping-table.md` completa con 59 filas
+- [ ] Cada fila tiene: filename, target_skill, confidence_level, rationale
+- [ ] Lista de archivos huérfanos resueltos (asignación justificada)
+- [ ] Lista de archivos que requieren revisión manual del usuario (si los hay)
+- [ ] Usuario aprueba la tabla antes de proceder a Phase 2
 
 **Verification:**
-- [ ] SPEC.md grep for "binary" returns no results in criteria sections
-- [ ] `bun run tsc --noEmit` passes (no broken type references)
-- [ ] SPEC.md changelog notes the criteria update
+- [ ] Tabla completa y revisada
+- [ ] 0 archivos sin asignar
+- [ ] Usuario confirma con "OK" o ajustes específicos
 
-**Dependencies:** None (can be parallel with 1.1, 1.2)
+**Dependencies:** Task 1.2
 
 **Files likely touched:**
-- `SPEC.md`
+- `docs/diagnosis/fix05-mapping-table.md` (actualizar)
 
-**Estimated scope:** S (1 file)
-
----
-
-### Checkpoint: Foundation
-- [ ] All audit findings documented
-- [ ] ADR-011 created and cross-referenced
-- [ ] SPEC.md updated
-- [ ] No code changes yet (read-only audit)
-- [ ] Review with human before proceeding to Phase 2
+**Estimated scope:** S (revisión + documentación)
 
 ---
 
-### Phase 2: Source Code Removal
+### Checkpoint: Discovery Complete
+- [ ] Tabla de mapping aprobada por el usuario
+- [ ] 59 archivos → 59 asignaciones (0 huérfanos puros)
+- [ ] Confidence levels distribuidos (mayoría HIGH/MEDIUM)
+- [ ] Revisión con humano antes de proceder a Phase 2
 
-#### Task 2.1: Remove binary compilation from src/
-**Description:** Remove any binary compilation logic, build scripts, or compile-related code from `src/`.
+---
+
+### Phase 2: Template Restructuring (Issue #54)
+
+#### Task 2.1: Crear subdirectorios `references/` en skills destino
+**Description:** Para cada skill que recibirá al menos 1 archivo de reference, crear el subdirectorio `references/`. Usar `git mv` desde el inicio para preservar historial.
 
 **Acceptance criteria:**
-- [ ] No `bun build --compile` references in `src/`
-- [ ] No `compile` functions in `src/cli/` (verify with `ls src/cli/`)
-- [ ] No binary-related comments in source files
-- [ ] `src/cli/main.ts` remains the only entry point
+- [ ] Todos los subdirectorios `template/obligatorio/skills/<skill>/references/` creados
+- [ ] Cada directorio tiene un `.gitkeep` si está vacío temporalmente
+- [ ] Estructura verificable con `ls -la`
 
 **Verification:**
-- [ ] `grep -r "compile\|build" src/` returns no false positives
-- [ ] `bun run tsc --noEmit` passes
-- [ ] `bun test tests/unit/` passes (no domain logic affected)
-- [ ] `src/cli/` directory unchanged in structure (no files added/removed)
+- [ ] `find template/obligatorio/skills -type d -name references | wc -l` == número de skills con references
+- [ ] Coincide con la tabla de mapping
+- [ ] Sin errores de permisos o paths inválidos
 
-**Dependencies:** Task 1.1 (audit)
+**Dependencies:** Task 1.3 (mapping aprobado)
 
 **Files likely touched:**
-- Potentially `src/cli/main.ts` (if any binary logic exists)
-- No file additions/removals expected
+- `template/obligatorio/skills/*/references/` (nuevos, ~20-30 directorios esperados)
 
-**Estimated scope:** XS (0-1 files, likely no changes)
+**Estimated scope:** S (operación batch)
 
 ---
 
-#### Task 2.2: Remove dist/ references
-**Description:** Remove references to `dist/` directory in source code, comments, and configuration.
+#### Task 2.2: Mover archivos con `git mv`
+**Description:** Mover los 59 archivos desde `template/obligatorio/references/` a sus skills destino usando `git mv`. Esto preserva el historial de git (permite `git log --follow`).
 
 **Acceptance criteria:**
-- [ ] No `dist/` references in `src/` or `tests/`
-- [ ] `package.json` does not include `dist/` in `files` field
-- [ ] `.gitignore` still excludes `dist/` (correct behavior)
+- [ ] 59 archivos movidos con `git mv <origen> <destino>`
+- [ ] `git status` muestra los 59 archivos como renombrados (R), no borrados+añadidos
+- [ ] `template/obligatorio/references/` queda vacío o con archivos residuales
+- [ ] Cada `skills/<name>/references/` contiene los archivos asignados
 
 **Verification:**
-- [ ] `grep -r "dist/" src/ tests/ package.json` returns no false positives
-- [ ] `git ls-files | grep dist/` returns empty (except .gitkeep if exists)
+- [ ] `git diff --stat --find-renames HEAD` muestra 59 renames
+- [ ] `ls template/obligatorio/references/ | wc -l` == 0 (o solo .gitkeep si se usó)
+- [ ] Mapping verificado: `for f in $(cat mapping.txt); do ls skills/$(echo $f | cut -d: -f2)/references/$(basename $f | cut -d: -f1); done`
+- [ ] `just test:unit` pasa (sin regresión)
 
 **Dependencies:** Task 2.1
 
 **Files likely touched:**
-- `package.json` (files field)
-- No file removals expected (dist/ is gitignored)
+- 59 archivos `*.md` movidos (no se modifican contenidos)
 
-**Estimated scope:** XS (0-1 files)
+**Estimated scope:** M (59 operaciones, automatizable con script)
 
 ---
 
-#### Task 2.3: Update package.json
-**Description:** Remove binary-related fields from `package.json`.
+#### Task 2.3: Eliminar directorio `template/obligatorio/references/`
+**Description:** Una vez que todos los archivos están movidos, eliminar el directorio `template/obligatorio/references/` (ahora vacío).
 
 **Acceptance criteria:**
-- [ ] `bin` field removed (no executable to install)
-- [ ] `scripts.build` removed
-- [ ] `scripts.build:all` removed
-- [ ] `files` field updated (remove dist/ references)
-- [ ] `main` field points to `src/cli/main.ts` for source distribution
-- [ ] Version bumped to 1.2.0 (preparation for release)
+- [ ] `template/obligatorio/references/` eliminado completamente
+- [ ] `git status` no muestra archivos untracked en references/
+- [ ] El directorio no aparece en `find template -type d -name references` (solo los de skills)
 
 **Verification:**
-- [ ] `bun run tsc --noEmit` passes
-- [ ] `npm pack --dry-run` shows only source files (no dist/)
-- [ ] `package.json` is valid JSON
-- [ ] No breaking changes to dependencies
+- [ ] `ls template/obligatorio/references/ 2>&1` → "No such file or directory"
+- [ ] `git status` limpio
+- [ ] Conteo de referencias: `find template/obligatorio/skills -type f -name "*.md" | wc -l` consistente
 
 **Dependencies:** Task 2.2
 
 **Files likely touched:**
-- `package.json`
+- `template/obligatorio/references/` (directorio eliminado)
 
-**Estimated scope:** XS (1 file)
-
----
-
-### Checkpoint: Source Code Clean
-- [ ] No binary compilation code in src/
-- [ ] No dist/ references
-- [ ] package.json updated
-- [ ] `bun run tsc --noEmit` passes
-- [ ] `bun test tests/unit/` passes
-- [ ] Review with human before proceeding to Phase 3
+**Estimated scope:** XS (1 operación)
 
 ---
 
-### Phase 3: Build System
+### Checkpoint: Template Restructured
+- [ ] 59 archivos reubicados con `git mv` (historial preservado)
+- [ ] `template/obligatorio/references/` eliminado
+- [ ] `template/obligatorio/skills/*/references/` poblado correctamente
+- [ ] Revisión con humano antes de proceder a Phase 3
 
-#### Task 3.1: Remove Justfile recipes
-**Description:** Remove `build`, `build-all`, and `release` recipes from Justfile. Update `test-e2e` to not depend on `build`.
+---
+
+### Phase 3: Source Code Updates
+
+#### Task 3.1: `FileRuleManifestData.ts` — eliminar entry `references`
+**Description:** Eliminar el entry `references` del manifest de clasificación de archivos en `src/domain/entities/FileRuleManifestData.ts` (líneas 55-60). El directorio raíz `references/` ya no existe; las references son ahora transitivas de cada skill.
 
 **Acceptance criteria:**
-- [ ] `build` recipe removed
-- [ ] `build-all` recipe removed
-- [ ] `release` recipe removed
-- [ ] `test-e2e` recipe updated: `bunx @fisherk2-dev/codice` or `bun run src/cli/main.ts`
-- [ ] `clean` recipe remains (or is updated to remove dist/)
-- [ ] Justfile is still valid syntax
+- [ ] Entry `references` eliminado del array `FILE_RULE_MANIFEST`
+- [ ] Comentario `// NOTE:` actualizado (si aplica)
+- [ ] Sin otros cambios en el archivo
+- [ ] `bun run tsc --noEmit` pasa
+
+**Diff esperado:**
+
+```diff
+ 	{
+ 		path: "skills",
+ 		category: "mandatory",
+ 		isDirectory: true,
+ 		description: "Skill definitions managed by installer",
+ 	},
+-	{
+-		path: "references",
+-		category: "mandatory",
+-		isDirectory: true,
+-		description: "Reference files managed by installer",
+-	},
+
+ 	// =============================================
+ 	// ESTANDAR (Standard) — copied only if missing
+ 	// =============================================
+```
 
 **Verification:**
-- [ ] `just --list` shows no build/build-all/release recipes
-- [ ] `just test-e2e` command syntax is valid
-- [ ] `just --justfile` parses without errors
+- [ ] `grep -n "path: \"references\"" src/domain/entities/FileRuleManifestData.ts` → no results
+- [ ] `bun test tests/unit/` pasa
+- [ ] `bun run tsc --noEmit` pasa
+- [ ] Conteo de entries: 41 → 40 (esperado)
 
 **Dependencies:** Task 2.3
 
 **Files likely touched:**
-- `Justfile`
+- `src/domain/entities/FileRuleManifestData.ts` (1 entry eliminado)
 
-**Estimated scope:** S (1 file)
+**Estimated scope:** XS (1 file, 6 líneas)
 
 ---
 
-#### Task 3.2: Update CI workflow (ci.yml)
-**Description:** Remove binary generation steps from `.github/workflows/ci.yml`. Keep quality checks and npm publish prep.
+#### Task 3.2: Tests unitarios actualizados
+**Description:** Buscar y actualizar todos los tests que asuman la existencia de `template/obligatorio/references/` como directorio top-level. Específicamente: tests de FileRuleManifest, FileMergeEngine, TemplateResolver.
 
 **Acceptance criteria:**
-- [ ] "Build binary" step removed
-- [ ] "Smoke test binary" steps removed (macOS, Windows)
-- [ ] "Set artifact binary name" step removed
-- [ ] "Upload binary artifact" step removed
-- [ ] Quality checks remain: lint, format, typecheck, test
-- [ ] Matrix remains: ubuntu, macos, windows
-- [ ] Workflow file is valid YAML
+- [ ] Tests que verifican la lista de entries del manifest: actualizados para no esperar `references`
+- [ ] Tests que verifican paths en `destPath/references/...`: actualizados a `destPath/skills/<name>/references/...`
+- [ ] Nuevos tests: validación de que cada skill puede tener su propio `references/` (positivos)
+- [ ] Nuevos tests: validación de que `references/` raíz NO existe (negativos)
 
 **Verification:**
-- [ ] `yamllint .github/workflows/ci.yml` passes
-- [ ] `grep -n "binary\|build" .github/workflows/ci.yml` returns no false positives
-- [ ] Workflow structure: 3 jobs (lint, test, typecheck) on 3 OS
+- [ ] `bun test tests/unit/` pasa con 0 regresiones
+- [ ] Coverage de `FileRuleManifestData.ts` ≥95% (verificar con `bun test --coverage`)
+- [ ] Conteo de tests: ≥593 (sin pérdida)
 
 **Dependencies:** Task 3.1
 
 **Files likely touched:**
-- `.github/workflows/ci.yml`
+- `tests/unit/entities/FileRuleManifest.test.ts` (o equivalente)
+- `tests/unit/services/FileMergeEngine.test.ts`
+- Posiblemente otros tests que asuman estructura top-level
 
-**Estimated scope:** S (1 file)
+**Estimated scope:** M (3-5 archivos de test)
 
 ---
 
-#### Task 3.3: Update Release workflow (release.yml)
-**Description:** Remove binary build and upload steps from `.github/workflows/release.yml`. Keep npm publish steps.
+#### Task 3.3: Tests E2E actualizados
+**Description:** Actualizar los scripts de tests E2E en `tests/e2e/` que asumen que `references/` existe como directorio top-level. Específicamente el escenario 01-clean-install.sh (línea 54).
 
 **Acceptance criteria:**
-- [ ] `build` job removed
-- [ ] "Download all binary artifacts" step removed
-- [ ] "All-or-nothing" sha256sum check removed
-- [ ] `release` job updated: only attach source tarball (optional)
-- [ ] npm publish step remains and is tested
-- [ ] Workflow triggers remain: tags v*, v*.*.*-beta.*, v*.*.*-rc.*
-- [ ] Workflow file is valid YAML
+- [ ] `tests/e2e/01-clean-install.sh` línea 54: cambiar `assert_file_exists "$TEMP_DIR/references/architecture.md"` por la nueva ubicación esperada
+- [ ] Otros tests E2E revisados (grep para `references/`)
+- [ ] Si corresponde, añadir un test E2E que valide la co-localización: `assert_file_exists "$TEMP_DIR/skills/clean-ddd-hexagonal/references/LAYERS.md"`
+- [ ] Si corresponde, añadir un test E2E que valide que `references/` raíz NO existe
 
 **Verification:**
-- [ ] `yamllint .github/workflows/release.yml` passes
-- [ ] `grep -n "binary\|compile" .github/workflows/release.yml` returns no false positives
-- [ ] npm publish step is intact and tested
-- [ ] Release notes generation works (CHANGELOG extraction)
+- [ ] `just test:e2e` 15/15 pasando
+- [ ] `bash tests/e2e/01-clean-install.sh` pasa individualmente
+- [ ] Sin warnings sobre paths faltantes
+
+**Dependencies:** Task 3.2 (los tests unitarios deben pasar primero)
+
+**Files likely touched:**
+- `tests/e2e/01-clean-install.sh` (1 línea modificada)
+- Posiblemente otros scripts E2E
+
+**Estimated scope:** S (1-2 archivos)
+
+---
+
+#### Task 3.4: Verificar `directoryWalker.ts` (sin cambios esperados)
+**Description:** Inspeccionar `src/infrastructure/adapters/directoryWalker.ts` para verificar que no tiene lógica hardcoded para `references/` como directorio top-level. Si la tiene, refactorizar.
+
+**Acceptance criteria:**
+- [ ] `grep -n "references" src/infrastructure/adapters/directoryWalker.ts` documentado
+- [ ] Si hay referencias: actualizadas a ser genéricas (no asumir `references/` como path especial)
+- [ ] Si no hay: confirmar que solo maneja `skills/` como directorio relevante
+
+**Verification:**
+- [ ] `bun test tests/integration/adapters/directoryWalker.test.ts` pasa
+- [ ] Sin regresión en coverage
 
 **Dependencies:** Task 3.2
 
 **Files likely touched:**
-- `.github/workflows/release.yml`
+- `src/infrastructure/adapters/directoryWalker.ts` (posiblemente, cambios menores)
 
-**Estimated scope:** M (1 file, complex changes)
-
----
-
-### Checkpoint: Build System Clean
-- [ ] Justfile recipes removed
-- [ ] CI workflow updated
-- [ ] Release workflow updated
-- [ ] No binary generation in any workflow
-- [ ] `just --list` shows clean recipe list
-- [ ] Review with human before proceeding to Phase 4
+**Estimated scope:** XS (verificación + 0-N cambios)
 
 ---
 
-### Phase 4: Tests
+### Checkpoint: Source Code Updated
+- [ ] `FileRuleManifestData.ts` sin entry `references`
+- [ ] Tests unitarios pasan sin regresión
+- [ ] Tests E2E pasan (15/15)
+- [ ] `directoryWalker.ts` verificado
+- [ ] `bun test` 0 fail, coverage sin pérdida
+- [ ] Revisión con humano antes de proceder a Phase 4
 
-#### Task 4.1: Migrate E2E tests to bunx/bun run
-**Description:** Update E2E tests to use `bunx @fisherk2-dev/codice` or `bun run src/cli/main.ts` instead of compiled binary.
+---
+
+### Phase 4: Configuration Enhancement (Issue #52)
+
+#### Task 4.1: Diseñar estructura `reference` section
+**Description:** Diseñar la estructura del bloque `reference` en `opencode.json` basándose en la documentación oficial de OpenCode (https://opencode.ai/docs/es/references/). Un entry por cada skill que tenga subdirectorio `references/`.
+
+**Estructura objetivo:**
+
+```json
+"reference": {
+  "clean-ddd-hexagonal": {
+    "path": "./skills/clean-ddd-hexagonal/references",
+    "description": "Reference materials for Clean Architecture, DDD, and Hexagonal patterns"
+  },
+  "design-patterns": {
+    "path": "./skills/design-patterns/references",
+    "description": "Reference materials for GoF and enterprise design patterns"
+  },
+  "clean-code": {
+    "path": "./skills/clean-code/references",
+    "description": "Reference materials for clean code principles and practices"
+  }
+  // ... un entry por cada skill con references/
+}
+```
 
 **Acceptance criteria:**
-- [ ] All E2E scripts in `tests/e2e/` use `bunx` or `bun run` instead of `./codice` or `dist/codice-*`
-- [ ] Test infrastructure (`run-e2e.sh`) updated accordingly
-- [ ] No E2E test depends on `just build`
-- [ ] E2E tests can run locally without compilation step
+- [ ] Lista de skills con `references/` (de Phase 2) — esperado: 20-30 skills
+- [ ] Cada entry tiene: alias (skill-name), path (relativo), description (corto y específico)
+- [ ] Descriptions siguen el formato: "Use for..." o "Reference materials for..."
+- [ ] Alias sin caracteres especiales (OpenCode restriction: no `/`, whitespace, backticks, commas)
 
 **Verification:**
-- [ ] `grep -r "dist/codice\|./codice" tests/e2e/` returns no results
-- [ ] `just test-e2e` syntax is valid (no `just build` prefix)
-- [ ] Local E2E test runs successfully: `bash tests/e2e/01-clean-install.sh`
+- [ ] Lista de skills con `references/` validada contra `find template/obligatorio/skills -type d -name references`
+- [ ] Cada path relativo verificable: `ls template/obligatorio/skills/<skill>/references/` existe
 
-**Dependencies:** Task 3.3
+**Dependencies:** Task 2.2 (necesita saber qué skills tienen `references/`)
 
 **Files likely touched:**
-- `tests/e2e/*.sh` (15 scenarios)
-- `tests/e2e/run-e2e.sh`
+- Solo diseño (no se escriben archivos todavía)
 
-**Estimated scope:** M (16 files)
+**Estimated scope:** S (diseño + lista)
 
 ---
 
-#### Task 4.2: Remove binary-specific E2E tests
-**Description:** Delete E2E tests that specifically test binary behavior (e.g., binary size, binary execution permissions).
+#### Task 4.2: Añadir `reference` section a `opencode.json`
+**Description:** Insertar el bloque `reference` en `template/obligatorio/opencode.json` después de la sección `instructions` (líneas 394-401), siguiendo el formato de la documentación oficial de OpenCode.
 
 **Acceptance criteria:**
-- [ ] No E2E tests for binary-specific behavior remain
-- [ ] Test count reduced accordingly (596 → expected ~585)
-- [ ] `tests/e2e/` directory contains only npm/bunx-based scenarios
+- [ ] Sección `"reference": { ... }` añadida en `opencode.json` después de `instructions`
+- [ ] Cada entry tiene: alias, path, description
+- [ ] JSON válido (verificable con `bun -e "JSON.parse(require('fs').readFileSync('template/obligatorio/opencode.json', 'utf8'))"`)
+- [ ] Sin duplicación de entries
+- [ ] Sin paths absolutos hardcoded (usar `./<relative-path>`)
 
 **Verification:**
-- [ ] `ls tests/e2e/` shows 15 scenarios (no binary-specific)
-- [ ] `grep -l "binary\|chmod\|elf\|pe" tests/e2e/*.sh` returns empty
-- [ ] `just test-e2e --list` (if supported) shows 15 tests
+- [ ] `jq . template/obligatorio/opencode.json` parsea sin errores
+- [ ] `grep -c "\"path\":" template/obligatorio/opencode.json` == número de references (≥20)
+- [ ] `bun run tsc --noEmit` pasa (no rompe tipos)
+- [ ] Cada path verificable: `ls <path>` desde la raíz del proyecto
 
 **Dependencies:** Task 4.1
 
 **Files likely touched:**
-- `tests/e2e/` (deletion of binary-specific scripts)
+- `template/obligatorio/opencode.json` (1 sección añadida, ~60-100 líneas)
 
-**Estimated scope:** S (2-5 files)
+**Estimated scope:** S (1 archivo, cambios bien definidos)
 
 ---
 
-#### Task 4.3: Verify all tests pass
-**Description:** Run the complete test suite to ensure no regressions.
+#### Task 4.3: Validar JSON schema y formato OpenCode
+**Description:** Validar que la sección `reference` cumple con el schema y formato esperado por OpenCode. Consultar documentación oficial y comparar con ejemplos.
 
 **Acceptance criteria:**
-- [ ] `bun test`: ≥585 pass, 0 fail
-- [ ] `just test-unit`: 100% pass
-- [ ] `just test-integration`: 100% pass
-- [ ] `just test-e2e`: 15/15 scenarios passing
-- [ ] `just test-packaging`: 5/5 tests passing
-- [ ] `just check`: 0 errors (biome + tsc)
-- [ ] Coverage: ≥98% functions, ≥96% lines
+- [ ] Estructura coincide con la documentación de OpenCode (campos `path`, `description`, opcional `hidden`)
+- [ ] No usar campos no documentados (no inventar `type`, `version`, etc.)
+- [ ] Aliases siguen las reglas: no vacíos, no `/`, no whitespace, no backticks, no commas
+- [ ] Paths relativos a `opencode.json` (no absolutos)
 
 **Verification:**
-- [ ] `just check && just test && just test-e2e` all pass
-- [ ] Coverage report shows no degradation vs v1.1.3 baseline (100% funcs, 98.08% lines)
+- [ ] Comparar con https://opencode.ai/docs/es/references/
+- [ ] Test manual: instalar workspace y verificar que OpenCode carga las references correctamente
+- [ ] `opencode --version` + abrir el workspace + invocar un agente que use references
 
 **Dependencies:** Task 4.2
 
 **Files likely touched:**
-- None (verification only)
+- Validación (sin cambios esperados)
 
-**Estimated scope:** XS (0 files)
-
----
-
-### Checkpoint: Tests Green
-- [ ] All unit tests pass
-- [ ] All integration tests pass
-- [ ] All E2E tests pass (15 scenarios)
-- [ ] No regression in coverage
-- [ ] `just check` clean
-- [ ] Review with human before proceeding to Phase 5
+**Estimated scope:** XS (verificación + ajustes menores si los hay)
 
 ---
 
-### Phase 5: Documentation
+### Checkpoint: Configuration Enhanced
+- [ ] Sección `reference` añadida a `opencode.json`
+- [ ] Formato OpenCode-compliant
+- [ ] Todos los paths verificables
+- [ ] JSON schema válido
+- [ ] Revisión con humano antes de proceder a Phase 5
 
-#### Task 5.1: Update README.md
-**Description:** Remove binary installation methods from README, keep only npm/bunx/npx.
+---
+
+### Phase 5: Documentation Updates (paralelo con Phase 3+4)
+
+#### Task 5.1: `docs/wiki-source/Workspace-Structure.md`
+**Description:** Actualizar el árbol de directorios del workspace: eliminar `references/` de la raíz y añadir `skills/*/references/` como subdirectorios esperados de cada skill.
 
 **Acceptance criteria:**
-- [ ] Section "If you don't have Bun installed or prefer a standalone binary" removed
-- [ ] All `dist/codice-*` download links removed
-- [ ] "Quick Install" section shows only `bunx @fisherk2-dev/codice`
-- [ ] Troubleshooting section: remove "Permission denied (binary)" and "Binary not found after install" entries
-- [ ] CI/CD badge remains (now reflects npm publish)
+- [ ] Árbol de directorios actualizado (línea 27 aproximadamente)
+- [ ] Conteo de references corregido (línea 219): ya no "59 en raíz", sino "59 distribuidos en ~25 skills"
+- [ ] Sección `### references/ — Shared Reference Library` (líneas 106-117) actualizada: ahora explica la co-localización
 
 **Verification:**
-- [ ] `grep -n "binary\|dist/codice" README.md` returns no false positives
-- [ ] README renders correctly (markdown lint passes)
-- [ ] Copy-paste installation commands work for non-technical users (SC-16)
+- [ ] `grep -n "references/" docs/wiki-source/Workspace-Structure.md` documentado
+- [ ] Wiki renderiza correctamente (markdown lint)
+- [ ] Consistencia con el resto del documento
 
-**Dependencies:** Task 4.3
+**Dependencies:** Task 2.3 (estructura ya cambiada)
 
 **Files likely touched:**
-- `README.md`
+- `docs/wiki-source/Workspace-Structure.md` (3-5 líneas modificadas)
 
-**Estimated scope:** S (1 file)
+**Estimated scope:** S (1 archivo)
 
 ---
 
-#### Task 5.2: Update CONTRIBUTING.md
-**Description:** Remove binary build instructions from CONTRIBUTING.md. Keep dev/test instructions.
+#### Task 5.2: `docs/wiki-source/Skills.md`
+**Description:** Documentar que cada skill puede tener un subdirectorio `references/` con material de referencia. Añadir convenciones de cuándo crear references por skill.
 
 **Acceptance criteria:**
-- [ ] "Building" section: remove `just build` and `just build-all` instructions
-- [ ] "Release Process" section: remove binary upload steps
-- [ ] Keep: setup, test, lint, format, check, dev commands
-- [ ] Conventional Commits guide remains
-- [ ] PR process remains
+- [ ] Sección "Skill structure" añadida: `SKILL.md` + opcional `references/` + opcional `scripts/` + opcional `assets/`
+- [ ] Convención: "Use `references/` para material de referencia extenso que complemente la skill sin saturar el SKILL.md"
+- [ ] Cross-reference a `Configuration.md` (documenta cómo OpenCode carga las references)
 
 **Verification:**
-- [ ] `grep -n "build\|binary\|dist/" CONTRIBUTING.md` returns no false positives
-- [ ] CONTRIBUTING.md is valid markdown
-- [ ] Dev setup instructions are complete without binary references
+- [ ] Wiki renderiza correctamente
+- [ ] Cross-references funcionan
+- [ ] Consistencia con el resto del Wiki
 
-**Dependencies:** Task 5.1
+**Dependencies:** Task 4.2 (references ya configuradas)
 
 **Files likely touched:**
-- `CONTRIBUTING.md`
+- `docs/wiki-source/Skills.md` (1-2 secciones añadidas)
 
-**Estimated scope:** S (1 file)
+**Estimated scope:** S (1 archivo)
 
 ---
 
-#### Task 5.3: Update Wiki (Getting-Started.md)
-**Description:** Remove binary references from GitHub Wiki pages synced from `docs/wiki-source/`.
+#### Task 5.3: `docs/wiki-source/Configuration.md`
+**Description:** Documentar la nueva sección `reference` en `opencode.json`: estructura, campos válidos, ejemplo de uso, cómo se invoca en TUI con `@alias`.
 
 **Acceptance criteria:**
-- [ ] `docs/wiki-source/Getting-Started.md`: remove binary install section
-- [ ] `docs/wiki-source/Installation.md` (if exists): remove binary references
-- [ ] Wiki counts updated (no binary mention)
-- [ ] Other Wiki pages checked for binary references
+- [ ] Sección "## References Configuration" añadida
+- [ ] Ejemplo de configuración: `{"path": "./skills/<name>/references", "description": "..."}`
+- [ ] Tabla de campos: `path`, `description`, `hidden` (de docs OpenCode)
+- [ ] Sección "How to use": `@clean-ddd-hexagonal` en TUI adjunta el reference root
+- [ ] Cross-reference a OpenCode docs oficial
 
 **Verification:**
-- [ ] `grep -r "binary\|dist/codice" docs/wiki-source/` returns no false positives
-- [ ] Wiki sync to `.wiki/` directory works: `rsync -a --delete --exclude='README.md' docs/wiki-source/*.md docs/wiki-source/.wiki/`
-- [ ] Wiki is ready for commit/push to GitHub Wiki
+- [ ] Wiki renderiza correctamente
+- [ ] Ejemplos probados manualmente (invocar `@<alias>` en OpenCode TUI)
+- [ ] Links a docs oficiales funcionan
 
-**Dependencies:** Task 5.2
+**Dependencies:** Task 4.2
 
 **Files likely touched:**
-- `docs/wiki-source/Getting-Started.md`
-- `docs/wiki-source/Installation.md` (if exists)
+- `docs/wiki-source/Configuration.md` (1 sección añadida)
 
-**Estimated scope:** S (1-2 files)
+**Estimated scope:** S (1 archivo)
 
 ---
 
-#### Task 5.4: Update TECH_DEBT.md
-**Description:** Remove Section 7.1 (Binary Size Reduction) from TECH_DEBT.md since it's now resolved by FEV-11.
+#### Task 5.4: `CONTRIBUTING.md` — eliminar paso de extracción
+**Description:** Eliminar el paso en la guía de contribución de skills que dice "extraer las references al directorio `references/` raíz". Ahora cada skill incluye sus references co-localizadas.
 
 **Acceptance criteria:**
-- [ ] Section 7.1 removed or marked as "RESOLVED in v1.2.0"
-- [ ] "Resolved" section updated: add v1.2.0 entry with FEV-11 resolution
-- [ ] Cross-reference to ADR-011 added
-- [ ] Other sections unchanged
+- [ ] Paso de extracción eliminado (si existe)
+- [ ] Nueva guía: "Las references van en `skills/<skill>/references/`, no en un directorio centralizado"
+- [ ] Cross-reference a `docs/wiki-source/Skills.md`
 
 **Verification:**
-- [ ] `grep -n "Binary Size" docs/TECH_DEBT.md` returns no active references
-- [ ] TECH_DEBT.md is valid markdown
-- [ ] v1.2.0 entry added to "Resolved" table
+- [ ] `grep -n "extract.*references\|references.*extract" CONTRIBUTING.md` → no results
+- [ ] Documento es coherente con la nueva estructura
+- [ ] Sigue siendo markdown válido
 
-**Dependencies:** Task 5.3
+**Dependencies:** Task 2.3
 
 **Files likely touched:**
-- `docs/TECH_DEBT.md`
+- `CONTRIBUTING.md` (1-2 párrafos modificados)
 
-**Estimated scope:** XS (1 file)
+**Estimated scope:** XS (1 archivo, cambio pequeño)
 
 ---
 
-#### Task 5.5: Update CHANGELOG.md
-**Description:** Add v1.2.0 entry to CHANGELOG.md with breaking change notice.
+#### Task 5.5: `README.md` — workspace structure tree
+**Description:** Actualizar el árbol de directorios del workspace en `README.md` (sección "Workspace Structure" o equivalente). Eliminar `references/` de la raíz.
 
 **Acceptance criteria:**
-- [ ] Section `[1.2.0] - 2026-XX-XX` added
-- [ ] "Changed" subsection: "BREAKING: Binary compilation removed. Use `bunx @fisherk2-dev/codice` instead."
-- [ ] "Removed" subsection: list of removed features
-- [ ] "Added" subsection: ADR-011 documentation
-- [ ] Migration instructions in "Changed" section
+- [ ] Árbol actualizado: `references/` ya no aparece como directorio top-level
+- [ ] Si hay una sección que explica `references/`: actualizada para reflejar la co-localización
+- [ ] Conteo de archivos (si existe): corregido
 
 **Verification:**
-- [ ] CHANGELOG.md follows Keep a Changelog format
-- [ ] `grep -A 5 "1.2.0" CHANGELOG.md` shows complete entry
-- [ ] Breaking change is clearly marked with `**BREAKING**`
+- [ ] `grep -n "references/" README.md` documentado
+- [ ] README renderiza correctamente
+- [ ] Sin referencias rotas
 
-**Dependencies:** Task 5.4
+**Dependencies:** Task 2.3
 
 **Files likely touched:**
-- `CHANGELOG.md`
+- `README.md` (1-3 líneas)
 
-**Estimated scope:** XS (1 file)
+**Estimated scope:** XS (1 archivo, cambio pequeño)
+
+---
+
+#### Task 5.6: Actualizar `docs/diagnosis/fix05-*` con resultados
+**Description:** Actualizar el documento de diagnóstico original con los resultados reales del plan ejecutado: número de skills con references, ejemplos de mapping, comandos ejecutados, issues encontrados.
+
+**Acceptance criteria:**
+- [ ] Sección "## Results" añadida al diagnosis
+- [ ] Tabla de mapping final incluida
+- [ ] Métricas: 59 archivos → 25-30 skills, ~30 entries en `reference` section
+- [ ] Sección "## Lessons Learned" con observaciones
+
+**Verification:**
+- [ ] Documento es coherente con el resultado real (no especulativo)
+- [ ] Cross-references actualizados
+
+**Dependencies:** Phase 2-4 completas
+
+**Files likely touched:**
+- `docs/diagnosis/fix05-v1.2-phase2-references.md` (sección añadida)
+
+**Estimated scope:** S (1 archivo)
+
+---
+
+#### Task 5.7: Crear ADR-012 — References Co-location
+**Description:** Documentar la decisión arquitectónica de co-localizar references con sus skills y exponerlas vía la sección `reference` de OpenCode como ADR-012. Esta decisión es fundamental porque cambia el modelo de references de "centralizado" a "federado por skill".
+
+**Acceptance criteria:**
+- [ ] Archivo `specs/adr/adr-012-references-co-location.md` creado
+- [ ] Status: Accepted
+- [ ] Context: Por qué se abandonó el modelo centralizado
+- [ ] Decision: Cada skill contiene sus references en `skills/<name>/references/`, expuestas vía `opencode.json` `reference` section
+- [ ] Consequences: Self-contained skills, mejor discoverability, ~100+ skills nuevas viables, sin cross-skill reference sharing
+- [ ] Alternatives Considered: Mantener centralizado, references por dominio (carpeta por tema), virtual manifest
+- [ ] References: Issue #54, Issue #52, diagnosis fix05, OpenCode docs
+- [ ] `docs/ARCHITECTURE.md` actualizado para incluir ADR-012 en la tabla
+
+**Verification:**
+- [ ] Archivo sigue el template de ADR-001 a ADR-011
+- [ ] Cross-references válidos
+- [ ] Status Accepted (no Proposed)
+
+**Dependencies:** Phase 2-4 completas (necesita datos reales para documentar el cambio)
+
+**Files likely touched:**
+- `specs/adr/adr-012-references-co-location.md` (nuevo)
+- `docs/ARCHITECTURE.md` (1 fila añadida a la tabla de ADRs)
+
+**Estimated scope:** S (1-2 archivos)
 
 ---
 
 ### Checkpoint: Documentation Updated
-- [ ] README.md updated (no binary references)
-- [ ] CONTRIBUTING.md updated
-- [ ] Wiki pages updated
-- [ ] TECH_DEBT.md updated (Section 7.1 resolved)
-- [ ] CHANGELOG.md updated (v1.2.0 entry)
-- [ ] All docs render correctly
-- [ ] Review with human before proceeding to Phase 6
+- [ ] Wiki pages actualizadas (Workspace-Structure, Skills, Configuration)
+- [ ] CONTRIBUTING.md actualizado
+- [ ] README.md actualizado
+- [ ] Diagnosis documentado con resultados
+- [ ] ADR-012 creado y cross-referenciado
+- [ ] Revisión con humano antes de proceder a Phase 6
 
 ---
 
-### Phase 6: Release
+### Phase 6: Verification
 
-#### Task 6.1: Bump version to 1.2.0
-**Description:** Update version number across all relevant files to 1.2.0.
+#### Task 6.1: `just check` (lint + format + tsc)
+**Description:** Ejecutar el pre-flight check: biome (lint + format) + tsc (typecheck). Verificar que no hay errores ni warnings.
 
 **Acceptance criteria:**
-- [ ] `package.json`: version = "1.2.0"
-- [ ] No other version references to update (verified via grep)
-- [ ] Version follows semver: minor bump (new feature: npm-only distribution)
+- [ ] `just check` exit code 0
+- [ ] `biome ci` exit code 0
+- [ ] `tsc --noEmit` exit code 0
+- [ ] Sin warnings nuevos
 
 **Verification:**
-- [ ] `grep -r "1.1.3" package.json` returns no results
-- [ ] `package.json` is valid JSON
-- [ ] `git diff package.json` shows only version change
+- [ ] Output completo sin errores
+- [ ] Comparar contra FEV-11 baseline: 0 errores, 0 warnings
 
-**Dependencies:** Task 5.5
+**Dependencies:** Phases 3, 4, 5
 
-**Files likely touched:**
-- `package.json`
+**Files likely touched:** None (solo verificación)
 
-**Estimated scope:** XS (1 file)
+**Estimated scope:** XS (verificación)
 
 ---
 
-#### Task 6.2: Create release PR
-**Description:** Create a pull request from `feat/v1.2-fev-11` to `main` with all FEV-11 changes.
+#### Task 6.2: `just test` (unit + integration)
+**Description:** Ejecutar la suite completa de tests: unit + integration. Verificar que no hay regresiones.
 
 **Acceptance criteria:**
-- [ ] Branch: `feat/v1.2-fev-11`
-- [ ] All Phase 1-5 changes committed
-- [ ] PR title: "feat(v1.2): remove binary compilation (FEV-11, Issue #46)"
-- [ ] PR description includes:
-  - Summary of changes
-  - Breaking change notice
-  - Migration path for affected users
-  - Test results
-  - Checklist of completed tasks
-- [ ] CI passes on all 3 platforms
+- [ ] `just test` exit code 0
+- [ ] ≥593 tests pasando (sin pérdida vs FEV-11)
+- [ ] Sin tests skipped
+- [ ] Coverage: ≥97% funciones, ≥96% líneas (sin pérdida)
 
 **Verification:**
-- [ ] `gh pr list --head feat/v1.2-fev-11` shows PR
-- [ ] CI status: ✅ all green
-- [ ] PR description is complete and follows template
+- [ ] Output completo: `593 pass, 0 fail`
+- [ ] Coverage report comparado contra FEV-11
 
 **Dependencies:** Task 6.1
 
-**Files likely touched:**
-- New branch `feat/v1.2-fev-11`
-- All modified files from Phases 1-5
+**Files likely touched:** None (solo verificación)
 
-**Estimated scope:** M (PR creation, review, merge)
+**Estimated scope:** XS (verificación)
 
 ---
 
-#### Task 6.3: Tag v1.2.0
-**Description:** Create git tag v1.2.0 after PR is merged to main.
+#### Task 6.3: `just test:e2e` (15/15 scenarios)
+**Description:** Ejecutar la suite de tests E2E. Todos los 15 escenarios deben pasar.
 
 **Acceptance criteria:**
-- [ ] Tag created: `v1.2.0`
-- [ ] Tag annotation includes breaking change notice
-- [ ] Tag is pushed to remote
-- [ ] `git tag -l "v1.2*"` shows the tag
+- [ ] `just test:e2e` exit code 0
+- [ ] 15/15 escenarios pasando
+- [ ] Sin tests skipped
+- [ ] Escenario 01 (Clean Install) valida co-localización
 
 **Verification:**
-- [ ] `git tag -l` includes v1.2.0
-- [ ] `git ls-remote --tags origin | grep v1.2.0` shows remote tag
-- [ ] Tag message is descriptive
+- [ ] Output completo: `15/15 passing`
+- [ ] `tests/e2e/01-clean-install.sh` valida `skills/clean-ddd-hexagonal/references/LAYERS.md` (o equivalente)
 
 **Dependencies:** Task 6.2
 
-**Files likely touched:**
-- None (git operation only)
+**Files likely touched:** None (solo verificación)
 
-**Estimated scope:** XS (1 command)
+**Estimated scope:** XS (verificación)
 
 ---
 
-#### Task 6.4: Publish to npm
-**Description:** Publish v1.2.0 to npm with `@latest` dist-tag. Release workflow handles this automatically on tag push.
+#### Task 6.4: Coverage report
+**Description:** Generar reporte de coverage completo. Comparar contra baseline FEV-11.
 
 **Acceptance criteria:**
-- [ ] `release.yml` workflow triggers on v1.2.0 tag
-- [ ] npm publish succeeds: `npm view @fisherk2-dev/codice@1.2.0` shows the version
-- [ ] Package size < 5MB (SC-16 new criterion)
-- [ ] `npm view @fisherk2-dev/codice dist-tags` shows `latest: 1.2.0`
+- [ ] `bun test --coverage` genera HTML + lcov
+- [ ] Coverage de `FileRuleManifestData.ts` ≥95% (verificado)
+- [ ] Coverage general: ≥97% funciones, ≥96% líneas
+- [ ] Sin archivos con coverage <80% (excepto si justificado)
 
 **Verification:**
-- [ ] `npm view @fisherk2-dev/codice@1.2.0` succeeds
-- [ ] `bunx @fisherk2-dev/codice --version` shows 1.2.0
-- [ ] Package tarball is available for download
+- [ ] Reporte HTML inspeccionado
+- [ ] Diff contra FEV-11: 0 pérdida
+
+**Dependencies:** Task 6.2
+
+**Files likely touched:** None (solo verificación)
+
+**Estimated scope:** XS (verificación)
+
+---
+
+#### Task 6.5: `just dev` — instalación manual en workspace
+**Description:** Ejecutar el CLI en modo dev para verificar la instalación end-to-end: `just dev --dest tests/fixtures/workspace/`. Verificar que las references se instalan en las nuevas ubicaciones.
+
+**Acceptance criteria:**
+- [ ] `just dev --dest tests/fixtures/workspace/` exit code 0
+- [ ] `tests/fixtures/workspace/skills/<skill>/references/<file>.md` existen para cada skill con references
+- [ ] `tests/fixtures/workspace/references/` NO existe (raíz eliminada)
+- [ ] `opencode.json` instalado tiene sección `reference` válida
+- [ ] `cat .codice-version` muestra v1.2.0 (o el current version)
+
+**Verification:**
+- [ ] Inspección visual del workspace/
+- [ ] `find workspace -type d -name references` muestra solo los de skills
+- [ ] OpenCode TUI puede usar `@<alias>` para invocar references (test manual)
 
 **Dependencies:** Task 6.3
 
+**Files likely touched:** None (solo verificación, limpieza de `tests/fixtures/workspace/` después)
+
+**Estimated scope:** XS (verificación + cleanup)
+
+---
+
+#### Task 6.6: Branch + PR + commit message
+**Description:** Crear branch `feat/fev-12-references`, commits estructurados, PR a `develop` con descripción completa.
+
+**Acceptance criteria:**
+- [ ] Branch `feat/fev-12-references` creada desde `develop`
+- [ ] Commits siguen Conventional Commits: `feat(v1.2): ...`, `refactor(template): ...`, `docs(wiki): ...`
+- [ ] Cada commit incluye `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
+- [ ] PR title: "feat(v1.2): restructure references into self-contained skills (FEV-12, Issues #54, #52)"
+- [ ] PR description incluye: Summary, Issues cerrados, Cambios principales, Métricas, Checklist
+- [ ] CI pasa en los 3 OS (ubuntu, macos, windows)
+- [ ] Squash merge a `develop`
+
+**Verification:**
+- [ ] `gh pr list --head feat/fev-12-references` muestra PR
+- [ ] CI status: ✅ all green
+- [ ] Branch limpia (sin commits basura)
+
+**Dependencies:** Phases 1-5 completas + verifications 6.1-6.5
+
 **Files likely touched:**
-- None (automated by release.yml)
+- Branch + commits (no se modifican archivos en este task)
 
-**Estimated scope:** XS (verification only)
-
----
-
-### Checkpoint: Release Complete
-- [ ] v1.2.0 published to npm
-- [ ] Tag pushed to GitHub
-- [ ] Release notes published (auto-generated from CHANGELOG)
-- [ ] No binary artifacts attached
-- [ ] Migration path documented
-- [ ] **All FEV-11 DoD items completed** ✅
+**Estimated scope:** M (creación de PR + review)
 
 ---
 
-## DoD (Definition of Done) — FEV-11
+#### Task 6.7: Code Review 5-ejes por Tezcatlipoca
+**Description:** Invocar al agente Tezcatlipoca (Code Reviewer) para hacer un code review 5-ejes del PR: Correctness, Readability, Architecture, Security, Performance. Generar reporte estructurado de findings.
 
-- [ ] All binary compilation code removed from `src/`
-- [ ] Binary-specific tests removed
-- [ ] CI/CD workflows no longer generate binaries
-- [ ] README and documentation updated (no binary references)
-- [ ] TECH_DEBT.md Section 7.1 removed/resolved
-- [ ] SPEC.md updated (SC-15 removed, SC-16 updated)
-- [ ] CONTRIBUTING.md updated
-- [ ] ADR-011 documented
-- [ ] `bun test`: 0 fail, no regression (≥585 tests passing)
+**Acceptance criteria:**
+- [ ] Code review ejecutado en el branch `feat/fev-12-references`
+- [ ] 5 ejes revisados: Correctness, Readability, Architecture, Security, Performance
+- [ ] Reporte con findings categorizados: Critical, Important, Suggestions
+- [ ] Cada finding tiene: descripción, ubicación (archivo:línea), propuesta de fix
+- [ ] Reporte guardado en `docs/diagnosis/fix05-code-review.md`
+
+**Verification:**
+- [ ] Reporte tiene ≥10 findings (indicador de revisión profunda)
+- [ ] Findings Critical (si los hay) deben resolverse antes del merge
+- [ ] Findings Important documentados para seguimiento
+
+**Dependencies:** Task 6.6 (PR creado)
+
+**Files likely touched:**
+- `docs/diagnosis/fix05-code-review.md` (nuevo)
+
+**Estimated scope:** M (revisión profunda + reporte)
+
+---
+
+#### Task 6.8: Ship Review + GO/NO-GO Decision
+**Description:** Evaluar si FEV-12 está listo para merge final. Basado en los findings del code review y las métricas de verificación. Decisión: GO (merge) o NO-GO (rework).
+
+**Acceptance criteria:**
+- [ ] 0 Critical findings abiertos
+- [ ] 0 Important findings abiertos (o justificados/aplazados)
+- [ ] Todas las verifications 6.1-6.5 pasaron
+- [ ] Decisión documentada: GO/NO-GO con rationale
+- [ ] Si GO: aprobar PR y squash merge
+- [ ] Si NO-GO: crear tasks de rework y volver a 6.7
+
+**Verification:**
+- [ ] `gh pr merge --squash` ejecutado (si GO)
+- [ ] Branch `feat/fev-12-references` eliminada después del merge
+- [ ] `develop` actualizado con los cambios
+
+**Dependencies:** Task 6.7 (code review completo)
+
+**Files likely touched:**
+- Decisión documentada en `docs/diagnosis/fix05-v1.2-phase2-references.md` (sección "Ship Review")
+
+**Estimated scope:** S (decisión + merge)
+
+---
+
+### Checkpoint: Complete
+- [ ] Todas las verificaciones pasan (6.1-6.5)
+- [ ] Code review ejecutado con 0 Critical findings (6.7)
+- [ ] Ship Review GO decision (6.8)
+- [ ] PR mergeado a `develop`
+- [ ] **Todos los items del DoD FEV-12 completados** ✅
+
+---
+
+## DoD (Definition of Done) — FEV-12
+
+- [ ] Los 59 archivos de references reubicados en `skills/<name>/references/` con `git mv` (historial preservado)
+- [ ] `template/obligatorio/references/` eliminado completamente
+- [ ] `FileRuleManifestData.ts` sin entry `references` (40 entries restantes)
+- [ ] Tests unitarios actualizados y pasando (≥593 pass, 0 fail)
+- [ ] Tests E2E actualizados y pasando (15/15)
+- [ ] Sección `reference` añadida a `opencode.json` con un entry por cada skill con references
+- [ ] Formato `reference` cumple con schema OpenCode oficial
+- [ ] Wiki actualizado: Workspace-Structure, Skills, Configuration
+- [ ] CONTRIBUTING.md actualizado (paso de extracción eliminado)
+- [ ] README.md actualizado (workspace structure)
+- [ ] Diagnosis documentado con resultados reales
+- [ ] ADR-012 (References Co-location) creado y cross-referenciado
+- [ ] `bun test`: 0 fail, sin regresión (≥593 tests)
 - [ ] `just check`: 0 errors
-- [ ] `bunx @fisherk2-dev/codice` works correctly
-- [ ] v1.2.0 released to npm with breaking change notice
+- [ ] `just dev --dest tests/fixtures/workspace/`: instalación correcta
+- [ ] Sin versión bump (v1.2.0 se lanza al cerrar FEV-12 + FEV-13 + FEV-14 + FEV-15)
+- [ ] Branch `feat/fev-12-references` + PR a `develop` con CI green
+- [ ] Code Review 5-ejes ejecutado con 0 Critical findings
+- [ ] Ship Review GO decision documentado y PR mergeado
 
 ---
 
@@ -679,40 +908,45 @@ Phase 6: Release (depends on Phase 5)
 
 | Risk | Impact | Likelihood | Mitigation |
 |------|--------|------------|------------|
-| Breaking change for <5% users | Medium | High | Document migration path in CHANGELOG, README, Wiki |
-| E2E test failures after migration | Medium | Medium | Migrate incrementally, verify each scenario |
-| CI/CD workflow errors | High | Low | Test on feature branch before merge |
-| npm package size increase | Low | Low | Template files are small (<2MB), source is ~50KB |
-| Wiki sync issues | Low | Low | Test rsync command locally before commit |
-| Missing binary references in unexpected files | Medium | Medium | Comprehensive audit (Task 1.1) |
+| Cross-references entre archivos de references no detectadas | Medium | Medium | Análisis de 2 pasadas (Nivel 1: skill mentions, Nivel 2: cross-references) + revisión manual del usuario |
+| Archivos huérfanos sin skill clara | Low | High | Decisión del usuario: asignar a skill más coherente basándose en contenido, no eliminar |
+| Pérdida de cobertura por tests desactualizados | Medium | Low | Task 3.2 explícita + checkpoint de coverage en 6.4 |
+| Breaking change para usuarios que dependan de `references/` raíz | Medium | Low | Documentar en CHANGELOG cuando se haga el release v1.2.0 |
+| OpenCode no carga la sección `reference` (cambio breaking en OpenCode) | Low | Low | Validar con docs oficial + test manual en 6.5 |
+| Conflicto con FEV-13 (Documentation Overhaul) si toca la misma Wiki | Low | Medium | FEV-12 se enfoca en FEV-12-specific docs; FEV-13 hará el rewrite general |
+| `git mv` falla por permisos o paths con caracteres especiales | Low | Low | Validar con dry-run antes de ejecutar batch; usar `git mv -v` para verbose |
+| Workspace fixture se corrompe por `just dev` | Low | Low | `tests/fixtures/workspace/` está gitignored, regenerable; cleanup en 6.5 |
 
 ---
 
 ## Parallelization Opportunities
 
 **Safe to parallelize:**
-- Phase 1 tasks (1.1, 1.2, 1.3) — independent
-- Phase 5 tasks (5.1, 5.2, 5.3, 5.4, 5.5) — independent docs updates
-- Phase 2 tasks (2.1, 2.2, 2.3) — if no dependencies found
+- **Phase 3 (Code) + Phase 4 (Config) + Phase 5 (Docs):** Trabajan sobre archivos distintos
+  - Phase 3: `src/`, `tests/`
+  - Phase 4: `template/obligatorio/opencode.json`
+  - Phase 5: `docs/wiki-source/`, `CONTRIBUTING.md`, `README.md`
+- **Dentro de Phase 3:** Tasks 3.1, 3.2, 3.4 son independientes (3.3 depende de 3.2)
+- **Dentro de Phase 5:** Tasks 5.1, 5.2, 5.3, 5.4, 5.5 son independientes
 
 **Must be sequential:**
-- Phase 2 → Phase 3 (build system depends on source code)
-- Phase 3 → Phase 4 (tests depend on build system)
-- Phase 4 → Phase 5 (docs depend on final code state)
-- Phase 5 → Phase 6 (release depends on docs)
+- Phase 1 → Phase 2 (mapping debe estar aprobado antes de mover)
+- Phase 2 → Phase 3 (manifest update requiere nueva estructura)
+- Phase 2 → Phase 4.1 (lista de skills con references viene de Phase 2)
+- Phases 3+4+5 → Phase 6 (verificación requiere todo terminado)
 
 **Needs coordination:**
-- CI/CD changes (3.2, 3.3) — test on feature branch first
+- Phase 1.3 (mapping approval) → Phase 2 (no mover sin aprobación)
+- Phase 4.1 (diseño) → Phase 4.2 (implementación) — diseño debe estar claro
 
 ---
 
 ## Open Questions
 
-None. All decisions confirmed by user:
-- ✅ Version: v1.2.0 (minor bump)
-- ✅ E2E strategy: Eliminate + adapt (replace binary tests with bunx/bun run)
-- ✅ GitHub Releases: Only stop adding new binaries (keep historical)
-- ✅ Justfile: Remove build/build-all/release recipes
+Ninguna pendiente. Decisiones confirmadas:
+- ✅ Conflicto #54 vs #52: References apuntan a `skills/<name>/references` (Opción 4)
+- ✅ Huérfanos: No eliminar, asignar a skill más coherente (Opción 1)
+- ✅ Versionado: Sin bump, esperar al cierre de todas las FEVs (Opción 3)
 
 ---
 
@@ -720,43 +954,47 @@ None. All decisions confirmed by user:
 
 | Phase | Effort | Cumulative |
 |-------|--------|------------|
-| Phase 1: Foundation | 1.5h | 1.5h |
-| Phase 2: Source Code | 1h | 2.5h |
-| Phase 3: Build System | 2h | 4.5h |
-| Phase 4: Tests | 3h | 7.5h |
-| Phase 5: Documentation | 2.5h | 10h |
-| Phase 6: Release | 1h | 11h |
-| **Total** | **11h** | **11h** |
+| Phase 1: Discovery & Mapping | 2.5h | 2.5h |
+| Phase 2: Template Restructuring | 1.5h | 4h |
+| Phase 3: Source Code Updates | 1.5h | 5.5h |
+| Phase 4: Configuration Enhancement | 1h | 6.5h |
+| Phase 5: Documentation Updates (incl. ADR-012) | 2.5h | 9h |
+| Phase 6: Verification (incl. Code Review + Ship Review) | 3h | 12h |
+| **Total** | **12h** | **12h** |
 
-**Buffer:** +1h for unexpected issues = **12h total**
+**Buffer:** +2h para imprevistos (mapeo de huérfanos, validación OpenCode, rework post-review) = **14h total**
 
 ---
 
 ## Success Metrics
 
-| Metric | Baseline (v1.1.3) | Target (v1.2.0) |
+| Metric | Baseline (FEV-11) | Target (FEV-12) |
 |--------|-------------------|-----------------|
-| Tests passing | 596 / 0 fail | ≥585 / 0 fail |
-| Coverage (functions) | 100% | ≥98% |
-| Coverage (lines) | 98.08% | ≥96% |
-| `just check` errors | 0 | 0 |
-| E2E scenarios | 15/15 | 15/15 |
-| npm package size | ~3MB | <5MB (new SC-16) |
-| Binary artifacts in release | 3 (Linux, macOS, Windows) | 0 |
-| Maintenance burden | Baseline | -30% (no cross-platform builds) |
+| Tests passing | 593 / 0 fail | ≥593 / 0 fail |
+| Coverage (funciones) | 97.66% | ≥97.66% |
+| Coverage (líneas) | 96.52% | ≥96.52% |
+| `just check` errores | 0 | 0 |
+| E2E escenarios | 15/15 | 15/15 |
+| `template/obligatorio/references/` | 59 archivos | Eliminado |
+| `skills/*/references/` | 0 directorios | ≥20 directorios (1+ archivo cada uno) |
+| `opencode.json` `reference` section | 0 entries | ≥20 entries (1 por skill) |
+| FileRuleManifestData.ts entries | 41 | 40 (sin `references`) |
+| Issues cerrados | — | #54, #52 |
+| Versión bumped | v1.2.0 | Sin bump (espera al release final) |
 
 ---
 
 ## References
 
-- **Issue:** [#46](https://github.com/fisherk2/codice-opencode/issues/46)
-- **Diagnosis:** [fix04-v1.2-phase1-binary-removal.md](../diagnosis/fix04-v1.2-phase1-binary-removal.md)
-- **ADR-006:** npm Publication as Primary Distribution
-- **ADR-011:** Binary Removal (to be created in Task 1.2)
-- **WORKFLOW.md:** FEV-11 phase definition
-- **TECH_DEBT.md:** Section 7.1 (to be resolved)
+- **Issue #54:** https://github.com/fisherk2/codice-opencode/issues/54
+- **Issue #52:** https://github.com/fisherk2/codice-opencode/issues/52
+- **OpenCode References Docs:** https://opencode.ai/docs/es/references/
+- **Diagnosis:** [fix05-v1.2-phase2-references.md](../diagnosis/fix05-v1.2-phase2-references.md)
+- **ADR-012:** References Co-location (a crear en Task 5.7)
+- **WORKFLOW.md:** FEV-12 phase definition
+- **TECH_DEBT.md:** FEV-12 entry (línea 175)
 
 ---
 
-_Plan created by Moctezuma (Strategic Planner) — 2026-07-27_
+_Plan created by Moctezuma (Strategic Planner) — 2026-07-28_
 _Ready for human review via `question` tool_
