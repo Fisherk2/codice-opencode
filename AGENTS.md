@@ -7,11 +7,10 @@
 
 ## 🎯 Contexto del Proyecto
 
-**Códice** es un instalador/actualizador de línea de comandos (CLI) compilado con Bun, diseñado para desplegar plantillas de workspace de OpenCode de forma atómica, segura e inteligente.
+**Códice** es un instalador/actualizador CLI compilado con Bun para desplegar plantillas de workspace de OpenCode de forma atómica y segura.
 
-- **Dominio:** Gestión de archivos, versionado semántico, interacción TUI.
-- **In-Scope:** Instalación/actualización del template empaquetado, gestión de versiones local/remota.
-- **Out-of-Scope:** Instalación de dependencias externas, modificación de archivos del usuario post-instalación.
+- **In-Scope:** Instalación/actualización del template, gestión de versiones local/remota.
+- **Out-of-Scope:** Instalación de dependencias externas, modificación de archivos del usuario.
 
 ---
 
@@ -57,11 +56,10 @@
 
 ## 📚 Índice de Documentación
 
-### docs/
 | Archivo | Contenido |
 |---------|-----------|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Diagrama de componentes, capas, ADRs |
-| [CODE_STYLE.md](docs/CODE_STYLE.md) | Convenciones de código, naming, TypeScript, errores |
+| [CODE_STYLE.md](docs/CODE_STYLE.md) | Convenciones de código, naming, TypeScript |
 | [WORKFLOW.md](docs/WORKFLOW.md) | Plan de implementación por fases (FEV) |
 | [PRD.md](docs/PRD.md) | Product Requirements Document |
 | [TRD.md](docs/TRD.md) | Technical Requirements Document |
@@ -70,10 +68,30 @@
 | [APPFLOW.md](docs/APPFLOW.md) | Flujo de aplicación |
 | [SPEC.md](SPEC.md) | Especificación central del proyecto |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Guía de contribución, CI/CD, releases |
-
-### specs/
-| Archivo | Contenido |
-|---------|-----------|
-| [spec-file-rules.md](specs/spec-file-rules.md) | Reglas de clasificación de archivos (Obligatorio/Estándar/Opcional) |
+| [spec-file-rules.md](specs/spec-file-rules.md) | Reglas de clasificación de archivos |
 | [spec-cli-commands.md](specs/spec-cli-commands.md) | Especificación de modos y comandos CLI |
 | [adr/](specs/adr/) | Architecture Decision Records (ADR-001 al ADR-010) |
+
+### Codebase Memory MCP
+
+Este proyecto utiliza **codebase-memory-mcp** para indexado y búsqueda de elementos del código. **SIEMPRE preferir MCP sobre grep/glob** para buscar código.
+
+#### Herramientas
+
+| Herramienta | Uso |
+|-------------|-----|
+| `search_graph` | Buscar funciones, clases, rutas por patrón (primera opción) |
+| `trace_path` | Rastrear callers/callees, análisis de impacto |
+| `get_code_snippet` | Leer implementación específica de una función/clase |
+| `query_graph` | Consultas Cypher para patrones complejos |
+| `get_architecture` | Visión general de arquitectura del proyecto |
+| `index_repository` | Re-indexar después de cambios estructurales significativos |
+
+**Caer en grep/glob solo para:** strings literales, mensajes de error, config values, archivos no-code (Dockerfiles, scripts).
+
+#### Indexación
+
+- Grafo persistido en `.codebase-memory/graph.db.zst` — commitear para team sharing.
+- Para re-indexar: `codebase-memory-mcp_index_repository` con `persistence=true`.
+
+---
