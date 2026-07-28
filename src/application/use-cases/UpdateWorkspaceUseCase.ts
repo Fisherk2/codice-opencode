@@ -39,7 +39,7 @@ export class UpdateWorkspaceUseCase {
 	 * @param userPrompt - Adapter for interactive user prompts
 	 * @param gitHubClient - Adapter for GitHub API version checking
 	 * @param versionComparator - Domain service for semantic version comparison
-	 * @param bundledVersion - The version of the template bundled in this binary
+	 * @param bundledVersion - The version of the template bundled in the package
 	 */
 	constructor(
 		private readonly fileSystem: IFileSystem & IStagingSystem,
@@ -168,7 +168,7 @@ export class UpdateWorkspaceUseCase {
 	 * Resolve the version string to write to .codice-version.
 	 * Priority: explicit flag > bundled template > fallback to "0.0.0".
 	 *
-	 * The bundled template version is always available (compile-time constant),
+	 * The bundled template version is always available,
 	 * so the chain never reaches the fallback — kept for type safety.
 	 */
 	private resolveNewVersion(options: UpdateWorkspaceOptions | undefined): string {

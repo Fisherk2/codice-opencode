@@ -162,11 +162,16 @@ not file granularity.
 | `IFileSystem` port split (ISP) | ✅ IFileSystem (6) + IStagingSystem (4) |
 | Explicit constructors in `VersionComparator` + `ClackPromptsAdapter` | ✅ Resolved in FEV-6 (v1.1.0) |
 
-### v1.2.0
+### v1.2.0 ✅ 
+
+| Item | Resolution |
+|------|------------|
+| FEV-11: Binary removal (Issue #46) — BREAKING | ✅ npm-only distribution as per ADR-011. Binary compilation removed from build system, CI/CD, E2E tests, and docs. |
+
+### v1.2.0 (remaining)
 
 | Item | Effort | Impact | Diagnosis |
 |------|--------|--------|-----------|
-| FEV-11: Binary removal (Issue #46) | 6h | Reduced maintenance burden, npm-only distribution | [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md) |
 | FEV-12: References restructuring (Issues #54, #52) | 8h | Self-contained skills, configurable references | [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md) |
 | FEV-13: Documentation overhaul (Issues #51, #53) | 12h | Cleaner docs, user-facing Wiki | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
 | FEV-14: UX enhancements (Issues #47, #56) | 6h | Progress bar, /help command | [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md) |

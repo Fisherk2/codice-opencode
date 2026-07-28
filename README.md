@@ -180,34 +180,6 @@ That's it. Bun downloads and runs the latest version automatically.
 
 > **Next steps:** After installation, visit the [GitHub Wiki → Getting Started](https://github.com/fisherk2/codice-opencode/wiki/Getting-Started) guide to configure models, install plugin dependencies, and start your first workflow.
 
-### Offline / Air-gapped Alternative
-
-If you don't have Bun installed or prefer a standalone binary, download the compiled binary for your platform:
-
-#### Linux (x64) / macOS (x64)
-
-```bash
-# Download the latest binary for your platform:
-curl -L -o codice https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-linux
-# macOS: replace `codice-linux` with `codice-macos`
-
-# Make it executable:
-chmod +x codice
-
-# Run the installer:
-./codice
-```
-
-#### Windows (x64)
-
-```powershell
-# Download the latest binary:
-curl -L -o codice.exe https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-windows.exe
-
-# Run the installer:
-.\codice.exe
-```
-
 ### Usage
 
 Códice presents an interactive menu with three installation modes:
@@ -219,15 +191,14 @@ Códice presents an interactive menu with three installation modes:
 | **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
 
 ```bash
-# Interactive menu (default) — via bunx or binary:
-bunx @fisherk2-dev/codice     # via npm (requires Bun)
-./codice                   # via compiled binary (standalone)
+# Interactive menu (default):
+bunx @fisherk2-dev/codice
 
 # Direct mode with flags:
 bunx @fisherk2-dev/codice --dest ./my-project
-./codice --force
-./codice --version
-codice --help
+bunx @fisherk2-dev/codice --force
+bunx @fisherk2-dev/codice --version
+bunx @fisherk2-dev/codice --help
 ```
 
 ### Flags
@@ -237,7 +208,7 @@ codice --help
 | `--dest <path>` | Target installation directory (default: current directory) |
 | `--force` | Skip all confirmation prompts |
 | `--verbose` | Enable structured logging to stderr |
-| `--version` | Print binary version and exit |
+| `--version` | Print package version and exit |
 | `--clean` | Run Clean Install mode (skip interactive menu) |
 | `--project` | Run Project Install mode (skip interactive menu) |
 | `--update` | Run Update Workspace mode (skip interactive menu) |
@@ -291,8 +262,6 @@ flowchart LR
 | `bunx @fisherk2-dev/codice` not found | Ensure Bun is installed: `curl -fsSL https://bun.sh/install \| bash` |
 | `bunx` shows no output or hangs | Try `bunx @fisherk2-dev/codice@latest` or use `npx @fisherk2-dev/codice` instead |
 | `bunx` uses a cached version | Run `bunx --fresh @fisherk2-dev/codice` |
-| `Permission denied` (binary) | Run `chmod +x` on the downloaded binary, or prepend `sudo` |
-| Binary not found after install | Ensure the binary is in your `$PATH`, or use `./codice` |
 | GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
 | `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |

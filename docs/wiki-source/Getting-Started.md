@@ -9,7 +9,7 @@ Before installing Códice, you need **OpenCode** installed on your system. OpenC
 - **[Install OpenCode](https://opencode.ai/docs/installation)** — follow the official installation guide for your platform
 - **Verify the installation** by running `opencode --version` in your terminal
 
-> Códice does not require Bun, Node.js, or any runtime to be pre-installed on the target machine. The installer is distributed as a standalone binary or via `bunx`/`npx` and handles everything itself.
+> Códice is distributed via npm and executed with `bunx @fisherk2-dev/codice`. Bun is the recommended runtime.
 
 ## Install the Workspace
 

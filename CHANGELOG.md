@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-07-28
+
+### Changed
+
+- **BREAKING: Binary compilation removed.** The only installation method is now `bunx @fisherk2-dev/codice` (or `npx @fisherk2-dev/codice`). Compiled binaries are no longer produced or distributed. Users in air-gapped environments can use `npm pack` to download the tarball. See [ADR-011](specs/adr/adr-011-binary-removal.md) for migration details.
+
+### Removed
+
+- **Binary compilation recipes** — `just build`, `just build-all` removed from Justfile
+- **Binary distribution from CI/CD** — `ci.yml` no longer builds/smoke-tests/upload binaries; `release.yml` no longer builds/checksums/attaches binaries to GitHub Releases
+- **Binary resolution from E2E test infrastructure** — `setup_binary()` and related fallback logic (80+ lines) replaced with direct `bun run src/cli/main.ts`
+- **Binary install documentation** — Offline/air-gapped binary install section removed from README
+- **Binary build instructions** — Removed from CONTRIBUTING.md
+- **SC-15** — "Compiled binaries are produced for Linux, macOS, and Windows x64" removed from SPEC.md
+
+### Added
+
+- **ADR-011:** Binary Removal — documents the architectural decision (see `specs/adr/adr-011-binary-removal.md`)
+- **`tests/e2e/codice.sh`:** Wrapper script for `bun run src/cli/main.ts` in E2E tests
+
+### Changed (non-breaking)
+
+- **SC-16:** Updated from README criterion to "npm package (tarball) size < 5MB" (was about compiled binaries)
+- **ARCHITECTURE.md:** Added ADR-011 to ADR table
+
 ## [1.1.3] — 2026-07-11
 
 ### Fixed

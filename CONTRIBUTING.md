@@ -51,14 +51,14 @@ just test           # All unit + integration tests
 just test:unit      # Domain logic only (pure functions, entities)
 just test:integration  # Adapters + use cases with mocked externals
 just test-packaging # npm tarball structure validation (5 scenarios)
-just test:e2e       # Compiled binary against isolated directories (15 scenarios)
+just test:e2e       # CLI against isolated directories (15 scenarios)
 just test-watch     # Watch mode for development
 just test:coverage  # With coverage report
 ```
 
 - **Unit tests:** > 90% coverage target. Domain layer only.
 - **Integration tests:** Adapters with real temp dirs. No live network calls.
-- **E2E tests:** Compiled binary, isolated dirs, 15 scenarios. Bash scripts (Linux CI only).
+- **E2E tests:** `bun run src/cli/main.ts`, isolated dirs, 15 scenarios. Bash scripts (Linux CI only).
 
 ---
 
@@ -199,7 +199,7 @@ See [docs/wiki-source/README.md](docs/wiki-source/README.md) for the full proced
 ## References
 
 - **npm Publishing:** `@fisherk2-dev/codice` with dist-tags `latest`, `beta`, `rc`. See [docs/TRD.md](docs/TRD.md).
-- **CI/CD Pipeline:** `ci.yml` (quality matrix) + `release.yml` (tag → build → npm publish). See [.github/workflows/](.github/workflows/).
+- **CI/CD Pipeline:** `ci.yml` (quality matrix) + `release.yml` (tag → npm publish). See [.github/workflows/](.github/workflows/).
 - **Release Checklist:** Pre-release test → merge to main → tag → verify CI → verify npm → sync develop.
 - **Reporting Issues:** Include expected vs actual behavior, steps to reproduce, environment, and verbose logs.
 - **GitHub Wiki:** [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents), [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills), [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands), [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers), [Customization Guide](https://github.com/fisherk2/codice-opencode/wiki/Customization-Guide).

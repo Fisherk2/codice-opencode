@@ -36,14 +36,15 @@ export class TemplateResolver {
 	 *   equals the package/project root. This works for both local development and npm
 	 *   package execution (e.g. `bunx @fisherk2-dev/codice`).
 	 *
-	 * - **Compiled mode** (standalone binary): resolves the template directory
-	 *   relative to the binary location.
-	 *
 	 * - **Fallback**: uses the current working directory for backward compatibility
 	 *   with pre-v1.0.0 usage.
 	 *
 	 * Source: Template file location convention from SPEC.md — template files
 	 * are always in a `template/` directory at the project or package root.
+	 *
+	 * Note: Compiled binary mode was removed in v1.2.0 (ADR-011). The old binary
+	 * resolution path is preserved as a no-op fallback for any remaining pre-v1.2
+	 * binaries still in use.
 	 */
 	static detectTemplateRoot(): string {
 		// Path 1: Source/bunx mode (repo root or npm package)
@@ -57,8 +58,8 @@ export class TemplateResolver {
 			return sourcePath;
 		}
 
-		// Path 2: Compiled mode (standalone binary)
-		// process.argv[0] is the compiled binary path; fallback to process.execPath
+		// Path 2: Legacy compiled mode (pre-v1.2.0 binaries only)
+		// Kept for backward compatibility with any remaining compiled binaries.
 		const binaryDir = path.dirname(process.argv[0] ?? process.execPath);
 		const binaryRelativePath = path.resolve(binaryDir, `../${TEMPLATE_DIR_NAME}`);
 		if (fs.existsSync(binaryRelativePath)) {
@@ -69,7 +70,7 @@ export class TemplateResolver {
 		const cwdPath = path.resolve(process.cwd(), TEMPLATE_DIR_NAME);
 		// biome-ignore lint/suspicious/noConsole: production warning for missing template
 		console.warn(
-			`[warn] Template not found via source (${sourcePath}) or compiled binary path ` +
+			`[warn] Template not found via source (${sourcePath}) or binary path ` +
 				`(${binaryRelativePath}). Falling back to current working directory: ${cwdPath}. ` +
 				"Run `codice` from the project root, or ensure the template directory is present.",
 		);

@@ -279,6 +279,6 @@ ls -la .opencode/agents .opencode/commands .opencode/skills
 - **When reporting a bug**, include:
   - Your operating system and version
   - Códice version (`codice --version`)
-  - How you ran the installer (bunx, npx, or binary)
+  - How you ran the installer (bunx or npx)
   - The full output with `--verbose` flag
   - Steps to reproduce the issue

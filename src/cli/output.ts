@@ -6,12 +6,11 @@
  */
 
 // ---------------------------------------------------------------------------
-// Binary version
+// Version
 // ---------------------------------------------------------------------------
 
-/** Compiled-in binary version (also used for version file).
- * Reads from package.json — works in source mode (bun run, bunx)
- * and compiled binary mode (package.json is bundled at compile time). */
+/** Package version (also used for version file).
+ * Reads from package.json — works in all execution modes (bun run, bunx, npx). */
 import { VERSION } from "./version";
 
 export { VERSION };
