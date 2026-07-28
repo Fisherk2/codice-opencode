@@ -52,7 +52,7 @@ The system partitions the template into **three mutually exclusive categories**:
 | `commands/` | **Obligatorio** | Command schemas are installer-managed. |
 | `.opencode/` | **Obligatorio** | Core OpenCode configuration directory. |
 | `skills/` | **Obligatorio** | Skill definitions are installer-managed. |
-| `references/` | **Obligatorio** | Reference files are installer-managed. |
+| `skills/<name>/references/` | **Obligatorio** (sub-path of skills) | Reference files are managed per-skill via their parent's `skills/` classification. |
 | `scripts/` | **Opcional** | Utility scripts; user may add their own. |
 | `tasks/` | **Estandar** | Task definitions; user may extend. |
 | `docs/` | **Estandar** (with exceptions) | General documentation; see §2.3. |

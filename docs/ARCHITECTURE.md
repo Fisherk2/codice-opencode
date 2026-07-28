@@ -18,6 +18,7 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 | [ADR-009](../specs/adr/adr-009-gitignore-post-install.md) | Post-Installation Gitignore Generation | Accepted | IGitignoreCreator port + BunGitignoreCreator adapter for npm-compatible gitignore generation |
 | [ADR-010](../specs/adr/adr-010-no-template-copy-flag.md) | noTemplateCopy Flag for Virtual Manifest Entries | Accepted | `noTemplateCopy?` field on FileRule for entries whose content is generated post-installation (e.g., `.devin/` symlinks) |
 | [ADR-011](../specs/adr/adr-011-binary-removal.md) | Binary Removal | Accepted | npm/bunx as sole distribution; binary compilation removed |
+| [ADR-012](../specs/adr/adr-012-references-co-location.md) | References Co-location | Accepted | References co-located with skills, exposed via `reference` section |
 
 > **Note:** `TemplateResolver` and `AtomicStager` are extracted classes (not full ADRs). They are SRP-based refactorings of `BunFileSystem` that follow the existing ADR-003 (atomic staging) pattern.
 

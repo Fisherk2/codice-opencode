@@ -66,7 +66,6 @@ your-project/
 ├── docs/                      # Documentation templates
 ├── specs/                     # Modular specifications and ADRs
 ├── tasks/                     # Task breakdowns (created by /plan)
-├── references/                # Engineering reference materials
 ├── .opencode/
 │   ├── plugins/               # SDD pipeline and orchestrator plugins
 │   └── agents/ → agents/      # Symlink to agents directory

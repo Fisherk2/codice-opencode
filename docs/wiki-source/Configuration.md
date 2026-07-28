@@ -259,6 +259,52 @@ Add your own files here if there are documents you want the model to always know
 
 ---
 
+## References — Skill Reference Material
+
+The `reference` section configures local directories containing reference material that agents can load on demand. The template ships with **18 reference entries** — one per skill that has a `references/` subdirectory:
+
+```json
+"reference": {
+  "clean-code": {
+    "path": "./skills/clean-code/references",
+    "description": "Reference materials for clean code principles, naming, functions, and formatting"
+  },
+  "ui-ux-design-pro": {
+    "path": "./skills/ui-ux-design-pro/references",
+    "description": "Reference materials for UI/UX design: typography, color, spacing, tokens, accessibility"
+  }
+}
+```
+
+### Fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `path` | ✅ | Relative path to the reference directory (from `opencode.json`) |
+| `description` | ✅ | Plain-language description to help the agent decide when to load this reference |
+| `hidden` | ❌ | If `true`, hides the reference from TUI listings (default: `false`) |
+
+### How to Use
+
+In the OpenCode TUI, type `@<skill-name>` to load the skill's reference material into the current conversation. For example, `@clean-code` loads all references from `skills/clean-code/references/`.
+
+### Add a Custom Reference
+
+To add your own reference directory:
+
+```json
+"reference": {
+  "my-docs": {
+    "path": "./docs/references",
+    "description": "Project-specific architecture decisions and API contracts"
+  }
+}
+```
+
+> **Official docs:** [opencode.ai/docs/references](https://opencode.ai/docs/references) — Full reference for the configuration format.
+
+---
+
 ## Permissions — Security Boundaries
 
 The `permission` section controls what agents can do. The template uses a **default-deny** model: most operations require explicit approval, while safe read-only commands are pre-approved.

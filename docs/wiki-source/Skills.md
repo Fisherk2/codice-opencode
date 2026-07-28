@@ -8,13 +8,25 @@ Skills are the workspace's reusable knowledge base. Each skill is a Markdown fil
 
 ## What Skills Are
 
-A skill is a specialized instruction set stored in `skills/<skill-name>/SKILL.md`. Each skill has:
+A skill is a specialized instruction set stored in `skills/<skill-name>/`. Each skill directory contains:
 
+- **`SKILL.md`** (required) — The skill workflow with YAML frontmatter, numbered steps, and exit criteria.
+- **`references/`** (optional) — Extended reference material co-located with the skill. Loaded via OpenCode's `reference` section in `opencode.json`.
+
+```
+skills/<skill-name>/
+├── SKILL.md              # Required: skill workflow
+└── references/           # Optional: co-located reference material
+    ├── topic-1.md
+    └── topic-2.md
+```
+
+The `SKILL.md` file has:
 - **YAML frontmatter** — Metadata including a machine-readable `name` and a plain-language `description` that helps the agent decide when the skill applies.
 - **Numbered steps** — A concrete workflow the agent follows, from pre-flight checks through execution to verification.
 - **Exit criteria** — Clear conditions that define when the task is done.
 
-Skills are not scripts — they do not execute code on their own. Instead, they are **absorbed into the agent's context** when referenced, guiding the agent's reasoning and actions. Any agent can load any skill at any time by referencing `@skills/<skill-name>/SKILL.md` in its instructions.
+The `references/` subdirectory extends the skill with deeper knowledge without bloating the `SKILL.md`. References are exposed via the `reference` section in `opencode.json` and accessed by invoking `@<skill-name>` in the OpenCode TUI.
 
 ```
 skills/
@@ -27,7 +39,7 @@ skills/
 ├── obsidian-vault/SKILL.md              # Vault management and organization
 ├── obsidian-markdown/SKILL.md           # Obsidian Flavored Markdown syntax
 ├── obsidian-cli/SKILL.md                # Obsidian CLI command reference
-└── ... (52 skill directories total)
+└── ... (52 skill directories total, many with references/ subdirectories)
 ```
 
 ---

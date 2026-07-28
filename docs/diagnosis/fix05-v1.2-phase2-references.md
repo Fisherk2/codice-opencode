@@ -166,3 +166,47 @@ The `reference` section in `opencode.json` is a native OpenCode feature that was
 ---
 
 _Diagnosed by Quetzalcoatl (Visionary Sage) — 2026-07-27_
+
+---
+
+## Results (2026-07-28)
+
+FEV-12 has been implemented. Here are the final results:
+
+### Metrics
+
+| Metric | Value |
+|--------|-------|
+| Reference files relocated | 59 (57 .md + 2 non-.md) |
+| Skills with references/ subdirectories | 18 (15 from mapping + 3 pre-existing) |
+| Confidence: HIGH (direct SKILL.md match) | 51 files |
+| Confidence: LOW (manual override) | 8 files |
+| Entries in `reference` section | 18 |
+| Manifest entries removed | `references` entry (mandatory count: 8→7) |
+| SKILL.md paths updated | 49 references across 5 files |
+| Tests passing | 593 pass, 0 fail |
+
+### Skills Receiving References
+
+| Skill | Files | Example References |
+|-------|-------|-------------------|
+| `ui-ux-design-pro` | 13 | typography, color system, spacing, tokens |
+| `architecture-diagrams` | 10 | C4, UML, deployment, sequence diagrams |
+| `clean-ddd-hexagonal` | 7 | DDD strategic/tactical, hexagonal, CQRS |
+| `clean-code` | 6 | naming, functions, formatting, code smells |
+| `refactoring-patterns` | 6 | all refactoring-* files |
+| `crafting-effective-readmes` | 6 | art-of-readme, standard-readme spec |
+| `solid` | 3 | SOLID principles, object design, TDD |
+| Others (10 skills) | 1-2 each | |
+
+### Lessons Learned
+
+1. **The 3-level detection algorithm was effective.** 51/59 files (86%) had direct SKILL.md mentions.
+2. **Cross-reference analysis confirmed clusters** but did not change any assignments — all 59 files mapped cleanly to one skill.
+3. **6 orphan files** (no SKILL.md references) were resolved via manual content analysis. All 6 belonged to `crafting-effective-readmes` (README-related) or `ui-ux-design-pro` (icon-patterns).
+4. **2 non-.md files** (`arch-migration-template.sql`, `arch-validate-schema.sh`) were in the references directory and belong to `db-migration`.
+5. **3 skills already had pre-existing `references/` subdirectories** (baoyu-format-markdown, baoyu-url-to-markdown, obsidian-markdown) — these were already following the co-located pattern.
+
+---
+
+_Implementado por Tlaloc — 2026-07-28_
