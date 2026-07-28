@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.2.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-11 (FEV-6 ✅ Completo, FEV-7 ✅ Completo, FEV-8 ✅ Completo, FEV-9 ✅ Completo, FEV-10 ✅ Completo, Code review ✅) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-27 (FEV-11 📋 Pendiente, FEV-12 📋 Pendiente, FEV-13 📋 Pendiente, FEV-14 📋 Pendiente, FEV-15 📋 Pendiente) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -1473,6 +1473,225 @@ Fase final de v1.1.0. Implementación de 5 items del catálogo TECH_DEBT: cobert
 
 ---
 
+### Fase FEV-11 — Binary Removal (v1.2 Phase 1)
+
+**Fecha:** 2026-07-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 📋 Pendiente
+**Diagnóstico:** [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md)
+
+#### Contexto
+
+Issue #46 identifica que los binarios compilados son demasiado grandes (74MB para Linux, similar para macOS/Windows) y representan una carga de mantenimiento innecesaria. La distribución principal es vía npm/bunx, por lo que los binarios son redundantes.
+
+**Propuesta:** Eliminar toda la lógica de compilación y distribución de binarios. La única será vía gestores de paquetes (npm/bunx).
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| FEV11-T1 | Eliminar scripts de compilación de Justfile | `Justfile` | 📋 Pendiente |
+| FEV11-T2 | Eliminar `just build`, `just build:all`, `just release` recipes | `Justfile` | 📋 Pendiente |
+| FEV11-T3 | Eliminar configuración de cross-compilation en CI | `.github/workflows/ci.yml` | 📋 Pendiente |
+| FEV11-T4 | Eliminar job de build en release workflow | `.github/workflows/release.yml` | 📋 Pendiente |
+| FEV11-T5 | Eliminar binarios de assets en releases existentes | GitHub Releases | 📋 Pendiente |
+| FEV11-T6 | Actualizar README: eliminar sección de binarios | `README.md` | 📋 Pendiente |
+| FEV11-T7 | Actualizar CONTRIBUTING.md: eliminar sección de build | `CONTRIBUTING.md` | 📋 Pendiente |
+| FEV11-T8 | Actualizar SPEC.md: eliminar referencias a binarios | `SPEC.md` | 📋 Pendiente |
+| FEV11-T9 | Verificar que bunx funciona correctamente tras eliminación | Tests | 📋 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.1.3 (actual) | Meta v1.2.0-FEV11 |
+|---------|-----------------|-------------------|
+| Tests (pass/fail) | 596 / 0 | ≥596 / 0 |
+| Binarios compilados | 3 (Linux, macOS, Windows) | 0 |
+| Tamaño release assets | ~222MB | ~0MB |
+| `just check` errores | 0 | 0 |
+
+**Criterios de completitud (DoD FEV-11):**
+- [ ] Issue #46 resuelto: binarios eliminados completamente
+- [ ] `just build`, `just build:all`, `just release` eliminados
+- [ ] CI/CD pipeline actualizado sin build steps
+- [ ] README actualizado (sin sección de binarios)
+- [ ] CONTRIBUTING.md actualizado (sin sección de build)
+- [ ] SPEC.md actualizado (sin referencias a binarios)
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+- [ ] bunx funciona correctamente
+
+---
+
+### Fase FEV-12 — References Restructuring (v1.2 Phase 2)
+
+**Fecha:** 2026-07-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 📋 Pendiente
+**Diagnóstico:** [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md)
+
+#### Contexto
+
+Issues #54 y #52 identifican problemas con las referencias en el template:
+- **Issue #54:** Las referencias hardcodeadas en `template/obligatorio/references/` no son configurables ni actualizables por el usuario
+- **Issue #52:** Falta una sección de referencias en `opencode.json` para configurar URLs de documentación
+
+**Propuesta:** Restructurar las referencias para que sean configurables vía `opencode.json` y mantener un directorio de referencias por defecto que pueda ser sobreescrito.
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| FEV12-T1 | Analizar estructura actual de `references/` | `template/obligatorio/references/` | 📋 Pendiente |
+| FEV12-T2 | Añadir sección `references` a `opencode.json` | `template/obligatorio/opencode.json` | 📋 Pendiente |
+| FEV12-T3 | Hacer que `references/` sean opcionales (no siempre copiadas) | `src/domain/entities/FileRuleManifestData.ts` | 📋 Pendiente |
+| FEV12-T4 | Documentar configuración de referencias en Wiki | `docs/wiki-source/` | 📋 Pendiente |
+| FEV12-T5 | Tests para configuración de referencias | `tests/` | 📋 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.1.3 (actual) | Meta v1.2.0-FEV12 |
+|---------|-----------------|-------------------|
+| Tests (pass/fail) | 596 / 0 | ≥596 / 0 |
+| Referencias configurables | 0 | ~10+ |
+| `just check` errores | 0 | 0 |
+
+**Criterios de completitud (DoD FEV-12):**
+- [ ] Issues #54 y #52 resueltos
+- [ ] `opencode.json` tiene sección `references` configurable
+- [ ] `references/` son opcionales en el manifest
+- [ ] Wiki documenta configuración de referencias
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+
+---
+
+### Fase FEV-13 — Documentation Overhaul (v1.2 Phase 3)
+
+**Fecha:** 2026-07-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 📋 Pendiente
+**Diagnóstico:** [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md)
+
+#### Contexto
+
+Issues #51 y #53 identifican problemas de documentación:
+- **Issue #51:** Documentación desactualizada en `docs/` y `template/estandar/docs/` (README.md y CONTRIBUTING.md excluidos por estar bien documentados)
+- **Issue #53:** Acoplamiento excesivo entre el plugin SDD (`sdd-pipeline.ts`) y la documentación al añadir comandos, agentes y skills
+
+**Propuesta:** Refactorizar la documentación para reducir acoplamiento y actualizar contenido desactualizado.
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| FEV13-T1 | Actualizar documentación en `docs/` (excluyendo README.md y CONTRIBUTING.md) | `docs/` | 📋 Pendiente |
+| FEV13-T2 | Actualizar documentación en `template/estandar/docs/` | `template/estandar/docs/` | 📋 Pendiente |
+| FEV13-T3 | Reducir acoplamiento SDD plugin ↔ documentación | `sdd-pipeline.ts` | 📋 Pendiente |
+| FEV13-T4 | Implementar auto-discovery para comandos/agentes/skills | `sdd-pipeline.ts` | 📋 Pendiente |
+| FEV13-T5 | Tests para auto-discovery | `tests/` | 📋 Pendiente |
+| FEV13-T6 | Documentar cambios en Wiki | `docs/wiki-source/` | 📋 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.1.3 (actual) | Meta v1.2.0-FEV13 |
+|---------|-----------------|-------------------|
+| Tests (pass/fail) | 596 / 0 | ≥596 / 0 |
+| Archivos docs actualizados | 0 | ~20+ |
+| `just check` errores | 0 | 0 |
+
+**Criterios de completitud (DoD FEV-13):**
+- [ ] Issues #51 y #53 resueltos
+- [ ] Documentación `docs/` actualizada (excluyendo README.md, CONTRIBUTING.md)
+- [ ] Documentación `template/estandar/docs/` actualizada
+- [ ] SDD plugin con auto-discovery (sin maps hardcodeados)
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+
+---
+
+### Fase FEV-14 — UX Enhancements (v1.2 Phase 4)
+
+**Fecha:** 2026-07-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 📋 Pendiente
+**Diagnóstico:** [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md)
+
+#### Contexto
+
+Issues #47 y #56 identifican mejoras de UX:
+- **Issue #47:** Falta barra de progreso durante la instalación/actualización del workspace
+- **Issue #56:** Falta un comando `/help` para onboarding de usuarios nuevos
+
+**Propuesta:** Implementar barra de progreso con feedback de archivos y crear comando `/help` asignado a Huitzilopochtli.
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| FEV14-T1 | Añadir progress callback a `IFileMergeEngine` | `src/domain/ports/IFileMergeEngine.ts` | 📋 Pendiente |
+| FEV14-T2 | Implementar progress reporting en `FileMergeEngine.execute()` | `src/domain/services/FileMergeEngine.ts` | 📋 Pendiente |
+| FEV14-T3 | Añadir progress bar rendering a `ClackPromptsAdapter` | `src/infrastructure/adapters/ClackPromptsAdapter.ts` | 📋 Pendiente |
+| FEV14-T4 | Conectar progress callback desde use cases al TUI adapter | `src/application/use-cases/*.ts` | 📋 Pendiente |
+| FEV14-T5 | Tests para progress bar | `tests/integration/` | 📋 Pendiente |
+| FEV14-T6 | Crear archivo de comando `/help` | `template/obligatorio/commands/help.md` (nuevo) | 📋 Pendiente |
+| FEV14-T7 | Añadir `/help` a `COMMAND_AGENT_MAP` en sdd-pipeline.ts | `template/obligatorio/.opencode/plugins/sdd-pipeline.ts` | 📋 Pendiente |
+| FEV14-T8 | Añadir `/help` a `INTENT_PATTERNS` en sdd-pipeline.ts | Mismo archivo | 📋 Pendiente |
+| FEV14-T9 | Actualizar Wiki Commands.md con documentación de `/help` | `docs/wiki-source/Commands.md` | 📋 Pendiente |
+| FEV14-T10 | Actualizar README.md sección de comandos | `README.md` | 📋 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.1.3 (actual) | Meta v1.2.0-FEV14 |
+|---------|-----------------|-------------------|
+| Tests (pass/fail) | 596 / 0 | ≥596 / 0 |
+| Comandos SDD | 12 | 13 (+/help) |
+| `just check` errores | 0 | 0 |
+
+**Criterios de completitud (DoD FEV-14):**
+- [ ] Issues #47 y #56 resueltos
+- [ ] Progress bar muestra durante instalación (modos Clean, Project, Update)
+- [ ] Progress muestra: archivo actual, archivos procesados, total, porcentaje, tiempo estimado
+- [ ] Comando `/help` creado con frontmatter correcto
+- [ ] `/help` asignado a Huitzilopochtli
+- [ ] `/help` registrado en `COMMAND_AGENT_MAP` e `INTENT_PATTERNS`
+- [ ] `/help` ofrece 6 opciones vía question tool
+- [ ] Wiki Commands.md actualizado
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+
+---
+
+### Fase FEV-15 — Community Standards (v1.2 Phase 5)
+
+**Fecha:** 2026-07-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 📋 Pendiente
+**Diagnóstico:** [fix08-v1.2-phase5-community.md](diagnosis/fix08-v1.2-phase5-community.md)
+
+#### Contexto
+
+Issue #55 identifica la falta de un Code of Conduct para el proyecto y el template.
+
+**Propuesta:** Añadir `CODE_OF_CONDUCT.md` al proyecto (Contributor Covenant v2.1) y al template (placeholder personalizable).
+
+#### Plan de Implementación
+
+| ID | Descripción | Archivo | Estado |
+|----|-------------|---------|--------|
+| FEV15-T1 | Crear `CODE_OF_CONDUCT.md` para el proyecto | `CODE_OF_CONDUCT.md` (nuevo) | 📋 Pendiente |
+| FEV15-T2 | Crear `template/estandar/CODE_OF_CONDUCT.md` placeholder | `template/estandar/CODE_OF_CONDUCT.md` (nuevo) | 📋 Pendiente |
+| FEV15-T3 | Actualizar README.md con referencia al Code of Conduct | `README.md` | 📋 Pendiente |
+| FEV15-T4 | Actualizar CONTRIBUTING.md con referencia al Code of Conduct | `CONTRIBUTING.md` | 📋 Pendiente |
+
+#### Métricas de Referencia
+
+| Métrica | v1.1.3 (actual) | Meta v1.2.0-FEV15 |
+|---------|-----------------|-------------------|
+| Tests (pass/fail) | 596 / 0 | ≥596 / 0 |
+| Code of Conduct | 0 | 2 (proyecto + template) |
+| `just check` errores | 0 | 0 |
+
+**Criterios de completitud (DoD FEV-15):**
+- [ ] Issue #55 resuelto
+- [ ] `CODE_OF_CONDUCT.md` creado para el proyecto (Contributor Covenant v2.1)
+- [ ] `template/estandar/CODE_OF_CONDUCT.md` creado como placeholder
+- [ ] README.md referencia al Code of Conduct
+- [ ] CONTRIBUTING.md referencia al Code of Conduct
+- [ ] `bun test`: sin regresión
+- [ ] `just check`: 0 errores
+
+---
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -1484,7 +1703,7 @@ Fase final de v1.1.0. Implementación de 5 items del catálogo TECH_DEBT: cobert
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 586 tests, 0 fail, 1255 expects
+- **Tests unit+int:** 596 tests, 0 fail, 1289 expects
 - **Tests E2E:** 15/15 pasando (14 existentes + 1 update existing project)
 - **Coverage:** 98.89% funciones / 96.98% líneas
 - **Domain coverage:** 100% líneas
@@ -1523,9 +1742,14 @@ Fase final de v1.1.0. Implementación de 5 items del catálogo TECH_DEBT: cobert
 - **FEV-10 status:** ✅ Completo — 5 TECH_DEBT items resueltos
 - **FEV-10 commits:** `a908afd`, `74cb066`, `d8ca221` (tests main.ts), `d56fc68` (TS 6.x), `33131a4` (ISP split), `840dc31` (packaging tests), `65b8f8f` (docs) en `feat/workspace-enhancement`
 - **FEV-10 total:** 6 slices, 5+ items completados
-- **Tests actuales:** 586 pass, 0 fail, 1255 expects
+- **Tests actuales:** 596 pass, 0 fail, 1289 expects
 - **Coverage:** 98.89% funciones / 96.98% líneas
 - **V1.1.2 completado:** ✓ Pre-release verified, production release v1.1.2 published.
 - **V1.1.3 completado:** ✓ Hotfix — EPERM on Windows CI, CONTRIBUTING.md simplified.
+- **FEV-11 status:** 📋 Pendiente — Binary Removal (Issue #46, 6h, npm-only distribution)
+- **FEV-12 status:** 📋 Pendiente — References Restructuring (Issues #54, #52, 8h, configurable references)
+- **FEV-13 status:** 📋 Pendiente — Documentation Overhaul (Issues #51, #53, 12h, reduce SDD coupling)
+- **FEV-14 status:** 📋 Pendiente — UX Enhancements (Issues #47, #56, 6h, progress bar + /help command)
+- **FEV-15 status:** 📋 Pendiente — Community Standards (Issue #55, 2h, CODE_OF_CONDUCT.md)
 
 ---
