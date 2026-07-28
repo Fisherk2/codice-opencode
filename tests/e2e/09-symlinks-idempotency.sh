@@ -22,15 +22,13 @@ source "$(dirname "$0")/common.sh"
 
 log_step "FEV-2-B: Symlinks Idempotency E2E"
 
-# Resolve binary (builds if needed)
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+# Resolve CLI (builds if needed)
 
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
 log_info "Test directory: $TEMP_DIR"
 
-# Copy template to temp dir so the binary can find it
+# Copy template to temp dir so the CLI can find it
 cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 
 # ---------------------------------------------------------------------------

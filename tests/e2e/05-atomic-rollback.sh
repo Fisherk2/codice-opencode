@@ -2,12 +2,12 @@
 #===============================================================================
 # F4-T6: Atomic Rollback E2E
 #
-# Scenario: Run binary, send SIGINT during operation
+# Scenario: Run CLI, send SIGINT during operation
 # Expected: Destination directory remains in pre-operation state
 #           Staging directory is cleaned up after interruption
 #
 # This tests the SIGINT handler which calls cleanStaging() and exits.
-# If the binary completes before SIGINT can be sent (fast execution),
+# If the CLI completes before SIGINT can be sent (fast execution),
 # the test verifies that the installation completed cleanly instead.
 #===============================================================================
 
@@ -20,9 +20,7 @@ source "$(dirname "$0")/common.sh"
 
 log_step "F4-T6: Atomic Rollback E2E"
 
-# Resolve binary
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+# Resolve CLI
 
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
@@ -43,8 +41,8 @@ echo "# EXISTING README" > "$TEMP_DIR/README.md"
 
 log_info "Starting $CODICE_BINARY --clean --force in background in $TEMP_DIR..."
 
-# Run binary directly from TEMP_DIR
-# Use bash -c with exec so $! captures the binary's PID
+# Run CLI directly from TEMP_DIR
+# Use bash -c with exec so $! captures the CLI's PID
 bash -c "cd '$TEMP_DIR' && exec '$CODICE_BINARY' --clean --force" >/dev/null 2>&1 &
 BINARY_PID=$!
 
@@ -59,8 +57,8 @@ while [[ "$POLLED" -lt "$MAX_POLLS" ]]; do
     if ! kill -0 "$BINARY_PID" 2>/dev/null; then
         # Process already finished — can't test interruption
         wait "$BINARY_PID" 2>/dev/null || true
-        log_warn "Binary completed before SIGINT could be sent (staging too fast)"
-        log_pass "Binary completed successfully — no rollback test needed"
+        log_warn "CLI completed before SIGINT could be sent (staging too fast)"
+        log_pass "CLI completed successfully — no rollback test needed"
         ROLLBACK_TESTED=true
         break
     fi
@@ -80,7 +78,7 @@ while [[ "$POLLED" -lt "$MAX_POLLS" ]]; do
         wait "$BINARY_PID" 2>/dev/null
         EXIT_CODE=$?
         set -e
-        log_info "Binary exited with code $EXIT_CODE (expected 130 for SIGINT)"
+        log_info "CLI exited with code $EXIT_CODE (expected 130 for SIGINT)"
 
         ROLLBACK_TESTED=true
         break
@@ -99,7 +97,7 @@ if [[ "$ROLLBACK_TESTED" == "false" ]]; then
     wait "$BINARY_PID" 2>/dev/null
     EXIT_CODE=$?
     set -e
-    log_info "Binary exited with code $EXIT_CODE"
+    log_info "CLI exited with code $EXIT_CODE"
 fi
 
 # ---------------------------------------------------------------------------
@@ -122,7 +120,7 @@ fi
 log_pass "original.txt preserved"
 
 # Check the original estandar file was preserved (should NOT have been overwritten
-# since the binary was interrupted before commit)
+# since the CLI was interrupted before commit)
 if [[ -f "$TEMP_DIR/README.md" ]]; then
     README_CONTENT=$(head -1 "$TEMP_DIR/README.md" 2>/dev/null || echo "")
     if [[ "$README_CONTENT" != "# EXISTING README" ]]; then

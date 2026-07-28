@@ -21,15 +21,13 @@ source "$(dirname "$0")/common.sh"
 
 log_step "FEV-2-B: Symlinks Clean Install E2E"
 
-# Resolve binary (builds if needed)
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+# Resolve CLI (builds if needed)
 
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
 log_info "Test directory: $TEMP_DIR"
 
-# Copy template to temp dir so the binary can find it
+# Copy template to temp dir so the CLI can find it
 cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 
 # ---------------------------------------------------------------------------
@@ -41,10 +39,10 @@ EXIT_CODE=0
 (cd "$TEMP_DIR" && "$CODICE_BINARY" --clean --force) 2>/dev/null || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     exit 1
 fi
-log_pass "Binary exited with code 0"
+log_pass "CLI exited with code 0"
 
 # ---------------------------------------------------------------------------
 # Assertions — .opencode/ symlinks (3)

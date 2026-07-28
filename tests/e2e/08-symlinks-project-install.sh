@@ -16,9 +16,7 @@ source "$(dirname "$0")/common.sh"
 
 log_step "FEV-2-B: Symlinks Project Install E2E"
 
-# Resolve binary (builds if needed)
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+# Resolve CLI (builds if needed)
 
 # ---------------------------------------------------------------------------
 # Test 1: Project Install WITHOUT .devin → only 3 .opencode symlinks
@@ -36,10 +34,10 @@ EXIT_CODE=0
 (cd "$TEMP_DIR1" && "$CODICE_BINARY" --project --force) 2>/dev/null || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     exit 1
 fi
-log_pass "Binary exited with code 0"
+log_pass "CLI exited with code 0"
 
 # Verify .opencode symlinks exist (always created)
 assert_symlink_exists "$TEMP_DIR1/.opencode/agents"

@@ -24,7 +24,6 @@
   },
   "scripts": {
     "dev": "bun run src/cli/main.ts --verbose",
-    "build": "bun build --compile src/cli/main.ts --outfile ./dist/codice-linux",
     "test": "bun test tests/ --path-ignore-patterns=template/obligatorio/skills/**,skills/**",
     "test:unit": "bun test tests/unit/ --path-ignore-patterns=template/obligatorio/skills/**,skills/**",
     "test:integration": "bun test tests/integration/ --path-ignore-patterns=template/obligatorio/skills/**,skills/**",
@@ -33,7 +32,7 @@
     "format": "bunx @biomejs/biome format --write src/ tests/",
     "format:check": "bunx @biomejs/biome ci src/ tests/",
     "check": "bunx @biomejs/biome ci src/ tests/ && bun run tsc --noEmit",
-    "clean": "rm -rf dist/*"
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",

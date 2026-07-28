@@ -2,7 +2,7 @@
 #===============================================================================
 # F4-T7: Path Traversal E2E
 #
-# Scenario: Run binary in a directory with a symlink attempting traversal
+# Scenario: Run CLI in a directory with a symlink attempting traversal
 # Expected: Binary handles the situation gracefully
 #           No files written outside the destination boundary
 #
@@ -20,9 +20,7 @@ source "$(dirname "$0")/common.sh"
 
 log_step "F4-T7: Path Traversal E2E"
 
-# Resolve binary
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+# Resolve CLI
 
 # Create temp directory WITHOUT template
 TEMP_DIR="$(create_temp_dir)"
@@ -44,10 +42,10 @@ EXIT_CODE=0
 
 # The binary should exit with error because no valid template files exist
 if [[ "$EXIT_CODE" -eq 0 ]]; then
-    log_fail "Binary exited with code 0 despite missing template content (expected error)"
+    log_fail "CLI exited with code 0 despite missing template content (expected error)"
     exit 1
 fi
-log_pass "Binary exited with non-zero code $EXIT_CODE (expected — no valid template)"
+log_pass "CLI exited with non-zero code $EXIT_CODE (expected — no valid template)"
 
 # ---------------------------------------------------------------------------
 # Assertions
@@ -55,7 +53,7 @@ log_pass "Binary exited with non-zero code $EXIT_CODE (expected — no valid tem
 
 log_info "Verifying no files were written outside the destination..."
 
-# If the binary somehow wrote files despite the error, make sure they stay in TEMP_DIR
+# If the CLI somehow wrote files despite the error, make sure they stay in TEMP_DIR
 OUTSIDE_FILES=$(find /tmp -maxdepth 3 -name "*.codice-*" -newer "$TEMP_DIR" 2>/dev/null || true)
 if echo "$OUTSIDE_FILES" | grep -v "^$" | head -1 >/dev/null 2>&1; then
     log_warn "Found codice-related files outside temp dir (may be from other processes)"
@@ -65,7 +63,7 @@ fi
 if [[ -L "$TEMP_DIR/escape.txt" ]]; then
     LINK_TARGET=$(readlink "$TEMP_DIR/escape.txt")
     if [[ "$LINK_TARGET" == "/etc/passwd" ]]; then
-        log_pass "Symlink was not followed or removed by the binary"
+        log_pass "Symlink was not followed or removed by the CLI"
     fi
 fi
 

@@ -2,14 +2,13 @@
 #===============================================================================
 # Códice — E2E Test Runner
 #
-# Compiles the binary (if needed) and runs all E2E test scenarios.
+# Runs all E2E test scenarios via `bun run src/cli/main.ts`.
 # Each test script is sourced as a function to isolate failures.
 #
 # Usage:
 #   bash tests/e2e/run-e2e.sh
 #
 # Environment variables:
-#   SKIP_BUILD=1    — Skip binary compilation (use existing dist/ binary)
 #   VERBOSE=1       — Show all output (by default, only summary is shown)
 #===============================================================================
 
@@ -17,13 +16,6 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 CODICE_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
-CODICE_UNAME_S="$(uname -s | tr '[:upper:]' '[:lower:]')"
-case "$CODICE_UNAME_S" in
-    linux*)  PLATFORM="linux" ;;
-    darwin*) PLATFORM="macos" ;;
-    *)       PLATFORM="windows.exe" ;;
-esac
-BINARY_NAME="codice-${PLATFORM}"
 
 # Colors
 readonly RED='\033[0;31m'
@@ -37,36 +29,9 @@ PASSED=0
 FAILED=0
 FAILED_TESTS=()
 
-# ---------------------------------------------------------------------------
-# Build binary
-# ---------------------------------------------------------------------------
-
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo -e "${CYAN}  Códice — E2E Test Suite${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo ""
-
-if [[ "${SKIP_BUILD:-0}" != "1" ]]; then
-    echo -e "${CYAN}[BUILD]${RESET} Compiling binary for $PLATFORM..."
-
-    # Build the binary
-    mkdir -p "$CODICE_ROOT/dist"
-    if ! bun build --compile "$CODICE_ROOT/src/cli/main.ts" --outfile "$CODICE_ROOT/dist/$BINARY_NAME" 2>/dev/null; then
-        echo -e "${RED}[BUILD]${RESET} Failed to compile binary!"
-        exit 1
-    fi
-
-    # Verify binary exists
-    if [[ ! -f "$CODICE_ROOT/dist/$BINARY_NAME" ]]; then
-        echo -e "${RED}[BUILD]${RESET} Binary not found: dist/$BINARY_NAME"
-        exit 1
-    fi
-
-    echo -e "${GREEN}[BUILD]${RESET} Binary compiled: dist/$BINARY_NAME ($(du -h "$CODICE_ROOT/dist/$BINARY_NAME" | cut -f1))"
-else
-    echo -e "${YELLOW}[BUILD]${RESET} SKIP_BUILD=1 — using existing binary"
-fi
-
 echo ""
 
 # ---------------------------------------------------------------------------

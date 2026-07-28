@@ -19,9 +19,7 @@ source "$(dirname "$0")/common.sh"
 
 log_step "FEV-2-D: Clean Install Optional Menu E2E"
 
-# Resolve binary (builds if needed)
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+# Resolve CLI (builds if needed)
 
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
@@ -39,11 +37,11 @@ EXIT_CODE=0
 (cd "$TEMP_DIR" && "$CODICE_BINARY" --clean --force) 2>"$STDERR_LOG" || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     [[ -s "$STDERR_LOG" ]] && echo "    Stderr: $(cat "$STDERR_LOG")" >&2
     exit 1
 fi
-log_pass "Binary exited with code 0"
+log_pass "CLI exited with code 0"
 
 # Verify stderr has no security warnings
 if [[ -s "$STDERR_LOG" ]]; then

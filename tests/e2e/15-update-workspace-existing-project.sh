@@ -26,9 +26,7 @@ source "$(dirname "$0")/common.sh"
 
 log_step "FEV3-T6: Update Workspace Existing Project E2E"
 
-# Resolve binary
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+
 
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
@@ -78,10 +76,10 @@ STDOUT_FILE="$TEMP_DIR/stdout.log"
 stop_mock_server
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     exit 1
 fi
-log_pass "Binary exited with code 0"
+log_pass "CLI exited with code 0"
 
 # ---------------------------------------------------------------------------
 # Assertions
