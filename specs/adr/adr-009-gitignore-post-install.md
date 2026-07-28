@@ -117,7 +117,7 @@ Hardcode the `.gitignore` content as a TypeScript string constant in the source 
 
 ## Compliance
 
-- ADR-002 (Bun compilation) remains valid — compiled binary path is preserved
+- ADR-002 (Bun compilation) — superseded by ADR-011 for binary compilation; Bun remains the development runtime
 - ADR-003 (Atomic staging) is unaffected — gitignore is created after staging completes
 - ADR-004 (@clack/prompts) is unaffected — TUI layer is not involved in gitignore generation
 - ADR-005 (`--dest` flag) is unaffected — gitignore is written relative to the destination directory

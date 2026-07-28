@@ -40,10 +40,4 @@ dir = "~/.bun/install/cache"
 # Don't disable the cache
 disable = false
 
-# ─── Build Settings (legacy — binary compilation removed in v1.2.0, ADR-011) ────
 
-# These cross-compilation flags were used to produce standalone binaries:
-#   bun build --compile --target=bun-linux-x64-latest
-#   bun build --compile --target=bun-darwin-x64-latest
-#   bun build --compile --target=bun-windows-x64-latest
-# Binary compilation was removed in v1.2.0. These flags are kept for historical reference.

@@ -39,11 +39,11 @@ echo "# EXISTING README" > "$TEMP_DIR/README.md"
 # Execute — run binary in background and try to send SIGINT
 # ---------------------------------------------------------------------------
 
-log_info "Starting $CODICE_BINARY --clean --force in background in $TEMP_DIR..."
+log_info "Starting $CODICE_CLI --clean --force in background in $TEMP_DIR..."
 
 # Run CLI directly from TEMP_DIR
 # Use bash -c with exec so $! captures the CLI's PID
-bash -c "cd '$TEMP_DIR' && exec '$CODICE_BINARY' --clean --force" >/dev/null 2>&1 &
+bash -c "cd '$TEMP_DIR' && exec $CODICE_CLI --clean --force" >/dev/null 2>&1 &
 BINARY_PID=$!
 
 # Wait briefly and try to send SIGINT if the process is still running

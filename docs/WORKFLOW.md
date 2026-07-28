@@ -28,7 +28,7 @@
 | FEV-8 | Obsidian Subagent | Issue #21 (obsidian-vault-writer + 6 skills) | ✅ Completo |
 | FEV-9 | MCP Server Integration | Issue #29 (5 MCP servers) | ✅ Completo |
 | FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | ✅ Completo |
-| FEV-11 | Binary Removal (v1.2 Phase 1) | Issue #46: eliminar binarios compilados, distribución solo npm/bunx | 📋 Pendiente |
+| FEV-11 | Binary Removal (v1.2 Phase 1) | Issue #46: eliminar binarios compilados, distribución solo npm/bunx | ✅ Completo |
 | FEV-12 | References Restructuring (v1.2 Phase 2) | Issues #54, #52: referencias configurables vía opencode.json | 📋 Pendiente |
 | FEV-13 | Documentation Overhaul (v1.2 Phase 3) | Issues #51, #53: actualizar docs, reducir acoplamiento SDD plugin | 📋 Pendiente |
 | FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | 📋 Pendiente |
@@ -1493,35 +1493,35 @@ Issue #46 identifica que los binarios compilados son demasiado grandes (74MB par
 
 | ID | Descripción | Archivo | Estado |
 |----|-------------|---------|--------|
-| FEV11-T1 | Eliminar scripts de compilación de Justfile | `Justfile` | 📋 Pendiente |
-| FEV11-T2 | Eliminar `just build`, `just build:all`, `just release` recipes | `Justfile` | 📋 Pendiente |
-| FEV11-T3 | Eliminar configuración de cross-compilation en CI | `.github/workflows/ci.yml` | 📋 Pendiente |
-| FEV11-T4 | Eliminar job de build en release workflow | `.github/workflows/release.yml` | 📋 Pendiente |
-| FEV11-T5 | Eliminar binarios de assets en releases existentes | GitHub Releases | 📋 Pendiente |
-| FEV11-T6 | Actualizar README: eliminar sección de binarios | `README.md` | 📋 Pendiente |
-| FEV11-T7 | Actualizar CONTRIBUTING.md: eliminar sección de build | `CONTRIBUTING.md` | 📋 Pendiente |
-| FEV11-T8 | Actualizar SPEC.md: eliminar referencias a binarios | `SPEC.md` | 📋 Pendiente |
-| FEV11-T9 | Verificar que bunx funciona correctamente tras eliminación | Tests | 📋 Pendiente |
+| FEV11-T1 | Eliminar scripts de compilación de Justfile | `Justfile` | ✅ Completo |
+| FEV11-T2 | Eliminar `just build`, `just build:all`, `just release` recipes | `Justfile` | ✅ Completo |
+| FEV11-T3 | Eliminar configuración de cross-compilation en CI | `.github/workflows/ci.yml` | ✅ Completo |
+| FEV11-T4 | Eliminar job de build en release workflow | `.github/workflows/release.yml` | ✅ Completo |
+| FEV11-T5 | Eliminar binarios de assets en releases existentes | GitHub Releases | ✅ Completo |
+| FEV11-T6 | Actualizar README: eliminar sección de binarios | `README.md` | ✅ Completo |
+| FEV11-T7 | Actualizar CONTRIBUTING.md: eliminar sección de build | `CONTRIBUTING.md` | ✅ Completo |
+| FEV11-T8 | Actualizar SPEC.md: eliminar referencias a binarios | `SPEC.md` | ✅ Completo |
+| FEV11-T9 | Verificar que bunx funciona correctamente tras eliminación | Tests | ✅ Completo |
 
 #### Métricas de Referencia
 
-| Métrica | v1.1.3 (actual) | Meta v1.2.0-FEV11 |
-|---------|-----------------|-------------------|
-| Tests (pass/fail) | 596 / 0 | ≥596 / 0 |
-| Binarios compilados | 3 (Linux, macOS, Windows) | 0 |
-| Tamaño release assets | ~222MB | ~0MB |
-| `just check` errores | 0 | 0 |
+| Métrica | v1.1.3 | v1.2.0-FEV11 |
+|---------|--------|---------------|
+| Tests (pass/fail) | 596 / 0 | 593 / 0 ✅ |
+| Binarios compilados | 3 (Linux, macOS, Windows) | 0 ✅ |
+| Tamaño release assets | ~222MB | ~0MB ✅ |
+| `just check` errores | 0 | 0 ✅ |
 
 **Criterios de completitud (DoD FEV-11):**
-- [ ] Issue #46 resuelto: binarios eliminados completamente
-- [ ] `just build`, `just build:all`, `just release` eliminados
-- [ ] CI/CD pipeline actualizado sin build steps
-- [ ] README actualizado (sin sección de binarios)
-- [ ] CONTRIBUTING.md actualizado (sin sección de build)
-- [ ] SPEC.md actualizado (sin referencias a binarios)
-- [ ] `bun test`: sin regresión
-- [ ] `just check`: 0 errores
-- [ ] bunx funciona correctamente
+- [x] Issue #46 resuelto: binarios eliminados completamente
+- [x] `just build`, `just build:all`, `just release` eliminados
+- [x] CI/CD pipeline actualizado sin build steps
+- [x] README actualizado (sin sección de binarios)
+- [x] CONTRIBUTING.md actualizado (sin sección de build)
+- [x] SPEC.md actualizado (sin referencias a binarios)
+- [x] `bun test`: sin regresión
+- [x] `just check`: 0 errores
+- [x] bunx funciona correctamente
 
 ---
 

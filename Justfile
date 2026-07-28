@@ -48,5 +48,6 @@ test-packaging-skip:
 test-e2e:
     bash tests/e2e/run-e2e.sh
 
+# Remove legacy dist/ directory (binary compilation removed in v1.2.0; kept for cleanup of old artifacts)
 clean:
     rm -rf dist

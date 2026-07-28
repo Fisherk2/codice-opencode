@@ -57,9 +57,9 @@ log_info "Mock GitHub API pointing to $CODICE_GITHUB_API_URL"
 # Execute
 # ---------------------------------------------------------------------------
 
-log_info "Running: $CODICE_BINARY --update --force in $TEMP_DIR"
+log_info "Running: $CODICE_CLI --update --force in $TEMP_DIR"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" "$CODICE_BINARY" --update --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" $CODICE_CLI --update --force) 2>/dev/null || EXIT_CODE=$?
 
 # Stop mock server
 stop_mock_server
@@ -123,7 +123,7 @@ if [[ ! -f "$TEMP_DIR/.codice-version" ]]; then
 fi
 
 # Get the CLI version (from package.json)
-CLI_VERSION=$("$CODICE_BINARY" --version 2>/dev/null | sed 's/^Códice v//')
+CLI_VERSION=$($CODICE_CLI --version 2>/dev/null | sed 's/^Códice v//')
 log_info "CLI version: $CLI_VERSION"
 
 VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")

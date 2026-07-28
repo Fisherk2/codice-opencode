@@ -31,9 +31,9 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 # Execute
 # ---------------------------------------------------------------------------
 
-log_info "Running: $CODICE_BINARY --project --force in $TEMP_DIR"
+log_info "Running: $CODICE_CLI --project --force in $TEMP_DIR"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --project --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && $CODICE_CLI --project --force) 2>/dev/null || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
     log_fail "CLI exited with code $EXIT_CODE (expected 0)"

@@ -39,7 +39,7 @@ Códice automates all three scenarios with a single command, zero external depen
 | TUI Framework | @clack/prompts | Latest stable | Zero-dependency tree, modern UX, ideal for CLI tools, lightweight spinner and prompt primitives |
 | Testing Framework | bun:test | Bundled with Bun | Native test runner, built-in mocking, coverage reporting, no additional dependencies |
 | Linting & Formatting | Biome (or eslint + prettier) | Latest stable | Fast formatting, consistent code style enforcement in CI |
-| Task Runner | Just | Latest stable | Cross-platform task definitions (`just setup`, `just test`, `just build`) |
+| Task Runner | Just | Latest stable | Cross-platform task definitions (`just setup`, `just test`, `just check`) |
 | CI/CD Platform | GitHub Actions | Native | Tight integration with repository, free runners for Linux/macOS/Windows, automatic release asset attachment |
 | Version Parsing | semver | Latest stable | Standard semantic version comparison, tag validation |
 

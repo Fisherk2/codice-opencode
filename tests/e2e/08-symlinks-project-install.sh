@@ -29,9 +29,9 @@ log_info "Test directory: $TEMP_DIR1"
 
 cp -r "$CODICE_ROOT/template" "$TEMP_DIR1/template"
 
-log_info "Running: $CODICE_BINARY --project --force in $TEMP_DIR1"
+log_info "Running: $CODICE_CLI --project --force in $TEMP_DIR1"
 EXIT_CODE=0
-(cd "$TEMP_DIR1" && "$CODICE_BINARY" --project --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR1" && $CODICE_CLI --project --force) 2>/dev/null || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
     log_fail "CLI exited with code $EXIT_CODE (expected 0)"
@@ -77,7 +77,7 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR2/template"
 # .devin symlinks (since .devin is always copied in clean mode).
 log_info "Using --clean --force as proxy for 'select all optionals including .devin'"
 EXIT_CODE2=0
-(cd "$TEMP_DIR2" && "$CODICE_BINARY" --clean --force) 2>/dev/null || EXIT_CODE2=$?
+(cd "$TEMP_DIR2" && $CODICE_CLI --clean --force) 2>/dev/null || EXIT_CODE2=$?
 
 if [[ "$EXIT_CODE2" -ne 0 ]]; then
     log_fail "Clean install exited with code $EXIT_CODE2 (expected 0)"

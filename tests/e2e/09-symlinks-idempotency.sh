@@ -35,9 +35,9 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 # First run
 # ---------------------------------------------------------------------------
 
-log_info "=== First run: $CODICE_BINARY --clean --force ==="
+log_info "=== First run: $CODICE_CLI --clean --force ==="
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --clean --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && $CODICE_CLI --clean --force) 2>/dev/null || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
     log_fail "First run exited with code $EXIT_CODE (expected 0)"
@@ -49,9 +49,9 @@ log_pass "First run exited with code 0"
 # Second run
 # ---------------------------------------------------------------------------
 
-log_info "=== Second run: $CODICE_BINARY --clean --force (idempotency check) ==="
+log_info "=== Second run: $CODICE_CLI --clean --force (idempotency check) ==="
 EXIT_CODE2=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --clean --force) 2>/dev/null || EXIT_CODE2=$?
+(cd "$TEMP_DIR" && $CODICE_CLI --clean --force) 2>/dev/null || EXIT_CODE2=$?
 
 if [[ "$EXIT_CODE2" -ne 0 ]]; then
     log_fail "Second run exited with code $EXIT_CODE2 (expected 0)"

@@ -29,9 +29,9 @@ log_info "Test directory: $TEMP_DIR1"
 
 cp -r "$CODICE_ROOT/template" "$TEMP_DIR1/template"
 
-log_info "Running: $CODICE_BINARY --project --force in $TEMP_DIR1"
+log_info "Running: $CODICE_CLI --project --force in $TEMP_DIR1"
 EXIT_CODE=0
-(cd "$TEMP_DIR1" && "$CODICE_BINARY" --project --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR1" && $CODICE_CLI --project --force) 2>/dev/null || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
     log_fail "CLI exited with code $EXIT_CODE (expected 0)"
@@ -63,9 +63,9 @@ log_info "--- Test 2: .gitignore idempotency (not overwritten) ---"
 echo "# User-customized gitignore" >> "$TEMP_DIR1/.gitignore"
 echo "my-custom-pattern/" >> "$TEMP_DIR1/.gitignore"
 
-log_info "Running: $CODICE_BINARY --project --force again in $TEMP_DIR1"
+log_info "Running: $CODICE_CLI --project --force again in $TEMP_DIR1"
 EXIT_CODE2=0
-(cd "$TEMP_DIR1" && "$CODICE_BINARY" --project --force) 2>/dev/null || EXIT_CODE2=$?
+(cd "$TEMP_DIR1" && $CODICE_CLI --project --force) 2>/dev/null || EXIT_CODE2=$?
 
 if [[ "$EXIT_CODE2" -ne 0 ]]; then
     log_fail "Second run exited with code $EXIT_CODE2 (expected 0)"
@@ -100,9 +100,9 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR3/template"
 # Pre-create a directory at .gitignore path (user may have created manually)
 mkdir -p "$TEMP_DIR3/.gitignore"
 
-log_info "Running: $CODICE_BINARY --project --force in $TEMP_DIR3 (with .gitignore dir)"
+log_info "Running: $CODICE_CLI --project --force in $TEMP_DIR3 (with .gitignore dir)"
 EXIT_CODE3=0
-(cd "$TEMP_DIR3" && "$CODICE_BINARY" --project --force) 2>/dev/null || EXIT_CODE3=$?
+(cd "$TEMP_DIR3" && $CODICE_CLI --project --force) 2>/dev/null || EXIT_CODE3=$?
 
 if [[ "$EXIT_CODE3" -ne 0 ]]; then
     log_fail "Third run exited with code $EXIT_CODE3 (expected 0)"

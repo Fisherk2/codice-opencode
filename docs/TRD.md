@@ -59,7 +59,7 @@ graph TD
 | Capa | Tecnología | Versión | Justificación Arquitectónica |
 |------|------------|---------|------------------------------|
 | **Runtime/Build** | Bun | >= 1.1.x | Velocidad de ejecución superior y API moderna de sistema de archivos. Distribución vía npm/bunx (compilación a binario removida en v1.2.0 — ADR-011). |
-| **TUI / UX** | `@clack/prompts` | Latest | Ligera, moderna, zero-dependency tree profundo, ideal para binarios compilados. |
+| **TUI / UX** | `@clack/prompts` | Latest | Ligera, moderna, zero-dependency tree profundo, ideal para herramientas CLI. |
 | **Validación** | `zod` | Latest | Esquemas de validación de datos en tiempo de ejecución (ej: validar respuesta de GitHub API). Principio de *Fail-Fast*. |
 | **Versionado** | `semver` | Latest | Comparación robusta de versiones semánticas (v1.0.0 vs v1.1.0). |
 | **Orquestación** | `just` | Latest | Task runner moderno, sintaxis más limpia que Make, escrito en Rust, ideal para definir flujos de desarrollo y CI/CD. |
@@ -94,7 +94,7 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | `GET /repos/{owner}/{repo}/releases/latest` | GET | Headers: `User-Agent: OpenCode-CLI` | JSON: `{ "tag_name": "v1.0.0", "name": "..." }` | No requerida | 60 req/hora (anon) |
 
 ## 5. Requisitos Técnicos No Funcionales
-- **Escalabilidad**: El binario debe ser autocontenido. No escala horizontalmente (es una herramienta de cliente), pero debe escalar en tamaño de template sin degradar el rendimiento de memoria (streaming de archivos si el template crece >50MB).
+- **Escalabilidad**: El CLI debe ser autocontenido. No escala horizontalmente (es una herramienta de cliente), pero debe escalar en tamaño de template sin degradar el rendimiento de memoria (streaming de archivos si el template crece >50MB).
 - **Latencia/Throughput**: La operación de fusión local debe procesar >100 archivos/segundo. La consulta a GitHub debe tener un timeout de 3 segundos.
 - **Seguridad**: 
   - Validación estricta de rutas (prevenir *Path Traversal* usando `path.resolve` y verificando que el destino esté dentro del directorio de trabajo permitido).
@@ -108,9 +108,8 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
   2. `setup-bun`
   3. `just install` (dependencias)
   4. `just test` (unitarias + E2E)
-  5. `just build` (compilación multiplataforma: linux-x64, macos-x64, windows-x64)
-  6. `just release` (si el commit es un tag, sube los binarios a GitHub Releases).
-- **Rollback**: Al ser un cliente, el "rollback" es que el usuario descargue la release anterior del binario. La atomicidad local protege contra rollbacks de instalación fallida.
+  5. `just release` (si el commit es un tag, publica en npm como @fisherk2-dev/codice).
+- **Rollback**: Al ser un cliente, el "rollback" es que el usuario use la release anterior con bunx/npx. La atomicidad local protege contra rollbacks de instalación fallida.
 
 ## 7. Matriz de Trazabilidad
 | PRD REQ-ID | TRD Componente | API/DB | Estado |
@@ -127,10 +126,10 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | **ADR-001** | Estructura del proyecto | Clean Architecture con 4 capas (Domain, Application, Infrastructure, CLI) | Dependencias siempre hacia adentro. Domain sin dependencias externas. | Arquitectura plana por carpetas funcionales. |
 | **ADR-002** | Runtime y compilación | Bun como runtime y entorno de desarrollo | Runtime único, startup time superior. Compilación a binario removida en v1.2.0 (ADR-011). | Node.js + pkg, Deno compile. |
 | **ADR-003** | Integridad de archivos | Patrón Staging Directory + Rename Atómico (`fs.rename`) | Garantiza que el proyecto nunca quede corrupto por interrupción. Requiere espacio temporal en disco. | Journal de reversión (demasiado complejo). |
-| **ADR-004** | Interfaz TUI | @clack/prompts para prompts interactivos | Zero-dependency tree, ideal para binarios compilados, spinners y prompts modernos. | Inquirer.js (árbol de dependencias pesado), prompts (menos moderno). |
+| **ADR-004** | Interfaz TUI | @clack/prompts para prompts interactivos | Zero-dependency tree, ideal para herramientas CLI, spinners y prompts modernos. | Inquirer.js (árbol de dependencias pesado), prompts (menos moderno). |
 | **ADR-005** | Desarrollo seguro | Flag `--dest` + directorio `tests/fixtures/workspace/` | `just dev` escribe en playground seguro, no en la raíz del proyecto. | Modificar CWD manualmente (propenso a errores). |
-| **ADR-006** | Distribución | Publicación npm como método primario (`bunx @fisherk2-dev/codice`) | Amplía accesibilidad más allá de usuarios Bun. Binarios como fallback offline. | Solo binarios (requiere descarga manual), solo source (requiere Bun). |
-| **ADR-007** | Resolución de template | Cascada de 3 rutas para detección (compilado, bunx/npm, source) | Funciona en todos los modos de distribución sin configuración manual. | Ruta hardcoded (frágil), variable de entorno (incómodo para usuarios). |
+| **ADR-006** | Distribución | Publicación npm como método primario (`bunx @fisherk2-dev/codice`) | Amplía accesibilidad más allá de usuarios Bun. Distribución única vía npm (ver ADR-011). | Solo binarios (requiere descarga manual), solo source (requiere Bun). |
+| **ADR-007** | Resolución de template | Cascada de 2 rutas (bunx/npm, source + CWD fallback; ruta compilado eliminada en v1.2.0 — ADR-011) | Funciona en todos los modos de distribución sin configuración manual. | Ruta hardcoded (frágil), variable de entorno (incómodo para usuarios). |
 | **ADR-008** | Symlinks post-install | `ISymlinkCreator` port + `BunSymlinkCreator` adapter | Symlinks se generan post-instalación, evitando el strippng de npm. Idempotente. | Empaquetar symlinks en template (npm los resuelve). |
 | **ADR-009** | Gitignore post-install | `IGitignoreCreator` port + `BunGitignoreCreator` adapter | `.gitignore` se genera post-instalación, evitando la exclusión de npm. | Renombrar a `.gitignore.txt` (confuso), empaquetar como otro nombre. |
 | **ADR-010** | Entries virtuales en manifest | Flag `noTemplateCopy` para entries cuyo contenido se genera post-instalación | Entries como `.devin/` aparecen en UX de selección pero skipan resolución de template. | Eliminar del manifest (pierde visibilidad en UX). |

@@ -31,9 +31,9 @@ readonly COLOR_RESET='\033[0m'
 # Root of the repository (assumes common.sh is at tests/e2e/common.sh)
 readonly CODICE_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
-# CLI invocation — wrapper script that forwards args to `bun run src/cli/main.ts`
+# CLI invocation — runs codice via `bun run src/cli/main.ts`
 # Replaces the compiled binary used in earlier versions.
-CODICE_BINARY="$CODICE_ROOT/tests/e2e/codice.sh"
+CODICE_CLI="bun run $CODICE_ROOT/src/cli/main.ts"
 
 # Track PIDs for mock server cleanup
 _MOCK_SERVER_PID=""

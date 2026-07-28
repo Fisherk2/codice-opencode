@@ -36,9 +36,9 @@ ln -s /etc/passwd "$TEMP_DIR/template/obligatorio/escape.txt" 2>/dev/null || tru
 # Execute — expect exit code 1 (no valid template files)
 # ---------------------------------------------------------------------------
 
-log_info "Running: $CODICE_BINARY --clean --force in $TEMP_DIR"
+log_info "Running: $CODICE_CLI --clean --force in $TEMP_DIR"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --clean --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && $CODICE_CLI --clean --force) 2>/dev/null || EXIT_CODE=$?
 
 # The binary should exit with error because no valid template files exist
 if [[ "$EXIT_CODE" -eq 0 ]]; then

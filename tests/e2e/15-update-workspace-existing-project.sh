@@ -27,7 +27,6 @@ source "$(dirname "$0")/common.sh"
 log_step "FEV3-T6: Update Workspace Existing Project E2E"
 
 
-
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
 log_info "Test directory: $TEMP_DIR"
@@ -66,11 +65,11 @@ log_info "Mock GitHub API pointing to $CODICE_GITHUB_API_URL"
 # Execute
 # ---------------------------------------------------------------------------
 
-log_info "Running: $CODICE_BINARY --update --force in $TEMP_DIR"
+log_info "Running: $CODICE_CLI --update --force in $TEMP_DIR"
 EXIT_CODE=0
 STDERR_FILE="$TEMP_DIR/stderr.log"
 STDOUT_FILE="$TEMP_DIR/stdout.log"
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" "$CODICE_BINARY" --update --force) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" $CODICE_CLI --update --force) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
 
 # Stop mock server
 stop_mock_server
