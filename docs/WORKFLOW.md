@@ -28,6 +28,11 @@
 | FEV-8 | Obsidian Subagent | Issue #21 (obsidian-vault-writer + 6 skills) | ✅ Completo |
 | FEV-9 | MCP Server Integration | Issue #29 (5 MCP servers) | ✅ Completo |
 | FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | ✅ Completo |
+| FEV-11 | Binary Removal (v1.2 Phase 1) | Issue #46: eliminar binarios compilados, distribución solo npm/bunx | 📋 Pendiente |
+| FEV-12 | References Restructuring (v1.2 Phase 2) | Issues #54, #52: referencias configurables vía opencode.json | 📋 Pendiente |
+| FEV-13 | Documentation Overhaul (v1.2 Phase 3) | Issues #51, #53: actualizar docs, reducir acoplamiento SDD plugin | 📋 Pendiente |
+| FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | 📋 Pendiente |
+| FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | 📋 Pendiente |
 
 ## 2. Desglose por Fase
 
