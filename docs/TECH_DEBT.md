@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-07-11
+**Last updated:** 2026-07-27
 **Status:** Active reference for improvement planning
-**Current version:** v1.1.3 (587 tests, 0 fail, ~1255 expects, 100.00% funcs / 98.08% lines)
+**Current version:** v1.1.3 (596 tests, 0 fail, 1289 expects, 100.00% funcs / 98.08% lines)
 
 ---
 
@@ -140,19 +140,12 @@ not file granularity.
 
 ## 7. Performance & Distribution
 
-### 7.1 Binary Size Reduction — 74MB → <20MB
+### 7.1 Binary Size Reduction — RESOLVED in v1.2.0
 
 | Item | Detail |
 |------|--------|
 | **Problem** | Compiled binaries are too large: `codice-linux` is **74MB** (ELF x64). macOS and Windows builds are similar. This exceeds reasonable download sizes for a CLI tool and bloats GitHub Release assets. |
-| **Root cause** | Bun's `--compile` bundles the entire runtime + all dependencies + the embedded template directory into a single executable. The template alone (agents, skills, commands, docs) is substantial, and Bun includes its full JS runtime regardless of what's used. |
-| **Impact** | Users downloading via `curl` or GitHub Releases wait longer. npm package size also increases. CDN and storage costs grow. Competing CLI tools (e.g., `gh`, `rg`) ship binaries <10MB. |
-| **Target** | <20MB per platform binary (73% reduction from current 74MB). |
-| **Proposed strategies** | 1. **Externalize template**: Ship template as a separate npm package or downloadable tarball instead of embedding in the binary. Binary becomes a pure installer/downloader. 2. **Bun tree-shaking**: Investigate `--minify` and dead code elimination flags. 3. **UPX compression**: Compress binaries with UPX (adds runtime decompression, ~30-50% reduction). 4. **Lazy template fetch**: Binary fetches template from GitHub Releases API on first run, caching locally. |
-| **Trade-offs** | Externalizing template adds a network dependency on first install. UPX adds antivirus false positives. Lazy fetch requires internet. Best approach: externalize template + keep offline fallback via `--offline` flag using embedded template. |
-| **Risk** | Medium. Externalizing template changes the distribution model. Requires ADR before implementation. |
-| **Target release** | v1.2.0 |
-| **Effort** | 8-12h (including ADR, implementation, and cross-platform testing) |
+| **Resolution** | **FEV-11 (Issue #46):** Remove all binary compilation and distribution logic. The only installation method will be via package managers (npm/bunx). This eliminates the binary size problem entirely by removing binaries. See [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md). |
 
 ---
 
@@ -169,14 +162,53 @@ not file granularity.
 | `IFileSystem` port split (ISP) | ✅ IFileSystem (6) + IStagingSystem (4) |
 | Explicit constructors in `VersionComparator` + `ClackPromptsAdapter` | ✅ Resolved in FEV-6 (v1.1.0) |
 
-### Future (v1.2.0+)
+### v1.2.0
 
-| Item | Effort | Impact |
-|------|--------|--------|
-| Binary size reduction (74MB → <20MB) | 8-12h | 73% smaller downloads, faster installs, lower CDN costs |
-| E2E coverage instrumentation | 8h | Accurate coverage for entry point |
-| `just bench` performance benchmarks | 4h | Regression detection for SC-9/10/11 |
-| CleanInstall/ProjectInstall Template Method refactor | 4h | Eliminate ~80 lines duplication, prepare for new install modes |
+| Item | Effort | Impact | Diagnosis |
+|------|--------|--------|-----------|
+| FEV-11: Binary removal (Issue #46) | 6h | Reduced maintenance burden, npm-only distribution | [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md) |
+| FEV-12: References restructuring (Issues #54, #52) | 8h | Self-contained skills, configurable references | [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md) |
+| FEV-13: Documentation overhaul (Issues #51, #53) | 12h | Cleaner docs, user-facing Wiki | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
+| FEV-14: UX enhancements (Issues #47, #56) | 6h | Progress bar, /help command | [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md) |
+| FEV-15: Community standards (Issue #55) | 2h | Code of conduct for project and template | [fix08-v1.2-phase5-community.md](diagnosis/fix08-v1.2-phase5-community.md) |
+| E2E coverage instrumentation | 8h | Accurate coverage for entry point | — |
+| `just bench` performance benchmarks | 4h | Regression detection for SC-9/10/11 | — |
+| CleanInstall/ProjectInstall Template Method refactor | 4h | Eliminate ~80 lines duplication | — |
+
+### v1.3.0
+
+The following items are planned for v1.3 and beyond. No diagnosis has been created yet — these will be addressed after v1.2 is complete.
+
+#### Alternative Package Managers — Issue #24
+
+| Item | Detail |
+|------|--------|
+| **Issue** | [#24](https://github.com/fisherk2/codice-opencode/issues/24) — Añadir mas opciones de instalacion |
+| **Description** | Implement and maintain alternative package managers to npm in case of incidents. Proposals: uv with pip, cargo, composer, pnpm, yarn. |
+| **Risk** | Medium. Multiple package managers increase maintenance burden and testing complexity. |
+| **Target** | v1.3 |
+| **Effort** | 8-12h (including testing across multiple package managers) |
+
+#### Internationalization (i18n) — Issue #22
+
+| Item | Detail |
+|------|--------|
+| **Issue** | [#22](https://github.com/fisherk2/codice-opencode/issues/22) — Añadir accesibilidad de idiomas |
+| **Description** | Add language selection at CLI startup. Options: (1) Manual selection from 5 languages (English, Spanish, + 3 more), (2) Automatic detection based on host locale. All interactive menu text must be translated. |
+| **Risk** | Medium. Requires i18n infrastructure, translation files, and locale detection logic. |
+| **Target** | v1.3 |
+| **Effort** | 6-10h (including translation infrastructure and 5 language translations) |
+
+#### SDD Plugin Coupling Reduction — Issue #53
+
+| Item | Detail |
+|------|--------|
+| **Issue** | [#53](https://github.com/fisherk2/codice-opencode/issues/53) — Corregir la Wiki (tech debt note) |
+| **Description** | Reduce coupling between the SDD plugin (`sdd-pipeline.ts`) and documentation when adding commands, agents, and skills. Currently, adding a new command requires updating `COMMAND_AGENT_MAP` in the plugin, and adding a new subagent requires updating `VALID_SUBAGENTS`. This creates a high difficulty spike for users customizing their workspace. |
+| **Proposed solutions** | (1) Auto-discovery: scan `commands/` and `agents/` directories at startup instead of maintaining hardcoded maps. (2) Configuration-driven: move `COMMAND_AGENT_MAP` and `VALID_SUBAGENTS` to `opencode.json` so users can customize without touching plugin code. (3) Convention-based: infer agent from command frontmatter, validate subagents against `agents/` directory. |
+| **Risk** | Medium. Requires refactoring the SDD plugin architecture. Must maintain backward compatibility with existing commands and agents. |
+| **Target** | v1.3 (after i18n) |
+| **Effort** | 6-8h (plugin refactoring + testing) |
 
 ---
 
