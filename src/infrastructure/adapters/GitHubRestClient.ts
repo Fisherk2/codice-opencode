@@ -1,5 +1,5 @@
 import semver from "semver";
-// Import version for User-Agent header — bundle-friendly (Bun includes package.json at compile time)
+// Import version for User-Agent header — Bun resolves package.json at runtime, no special setup needed
 import { version as pkgVersion } from "../../../package.json";
 import type { IGitHubClient } from "../../application/ports/IGitHubClient";
 import { GITHUB_API_TIMEOUT_MS, getGitHubApiUrl } from "../config/constants";

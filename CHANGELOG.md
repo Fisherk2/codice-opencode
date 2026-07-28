@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (non-breaking)
 
-- **SC-16:** Updated from README criterion to "npm package (tarball) size < 5MB" (was about compiled binaries)
+- **SC-15:** Updated to "npm package (tarball) size < 5MB" (previous SC-15 about compiled binaries removed)
 - **ARCHITECTURE.md:** Added ADR-011 to ADR table
 
 ## [1.1.3] — 2026-07-11

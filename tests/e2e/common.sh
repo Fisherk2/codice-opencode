@@ -107,10 +107,6 @@ create_temp_dir() {
 }
 
 # ---------------------------------------------------------------------------
-# CLI invocation — uses `bun run src/cli/main.ts` directly (no compilation needed)
-# CODICE_BINARY is set above as readonly
-
-# ---------------------------------------------------------------------------
 # Assertion helpers
 # ---------------------------------------------------------------------------
 

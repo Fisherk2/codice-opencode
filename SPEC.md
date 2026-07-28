@@ -1,16 +1,16 @@
-# Spec: Códice — Opencode Workspace Installer v1.1.3
+# Spec: Códice — Opencode Workspace Installer v1.2.0
 
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v1.1.3  
+**Current Version:** v1.2.0  
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
 ---
 
 ## Objective
 
-Códice is a command-line interface (CLI) tool compiled with Bun that installs and updates OpenCode workspace templates in an atomic, safe, and intelligent manner. It resolves the fragmentation and customization-loss problem that occurs when users manually merge template updates into existing projects.
+Códice is a command-line interface (CLI) tool built with Bun that installs and updates OpenCode workspace templates in an atomic, safe, and intelligent manner. It resolves the fragmentation and customization-loss problem that occurs when users manually merge template updates into existing projects.
 
 ### Problem Statement
 OpenCode workspace templates evolve over time. Users currently face three painful scenarios:
@@ -371,7 +371,7 @@ These actions are explicitly prohibited under all circumstances:
 
 ## Success Criteria
 
-The following conditions are specific, testable, and must all be met for the v1.1.3 release to be considered complete.
+The following conditions are specific, testable, and must all be met for the v1.2.0 release to be considered complete.
 
 ### Functional Criteria
 

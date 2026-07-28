@@ -58,7 +58,7 @@ graph TD
 ## 2. Stack Tecnológico & Justificación
 | Capa | Tecnología | Versión | Justificación Arquitectónica |
 |------|------------|---------|------------------------------|
-| **Runtime/Build** | Bun | >= 1.1.x | Compilación a binario nativo (`bun build --compile`), velocidad de ejecución superior y API moderna de sistema de archivos. |
+| **Runtime/Build** | Bun | >= 1.1.x | Velocidad de ejecución superior y API moderna de sistema de archivos. Distribución vía npm/bunx (compilación a binario removida en v1.2.0 — ADR-011). |
 | **TUI / UX** | `@clack/prompts` | Latest | Ligera, moderna, zero-dependency tree profundo, ideal para binarios compilados. |
 | **Validación** | `zod` | Latest | Esquemas de validación de datos en tiempo de ejecución (ej: validar respuesta de GitHub API). Principio de *Fail-Fast*. |
 | **Versionado** | `semver` | Latest | Comparación robusta de versiones semánticas (v1.0.0 vs v1.1.0). |
@@ -125,7 +125,7 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | ADR-ID | Contexto | Decisión | Consecuencias | Alternativas Descartadas |
 |--------|----------|----------|---------------|--------------------------|
 | **ADR-001** | Estructura del proyecto | Clean Architecture con 4 capas (Domain, Application, Infrastructure, CLI) | Dependencias siempre hacia adentro. Domain sin dependencias externas. | Arquitectura plana por carpetas funcionales. |
-| **ADR-002** | Runtime y compilación | Bun como runtime y compilador a binario nativo | Binario único sin dependencias de runtime. Startup time superior. | Node.js + pkg, Deno compile. |
+| **ADR-002** | Runtime y compilación | Bun como runtime y entorno de desarrollo | Runtime único, startup time superior. Compilación a binario removida en v1.2.0 (ADR-011). | Node.js + pkg, Deno compile. |
 | **ADR-003** | Integridad de archivos | Patrón Staging Directory + Rename Atómico (`fs.rename`) | Garantiza que el proyecto nunca quede corrupto por interrupción. Requiere espacio temporal en disco. | Journal de reversión (demasiado complejo). |
 | **ADR-004** | Interfaz TUI | @clack/prompts para prompts interactivos | Zero-dependency tree, ideal para binarios compilados, spinners y prompts modernos. | Inquirer.js (árbol de dependencias pesado), prompts (menos moderno). |
 | **ADR-005** | Desarrollo seguro | Flag `--dest` + directorio `tests/fixtures/workspace/` | `just dev` escribe en playground seguro, no en la raíz del proyecto. | Modificar CWD manualmente (propenso a errores). |

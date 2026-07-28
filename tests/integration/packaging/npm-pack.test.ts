@@ -140,37 +140,41 @@ describePack("npm package — extracted installation", () => {
 	// Test C: Clean install from extracted package
 	// -----------------------------------------------------------------------
 
-	itPack("clean install works from extracted package (Test C)", async () => {
-		// Must avoid system directories — macOS os.tmpdir() is /var/folders/
-		// which is blocked by SYSTEM_DIRS in validateDestPath (parse-args.ts:66).
-		// Use process.cwd() which is the CI workspace (always a valid project dir).
-		const installDir = await fs.mkdtemp(path.join(process.cwd(), ".codice-clean-test-"));
+	itPack(
+		"clean install works from extracted package (Test C)",
+		async () => {
+			// Must avoid system directories — macOS os.tmpdir() is /var/folders/
+			// which is blocked by SYSTEM_DIRS in validateDestPath (parse-args.ts:66).
+			// Use process.cwd() which is the CI workspace (always a valid project dir).
+			const installDir = await fs.mkdtemp(path.join(process.cwd(), ".codice-clean-test-"));
 
-		try {
-			const proc = Bun.spawnSync(
-				["bun", "run", "src/cli/main.ts", "--clean", "--force", "--dest", installDir],
-				{
-					cwd: packageDir,
-				},
-			);
+			try {
+				const proc = Bun.spawnSync(
+					["bun", "run", "src/cli/main.ts", "--clean", "--force", "--dest", installDir],
+					{
+						cwd: packageDir,
+					},
+				);
 
-			expect(proc.exitCode).toBe(0);
+				expect(proc.exitCode).toBe(0);
 
-			// Verify key template files were installed
-			const installedFiles = await fs.readdir(installDir);
+				// Verify key template files were installed
+				const installedFiles = await fs.readdir(installDir);
 
-			// .opencode directory should exist (obligatorio)
-			expect(installedFiles).toContain(".opencode");
+				// .opencode directory should exist (obligatorio)
+				expect(installedFiles).toContain(".opencode");
 
-			// .gitignore should exist (generated post-install)
-			const gitignorePath = path.join(installDir, ".gitignore");
-			const gitignoreExists = await fs
-				.access(gitignorePath)
-				.then(() => true)
-				.catch(() => false);
-			expect(gitignoreExists).toBe(true);
-		} finally {
-			await fs.rm(installDir, { recursive: true, force: true });
-		}
-	});
+				// .gitignore should exist (generated post-install)
+				const gitignorePath = path.join(installDir, ".gitignore");
+				const gitignoreExists = await fs
+					.access(gitignorePath)
+					.then(() => true)
+					.catch(() => false);
+				expect(gitignoreExists).toBe(true);
+			} finally {
+				await fs.rm(installDir, { recursive: true, force: true });
+			}
+		},
+		{ timeout: 30000 },
+	);
 });

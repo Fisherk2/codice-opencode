@@ -42,12 +42,10 @@ export class TemplateResolver {
 	 * Source: Template file location convention from SPEC.md — template files
 	 * are always in a `template/` directory at the project or package root.
 	 *
-	 * Note: Compiled binary mode was removed in v1.2.0 (ADR-011). The old binary
-	 * resolution path is preserved as a no-op fallback for any remaining pre-v1.2
-	 * binaries still in use.
+	 * Note: Compiled binary mode was removed in v1.2.0 (ADR-011).
 	 */
 	static detectTemplateRoot(): string {
-		// Path 1: Source/bunx mode (repo root or npm package)
+		// Source/bunx mode (repo root or npm package)
 		// import.meta.dir points to src/infrastructure/adapters/ where
 		// TemplateResolver.ts is defined. From there, ../../../template
 		// reaches the package root's template/ directory.
@@ -58,20 +56,12 @@ export class TemplateResolver {
 			return sourcePath;
 		}
 
-		// Path 2: Legacy compiled mode (pre-v1.2.0 binaries only)
-		// Kept for backward compatibility with any remaining compiled binaries.
-		const binaryDir = path.dirname(process.argv[0] ?? process.execPath);
-		const binaryRelativePath = path.resolve(binaryDir, `../${TEMPLATE_DIR_NAME}`);
-		if (fs.existsSync(binaryRelativePath)) {
-			return binaryRelativePath;
-		}
-
 		// Fallback: template relative to CWD (backward compatible)
 		const cwdPath = path.resolve(process.cwd(), TEMPLATE_DIR_NAME);
 		// biome-ignore lint/suspicious/noConsole: production warning for missing template
 		console.warn(
-			`[warn] Template not found via source (${sourcePath}) or binary path ` +
-				`(${binaryRelativePath}). Falling back to current working directory: ${cwdPath}. ` +
+			`[warn] Template not found via source (${sourcePath}). ` +
+				`Falling back to current working directory: ${cwdPath}. ` +
 				"Run `codice` from the project root, or ensure the template directory is present.",
 		);
 		return cwdPath;
@@ -131,9 +121,8 @@ export class TemplateResolver {
 				throw new Error(`Template path escapes template directory: ${relativePath}.`);
 			}
 
-			// Check existence — fs.access() cannot read embedded files in compiled
-			// binaries, but Bun.file() can. However, Bun.file().exists() returns
-			// false for directories, so we use fs.existsSync() for directory entries.
+			// Check existence — Bun.file().exists() returns false for
+			// directories, so we use fs.existsSync() for directory entries.
 			if (fs.existsSync(resolved)) {
 				this.templateCache.set(relativePath, resolved);
 				return resolved;
