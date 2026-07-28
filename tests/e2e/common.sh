@@ -190,6 +190,18 @@ assert_dir_exists() {
     log_pass "Directory exists: $path"
 }
 
+# Assert that a directory does NOT exist.
+# Usage: assert_dir_missing "/path/to/dir"
+assert_dir_missing() {
+    local path="$1"
+    local message="${2:-Expected directory to be missing but it exists}"
+    if [[ -d "$path" ]]; then
+        log_fail "$message: $path"
+        return 1
+    fi
+    log_pass "Directory is missing (expected): $path"
+}
+
 # Assert that two files have the same content.
 # Usage: assert_file_equals "$expected" "$actual"
 assert_file_equals() {

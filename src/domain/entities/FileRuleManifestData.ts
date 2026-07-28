@@ -52,12 +52,6 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: true,
 		description: "Skill definitions managed by installer",
 	},
-	{
-		path: "references",
-		category: "mandatory",
-		isDirectory: true,
-		description: "Reference files managed by installer",
-	},
 
 	// =============================================
 	// ESTANDAR (Standard) — copied only if missing
