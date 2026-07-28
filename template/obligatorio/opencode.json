@@ -68,6 +68,81 @@
     "docs/CODE_STYLE.md"
   ],
 
+  "reference": {
+    "architecture-diagrams": {
+      "path": "./skills/architecture-diagrams/references",
+      "description": "Reference materials for architectural diagrams (C4, UML, deployment, sequence)"
+    },
+    "clean-code": {
+      "path": "./skills/clean-code/references",
+      "description": "Reference materials for clean code principles, naming, functions, and formatting"
+    },
+    "clean-ddd-hexagonal": {
+      "path": "./skills/clean-ddd-hexagonal/references",
+      "description": "Reference materials for DDD tactical patterns, hexagonal architecture, and CQRS"
+    },
+    "code-simplification": {
+      "path": "./skills/code-simplification/references",
+      "description": "Reference materials for managing essential and accidental complexity"
+    },
+    "crafting-effective-readmes": {
+      "path": "./skills/crafting-effective-readmes/references",
+      "description": "Reference materials for README structure, art of README, and standard-readme spec"
+    },
+    "design-patterns": {
+      "path": "./skills/design-patterns/references",
+      "description": "Reference materials for GoF and enterprise design patterns"
+    },
+    "error-handling-patterns": {
+      "path": "./skills/error-handling-patterns/references",
+      "description": "Reference materials for error handling patterns across languages"
+    },
+    "performance-optimization": {
+      "path": "./skills/performance-optimization/references",
+      "description": "Reference materials for performance analysis and optimization checklists"
+    },
+    "refactoring-patterns": {
+      "path": "./skills/refactoring-patterns/references",
+      "description": "Reference materials for refactoring techniques: composing methods, moving features, organizing data"
+    },
+    "security-and-hardening": {
+      "path": "./skills/security-and-hardening/references",
+      "description": "Reference materials for security best practices and hardening checklists"
+    },
+    "shipping-and-launch": {
+      "path": "./skills/shipping-and-launch/references",
+      "description": "Reference materials for launch readiness including accessibility checklists"
+    },
+    "solid": {
+      "path": "./skills/solid/references",
+      "description": "Reference materials for SOLID principles, object design, and TDD"
+    },
+    "test-driven-development": {
+      "path": "./skills/test-driven-development/references",
+      "description": "Reference materials for testing patterns and test-driven development"
+    },
+    "ui-ux-design-pro": {
+      "path": "./skills/ui-ux-design-pro/references",
+      "description": "Reference materials for UI/UX design: typography, color, spacing, tokens, accessibility"
+    },
+    "db-migration": {
+      "path": "./skills/db-migration/references",
+      "description": "Reference materials for database migration templates and schema validation"
+    },
+    "baoyu-format-markdown": {
+      "path": "./skills/baoyu-format-markdown/references",
+      "description": "Reference materials for markdown formatting patterns and title formulas"
+    },
+    "baoyu-url-to-markdown": {
+      "path": "./skills/baoyu-url-to-markdown/references",
+      "description": "Reference materials for URL-to-markdown conversion adapters and quality gates"
+    },
+    "obsidian-markdown": {
+      "path": "./skills/obsidian-markdown/references",
+      "description": "Reference materials for Obsidian-flavored markdown syntax (callouts, embeds, properties)"
+    }
+  },
+
   "permission": {
     "task": {
       "*": "deny"
