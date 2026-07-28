@@ -1369,7 +1369,7 @@ Issue #21 propone un subagente especializado para administración de vaults de O
 
 #### Contexto
 
-Issue #29 propone añadir 5 nuevos MCP servers enfocados en documentación y búsqueda web. Se reemplaza **Docfork** (shut down 2026-06-14) con **Grounded Docs MCP Server** (`@arabold/docs-mcp-server`). Los 5 servidores finales son: Grounded Docs, Tavily, Firecrawl, Vercel Grep, GitMCP.
+Issue #29 propone añadir nuevos MCP servers enfocados en documentación y búsqueda web. Los servidores finales son: Tavily, Firecrawl, Vercel Grep, GitMCP.
 
 Además, los 6 agentes principales tienen una sección `## KNOWLEDGE` que actualmente termina con `Context7 → Web search`. Dado que los nuevos MCPs realizan un trabajo similar a Context7, se debe **reemplazar Context7** por la cadena de consulta: **MCP servers → Web search → Question-tool**.
 

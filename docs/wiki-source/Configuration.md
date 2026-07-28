@@ -347,9 +347,9 @@ The `mcp` section configures Model Context Protocol servers that extend agent ca
 | `chrome-devtools` | Local | ❌ Disabled | Web performance & browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation |
 | `jupyter` | Local | ❌ Disabled | Jupyter notebook automation |
-| `docs-mcp-server` | Local | ❌ Disabled | Open-source documentation queries |
 | `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
 | `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
+| `codebase-memory-mcp` | Local (global install) | ❌ Disabled | Knowledge graph for codebase intelligence |
 
 Three servers are enabled by default (`context7`, `vercel-grep`, `gitmcp`). To activate the others:
 
