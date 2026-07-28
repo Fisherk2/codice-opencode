@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.2.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-27 (FEV-11 📋 Pendiente, FEV-12 📋 Pendiente, FEV-13 📋 Pendiente, FEV-14 📋 Pendiente, FEV-15 📋 Pendiente) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-27 (FEV-11 ✅ Completo, FEV-12 📋 Pendiente — listo para planificación, FEV-13 📋 Pendiente, FEV-14 📋 Pendiente, FEV-15 📋 Pendiente) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -1480,7 +1480,7 @@ Fase final de v1.1.0. Implementación de 5 items del catálogo TECH_DEBT: cobert
 
 ### Fase FEV-11 — Binary Removal (v1.2 Phase 1)
 
-**Fecha:** 2026-07-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 📋 Pendiente
+**Fecha:** 2026-07-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** ✅ Completo
 **Diagnóstico:** [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md)
 
 #### Contexto
@@ -1751,8 +1751,8 @@ Issue #55 identifica la falta de un Code of Conduct para el proyecto y el templa
 - **Coverage:** 98.89% funciones / 96.98% líneas
 - **V1.1.2 completado:** ✓ Pre-release verified, production release v1.1.2 published.
 - **V1.1.3 completado:** ✓ Hotfix — EPERM on Windows CI, CONTRIBUTING.md simplified.
-- **FEV-11 status:** 📋 Pendiente — Binary Removal (Issue #46, 6h, npm-only distribution)
-- **FEV-12 status:** 📋 Pendiente — References Restructuring (Issues #54, #52, 8h, configurable references)
+- **FEV-11 status:** ✅ Completo — Binary Removal (Issue #46, npm-only distribution)
+- **FEV-12 status:** 📋 Pendiente — References Restructuring (Issues #54, #52, 8h, configurable references) — listo para planificación
 - **FEV-13 status:** 📋 Pendiente — Documentation Overhaul (Issues #51, #53, 12h, reduce SDD coupling)
 - **FEV-14 status:** 📋 Pendiente — UX Enhancements (Issues #47, #56, 6h, progress bar + /help command)
 - **FEV-15 status:** 📋 Pendiente — Community Standards (Issue #55, 2h, CODE_OF_CONDUCT.md)
