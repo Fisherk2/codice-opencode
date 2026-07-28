@@ -4,7 +4,7 @@
 **Issues:** [#54](https://github.com/fisherk2/codice-opencode/issues/54), [#52](https://github.com/fisherk2/codice-opencode/issues/52)
 **Date:** 2026-07-28
 **Full plan:** [plan.md](./plan.md)
-**Status:** 📋 PENDIENTE
+**Status:** ✅ COMPLETADO (2026-07-28)
 
 ---
 
