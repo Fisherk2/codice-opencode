@@ -1,0 +1,11 @@
+{
+    "schema_version": 2,
+    "commit": "758989c0b23a3d10481a656d1f73e4025c89a9f3",
+    "indexed_at": "2026-07-28T00:40:46Z",
+    "project": "codice-opencode",
+    "nodes": 7612,
+    "edges": 10868,
+    "original_size": 8716288,
+    "compressed_size": 1822662,
+    "compression_level": 9
+}
