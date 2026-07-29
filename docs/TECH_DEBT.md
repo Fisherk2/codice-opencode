@@ -1,6 +1,6 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-07-27
+**Last updated:** 2026-07-29
 **Status:** Active reference for improvement planning
 **Current version:** v1.1.3 (596 tests, 0 fail, 1289 expects, 100.00% funcs / 98.08% lines)
 
@@ -174,6 +174,7 @@ not file granularity.
 |------|--------|--------|-----------|
 | FEV-12: References restructuring (Issues #54, #52) | 8h | ✅ Completado — Self-contained skills, configurable references | [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md) |
 | FEV-13: Documentation overhaul (Issues #51, #53) | 12h | 📋 Listo para planificación — Cleaner docs, user-facing Wiki | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
+| FEV-13b: SDD Plugin Decoupling (Issue #53) | 6-8h | 📋 Spec ready — Auto-discovery + config-driven + quality infra | [spec-sdd-plugin-decoupling.md](../specs/spec-sdd-plugin-decoupling.md) |
 | FEV-14: UX enhancements (Issues #47, #56) | 6h | Progress bar, /help command | [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md) |
 | FEV-15: Community standards (Issue #55) | 2h | Code of conduct for project and template | [fix08-v1.2-phase5-community.md](diagnosis/fix08-v1.2-phase5-community.md) |
 | E2E coverage instrumentation | 8h | Accurate coverage for entry point | — |
@@ -203,17 +204,6 @@ The following items are planned for v1.3 and beyond. No diagnosis has been creat
 | **Risk** | Medium. Requires i18n infrastructure, translation files, and locale detection logic. |
 | **Target** | v1.3 |
 | **Effort** | 6-10h (including translation infrastructure and 5 language translations) |
-
-#### SDD Plugin Coupling Reduction — Issue #53
-
-| Item | Detail |
-|------|--------|
-| **Issue** | [#53](https://github.com/fisherk2/codice-opencode/issues/53) — Corregir la Wiki (tech debt note) |
-| **Description** | Reduce coupling between the SDD plugin (`sdd-pipeline.ts`) and documentation when adding commands, agents, and skills. Currently, adding a new command requires updating `COMMAND_AGENT_MAP` in the plugin, and adding a new subagent requires updating `VALID_SUBAGENTS`. This creates a high difficulty spike for users customizing their workspace. |
-| **Proposed solutions** | (1) Auto-discovery: scan `commands/` and `agents/` directories at startup instead of maintaining hardcoded maps. (2) Configuration-driven: move `COMMAND_AGENT_MAP` and `VALID_SUBAGENTS` to `opencode.json` so users can customize without touching plugin code. (3) Convention-based: infer agent from command frontmatter, validate subagents against `agents/` directory. |
-| **Risk** | Medium. Requires refactoring the SDD plugin architecture. Must maintain backward compatibility with existing commands and agents. |
-| **Target** | v1.3 (after i18n) |
-| **Effort** | 6-8h (plugin refactoring + testing) |
 
 ---
 
