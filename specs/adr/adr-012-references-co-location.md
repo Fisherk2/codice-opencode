@@ -23,7 +23,7 @@ We will co-locate reference files with their primary skill and expose them via O
 
 1. **Each reference file moves to `skills/<primary-skill>/references/<file>`** — determined by a 3-level analysis algorithm (SKILL.md mention, cross-reference clustering, content analysis).
 2. **No reference files are deleted.** All 59 files are preserved and relocated.
-3. **A `reference` section is added to `opencode.json`** with one entry per skill that has a `references/` subdirectory.
+3. **A `references` section is added to `opencode.json`** with **3 example entries** demonstrating local (`path`) and remote (`repository`) reference types. Users add their own entries by editing `opencode.json`. (The template does not ship with all 18 skill references pre-configured.)
 4. **The centralized `references/` directory is removed** from the template structure and from `FileRuleManifestData.ts`.
 
 ### Algorithm for Determining Primary Skill
@@ -41,7 +41,7 @@ We will co-locate reference files with their primary skill and expose them via O
 - **Self-contained skills:** Each skill directory contains its knowledge (`SKILL.md`) and supporting reference material (`references/`). Installing a skill installs everything needed.
 - **Discoverability:** The mapping of 59 files → 18 skills is documented in `docs/diagnosis/fix05-mapping-table.md`.
 - **Scalability:** Adding 100+ new skills is feasible because each skill's references stay in its own directory.
-- **OpenCode integration:** The `reference` section makes references accessible via `@<skill-name>` in the OpenCode TUI, eliminating the need for manual `read()` calls in SKILL.md files.
+- **OpenCode integration:** The example `references` entries in `opencode.json` demonstrate how to expose references via `@<alias>` in the OpenCode TUI, reducing reliance on manual `read()` calls in SKILL.md files.
 - **Preserved history:** `git mv` preserves the revision history of all 59 files via `git log --follow`.
 
 ### Negative

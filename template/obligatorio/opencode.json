@@ -327,7 +327,7 @@
   },
 
   "mcp": {
-    "codebase-memory-mcp":{
+    "codebase-memory-mcp": {
       "enabled": false
     },
     "context7": {
