@@ -68,18 +68,18 @@
     "docs/CODE_STYLE.md"
   ],
 
-  "reference": {
+  "references": {
     "clean-code": {
       "path": "./skills/clean-code/references",
       "description": "Reference materials for clean code principles, naming, functions, and formatting"
     },
     "codice-opencode": {
-      "url": "https://github.com/Fisherk2/codice-opencode",
+      "repository": "Fisherk2/codice-opencode",
       "branch": "main",
       "description": "Códice repository — OpenCode workspace installer reference"
     },
     "opencode": {
-      "url": "https://github.com/anomalyco/opencode",
+      "repository": "anomalyco/opencode",
       "branch": "main",
       "description": "Official OpenCode repository — CLI, API, and configuration reference"
     }
