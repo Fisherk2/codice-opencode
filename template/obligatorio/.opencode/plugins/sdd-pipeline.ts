@@ -100,6 +100,9 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 	//      Reset to 0 if file doesn't exist; set on init; tracked in audit().
 	let auditLineCount = 0;
 
+	/** Formats an unknown error as a human-readable string. */
+	const formatError = (err: unknown): string => (err instanceof Error ? err.message : String(err));
+
 	/** Reads the audit log, counts lines, and truncates to half if >= MAX_AUDIT_LINES. */
 	const maybeRotateAuditLog = (): void => {
 		if (!existsSync(auditLogPath)) {
@@ -109,11 +112,10 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 		const content = readFileSync(auditLogPath, "utf-8");
 		const lines = content.split("\n");
 		// Remove trailing empty line from split if file ends with newline
-		auditLineCount =
-			lines.length > 0 && lines[lines.length - 1] === "" ? lines.length - 1 : lines.length;
+		auditLineCount = lines.at(-1) === "" ? lines.length - 1 : lines.length;
 		if (auditLineCount >= MAX_AUDIT_LINES) {
 			const keep = lines.slice(-(MAX_AUDIT_LINES / 2));
-			writeFileSync(auditLogPath, keep.join("\n") + "\n");
+			writeFileSync(auditLogPath, `${keep.join("\n")}\n`);
 			auditLineCount = keep.length;
 			console.debug("[sdd-pipeline] Audit log truncated on init");
 		}
@@ -123,8 +125,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 	try {
 		maybeRotateAuditLog();
 	} catch (err: unknown) {
-		const msg = err instanceof Error ? err.message : String(err);
-		console.debug("[sdd-pipeline] Could not truncate audit log:", msg);
+		console.debug("[sdd-pipeline] Could not truncate audit log:", formatError(err));
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
@@ -146,8 +147,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 			appendFileSync(auditLogPath, entry);
 			auditLineCount++;
 		} catch (err: unknown) {
-			const msg = err instanceof Error ? err.message : String(err);
-			console.debug("[sdd-pipeline] Could not write audit log:", msg);
+			console.debug("[sdd-pipeline] Could not write audit log:", formatError(err));
 		}
 	};
 
@@ -205,8 +205,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 					`Injected SDD state (agent: ${sddState.agent_type}, phase: ${sddState.pipeline_phase})`,
 				);
 			} catch (err: unknown) {
-				const msg = err instanceof Error ? err.message : String(err);
-				console.error("[sdd-pipeline] Error in system.transform:", msg);
+				console.error("[sdd-pipeline] Error in system.transform:", formatError(err));
 			}
 		},
 
@@ -273,8 +272,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 					}
 				}
 			} catch (err: unknown) {
-				const msg = err instanceof Error ? err.message : String(err);
-				console.error("[sdd-pipeline] Error in chat.message:", msg);
+				console.error("[sdd-pipeline] Error in chat.message:", formatError(err));
 			}
 		},
 
@@ -334,8 +332,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 			} catch (err: unknown) {
 				// [R2] Re-throw our own SddError instances; log everything else
 				if (err instanceof SddError) throw err;
-				const msg = err instanceof Error ? err.message : String(err);
-				console.error("[sdd-pipeline] Error in tool.before:", msg);
+				console.error("[sdd-pipeline] Error in tool.before:", formatError(err));
 			}
 		},
 
@@ -348,8 +345,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 				const inp = input as { tool?: string } | undefined;
 				audit("tool.after", `${inp?.tool ?? "unknown"} completed`);
 			} catch (err: unknown) {
-				const msg = err instanceof Error ? err.message : String(err);
-				console.error("[sdd-pipeline] Error in tool.after:", msg);
+				console.error("[sdd-pipeline] Error in tool.after:", formatError(err));
 			}
 		},
 
@@ -365,8 +361,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 
 				audit("session.compacting", "Injected SDD state");
 			} catch (err: unknown) {
-				const msg = err instanceof Error ? err.message : String(err);
-				console.error("[sdd-pipeline] Error in session.compacting:", msg);
+				console.error("[sdd-pipeline] Error in session.compacting:", formatError(err));
 			}
 		},
 	};
