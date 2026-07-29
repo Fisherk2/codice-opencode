@@ -167,6 +167,6 @@ Each command suggests the next logical step when it finishes, guiding you throug
 - [Workspace Structure](Workspace-Structure) — Learn what each file and directory does
 - [Commands](Commands) — Detailed reference for all 12 slash commands
 - [Agents](Agents) — Understand each agent's role, permissions, and recommended models
-- [Customization Guide](Customization-Guide) — Adapt the workspace to your team's workflow
+- [Configuration](Configuration) — Configure models, agents, permissions, MCP, and more
 
 For OpenCode-specific questions (agent configuration, permission model, MCP servers), refer to the [official OpenCode documentation](https://opencode.ai/docs).

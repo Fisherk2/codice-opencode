@@ -232,7 +232,7 @@ Review the `## Suggested Next Step` blocks in existing commands to see if any sh
 
 Add the new command to:
 - [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) — Command creation documentation
-- [GitHub Wiki → Customization Guide](https://github.com/fisherk2/codice-opencode/wiki/Customization-Guide) — User-facing command reference
+- [Configuration](Configuration) — Full `opencode.json` reference and customization guide
 - `README.md` — Full-cycle phase table and Mermaid diagram (if applicable)
 
 ### Step 7: Restart OpenCode

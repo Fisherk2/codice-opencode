@@ -65,7 +65,7 @@ Each command suggests the next logical step when it finishes, guiding you throug
 - [Agents](Agents) — The six primary agents, subagent catalog, and how to add new ones
 - [Commands](Commands) — All 12 SDD slash commands and their workflows
 - [Skills](Skills) — Engineering skills included in the template and how to add new ones
-- [Customization Guide](Customization-Guide) — Recipes for adapting the workspace to your needs
+- [Configuration](Configuration) — Configure models, agents, permissions, MCP servers, and references
 - [Troubleshooting](Troubleshooting) — Common issues and solutions
 
 ## Learn More

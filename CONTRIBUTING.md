@@ -203,7 +203,7 @@ See [docs/wiki-source/README.md](docs/wiki-source/README.md) for the full proced
 - **CI/CD Pipeline:** `ci.yml` (quality matrix) + `release.yml` (tag → npm publish). See [.github/workflows/](.github/workflows/).
 - **Release Checklist:** Pre-release test → merge to main → tag → verify CI → verify npm → sync develop.
 - **Reporting Issues:** Include expected vs actual behavior, steps to reproduce, environment, and verbose logs.
-- **GitHub Wiki:** [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents), [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills), [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands), [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers), [Customization Guide](https://github.com/fisherk2/codice-opencode/wiki/Customization-Guide).
+- **GitHub Wiki:** [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents), [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills), [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands), [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers), [Configuration](https://github.com/fisherk2/codice-opencode/wiki/Configuration).
 
 ---
 
