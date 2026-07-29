@@ -172,8 +172,8 @@ not file granularity.
 
 | Item | Effort | Impact | Diagnosis |
 |------|--------|--------|-----------|
-| FEV-12: References restructuring (Issues #54, #52) | 8h | Self-contained skills, configurable references | [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md) |
-| FEV-13: Documentation overhaul (Issues #51, #53) | 12h | Cleaner docs, user-facing Wiki | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
+| FEV-12: References restructuring (Issues #54, #52) | 8h | ✅ Completado — Self-contained skills, configurable references | [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md) |
+| FEV-13: Documentation overhaul (Issues #51, #53) | 12h | 📋 Listo para planificación — Cleaner docs, user-facing Wiki | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
 | FEV-14: UX enhancements (Issues #47, #56) | 6h | Progress bar, /help command | [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md) |
 | FEV-15: Community standards (Issue #55) | 2h | Code of conduct for project and template | [fix08-v1.2-phase5-community.md](diagnosis/fix08-v1.2-phase5-community.md) |
 | E2E coverage instrumentation | 8h | Accurate coverage for entry point | — |

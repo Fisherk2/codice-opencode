@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.2.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-27 (FEV-11 ✅ Completo, FEV-12 📋 Pendiente — listo para planificación, FEV-13 📋 Pendiente, FEV-14 📋 Pendiente, FEV-15 📋 Pendiente) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-28 (FEV-12 ✅ Completo, FEV-13 📋 Listo para planificación, FEV-14 📋 Pendiente, FEV-15 📋 Pendiente) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -29,8 +29,8 @@
 | FEV-9 | MCP Server Integration | Issue #29 (5 MCP servers) | ✅ Completo |
 | FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | ✅ Completo |
 | FEV-11 | Binary Removal (v1.2 Phase 1) | Issue #46: eliminar binarios compilados, distribución solo npm/bunx | ✅ Completo |
-| FEV-12 | References Restructuring (v1.2 Phase 2) | Issues #54, #52: referencias configurables vía opencode.json | 📋 Pendiente |
-| FEV-13 | Documentation Overhaul (v1.2 Phase 3) | Issues #51, #53: actualizar docs, reducir acoplamiento SDD plugin | 📋 Pendiente |
+| FEV-12 | References Restructuring (v1.2 Phase 2) | Issues #54, #52: referencias configurables vía opencode.json | ✅ Completo |
+| FEV-13 | Documentation Overhaul (v1.2 Phase 3) | Issues #51, #53: actualizar docs, reducir acoplamiento SDD plugin | 📋 Listo para planificación |
 | FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | 📋 Pendiente |
 | FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | 📋 Pendiente |
 
@@ -1525,7 +1525,7 @@ Issue #46 identifica que los binarios compilados son demasiado grandes (74MB par
 
 ---
 
-### Fase FEV-12 — References Restructuring (v1.2 Phase 2)
+### Fase FEV-12 — References Restructuring (v1.2 Phase 2) ✅ COMPLETADO
 
 **Fecha:** 2026-07-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 📋 Pendiente
 **Diagnóstico:** [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md)
@@ -1566,7 +1566,7 @@ Issues #54 y #52 identifican problemas con las referencias en el template:
 
 ---
 
-### Fase FEV-13 — Documentation Overhaul (v1.2 Phase 3)
+### Fase FEV-13 — Documentation Overhaul (v1.2 Phase 3) 📋 Listo para planificación
 
 **Fecha:** 2026-07-27 | **Autor:** Quetzalcoatl (Visionary Sage) | **Estado:** 📋 Pendiente
 **Diagnóstico:** [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md)
@@ -1752,8 +1752,8 @@ Issue #55 identifica la falta de un Code of Conduct para el proyecto y el templa
 - **V1.1.2 completado:** ✓ Pre-release verified, production release v1.1.2 published.
 - **V1.1.3 completado:** ✓ Hotfix — EPERM on Windows CI, CONTRIBUTING.md simplified.
 - **FEV-11 status:** ✅ Completo — Binary Removal (Issue #46, npm-only distribution)
-- **FEV-12 status:** 📋 Pendiente — References Restructuring (Issues #54, #52, 8h, configurable references) — listo para planificación
-- **FEV-13 status:** 📋 Pendiente — Documentation Overhaul (Issues #51, #53, 12h, reduce SDD coupling)
+- **FEV-12 status:** ✅ Completado — References Restructuring (Issues #54, #52, 8h, configurable references) — mergeado a develop
+- **FEV-13 status:** 📋 Listo para planificación — Documentation Overhaul (Issues #51, #53, 12h, reduce SDD coupling)
 - **FEV-14 status:** 📋 Pendiente — UX Enhancements (Issues #47, #56, 6h, progress bar + /help command)
 - **FEV-15 status:** 📋 Pendiente — Community Standards (Issue #55, 2h, CODE_OF_CONDUCT.md)
 

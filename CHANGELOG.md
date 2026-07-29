@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **FEV-12 (References Restructuring):** 59 reference files moved from centralized `template/obligatorio/references/` to `skills/<name>/references/` for co-location with their primary skill. `opencode.json` now includes a `references` section with 3 example entries (local path + 2 remote repos). `docs/WORKFLOW.md` and `docs/TECH_DEBT.md` removed from `instructions` array. Agent models updated: huitzilopochtli → deepseek-v4-flash, moctezuma steps 20→30, tlaloc steps 90→100. `docs-mcp-server` removed; `codebase-memory-mcp` added (disabled by default). See [ADR-012](specs/adr/adr-012-references-co-location.md).
+
 ## [1.2.0] — 2026-07-28
 
 ### Changed
