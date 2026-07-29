@@ -261,7 +261,7 @@ Add your own files here if there are documents you want the model to always know
 
 ## References — Skill Reference Material
 
-The `reference` section configures local directories containing reference material that agents can load on demand. The template ships with **18 reference entries** — one per skill that has a `references/` subdirectory:
+The `reference` section configures local directories or Git repositories that agents can load as reference material. The template ships with **3 example entries** to demonstrate the available reference types:
 
 ```json
 "reference": {
@@ -269,24 +269,34 @@ The `reference` section configures local directories containing reference materi
     "path": "./skills/clean-code/references",
     "description": "Reference materials for clean code principles, naming, functions, and formatting"
   },
-  "ui-ux-design-pro": {
-    "path": "./skills/ui-ux-design-pro/references",
-    "description": "Reference materials for UI/UX design: typography, color, spacing, tokens, accessibility"
+  "codice-opencode": {
+    "url": "https://github.com/Fisherk2/codice-opencode",
+    "branch": "main",
+    "description": "Códice repository — OpenCode workspace installer reference"
+  },
+  "opencode": {
+    "url": "https://github.com/anomalyco/opencode",
+    "branch": "main",
+    "description": "Official OpenCode repository — CLI, API, and configuration reference"
   }
 }
 ```
+
+> **Note:** These are examples — add your own references by editing `opencode.json`. The template does not ship with all 18 skill references pre-configured; users add the ones they need.
 
 ### Fields
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `path` | ✅ | Relative path to the reference directory (from `opencode.json`) |
+| `path` | For local refs | Relative path to the reference directory (from `opencode.json`) |
+| `url` | For remote refs | Git repository URL to clone as a reference source |
+| `branch` | ❌ | Git branch to use (default: repository default) |
 | `description` | ✅ | Plain-language description to help the agent decide when to load this reference |
 | `hidden` | ❌ | If `true`, hides the reference from TUI listings (default: `false`) |
 
 ### How to Use
 
-In the OpenCode TUI, type `@<skill-name>` to load the skill's reference material into the current conversation. For example, `@clean-code` loads all references from `skills/clean-code/references/`.
+In the OpenCode TUI, type `@<alias>` to load the reference material into the current conversation. For example, `@clean-code` loads all files from `skills/clean-code/references/`.
 
 ### Add a Custom Reference
 
@@ -297,6 +307,18 @@ To add your own reference directory:
   "my-docs": {
     "path": "./docs/references",
     "description": "Project-specific architecture decisions and API contracts"
+  }
+}
+```
+
+Or a remote repository:
+
+```json
+"reference": {
+  "my-org-docs": {
+    "url": "https://github.com/my-org/technical-docs",
+    "branch": "main",
+    "description": "Organization-wide technical documentation"
   }
 }
 ```
