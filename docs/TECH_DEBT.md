@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-07-29
 **Status:** Active reference for improvement planning
-**Current version:** v1.1.3 (596 tests, 0 fail, 1289 expects, 100.00% funcs / 98.08% lines)
+**Current version:** v1.1.3 (761 tests, 0 fail, 98.89% funcs / 96.98% lines)
 
 ---
 
@@ -23,6 +23,13 @@
 | ID | Item | Resolution |
 |----|------|------------|
 | **TD-CR-1** | Code review fixes: GitHubRestClient catch simplification, UpdateWorkspaceUseCase helper normalization, Windows SYSTEM_DIRS, resolveWithinRoot normalization, VERSION module extraction, AtomicStager fs.copyFile, CleanInstall/ProjectInstall duplication documented | ✅ All 11 code review findings resolved (4 Important, 7 Suggestions) |
+
+### FEV-13 — Documentation Overhaul + SDD Plugin Decoupling (2026-07-29)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **Issue #53** | SDD plugin coupling — 6 hardcoded maps (`COMMAND_AGENT_MAP`, `VALID_SUBAGENTS`, `AGENT_MENTION_PATTERNS`, `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS`) required manual editing of `sdd-pipeline.ts` for every new command/agent/skill | ✅ Extracted to `autoDiscovery.ts` (filesystem scanning) + `defaults.ts` (config-driven defaults). Auto-discovery detects commands/agents from filesystem; config loaded from `opencode.json` `sddPipeline` section. Plugin reduced from 665→<400 lines. |
+| **Issue #51** | Documentation outdated in `docs/` and `template/estandar/docs/`; Wiki pages referenced internal implementation details ("edit sdd-pipeline.ts") | ✅ 8 Wiki pages rewritten for end users. WORKFLOW.md, CHANGELOG.md, SPEC.md under target line counts. ADR-013 created. |
 
 ### Prior (v1.0.11)
 
@@ -168,9 +175,8 @@ not file granularity.
 |------|--------|--------|-----------|
 | FEV-11: Binary removal (Issue #46) — BREAKING | — | ✅ npm-only distribution as per ADR-011. Binary compilation removed from build system, CI/CD, E2E tests, and docs. | [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md) |
 | FEV-12: References restructuring (Issues #54, #52) | 8h | ✅ Completado — Self-contained skills, configurable references | [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md) |
-| FEV-13: Documentation overhaul (Issues #51, #53) | 12h | 📋 Listo para planificación — Cleaner docs, user-facing Wiki | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
-| FEV-13b: SDD Plugin Decoupling (Issue #53) | 6-8h | 📋 Spec ready — Auto-discovery + config-driven + quality infra | [spec-sdd-plugin-decoupling.md](../specs/spec-sdd-plugin-decoupling.md) |
-| FEV-14: UX enhancements (Issues #47, #56) | 6h | Progress bar, /help command | [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md) |
+| FEV-13: Documentation overhaul (Issues #51, #53) | 12h | ✅ Completado — Auto-discovery + config-driven + quality infra + Wiki rewrite | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
+| FEV-14: UX enhancements (Issues #47, #56) | 6h | 📋 Listo para planificación — Progress bar, /help command | [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md) |
 | FEV-15: Community standards (Issue #55) | 2h | Code of conduct for project and template | [fix08-v1.2-phase5-community.md](diagnosis/fix08-v1.2-phase5-community.md) |
 | E2E coverage instrumentation | 8h | Accurate coverage for entry point | — |
 | `just bench` performance benchmarks | 4h | Regression detection for SC-9/10/11 | — |
