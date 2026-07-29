@@ -261,25 +261,26 @@ Add your own files here if there are documents you want the model to always know
 
 ## References — Skill Reference Material
 
-The `reference` section configures local directories or Git repositories that agents can load as reference material. The template ships with **3 example entries** to demonstrate the available reference types:
+The `references` section configures local directories or Git repositories that agents can load as reference material. The template ships with **3 example entries** to demonstrate the available reference types:
 
 ```json
-"reference": {
+"references": {
   "clean-code": {
     "path": "./skills/clean-code/references",
     "description": "Reference materials for clean code principles, naming, functions, and formatting"
   },
   "codice-opencode": {
-    "url": "https://github.com/Fisherk2/codice-opencode",
+    "repository": "Fisherk2/codice-opencode",
     "branch": "main",
     "description": "Códice repository — OpenCode workspace installer reference"
   },
   "opencode": {
-    "url": "https://github.com/anomalyco/opencode",
+    "repository": "anomalyco/opencode",
     "branch": "main",
     "description": "Official OpenCode repository — CLI, API, and configuration reference"
   }
 }
+```
 ```
 
 > **Note:** These are examples — add your own references by editing `opencode.json`. The template does not ship with all 18 skill references pre-configured; users add the ones they need.
@@ -289,7 +290,7 @@ The `reference` section configures local directories or Git repositories that ag
 | Field | Required | Description |
 |-------|----------|-------------|
 | `path` | For local refs | Relative path to the reference directory (from `opencode.json`) |
-| `url` | For remote refs | Git repository URL to clone as a reference source |
+| `repository` | For remote refs | Git repository in `owner/repo` format |
 | `branch` | ❌ | Git branch to use (default: repository default) |
 | `description` | ✅ | Plain-language description to help the agent decide when to load this reference |
 | `hidden` | ❌ | If `true`, hides the reference from TUI listings (default: `false`) |
@@ -303,7 +304,7 @@ In the OpenCode TUI, type `@<alias>` to load the reference material into the cur
 To add your own reference directory:
 
 ```json
-"reference": {
+"references": {
   "my-docs": {
     "path": "./docs/references",
     "description": "Project-specific architecture decisions and API contracts"
@@ -314,9 +315,9 @@ To add your own reference directory:
 Or a remote repository:
 
 ```json
-"reference": {
+"references": {
   "my-org-docs": {
-    "url": "https://github.com/my-org/technical-docs",
+    "repository": "my-org/technical-docs",
     "branch": "main",
     "description": "Organization-wide technical documentation"
   }
