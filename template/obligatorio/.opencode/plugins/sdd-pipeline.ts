@@ -2,6 +2,10 @@ import type { Plugin } from "@opencode-ai/plugin"
 import { readFileSync, writeFileSync, existsSync, appendFileSync } from "fs"
 import { join } from "path"
 
+// DEFAULTS imported to verify module path resolves.
+// Inline definitions remain until Task 8.1 migration.
+import { DEFAULTS } from "./src/defaults"
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
