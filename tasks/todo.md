@@ -1,11 +1,22 @@
 # FEV-13 Todo List — SDD Plugin Decoupling & Quality Infrastructure
 
 **Phase:** FEV-13 (v1.2 Phase 3)
-**Issues:** [#53](https://github.com/fisherk2/codice-opencode/issues/53)
+**Issues:** [#53](https://github.com/fisherk2/codice-opencode/issues/53), [#51](https://github.com/fisherk2/codice-opencode/issues/51) (Documentation Reduction)
 **Spec:** [specs/spec-sdd-plugin-decoupling.md](../specs/spec-sdd-plugin-decoupling.md)
 **Date:** 2026-07-29
 **Full plan:** [plan.md](./plan.md)
 **Status:** 📋 Listo para implementación
+
+---
+
+## Phase 0: Documentation Reduction (Issue #51)
+
+- [ ] **Task 0.1:** Audit WORKFLOW.md — remove completed phases (FEV-1 through FEV-10), keep current state. Target: <300 lines → `docs/WORKFLOW.md`
+- [ ] **Task 0.2:** Audit CHANGELOG.md — consolidate pre-v1.0 entries into "Early Development" section. Target: <350 lines → `CHANGELOG.md`
+- [ ] **Task 0.3:** Audit SPEC.md — remove resolved decisions (move to ADRs), keep only active spec. Target: <400 lines → `SPEC.md`
+- [ ] **Task 0.4:** Verify cross-references — ensure no broken internal links after reductions
+
+**Checkpoint:** All 3 docs under target line counts, zero broken links
 
 ---
 
@@ -73,10 +84,18 @@
 ## Phase 7: Documentation
 
 - [ ] **Task 7.1:** Create ADR-013 → `specs/adr/adr-013-plugin-auto-discovery.md` + update `docs/ARCHITECTURE.md`
-- [ ] **Task 7.2:** Update Wiki (Agents, Commands, Configuration pages for end users)
+- [ ] **Task 7.2:** Update Wiki — all 8 end-user pages:
+  - [ ] `Home.md` — remove src/, tests/, template/ references
+  - [ ] `Getting-Started.md` — remove maintainer setup, focus on install → configure → run
+  - [ ] `Workspace-Structure.md` — remove src/, tests/, dist/, focus on user-facing dirs
+  - [ ] `Configuration.md` — remove internal refs, focus on opencode.json user sections
+  - [ ] `Agents.md` — replace "edit sdd-pipeline.ts" with "create agents/my-agent.md"
+  - [ ] `Commands.md` — replace "edit sdd-pipeline.ts" with "create commands/my-command.md"
+  - [ ] `Skills.md` — replace discovery tree maintenance with "create skills/my-skill/SKILL.md"
+  - [ ] `Customization-Guide.md` — ensure all recipes are user-facing
 - [ ] **Task 7.3:** Update diagnosis `fix06-v1.2-phase3-documentation.md` with actual results
 
-**Checkpoint:** All docs consistent, end-user friendly, cross-references valid
+**Checkpoint:** All docs consistent, end-user friendly, cross-references valid, zero "edit sdd-pipeline.ts" in Wiki
 
 ---
 
@@ -127,6 +146,11 @@
 - [ ] Wiki pages updated for end users (no maintainer references)
 - [ ] Diagnosis documents real results
 - [ ] Issue #53 closed
+- [ ] `docs/WORKFLOW.md` < 300 lines
+- [ ] `CHANGELOG.md` < 350 lines
+- [ ] `SPEC.md` < 400 lines
+- [ ] All 8 Wiki pages rewritten for end users
+- [ ] Issue #51 closed
 
 ### Process
 - [ ] Branch `feat/fev-13-plugin-decoupling` from `develop`
@@ -149,11 +173,12 @@
 | 5 | ¿Estructura del plugin? | 3 archivos nuevos: `defaults.ts`, `autoDiscovery.ts`, `configLoader.ts` |
 | 6 | ¿Test location? | `tests/plugin/{unit,integration,e2e}/` (separado de `src/` tests) |
 | 7 | ¿Biome scope? | Plugin dirs incluidos; skills dirs siguen excluidos (deps externas) |
+| 8 | Issue #51: merge into FEV-13? | **Yes — Phase 0 added** | Docs reduction es independiente del plugin code; 2h adicional, no bloquea otras fases |
 
 ---
 
-**Estimated effort:** 16.5h + 2h buffer = 18.5h total
-**Dependencies:** Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9
+**Estimated effort:** 19h + 2.5h buffer = 21.5h total
+**Dependencies:** Phase 0 ∥ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9
 **Parallelization:** Phases 2, 3, 4 modules can be developed in parallel; Phases 5, 6, 7 docs/tests parallel with implementation
 
 ---
