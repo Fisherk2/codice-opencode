@@ -52,7 +52,7 @@ assert_file_exists "$TEMP_DIR/agents/backend-developer.md"
 assert_file_exists "$TEMP_DIR/agents/tlaloc.md"
 assert_file_exists "$TEMP_DIR/commands/build.md"
 assert_file_exists "$TEMP_DIR/skills/architecture-diagrams/references/architecture.md"
-assert_dir_missing "$TEMP_DIR/references/" "Old centralized references/ directory removed"
+assert_dir_missing "$TEMP_DIR/references/"
 assert_file_exists "$TEMP_DIR/skills-lock.json"
 
 log_info "Verifying estandar files..."

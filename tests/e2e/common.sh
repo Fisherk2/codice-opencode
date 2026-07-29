@@ -194,9 +194,8 @@ assert_dir_exists() {
 # Usage: assert_dir_missing "/path/to/dir"
 assert_dir_missing() {
     local path="$1"
-    local message="${2:-Expected directory to be missing but it exists}"
     if [[ -d "$path" ]]; then
-        log_fail "$message: $path"
+        log_fail "Expected directory to be missing but it exists: $path"
         return 1
     fi
     log_pass "Directory is missing (expected): $path"
