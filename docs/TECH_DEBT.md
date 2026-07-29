@@ -162,16 +162,11 @@ not file granularity.
 | `IFileSystem` port split (ISP) | ✅ IFileSystem (6) + IStagingSystem (4) |
 | Explicit constructors in `VersionComparator` + `ClackPromptsAdapter` | ✅ Resolved in FEV-6 (v1.1.0) |
 
-### v1.2.0 ✅ 
-
-| Item | Resolution |
-|------|------------|
-| FEV-11: Binary removal (Issue #46) — BREAKING | ✅ npm-only distribution as per ADR-011. Binary compilation removed from build system, CI/CD, E2E tests, and docs. |
-
-### v1.2.0 (remaining)
+### v1.2.0
 
 | Item | Effort | Impact | Diagnosis |
 |------|--------|--------|-----------|
+| FEV-11: Binary removal (Issue #46) — BREAKING | — | ✅ npm-only distribution as per ADR-011. Binary compilation removed from build system, CI/CD, E2E tests, and docs. | [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md) |
 | FEV-12: References restructuring (Issues #54, #52) | 8h | ✅ Completado — Self-contained skills, configurable references | [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md) |
 | FEV-13: Documentation overhaul (Issues #51, #53) | 12h | 📋 Listo para planificación — Cleaner docs, user-facing Wiki | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
 | FEV-13b: SDD Plugin Decoupling (Issue #53) | 6-8h | 📋 Spec ready — Auto-discovery + config-driven + quality infra | [spec-sdd-plugin-decoupling.md](../specs/spec-sdd-plugin-decoupling.md) |
