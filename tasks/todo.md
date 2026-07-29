@@ -1,189 +1,259 @@
-# FEV-13 Todo List — SDD Plugin Decoupling & Quality Infrastructure
+# FEV-14 Todo List — UX Enhancements (v1.2 Phase 4)
 
-**Phase:** FEV-13 (v1.2 Phase 3)
-**Issues:** [#53](https://github.com/fisherk2/codice-opencode/issues/53), [#51](https://github.com/fisherk2/codice-opencode/issues/51) (Documentation Reduction)
-**Spec:** [specs/spec-sdd-plugin-decoupling.md](../specs/spec-sdd-plugin-decoupling.md)
+**Phase:** FEV-14 (v1.2 Phase 4)
+**Issues:** [#47](https://github.com/fisherk2/codice-opencode/issues/47), [#56](https://github.com/fisherk2/codice-opencode/issues/56)
+**Spec:** [SPEC.md](../SPEC.md), [docs/WORKFLOW.md](../docs/WORKFLOW.md) §FEV-14
 **Date:** 2026-07-29
 **Full plan:** [plan.md](./plan.md)
-**Status:** ✅ Completo — 761 tests, 0 fail, `just check` 0 errores
+**Status:** 📋 Listo para implementación
+**Branch:** `feat/fev14-ux` (from `feat/ux-docs-wiki`)
 
 ---
 
-## Phase 0: Documentation Reduction (Issue #51)
+## Decisiones UX Confirmadas (vía question tool)
 
-- [x] **Task 0.1:** Audit WORKFLOW.md — remove completed phases (FEV-1 through FEV-10), keep current state. Target: <300 lines → `docs/WORKFLOW.md`
-- [x] **Task 0.2:** Audit CHANGELOG.md — consolidate pre-v1.0 entries into "Early Development" section. Target: <350 lines → `CHANGELOG.md`
-- [x] **Task 0.3:** Audit SPEC.md — remove resolved decisions (move to ADRs), keep only active spec. Target: <400 lines → `SPEC.md`
-- [x] **Task 0.4:** Verify cross-references — ensure no broken internal links after reductions
-
-**Checkpoint:** ✅ All 3 docs under target line counts, zero broken links
-
----
-
-## Phase 1: Foundation — Extract DEFAULTS & Types
-
-- [x] **Task 1.1:** Extract DEFAULTS to `src/defaults.ts` (6 hardcoded maps + DESTRUCTIVE_PATTERNS separated)
-- [x] **Task 1.2:** Add `SddPipelineConfig` type definition → `src/types.ts`
-
-**Checkpoint:** ✅ Plugin behavior identical, all existing tests pass
+| # | Pregunta | Decisión |
+|---|----------|----------|
+| 1 | Estilo de progress bar | **Multi-progress con log lines** (`clack.progress()` per-file + `clack.log()` con eventos) |
+| 2 | 6 opciones del menú `/help` | **Onboarding + lifecycle + advanced** (What is Códice? / Start new / Update existing / SDD cycle / List 13 commands / Troubleshooting) |
+| 3 | Visibilidad del progress bar | **Siempre visible** (no solo en `--verbose`) |
+| 4 | Bump de versión | **Mantener v1.2.0** (sin bump; cierre coordinado FEV-12/13/14/15) |
 
 ---
 
-## Phase 2: Auto-Discovery Implementation (Pillar 1)
+## Phase 0: Preparation
 
-- [x] **Task 2.1:** Create `src/autoDiscovery.ts` (discoverCommandAgentMap, discoverValidSubagents, discoverAgentMentionPatterns)
-- [x] **Task 2.2:** Unit tests for autoDiscovery → `tests/plugin/unit/autoDiscovery.test.ts` (10 scenarios, >90% coverage)
-- [x] **Task 2.3:** Wire auto-discovery into plugin (with fallback to DEFAULTS)
+- [ ] **Task 0.1:** Crear rama `feat/fev14-ux` desde `feat/ux-docs-wiki` (o `develop`)
+- [ ] **Task 0.2:** Verificar baseline — `just check` + `just test` + `just test:e2e` exit 0
 
-**Checkpoint:** ✅ Adding a new command in `commands/` detected without plugin edit (SC-1)
-
----
-
-## Phase 3: Configuration-Driven Behavior (Pillar 2)
-
-- [x] **Task 3.1:** Create `src/configLoader.ts` (loadSddConfig with validation)
-- [x] **Task 3.2:** Unit tests for configLoader → `tests/plugin/unit/configLoader.test.ts` (10 scenarios, >90% coverage)
-- [x] **Task 3.3:** Add `sddPipeline` section to `opencode.json` (default values for all 3 fields)
-- [x] **Task 3.4:** Wire config into plugin (merge with defaults, OQ-3 debug warning)
-
-**Checkpoint:** ✅ Intent/phase/suggestions configurable via opencode.json (SC-3, SC-8)
+**Checkpoint:** ✅ Branch clean, 761 tests passing, 18/18 E2E
 
 ---
 
-## Phase 4: Quality Infrastructure (Pillar 3)
+## Phase 1: Domain — Progress callback (Pillar A foundation)
 
-- [x] **Task 4.1:** Update `biome.json` to include plugin directories (remove blanket template exclusion)
-- [x] **Task 4.2:** Add Justfile targets: `check-plugin`, `test-plugin-unit`, `test-plugin-integration`, `test-plugin-e2e`
-- [x] **Task 4.3:** First batch unit tests → `tests/plugin/unit/normalizeBash.test.ts` + `destructivePatterns.test.ts` (>90% coverage)
-- [x] **Task 4.4:** Update `just check` to include plugin directories
+- [ ] **Task 1.1:** Crear `src/domain/types/ProgressEvent.ts` con discriminated union (6 variants: `stage_start`, `stage_complete`, `stage_skip`, `commit_start`, `commit_complete`, `error`) + `ProgressCallback` type alias
+- [ ] **Task 1.2:** Extender `IFileMergeEngine.execute()` con parámetro `onProgress?: ProgressCallback` (3rd, opcional) → `src/domain/ports/IFileMergeEngine.ts`
+- [ ] **Task 1.3:** Implementar emisión de eventos en `FileMergeEngine.execute()` + `safeEmit()` wrapper (try/catch para no romper merge) + tests unitarios para 6 eventos + callback exception → `src/domain/services/FileMergeEngine.ts` + `tests/unit/domain/file-merge-engine.test.ts`
 
-**Checkpoint:** ✅ Plugin passes Biome lint with zero errors (SC-4)
-
----
-
-## Phase 5: Plugin Hook Integration Tests
-
-- [x] **Task 5.1:** Integration tests for `chat.message` hook → `tests/plugin/integration/chatMessage.test.ts` (6 scenarios, >80% coverage)
-- [x] **Task 5.2:** Integration tests for `tool.execute.before` hook → `tests/plugin/integration/toolExecuteBefore.test.ts` (7 scenarios, >80% coverage)
-- [x] **Task 5.3:** Integration tests for `system.transform` hook → `tests/plugin/integration/systemTransform.test.ts` (5 scenarios, >70% coverage)
-
-**Checkpoint:** ✅ All hooks tested, >70% coverage (SC-5 partial)
+**Checkpoint:** ✅ Domain type-check pasa, 6 eventos emitidos, no regresión, tests nuevos pasan
 
 ---
 
-## Phase 6: E2E Tests for Plugin
+## Phase 2: Application — TUI ports
 
-- [x] **Task 6.1:** E2E: plugin file exists after clean install → `tests/plugin/e2e/16-plugin-installation.sh`
-- [x] **Task 6.2:** E2E: plugin passes Biome lint in installed workspace → `tests/plugin/e2e/17-plugin-lint.sh`
-- [x] **Task 6.3:** E2E: audit log created on first session → `tests/plugin/e2e/18-audit-log.sh`
+- [ ] **Task 2.1:** Extender `IUserPrompt` con 4 métodos: `showProgressBar(total, label?)`, `updateProgress(current, filePath)`, `completeProgress()`, `logProgressEvent(message)` → `src/application/ports/IUserPrompt.ts`
+- [ ] **Task 2.2:** Tests unitarios mock-based para `IUserPrompt` extended port (3+ casos, verifica contrato del port) → `tests/unit/application/i-user-prompt.test.ts`
 
-**Checkpoint:** ✅ 18/18 E2E scenarios passing (15 existing + 3 new)
-
----
-
-## Phase 7: Documentation
-
-- [x] **Task 7.1:** Create ADR-013 → `specs/adr/adr-013-plugin-auto-discovery.md` + update `docs/ARCHITECTURE.md`
-- [x] **Task 7.2:** Update Wiki — all 8 end-user pages:
-  - [x] `Home.md` — remove src/, tests/, template/ references
-  - [x] `Getting-Started.md` — remove maintainer setup, focus on install → configure → run
-  - [x] `Workspace-Structure.md` — remove src/, tests/, dist/, focus on user-facing dirs
-  - [x] `Configuration.md` — remove internal refs, focus on opencode.json user sections
-  - [x] `Agents.md` — replace "edit sdd-pipeline.ts" with "create agents/my-agent.md"
-  - [x] `Commands.md` — replace "edit sdd-pipeline.ts" with "create commands/my-command.md"
-  - [x] `Skills.md` — replace discovery tree maintenance with "create skills/my-skill/SKILL.md"
-  - [x] `Customization-Guide.md` — ensure all recipes are user-facing
-- [x] **Task 7.3:** Update diagnosis `fix06-v1.2-phase3-documentation.md` with actual results
-
-**Checkpoint:** ✅ All docs consistent, end-user friendly, cross-references valid, zero "edit sdd-pipeline.ts" in Wiki
+**Checkpoint:** ✅ Application type-check pasa, contrato del port verificado, sin imports de domain→application
 
 ---
 
-## Phase 8: Cleanup (Phase D from spec)
+## Phase 3: Infrastructure — ClackPromptsAdapter
 
-- [x] **Task 8.1:** Remove hardcoded maps from `sdd-pipeline.ts` (use only imported defaults)
-- [x] **Task 8.2:** Verify plugin <400 lines (SC-6)
-- [x] **Task 8.3:** Full regression: `just check`, `bun test`, `just test:e2e`
+- [ ] **Task 3.1:** Implementar `showProgressBar()` con `clack.progress({ max: total, style: "heavy" })` + `updateProgress()` con `progress.advance(1, msg)` + `completeProgress()` con `progress.stop()` → `src/infrastructure/adapters/ClackPromptsAdapter.ts`
+- [ ] **Task 3.2:** Implementar `logProgressEvent()` con dispatch por categoría: `commit:` → success ✓, `symlink:` → info 🔗, `gitignore:` → info 📄, `error:` → error ✗, `skip:` → warn ⊘, default → step → `src/infrastructure/adapters/ClackPromptsAdapter.ts`
+- [ ] **Task 3.3:** Integration tests para progress rendering (6+ escenarios con mock de clack primitives, captura orden de llamadas) → `tests/integration/adapters/clack-prompts-progress.test.ts`
 
-**Checkpoint:** ✅ Plugin file <400 lines, all tests pass
+**Checkpoint:** ✅ Adapter >80% coverage, progress + logs visibles en dry-run, no regresión
+
+---
+
+## Phase 4: Use Cases — Wiring
+
+- [ ] **Task 4.1:** Wire progress callback en `CleanInstallUseCase.execute()` (label "Installing files..." + log events post-merge) + tests integration para eventos capturados → `src/application/use-cases/CleanInstallUseCase.ts` + `tests/integration/use-cases/clean-install.test.ts`
+- [ ] **Task 4.2:** Wire progress callback en `ProjectInstallUseCase.execute()` (label "Project install...") + tests integration → `src/application/use-cases/ProjectInstallUseCase.ts` + `tests/integration/use-cases/project-install.test.ts`
+- [ ] **Task 4.3:** Wire progress callback en `UpdateWorkspaceUseCase.execute()` (label "Updating files...", spinner separado para version check) + tests integration → `src/application/use-cases/UpdateWorkspaceUseCase.ts` + `tests/integration/use-cases/update-workspace.test.ts`
+
+**Checkpoint:** ✅ 3 use cases con progress visible end-to-end, manual smoke test verde, sin regresión
+
+---
+
+## Phase 5: Tests — Integration + E2E
+
+- [ ] **Task 5.1:** Integration test: progress bar visible en Clean Install con 10 files (10 `stage_complete` events + orden + `commit_start`/`commit_complete`) → `tests/integration/use-cases/progress-flow.test.ts`
+- [ ] **Task 5.2:** Integration test: progress events log estructurados (`commit:`, `symlink:`, `gitignore:` capturados) → `tests/integration/use-cases/progress-logs.test.ts`
+- [ ] **Task 5.3:** E2E: extender `tests/e2e/01-clean-install.sh` con assertions de `commit:` y `symlink:` en stdout (+10 líneas, preservar 5 assertions originales)
+
+**Checkpoint:** ✅ 3 integration tests + 1 E2E extension pasan, sin regresión en suite completa
+
+---
+
+## Phase 6: Help Command — Template (PARALLEL BRANCH)
+
+- [ ] **Task 6.1:** Crear `template/obligatorio/commands/help.md` con frontmatter `agent: huitzilopochtli` + 6 opciones (What is Códice? / Start new project / Update existing / SDD cycle / List 13 commands / Troubleshooting) + Rules + Suggested Next Step (<100 líneas)
+
+**Checkpoint:** ✅ `commands/help.md` creado, frontmatter correcto, listo para auto-discovery
+
+---
+
+## Phase 7: Help Command — Plugin Defaults
+
+- [ ] **Task 7.1:** Agregar `/help: "huitzilopochtli"` a `COMMAND_AGENT_MAP` → `template/obligatorio/.opencode/plugins/src/defaults.ts` (+2 líneas, comentario `// FEV-14`)
+- [ ] **Task 7.2:** Agregar `INTENT_PATTERNS["/help"]` con 15+ keywords EN/ES (help, ayuda, como uso, how to use, what is, que es, show commands, list commands, menu, onboarding, getting started, como empezar, donde empiezo, documentation, docs, manual) → mismo archivo (+16 líneas)
+- [ ] **Task 7.3:** Agregar `COMMAND_PHASE_MAP["/help"] = "idle"` (informational, sin progresión SDD) → mismo archivo (+2 líneas)
+- [ ] **Task 7.4:** Agregar `PHASE_SUGGESTIONS.idle.huitzilopochtli = "Consider /help to discover available commands, or /spec to start a new project."` → mismo archivo (+2 líneas)
+- [ ] **Task 7.5:** Integration test: plugin auto-discovers `/help` (temp dir + mock `help.md`, assert `commandAgentMap["/help"] === "huitzilopochtli"`) → `tests/plugin/integration/help-command-discovery.test.ts`
+
+**Checkpoint:** ✅ /help registrado en 4 default maps, plugin auto-discovery test pasa, sin regresión en plugin tests
+
+---
+
+## Phase 8: Documentation
+
+- [ ] **Task 8.1:** Actualizar Wiki `docs/wiki-source/Commands.md` (Mermaid +/help, table +1 row, Command Details +/help subsection, 12→13 commands count) (+20 líneas)
+- [ ] **Task 8.2:** Actualizar `README.md` (Features "12 Slash Commands"→"13 Slash Commands", Mermaid +/help node, Full Cycle table +/help row, nueva sección "## Progress Bar") (+25 líneas, <300 total)
+- [ ] **Task 8.3:** Actualizar `docs/WORKFLOW.md` (FEV-14 status "📋 Listo"→"✅ Completo", sección resultados, métricas) (+15 líneas, <300 total)
+- [ ] **Task 8.4:** Actualizar `CHANGELOG.md` (FEV-14 entry en sección v1.2.0 - Unreleased, Keep a Changelog format Added) (+15 líneas, <350 total)
+
+**Checkpoint:** ✅ Todos los docs consistentes, sin broken links, FEV-14 marcado completo
 
 ---
 
 ## Phase 9: Verification & Ship
 
-- [x] **Task 9.1:** `just check` (all directories including plugin) → 0 errors
-- [x] **Task 9.2:** `bun test` (full suite) → ≥661 tests, 0 fail
-- [x] **Task 9.3:** `just test:e2e` (18/18 scenarios)
-- [x] **Task 9.4:** Coverage report → plugin >80% (SC-5)
-- [x] **Task 9.5:** Code Review 5-ejes by Tezcatlipoca → 0 Critical, all Important resolved
-- [x] **Task 9.6:** Ship Review GO/NO-GO Decision → GO ✅, PR merged
+- [ ] **Task 9.1:** `just check` (Biome + tsc) → 0 errors
+- [ ] **Task 9.2:** `bun test tests/` → ~781 tests, 0 fail (761 + ~20 new)
+- [ ] **Task 9.3:** `just test:e2e` → 19/19 (18 existing + 1 extended)
+- [ ] **Task 9.4:** Coverage report → no regression vs 96.98% lines baseline
+- [ ] **Task 9.5:** Code Review 5-ejes by Tezcatlipoca → 0 Critical, report en `docs/diagnosis/fix07-v1.2-phase4-ux.md`
+- [ ] **Task 9.6:** Ship Review GO/NO-GO → GO, PR mergeado a `develop`
 
-**Checkpoint:** ✅ All DoD items satisfied, FEV-13 closed, FEV-14 ready
+**Checkpoint:** ✅ Todos DoD items satisfied, FEV-14 cerrado, FEV-15 ready
 
 ---
 
-## DoD Checklist — FEV-13
+## DoD Checklist — FEV-14
 
 ### Functional
-- [x] SC-1: Adding a command in `commands/` detected by plugin without editing `sdd-pipeline.ts`
-- [x] SC-2: Adding an agent in `agents/` accepted by `task()` validation without editing plugin
-- [x] SC-3: `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS` configurable via `opencode.json`
-- [x] SC-4: Plugin passes `bunx @biomejs/biome check` with zero errors
-- [x] SC-5: Plugin has >80% test coverage across unit + integration suites
-- [x] SC-6: Plugin file size reduced from 665 lines to <400 lines after Phase D
-- [x] SC-7: All existing functionality preserved — no regression
-- [x] SC-8: Backward compatible — works without `sddPipeline` config
+- [ ] Issue #47 resuelto: progress bar visible durante Clean, Project, Update install
+- [ ] Issue #56 resuelto: `/help` command con 6 opciones
+- [ ] Progress muestra: archivo actual, total, %, completion
+- [ ] Log events emitidos: `commit:`, `symlink:`, `gitignore:`, `error:`, `skip:`
+- [ ] `/help` registrado en COMMAND_AGENT_MAP, INTENT_PATTERNS, COMMAND_PHASE_MAP, PHASE_SUGGESTIONS
+- [ ] `/help` offers 6 options vía question tool
+- [ ] Plugin auto-discovers `commands/help.md` (Pillar 1, FEV-13)
 
 ### Quality
-- [x] `just check`: 0 errors
-- [x] `bun test`: 761 tests, 0 fail
-- [x] `just test:e2e`: 18/18 (15 existing + 3 new)
-- [x] Coverage: plugin >80% lines/funcs; overall no regression
-- [x] Code review: 0 Critical, 0 Important open
+- [ ] `just check`: 0 errors
+- [ ] `bun test`: ~781 tests, 0 fail
+- [ ] `just test:e2e`: 19/19
+- [ ] Coverage: no regression vs 96.98% lines
+- [ ] Code review: 0 Critical, 0 Important open
 
 ### Documentation
-- [x] ADR-013 created and cross-referenced in ARCHITECTURE.md
-- [x] Wiki pages updated for end users (no maintainer references)
-- [x] Diagnosis documents real results
-- [x] Issue #53 closed
-- [x] `docs/WORKFLOW.md` < 300 lines
-- [x] `CHANGELOG.md` < 350 lines
-- [x] `SPEC.md` < 400 lines
-- [x] All 8 Wiki pages rewritten for end users
-- [x] Issue #51 closed
+- [ ] Wiki Commands.md: 12 → 13 commands
+- [ ] README.md: Features + Mermaid + Full Cycle + Progress Bar section
+- [ ] WORKFLOW.md: FEV-14 marked complete
+- [ ] CHANGELOG.md: FEV-14 entry
+- [ ] No broken internal links
 
 ### Process
-- [x] Branch `feat/ux-docs-wiki` from `develop`
-- [x] Atomic commits with Co-Authored-By trailer
-- [x] PR to `develop` with CI green
-- [x] Code review executed
-- [x] Ship Review: GO decision documented
-- [x] No version bump (v1.2.0 se lanza al cierre de FEV-12 ✅ + 13 + 14 + 15)
+- [ ] Branch `feat/fev14-ux` from `feat/ux-docs-wiki`
+- [ ] Atomic commits con `Co-Authored-By: <Agente> <dev@fisherk2.com>`
+- [ ] PR to `develop` con CI green
+- [ ] Code review ejecutado (5-ejes by Tezcatlipoca)
+- [ ] Ship Review: GO decision
+- [ ] No version bump (v1.2.0 al cierre de FEV-12 ✅ + 13 ✅ + 14 + 15)
 
 ---
 
-## Decision Log (2026-07-29)
+## Resumen de Archivos a Modificar/Crear
 
-| # | Pregunta | Decisión |
-|---|----------|----------|
-| 1 | OQ-1: ¿`sddPipeline` config: Obligatorio o Estándar? | **Obligatorio** — defaults sincronizan con updates |
-| 2 | OQ-2: ¿Auto-discovery: cache o scan? | **Scan every session** — <5ms overhead, sin invalidación complexity |
-| 3 | OQ-3: ¿Warn para command sin `commandPhaseMap`? | **Yes, `console.debug`** — visible solo en verbose |
-| 4 | OQ-4: ¿`DESTRUCTIVE_PATTERNS` a config? | **No** — safety boundary, hardcoded siempre |
-| 5 | ¿Estructura del plugin? | 3 archivos nuevos: `defaults.ts`, `autoDiscovery.ts`, `configLoader.ts` |
-| 6 | ¿Test location? | `tests/plugin/{unit,integration,e2e}/` (separado de `src/` tests) |
-| 7 | ¿Biome scope? | Plugin dirs incluidos; skills dirs siguen excluidos (deps externas) |
-| 8 | Issue #51: merge into FEV-13? | **Yes — Phase 0 added** | Docs reduction es independiente del plugin code; 2h adicional, no bloquea otras fases |
+### Nuevos archivos (10)
+1. `src/domain/types/ProgressEvent.ts` (~40 líneas)
+2. `tests/unit/application/i-user-prompt.test.ts` (~80 líneas)
+3. `tests/integration/adapters/clack-prompts-progress.test.ts` (~120 líneas)
+4. `tests/integration/use-cases/progress-flow.test.ts` (~150 líneas)
+5. `tests/integration/use-cases/progress-logs.test.ts` (~100 líneas)
+6. `template/obligatorio/commands/help.md` (~85 líneas)
+7. `tests/plugin/integration/help-command-discovery.test.ts` (~80 líneas)
+8. `docs/diagnosis/fix07-v1.2-phase4-ux.md` (code review report)
+
+### Archivos modificados (10)
+1. `src/domain/ports/IFileMergeEngine.ts` (+10 líneas)
+2. `src/domain/services/FileMergeEngine.ts` (+30 líneas)
+3. `tests/unit/domain/file-merge-engine.test.ts` (+50 líneas)
+4. `src/application/ports/IUserPrompt.ts` (+25 líneas)
+5. `src/infrastructure/adapters/ClackPromptsAdapter.ts` (+50 líneas)
+6. `src/application/use-cases/CleanInstallUseCase.ts` (+30 líneas)
+7. `src/application/use-cases/ProjectInstallUseCase.ts` (+30 líneas)
+8. `src/application/use-cases/UpdateWorkspaceUseCase.ts` (+30 líneas)
+9. `template/obligatorio/.opencode/plugins/src/defaults.ts` (+22 líneas en 4 maps)
+10. `tests/integration/use-cases/{clean,project,update}-install.test.ts` (+30 líneas c/u)
+11. `tests/e2e/01-clean-install.sh` (+10 líneas)
+12. `docs/wiki-source/Commands.md` (+20 líneas)
+13. `README.md` (+25 líneas)
+14. `docs/WORKFLOW.md` (+15 líneas)
+15. `CHANGELOG.md` (+15 líneas)
+
+**Total:** 18 archivos (10 nuevos + 8 modificados, 3 de tests adicionales)
 
 ---
 
-**Estimated effort:** 19h + 2.5h buffer = 21.5h total
-**Dependencies:** Phase 0 ∥ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9
-**Parallelization:** Phases 2, 3, 4 modules can be developed in parallel; Phases 5, 6, 7 docs/tests parallel with implementation
+## Métricas Esperadas
+
+| Métrica | Baseline (v1.1.3 + FEV-13) | Meta v1.2.0-FEV14 |
+|---------|------------------------------|---------------------|
+| Tests (pass/fail) | 761 / 0 | ~781 / 0 |
+| Comandos SDD | 12 | 13 (+/help) |
+| `just check` errores | 0 | 0 |
+| `just test:e2e` | 18/18 | 19/19 |
+| Coverage (lines) | 96.98% | ≥96.98% |
+| Plugin file | 366 líneas | 366 (sin tocar) |
+| Issues cerrados | — | #47, #56 |
 
 ---
 
-## 📋 Próximo: FEV-14 — UX Enhancements
+## Dependency Graph (Mermaid)
 
-FEV-14 (Issues #47, #56) está pendiente: progress bar + comando `/help`.
-Ver [docs/WORKFLOW.md](../docs/WORKFLOW.md) sección FEV-14.
+```mermaid
+graph LR
+    P0[Phase 0: Prep] --> P1[Phase 1: Domain]
+    P1 --> P2[Phase 2: Ports]
+    P2 --> P3[Phase 3: TUI]
+    P3 --> P4[Phase 4: UseCases]
+    P4 --> P5[Phase 5: Tests]
+    P0 --> P6[Phase 6: Help Template]
+    P6 --> P7[Phase 7: Plugin Defaults]
+    P5 --> P8[Phase 8: Docs]
+    P7 --> P8
+    P8 --> P9[Phase 9: Verify]
+    P9 --> SHIP[PR Merge]
+
+    classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
+    classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
+
+    class P1,P2,P3,P4 crit
+    class P6,P7 par
+    class P5,P8,P9,SHIP gate
+```
+
+**Critical path:** Phase 0 → 1 → 2 → 3 → 4 → 5 → 8 → 9 (~15h)
+**Parallel branch:** Phase 0 → 6 → 7 → 8 (~3h, agent separado)
+**Convergence:** Phase 8 espera ambos branches
+**Final gate:** Phase 9 (verificación + ship)
+
+---
+
+## Próximo Paso
+
+Una vez aprobado el plan:
+1. **Implementar Phase 0-5** (progress bar) — sequential, ~14h
+2. **Parallel:** Phase 6-7 (help command) — puede ser otro agente, ~3h
+3. **Convergence:** Phase 8 (docs)
+4. **Ship:** Phase 9
+
+**Comando sugerido:** `> Run /build to start Phase 0 (preparation)`
+
+---
+
+**Estimated effort:** 17-20h wall-clock (con paralelización)
+**Dependencies:** FEV-13 ✅ cerrado
+**Blockers:** Ninguno
+**Decision Log:** Ver sección "Decisiones UX Confirmadas" arriba
+
+---
+
+*Última actualización: 2026-07-29 — Moctezuma (Strategic Planner)*
