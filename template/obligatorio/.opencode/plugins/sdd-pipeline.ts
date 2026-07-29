@@ -2,9 +2,21 @@ import type { Plugin } from "@opencode-ai/plugin"
 import { readFileSync, writeFileSync, existsSync, appendFileSync } from "fs"
 import { join } from "path"
 
-// DEFAULTS imported to verify module path resolves.
-// Inline definitions remain until Task 8.1 migration.
-import { DEFAULTS } from "./src/defaults"
+// Module-level defaults — will be replaced by auto-discovery + config in plugin init.
+// Hardcoded maps remain here until Task 8.1 (Phase 8 cleanup removes inline definitions).
+import {
+  DEFAULTS,
+  COMMAND_AGENT_MAP as HARDCODED_COMMAND_AGENT_MAP,
+  VALID_SUBAGENTS as HARDCODED_VALID_SUBAGENTS,
+  INTENT_PATTERNS as HARDCODED_INTENT_PATTERNS,
+  COMMAND_PHASE_MAP as HARDCODED_COMMAND_PHASE_MAP,
+  PHASE_SUGGESTIONS as HARDCODED_PHASE_SUGGESTIONS,
+  AGENT_MENTION_PATTERNS as HARDCODED_AGENT_MENTION_PATTERNS,
+  DESTRUCTIVE_PATTERNS,
+} from "./src/defaults"
+import { discoverCommandAgentMap, discoverValidSubagents, discoverAgentMentionPatterns } from "./src/autoDiscovery"
+import { loadSddConfig } from "./src/configLoader"
+import type { SddPipelineConfig } from "./src/types"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -372,6 +384,32 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 
   // ── Paths ────────────────────────────────────────────────────────────────
   const projectDir = directory || process.cwd()
+
+  // ── Auto-discovery (Pillar 1) — fallback to DEFAULTS when directories absent ──
+  const commandsDir = join(projectDir, "commands")
+  const agentsDir = join(projectDir, "agents")
+  const discoveredCommandAgentMap = discoverCommandAgentMap(commandsDir)
+  const discoveredValidSubagents = discoverValidSubagents(agentsDir)
+  const commandAgentMap = Object.keys(discoveredCommandAgentMap).length > 0
+    ? discoveredCommandAgentMap
+    : DEFAULTS.commandAgentMap
+  const validSubagents = discoveredValidSubagents.size > 0
+    ? discoveredValidSubagents
+    : DEFAULTS.validSubagents
+  const agentMentionPatterns = discoverAgentMentionPatterns(validSubagents)
+
+  // ── Configuration loading (Pillar 2) — merge user config with defaults ──
+  const sddConfig = loadSddConfig(projectDir)
+  const commandPhaseMap = { ...DEFAULTS.commandPhaseMap, ...sddConfig.commandPhaseMap }
+  const intentPatterns = { ...DEFAULTS.intentPatterns, ...sddConfig.intentPatterns }
+  const phaseSuggestions = { ...DEFAULTS.phaseSuggestions, ...sddConfig.phaseSuggestions }
+
+  // OQ-3: warn when a commands/ file has no commandPhaseMap entry
+  for (const command of Object.keys(commandAgentMap)) {
+    if (!commandPhaseMap[command]) {
+      console.debug(`[sdd-pipeline] Command "${command}" has no commandPhaseMap entry, defaulting to "idle"`)
+    }
+  }
   const pluginsDir = join(projectDir, ".opencode", "plugins")
   const auditLogPath = join(pluginsDir, ".sdd-audit.log")
 
@@ -459,7 +497,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
   }
 
   /** Maps a slash command to its corresponding SDD pipeline phase. */
-  const commandToPhase = (command: string): string => COMMAND_PHASE_MAP[command] ?? "idle"
+  const commandToPhase = (command: string): string => commandPhaseMap[command] ?? "idle"
 
   // ── Hooks ────────────────────────────────────────────────────────────────
 
@@ -481,7 +519,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
         const sddContext = buildSddContext()
         
         // Add phase suggestion if agent is used outside typical phase
-        const suggestion = PHASE_SUGGESTIONS[sddState.pipeline_phase]?.[sddState.agent_type]
+        const suggestion = phaseSuggestions[sddState.pipeline_phase]?.[sddState.agent_type]
         const suggestionLine = suggestion ? `
 > **Suggestion:** ${suggestion}` : ''
         
@@ -516,7 +554,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
         const lower = content.toLowerCase()
 
         // --- Detect agent mentions (e.g., "@tlaloc", "agente tezcatlipoca") ---
-        for (const [agentType, patterns] of Object.entries(AGENT_MENTION_PATTERNS)) {
+        for (const [agentType, patterns] of Object.entries(agentMentionPatterns)) {
           if (patterns.some((p) => p.test(content))) {
             if (sddState.agent_type !== agentType) {
               sddState.agent_type = agentType
@@ -532,7 +570,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
         // on the first command after session start when agent is "unknown").
         // Must be followed by space, EOL, or non-word char to avoid false matches
         // like "/specification" matching "/spec".
-        for (const [command, agentType] of Object.entries(COMMAND_AGENT_MAP)) {
+        for (const [command, agentType] of Object.entries(commandAgentMap)) {
           if (lower.startsWith(command)) {
             const nextChar = lower[command.length]
             const isEnd = lower.length === command.length
@@ -553,7 +591,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
         // Uses word-boundary regex to avoid false positives on common English
         // substrings (e.g., "relationship status" should NOT match /ship,
         // "I protest this decision" should NOT match /test).
-        for (const [command, keywords] of Object.entries(INTENT_PATTERNS)) {
+        for (const [command, keywords] of Object.entries(intentPatterns)) {
           if (keywords.some((kw) => {
             const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
             return new RegExp(`\\b${escaped}\\b`, 'i').test(content)
@@ -614,7 +652,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
             console.debug("[sdd-pipeline] task() args have no recognizable subagent key:", Object.keys(args))
           }
 
-          if (subagentName && !VALID_SUBAGENTS.has(subagentName)) {
+          if (subagentName && !validSubagents.has(subagentName)) {
             audit('tool.before', `BLOCKED task: unknown subagent "${subagentName}"`)
             throw new SddError(`Unknown subagent: "${subagentName}". Use an agent from the VALID_SUBAGENTS catalog.`)
           }
