@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.2.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-28 (FEV-12 ✅ Completo, FEV-13 📋 Listo para planificación, FEV-14 📋 Pendiente, FEV-15 📋 Pendiente) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-29 (FEV-12 ✅ Completo, FEV-13 📋 Spec creada, FEV-14 📋 Pendiente, FEV-15 📋 Pendiente) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -30,7 +30,7 @@
 | FEV-10 | Code Quality + Dependency Upgrades | TD-1.1, TD-2.1, TD-3.1, TD-3.2, TD-5.3 | ✅ Completo |
 | FEV-11 | Binary Removal (v1.2 Phase 1) | Issue #46: eliminar binarios compilados, distribución solo npm/bunx | ✅ Completo |
 | FEV-12 | References Restructuring (v1.2 Phase 2) | Issues #54, #52: referencias configurables vía opencode.json | ✅ Completo |
-| FEV-13 | Documentation Overhaul (v1.2 Phase 3) | Issues #51, #53: actualizar docs, reducir acoplamiento SDD plugin | 📋 Listo para planificación |
+| FEV-13 | Documentation Overhaul (v1.2 Phase 3) | Issues #51, #53: actualizar docs, reducir acoplamiento SDD plugin + quality infra (linters, tests) | 📋 Spec creada — Listo para planificación |
 | FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | 📋 Pendiente |
 | FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | 📋 Pendiente |
 
@@ -1589,6 +1589,13 @@ Issues #51 y #53 identifican problemas de documentación:
 | FEV13-T4 | Implementar auto-discovery para comandos/agentes/skills | `sdd-pipeline.ts` | 📋 Pendiente |
 | FEV13-T5 | Tests para auto-discovery | `tests/` | 📋 Pendiente |
 | FEV13-T6 | Documentar cambios en Wiki | `docs/wiki-source/` | 📋 Pendiente |
+| FEV13-T7 | Implement auto-discovery for COMMAND_AGENT_MAP (scan commands/*.md frontmatter) | `sdd-pipeline.ts` | 📋 Pendiente |
+| FEV13-T8 | Implement auto-discovery for VALID_SUBAGENTS (scan agents/*.md filenames) | `sdd-pipeline.ts` | 📋 Pendiente |
+| FEV13-T9 | Move INTENT_PATTERNS, COMMAND_PHASE_MAP, PHASE_SUGGESTIONS to opencode.json sddPipeline config | `sdd-pipeline.ts`, `opencode.json` | 📋 Pendiente |
+| FEV13-T10 | Extend Biome config to include plugin directories | `biome.json`, `Justfile` | 📋 Pendiente |
+| FEV13-T11 | Create plugin unit tests (normalizeBash, destructivePatterns, autoDiscovery, configLoading) | `tests/plugin/unit/` | 📋 Pendiente |
+| FEV13-T12 | Create plugin integration tests (chatMessage, toolExecuteBefore, systemTransform) | `tests/plugin/integration/` | 📋 Pendiente |
+| FEV13-T13 | Create ADR-013 documenting plugin auto-discovery decision | `specs/adr/adr-013-plugin-auto-discovery.md` | 📋 Pendiente |
 
 #### Métricas de Referencia
 
@@ -1603,6 +1610,13 @@ Issues #51 y #53 identifican problemas de documentación:
 - [ ] Documentación `docs/` actualizada (excluyendo README.md, CONTRIBUTING.md)
 - [ ] Documentación `template/estandar/docs/` actualizada
 - [ ] SDD plugin con auto-discovery (sin maps hardcodeados)
+- [ ] Auto-discovery: adding a command in commands/ is detected without editing sdd-pipeline.ts
+- [ ] Auto-discovery: adding an agent in agents/ is accepted by task() validation without editing sdd-pipeline.ts
+- [ ] Config: INTENT_PATTERNS, COMMAND_PHASE_MAP, PHASE_SUGGESTIONS configurable via opencode.json
+- [ ] Plugin passes Biome lint with zero errors
+- [ ] Plugin has >80% test coverage
+- [ ] Plugin file reduced from 665 to <400 lines
+- [ ] ADR-013 documented
 - [ ] `bun test`: sin regresión
 - [ ] `just check`: 0 errores
 
@@ -1753,7 +1767,7 @@ Issue #55 identifica la falta de un Code of Conduct para el proyecto y el templa
 - **V1.1.3 completado:** ✓ Hotfix — EPERM on Windows CI, CONTRIBUTING.md simplified.
 - **FEV-11 status:** ✅ Completo — Binary Removal (Issue #46, npm-only distribution)
 - **FEV-12 status:** ✅ Completado — References Restructuring (Issues #54, #52, 8h, configurable references) — mergeado a develop
-- **FEV-13 status:** 📋 Listo para planificación — Documentation Overhaul (Issues #51, #53, 12h, reduce SDD coupling)
+- **FEV-13 status:** 📋 Spec creada — Documentation Overhaul + SDD Plugin Decoupling + Quality Infra (Issues #51, #53, 18-20h, spec at specs/spec-sdd-plugin-decoupling.md)
 - **FEV-14 status:** 📋 Pendiente — UX Enhancements (Issues #47, #56, 6h, progress bar + /help command)
 - **FEV-15 status:** 📋 Pendiente — Community Standards (Issue #55, 2h, CODE_OF_CONDUCT.md)
 

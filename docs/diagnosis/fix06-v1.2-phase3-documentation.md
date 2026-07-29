@@ -68,6 +68,19 @@ The Wiki was created by migrating content from `docs/opencode/` (FEV-5), which w
 1. **Issue #51:** Reduce all documents >500 lines to <500 lines by removing obsolete content while preserving error/fix history
 2. **Issue #53:** Rewrite Wiki pages for end users (workspace customizers), not maintainers (Códice contributors)
 
+### Expanded Scope (2026-07-29)
+
+FEV-13 has been expanded to include the resolution of Issue #53 (SDD Plugin Coupling Reduction), moved from v1.3.0 to v1.2.0. Additionally, plugin quality infrastructure (linters, formatters, tests) has been added to the scope.
+
+**New spec:** [spec-sdd-plugin-decoupling.md](../specs/spec-sdd-plugin-decoupling.md)
+
+**Three pillars:**
+1. **Auto-Discovery:** COMMAND_AGENT_MAP and VALID_SUBAGENTS derived from filesystem at session start
+2. **Configuration-Driven:** INTENT_PATTERNS, COMMAND_PHASE_MAP, PHASE_SUGGESTIONS moved to opencode.json
+3. **Quality Infrastructure:** Biome coverage, test suites, Justfile targets for plugin directory
+
+**Effort estimate:** 6-8h additional (on top of original 12h documentation overhaul)
+
 ### Tasks
 
 | ID | Description | File(s) | Effort |
