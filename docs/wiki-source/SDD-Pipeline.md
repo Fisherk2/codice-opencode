@@ -1,8 +1,8 @@
 # SDD Pipeline Plugin
 
-The SDD (Spec-Driven Development) Pipeline is an OpenCode plugin that orchestrates the development lifecycle. It lives in `.opencode/plugins/sdd-pipeline.ts` and hooks into OpenCode's SDK API to manage state, validate actions, and guide the workflow.
+The SDD (Spec-Driven Development) Pipeline is an OpenCode plugin that orchestrates the development lifecycle. It uses auto-discovery and configuration-driven behavior to manage state, validate actions, and guide the workflow.
 
-> **Source:** `.opencode/plugins/sdd-pipeline.ts` (~575 lines)
+> **Source:** `.opencode/plugins/sdd-pipeline.ts` (~370 lines) with supporting modules in `src/`
 >
 > **SDK:** `@opencode-ai/plugin` — see [opencode.ai/docs/plugins](https://opencode.ai/docs/plugins/) for the plugin API reference.
 
@@ -161,7 +161,7 @@ This file is gitignored by `.opencode/.gitignore` and does not need to be tracke
 
 The plugin is an **obligatorio** file — it will be overwritten on template updates. If you need to customize its behavior:
 
-1. **Add new destructive patterns** — Edit the `DESTRUCTIVE_PATTERNS` array in `sdd-pipeline.ts` to add new blocked commands
+1. **Add new destructive patterns** — Edit the `DESTRUCTIVE_PATTERNS` array in `src/destructivePatterns.ts` to add new blocked commands
 2. **Add new commands** — Add entries to `COMMAND_AGENT_MAP` when creating new slash commands
 3. **Add new agent mentions** — Add entries to `AGENT_MENTION_PATTERNS` when creating new primary agents
 4. **Add new intent patterns** — Add entries to `INTENT_PATTERNS` for free-text command detection

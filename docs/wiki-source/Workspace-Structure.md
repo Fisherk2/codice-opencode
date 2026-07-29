@@ -170,7 +170,7 @@ OpenCode's internal configuration directory:
 └── .gitignore
 ```
 
-The `plugins/sdd-pipeline.ts` file contains the Source-Driven Development orchestration logic — command routing, agent identity detection, and phase transitions. This is an always-present file (obligatorio) that gets updated with template releases.
+The `plugins/sdd-pipeline.ts` file is the SDD Pipeline plugin entry point — it orchestrates the development lifecycle by wiring together auto-discovery, configuration, and hook handlers. Supporting modules in `src/` handle auto-discovery (`autoDiscovery.ts`), config loading (`configLoader.ts`), and defaults (`defaults.ts`). This is an always-present file (obligatorio) that gets updated with template releases.
 
 ### `.devin/` — Devin Compatibility Layer (Optional)
 

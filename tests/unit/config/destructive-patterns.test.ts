@@ -17,11 +17,11 @@ const PLUGIN_PATH = path.resolve(
 	"template/obligatorio/.opencode/plugins/sdd-pipeline.ts",
 );
 
-/** Source of truth: DESTRUCTIVE_PATTERNS is now imported from ./src/defaults */
-const DEFAULTS_PATH = path.resolve(
+/** Source of truth: DESTRUCTIVE_PATTERNS is now imported from ./src/destructivePatterns */
+const DESTRUCTIVE_PATH = path.resolve(
 	import.meta.dir,
 	"../../..",
-	"template/obligatorio/.opencode/plugins/src/defaults.ts",
+	"template/obligatorio/.opencode/plugins/src/destructivePatterns.ts",
 );
 
 // ─── Structural helpers ───────────────────────────────────────────────────
@@ -402,13 +402,13 @@ describe("DESTRUCTIVE_PATTERNS", () => {
 	});
 
 	test("contains ≥50 destructive command patterns", () => {
-		fileContent = fs.readFileSync(DEFAULTS_PATH, "utf-8");
+		fileContent = fs.readFileSync(DESTRUCTIVE_PATH, "utf-8");
 		const count = countDestructivePatterns(fileContent);
 		expect(count).toBeGreaterThanOrEqual(50);
 	});
 
 	test("patterns are organized in 14+ category blocks", () => {
-		if (!fileContent) fileContent = fs.readFileSync(DEFAULTS_PATH, "utf-8");
+		if (!fileContent) fileContent = fs.readFileSync(DESTRUCTIVE_PATH, "utf-8");
 		const categories = countCategoryHeaders(fileContent);
 		expect(categories).toBeGreaterThanOrEqual(14);
 	});

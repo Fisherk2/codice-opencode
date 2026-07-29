@@ -31,11 +31,11 @@ export interface SddPipelineConfig {
 	 * their corresponding slash commands. When omitted, uses
 	 * INTENT_PATTERNS from defaults.
 	 *
-	 * NOTE: This is a FULL OVERRIDE per command key, not a merge.
-	 * Providing `{ "/spec": ["my keyword"] }` replaces ALL keywords
-	 * for `/spec`, losing defaults like "requirement", "idea", etc.
-	 * To add keywords without losing defaults, copy the existing
-	 * defaults into your config and append to them.
+	 * NOTE: PER-KEY OVERRIDE — providing `{ "/spec": ["my keyword"] }`
+	 * replaces ALL keywords for `/spec`, losing defaults like
+	 * "requirement", "idea", etc. Other commands (e.g., "/build")
+	 * retain their default keywords. To extend without losing defaults,
+	 * copy the existing defaults into your config and append to them.
 	 */
 	readonly intentPatterns?: Readonly<Record<string, readonly string[]>>;
 

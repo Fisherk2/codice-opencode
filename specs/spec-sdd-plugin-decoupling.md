@@ -161,7 +161,10 @@ function discoverValidSubagents(agentsDir: string): Set<string> {
 
 ### 5.1 Schema
 
-Add a `sddPipeline` section to `opencode.json`:
+The `sddPipeline` section is optional and is NOT included in the default
+`opencode.json`. Defaults live in the plugin's `src/defaults.ts` (Obligatorio
+classification per OQ-1). Users who wish to customize behavioral settings
+manually add this section to their `opencode.json`:
 
 ```json
 {

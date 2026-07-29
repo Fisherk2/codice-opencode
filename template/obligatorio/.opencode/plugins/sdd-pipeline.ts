@@ -8,6 +8,7 @@ import {
 } from "./src/autoDiscovery";
 import { loadSddConfig } from "./src/configLoader";
 import { DEFAULTS, DESTRUCTIVE_PATTERNS } from "./src/defaults";
+import { normalizeBash } from "./src/normalizeBash";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,14 +36,6 @@ class SddError extends Error {
 		this.name = "SddError";
 	}
 }
-
-/** Normalizes a bash command for safer regex matching — strips comments, newlines, collapses whitespace. */
-const normalizeBash = (cmd: string): string =>
-	cmd
-		.replace(/#.*/g, "") // strip comments
-		.replace(/\n/g, "") // strip newlines
-		.replace(/\s+/g, " ") // collapse whitespace
-		.trim();
 
 // Plugin
 // ---------------------------------------------------------------------------
@@ -99,6 +92,9 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 	// [P1] In-memory line count — avoids re-reading the file on every append.
 	//      Reset to 0 if file doesn't exist; set on init; tracked in audit().
 	let auditLineCount = 0;
+
+	/** Maximum audit log lines before rotation. When hit, the log is truncated to half. */
+	const MAX_AUDIT_LINES = 500;
 
 	/** Formats an unknown error as a human-readable string. */
 	const formatError = (err: unknown): string => (err instanceof Error ? err.message : String(err));

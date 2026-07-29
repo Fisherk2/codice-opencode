@@ -186,37 +186,24 @@ Invoke @skills/shipping-and-launch/SKILL.md.
 > Deployment complete. Run `/diagnosis` to monitor for issues, or run `/docs-update` to update deployment documentation.
 ```
 
-### Step 2: Register in COMMAND_AGENT_MAP
+### Step 2: (Skipped — Auto-Discovery)
 
-Open `.opencode/plugins/sdd-pipeline.ts` and add the command to the `COMMAND_AGENT_MAP`:
-
-```typescript
-const COMMAND_AGENT_MAP: Record<string, string> = {
-  "/spec": "quetzalcoatl",
-  "/design": "quetzalcoatl",
-  "/evolve": "quetzalcoatl",
-  "/plan": "moctezuma",
-  "/build": "tlaloc",
-  "/deploy": "tlaloc",        // <-- add here
-  "/test": "mictlantecuhtli",
-  "/review": "tezcatlipoca",
-  "/ship": "mictlantecuhtli",
-  "/code-simplify": "tlaloc",
-  "/webperf": "mictlantecuhtli",
-}
-```
+Previous versions of Códice required registering commands in a hardcoded `COMMAND_AGENT_MAP` inside the SDD plugin. This is no longer necessary — the plugin auto-discovers commands by scanning `commands/*.md` files at session start and reads the `agent:` field from YAML frontmatter. Simply creating the command file with the correct frontmatter is sufficient.
 
 ### Step 3: Register Intent Patterns (Optional)
 
-If you want the SDD plugin to auto-detect when a user's question should trigger `/deploy`, add intent patterns:
+If you want the SDD plugin to auto-detect when a user's question should trigger `/deploy`, add intent keywords by creating or editing the `sddPipeline.intentPatterns` section in your `opencode.json`:
 
-```typescript
-const INTENT_PATTERNS: Record<string, string[]> = {
-  // ... existing patterns ...
-  "/deploy": [
-    "deploy", "desplegar", "release", "lanzar", "push to production",
-    "go live", "production deploy", "roll out", "ship to production",
-  ],
+```json
+{
+  "sddPipeline": {
+    "intentPatterns": {
+      "/deploy": [
+        "deploy", "desplegar", "release", "lanzar", "push to production",
+        "go live", "production deploy", "roll out", "ship to production"
+      ]
+    }
+  }
 }
 ```
 
@@ -243,9 +230,9 @@ Restart your OpenCode session so it recognizes the new command file.
 
 | Step | File | Change |
 |------|------|--------|
-| 1 | `commands/<name>.md` | Create command file with frontmatter + numbered steps |
-| 2 | `.opencode/plugins/sdd-pipeline.ts` | Add to `COMMAND_AGENT_MAP` |
-| 3 | `.opencode/plugins/sdd-pipeline.ts` | (Optional) Add to `INTENT_PATTERNS` |
+| 1 | `commands/<name>.md` | Create command file with frontmatter + numbered steps (auto-discovered) |
+| 2 | (Auto-Discovery) | Plugin detects `commands/<name>.md` automatically — no registration needed |
+| 3 | `opencode.json` `sddPipeline.intentPatterns` | (Optional) Add intent keywords for auto-detection |
 | 4 | [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) | (If SDD phase is new) Update phase suggestions |
 | 5 | Various command files | Update `## Suggested Next Step` blocks |
 | 6 | User guide + README | Add command to reference tables |

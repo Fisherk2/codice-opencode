@@ -151,7 +151,17 @@ describe("discoverCommandAgentMap()", () => {
 });
 
 describe("discoverValidSubagents()", () => {
-	test("2. Valid agents dir with 5 agents returns correct set", () => {
+	/** The 6 primary agents always included in results. */
+	const PRIMARY = [
+		"huitzilopochtli",
+		"quetzalcoatl",
+		"moctezuma",
+		"tlaloc",
+		"mictlantecuhtli",
+		"tezcatlipoca",
+	] as const;
+
+	test("2. Valid agents dir with 5 agents returns correct set (includes primaries)", () => {
 		createTestFixture(agentsDir);
 		writeAgentFile(agentsDir, "typescript-pro.md");
 		writeAgentFile(agentsDir, "golang-pro.md");
@@ -162,31 +172,38 @@ describe("discoverValidSubagents()", () => {
 		const result = discoverValidSubagents(agentsDir);
 
 		expect(result).toBeInstanceOf(Set);
-		expect(result.size).toBe(5);
+		expect(result.size).toBe(5 + PRIMARY.length);
 		expect(result.has("typescript-pro")).toBe(true);
 		expect(result.has("golang-pro")).toBe(true);
 		expect(result.has("docker-expert")).toBe(true);
 		expect(result.has("docs-writer")).toBe(true);
 		expect(result.has("test-engineer")).toBe(true);
+		// All primaries are present even without files
+		for (const name of PRIMARY) {
+			expect(result.has(name)).toBe(true);
+		}
 	});
 
-	test("4. Missing agents dir returns empty set", () => {
+	test("4. Missing agents dir returns empty set (caller falls back to DEFAULTS)", () => {
 		const result = discoverValidSubagents(agentsDir);
 
 		expect(result).toBeInstanceOf(Set);
 		expect(result.size).toBe(0);
 	});
 
-	test("5. Empty agents dir (exists but no .md files) returns empty set", () => {
+	test("5. Empty agents dir (exists but no .md files) returns set with only primaries", () => {
 		createTestFixture(agentsDir);
 
 		const result = discoverValidSubagents(agentsDir);
 
 		expect(result).toBeInstanceOf(Set);
-		expect(result.size).toBe(0);
+		expect(result.size).toBe(PRIMARY.length);
+		for (const name of PRIMARY) {
+			expect(result.has(name)).toBe(true);
+		}
 	});
 
-	test("8. Non-.md files in agents dir are ignored", () => {
+	test("8. Non-.md files in agents dir are ignored (but primaries still included)", () => {
 		createTestFixture(agentsDir);
 		writeAgentFile(agentsDir, "rust-engineer.md");
 		writeNonMdFile(agentsDir, "readme.txt");
@@ -194,8 +211,11 @@ describe("discoverValidSubagents()", () => {
 
 		const result = discoverValidSubagents(agentsDir);
 
-		expect(result.size).toBe(1);
+		expect(result.size).toBe(1 + PRIMARY.length);
 		expect(result.has("rust-engineer")).toBe(true);
+		for (const name of PRIMARY) {
+			expect(result.has(name)).toBe(true);
+		}
 	});
 });
 

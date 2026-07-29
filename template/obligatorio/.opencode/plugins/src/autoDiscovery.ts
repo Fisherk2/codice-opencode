@@ -23,6 +23,20 @@ const FRONTMATTER_REGEX = /^---\s*\n([\s\S]*?)\n---\s*(?:\n|$)/;
 /** Regex to extract the `agent:` field value from raw YAML frontmatter text. */
 const AGENT_FIELD_REGEX = /^agent:\s*(.+)$/m;
 
+/**
+ * The 6 primary agent names that are always valid — even when no corresponding
+ * `.md` file exists in the user's `agents/` directory. This ensures the SDD
+ * pipeline never rejects calls to built-in agents.
+ */
+const PRIMARY_AGENTS: readonly string[] = [
+	"huitzilopochtli",
+	"quetzalcoatl",
+	"moctezuma",
+	"tlaloc",
+	"mictlantecuhtli",
+	"tezcatlipoca",
+] as const;
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -71,29 +85,44 @@ export function discoverCommandAgentMap(commandsDir: string): Record<string, str
  * from the filename (without the `.md` extension). The file contents are not
  * inspected — presence alone constitutes registration.
  *
+ * When the directory exists (even if empty), the 6 primary agents are always
+ * included in the result. When the directory does not exist, returns an empty
+ * Set so the caller can fall back to {@link DEFAULTS.VALID_SUBAGENTS}.
+ *
  * @param agentsDir - Path to the user's `agents/` directory.
- * @returns A set of agent names derived from `*.md` filenames. Returns an
- *          empty `Set` if the directory does not exist.
+ * @returns A set of agent names derived from `*.md` filenames plus the 6
+ *          primary agents if the directory exists. Returns an empty `Set`
+ *          if the directory does not exist.
  */
 export function discoverValidSubagents(agentsDir: string): Set<string> {
-	return new Set(scanMarkdownFiles(agentsDir));
+	if (!existsSync(agentsDir)) {
+		return new Set(); // Caller falls back to DEFAULTS.VALID_SUBAGENTS
+	}
+	const discovered = scanMarkdownFiles(agentsDir);
+	return new Set([...discovered, ...PRIMARY_AGENTS]);
 }
 
 /**
- * Generates agent mention patterns for the given set of agent names.
+ * Generates agent mention patterns for primary agents only.
  *
- * For each agent, produces two RegExp patterns:
+ * Only the 6 primary agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc,
+ * mictlantecuhtli, tezcatlipoca) get mention patterns — subagents are not
+ * referenced directly in user messages.
+ *
+ * For each primary agent, produces two RegExp patterns:
  * - `@agentName` with a word boundary (matches `@agentName`, `@agentName!`, etc.)
  * - `agente agentName` (Spanish-language agent reference)
  *
- * @param agents - A set of agent names to generate patterns for.
- * @returns A record mapping each agent name to an array of two RegExp patterns.
- *          Returns an empty record if the set is empty.
+ * @param agents - A set of agent names to filter and generate patterns for.
+ * @returns A record mapping each primary agent name to an array of two RegExp
+ *          patterns. Returns an empty record if no primary agents are found.
  */
 export function discoverAgentMentionPatterns(agents: Set<string>): Record<string, RegExp[]> {
+	const primary = new Set(PRIMARY_AGENTS);
 	const patterns: Record<string, RegExp[]> = {};
 
 	for (const agent of agents) {
+		if (!primary.has(agent)) continue; // Only primary agents get mention patterns
 		// Escape special regex characters in the agent name to avoid injection
 		const escaped = agent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		patterns[agent] = [new RegExp(`@${escaped}\\b`, "i"), new RegExp(`agente\\s+${escaped}`, "i")];

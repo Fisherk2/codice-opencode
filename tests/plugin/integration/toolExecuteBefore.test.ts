@@ -16,17 +16,10 @@ import {
 } from "../../../template/obligatorio/.opencode/plugins/src/defaults";
 
 // ---------------------------------------------------------------------------
-// Replicated pure functions from the plugin
+// Import pure functions (no longer replicated — extracted to module)
 // ---------------------------------------------------------------------------
 
-/** Replicates normalizeBash from the plugin. */
-function normalizeBash(cmd: string): string {
-	return cmd
-		.replace(/#.*/g, "") // strip comments
-		.replace(/\n/g, "") // strip newlines
-		.replace(/\s+/g, " ") // collapse whitespace
-		.trim();
-}
+import { normalizeBash } from "../../../template/obligatorio/.opencode/plugins/src/normalizeBash";
 
 /** Returns true if the command matches any destructive pattern after normalization. */
 function isDestructive(cmd: string): boolean {
@@ -48,9 +41,9 @@ describe("tool.execute.before — normalizeBash helper", () => {
 		expect(normalizeBash("rm -rf / # dangerous")).toBe("rm -rf /");
 	});
 
-	test("removes newline characters (does NOT add spaces between joined tokens)", () => {
-		// normalizeBash strips \n without replacement, so adjacent tokens merge
-		expect(normalizeBash("ls\n-la\n/")).toBe("ls-la/");
+	test("replaces newline characters with space (prevents token merging)", () => {
+		// normalizeBash replaces \n with space, so tokens stay separate
+		expect(normalizeBash("ls\n-la\n/")).toBe("ls -la /");
 	});
 
 	test("collapses multiple spaces", () => {
@@ -113,6 +106,19 @@ describe("tool.execute.before — destructive command blocking", () => {
 
 	test("commented destructive command with surrounding text", () => {
 		expect(isDestructive("echo safe # rm -rf /")).toBe(false);
+	});
+
+	// ─── Newline bypass fix ──────────────────────────────────
+
+	test("rm -rf / with newline instead of space IS blocked (newlines replaced)", () => {
+		// Previously, normalizeBash stripped \n without replacement, allowing
+		// "rm\n-rf\n/" to become "rm-rf/" (bypassing the destructive pattern).
+		// Now \n is replaced with space, so "rm\n-rf\n/" → "rm -rf /" → blocked.
+		expect(isDestructive("rm\n-rf\n/")).toBe(true);
+	});
+
+	test("split across multiple newlines is also blocked", () => {
+		expect(isDestructive("rm\n-rf\n--no-preserve-root\n/")).toBe(true);
 	});
 
 	// ─── Git destructive patterns ─────────────────────────────
