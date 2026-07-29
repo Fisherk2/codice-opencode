@@ -290,7 +290,28 @@ function analyze(): ReferenceMapping[] {
 
 // ── Output ────────────────────────────────────────────────────────────────────
 
+interface Stats {
+	readonly high: number;
+	readonly med: number;
+	readonly low: number;
+	readonly uniqueSkills: number;
+	readonly bySkill: Map<string, number>;
+}
+
+function computeStats(mappings: ReferenceMapping[]): Stats {
+	const high = mappings.filter((m) => m.confidence === "HIGH").length;
+	const med = mappings.filter((m) => m.confidence === "MEDIUM").length;
+	const low = mappings.filter((m) => m.confidence === "LOW").length;
+	const uniqueSkills = new Set(mappings.map((m) => m.targetSkill)).size;
+	const bySkill = new Map<string, number>();
+	for (const m of mappings) {
+		bySkill.set(m.targetSkill, (bySkill.get(m.targetSkill) ?? 0) + 1);
+	}
+	return { high, med, low, uniqueSkills, bySkill };
+}
+
 function generateMarkdown(mappings: ReferenceMapping[]): string {
+	const { high, med, low, bySkill } = computeStats(mappings);
 	const lines: string[] = [];
 	lines.push("# FEV-12 — References-to-Skills Mapping Table");
 	lines.push("");
@@ -300,9 +321,6 @@ function generateMarkdown(mappings: ReferenceMapping[]): string {
 	lines.push("");
 	lines.push("## Confidence Level Distribution");
 	lines.push("");
-	const high = mappings.filter((m) => m.confidence === "HIGH").length;
-	const med = mappings.filter((m) => m.confidence === "MEDIUM").length;
-	const low = mappings.filter((m) => m.confidence === "LOW").length;
 	lines.push("| Confidence | Count |");
 	lines.push("|------------|-------|");
 	lines.push(`| HIGH       | ${high} |`);
@@ -312,15 +330,11 @@ function generateMarkdown(mappings: ReferenceMapping[]): string {
 	lines.push("");
 
 	// Summary by skill
-	const skillCounts = new Map<string, number>();
-	for (const m of mappings) {
-		skillCounts.set(m.targetSkill, (skillCounts.get(m.targetSkill) ?? 0) + 1);
-	}
 	lines.push("## Distribution by Skill");
 	lines.push("");
 	lines.push("| Skill | References |");
 	lines.push("|-------|------------|");
-	for (const [skill, count] of [...skillCounts.entries()].sort()) {
+	for (const [skill, count] of [...bySkill.entries()].sort()) {
 		lines.push(`| ${skill} | ${count} |`);
 	}
 	lines.push("");
@@ -362,10 +376,7 @@ function generateMarkdown(mappings: ReferenceMapping[]): string {
 }
 
 function printSummary(mappings: ReferenceMapping[]): void {
-	const high = mappings.filter((m) => m.confidence === "HIGH").length;
-	const med = mappings.filter((m) => m.confidence === "MEDIUM").length;
-	const low = mappings.filter((m) => m.confidence === "LOW").length;
-	const uniqueSkills = new Set(mappings.map((m) => m.targetSkill)).size;
+	const { high, med, low, uniqueSkills } = computeStats(mappings);
 
 	console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 	console.log("  FEV-12 Reference Analysis Summary");
