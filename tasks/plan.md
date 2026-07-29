@@ -1,7 +1,7 @@
 # Implementation Plan: FEV-13 — SDD Plugin Decoupling & Quality Infrastructure
 
 **Phase:** FEV-13 (v1.2 Phase 3)
-**Issues:** [#53](https://github.com/fisherk2/codice-opencode/issues/53) (moved from v1.3.0 to v1.2.0)
+**Issues:** [#53](https://github.com/fisherk2/codice-opencode/issues/53) (moved from v1.3.0 to v1.2.0), [#51](https://github.com/fisherk2/codice-opencode/issues/51) (Documentation Reduction)
 **Spec:** [specs/spec-sdd-plugin-decoupling.md](../specs/spec-sdd-plugin-decoupling.md)
 **Date:** 2026-07-29
 **Author:** Moctezuma (Strategic Planner)
@@ -17,6 +17,8 @@ Resolver el acoplamiento entre el plugin SDD (`sdd-pipeline.ts`, 665 líneas) y 
 1. **Pillar 1 (Auto-Discovery):** `COMMAND_AGENT_MAP` y `VALID_SUBAGENTS` derivados del filesystem (`commands/*.md` frontmatter, `agents/*.md` filenames) en session start.
 2. **Pillar 2 (Configuration-Driven):** `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS` movidos a `opencode.json` bajo `sddPipeline` section.
 3. **Pillar 3 (Quality Infrastructure):** Biome coverage, test suites, Justfile targets para el plugin directory.
+
+**Issue #51 — Documentation Reduction:** Additionally, reduce all workspace documentation files >500 lines to <500 lines by removing obsolete content while preserving error/fix history. Rewrite Wiki pages for end users (8 pages total). See Phase 0.
 
 **Restricciones del usuario:**
 - `DESTRUCTIVE_PATTERNS` permanece hardcoded (safety boundary) — OQ-4 confirmado
@@ -52,6 +54,12 @@ Resolver el acoplamiento entre el plugin SDD (`sdd-pipeline.ts`, 665 líneas) y 
 ## Dependency Graph
 
 ```
+Phase 0: Documentation Reduction (Issue #51 — no dependencies, parallel with all phases)
+├── Task 0.1: Audit WORKFLOW.md — remove completed phase details (FEV-1 through FEV-10), keep current state. Target: <300 lines
+├── Task 0.2: Audit CHANGELOG.md — consolidate pre-v1.0 entries into single "Early Development" section. Target: <350 lines
+├── Task 0.3: Audit SPEC.md — remove resolved decisions (move to ADRs), keep only active spec. Target: <400 lines
+└── Task 0.4: Verify cross-references — ensure no broken internal links after reductions
+
 Phase 1: Foundation (extract DEFAULTS — no behavior change)
 ├── Task 1.1: Extract DEFAULTS to src/defaults.ts (constants)
 ├── Task 1.2: Add SddPipelineConfig type (interfaces)
@@ -108,6 +116,119 @@ Phase 9: Verification & Ship
 ---
 
 ## Task List
+
+### Phase 0: Documentation Reduction (Issue #51)
+
+#### Task 0.1: Audit WORKFLOW.md — Remove Completed Phase Details
+**Description:** Reduce `docs/WORKFLOW.md` from 700+ lines to <300 lines by removing completed phase details (FEV-1 through FEV-10) while preserving current state and error/fix history. Keep the active phase (FEV-13+) and any ongoing phases.
+
+**Approach:**
+1. Identify all completed phase sections (FEV-1 through FEV-10)
+2. Remove detailed implementation steps for completed phases
+3. Keep a brief summary line for each completed phase (name + status: "Completed ✅")
+4. Preserve all error/fix history sections
+5. Keep current active phases (FEV-13, FEV-14, FEV-15) fully documented
+
+**Acceptance criteria:**
+- [ ] `docs/WORKFLOW.md` reduced to <300 lines
+- [ ] All completed phases (FEV-1 through FEV-10) collapsed to summary lines
+- [ ] Error/fix history preserved
+- [ ] Active phases (FEV-13+) fully documented
+- [ ] No broken internal links
+
+**Verification:**
+- [ ] `wc -l docs/WORKFLOW.md` shows <300 lines
+- [ ] `grep "FEV-1" docs/WORKFLOW.md` still returns results (summary lines)
+- [ ] `grep "Error\|Fix\|error\|fix" docs/WORKFLOW.md` shows preserved history
+
+**Dependencies:** None (can run in parallel with all phases)
+
+**Files likely touched:**
+- `docs/WORKFLOW.md` (modified, -400+ lines)
+
+**Estimated scope:** S (1 file, content reduction)
+
+---
+
+#### Task 0.2: Audit CHANGELOG.md — Consolidate Pre-v1.0 Entries
+**Description:** Reduce `CHANGELOG.md` from 383 lines to <350 lines by consolidating pre-v1.0 entries into a single "Early Development" section. Keep v1.0+ entries intact with full detail.
+
+**Approach:**
+1. Identify all pre-v1.0 entries
+2. Consolidate into a single "## Early Development (pre-v1.0)" section with brief summaries
+3. Keep v1.0+ entries unchanged (full detail preserved)
+4. Ensure Keep a Changelog format is maintained
+
+**Acceptance criteria:**
+- [ ] `CHANGELOG.md` reduced to <350 lines
+- [ ] Pre-v1.0 entries consolidated into "Early Development" section
+- [ ] v1.0+ entries preserved with full detail
+- [ ] Keep a Changelog format maintained (Added, Changed, Fixed, Security sections)
+
+**Verification:**
+- [ ] `wc -l CHANGELOG.md` shows <350 lines
+- [ ] `grep "Early Development" CHANGELOG.md` returns result
+- [ ] `grep "v1.0" CHANGELOG.md` returns results (entries preserved)
+
+**Dependencies:** None
+
+**Files likely touched:**
+- `CHANGELOG.md` (modified, -30+ lines)
+
+**Estimated scope:** XS (1 file, consolidation)
+
+---
+
+#### Task 0.3: Audit SPEC.md — Remove Resolved Decisions
+**Description:** Reduce `SPEC.md` from 459 lines to <400 lines by removing the "Resolved Decisions" section (moves to ADRs) and keeping only the active specification. The 9 resolved decisions are already documented in ADRs.
+
+**Approach:**
+1. Remove the "## Resolved Decisions" section (table of 9 decisions)
+2. Add a brief note: "Resolved decisions are documented in the respective ADRs (see `specs/adr/`)."
+3. Keep all active specification content (objectives, user stories, tech stack, commands, project structure, code style, testing strategy, boundaries, success criteria)
+4. Verify no other content depends on the resolved decisions section
+
+**Acceptance criteria:**
+- [ ] `SPEC.md` reduced to <400 lines
+- [ ] "Resolved Decisions" section removed
+- [ ] Brief reference to ADRs added
+- [ ] All active spec content preserved
+- [ ] No broken internal links
+
+**Verification:**
+- [ ] `wc -l SPEC.md` shows <400 lines
+- [ ] `grep "Resolved Decisions" SPEC.md` returns no results
+- [ ] `grep "ADR" SPEC.md` returns the new reference line
+
+**Dependencies:** None
+
+**Files likely touched:**
+- `SPEC.md` (modified, -60+ lines)
+
+**Estimated scope:** XS (1 file, section removal)
+
+---
+
+#### Task 0.4: Verify Cross-References After Reductions
+**Description:** After completing Tasks 0.1–0.3, verify that no internal links are broken across the documentation. Check all cross-references between WORKFLOW.md, CHANGELOG.md, SPEC.md, and other docs.
+
+**Acceptance criteria:**
+- [ ] All internal links in WORKFLOW.md, CHANGELOG.md, SPEC.md are valid
+- [ ] No broken cross-references from other docs to modified files
+- [ ] Any references to removed content updated
+
+**Verification:**
+- [ ] `grep -r "WORKFLOW.md\|CHANGELOG.md\|SPEC.md" docs/ specs/` — all references still valid
+- [ ] No 404-style broken links
+
+**Dependencies:** Tasks 0.1, 0.2, 0.3
+
+**Files likely touched:**
+- Any documentation file with broken links (if found)
+
+**Estimated scope:** XS (verification + minor fixes)
+
+---
 
 ### Phase 1: Foundation — Extract DEFAULTS & Types
 
@@ -895,37 +1016,53 @@ This relies on the updated `biome.json` from Task 4.1 which includes the plugin 
 
 ---
 
-#### Task 7.2: Update Wiki (Agents, Commands, Skills pages)
-**Description:** Update the user-facing Wiki to reflect the new auto-discovery and config-driven behavior. Users should understand:
-- Adding a command in `commands/` is auto-detected (no plugin edit needed)
-- Adding an agent in `agents/` is auto-accepted (no plugin edit needed)
-- `sddPipeline` config in `opencode.json` allows customization
+#### Task 7.2: Update Wiki (All 8 End-User Pages)
+**Description:** Rewrite all 8 Wiki pages for end users. Remove all maintainer/developer references (src/, tests/, template/, dist/, sdd-pipeline.ts editing). Users should only see user-facing content: install → configure → run.
 
-**Files to update:**
-- `docs/wiki-source/Agents.md` — document auto-discovery for agents
-- `docs/wiki-source/Commands.md` — document auto-discovery for commands
-- `docs/wiki-source/Skills.md` — no changes needed (skills are separate)
-- `docs/wiki-source/Configuration.md` — document `sddPipeline` section
+**Pages to rewrite (all 8):**
+
+1. **`docs/wiki-source/Home.md`** — Remove references to `src/`, `tests/`, `template/`. Focus on what Códice does, quick start, and links to other pages.
+
+2. **`docs/wiki-source/Getting-Started.md`** — Remove maintainer setup instructions (just setup, just dev, etc.). Focus on: install → configure → run workflow for end users.
+
+3. **`docs/wiki-source/Workspace-Structure.md`** — Remove `src/`, `tests/`, `dist/` directory references. Focus on user-facing directories: `commands/`, `agents/`, `skills/`, `.opencode/`.
+
+4. **`docs/wiki-source/Configuration.md`** — Remove internal plugin references. Focus on `opencode.json` user-facing sections: `sddPipeline` config, agent settings, skill settings.
+
+5. **`docs/wiki-source/Agents.md`** — Replace "edit `sdd-pipeline.ts`" with "create `agents/my-agent.md`". Document auto-discovery: adding an agent file is all that's needed.
+
+6. **`docs/wiki-source/Commands.md`** — Replace "edit `sdd-pipeline.ts`" with "create `commands/my-command.md`". Document auto-discovery: adding a command file with frontmatter is all that's needed.
+
+7. **`docs/wiki-source/Skills.md`** — Replace discovery tree maintenance with "create `skills/my-skill/SKILL.md`". Document that skills are auto-discovered from the filesystem.
+
+8. **`docs/wiki-source/Customization-Guide.md`** — Ensure all recipes are user-facing. Remove any references to plugin internals. Focus on: adding agents, commands, skills, and MCP servers.
 
 **Acceptance criteria:**
-- [ ] Wiki pages updated with new content
-- [ ] No references to "edit `sdd-pipeline.ts`" anywhere
-- [ ] All audience is end users (no maintainer references)
-- [ ] Wiki synced to GitHub (F5V5-C series)
+- [ ] All 8 Wiki pages rewritten for end users
+- [ ] Zero references to "edit `sdd-pipeline.ts`" in any Wiki page
+- [ ] Zero references to `src/`, `tests/`, `dist/` in user-facing pages
+- [ ] All pages follow consistent structure: overview → how-to → reference
+- [ ] Wiki synced to GitHub
 
 **Verification:**
-- [ ] Wiki pages render correctly
-- [ ] Internal links valid
+- [ ] `grep -r "sdd-pipeline" docs/wiki-source/` returns 0 results
+- [ ] `grep -r "src/" docs/wiki-source/` returns 0 results (except in code examples showing user workspace)
+- [ ] All 8 pages render correctly
 - [ ] Wiki sync command runs successfully
 
 **Dependencies:** Task 7.1 (ADR provides authoritative reference)
 
 **Files likely touched:**
-- `docs/wiki-source/Agents.md` (~10 lines changed)
-- `docs/wiki-source/Commands.md` (~10 lines changed)
+- `docs/wiki-source/Home.md` (~30 lines changed)
+- `docs/wiki-source/Getting-Started.md` (~40 lines changed)
+- `docs/wiki-source/Workspace-Structure.md` (~30 lines changed)
 - `docs/wiki-source/Configuration.md` (~30 lines added)
+- `docs/wiki-source/Agents.md` (~20 lines changed)
+- `docs/wiki-source/Commands.md` (~20 lines changed)
+- `docs/wiki-source/Skills.md` (~15 lines changed)
+- `docs/wiki-source/Customization-Guide.md` (~20 lines changed)
 
-**Estimated scope:** S (3 files, targeted changes)
+**Estimated scope:** M (8 files, comprehensive rewrite)
 
 ---
 
@@ -1200,6 +1337,15 @@ This relies on the updated `biome.json` from Task 4.1 which includes the plugin 
 - [ ] SC-7: no regression
 - [ ] SC-8: backward compatible
 
+### Issue #51 — Documentation Reduction
+- [ ] `docs/WORKFLOW.md` < 300 lines (Phase 0, Task 0.1)
+- [ ] `CHANGELOG.md` < 350 lines (Phase 0, Task 0.2)
+- [ ] `SPEC.md` < 400 lines (Phase 0, Task 0.3)
+- [ ] All internal cross-references valid (Phase 0, Task 0.4)
+- [ ] All 8 Wiki pages rewritten for end users (Phase 7, Task 7.2)
+- [ ] Zero "edit sdd-pipeline.ts" references in Wiki
+- [ ] Issue #51 closed
+
 ---
 
 ## Risks and Mitigations
@@ -1260,19 +1406,20 @@ This relies on the updated `biome.json` from Task 4.1 which includes the plugin 
 
 | Phase | Effort | Cumulative |
 |-------|--------|------------|
-| Phase 1: Foundation (extract defaults + types) | 1h | 1h |
-| Phase 2: Auto-Discovery (Pillar 1) | 2h | 3h |
-| Phase 3: Config-Driven (Pillar 2) | 2h | 5h |
-| Phase 4: Quality Infrastructure (Pillar 3) | 2h | 7h |
-| Phase 5: Hook Integration Tests | 2.5h | 9.5h |
-| Phase 6: E2E Tests | 1.5h | 11h |
-| Phase 7: Documentation (ADR + Wiki) | 1.5h | 12.5h |
-| Phase 8: Cleanup (Phase D) | 1h | 13.5h |
-| Phase 9: Verification & Ship | 3h | 16.5h |
-| **Total** | **16.5h** | **16.5h** |
-| **Buffer** | +2h | **18.5h** |
+| Phase 0: Documentation Reduction (Issue #51) | 2h | 2h |
+| Phase 1: Foundation (extract defaults + types) | 1h | 3h |
+| Phase 2: Auto-Discovery (Pillar 1) | 2h | 5h |
+| Phase 3: Config-Driven (Pillar 2) | 2h | 7h |
+| Phase 4: Quality Infrastructure (Pillar 3) | 2h | 9h |
+| Phase 5: Hook Integration Tests | 2.5h | 11.5h |
+| Phase 6: E2E Tests | 1.5h | 13h |
+| Phase 7: Documentation (ADR + Wiki) | 2h | 15h |
+| Phase 8: Cleanup (Phase D) | 1h | 16h |
+| Phase 9: Verification & Ship | 3h | 19h |
+| **Total** | **19h** | **19h** |
+| **Buffer** | +2.5h | **21.5h** |
 
-**Buffer allocation:** Code review findings rework (1h), YAML parser integration (0.5h), Wiki sync coordination (0.5h).
+**Buffer allocation:** Code review findings rework (1h), YAML parser integration (0.5h), Wiki sync coordination (0.5h), documentation cross-reference verification (0.5h).
 
 ---
 
@@ -1289,7 +1436,11 @@ This relies on the updated `biome.json` from Task 4.1 which includes the plugin 
 | Plugin file size | 665 lines | <400 lines |
 | Hardcoded maps in plugin | 6 | 0 (all in defaults.ts) |
 | `sddPipeline` config in opencode.json | absent | 3 sections (commandPhaseMap, intentPatterns, phaseSuggestions) |
-| Issues cerrados | — | #53 |
+| WORKFLOW.md lines | 700+ | <300 |
+| CHANGELOG.md lines | 383 | <350 |
+| SPEC.md lines | 459 | <400 |
+| Wiki pages rewritten | 0 | 8/8 end-user pages |
+| Issues cerrados | — | #53, #51 |
 | ADR nuevos | — | ADR-013 |
 | Versión bumped | v1.2.0 | Sin bump (espera al release final) |
 
