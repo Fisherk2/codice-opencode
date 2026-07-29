@@ -181,7 +181,7 @@ FEV-12 has been implemented. Here are the final results:
 | Skills with references/ subdirectories | 18 (15 from mapping + 3 pre-existing) |
 | Confidence: HIGH (direct SKILL.md match) | 51 files |
 | Confidence: LOW (manual override) | 8 files |
-| Entries in `reference` section | 18 |
+| Entries in `reference` section | 2 (local + remote example) |
 | Manifest entries removed | `references` entry (mandatory count: 8→7) |
 | SKILL.md paths updated | 49 references across 5 files |
 | Tests passing | 593 pass, 0 fail |
