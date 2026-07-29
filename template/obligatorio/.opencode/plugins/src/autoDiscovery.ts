@@ -43,20 +43,10 @@ const AGENT_FIELD_REGEX = /^agent:\s*(.+)$/m;
  *          does not exist.
  */
 export function discoverCommandAgentMap(commandsDir: string): Record<string, string> {
-	if (!existsSync(commandsDir)) {
-		return {};
-	}
-
-	const entries = readdirSync(commandsDir, { withFileTypes: true });
 	const map: Record<string, string> = {};
 
-	for (const entry of entries) {
-		// Only process .md files, skip directories and hidden/other files
-		if (!entry.isFile() || extname(entry.name).toLowerCase() !== ".md") {
-			continue;
-		}
-
-		const filePath = `${commandsDir}/${entry.name}`;
+	for (const name of scanMarkdownFiles(commandsDir)) {
+		const filePath = `${commandsDir}/${name}.md`;
 		let content: string;
 		try {
 			content = readFileSync(filePath, "utf-8");
@@ -66,13 +56,9 @@ export function discoverCommandAgentMap(commandsDir: string): Record<string, str
 		}
 
 		const agent = parseAgentFromFrontmatter(content);
-		if (agent === null) {
-			continue;
+		if (agent !== null) {
+			map[`/${name}`] = agent;
 		}
-
-		// Map /{filename} (without .md) to the agent name
-		const commandName = `/${basename(entry.name, ".md")}`;
-		map[commandName] = agent;
 	}
 
 	return map;
@@ -90,23 +76,7 @@ export function discoverCommandAgentMap(commandsDir: string): Record<string, str
  *          empty `Set` if the directory does not exist.
  */
 export function discoverValidSubagents(agentsDir: string): Set<string> {
-	if (!existsSync(agentsDir)) {
-		return new Set();
-	}
-
-	const entries = readdirSync(agentsDir, { withFileTypes: true });
-	const agents = new Set<string>();
-
-	for (const entry of entries) {
-		if (!entry.isFile() || extname(entry.name).toLowerCase() !== ".md") {
-			continue;
-		}
-
-		const agentName = basename(entry.name, ".md");
-		agents.add(agentName);
-	}
-
-	return agents;
+	return new Set(scanMarkdownFiles(agentsDir));
 }
 
 /**
@@ -135,6 +105,25 @@ export function discoverAgentMentionPatterns(agents: Set<string>): Record<string
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Scans a directory for markdown files and returns their base names (without `.md`).
+ *
+ * Skips non-existent directories, non-files, and non-`.md` extensions.
+ * Shared by {@link discoverCommandAgentMap} and {@link discoverValidSubagents}.
+ *
+ * @param dir - Path to the directory to scan.
+ * @returns Array of base names (e.g., `["spec", "build"]` for `spec.md`, `build.md`).
+ */
+function scanMarkdownFiles(dir: string): string[] {
+	if (!existsSync(dir)) {
+		return [];
+	}
+
+	return readdirSync(dir, { withFileTypes: true })
+		.filter((entry) => entry.isFile() && extname(entry.name).toLowerCase() === ".md")
+		.map((entry) => basename(entry.name, ".md"));
+}
 
 /**
  * Parses the `agent:` field from YAML frontmatter in a markdown file.
