@@ -188,97 +188,101 @@ function pickBestSkill(filename: string, basename: string, candidates: string[])
 	return candidates.sort((a, b) => b.length - a.length)[0];
 }
 
+/** Build a ReferenceMapping with consistent shape. */
+function buildMapping(
+	filename: string,
+	basename: string,
+	targetSkill: string,
+	confidence: ConfidenceLevel,
+	rationale: string,
+	candidates: string[],
+	crossRefList: string[],
+): ReferenceMapping {
+	return {
+		filename,
+		basename,
+		targetSkill,
+		confidence,
+		rationale,
+		skillsMentioned: candidates,
+		crossReferencedBy: crossRefList,
+	};
+}
+
+/** Determine confidence and target skill for a reference file. */
+function resolveFileMapping(
+	filename: string,
+	basename: string,
+	candidates: string[],
+	crossRefList: string[],
+	mapping: Map<string, ReferenceMapping>,
+): ReferenceMapping {
+	// Manual override
+	if (basename in MANUAL_OVERRIDES) {
+		return buildMapping(
+			filename, basename, MANUAL_OVERRIDES[basename], "LOW",
+			"No SKILL.md match; assigned via content analysis to most relevant skill",
+			candidates, crossRefList,
+		);
+	}
+
+	// Level 1: direct SKILL.md match
+	if (candidates.length === 1) {
+		return buildMapping(
+			filename, basename, candidates[0], "HIGH",
+			`Directly referenced in skills/${candidates[0]}/SKILL.md`,
+			candidates, crossRefList,
+		);
+	}
+	if (candidates.length > 1) {
+		const best = pickBestSkill(filename, basename, candidates);
+		return buildMapping(
+			filename, basename, best, "HIGH",
+			`Referenced in ${candidates.length} skills; best match: ${best}`,
+			candidates, crossRefList,
+		);
+	}
+
+	// Level 2: cross-referenced by other files
+	if (crossRefList.length > 0) {
+		const resolved = resolveCrossReferenceSkill(crossRefList, mapping);
+		if (resolved) {
+			return buildMapping(
+				filename, basename, resolved, "MEDIUM",
+				`No direct SKILL.md match; cross-referenced by ${crossRefList.join(", ")} → resolves to ${resolved}`,
+				candidates, crossRefList,
+			);
+		}
+		return buildMapping(
+			filename, basename, "clean-code", "MEDIUM",
+			`Cross-referenced by ${crossRefList.join(", ")} but target ambiguous; defaulting to clean-code`,
+			candidates, crossRefList,
+		);
+	}
+
+	// Level 3: true orphan
+	return buildMapping(
+		filename, basename, "general", "LOW",
+		"Orphan — no SKILL.md mention, no cross-references, no manual override",
+		candidates, crossRefList,
+	);
+}
+
 // ── Main Analysis ─────────────────────────────────────────────────────────────
 
 function analyze(): ReferenceMapping[] {
 	const refFiles = getReferenceFiles(REFERENCES_DIR);
 	const skillMentions = indexSkillMentions(SKILLS_DIR, refFiles);
 	const crossRefs = indexCrossReferences(REFERENCES_DIR, refFiles);
-
-	// Phase 1: Level 1 (HIGH) and Level 3 (LOW/orphans)
 	const tempMapping = new Map<string, ReferenceMapping>();
 
 	for (const { filename, basename } of refFiles) {
 		const candidates = skillMentions.get(basename) ?? [];
 		const crossRefList = crossRefs.get(basename) ?? [];
-
-		// Manual override check
-		if (basename in MANUAL_OVERRIDES) {
-			const targetSkill = MANUAL_OVERRIDES[basename];
-			tempMapping.set(basename, {
-				filename,
-				basename,
-				targetSkill,
-				confidence: "LOW",
-				rationale: "No SKILL.md match; assigned via content analysis to most relevant skill",
-				skillsMentioned: candidates,
-				crossReferencedBy: crossRefList,
-			});
-			continue;
-		}
-
-		if (candidates.length >= 1) {
-			// 1a) Single match — HIGH confidence
-			if (candidates.length === 1) {
-				tempMapping.set(basename, {
-					filename,
-					basename,
-					targetSkill: candidates[0],
-					confidence: "HIGH",
-					rationale: `Directly referenced in skills/${candidates[0]}/SKILL.md`,
-					skillsMentioned: candidates,
-					crossReferencedBy: crossRefList,
-				});
-			} else {
-				// 1b) Multi-match — pick the most relevant one
-				const bestMatch = pickBestSkill(filename, basename, candidates);
-				tempMapping.set(basename, {
-					filename,
-					basename,
-					targetSkill: bestMatch,
-					confidence: "HIGH",
-					rationale: `Referenced in ${candidates.length} skills; best match: ${bestMatch}`,
-					skillsMentioned: candidates,
-					crossReferencedBy: crossRefList,
-				});
-			}
-		} else if (crossRefList.length > 0) {
-			// Level 2: no direct SKILL match but cross-referenced by other files
-			const resolved = resolveCrossReferenceSkill(crossRefList, tempMapping);
-			if (resolved) {
-				tempMapping.set(basename, {
-					filename,
-					basename,
-					targetSkill: resolved,
-					confidence: "MEDIUM",
-					rationale: `No direct SKILL.md match; cross-referenced by ${crossRefList.join(", ")} → resolves to ${resolved}`,
-					skillsMentioned: candidates,
-					crossReferencedBy: crossRefList,
-				});
-			} else {
-				// Cross-referenced but multiple possible targets
-				tempMapping.set(basename, {
-					filename,
-					basename,
-					targetSkill: "clean-code",
-					confidence: "MEDIUM",
-					rationale: `Cross-referenced by ${crossRefList.join(", ")} but target ambiguous; defaulting to clean-code`,
-					skillsMentioned: candidates,
-					crossReferencedBy: crossRefList,
-				});
-			}
-		} else {
-			// True orphan — shouldn't happen since we catch MANUAL_OVERRIDES above
-			tempMapping.set(basename, {
-				filename,
-				basename,
-				targetSkill: "general",
-				confidence: "LOW",
-				rationale: "Orphan — no SKILL.md mention, no cross-references, no manual override",
-				skillsMentioned: candidates,
-				crossReferencedBy: crossRefList,
-			});
-		}
+		tempMapping.set(
+			basename,
+			resolveFileMapping(filename, basename, candidates, crossRefList, tempMapping),
+		);
 	}
 
 	return [...tempMapping.values()];
