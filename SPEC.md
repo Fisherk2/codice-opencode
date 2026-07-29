@@ -424,6 +424,8 @@ The following specifications break down complex subsystems into focused document
 
 - **[CLI Commands and Modes](specs/spec-cli-commands.md)** — Exhaustive specification of the three installation modes. Includes flow diagrams for each mode, decision trees for user prompts, error handling paths, and the exact TUI text and options presented at each step.
 
+- **[SDD Plugin Decoupling](specs/spec-sdd-plugin-decoupling.md)** — Specification for reducing coupling between the SDD pipeline plugin and documentation. Defines auto-discovery of commands/agents, configuration-driven behavioral data, and quality infrastructure (linting, testing). Addresses Issue #53.
+
 ---
 
 ## Resolved Decisions
