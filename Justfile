@@ -60,7 +60,7 @@ check-plugin:
 
 # Run plugin unit tests
 test-plugin-unit:
-    bun test tests/plugin/unit/
+    bun test template/obligatorio/.opencode/plugins/src/__tests__/
 
 # Run plugin integration tests
 test-plugin-integration:

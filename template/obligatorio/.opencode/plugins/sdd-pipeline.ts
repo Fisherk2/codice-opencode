@@ -61,16 +61,16 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 	const commandAgentMap =
 		Object.keys(discoveredCommandAgentMap).length > 0
 			? discoveredCommandAgentMap
-			: DEFAULTS.commandAgentMap;
+			: DEFAULTS.COMMAND_AGENT_MAP;
 	const validSubagents =
-		discoveredValidSubagents.size > 0 ? discoveredValidSubagents : DEFAULTS.validSubagents;
+		discoveredValidSubagents.size > 0 ? discoveredValidSubagents : DEFAULTS.VALID_SUBAGENTS;
 	const agentMentionPatterns = discoverAgentMentionPatterns(validSubagents);
 
 	// ── Configuration loading (Pillar 2) — merge user config with defaults ──
 	const sddConfig = loadSddConfig(projectDir);
-	const commandPhaseMap = { ...DEFAULTS.commandPhaseMap, ...sddConfig.commandPhaseMap };
-	const intentPatterns = { ...DEFAULTS.intentPatterns, ...sddConfig.intentPatterns };
-	const phaseSuggestions = { ...DEFAULTS.phaseSuggestions, ...sddConfig.phaseSuggestions };
+	const commandPhaseMap = { ...DEFAULTS.COMMAND_PHASE_MAP, ...sddConfig.commandPhaseMap };
+	const intentPatterns = { ...DEFAULTS.INTENT_PATTERNS, ...sddConfig.intentPatterns };
+	const phaseSuggestions = { ...DEFAULTS.PHASE_SUGGESTIONS, ...sddConfig.phaseSuggestions };
 
 	// OQ-3: warn when a commands/ file has no commandPhaseMap entry
 	for (const command of Object.keys(commandAgentMap)) {

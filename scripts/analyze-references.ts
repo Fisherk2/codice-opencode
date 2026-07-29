@@ -226,26 +226,38 @@ function resolveFileMapping(
 	// Manual override
 	if (basename in MANUAL_OVERRIDES) {
 		return buildMapping(
-			filename, basename, MANUAL_OVERRIDES[basename], "LOW",
+			filename,
+			basename,
+			MANUAL_OVERRIDES[basename],
+			"LOW",
 			"No SKILL.md match; assigned via content analysis to most relevant skill",
-			candidates, crossRefList,
+			candidates,
+			crossRefList,
 		);
 	}
 
 	// Level 1: direct SKILL.md match
 	if (candidates.length === 1) {
 		return buildMapping(
-			filename, basename, candidates[0], "HIGH",
+			filename,
+			basename,
+			candidates[0],
+			"HIGH",
 			`Directly referenced in skills/${candidates[0]}/SKILL.md`,
-			candidates, crossRefList,
+			candidates,
+			crossRefList,
 		);
 	}
 	if (candidates.length > 1) {
 		const best = pickBestSkill(filename, basename, candidates);
 		return buildMapping(
-			filename, basename, best, "HIGH",
+			filename,
+			basename,
+			best,
+			"HIGH",
 			`Referenced in ${candidates.length} skills; best match: ${best}`,
-			candidates, crossRefList,
+			candidates,
+			crossRefList,
 		);
 	}
 
@@ -254,15 +266,23 @@ function resolveFileMapping(
 		const resolved = resolveCrossReferenceSkill(crossRefList, mapping);
 		if (resolved) {
 			return buildMapping(
-				filename, basename, resolved, "MEDIUM",
+				filename,
+				basename,
+				resolved,
+				"MEDIUM",
 				`No direct SKILL.md match; cross-referenced by ${crossRefList.join(", ")} → resolves to ${resolved}`,
-				candidates, crossRefList,
+				candidates,
+				crossRefList,
 			);
 		}
 		return buildMapping(
-			filename, basename, "clean-code", "MEDIUM",
+			filename,
+			basename,
+			"clean-code",
+			"MEDIUM",
 			`Cross-referenced by ${crossRefList.join(", ")} but target ambiguous; defaulting to clean-code`,
-			candidates, crossRefList,
+			candidates,
+			crossRefList,
 		);
 	}
 
@@ -270,9 +290,13 @@ function resolveFileMapping(
 	// 59 files have manual overrides or direct matches. If reached via re-analysis
 	// on a different set of files, it acts as a sentinel for unmapped orphans.
 	return buildMapping(
-		filename, basename, "unmatched-orphan", "LOW",
+		filename,
+		basename,
+		"unmatched-orphan",
+		"LOW",
 		"Orphan — no SKILL.md mention, no cross-references, no manual override",
-		candidates, crossRefList,
+		candidates,
+		crossRefList,
 	);
 }
 

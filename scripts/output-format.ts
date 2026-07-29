@@ -5,8 +5,8 @@
  * 200-line limit (CODE_STYLE.md) while maintaining readability.
  */
 
-import { relative } from "node:path";
 import { writeFileSync } from "node:fs";
+import { relative } from "node:path";
 import type { ReferenceMapping } from "./analyze-references";
 
 // ── Stats ──────────────────────────────────────────────────────────────────────
@@ -85,12 +85,20 @@ export function generateMarkdown(
 	lines.push("");
 
 	// Full mapping table
-	lines.push("## Full Mapping", "", "| # | File | Target Skill | Confidence | Rationale |", "|---|------|--------------|------------|-----------|");
+	lines.push(
+		"## Full Mapping",
+		"",
+		"| # | File | Target Skill | Confidence | Rationale |",
+		"|---|------|--------------|------------|-----------|",
+	);
 
 	let idx = 1;
 	for (const m of mappings) {
-		const badge = m.confidence === "HIGH" ? "🟢 HIGH" : m.confidence === "MEDIUM" ? "🟡 MEDIUM" : "🔴 LOW";
-		lines.push(`| ${idx++} | \`${m.filename}\` | \`${m.targetSkill}\` | ${badge} | ${m.rationale} |`);
+		const badge =
+			m.confidence === "HIGH" ? "🟢 HIGH" : m.confidence === "MEDIUM" ? "🟡 MEDIUM" : "🔴 LOW";
+		lines.push(
+			`| ${idx++} | \`${m.filename}\` | \`${m.targetSkill}\` | ${badge} | ${m.rationale} |`,
+		);
 	}
 	lines.push("");
 

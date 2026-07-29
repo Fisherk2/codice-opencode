@@ -30,6 +30,12 @@ export interface SddPipelineConfig {
 	 * Maps natural-language keywords (e.g., "implement", "test") to
 	 * their corresponding slash commands. When omitted, uses
 	 * INTENT_PATTERNS from defaults.
+	 *
+	 * NOTE: This is a FULL OVERRIDE per command key, not a merge.
+	 * Providing `{ "/spec": ["my keyword"] }` replaces ALL keywords
+	 * for `/spec`, losing defaults like "requirement", "idea", etc.
+	 * To add keywords without losing defaults, copy the existing
+	 * defaults into your config and append to them.
 	 */
 	readonly intentPatterns?: Readonly<Record<string, readonly string[]>>;
 

@@ -158,5 +158,6 @@ function parseAgentFromFrontmatter(content: string): string | null {
 		return null;
 	}
 
-	return agentMatch[1].trim();
+	const value = agentMatch[1].trim();
+	return value.length > 0 ? value : null;
 }

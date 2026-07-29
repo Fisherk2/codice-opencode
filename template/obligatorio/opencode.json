@@ -61,12 +61,7 @@
     }
   },
 
-  "instructions": [
-    "CONTRIBUTING.md",
-    "SPEC.md",
-    "docs/ARCHITECTURE.md",
-    "docs/CODE_STYLE.md"
-  ],
+  "instructions": ["CONTRIBUTING.md", "SPEC.md", "docs/ARCHITECTURE.md", "docs/CODE_STYLE.md"],
 
   "references": {
     "clean-code": {
