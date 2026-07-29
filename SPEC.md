@@ -208,43 +208,15 @@ codice-opencode/
 
 ## Code Style
 
-All code must adhere to the following conventions derived from the project's architectural principles.
+All code must adhere to the full conventions in [CODE_STYLE.md](docs/CODE_STYLE.md). Key rules:
 
-### Naming Conventions
-- **Files:** PascalCase for classes, camelCase for utilities. Examples: `FileMergeEngine.ts`, `versionComparator.ts`.
-- **Classes and Interfaces:** Descriptive nouns. `FileMergeEngine` (not `Merger`), `VersionComparator` (not `VersionCheck`). Interfaces prefixed with `I`: `IFileSystem`, `IGitHubClient`.
-- **Functions:** Verb or verb-phrase. `compareVersions`, `stageFileAtomic`, `promptForMode`.
-- **Constants:** SCREAMING_SNAKE_CASE for true constants. `GITHUB_API_TIMEOUT_MS`, `STAGING_DIR_NAME`.
-
-### File Size and Structure
-- Maximum 200 lines per file. If a file exceeds this limit, extract responsibilities into new modules.
-- One primary export per file. Secondary utilities may be co-exported if tightly coupled.
-- Imports grouped by layer: external libraries first, then infrastructure, then application, then domain (domain imports are forbidden outside domain).
-
-### TypeScript Rules
-- Strict mode enabled. No implicit any.
-- Explicit return types on all public methods and exported functions.
-- No `any` type usage. Use `unknown` with type guards when type is genuinely uncertain.
-- Prefer `readonly` arrays and properties where mutation is not intended.
-
-### Comments and Documentation
-- Comments explain **why**, never **what**.
-- Public APIs (ports and use cases) include JSDoc describing purpose, parameters, return values, and error conditions.
-- Avoid obvious comments such as `// Increment i` next to `i++`.
-
-### Error Handling
-- Fail-fast validation at function entry points.
-- Domain services return `Result<T, Error>` instead of throwing exceptions.
-- Error messages must be actionable. Example: "Permission denied at /path/to/file. Run with appropriate permissions or check directory access." instead of "Error EACCES".
-- Infrastructure adapters may catch low-level errors (network, filesystem) and map them to domain error types.
-
-### Pre-Commit Checklist
-Every commit must satisfy:
-- [ ] `just lint` passes with zero errors and zero warnings.
-- [ ] `just test:unit` passes with > 80% coverage.
-- [ ] No `any` types introduced.
-- [ ] Names are descriptive and follow convention.
-- [ ] Documentation updated if public API changed.
+- **Files:** PascalCase for classes, camelCase for utilities. Classes: descriptive nouns, interfaces prefixed with `I`.
+- **Functions:** verb-phrases. **Constants:** `SCREAMING_SNAKE_CASE`.
+- **Max 200 lines per file**, one primary export. Imports: externals → infra → application → domain.
+- **Strict TypeScript** — no `any`, explicit return types, prefer `readonly`.
+- **Comments** explain **why**, never **what**. JSDoc for public APIs.
+- **Error handling:** fail-fast validation, domain returns `Result<T, Error>`, actionable messages.
+- **Pre-commit:** `just lint` + `just test:unit` pass, no `any` introduced, docs updated.
 
 ---
 
@@ -328,13 +300,9 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 - Exit codes validated for success (0) and failure (1).
 - No test leaves artifacts in the repository workspace.
 
----
-
 ## Boundaries
 
 ### Always
-
-These actions are always permitted and expected without explicit user confirmation:
 
 - **Validate inputs immediately.** Every path, version string, and user selection is validated at the point of entry. Fail fast with actionable error messages.
 - **Use atomic file operations.** All writes that affect the user's project must go through the staging directory + rename pattern. No direct overwrites of existing user files.
@@ -346,16 +314,12 @@ These actions are always permitted and expected without explicit user confirmati
 
 ### Ask First
 
-These actions require explicit user confirmation or interactive decision before proceeding:
-
 - **Overwriting existing files in Clean Install mode.** If the destination directory is not empty, warn the user and require confirmation before deleting or overwriting anything.
 - **Copying Optional files in Project Install mode.** Present a checkbox list of all optional files. Only copy those the user selects. If the user deselects all, copy none.
 - **Proceeding when GitHub API is unreachable.** If the version check fails due to network issues, ask whether to continue with the local template or abort.
 - **Installing into a directory that does not look like a project.** If the destination lacks expected markers (e.g., no `.git` directory, no `package.json`), ask for confirmation that the user selected the correct path.
 
 ### Never
-
-These actions are explicitly prohibited under all circumstances:
 
 - **Never execute arbitrary code from the template.** Do not run shell scripts, eval JavaScript, or execute binaries embedded in the template directory. The installer is a file copier, not a script runner.
 - **Never hardcode absolute paths.** All paths must be constructed with `path.join()` or `path.resolve()`. No `/home/user/...` or `C:\Users\...` literals in source code.
@@ -367,11 +331,7 @@ These actions are explicitly prohibited under all circumstances:
 - **Never duplicate logic.** Extract shared behavior into domain services or utility functions. Follow DRY.
 - **Never write comments that state the obvious.** Comments must explain intent and rationale, not restate the code.
 
----
-
 ## Success Criteria
-
-The following conditions are specific, testable, and must all be met for the v1.2.0 release to be considered complete.
 
 ### Functional Criteria
 
@@ -414,11 +374,8 @@ The following conditions are specific, testable, and must all be met for the v1.
 | SC-20 | CHANGELOG.md exists and follows Keep a Changelog format with Added, Changed, Fixed, and Security sections. | Manual inspection |
 | SC-21 | CI/CD badge is visible in README and reflects the current build status of the `main` branch. | Visual inspection of rendered README |
 
----
 
 ## Modular Specs
-
-The following specifications break down complex subsystems into focused documents. They are referenced here and maintained independently.
 
 - **[File Classification Rules](specs/spec-file-rules.md)** — Detailed definition of the Obligatorio, Estándar, and Opcional categories. Includes the directory structure convention in `template/`, rule precedence, edge cases (nested directories, hidden files), and the algorithm for determining which rule applies to a given file path.
 
@@ -426,25 +383,7 @@ The following specifications break down complex subsystems into focused document
 
 - **[SDD Plugin Decoupling](specs/spec-sdd-plugin-decoupling.md)** — Specification for reducing coupling between the SDD pipeline plugin and documentation. Defines auto-discovery of commands/agents, configuration-driven behavioral data, and quality infrastructure (linting, testing). Addresses Issue #53.
 
----
-
-## Resolved Decisions
-
-The following architectural decisions have been resolved and are now part of the specification:
-
-| # | Decision | Resolution | Rationale |
-|---|----------|------------|-----------|
-| 1 | **Template Packaging Format** | Bundle template directory with the npm package. Resolved at runtime via `TemplateResolver` (source, bunx/npm, or cwd). | Guarantees portability and eliminates "missing template" errors. |
-| 2 | **Optional File Grouping** | Present optional files grouped by category (e.g., "Config", "Scripts", "Docs") in the TUI when count exceeds 10. | Improves UX for non-technical users. Requires `IUserPrompt` to support grouped multiselect. |
-| 3 | **GitHub Authentication** | Rely solely on unauthenticated requests (60 req/hr). Do not support `GITHUB_TOKEN`. | Simpler for end users. If rate limit is hit, display a clear message and fall back to the embedded local template. |
-| 4 | **Windows Path Handling** | Normalize all paths internally to forward slashes (`/`). The filesystem adapter handles OS-specific translation at the boundary. | Simplifies Path Traversal prevention logic and cross-platform consistency. |
-| 5 | **Local Version Storage** | Persist the installed version in a `.codice-version` file in the project root. | Simplest implementation. The file is small, human-readable, and easy to parse. |
-| 6 | **Rollback on Partial Failure** | If a multi-file operation fails mid-way, automatically roll back all already-copied files from the current staging batch. | Guarantees project consistency. Combined with per-file atomic staging, this provides transaction-like safety. |
-| 7 | **Update Notification in Other Modes** | Version checking is **exclusive** to Update Workspace mode. Clean Install and Project Install do not check for newer versions. | Reduces noise and API calls. Users in install mode are assumed to want the bundled version. |
-| 8 | **Primary Distribution Method** | Publish to npm as `@fisherk2-dev/codice`. Use `bunx @fisherk2-dev/codice` as the official installation method. | Broadens accessibility beyond Bun users. Eliminates installation friction for npm-native workflows. |
-| 9 | **Post-Installation Generation** | Symlinks and `.gitignore` are generated post-installation via dedicated ports (`ISymlinkCreator`, `IGitignoreCreator`) instead of being packaged in the template. | npm resolves symlinks during packaging and excludes `.gitignore` files. Post-install generation guarantees these files exist correctly regardless of distribution method. |
-
----
+Resolved decisions are documented in the respective ADRs (see `specs/adr/`).
 
 ## References
 
@@ -453,7 +392,5 @@ The following architectural decisions have been resolved and are now part of the
 - **docs/PRD.md** — Product Requirements Document (if exists).
 - **docs/TRD.md** — Technical Requirements Document (if exists).
 - **Reference Repository:** `https://github.com/weisser-dev/awesome-opencode` — Similar installation system for UX and flow inspiration.
-
----
 
 *End of Spec*
