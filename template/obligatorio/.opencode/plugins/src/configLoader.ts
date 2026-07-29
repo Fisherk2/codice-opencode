@@ -7,28 +7,20 @@
 // Uses only Node.js `fs` module — no Bun-specific APIs.
 // ---------------------------------------------------------------------------
 
-import { existsSync, readFileSync } from "fs"
-import { join } from "path"
-import type { SddPipelineConfig } from "./types"
-import { DEFAULT_SDD_PIPELINE_CONFIG } from "./types"
-import { DEFAULTS } from "./defaults"
+import { existsSync, readFileSync } from "fs";
+import { join } from "path";
+import { DEFAULTS } from "./defaults";
+import type { SddPipelineConfig } from "./types";
+import { DEFAULT_SDD_PIPELINE_CONFIG } from "./types";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 /** Valid SDD pipeline phases (case-insensitive on input). */
-const VALID_PHASES = new Set([
-  "idle",
-  "define",
-  "plan",
-  "build",
-  "verify",
-  "review",
-  "ship",
-])
+const VALID_PHASES = new Set(["idle", "define", "plan", "build", "verify", "review", "ship"]);
 
-const VALID_PHASES_STR = "idle, define, plan, build, verify, review, ship"
+const VALID_PHASES_STR = "idle, define, plan, build, verify, review, ship";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -38,14 +30,14 @@ const VALID_PHASES_STR = "idle, define, plan, build, verify, review, ship"
  * Returns `true` if `value` is a valid SDD pipeline phase name (case-insensitive).
  */
 function isValidPhase(value: string): boolean {
-  return VALID_PHASES.has(value.toLowerCase())
+	return VALID_PHASES.has(value.toLowerCase());
 }
 
 /**
  * Type guard: returns `true` when `value` is a non-null, non-array object.
  */
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
+	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 // ---------------------------------------------------------------------------
@@ -63,23 +55,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * @returns A complete `Record<string, string>` with all expected entries.
  */
 function mergeCommandPhaseMap(userValue: unknown): Record<string, string> {
-  const merged: Record<string, string> = { ...DEFAULTS.COMMAND_PHASE_MAP }
+	const merged: Record<string, string> = { ...DEFAULTS.COMMAND_PHASE_MAP };
 
-  if (!isRecord(userValue)) return merged
+	if (!isRecord(userValue)) return merged;
 
-  for (const [command, phase] of Object.entries(userValue)) {
-    const phaseStr = String(phase)
-    if (!isValidPhase(phaseStr)) {
-      console.warn(
-        `[sdd-pipeline] Invalid phase "${phaseStr}" for command "${command}". ` +
-          `Must be one of: ${VALID_PHASES_STR}. Skipping.`,
-      )
-      continue
-    }
-    merged[command] = phaseStr
-  }
+	for (const [command, phase] of Object.entries(userValue)) {
+		const phaseStr = String(phase);
+		if (!isValidPhase(phaseStr)) {
+			console.warn(
+				`[sdd-pipeline] Invalid phase "${phaseStr}" for command "${command}". ` +
+					`Must be one of: ${VALID_PHASES_STR}. Skipping.`,
+			);
+			continue;
+		}
+		merged[command] = phaseStr;
+	}
 
-  return merged
+	return merged;
 }
 
 /**
@@ -92,29 +84,25 @@ function mergeCommandPhaseMap(userValue: unknown): Record<string, string> {
  * @param userValue — The user-provided value from `opencode.json`.
  * @returns A complete `Record<string, readonly string[]>` with all expected entries.
  */
-function mergeIntentPatterns(
-  userValue: unknown,
-): Record<string, readonly string[]> {
-  const merged: Record<string, readonly string[]> = {
-    ...DEFAULTS.INTENT_PATTERNS,
-  }
+function mergeIntentPatterns(userValue: unknown): Record<string, readonly string[]> {
+	const merged: Record<string, readonly string[]> = {
+		...DEFAULTS.INTENT_PATTERNS,
+	};
 
-  if (!isRecord(userValue)) return merged
+	if (!isRecord(userValue)) return merged;
 
-  for (const [key, value] of Object.entries(userValue)) {
-    if (!key.startsWith("/")) {
-      console.warn(
-        `[sdd-pipeline] Invalid intent pattern key "${key}". Must start with "/". Skipping.`,
-      )
-      continue
-    }
-    // Normalise to a readonly array of strings
-    merged[key] = Array.isArray(value)
-      ? value.map((v: unknown) => String(v))
-      : []
-  }
+	for (const [key, value] of Object.entries(userValue)) {
+		if (!key.startsWith("/")) {
+			console.warn(
+				`[sdd-pipeline] Invalid intent pattern key "${key}". Must start with "/". Skipping.`,
+			);
+			continue;
+		}
+		// Normalise to a readonly array of strings
+		merged[key] = Array.isArray(value) ? value.map((v: unknown) => String(v)) : [];
+	}
 
-  return merged
+	return merged;
 }
 
 /**
@@ -129,36 +117,36 @@ function mergeIntentPatterns(
  * @returns A complete `Record<string, Readonly<Record<string, string>>>`.
  */
 function mergePhaseSuggestions(
-  userValue: unknown,
+	userValue: unknown,
 ): Record<string, Readonly<Record<string, string>>> {
-  // Deep-copy defaults into mutable structure
-  const merged: Record<string, Record<string, string>> = {}
-  for (const [phase, agents] of Object.entries(DEFAULTS.PHASE_SUGGESTIONS)) {
-    merged[phase] = { ...agents }
-  }
+	// Deep-copy defaults into mutable structure
+	const merged: Record<string, Record<string, string>> = {};
+	for (const [phase, agents] of Object.entries(DEFAULTS.PHASE_SUGGESTIONS)) {
+		merged[phase] = { ...agents };
+	}
 
-  if (!isRecord(userValue)) return merged
+	if (!isRecord(userValue)) return merged;
 
-  for (const [phase, agentMap] of Object.entries(userValue)) {
-    if (!isValidPhase(phase)) {
-      console.warn(
-        `[sdd-pipeline] Invalid phase "${phase}" in phaseSuggestions. ` +
-          `Must be one of: ${VALID_PHASES_STR}. Skipping.`,
-      )
-      continue
-    }
+	for (const [phase, agentMap] of Object.entries(userValue)) {
+		if (!isValidPhase(phase)) {
+			console.warn(
+				`[sdd-pipeline] Invalid phase "${phase}" in phaseSuggestions. ` +
+					`Must be one of: ${VALID_PHASES_STR}. Skipping.`,
+			);
+			continue;
+		}
 
-    if (isRecord(agentMap)) {
-      if (!merged[phase]) {
-        merged[phase] = {}
-      }
-      for (const [agent, suggestion] of Object.entries(agentMap)) {
-        merged[phase][agent] = String(suggestion)
-      }
-    }
-  }
+		if (isRecord(agentMap)) {
+			if (!merged[phase]) {
+				merged[phase] = {};
+			}
+			for (const [agent, suggestion] of Object.entries(agentMap)) {
+				merged[phase][agent] = String(suggestion);
+			}
+		}
+	}
 
-  return merged
+	return merged;
 }
 
 // ---------------------------------------------------------------------------
@@ -193,41 +181,41 @@ function mergePhaseSuggestions(
  * ```
  */
 export function loadSddConfig(projectDir: string): SddPipelineConfig {
-  const configPath = join(projectDir, "opencode.json")
+	const configPath = join(projectDir, "opencode.json");
 
-  // 1. Check if opencode.json exists
-  if (!existsSync(configPath)) {
-    return DEFAULT_SDD_PIPELINE_CONFIG
-  }
+	// 1. Check if opencode.json exists
+	if (!existsSync(configPath)) {
+		return DEFAULT_SDD_PIPELINE_CONFIG;
+	}
 
-  // 2. Read and parse JSON (wrap in try-catch for parse errors)
-  let parsed: unknown
-  try {
-    const raw = readFileSync(configPath, "utf-8")
-    parsed = JSON.parse(raw)
-  } catch {
-    console.warn(
-      `[sdd-pipeline] Invalid or unreadable opencode.json at ${configPath}. ` +
-        "Falling back to defaults.",
-    )
-    return DEFAULT_SDD_PIPELINE_CONFIG
-  }
+	// 2. Read and parse JSON (wrap in try-catch for parse errors)
+	let parsed: unknown;
+	try {
+		const raw = readFileSync(configPath, "utf-8");
+		parsed = JSON.parse(raw);
+	} catch {
+		console.warn(
+			`[sdd-pipeline] Invalid or unreadable opencode.json at ${configPath}. ` +
+				"Falling back to defaults.",
+		);
+		return DEFAULT_SDD_PIPELINE_CONFIG;
+	}
 
-  // 3. Must be a non-null object at the top level
-  if (!isRecord(parsed)) {
-    return DEFAULT_SDD_PIPELINE_CONFIG
-  }
+	// 3. Must be a non-null object at the top level
+	if (!isRecord(parsed)) {
+		return DEFAULT_SDD_PIPELINE_CONFIG;
+	}
 
-  // 4. Extract the optional sddPipeline key
-  const sddPipeline = parsed.sddPipeline
-  if (!isRecord(sddPipeline) || Object.keys(sddPipeline).length === 0) {
-    return DEFAULT_SDD_PIPELINE_CONFIG
-  }
+	// 4. Extract the optional sddPipeline key
+	const sddPipeline = parsed.sddPipeline;
+	if (!isRecord(sddPipeline) || Object.keys(sddPipeline).length === 0) {
+		return DEFAULT_SDD_PIPELINE_CONFIG;
+	}
 
-  // 5. Merge each section with defaults
-  return {
-    commandPhaseMap: mergeCommandPhaseMap(sddPipeline.commandPhaseMap),
-    intentPatterns: mergeIntentPatterns(sddPipeline.intentPatterns),
-    phaseSuggestions: mergePhaseSuggestions(sddPipeline.phaseSuggestions),
-  }
+	// 5. Merge each section with defaults
+	return {
+		commandPhaseMap: mergeCommandPhaseMap(sddPipeline.commandPhaseMap),
+		intentPatterns: mergeIntentPatterns(sddPipeline.intentPatterns),
+		phaseSuggestions: mergePhaseSuggestions(sddPipeline.phaseSuggestions),
+	};
 }

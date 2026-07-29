@@ -1,371 +1,375 @@
-import type { Plugin } from "@opencode-ai/plugin"
-import { readFileSync, writeFileSync, existsSync, appendFileSync } from "node:fs"
-import { join } from "node:path"
-
-import { DEFAULTS, DESTRUCTIVE_PATTERNS } from "./src/defaults"
-import { discoverCommandAgentMap, discoverValidSubagents, discoverAgentMentionPatterns } from "./src/autoDiscovery"
-import { loadSddConfig } from "./src/configLoader"
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import type { Plugin } from "@opencode-ai/plugin";
+import {
+	discoverAgentMentionPatterns,
+	discoverCommandAgentMap,
+	discoverValidSubagents,
+} from "./src/autoDiscovery";
+import { loadSddConfig } from "./src/configLoader";
+import { DEFAULTS, DESTRUCTIVE_PATTERNS } from "./src/defaults";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 interface SddState {
-  pipeline_phase: string
-  active_spec: string | null
-  current_task: string | null
-  completed_tasks: string[]
-  pending_tasks: string[]
-  agent_type: string
-  last_intent: string | null
+	pipeline_phase: string;
+	active_spec: string | null;
+	current_task: string | null;
+	completed_tasks: string[];
+	pending_tasks: string[];
+	agent_type: string;
+	last_intent: string | null;
 }
 
 interface MessageEvent {
-  message?: { content?: string }
-  parts?: unknown[]
+	message?: { content?: string };
+	parts?: unknown[];
 }
 
 /** Typed error for SDD pipeline blocking — avoids string prefix coupling. */
 class SddError extends Error {
-  constructor(msg: string) {
-    super(msg)
-    this.name = "SddError"
-  }
+	constructor(msg: string) {
+		super(msg);
+		this.name = "SddError";
+	}
 }
 
 /** Normalizes a bash command for safer regex matching — strips comments, newlines, collapses whitespace. */
 const normalizeBash = (cmd: string): string =>
-  cmd.replace(/#.*/g, '')           // strip comments
-     .replace(/\n/g, '')            // strip newlines
-     .replace(/\s+/g, ' ')          // collapse whitespace
-     .trim()
+	cmd
+		.replace(/#.*/g, "") // strip comments
+		.replace(/\n/g, "") // strip newlines
+		.replace(/\s+/g, " ") // collapse whitespace
+		.trim();
 
 // Plugin
 // ---------------------------------------------------------------------------
 
 export const SddPipelinePlugin: Plugin = async (ctx) => {
-  const { directory } = ctx
+	const { directory } = ctx;
 
-  // ── Paths ────────────────────────────────────────────────────────────────
-  const projectDir = directory || process.cwd()
+	// ── Paths ────────────────────────────────────────────────────────────────
+	const projectDir = directory || process.cwd();
 
-  // ── Auto-discovery (Pillar 1) — fallback to DEFAULTS when directories absent ──
-  const commandsDir = join(projectDir, "commands")
-  const agentsDir = join(projectDir, "agents")
-  const discoveredCommandAgentMap = discoverCommandAgentMap(commandsDir)
-  const discoveredValidSubagents = discoverValidSubagents(agentsDir)
-  const commandAgentMap = Object.keys(discoveredCommandAgentMap).length > 0
-    ? discoveredCommandAgentMap
-    : DEFAULTS.commandAgentMap
-  const validSubagents = discoveredValidSubagents.size > 0
-    ? discoveredValidSubagents
-    : DEFAULTS.validSubagents
-  const agentMentionPatterns = discoverAgentMentionPatterns(validSubagents)
+	// ── Auto-discovery (Pillar 1) — fallback to DEFAULTS when directories absent ──
+	const commandsDir = join(projectDir, "commands");
+	const agentsDir = join(projectDir, "agents");
+	const discoveredCommandAgentMap = discoverCommandAgentMap(commandsDir);
+	const discoveredValidSubagents = discoverValidSubagents(agentsDir);
+	const commandAgentMap =
+		Object.keys(discoveredCommandAgentMap).length > 0
+			? discoveredCommandAgentMap
+			: DEFAULTS.commandAgentMap;
+	const validSubagents =
+		discoveredValidSubagents.size > 0 ? discoveredValidSubagents : DEFAULTS.validSubagents;
+	const agentMentionPatterns = discoverAgentMentionPatterns(validSubagents);
 
-  // ── Configuration loading (Pillar 2) — merge user config with defaults ──
-  const sddConfig = loadSddConfig(projectDir)
-  const commandPhaseMap = { ...DEFAULTS.commandPhaseMap, ...sddConfig.commandPhaseMap }
-  const intentPatterns = { ...DEFAULTS.intentPatterns, ...sddConfig.intentPatterns }
-  const phaseSuggestions = { ...DEFAULTS.phaseSuggestions, ...sddConfig.phaseSuggestions }
+	// ── Configuration loading (Pillar 2) — merge user config with defaults ──
+	const sddConfig = loadSddConfig(projectDir);
+	const commandPhaseMap = { ...DEFAULTS.commandPhaseMap, ...sddConfig.commandPhaseMap };
+	const intentPatterns = { ...DEFAULTS.intentPatterns, ...sddConfig.intentPatterns };
+	const phaseSuggestions = { ...DEFAULTS.phaseSuggestions, ...sddConfig.phaseSuggestions };
 
-  // OQ-3: warn when a commands/ file has no commandPhaseMap entry
-  for (const command of Object.keys(commandAgentMap)) {
-    if (!commandPhaseMap[command]) {
-      console.debug(`[sdd-pipeline] Command "${command}" has no commandPhaseMap entry, defaulting to "idle"`)
-    }
-  }
-  const pluginsDir = join(projectDir, ".opencode", "plugins")
-  const auditLogPath = join(pluginsDir, ".sdd-audit.log")
+	// OQ-3: warn when a commands/ file has no commandPhaseMap entry
+	for (const command of Object.keys(commandAgentMap)) {
+		if (!commandPhaseMap[command]) {
+			console.debug(
+				`[sdd-pipeline] Command "${command}" has no commandPhaseMap entry, defaulting to "idle"`,
+			);
+		}
+	}
+	const pluginsDir = join(projectDir, ".opencode", "plugins");
+	const auditLogPath = join(pluginsDir, ".sdd-audit.log");
 
-  // ── In-memory SDD state (no persistence — detected fresh each session) ──
-  const sddState: SddState = {
-    pipeline_phase: "idle",
-    active_spec: null,
-    current_task: null,
-    completed_tasks: [],
-    pending_tasks: [],
-    agent_type: "unknown",
-    last_intent: null,
-  }
+	// ── In-memory SDD state (no persistence — detected fresh each session) ──
+	const sddState: SddState = {
+		pipeline_phase: "idle",
+		active_spec: null,
+		current_task: null,
+		completed_tasks: [],
+		pending_tasks: [],
+		agent_type: "unknown",
+		last_intent: null,
+	};
 
-  // ── Audit log helpers ────────────────────────────────────────────────────
+	// ── Audit log helpers ────────────────────────────────────────────────────
 
-  // [P1] In-memory line count — avoids re-reading the file on every append.
-  //      Reset to 0 if file doesn't exist; set on init; tracked in audit().
-  let auditLineCount = 0
+	// [P1] In-memory line count — avoids re-reading the file on every append.
+	//      Reset to 0 if file doesn't exist; set on init; tracked in audit().
+	let auditLineCount = 0;
 
-  /** Reads the audit log, counts lines, and truncates to half if >= MAX_AUDIT_LINES. */
-  const maybeRotateAuditLog = (): void => {
-    if (!existsSync(auditLogPath)) {
-      auditLineCount = 0
-      return
-    }
-    const content = readFileSync(auditLogPath, "utf-8")
-    const lines = content.split("\n")
-    // Remove trailing empty line from split if file ends with newline
-    auditLineCount = lines.length > 0 && lines[lines.length - 1] === "" ? lines.length - 1 : lines.length
-    if (auditLineCount >= MAX_AUDIT_LINES) {
-      const keep = lines.slice(-(MAX_AUDIT_LINES / 2))
-      writeFileSync(auditLogPath, keep.join("\n") + "\n")
-      auditLineCount = keep.length
-      console.debug("[sdd-pipeline] Audit log truncated on init")
-    }
-  }
+	/** Reads the audit log, counts lines, and truncates to half if >= MAX_AUDIT_LINES. */
+	const maybeRotateAuditLog = (): void => {
+		if (!existsSync(auditLogPath)) {
+			auditLineCount = 0;
+			return;
+		}
+		const content = readFileSync(auditLogPath, "utf-8");
+		const lines = content.split("\n");
+		// Remove trailing empty line from split if file ends with newline
+		auditLineCount =
+			lines.length > 0 && lines[lines.length - 1] === "" ? lines.length - 1 : lines.length;
+		if (auditLineCount >= MAX_AUDIT_LINES) {
+			const keep = lines.slice(-(MAX_AUDIT_LINES / 2));
+			writeFileSync(auditLogPath, keep.join("\n") + "\n");
+			auditLineCount = keep.length;
+			console.debug("[sdd-pipeline] Audit log truncated on init");
+		}
+	};
 
-  // Init: rotate if needed and seed line count
-  try {
-    maybeRotateAuditLog()
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err)
-    console.debug("[sdd-pipeline] Could not truncate audit log:", msg)
-  }
+	// Init: rotate if needed and seed line count
+	try {
+		maybeRotateAuditLog();
+	} catch (err: unknown) {
+		const msg = err instanceof Error ? err.message : String(err);
+		console.debug("[sdd-pipeline] Could not truncate audit log:", msg);
+	}
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+	// ── Helpers ──────────────────────────────────────────────────────────────
 
-  /** Sanitizes a string for safe log entry — prevents newline injection. */
-  const sanitize = (s: string): string => s.replace(/[\n\r]/g, '_')
+	/** Sanitizes a string for safe log entry — prevents newline injection. */
+	const sanitize = (s: string): string => s.replace(/[\n\r]/g, "_");
 
-  /** Writes a timestamped entry to the audit log file. Handles rotation when line count exceeds limit. */
-  const audit = (source: string, detail: string): void => {
-    try {
-      const timestamp = new Date().toISOString()
-      const entry = `[${timestamp}] [${source}] ${sanitize(detail)}\n`
+	/** Writes a timestamped entry to the audit log file. Handles rotation when line count exceeds limit. */
+	const audit = (source: string, detail: string): void => {
+		try {
+			const timestamp = new Date().toISOString();
+			const entry = `[${timestamp}] [${source}] ${sanitize(detail)}\n`;
 
-      // [P1] Rotate only when in-memory count reaches threshold
-      if (auditLineCount >= MAX_AUDIT_LINES) {
-        maybeRotateAuditLog()
-      }
+			// [P1] Rotate only when in-memory count reaches threshold
+			if (auditLineCount >= MAX_AUDIT_LINES) {
+				maybeRotateAuditLog();
+			}
 
-      appendFileSync(auditLogPath, entry)
-      auditLineCount++
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.debug("[sdd-pipeline] Could not write audit log:", msg)
-    }
-  }
+			appendFileSync(auditLogPath, entry);
+			auditLineCount++;
+		} catch (err: unknown) {
+			const msg = err instanceof Error ? err.message : String(err);
+			console.debug("[sdd-pipeline] Could not write audit log:", msg);
+		}
+	};
 
-  // ── Build injected context strings ───────────────────────────────────────
+	// ── Build injected context strings ───────────────────────────────────────
 
-  /** Constructs the full SDD context string including pipeline state. */
-  const buildSddContext = (): string => {
-    const lines = [
-      "## SDD Pipeline State",
-      `- Phase: ${sddState.pipeline_phase}`,
-      `- Active spec: ${sddState.active_spec ?? "none"}`,
-      `- Current task: ${sddState.current_task ?? "none"}`,
-      `- Agent type: ${sddState.agent_type}`,
-      `- Completed: ${sddState.completed_tasks.join(", ") || "none"}`,
-      `- Pending: ${sddState.pending_tasks.join(", ") || "none"}`,
-    ]
-    return lines.join("\n")
-  }
+	/** Constructs the full SDD context string including pipeline state. */
+	const buildSddContext = (): string => {
+		const lines = [
+			"## SDD Pipeline State",
+			`- Phase: ${sddState.pipeline_phase}`,
+			`- Active spec: ${sddState.active_spec ?? "none"}`,
+			`- Current task: ${sddState.current_task ?? "none"}`,
+			`- Agent type: ${sddState.agent_type}`,
+			`- Completed: ${sddState.completed_tasks.join(", ") || "none"}`,
+			`- Pending: ${sddState.pending_tasks.join(", ") || "none"}`,
+		];
+		return lines.join("\n");
+	};
 
-  /** Maps a slash command to its corresponding SDD pipeline phase. */
-  const commandToPhase = (command: string): string => commandPhaseMap[command] ?? "idle"
+	/** Maps a slash command to its corresponding SDD pipeline phase. */
+	const commandToPhase = (command: string): string => commandPhaseMap[command] ?? "idle";
 
-  // ── Hooks ────────────────────────────────────────────────────────────────
+	// ── Hooks ────────────────────────────────────────────────────────────────
 
-  return {
+	return {
+		/**
+		 * Fires before each LLM call to build the system prompt.
+		 * Injects SDD pipeline state so the agent
+		 * always has the orchestration guides available from the FIRST message.
+		 */
+		"experimental.chat.system.transform": async (_input: unknown, output: unknown) => {
+			try {
+				const out = output as { system: string[] };
 
-    /**
-     * Fires before each LLM call to build the system prompt.
-     * Injects SDD pipeline state so the agent
-     * always has the orchestration guides available from the FIRST message.
-     */
-    "experimental.chat.system.transform": async (
-      _input: unknown,
-      output: unknown,
-    ) => {
-      try {
-        const out = output as { system: string[] }
+				// Inject SDD state at the beginning so it appears early in the system prompt
+				const sddContext = buildSddContext();
 
-        // Inject SDD state at the beginning so it appears early in the system prompt
-        const sddContext = buildSddContext()
-        
-        // Add phase suggestion if agent is used outside typical phase
-        const suggestion = phaseSuggestions[sddState.pipeline_phase]?.[sddState.agent_type]
-        const suggestionLine = suggestion ? `
-> **Suggestion:** ${suggestion}` : ''
-        
-        // Add intent suggestion if detected in last user message (visible to model)
-        let intentLine = ''
-        if (sddState.last_intent) {
-          intentLine = `\n> **Intent detected:** User wants to \`${sddState.last_intent}\`. Suggest they use the command.`
-          sddState.last_intent = null // Consume intent after injecting
-        }
-        
-        out.system.unshift(sddContext + suggestionLine + intentLine)
-        audit("system.transform", `Injected SDD state (agent: ${sddState.agent_type}, phase: ${sddState.pipeline_phase})`)
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err)
-        console.error("[sdd-pipeline] Error in system.transform:", msg)
-      }
-    },
+				// Add phase suggestion if agent is used outside typical phase
+				const suggestion = phaseSuggestions[sddState.pipeline_phase]?.[sddState.agent_type];
+				const suggestionLine = suggestion
+					? `
+> **Suggestion:** ${suggestion}`
+					: "";
 
-    /**
-     * Fires when a new message is received.
-     * Detects user intent and suggests the matching SDD slash command.
-     */
-    "chat.message": async (
-      _input: unknown,
-      output: unknown,
-    ) => {
-      try {
-        const out = output as MessageEvent
-        const content = out?.message?.content ?? ""
-        if (!content) return
+				// Add intent suggestion if detected in last user message (visible to model)
+				let intentLine = "";
+				if (sddState.last_intent) {
+					intentLine = `\n> **Intent detected:** User wants to \`${sddState.last_intent}\`. Suggest they use the command.`;
+					sddState.last_intent = null; // Consume intent after injecting
+				}
 
-        const lower = content.toLowerCase()
+				out.system.unshift(sddContext + suggestionLine + intentLine);
+				audit(
+					"system.transform",
+					`Injected SDD state (agent: ${sddState.agent_type}, phase: ${sddState.pipeline_phase})`,
+				);
+			} catch (err: unknown) {
+				const msg = err instanceof Error ? err.message : String(err);
+				console.error("[sdd-pipeline] Error in system.transform:", msg);
+			}
+		},
 
-        // --- Detect agent mentions (e.g., "@tlaloc", "agente tezcatlipoca") ---
-        for (const [agentType, patterns] of Object.entries(agentMentionPatterns)) {
-          if (patterns.some((p) => p.test(content))) {
-            if (sddState.agent_type !== agentType) {
-              sddState.agent_type = agentType
-              audit("chat.message", `Agent switched via mention: ${agentType}`)
-            }
-            break
-          }
-        }
+		/**
+		 * Fires when a new message is received.
+		 * Detects user intent and suggests the matching SDD slash command.
+		 */
+		"chat.message": async (_input: unknown, output: unknown) => {
+			try {
+				const out = output as MessageEvent;
+				const content = out?.message?.content ?? "";
+				if (!content) return;
 
-        // --- Detect slash commands that load specific agents ---
-        // Commands override EVERYTHING — they represent explicit user intent.
-        // Always set the agent, even if it's the same (ensures state is persisted
-        // on the first command after session start when agent is "unknown").
-        // Must be followed by space, EOL, or non-word char to avoid false matches
-        // like "/specification" matching "/spec".
-        for (const [command, agentType] of Object.entries(commandAgentMap)) {
-          if (lower.startsWith(command)) {
-            const nextChar = lower[command.length]
-            const isEnd = lower.length === command.length
-            const hasBoundary = isEnd || !nextChar || /\s/.test(nextChar)
-            if (!hasBoundary) continue
-            const prev = sddState.agent_type
-            sddState.agent_type = agentType
-            sddState.pipeline_phase = commandToPhase(command)
-            if (prev !== agentType) {
-              audit("chat.message", `Agent switched via command ${command}: ${agentType}`)
-            }
-            break
-          }
-        }
+				const lower = content.toLowerCase();
 
-        // --- Detect SDD intent keywords ---
-        // Store intent so system.transform can inject a visible suggestion.
-        // Uses word-boundary regex to avoid false positives on common English
-        // substrings (e.g., "relationship status" should NOT match /ship,
-        // "I protest this decision" should NOT match /test).
-        for (const [command, keywords] of Object.entries(intentPatterns)) {
-          if (keywords.some((kw) => {
-            const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-            return new RegExp(`\\b${escaped}\\b`, 'i').test(content)
-          })) {
-            sddState.last_intent = command
-            audit("chat.message", `intent=${command}`)
-            break
-          }
-        }
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err)
-        console.error("[sdd-pipeline] Error in chat.message:", msg)
-      }
-    },
+				// --- Detect agent mentions (e.g., "@tlaloc", "agente tezcatlipoca") ---
+				for (const [agentType, patterns] of Object.entries(agentMentionPatterns)) {
+					if (patterns.some((p) => p.test(content))) {
+						if (sddState.agent_type !== agentType) {
+							sddState.agent_type = agentType;
+							audit("chat.message", `Agent switched via mention: ${agentType}`);
+						}
+						break;
+					}
+				}
 
-    /**
-     * Fires before a tool executes.
-     * Enforces tool permissions, bash write rules, and SDD phase enforcement.
-     */
-    "tool.execute.before": async (
-      input: unknown,
-      output: unknown,
-    ) => {
-      const inp = input as { tool?: string } | undefined
-      const out = output as { args?: Record<string, unknown> } | undefined
+				// --- Detect slash commands that load specific agents ---
+				// Commands override EVERYTHING — they represent explicit user intent.
+				// Always set the agent, even if it's the same (ensures state is persisted
+				// on the first command after session start when agent is "unknown").
+				// Must be followed by space, EOL, or non-word char to avoid false matches
+				// like "/specification" matching "/spec".
+				for (const [command, agentType] of Object.entries(commandAgentMap)) {
+					if (lower.startsWith(command)) {
+						const nextChar = lower[command.length];
+						const isEnd = lower.length === command.length;
+						const hasBoundary = isEnd || !nextChar || /\s/.test(nextChar);
+						if (!hasBoundary) continue;
+						const prev = sddState.agent_type;
+						sddState.agent_type = agentType;
+						sddState.pipeline_phase = commandToPhase(command);
+						if (prev !== agentType) {
+							audit("chat.message", `Agent switched via command ${command}: ${agentType}`);
+						}
+						break;
+					}
+				}
 
-      try {
-        const tool = inp?.tool ?? ""
-        const args = out?.args ?? {}
+				// --- Detect SDD intent keywords ---
+				// Store intent so system.transform can inject a visible suggestion.
+				// Uses word-boundary regex to avoid false positives on common English
+				// substrings (e.g., "relationship status" should NOT match /ship,
+				// "I protest this decision" should NOT match /test).
+				for (const [command, keywords] of Object.entries(intentPatterns)) {
+					if (
+						keywords.some((kw) => {
+							const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+							return new RegExp(`\\b${escaped}\\b`, "i").test(content);
+						})
+					) {
+						sddState.last_intent = command;
+						audit("chat.message", `intent=${command}`);
+						break;
+					}
+				}
+			} catch (err: unknown) {
+				const msg = err instanceof Error ? err.message : String(err);
+				console.error("[sdd-pipeline] Error in chat.message:", msg);
+			}
+		},
 
-        // --- Always block destructive commands ---
-        if (tool === "Bash" || tool === "bash") {
-          // Normalize the command before checking: strip comments, collapse whitespace
-          // This prevents bypasses like "rm  -rf" (double space) or "rm -r -f" (split flags)
-          const cmd = normalizeBash((args.command as string) ?? "")
-          for (const pattern of DESTRUCTIVE_PATTERNS) {
-            if (pattern.test(cmd)) {
-              audit("tool.before", `BLOCKED ${tool}: destructive command`)
-              throw new SddError("Destructive command blocked. Use safe alternatives.")
-            }
-          }
-        }
+		/**
+		 * Fires before a tool executes.
+		 * Enforces tool permissions, bash write rules, and SDD phase enforcement.
+		 */
+		"tool.execute.before": async (input: unknown, output: unknown) => {
+			const inp = input as { tool?: string } | undefined;
+			const out = output as { args?: Record<string, unknown> } | undefined;
 
-        // --- Task() Subagent Name Validation ---
-        // [C2] Use .toLowerCase() to handle any case variant ("task", "Task", "TASK")
-        if (tool.toLowerCase() === "task") {
-          // Extract only the subagent identifier from known parameter keys.
-          // Do NOT scan all string values — task() has other string params
-          // (description, prompt, command) that are not subagent names.
-          const subagentName = (args.subagent_type as string)
-            ?? (args.agent as string)
-            ?? (args.name as string)
-            ?? (args.type as string)
-            ?? (args.subagent as string)
-            ?? ""
+			try {
+				const tool = inp?.tool ?? "";
+				const args = out?.args ?? {};
 
-          if (!subagentName && Object.keys(args).length > 0) {
-            console.debug("[sdd-pipeline] task() args have no recognizable subagent key:", Object.keys(args))
-          }
+				// --- Always block destructive commands ---
+				if (tool === "Bash" || tool === "bash") {
+					// Normalize the command before checking: strip comments, collapse whitespace
+					// This prevents bypasses like "rm  -rf" (double space) or "rm -r -f" (split flags)
+					const cmd = normalizeBash((args.command as string) ?? "");
+					for (const pattern of DESTRUCTIVE_PATTERNS) {
+						if (pattern.test(cmd)) {
+							audit("tool.before", `BLOCKED ${tool}: destructive command`);
+							throw new SddError("Destructive command blocked. Use safe alternatives.");
+						}
+					}
+				}
 
-          if (subagentName && !validSubagents.has(subagentName)) {
-            audit('tool.before', `BLOCKED task: unknown subagent "${subagentName}"`)
-            throw new SddError(`Unknown subagent: "${subagentName}". Use an agent from the VALID_SUBAGENTS catalog.`)
-          }
-        }
+				// --- Task() Subagent Name Validation ---
+				// [C2] Use .toLowerCase() to handle any case variant ("task", "Task", "TASK")
+				if (tool.toLowerCase() === "task") {
+					// Extract only the subagent identifier from known parameter keys.
+					// Do NOT scan all string values — task() has other string params
+					// (description, prompt, command) that are not subagent names.
+					const subagentName =
+						(args.subagent_type as string) ??
+						(args.agent as string) ??
+						(args.name as string) ??
+						(args.type as string) ??
+						(args.subagent as string) ??
+						"";
 
-      } catch (err: unknown) {
-        // [R2] Re-throw our own SddError instances; log everything else
-        if (err instanceof SddError) throw err
-        const msg = err instanceof Error ? err.message : String(err)
-        console.error("[sdd-pipeline] Error in tool.before:", msg)
-      }
-    },
+					if (!subagentName && Object.keys(args).length > 0) {
+						console.debug(
+							"[sdd-pipeline] task() args have no recognizable subagent key:",
+							Object.keys(args),
+						);
+					}
 
-    /**
-     * Fires after a tool returns a result.
-     * Lightweight audit logging.
-     */
-    "tool.execute.after": async (
-      input: unknown,
-    ) => {
-      try {
-        const inp = input as { tool?: string } | undefined
-        audit("tool.after", `${inp?.tool ?? "unknown"} completed`)
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err)
-        console.error("[sdd-pipeline] Error in tool.after:", msg)
-      }
-    },
+					if (subagentName && !validSubagents.has(subagentName)) {
+						audit("tool.before", `BLOCKED task: unknown subagent "${subagentName}"`);
+						throw new SddError(
+							`Unknown subagent: "${subagentName}". Use an agent from the VALID_SUBAGENTS catalog.`,
+						);
+					}
+				}
+			} catch (err: unknown) {
+				// [R2] Re-throw our own SddError instances; log everything else
+				if (err instanceof SddError) throw err;
+				const msg = err instanceof Error ? err.message : String(err);
+				console.error("[sdd-pipeline] Error in tool.before:", msg);
+			}
+		},
 
-    /**
-     * Fires during context compaction.
-     * Re-injects SDD state into the compacted context.
-     */
-    "experimental.session.compacting": async (
-      _input: unknown,
-      output: unknown,
-    ) => {
-      try {
-        const out = output as { context?: string[] }
+		/**
+		 * Fires after a tool returns a result.
+		 * Lightweight audit logging.
+		 */
+		"tool.execute.after": async (input: unknown) => {
+			try {
+				const inp = input as { tool?: string } | undefined;
+				audit("tool.after", `${inp?.tool ?? "unknown"} completed`);
+			} catch (err: unknown) {
+				const msg = err instanceof Error ? err.message : String(err);
+				console.error("[sdd-pipeline] Error in tool.after:", msg);
+			}
+		},
 
-        out.context?.push(buildSddContext())
+		/**
+		 * Fires during context compaction.
+		 * Re-injects SDD state into the compacted context.
+		 */
+		"experimental.session.compacting": async (_input: unknown, output: unknown) => {
+			try {
+				const out = output as { context?: string[] };
 
-        audit("session.compacting", "Injected SDD state")
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err)
-        console.error("[sdd-pipeline] Error in session.compacting:", msg)
-      }
-    },
-  }
-}
+				out.context?.push(buildSddContext());
 
-export default SddPipelinePlugin
+				audit("session.compacting", "Injected SDD state");
+			} catch (err: unknown) {
+				const msg = err instanceof Error ? err.message : String(err);
+				console.error("[sdd-pipeline] Error in session.compacting:", msg);
+			}
+		},
+	};
+};
+
+export default SddPipelinePlugin;

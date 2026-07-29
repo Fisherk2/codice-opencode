@@ -1,8 +1,4 @@
-import {
-  COMMAND_PHASE_MAP,
-  INTENT_PATTERNS,
-  PHASE_SUGGESTIONS,
-} from "./defaults"
+import { COMMAND_PHASE_MAP, INTENT_PATTERNS, PHASE_SUGGESTIONS } from "./defaults";
 
 /**
  * Partial configuration interface for the SDD Pipeline plugin.
@@ -20,30 +16,30 @@ import {
  * ```
  */
 export interface SddPipelineConfig {
-  /**
-   * Override for the command → SDD phase mapping.
-   *
-   * Maps slash commands (e.g., "/build") to pipeline phases
-   * (e.g., "build"). When omitted, uses COMMAND_PHASE_MAP from defaults.
-   */
-  readonly commandPhaseMap?: Readonly<Record<string, string>>
+	/**
+	 * Override for the command → SDD phase mapping.
+	 *
+	 * Maps slash commands (e.g., "/build") to pipeline phases
+	 * (e.g., "build"). When omitted, uses COMMAND_PHASE_MAP from defaults.
+	 */
+	readonly commandPhaseMap?: Readonly<Record<string, string>>;
 
-  /**
-   * Override for the intent keyword → command mapping.
-   *
-   * Maps natural-language keywords (e.g., "implement", "test") to
-   * their corresponding slash commands. When omitted, uses
-   * INTENT_PATTERNS from defaults.
-   */
-  readonly intentPatterns?: Readonly<Record<string, readonly string[]>>
+	/**
+	 * Override for the intent keyword → command mapping.
+	 *
+	 * Maps natural-language keywords (e.g., "implement", "test") to
+	 * their corresponding slash commands. When omitted, uses
+	 * INTENT_PATTERNS from defaults.
+	 */
+	readonly intentPatterns?: Readonly<Record<string, readonly string[]>>;
 
-  /**
-   * Override for phase-specific agent suggestions.
-   *
-   * Maps phases (e.g., "build") to per-agent suggestion strings shown
-   * in the system prompt. When omitted, uses PHASE_SUGGESTIONS from defaults.
-   */
-  readonly phaseSuggestions?: Readonly<Record<string, Readonly<Record<string, string>>>>
+	/**
+	 * Override for phase-specific agent suggestions.
+	 *
+	 * Maps phases (e.g., "build") to per-agent suggestion strings shown
+	 * in the system prompt. When omitted, uses PHASE_SUGGESTIONS from defaults.
+	 */
+	readonly phaseSuggestions?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 /**
@@ -52,7 +48,7 @@ export interface SddPipelineConfig {
  * configuration is provided.
  */
 export const DEFAULT_SDD_PIPELINE_CONFIG: SddPipelineConfig = {
-  commandPhaseMap: COMMAND_PHASE_MAP,
-  intentPatterns: INTENT_PATTERNS,
-  phaseSuggestions: PHASE_SUGGESTIONS,
-} as const
+	commandPhaseMap: COMMAND_PHASE_MAP,
+	intentPatterns: INTENT_PATTERNS,
+	phaseSuggestions: PHASE_SUGGESTIONS,
+} as const;

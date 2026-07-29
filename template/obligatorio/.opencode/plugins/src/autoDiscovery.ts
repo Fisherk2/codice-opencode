@@ -10,18 +10,18 @@
 // YAML frontmatter is parsed manually via regex (no external deps).
 // ---------------------------------------------------------------------------
 
-import { existsSync, readdirSync, readFileSync } from "fs"
-import { extname, basename } from "path"
+import { existsSync, readdirSync, readFileSync } from "fs";
+import { basename, extname } from "path";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 /** Regex to match the frontmatter block between `---` delimiters. */
-const FRONTMATTER_REGEX = /^---\s*\n([\s\S]*?)\n---\s*(?:\n|$)/
+const FRONTMATTER_REGEX = /^---\s*\n([\s\S]*?)\n---\s*(?:\n|$)/;
 
 /** Regex to extract the `agent:` field value from raw YAML frontmatter text. */
-const AGENT_FIELD_REGEX = /^agent:\s*(.+)$/m
+const AGENT_FIELD_REGEX = /^agent:\s*(.+)$/m;
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -43,39 +43,39 @@ const AGENT_FIELD_REGEX = /^agent:\s*(.+)$/m
  *          does not exist.
  */
 export function discoverCommandAgentMap(commandsDir: string): Record<string, string> {
-  if (!existsSync(commandsDir)) {
-    return {}
-  }
+	if (!existsSync(commandsDir)) {
+		return {};
+	}
 
-  const entries = readdirSync(commandsDir, { withFileTypes: true })
-  const map: Record<string, string> = {}
+	const entries = readdirSync(commandsDir, { withFileTypes: true });
+	const map: Record<string, string> = {};
 
-  for (const entry of entries) {
-    // Only process .md files, skip directories and hidden/other files
-    if (!entry.isFile() || extname(entry.name).toLowerCase() !== ".md") {
-      continue
-    }
+	for (const entry of entries) {
+		// Only process .md files, skip directories and hidden/other files
+		if (!entry.isFile() || extname(entry.name).toLowerCase() !== ".md") {
+			continue;
+		}
 
-    const filePath = `${commandsDir}/${entry.name}`
-    let content: string
-    try {
-      content = readFileSync(filePath, "utf-8")
-    } catch {
-      // Skip files that can't be read (permission errors, etc.)
-      continue
-    }
+		const filePath = `${commandsDir}/${entry.name}`;
+		let content: string;
+		try {
+			content = readFileSync(filePath, "utf-8");
+		} catch {
+			// Skip files that can't be read (permission errors, etc.)
+			continue;
+		}
 
-    const agent = parseAgentFromFrontmatter(content)
-    if (agent === null) {
-      continue
-    }
+		const agent = parseAgentFromFrontmatter(content);
+		if (agent === null) {
+			continue;
+		}
 
-    // Map /{filename} (without .md) to the agent name
-    const commandName = `/${basename(entry.name, ".md")}`
-    map[commandName] = agent
-  }
+		// Map /{filename} (without .md) to the agent name
+		const commandName = `/${basename(entry.name, ".md")}`;
+		map[commandName] = agent;
+	}
 
-  return map
+	return map;
 }
 
 /**
@@ -90,23 +90,23 @@ export function discoverCommandAgentMap(commandsDir: string): Record<string, str
  *          empty `Set` if the directory does not exist.
  */
 export function discoverValidSubagents(agentsDir: string): Set<string> {
-  if (!existsSync(agentsDir)) {
-    return new Set()
-  }
+	if (!existsSync(agentsDir)) {
+		return new Set();
+	}
 
-  const entries = readdirSync(agentsDir, { withFileTypes: true })
-  const agents = new Set<string>()
+	const entries = readdirSync(agentsDir, { withFileTypes: true });
+	const agents = new Set<string>();
 
-  for (const entry of entries) {
-    if (!entry.isFile() || extname(entry.name).toLowerCase() !== ".md") {
-      continue
-    }
+	for (const entry of entries) {
+		if (!entry.isFile() || extname(entry.name).toLowerCase() !== ".md") {
+			continue;
+		}
 
-    const agentName = basename(entry.name, ".md")
-    agents.add(agentName)
-  }
+		const agentName = basename(entry.name, ".md");
+		agents.add(agentName);
+	}
 
-  return agents
+	return agents;
 }
 
 /**
@@ -121,18 +121,15 @@ export function discoverValidSubagents(agentsDir: string): Set<string> {
  *          Returns an empty record if the set is empty.
  */
 export function discoverAgentMentionPatterns(agents: Set<string>): Record<string, RegExp[]> {
-  const patterns: Record<string, RegExp[]> = {}
+	const patterns: Record<string, RegExp[]> = {};
 
-  for (const agent of agents) {
-    // Escape special regex characters in the agent name to avoid injection
-    const escaped = agent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    patterns[agent] = [
-      new RegExp(`@${escaped}\\b`, "i"),
-      new RegExp(`agente\\s+${escaped}`, "i"),
-    ]
-  }
+	for (const agent of agents) {
+		// Escape special regex characters in the agent name to avoid injection
+		const escaped = agent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		patterns[agent] = [new RegExp(`@${escaped}\\b`, "i"), new RegExp(`agente\\s+${escaped}`, "i")];
+	}
 
-  return patterns
+	return patterns;
 }
 
 // ---------------------------------------------------------------------------
@@ -150,16 +147,16 @@ export function discoverAgentMentionPatterns(agents: Set<string>): Record<string
  * @returns The agent name if found, or `null` otherwise.
  */
 function parseAgentFromFrontmatter(content: string): string | null {
-  const match = content.match(FRONTMATTER_REGEX)
-  if (!match) {
-    return null
-  }
+	const match = content.match(FRONTMATTER_REGEX);
+	if (!match) {
+		return null;
+	}
 
-  const frontmatterText = match[1]
-  const agentMatch = frontmatterText.match(AGENT_FIELD_REGEX)
-  if (!agentMatch) {
-    return null
-  }
+	const frontmatterText = match[1];
+	const agentMatch = frontmatterText.match(AGENT_FIELD_REGEX);
+	if (!agentMatch) {
+		return null;
+	}
 
-  return agentMatch[1].trim()
+	return agentMatch[1].trim();
 }
