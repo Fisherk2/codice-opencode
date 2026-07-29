@@ -6,7 +6,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["**", "!!**/dist", "!!**/node_modules", "!!**/template", "!!**/skills"]
+		"includes": ["**", "!!**/dist", "!!**/node_modules", "!!**/template/obligatorio/skills", "!!**/template/opcional/skills", "!!**/skills"]
 	},
 	"formatter": {
 		"enabled": true,
