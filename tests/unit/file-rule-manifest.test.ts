@@ -141,7 +141,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 
 	test.each([
 		["optional", 12],
-		["standard", 10],
+		["standard", 11],
 		["mandatory", 7],
 	])("category '%s' has %i entries", (category, expectedCount) => {
 		const count = FILE_RULE_MANIFEST.filter((r) => r.category === category).length;
