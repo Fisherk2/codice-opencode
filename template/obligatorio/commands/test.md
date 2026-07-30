@@ -1,5 +1,5 @@
 ---
-description: Write failing tests, implement, verify. For bugs, use the Prove-It pattern.
+description: Write failing tests, implement guardrails, verify. For bugs, use the Prove-It pattern.
 agent: mictlantecuhtli
 ---
 
@@ -24,8 +24,8 @@ PROJECT QUALITY STATE:
 
 Use the `question` tool to report findings and ask user whether to:
 
-- **A) Proceed** — run tests with existing tools only
-- **B) Setup missing guardrails** — install and configure missing tools first
+- **A) Proceed** — run all quality checks with existing tools only and proceed with phase 1.
+- **B) Setup missing guardrails** — proceed with phase 0 to install and configure missing tools first
 
 ## Phase 0: Guardrail Setup
 
@@ -39,23 +39,27 @@ For each confirmed tool:
 - Verify the tool works by running it once
 - Update project documentation to include the new tool
 
-## Phase 1: Initial Quality Gate
+## Phase 1: Audit & Analysis
 
-Run ALL available quality checks:
+**Delegate** `test-engineer`subagent and scan recent changes to identify missing test coverage.
 
-1. Run tests (if test framework exists) — report pass/fail count
-2. Run linter (if linter exists) — report errors/warnings count
-3. Run formatter CHECK mode (if formatter exists) — report unformatted files count
-4. Run typechecker (if typechecker exists) — report type errors count
-
-Use the `question` tool to show results and ask user:
-
-- **A) Proceed** — current issues are pre-existing, continue with TDD
-- **B) Fix first** — resolve existing issues before writing new tests
+1. Run `git diff` against the integration branch to detect new/modified code.
+2. Cross-reference with existing test files to find gaps.
+3. Classify each gap by **category** (Feature / Bug Fix) and **pyramid level** (Unit / Integration / E2E).
+4. Use the `question` tool to present the report and confirm which tests to implement in Phase 2.
 
 ## Phase 2: Test-Driven Development
 
 Load @skills/test-driven-development/SKILL.md skill to follow the TDD process.
+
+**Supporting skills (load as needed):**
+
+- `performance-analysis` — if tests reveal performance concerns
+- `security-and-hardening` — when testing security-sensitive features
+- `design-taste-frontend` — to verify visual consistency in frontend
+- `browser-testing-with-devtools` — for browser-related issues
+
+Write depending of phase 1 report:
 
 **For new features:**
 
@@ -71,19 +75,12 @@ Load @skills/test-driven-development/SKILL.md skill to follow the TDD process.
 4. Confirm test passes
 5. Run full test suite for regressions
 
-**Supporting skills (load as needed):**
-
-- `performance-analysis` — if tests reveal performance concerns
-- `security-and-hardening` — when testing security-sensitive features
-- `design-taste-frontend` — to verify visual consistency in frontend
-- `browser-testing-with-devtools` — for browser-related issues
-
 ## Phase 3: Final Quality Gate
 
-1. Invoke `code-reviewer` subagent with `code-review-and-quality` skill for multi-axis review (correctness, readability, architecture, security, performance)
+1. Invoke `code-reviewer` subagent with `code-review-and-quality` skill for multi-axis review (correctness, readability, architecture, security, performance) to review implemented tests.
 2. Apply suggested changes
 
-After ALL code changes and tests pass, run ALL quality checks AGAIN:
+After ALL tests changes, run ALL quality checks AGAIN:
 
 2. Run full test suite — must ALL pass (0 failures)
 3. Run linter — must have 0 errors (warnings OK but report them)
