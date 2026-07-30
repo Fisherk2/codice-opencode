@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.2.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-29 (FEV-13 ✅ Completo, FEV-14 ✅ Completo, FEV-15 📋 Pendiente) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-30 (FEV-13 ✅ Completo, FEV-14 ✅ Completo, FEV-15 ✅ Completo) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -32,7 +32,7 @@
 | FEV-12 | References Restructuring (v1.2 Phase 2) | Issues #54, #52: referencias configurables vía opencode.json | ✅ Completo |
 | FEV-13 | Documentation Overhaul (v1.2 Phase 3) | Issues #51, #53: actualizar docs, reducir acoplamiento SDD + quality infra | ✅ Completo |
 | FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | ✅ Completo |
-| FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | 📋 Pendiente |
+| FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | ✅ Completo |
 
 ## 2. Desglose por Fase (Completadas)
 
@@ -194,39 +194,33 @@ Spec/ADR templates actualizados a formatos industriales (MADR v4.0 + RFC-based).
 
 ---
 
-### Fase FEV-15 — Community Standards (v1.2 Phase 5) 📋 Pendiente
+### Fase FEV-15 — Community Standards (v1.2 Phase 5) ✅ Completo
 
-#### Contexto
+**Fecha:** 2026-07-30 | **Issue:** [#55](https://github.com/fisherk2/codice-opencode/issues/55) | **Esfuerzo:** ~1.5h
 
-Issue #55 identifica la falta de un Code of Conduct para el proyecto y el template.
+#### Resultados
 
-**Propuesta:** Añadir `CODE_OF_CONDUCT.md` al proyecto (Contributor Covenant v2.1) y al template (placeholder personalizable).
+Issue #55 resuelto — Code of Conduct para el proyecto y el template de workspace:
 
-#### Plan de Implementación
+- **Project `CODE_OF_CONDUCT.md`** (root): Contributor Covenant v2.1, contacto `dev@fisherk2.com`, 7 secciones (Pledge, Standards, Enforcement Responsibilities, Scope, Enforcement, Enforcement Guidelines, Attribution).
+- **Template `CODE_OF_CONDUCT.md`** (`template/estandar/`): Placeholder personalizable con 3 placeholders (`[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]`). Misma estructura que el proyecto.
+- **Manifest integration (CRÍTICO):** `CODE_OF_CONDUCT.md` registrado en `FileRuleManifestData.ts` con `category: "standard"`. Sin este cambio, el template CoC nunca llegaría al destino.
+- **Unit test:** Dos nuevos tests en `file-rule-manifest.test.ts`: verifica que `CODE_OF_CONDUCT.md` está en el manifest con `category: "standard"` e `isDirectory: false`.
+- **Cross-references:** `CONTRIBUTING.md` ganó sección `## Code of Conduct` (antes de Quick Start); `README.md` ganó la misma sección (antes de License) con referencia al template.
+- **E2E test:** `tests/e2e/01-clean-install.sh` extendido con 2 asserts (file exists + contenido `Our Pledge`).
+- **Sin menciones en Wiki** (decisión del usuario — cobertura transitiva desde README/CONTRIBUTING).
 
-| ID | Descripción | Archivo | Estado |
-|----|-------------|---------|--------|
-| FEV15-T1 | Crear `CODE_OF_CONDUCT.md` para el proyecto | `CODE_OF_CONDUCT.md` (nuevo) | 📋 Pendiente |
-| FEV15-T2 | Crear `template/estandar/CODE_OF_CONDUCT.md` placeholder | `template/estandar/CODE_OF_CONDUCT.md` (nuevo) | 📋 Pendiente |
-| FEV15-T3 | Actualizar README.md con referencia al Code of Conduct | `README.md` | 📋 Pendiente |
-| FEV15-T4 | Actualizar CONTRIBUTING.md con referencia al Code of Conduct | `CONTRIBUTING.md` | 📋 Pendiente |
+#### Métricas Finales
 
-#### Métricas de Referencia
-
-| Métrica | v1.1.3 (actual) | Meta v1.2.0-FEV15 |
-|---------|-----------------|-------------------|
-| Tests (pass/fail) | 596 / 0 | ≥596 / 0 |
-| Code of Conduct | 0 | 2 (proyecto + template) |
+| Métrica | Baseline (FEV-14) | FEV-15 |
+|---------|-------------------|--------|
+| Tests (pass/fail) | 809 / 0 | 810 / 0 |
+| E2E scenarios | 19 / 19 | 19 / 19 (1 extended) |
 | `just check` errores | 0 | 0 |
-
-**Criterios de completitud (DoD FEV-15):**
-- [ ] Issue #55 resuelto
-- [ ] `CODE_OF_CONDUCT.md` creado para el proyecto (Contributor Covenant v2.1)
-- [ ] `template/estandar/CODE_OF_CONDUCT.md` creado como placeholder
-- [ ] README.md referencia al Code of Conduct
-- [ ] CONTRIBUTING.md referencia al Code of Conduct
-- [ ] `bun test`: sin regresión
-- [ ] `just check`: 0 errores
+| Code of Conduct files | 0 | 2 (project + template) |
+| Manifest entries (standard) | 17 | 18 |
+| Issues resueltos | — | #55 |
+| Files touched | — | 10 (2 new + 8 modified) |
 
 ---
 
@@ -256,4 +250,4 @@ Issue #55 identifica la falta de un Code of Conduct para el proyecto y el templa
 - **FEV-12:** ✅ Completado — References Restructuring (Issues #54, #52)
 - **FEV-13:** ✅ Completo — Documentation Overhaul + SDD Decoupling (Issues #51, #53)
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
-- **FEV-15:** 📋 Pendiente — Community Standards (Issue #55)
+- **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail

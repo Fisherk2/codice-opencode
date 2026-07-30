@@ -42,6 +42,12 @@
 | **IMPORTANT-3** | DRY violation — 4 log event lines duplicated in 2 use cases | ✅ Resolved by CRITICAL-2 fix (events now live in shared `postInstall.ts`). |
 | **SUGGESTION-1** | Redundant `completeProgress()` calls in 3 use cases | ✅ Removed 3 redundant calls — callback already handles via `error`/`commit_complete` events. |
 
+### FEV-15 — Community Standards (2026-07-30)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **Issue #55** | Community standards — project lacks Code of Conduct | ✅ `CODE_OF_CONDUCT.md` created (Contributor Covenant v2.1). `template/estandar/CODE_OF_CONDUCT.md` created as customizable placeholder. Manifest entry added in `FileRuleManifestData.ts`. Cross-references in `CONTRIBUTING.md` and `README.md`. E2E test extended. |
+
 ### Prior (v1.0.11)
 
 All resolved debt from v1.0.11 and earlier removed. For historical reference, see git history.
