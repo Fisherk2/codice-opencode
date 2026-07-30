@@ -75,6 +75,12 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		description: "Contribution guidelines; user may tailor",
 	},
 	{
+		path: "CODE_OF_CONDUCT.md",
+		category: "standard",
+		isDirectory: false,
+		description: "Code of conduct for contributors (placeholder, customize for your project)",
+	},
+	{
 		path: "LICENSE",
 		category: "standard",
 		isDirectory: false,

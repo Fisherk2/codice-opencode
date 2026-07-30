@@ -103,6 +103,19 @@ describe("Category distribution", () => {
 		expect(paths).toContain("Justfile");
 		expect(paths).toContain("scripts");
 	});
+
+	test("standard rules include CODE_OF_CONDUCT.md", () => {
+		const standard = getStandardRules();
+		const paths = standard.map((r) => r.path);
+		expect(paths).toContain("CODE_OF_CONDUCT.md");
+	});
+
+	test("CODE_OF_CONDUCT.md rule has correct category and attributes", () => {
+		const rule = createFileRule("CODE_OF_CONDUCT.md");
+		expect(rule).not.toBeNull();
+		expect(rule!.category).toBe("standard");
+		expect(rule!.isDirectory).toBe(false);
+	});
 });
 
 // ---- createFileRule helper ----
