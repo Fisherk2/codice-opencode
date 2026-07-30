@@ -218,7 +218,7 @@ Issue #55 resuelto — Code of Conduct para el proyecto y el template de workspa
 | E2E scenarios | 19 / 19 | 19 / 19 (1 extended) |
 | `just check` errores | 0 | 0 |
 | Code of Conduct files | 0 | 2 (project + template) |
-| Manifest entries (standard) | 17 | 18 |
+| Manifest entries (standard) | 10 | 11 |
 | Issues resueltos | — | #55 |
 | Files touched | — | 10 (2 new + 8 modified) |
 

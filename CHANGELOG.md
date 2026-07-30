@@ -25,7 +25,7 @@ _No unreleased changes._
 - **FEV-14 — E2E test extended** with progress assertions (commit/symlink messages in stdout).
 - **FEV-15 — Project Code of Conduct (Issue #55):** `CODE_OF_CONDUCT.md` added to repo root, adapted from [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html). Contact: `dev@fisherk2.com`.
 - **FEV-15 — Template Code of Conduct:** `template/estandar/CODE_OF_CONDUCT.md` created as a customizable placeholder. Includes 2 placeholders (`[PROJECT_NAME]`, `[CONTACT_EMAIL]`).
-- **FEV-15 — Manifest integration:** `CODE_OF_CONDUCT.md` registered in `FileRuleManifestData.ts` with `category: "standard"` (18 standard files, was 17).
+- **FEV-15 — Manifest integration:** `CODE_OF_CONDUCT.md` registered in `FileRuleManifestData.ts` with `category: "standard"` (11 standard files, was 10).
 - **FEV-15 — Cross-references:** `CONTRIBUTING.md` and `README.md` updated with `## Code of Conduct` sections.
 - **FEV-15 — E2E test extension:** `tests/e2e/01-clean-install.sh` asserts `CODE_OF_CONDUCT.md` delivery and content.
 
@@ -41,7 +41,7 @@ _No unreleased changes._
 - **FEV-14 — 13 command files updated** with explicit subagent delegation patterns (sequential only, never parallel).
 - **SC-15:** Updated to "npm package (tarball) size < 5MB" (previous SC-15 about compiled binaries removed)
 - **ARCHITECTURE.md:** Added ADR-011 to ADR table
-- **FEV-15 — FileRuleManifestData delivery surface:** 1 new entry in `FileRuleManifestData.ts` (now tracks 18 standard files, was 17).
+- **FEV-15 — FileRuleManifestData delivery surface:** 1 new entry in `FileRuleManifestData.ts` (now tracks 11 standard files, was 10).
 
 ### Fixed
 
