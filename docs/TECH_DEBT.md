@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-07-29
+**Last updated:** 2026-07-30
 **Status:** Active reference for improvement planning
-**Current version:** v1.1.3 (761 tests, 0 fail, 98.89% funcs / 96.98% lines)
+**Current version:** v1.2.0 (809 tests, 0 fail)
 
 ---
 
@@ -30,6 +30,17 @@
 |----|------|------------|
 | **Issue #53** | SDD plugin coupling — 6 hardcoded maps (`COMMAND_AGENT_MAP`, `VALID_SUBAGENTS`, `AGENT_MENTION_PATTERNS`, `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS`) required manual editing of `sdd-pipeline.ts` for every new command/agent/skill | ✅ Extracted to `autoDiscovery.ts` (filesystem scanning) + `defaults.ts` (config-driven defaults). Auto-discovery detects commands/agents from filesystem; config loaded from `opencode.json` `sddPipeline` section. Plugin reduced from 665→<400 lines. |
 | **Issue #51** | Documentation outdated in `docs/` and `template/estandar/docs/`; Wiki pages referenced internal implementation details ("edit sdd-pipeline.ts") | ✅ 8 Wiki pages rewritten for end users. WORKFLOW.md, CHANGELOG.md, SPEC.md under target line counts. ADR-013 created. |
+
+### FEV-14 — UX Enhancements (2026-07-30)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **CRITICAL-1** | Progress bar re-created on every `stage_start` event | ✅ Added `barStarted` closure flag in `createProgressCallback()`. Bar initializes once on first `stage_start`, advances on subsequent events. |
+| **CRITICAL-2** | Symlink/gitignore log events emitted BEFORE operations | ✅ Moved 4 log event lines from `CleanInstallUseCase` and `ProjectInstallUseCase` into `postInstall.ts:runPostInstallSteps()` — each log now emits AFTER the corresponding operation completes. |
+| **IMPORTANT-1** | Progress `total` included skipped files, never reaching 100% | ✅ `FileMergeEngine` pre-computes `stageDecisions` Map; `total` counts only files that pass `shouldStage`. `current++` moved after the check. |
+| **IMPORTANT-2** | Inline `import()` types in test file | ✅ Top-level `import type { ProgressEvent }` added; 6 inline references replaced. |
+| **IMPORTANT-3** | DRY violation — 4 log event lines duplicated in 2 use cases | ✅ Resolved by CRITICAL-2 fix (events now live in shared `postInstall.ts`). |
+| **SUGGESTION-1** | Redundant `completeProgress()` calls in 3 use cases | ✅ Removed 3 redundant calls — callback already handles via `error`/`commit_complete` events. |
 
 ### Prior (v1.0.11)
 
@@ -176,7 +187,7 @@ not file granularity.
 | FEV-11: Binary removal (Issue #46) — BREAKING | — | ✅ npm-only distribution as per ADR-011. Binary compilation removed from build system, CI/CD, E2E tests, and docs. | [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md) |
 | FEV-12: References restructuring (Issues #54, #52) | 8h | ✅ Completado — Self-contained skills, configurable references | [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md) |
 | FEV-13: Documentation overhaul (Issues #51, #53) | 12h | ✅ Completado — Auto-discovery + config-driven + quality infra + Wiki rewrite | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
-| FEV-14: UX enhancements (Issues #47, #56) | 6h | 📋 Listo para planificación — Progress bar, /help command | [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md) |
+| FEV-14: UX enhancements (Issues #47, #56) | 6h | ✅ Completado — Progress bar + /help command + 6 code review fixes | [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md) |
 | FEV-15: Community standards (Issue #55) | 2h | Code of conduct for project and template | [fix08-v1.2-phase5-community.md](diagnosis/fix08-v1.2-phase5-community.md) |
 | E2E coverage instrumentation | 8h | Accurate coverage for entry point | — |
 | `just bench` performance benchmarks | 4h | Regression detection for SC-9/10/11 | — |
