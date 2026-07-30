@@ -41,7 +41,6 @@ In other harnesses without an Agent tool, invoke each persona's system prompt se
 Constraints (from OpenCode's subagent model):
 - Subagents cannot spawn other subagents — do not let one persona delegate to another.
 - Each subagent gets its own context window and returns only its report to this main session.
-- If you need teammates that talk to each other instead of just reporting back, use Claude Code Agent Teams and reference these personas as teammate types (see [GitHub Wiki → Workspace Structure](https://github.com/fisherk2/codice-opencode/wiki/Workspace-Structure)).
 
 **Persona resolution.** If you've defined your own `code-reviewer`, `security-auditor`, `test-engineer`, `dependency-manager`, or `accessibility-tester` in `.opencode/agents/` or `~/.opencode/agents/`, those take precedence over this plugin's versions — `/ship` picks up your customizations automatically. This is intentional: plugin subagents sit at the bottom of Open Code's scope priority table, so user-level definitions win by design.
 
@@ -54,12 +53,12 @@ Once all reports are back, the main agent (not a sub-persona) synthesizes them:
 3. **Dependencies** — Promote any Critical/High `dependency-manager` findings (CVEs, outdated packages) to launch blockers. Flag license compliance issues.
 4. **Performance** — Pull from `code-reviewer`'s performance axis; cross-check Core Web Vitals if applicable.
 5. **Accessibility** *(only if `accessibility-tester` was spawned)* — Aggregate findings. Promote Critical WCAG violations to launch blockers.
-6. **Infrastructure** — Env vars, migrations, monitoring, feature flags. Use @skills/observability-and-instrumentation/SKILL.md for logging, metrics, tracing, and alerting. Use @skills/bash-defensive-patterns/SKILL.md for robust CI/CD deployment scripts.
-7. **Documentation** — README, ADRs, changelog. Use @skills/crafting-effective-readmes/SKILL.md for README, @skills/architecture-diagrams/SKILL.md for architecture diagrams, and @skills/changelog-generate/SKILL.md for changelog updates.
+6. **Infrastructure** — Env vars, migrations, monitoring, feature flags. Load `observability-and-instrumentation` skill for logging, metrics, tracing, and alerting. Load `bash-defensive-patterns` for robust CI/CD deployment scripts.
+7. **Documentation** — README, ADRs, changelog. Load `crafting-effective-readmes` skill for README, `architecture-diagrams` skill for architecture diagrams, and `changelog-generate` skill for changelog updates.
 
 ## Phase C — Decision and rollback
 
-Produce a single output:
+Produce a single output for user review:
 
 ```markdown
 ## Ship Decision: GO | NO-GO

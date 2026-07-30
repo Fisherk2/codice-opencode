@@ -3,7 +3,7 @@ description: Run a web performance audit via the web-performance-auditor persona
 agent: mictlantecuhtli
 ---
 
-`/webperf` targets web applications specifically. Do not use it for utility libraries, CLIs, or server-only code with no browser-facing output.
+`/webperf` targets web applications specifically. **Do not use it for utility libraries, CLIs, or server-only code with no browser-facing output.**
 
 ## Determine the mode
 
@@ -19,7 +19,7 @@ agent: mictlantecuhtli
 
 ## Run the audit
 
-Spawn the `web-performance-auditor` subagent. Pass it explicitly:
+Invoke the `web-performance-auditor` subagent. Pass it explicitly:
 
 - The files, components, or diff under review
 - Any artifact paths (Lighthouse JSON, PSI JSON, CrUX response, trace) or pasted JSON content
@@ -30,7 +30,7 @@ The subagent returns a scorecard (only populated with sourced values), a ranked 
 
 ## Output
 
-Return the full audit report to the user. For remediation of findings, invoke @skills/performance-optimization/SKILL.md for granular optimization guidance and implementation steps.
+Return the full audit report to the user. For remediation of findings, use @skills/performance-optimization/SKILL.md for granular optimization guidance and implementation steps.
 
 ## Suggested Next Step
 
