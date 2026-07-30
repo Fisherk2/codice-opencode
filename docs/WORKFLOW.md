@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.2.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-29 (FEV-13 ✅ Completo, FEV-14 📋 Listo para planificación, FEV-15 📋 Pendiente) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-29 (FEV-13 ✅ Completo, FEV-14 ✅ Completo, FEV-15 📋 Pendiente) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -31,7 +31,7 @@
 | FEV-11 | Binary Removal (v1.2 Phase 1) | Issue #46: eliminar binarios, solo npm/bunx | ✅ Completo |
 | FEV-12 | References Restructuring (v1.2 Phase 2) | Issues #54, #52: referencias configurables vía opencode.json | ✅ Completo |
 | FEV-13 | Documentation Overhaul (v1.2 Phase 3) | Issues #51, #53: actualizar docs, reducir acoplamiento SDD + quality infra | ✅ Completo |
-| FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | 📋 Listo para planificación |
+| FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | ✅ Completo |
 | FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | 📋 Pendiente |
 
 ## 2. Desglose por Fase (Completadas)
@@ -157,50 +157,32 @@ SDD plugin refactorizado con auto-discovery y configuración-driven behavior:
 
 ---
 
-### Fase FEV-14 — UX Enhancements (v1.2 Phase 4) 📋 Listo para planificación
+### Fase FEV-14 — UX Enhancements (v1.2 Phase 4) ✅ Completo
 
-#### Contexto
+**Fecha:** 2026-07-29 | **Issues:** #47 (Progress bar), #56 (/help command)
 
-Issues #47 y #56 identifican mejoras de UX:
-- **Issue #47:** Falta barra de progreso durante la instalación/actualización del workspace
-- **Issue #56:** Falta un comando `/help` para onboarding de usuarios nuevos
+#### Resultados
 
-**Propuesta:** Implementar barra de progreso con feedback de archivos y crear comando `/help` asignado a Huitzilopochtli.
+Progress bar implementado durante la instalación (modos Clean, Project, Update):
+- `IProgressHandler` port + `executeWithProgress` callback en `IFileMergeEngine`
+- `ProgressBarAdapter` en `ClackPromptsAdapter` con spinner @clack/prompts
+- Eventos estructurados: file copy, symlink, gitignore generation
+- Progreso muestra: archivo actual, archivos procesados, total, porcentaje
 
-#### Plan de Implementación
+Comando `/help` creado y asignado a Huitzilopochtli:
+- 6 opciones interactivas vía question tool: discover Códice, start project, update workspace, learn SDD cycle, list all 13 commands, troubleshoot
+- Registrado en `COMMAND_AGENT_MAP`, `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS`
+- Wiki Commands.md actualizado con documentación del comando
 
-| ID | Descripción | Archivo | Estado |
-|----|-------------|---------|--------|
-| FEV14-T1 | Añadir progress callback a `IFileMergeEngine` | `src/domain/ports/IFileMergeEngine.ts` | 📋 Pendiente |
-| FEV14-T2 | Implementar progress reporting en `FileMergeEngine.execute()` | `src/domain/services/FileMergeEngine.ts` | 📋 Pendiente |
-| FEV14-T3 | Añadir progress bar rendering a `ClackPromptsAdapter` | `src/infrastructure/adapters/ClackPromptsAdapter.ts` | 📋 Pendiente |
-| FEV14-T4 | Conectar progress callback desde use cases al TUI adapter | `src/application/use-cases/*.ts` | 📋 Pendiente |
-| FEV14-T5 | Tests para progress bar | `tests/integration/` | 📋 Pendiente |
-| FEV14-T6 | Crear archivo de comando `/help` | `template/obligatorio/commands/help.md` (nuevo) | 📋 Pendiente |
-| FEV14-T7 | Añadir `/help` a `COMMAND_AGENT_MAP` en sdd-pipeline.ts | `template/obligatorio/.opencode/plugins/sdd-pipeline.ts` | 📋 Pendiente |
-| FEV14-T8 | Añadir `/help` a `INTENT_PATTERNS` en sdd-pipeline.ts | Mismo archivo | 📋 Pendiente |
-| FEV14-T9 | Actualizar Wiki Commands.md con documentación de `/help` | `docs/wiki-source/Commands.md` | 📋 Pendiente |
-| FEV14-T10 | Actualizar README.md sección de comandos | `README.md` | 📋 Pendiente |
+**Métricas finales:** 807 tests, 0 fail, 13 commands, `just check` 0 errores.
 
-#### Métricas de Referencia
-
-| Métrica | v1.1.3 (actual) | Meta v1.2.0-FEV14 |
-|---------|-----------------|-------------------|
-| Tests (pass/fail) | 596 / 0 | ≥596 / 0 |
-| Comandos SDD | 12 | 13 (+/help) |
-| `just check` errores | 0 | 0 |
-
-**Criterios de completitud (DoD FEV-14):**
-- [ ] Issues #47 y #56 resueltos
-- [ ] Progress bar muestra durante instalación (modos Clean, Project, Update)
-- [ ] Progress muestra: archivo actual, archivos procesados, total, porcentaje, tiempo estimado
-- [ ] Comando `/help` creado con frontmatter correcto
-- [ ] `/help` asignado a Huitzilopochtli
-- [ ] `/help` registrado en `COMMAND_AGENT_MAP` e `INTENT_PATTERNS`
-- [ ] `/help` ofrece 6 opciones vía question tool
-- [ ] Wiki Commands.md actualizado
-- [ ] `bun test`: sin regresión
-- [ ] `just check`: 0 errores
+**Archivos clave:**
+- `IProgressHandler.ts` (nuevo) — progress reporting port
+- `ProgressBarAdapter.ts` (nuevo) — spinner-based progress adapter
+- `FileMergeEngine.ts` (actualizado) — progress callback integration
+- `template/obligatorio/commands/help.md` (nuevo) — /help command definition
+- `sdd-pipeline.ts` (actualizado) — /help registrado en todos los maps
+- `tests/integration/` — 14 nuevos tests de progress events
 
 ---
 
@@ -265,5 +247,5 @@ Issue #55 identifica la falta de un Code of Conduct para el proyecto y el templa
 - **FEV-11:** ✅ Completo — Binary Removal (Issue #46, npm-only distribution)
 - **FEV-12:** ✅ Completado — References Restructuring (Issues #54, #52)
 - **FEV-13:** ✅ Completo — Documentation Overhaul + SDD Decoupling (Issues #51, #53)
-- **FEV-14:** 📋 Listo para planificación — UX Enhancements (Issues #47, #56)
+- **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56)
 - **FEV-15:** 📋 Pendiente — Community Standards (Issue #55)

@@ -202,8 +202,10 @@ describe("system.transform — phase suggestions", () => {
 		expect(prompt[0]).not.toContain("**Suggestion:**");
 	});
 
-	test("idle phase has no suggestions for any agent", () => {
-		expect(PHASE_SUGGESTIONS.idle).toEqual({});
+	test("idle phase has suggestion for huitzilopochtli only", () => {
+		const idle = PHASE_SUGGESTIONS.idle;
+		expect(idle).toBeDefined();
+		expect(Object.keys(idle!)).toEqual(["huitzilopochtli"]);
 	});
 });
 
@@ -337,8 +339,10 @@ describe("system.transform — PHASE_SUGGESTIONS structure", () => {
 		}
 	});
 
-	test("idle phase has empty suggestions", () => {
-		expect(PHASE_SUGGESTIONS.idle).toEqual({});
+	test("idle phase has suggestion for huitzilopochtli", () => {
+		const idle = PHASE_SUGGESTIONS.idle;
+		expect(idle).toBeDefined();
+		expect(Object.keys(idle!)).toEqual(["huitzilopochtli"]);
 	});
 
 	test("verify.tlaloc suggestion references /test", () => {

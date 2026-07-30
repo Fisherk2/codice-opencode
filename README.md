@@ -30,7 +30,7 @@ A production-grade workspace integrating 51 engineering skills + 1 meta-skill or
 ## Features
 
 - **52 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, Obsidian vault management, and more, organized in 10 SDD phases (3 optional) + Extra
-- **12 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`
+- **13 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`
 - **6 Main Agents + 98 Subagents** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 98 subagents specialized in frontend, backend, DevOps, testing, security, and more
 - **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
 - **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
@@ -234,12 +234,14 @@ flowchart LR
     K -.-> C
     L["/docs-update<br/>DOCS"] -.-> A
     M["/diagnosis<br/>DIAGNOSE"] -.-> C
+    N["/help<br/>HELP"] -.-> A
 ```
 
 ### Full Cycle
 
 | Phase | Command | Agent | What It Does | Main Skills |
 |------|---------|--------|--------------|-------------|
+| Onboarding | `/help` | huitzilopochtli | Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 13 commands, troubleshoot issues | |
 | Design (optional) | `/design` | quetzalcoatl | Parallel fan-out: UX research, technical feasibility, accessibility. Merges into design specification in `specs/design/` | ui-ux-design-pro, design-taste-frontend, frontend-ui-engineering |
 | Define (new) | `/spec` | quetzalcoatl | Detects project state (3 cases), clarifies requirements, generates docs (PRD, TRD, ARCHITECTURE, WORKFLOW) and synthesizes into SPEC.md | spec-driven-development, clean-ddd-hexagonal, architecture-diagrams, idea-refine, interview-me |
 | Evolve (mature) | `/evolve` | quetzalcoatl | Creates new specs or modifies existing ones for mature projects with version history. Redirects to `/spec` for new/immature projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
@@ -266,6 +268,10 @@ flowchart LR
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
 | `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
 | Symlinks not created | If `.opencode/agents` is missing after installation, re-run the installer. Symlinks are created during post-installation and require write permissions in the project directory |
+
+### Progress Bar
+
+During installation (Clean, Project, and Update modes), Códice displays a live progress bar with file-by-file visibility. You'll see the current file being processed, total files completed, percentage progress, and structured log events for each operation (file copy, symlink creation, gitignore generation). Use `--verbose` for detailed logging of every step.
 
 ---
 

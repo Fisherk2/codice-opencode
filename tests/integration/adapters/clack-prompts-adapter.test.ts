@@ -24,6 +24,20 @@ const mockIntro = mock();
 const mockOutro = mock();
 const mockCancel = mock();
 const mockIsCancel = mock(() => false);
+const mockProgress = mock(() => ({
+	start: mock(),
+	advance: mock(),
+	stop: mock(),
+}));
+const mockLog = {
+	message: mock(),
+	info: mock(),
+	success: mock(),
+	step: mock(),
+	warn: mock(),
+	warning: mock(),
+	error: mock(),
+};
 
 mock.module("@clack/prompts", () => ({
 	note: mockNote,
@@ -35,6 +49,8 @@ mock.module("@clack/prompts", () => ({
 	outro: mockOutro,
 	cancel: mockCancel,
 	isCancel: mockIsCancel,
+	progress: mockProgress,
+	log: mockLog,
 }));
 
 // Import after mock is set up

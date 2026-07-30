@@ -33,13 +33,32 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 
 log_info "Running: $CODICE_CLI --clean --force in $TEMP_DIR"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && $CODICE_CLI --clean --force) 2>/dev/null || EXIT_CODE=$?
+CLI_OUTPUT=$(cd "$TEMP_DIR" && $CODICE_CLI --clean --force 2>&1) || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
     log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     exit 1
 fi
 log_pass "CLI exited with code 0"
+
+# ---------------------------------------------------------------------------
+# Assertions: Progress messages in CLI output
+# ---------------------------------------------------------------------------
+log_info "Verifying progress messages..."
+
+if ! echo "$CLI_OUTPUT" | grep -q "Committing"; then
+    log_fail "Expected 'Committing' in progress output (commit progress message)"
+    echo "--- CLI OUTPUT (first 20 lines) ---" >&2
+    echo "$CLI_OUTPUT" | head -n 20 >&2
+    exit 1
+fi
+log_pass "Commit progress message found"
+
+if ! echo "$CLI_OUTPUT" | grep -q ".opencode/agents"; then
+    log_fail "Expected '.opencode/agents' in progress output (symlink log event)"
+    exit 1
+fi
+log_pass "Symlink progress message found"
 
 # ---------------------------------------------------------------------------
 # Assertions

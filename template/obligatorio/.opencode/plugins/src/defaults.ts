@@ -29,6 +29,7 @@ export const COMMAND_AGENT_MAP: Readonly<Record<string, string>> = {
 	"/ship": "mictlantecuhtli",
 	"/code-simplify": "tlaloc",
 	"/webperf": "mictlantecuhtli",
+	"/help": "huitzilopochtli", // FEV-14 — onboarding command
 } as const;
 
 /**
@@ -388,6 +389,11 @@ export const INTENT_PATTERNS: Readonly<Record<string, readonly string[]>> = {
 		"regenerate docs",
 		"docs update",
 	],
+	"/help": [ // FEV-14 — onboarding command
+		"help", "ayuda", "como uso", "how to use", "what is", "que es",
+		"show commands", "list commands", "menu", "onboarding", "getting started",
+		"como empezar", "donde empiezo", "documentation", "docs", "manual",
+	],
 } as const;
 
 /**
@@ -409,6 +415,7 @@ export const COMMAND_PHASE_MAP: Readonly<Record<string, string>> = {
 	"/ship": "ship",
 	"/code-simplify": "review",
 	"/webperf": "review",
+	"/help": "idle", // FEV-14 — informational command
 } as const;
 
 /**
@@ -419,7 +426,9 @@ export const COMMAND_PHASE_MAP: Readonly<Record<string, string>> = {
  * These are non-enforcing hints, not hard rules.
  */
 export const PHASE_SUGGESTIONS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-	idle: {},
+	idle: {
+		huitzilopochtli: "Consider /help to discover available commands, or /spec to start a new project.", // FEV-14 — onboarding command
+	},
 	define: {
 		moctezuma:
 			"Consider /spec, /evolve, /design, /diagnosis, or /docs-update to define requirements.",

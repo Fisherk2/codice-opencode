@@ -3,20 +3,11 @@ import type { IUserPrompt } from "../../application/ports/IUserPrompt";
 import type { FileRule } from "../../domain/entities/FileRule";
 
 /**
- * @clack/prompts adapter implementing the IUserPrompt interface.
- * Provides an interactive TUI for the installer using @clack/prompts primitives.
- *
- * Display methods (showWarning, showInfo, showIntro, showSuccess, showCancel,
- * showError) are synchronous — they do not wait for user interaction.
- * Interactive methods (confirm, selectOptional) return promises.
+ * @clack/prompts adapter implementing IUserPrompt.
+ * Sync display methods; async interactive methods.
  */
 export class ClackPromptsAdapter implements IUserPrompt {
-	/**
-	 * Explicit empty constructor.
-	 * Present to avoid Bun's coverage tool counting an implicit constructor
-	 * as an uncovered function. (REF: TECH_DEBT.md TD-1.2)
-	 */
-	// biome-ignore lint/complexity/noUselessConstructor: Needed to fix Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
+	// biome-ignore lint/complexity/noUselessConstructor: Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
 	constructor() {}
 
 	private spinner: ReturnType<typeof clack.spinner> | null = null;
@@ -107,6 +98,51 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		}
 	}
 
+	private progressBar: ReturnType<typeof clack.progress> | null = null;
+
+	showProgressBar(total: number, label?: string): void {
+		this.progressBar = clack.progress({ max: total, style: "heavy" });
+		if (label) this.progressBar.start(label);
+	}
+
+	updateProgress(_current: number, filePath: string): void {
+		if (!this.progressBar) return;
+		this.progressBar.advance(1, `Processing: ${filePath}`);
+	}
+
+	completeProgress(): void {
+		if (this.progressBar) {
+			this.progressBar.stop();
+			this.progressBar = null;
+		}
+	}
+
+	logProgressEvent(message: string): void {
+		const colonIdx = message.indexOf(":");
+		if (colonIdx > 0) {
+			const category = message.slice(0, colonIdx).trim().toLowerCase();
+			const text = message.slice(colonIdx + 1).trim();
+			switch (category) {
+				case "commit":
+					clack.log.success(`✓ ${text}`);
+					return;
+				case "symlink":
+					clack.log.success(`🔗 ${text}`);
+					return;
+				case "gitignore":
+					clack.log.info(`📄 ${text}`);
+					return;
+				case "error":
+					clack.log.error(`✗ ${text}`);
+					return;
+				case "skip":
+					clack.log.warn(`⊘ ${text}`);
+					return;
+			}
+		}
+		clack.log.step(message);
+	}
+
 	/**
 	 * Display the application intro header.
 	 */
@@ -161,8 +197,9 @@ export class ClackPromptsAdapter implements IUserPrompt {
 				},
 			],
 		});
-
 		if (clack.isCancel(result)) return null;
 		return result as "clean" | "project" | "update";
 	}
 }
+
+

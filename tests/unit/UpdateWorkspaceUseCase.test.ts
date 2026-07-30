@@ -96,6 +96,10 @@ class FakeUserPrompt implements IUserPrompt {
 	}
 	showSpinner(_message: string): void {}
 	stopSpinner(): void {}
+	showProgressBar(_total: number, _label?: string): void {}
+	updateProgress(_current: number, _filePath: string): void {}
+	completeProgress(): void {}
+	logProgressEvent(_message: string): void {}
 	showIntro(_title: string): void {}
 	showSuccess(_message: string): void {}
 	showCancel(_message: string): void {}

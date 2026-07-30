@@ -69,6 +69,10 @@ function createMockPrompt(): IUserPrompt {
 		selectOptional: mockFn((_options: FileRule[]) => Promise.resolve([])),
 		showSpinner: mockFn(() => {}),
 		stopSpinner: mockFn(() => {}),
+		showProgressBar: mockFn(() => {}),
+		updateProgress: mockFn(() => {}),
+		completeProgress: mockFn(() => {}),
+		logProgressEvent: mockFn(() => {}),
 		showIntro: mockFn(() => {}),
 		showSuccess: mockFn(() => {}),
 		showCancel: mockFn(() => {}),
@@ -468,6 +472,36 @@ describe("UpdateWorkspaceUseCase", () => {
 			if (result.ok) return;
 			expect(result.error.message).toContain("version file");
 			expect(calls.cleanStaging).toBe(1);
+		});
+
+		it("should emit progress events during merge", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const engine = new FileMergeEngine(fs);
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Progress bar should have been initialized with the correct label
+			expect(prompt.showProgressBar).toHaveBeenCalled();
+			expect(prompt.showProgressBar).toHaveBeenCalledWith(
+				expect.any(Number),
+				"Updating files...",
+			);
+			// Progress updates should have been sent
+			expect(prompt.updateProgress).toHaveBeenCalled();
+			// Commit log event should have been emitted
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
+				expect.stringContaining("commit: Committing"),
+			);
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
+				expect.stringContaining("commit:"),
+			);
+			// Progress should have been completed
+			expect(prompt.completeProgress).toHaveBeenCalled();
 		});
 	});
 });

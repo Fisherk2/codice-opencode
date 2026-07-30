@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **FEV-13 — Quality Infrastructure (Issue #53):** Biome config extended to plugin directories. Justfile targets added: `check-plugin`, `test-plugin-unit`, `test-plugin-integration`. Plugin test suites: `tests/plugin/unit/`, `tests/plugin/integration/`.
 - **FEV-13 — Documentation Reduction (Issue #51):** WORKFLOW.md, CHANGELOG.md, SPEC.md audited and trimmed to target line counts (<300, <350, <400 respectively).
 
+### Added (FEV-14)
+
+- **Progress bar during installation (Issue #47):** `IProgressHandler` port + `ProgressBarAdapter` with @clack/prompts spinner. Progress events fire for file copy, symlink creation, and gitignore generation. Visible in all three modes (Clean, Project, Update) with current file, count, and percentage display.
+- **New `/help` slash command for onboarding (Issue #56):** Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 13 commands, troubleshoot issues. Assigned to Huitzilopochtli.
+- **`/help` registered in pipeline maps:** Added to `COMMAND_AGENT_MAP`, `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, and `PHASE_SUGGESTIONS` in sdd-pipeline.ts.
+- **14 new integration tests** for progress events and flow verification.
+- **E2E test extended** with progress assertions.
+
 ## [1.2.0] — 2026-07-28
 
 ### Changed

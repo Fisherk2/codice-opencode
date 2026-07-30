@@ -73,6 +73,10 @@ function createMockPrompt(): IUserPrompt {
 		selectOptional: mockFn(() => Promise.resolve([...allOptionalPaths])),
 		showSpinner: mockFn(() => {}),
 		stopSpinner: mockFn(() => {}),
+		showProgressBar: mockFn(() => {}),
+		updateProgress: mockFn(() => {}),
+		completeProgress: mockFn(() => {}),
+		logProgressEvent: mockFn(() => {}),
 		showIntro: mockFn(() => {}),
 		showSuccess: mockFn(() => {}),
 		showCancel: mockFn(() => {}),
@@ -637,6 +641,77 @@ describe("CleanInstallUseCase", () => {
 			expect(result.error.message).toContain("version file");
 			// Staging should have been cleaned after the version file failure
 			expect(calls.cleanStaging).toBe(1);
+		});
+
+		it("should emit progress events during merge", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkCreator = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkCreator,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Progress bar should have been initialized with the correct label
+			expect(prompt.showProgressBar).toHaveBeenCalled();
+			expect(prompt.showProgressBar).toHaveBeenCalledWith(
+				expect.any(Number),
+				"Clean install...",
+			);
+			// Progress updates should have been sent
+			expect(prompt.updateProgress).toHaveBeenCalled();
+			// Commit log event should have been emitted
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
+				expect.stringContaining("commit: Committing"),
+			);
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
+				expect.stringContaining("commit:"),
+			);
+			// Progress should have been completed
+			expect(prompt.completeProgress).toHaveBeenCalled();
+		});
+
+		it("should emit symlink and gitignore log events after merge", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkCreator = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkCreator,
+				OPENCODE_SYMLINKS,
+				DEVIN_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
+				"symlink: Created .opencode/agents",
+			);
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
+				"symlink: Created .opencode/commands",
+			);
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
+				"symlink: Created .opencode/skills",
+			);
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
+				"gitignore: Generated .gitignore",
+			);
 		});
 	});
 });

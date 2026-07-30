@@ -36,6 +36,10 @@ function createMockPrompt(opts?: { confirmResult?: boolean }): {
 			selectOptional: mockFn(() => Promise.resolve([])),
 			showSpinner: mockFn(() => {}),
 			stopSpinner: mockFn(() => {}),
+			showProgressBar: mockFn(() => {}),
+			updateProgress: mockFn(() => {}),
+			completeProgress: mockFn(() => {}),
+			logProgressEvent: mockFn(() => {}),
 			showIntro: mockFn(() => {}),
 			showSuccess: mockFn(() => {}),
 			showCancel: mockFn((msg: string) => {

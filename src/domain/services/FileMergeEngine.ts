@@ -4,91 +4,113 @@ import type { IFileSystem } from "../ports/IFileSystem";
 import type { IStagingSystem } from "../ports/IStagingSystem";
 import type { MergeError } from "../types/MergeError";
 import { commitError, stagingError } from "../types/MergeError";
+import type { ProgressCallback, ProgressEvent } from "../types/ProgressEvent";
 import type { Result } from "../types/Result";
 import { failure, success } from "../types/Result";
 
 /**
  * Orchestrates file merging according to classification rules.
  *
- * Applies the correct strategy per category:
- * - **mandatory**: Always stages the file (overwrites destination).
- * - **standard**: Stages only if the destination does NOT exist.
- * - **optional**: Stages only if the user selected it AND destination does NOT exist.
+ * - mandatory: always stages (overwrites destination).
+ * - standard: stages only if destination does NOT exist.
+ * - optional: stages only if user selected AND destination missing.
  *
- * Guarantees atomic writes:
- * 1. Stage all files first (into staging directory).
- * 2. If any stage fails → cleanStaging() + return error.
- * 3. If all stages succeed → commitStaging() (atomic rename).
- * 4. If commit fails → cleanStaging() + return error.
+ * Guarantees atomic writes: stage all first → commit (rename) or rollback.
  */
 export class FileMergeEngine implements IFileMergeEngine {
 	constructor(private readonly fileSystem: IFileSystem & IStagingSystem) {}
 
 	/**
-	 * Execute all merge rules against the destination directory.
-	 *
-	 * @param rules - Ordered list of classification rules to apply.
-	 * @param selectedOptionals - Paths of optional files the user opted into.
-	 *   Only relevant when rules include optional-category entries. When omitted,
-	 *   no optional rules are staged (equivalent to passing an empty array).
-	 * @returns Result<void, MergeError> — success if all operations complete.
+	 * Execute merge rules against the destination directory.
+	 * @param onProgress - Optional progress callback (exceptions are swallowed).
 	 */
 	async execute(
 		rules: readonly FileRule[],
 		selectedOptionals?: readonly string[],
+		onProgress?: ProgressCallback,
 	): Promise<Result<void, MergeError>> {
 		const selected = new Set(selectedOptionals ?? []);
 
 		// Compute subdirectory exclusions for standard dirs that overlap
 		// with optional sub-paths, so each file is copied only once.
 		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
+
+		// Count files eligible for staging (exclude virtual noTemplateCopy entries).
+		const total = rules.filter((r) => !r.noTemplateCopy).length;
+		let current = 0;
+
 		// Phase 1: Stage all files
 		for (const rule of rules) {
 			// Content generated post-installation (e.g., .devin/ symlinks)
-			if (rule.noTemplateCopy) continue;
+			if (rule.noTemplateCopy) {
+				this.safeEmit(onProgress, {
+					type: "stage_skip",
+					filePath: rule.path,
+					reason: "Virtual entry (no template copy)",
+				});
+				continue;
+			}
+
+			current++;
 
 			const shouldStage = await this.shouldStage(rule, selected);
-			if (!shouldStage) continue;
+			if (!shouldStage) {
+				this.safeEmit(onProgress, {
+					type: "stage_skip",
+					filePath: rule.path,
+					reason: this.skipReason(rule, selected),
+				});
+				continue;
+			}
 
 			const excludeSubDirs = this.computeExclusions(rule, optionalPaths);
+
+			this.safeEmit(onProgress, {
+				type: "stage_start",
+				current,
+				total,
+				filePath: rule.path,
+			});
 
 			try {
 				await this.fileSystem.stageFile(rule.path, excludeSubDirs);
 			} catch (err) {
-				await this.fileSystem.cleanStaging();
 				const message = err instanceof Error ? err.message : "Unknown staging error";
+				this.safeEmit(onProgress, {
+					type: "error",
+					filePath: rule.path,
+					message,
+				});
+				await this.fileSystem.cleanStaging();
 				return failure(stagingError(rule.path, message));
 			}
+
+			this.safeEmit(onProgress, {
+				type: "stage_complete",
+				current,
+				total,
+				filePath: rule.path,
+			});
 		}
 
 		// Phase 2: Commit staging (atomic rename)
-		// commitStaging() is always called, even with zero staged files (empty rules).
-		// This guarantees the staging directory is cleaned up consistently at the end
-		// of every execution, regardless of how many files were actually staged.
+		this.safeEmit(onProgress, { type: "commit_start", total });
+
 		try {
 			await this.fileSystem.commitStaging();
 		} catch (err) {
-			await this.fileSystem.cleanStaging();
 			const message = err instanceof Error ? err.message : "Unknown commit error";
+			this.safeEmit(onProgress, { type: "error", filePath: "", message });
+			await this.fileSystem.cleanStaging();
 			return failure(commitError(message));
 		}
+
+		this.safeEmit(onProgress, { type: "commit_complete", total });
 
 		return success(undefined);
 	}
 
-	/**
-	 * Determine whether a rule's file should be staged.
-	 *
-	 * Strategy decision matrix:
-	 * | Category   | Destination exists? | Selected? | Stage? |
-	 * |------------|---------------------|-----------|--------|
-	 * | mandatory  | (ignored)           | N/A       | YES    |
-	 * | standard   | no                  | N/A       | YES    |
-	 * | standard   | yes                 | N/A       | NO     |
-	 * | optional   | no                  | yes       | YES    |
-	 * | optional   | yes/no              | no        | NO     |
-	 * | optional   | yes                 | yes       | NO     |
-	 */
+	/** Decide whether a rule's file should be staged based on category and state. */
 	private async shouldStage(rule: FileRule, selected: Set<string>): Promise<boolean> {
 		if (rule.category === "mandatory") {
 			return true;
@@ -110,13 +132,32 @@ export class FileMergeEngine implements IFileMergeEngine {
 		return false;
 	}
 
+	/** Emit event via optional callback, swallowing listener exceptions. */
+	private safeEmit(onProgress: ProgressCallback | undefined, event: ProgressEvent): void {
+		if (!onProgress) return;
+		try {
+			onProgress(event);
+		} catch {
+			// Swallow callback exceptions — see safeEmit contract.
+		}
+	}
+
+	private skipReason(rule: FileRule, selected: Set<string>): string {
+		if (rule.category === "standard") {
+			return "Destination already exists";
+		}
+		if (rule.category === "optional" && !selected.has(rule.path)) {
+			return "Not selected by user";
+		}
+		if (rule.category === "optional") {
+			return "Destination already exists";
+		}
+		return "Skipped by classification rule";
+	}
+
 	/**
-	 * Compute subdirectory exclusions for a standard directory rule that
-	 * overlaps with optional sub-paths. When a standard dir like "docs"
-	 * has an optional sub-path (e.g. "docs/guides"), the directory walker
-	 * should exclude "guides" so the optional rule can handle it separately.
-	 *
-	 * @returns Set of immediate subdirectory names to exclude, or undefined.
+	 * Compute subdirectory exclusions for standard dirs overlapping
+	 * optional sub-paths (e.g. "docs/guides" → exclude "guides" from "docs" walk).
 	 */
 	private computeExclusions(rule: FileRule, optionalPaths: string[]): Set<string> | undefined {
 		// Only standard directories get exclusions; mandatory always overwrites everything.

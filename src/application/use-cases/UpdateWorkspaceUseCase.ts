@@ -4,6 +4,7 @@ import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
+import type { ProgressCallback } from "../../domain/types/ProgressEvent";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, confirmOverwrite, writeVersionFileSafe } from "../helpers";
 import type { IGitHubClient } from "../ports/IGitHubClient";
@@ -139,9 +140,42 @@ export class UpdateWorkspaceUseCase {
 		// Estándar rules respect destinationExists (preserve existing user files).
 		const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional");
 
-		// Execute the merge engine
-		const mergeResult = await this.mergeEngine.execute(updateRules);
+		// Execute the merge engine with progress
+		const label = "Updating files...";
+		const onProgress: ProgressCallback = (event) => {
+			try {
+				switch (event.type) {
+					case "stage_start":
+						this.userPrompt.showProgressBar(event.total, label);
+						this.userPrompt.updateProgress(event.current, event.filePath);
+						break;
+					case "stage_complete":
+						this.userPrompt.updateProgress(event.current, event.filePath);
+						break;
+					case "stage_skip":
+						break;
+					case "commit_start":
+						this.userPrompt.logProgressEvent(
+							`commit: Committing ${event.total} files atomically...`,
+						);
+						break;
+					case "commit_complete":
+						this.userPrompt.logProgressEvent(`commit: ${event.total} files committed`);
+						this.userPrompt.completeProgress();
+						break;
+					case "error":
+						this.userPrompt.logProgressEvent(`error: ${event.filePath}: ${event.message}`);
+						this.userPrompt.completeProgress();
+						break;
+				}
+			} catch {
+				this.userPrompt.completeProgress();
+			}
+		};
+
+		const mergeResult = await this.mergeEngine.execute(updateRules, undefined, onProgress);
 		if (!mergeResult.ok) {
+			this.userPrompt.completeProgress();
 			return failure(new Error(mergeResult.error.message));
 		}
 
