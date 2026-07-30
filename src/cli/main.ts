@@ -44,6 +44,33 @@ export async function promptForMode(
 	return userPrompt.promptForMode();
 }
 
+/**
+ * Resolve the installation mode, showing an interactive menu if mode is "interactive".
+ * Extracted from main() to enable testing with a mock IUserPrompt.
+ *
+ * @param mode - Current mode (may be "interactive").
+ * @param userPrompt - The user prompt adapter instance.
+ * @param version - Current version string for the intro message.
+ * @returns Resolved mode, or null if user cancelled from the interactive menu.
+ */
+export async function resolveInteractiveMode(
+	mode: Mode,
+	userPrompt: IUserPrompt,
+	version: string,
+): Promise<Mode | null> {
+	if (mode !== "interactive") {
+		return mode;
+	}
+
+	userPrompt.showIntro(`Códice v${version} — Opencode Workspace Installer`);
+	const selected = await promptForMode(userPrompt);
+	if (selected === null) {
+		userPrompt.showCancel("Installation cancelled.");
+		return null;
+	}
+	return selected;
+}
+
 // ---------------------------------------------------------------------------
 // Mode execution
 // ---------------------------------------------------------------------------
@@ -132,20 +159,12 @@ async function main(): Promise<void> {
 	process.on("SIGINT", handleSigint);
 
 	try {
-		// Resolve interactive mode (show menu)
-		let resolvedMode: Mode = mode;
-		if (mode === "interactive") {
-			deps.userPrompt.showIntro(`Códice v${VERSION} — Opencode Workspace Installer`);
-			const selected = await promptForMode(deps.userPrompt);
-			if (selected === null) {
-				deps.userPrompt.showCancel("Installation cancelled.");
-				process.exit(EXIT_INTERRUPT);
-			}
-			resolvedMode = selected;
-		}
+		// Resolve interactive mode (show menu if needed)
+		const resolved = await resolveInteractiveMode(mode, deps.userPrompt, VERSION);
+		if (resolved === null) process.exit(EXIT_INTERRUPT);
 
-		// At this point resolvedMode is guaranteed to be a non-interactive mode
-		const executionMode = resolvedMode as "clean" | "project" | "update";
+		// resolved is guaranteed to be non-interactive (null case handled above)
+		const executionMode = resolved as "clean" | "project" | "update";
 
 		// Execute the selected mode
 		const result = await runMode(executionMode, deps, destinationPath, options);
