@@ -201,5 +201,3 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		return result as "clean" | "project" | "update";
 	}
 }
-
-

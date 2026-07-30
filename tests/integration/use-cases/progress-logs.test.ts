@@ -3,9 +3,7 @@ import type { IGitignoreCreator } from "../../../src/application/ports/IGitignor
 import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { CleanInstallUseCase } from "../../../src/application/use-cases/CleanInstallUseCase";
-import {
-	FILE_RULE_MANIFEST,
-} from "../../../src/domain/entities/FileRuleManifest";
+import { FILE_RULE_MANIFEST } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
@@ -86,9 +84,7 @@ function createMockPrompt(): IUserPrompt & { logEntries: string[] } {
 		showSuccess: mockFn(() => {}),
 		showCancel: mockFn(() => {}),
 		showError: mockFn(() => {}),
-		promptForMode: mockFn(() =>
-			Promise.resolve<"clean" | "project" | "update" | null>(null),
-		),
+		promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
 		get logEntries() {
 			return logEntries;
 		},
@@ -162,20 +158,12 @@ describe("CleanInstallUseCase structured log events", () => {
 		);
 
 		// Symlink messages should be exact
-		expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-			"symlink: Created .opencode/agents",
-		);
-		expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-			"symlink: Created .opencode/commands",
-		);
-		expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-			"symlink: Created .opencode/skills",
-		);
+		expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/agents");
+		expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/commands");
+		expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/skills");
 
 		// Gitignore message should be exact
-		expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-			"gitignore: Generated .gitignore",
-		);
+		expect(prompt.logProgressEvent).toHaveBeenCalledWith("gitignore: Generated .gitignore");
 	});
 
 	it("should emit commit messages before symlink and gitignore messages", async () => {
@@ -202,7 +190,9 @@ describe("CleanInstallUseCase structured log events", () => {
 
 		// Find the indices of key log events
 		const commitStartIdx = logEntries.findIndex((msg) => msg.startsWith("commit: Committing"));
-		const commitCompleteIdx = logEntries.findIndex((msg) => msg.startsWith("commit: ") && msg.endsWith("committed"));
+		const commitCompleteIdx = logEntries.findIndex(
+			(msg) => msg.startsWith("commit: ") && msg.endsWith("committed"),
+		);
 		const symlinkIdx = logEntries.findIndex((msg) => msg.startsWith("symlink:"));
 		const gitignoreIdx = logEntries.findIndex((msg) => msg.startsWith("gitignore:"));
 
@@ -234,15 +224,9 @@ describe("CleanInstallUseCase structured log events", () => {
 		expect(result.ok).toBe(true);
 
 		// Count logProgressEvent calls by category
-		const commitCalls = prompt.logEntries.filter(
-			(msg) => msg.startsWith("commit:"),
-		);
-		const symlinkCalls = prompt.logEntries.filter(
-			(msg) => msg.startsWith("symlink:"),
-		);
-		const gitignoreCalls = prompt.logEntries.filter(
-			(msg) => msg.startsWith("gitignore:"),
-		);
+		const commitCalls = prompt.logEntries.filter((msg) => msg.startsWith("commit:"));
+		const symlinkCalls = prompt.logEntries.filter((msg) => msg.startsWith("symlink:"));
+		const gitignoreCalls = prompt.logEntries.filter((msg) => msg.startsWith("gitignore:"));
 
 		expect(commitCalls).toHaveLength(2);
 		expect(symlinkCalls).toHaveLength(3);
@@ -253,9 +237,7 @@ describe("CleanInstallUseCase structured log events", () => {
 	it("should emit only commit log events when merge fails (no symlink/gitignore)", async () => {
 		const { stub: fs } = createMockFileSystem();
 		// Make stageFile throw to trigger merge failure
-		(fs.stageFile as ReturnType<typeof mockFn>).mockRejectedValue(
-			new Error("Disk full"),
-		);
+		(fs.stageFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full"));
 		const engine = new FileMergeEngine(fs);
 		const prompt = createMockPrompt();
 		const symlinkCreator = createMockSymlinkCreator();
@@ -310,17 +292,9 @@ describe("CleanInstallUseCase structured log events", () => {
 
 		// Symlink and gitignore log events should still be emitted
 		// (.opencode symlinks always created, gitignore always generated)
-		expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-			"symlink: Created .opencode/agents",
-		);
-		expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-			"symlink: Created .opencode/commands",
-		);
-		expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-			"symlink: Created .opencode/skills",
-		);
-		expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-			"gitignore: Generated .gitignore",
-		);
+		expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/agents");
+		expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/commands");
+		expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/skills");
+		expect(prompt.logProgressEvent).toHaveBeenCalledWith("gitignore: Generated .gitignore");
 	});
 });

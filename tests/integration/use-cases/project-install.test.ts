@@ -707,19 +707,14 @@ describe("ProjectInstallUseCase", () => {
 			expect(result.ok).toBe(true);
 			// Progress bar should have been initialized with the correct label
 			expect(prompt.showProgressBar).toHaveBeenCalled();
-			expect(prompt.showProgressBar).toHaveBeenCalledWith(
-				expect.any(Number),
-				"Project install...",
-			);
+			expect(prompt.showProgressBar).toHaveBeenCalledWith(expect.any(Number), "Project install...");
 			// Progress updates should have been sent
 			expect(prompt.updateProgress).toHaveBeenCalled();
 			// Commit log event should have been emitted
 			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
 				expect.stringContaining("commit: Committing"),
 			);
-			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-				expect.stringContaining("commit:"),
-			);
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(expect.stringContaining("commit:"));
 			// Progress should have been completed
 			expect(prompt.completeProgress).toHaveBeenCalled();
 		});
@@ -743,18 +738,10 @@ describe("ProjectInstallUseCase", () => {
 			const result = await useCase.execute("/tmp/project");
 
 			expect(result.ok).toBe(true);
-			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-				"symlink: Created .opencode/agents",
-			);
-			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-				"symlink: Created .opencode/commands",
-			);
-			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-				"symlink: Created .opencode/skills",
-			);
-			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
-				"gitignore: Generated .gitignore",
-			);
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/agents");
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/commands");
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/skills");
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith("gitignore: Generated .gitignore");
 		});
 	});
 });

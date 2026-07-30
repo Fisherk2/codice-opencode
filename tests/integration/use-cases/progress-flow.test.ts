@@ -207,13 +207,11 @@ describe("FileMergeEngine progress events", () => {
 		const rules = createMandatoryRules(3);
 		const { stub: fs, calls } = createMockFileSystem();
 		// Make the second file fail during staging
-		(fs.stageFile as ReturnType<typeof mockFn>).mockImplementation(
-			async (path: string) => {
-				if (path === "file-1.ts") {
-					throw new Error("Disk full");
-				}
-			},
-		);
+		(fs.stageFile as ReturnType<typeof mockFn>).mockImplementation(async (path: string) => {
+			if (path === "file-1.ts") {
+				throw new Error("Disk full");
+			}
+		});
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 
@@ -245,9 +243,7 @@ describe("FileMergeEngine progress events", () => {
 		const rules = createMandatoryRules(3);
 		const { stub: fs, calls } = createMockFileSystem();
 		// Make commitStaging throw
-		(fs.commitStaging as ReturnType<typeof mockFn>).mockRejectedValue(
-			new Error("Rename failed"),
-		);
+		(fs.commitStaging as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Rename failed"));
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 
@@ -310,10 +306,7 @@ describe("FileMergeEngine progress events", () => {
 		const stageSkip = events.filter((e) => e.type === "stage_skip");
 		expect(stageSkip).toHaveLength(1);
 		expect(stageSkip[0]).toHaveProperty("filePath", "virtual-entry");
-		expect(stageSkip[0]).toHaveProperty(
-			"reason",
-			"Virtual entry (no template copy)",
-		);
+		expect(stageSkip[0]).toHaveProperty("reason", "Virtual entry (no template copy)");
 
 		// total should reflect stageable count only (1), not total rules (2)
 		const commitStart = events.find((e) => e.type === "commit_start");
