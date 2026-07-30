@@ -39,13 +39,6 @@
 - ❌ Comentarios obvios — explicar el *porqué*, nunca el *qué*.
 - ❌ Loggear secrets — ni tokens, ni credenciales, ni API keys.
 
-### Commits y PRs
-- Todo commit debe incluir `Co-Authored-By: <Agente> <dev@fisherk2.com>` al final.
-- **Agentes principales:** Huitzilopochtli, Quetzalcoatl, Tlaloc, Moctezuma, Mictlantecuhtli, Tezcatlipoca (Lower Camel Case).
-- **Subagentes:** kebab-case (ej: `docs-writer`, `obsidian-vault-writer`).
-- Toda PR debe incluir `**Authored by:** <Agente>` al final de la descripción.
-- Múltiples agentes: listar trailers en orden de involucramiento (mayor a menor).
-
 ### Pre-Commit
 - [ ] `just check` — 0 errores (biome ci + tsc --noEmit).
 - [ ] `bun test` — 0 fallos.

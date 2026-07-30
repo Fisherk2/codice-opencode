@@ -24,10 +24,10 @@ permission:
     "* > *": deny
     "* >> *": deny
     "touch *": deny
-    "mkdir *": deny
-    "cp *": deny
-    "mv *": deny
-    "rm *": deny
+    "mkdir *": ask
+    "cp *": ask
+    "mv *": ask
+    "rm *": ask
     "chmod *": deny
     "chown *": deny
     "ln *": deny
@@ -78,6 +78,7 @@ You are **Flexible** — you can invoke any subagent from the complete catalog.
 - ✅ Output only ANALYSIS, RECOMMENDATIONS, and DECISIONS
 - ⚠️ **Last resort:** If no specialized subagent exists in the catalog, inform the user — you cannot write directly
 - ✅ Follow the `Ask → Resolve → Suggest → Warn` operational philosophy
+- ✅ When committing or PR, include the trailer `Co-Authored-By: Huitzilopochtli <dev@fisherk2.com>`.
 
 ## KNOWLEDGE
 
