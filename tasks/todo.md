@@ -1,252 +1,222 @@
-# FEV-14 Todo List — UX Enhancements (v1.2 Phase 4)
+# FEV-15 Todo List — Community Standards (v1.2 Phase 5)
 
-**Phase:** FEV-14 (v1.2 Phase 4) — ✅ COMPLETED
-**Issues:** [#47](https://github.com/fisherk2/codice-opencode/issues/47), [#56](https://github.com/fisherk2/codice-opencode/issues/56)
-**Spec:** [SPEC.md](../SPEC.md), [docs/WORKFLOW.md](../docs/WORKFLOW.md) §FEV-14
-**Date:** 2026-07-29 → 2026-07-30
+**Phase:** FEV-15 (v1.2 Phase 5) — 📋 Pendiente
+**Issue:** [#55](https://github.com/fisherk2/codice-opencode/issues/55) — Añadir código de conducta
+**Spec:** [SPEC.md](../SPEC.md), [docs/WORKFLOW.md](../docs/WORKFLOW.md) §FEV-15, [docs/diagnosis/fix08-v1.2-phase5-community.md](../docs/diagnosis/fix08-v1.2-phase5-community.md)
+**Date:** 2026-07-30
 **Full plan:** [plan.md](./plan.md)
-**Status:** ✅ COMPLETED — all tasks done, code review passed, tests green
-**Branch:** `feat/ux-docs-wiki`
+**Status:** 📋 Pendiente — ready to start Phase 0
+**Branch base:** `develop` (FEV-14 ya mergeado)
 
 ---
 
-## Decisiones UX Confirmadas (vía question tool)
+## Decisiones Confirmadas (vía question tool, 2026-07-30)
 
 | # | Pregunta | Decisión |
 |---|----------|----------|
-| 1 | Estilo de progress bar | **Multi-progress con log lines** (`clack.progress()` per-file + `clack.log()` con eventos) |
-| 2 | 6 opciones del menú `/help` | **Onboarding + lifecycle + advanced** (What is Códice? / Start new / Update existing / SDD cycle / List 13 commands / Troubleshooting) |
-| 3 | Visibilidad del progress bar | **Siempre visible** (no solo en `--verbose`) |
-| 4 | Bump de versión | **Mantener v1.2.0** (sin bump; cierre coordinado FEV-12/13/14/15) |
+| 1 | Alcance del plan | **Completo (8 tareas)** — incluye `FileRuleManifestData.ts` (CRÍTICO para entrega del template CoC) |
+| 2 | Wiki mentions | **Omitir** — sin menciones en `Home.md` / `Getting-Started.md`; cobertura transitiva desde README/CONTRIBUTING |
+| 3 | Test E2E | **Extender `01-clean-install.sh`** existente con 2 asserts (no scenario nuevo) |
+| 4 | Versión | **Mantener v1.2.0** — sin bump; cierre coordinado FEV-12 ✅ + 13 ✅ + 14 ✅ + 15 |
 
 ---
 
 ## Phase 0: Preparation
 
-- [ ] **Task 0.1:** Crear rama `feat/fev14-ux` desde `feat/ux-docs-wiki` (o `develop`)
-- [ ] **Task 0.2:** Verificar baseline — `just check` + `just test` + `just test:e2e` exit 0
+- [ ] **Task 0.1:** Crear rama `feat/fev15-community` desde `develop` — `git checkout -b feat/fev15-community develop`
+- [ ] **Task 0.2:** Verificar baseline — `just check` + `just test` + `just test:e2e` exit 0 (809 tests, 19/19 E2E)
 
-**Checkpoint:** ✅ Branch clean, 761 tests passing, 18/18 E2E
-
----
-
-## Phase 1: Domain — Progress callback (Pillar A foundation)
-
-- [ ] **Task 1.1:** Crear `src/domain/types/ProgressEvent.ts` con discriminated union (6 variants: `stage_start`, `stage_complete`, `stage_skip`, `commit_start`, `commit_complete`, `error`) + `ProgressCallback` type alias
-- [ ] **Task 1.2:** Extender `IFileMergeEngine.execute()` con parámetro `onProgress?: ProgressCallback` (3rd, opcional) → `src/domain/ports/IFileMergeEngine.ts`
-- [ ] **Task 1.3:** Implementar emisión de eventos en `FileMergeEngine.execute()` + `safeEmit()` wrapper (try/catch para no romper merge) + tests unitarios para 6 eventos + callback exception → `src/domain/services/FileMergeEngine.ts` + `tests/unit/domain/file-merge-engine.test.ts`
-
-**Checkpoint:** ✅ Domain type-check pasa, 6 eventos emitidos, no regresión, tests nuevos pasan
+**Checkpoint:** ✅ Branch clean, 809 tests passing, 19/19 E2E
 
 ---
 
-## Phase 2: Application — TUI ports
+## Phase 1: Project Code of Conduct
 
-- [ ] **Task 2.1:** Extender `IUserPrompt` con 4 métodos: `showProgressBar(total, label?)`, `updateProgress(current, filePath)`, `completeProgress()`, `logProgressEvent(message)` → `src/application/ports/IUserPrompt.ts`
-- [ ] **Task 2.2:** Tests unitarios mock-based para `IUserPrompt` extended port (3+ casos, verifica contrato del port) → `tests/unit/application/i-user-prompt.test.ts`
+- [ ] **Task 1.1:** Crear `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1, contact `dev@fisherk2.com`, ~140 líneas) → `CODE_OF_CONDUCT.md` (nuevo)
 
-**Checkpoint:** ✅ Application type-check pasa, contrato del port verificado, sin imports de domain→application
-
----
-
-## Phase 3: Infrastructure — ClackPromptsAdapter
-
-- [ ] **Task 3.1:** Implementar `showProgressBar()` con `clack.progress({ max: total, style: "heavy" })` + `updateProgress()` con `progress.advance(1, msg)` + `completeProgress()` con `progress.stop()` → `src/infrastructure/adapters/ClackPromptsAdapter.ts`
-- [ ] **Task 3.2:** Implementar `logProgressEvent()` con dispatch por categoría: `commit:` → success ✓, `symlink:` → info 🔗, `gitignore:` → info 📄, `error:` → error ✗, `skip:` → warn ⊘, default → step → `src/infrastructure/adapters/ClackPromptsAdapter.ts`
-- [ ] **Task 3.3:** Integration tests para progress rendering (6+ escenarios con mock de clack primitives, captura orden de llamadas) → `tests/integration/adapters/clack-prompts-progress.test.ts`
-
-**Checkpoint:** ✅ Adapter >80% coverage, progress + logs visibles en dry-run, no regresión
+**Checkpoint:** ✅ Project CoC existe, basado en v2.1, sin placeholders
 
 ---
 
-## Phase 4: Use Cases — Wiring
+## Phase 2: Template Code of Conduct
 
-- [ ] **Task 4.1:** Wire progress callback en `CleanInstallUseCase.execute()` (label "Installing files..." + log events post-merge) + tests integration para eventos capturados → `src/application/use-cases/CleanInstallUseCase.ts` + `tests/integration/use-cases/clean-install.test.ts`
-- [ ] **Task 4.2:** Wire progress callback en `ProjectInstallUseCase.execute()` (label "Project install...") + tests integration → `src/application/use-cases/ProjectInstallUseCase.ts` + `tests/integration/use-cases/project-install.test.ts`
-- [ ] **Task 4.3:** Wire progress callback en `UpdateWorkspaceUseCase.execute()` (label "Updating files...", spinner separado para version check) + tests integration → `src/application/use-cases/UpdateWorkspaceUseCase.ts` + `tests/integration/use-cases/update-workspace.test.ts`
+- [ ] **Task 2.1:** Crear `template/estandar/CODE_OF_CONDUCT.md` (placeholder con `[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]`, ~120 líneas) → `template/estandar/CODE_OF_CONDUCT.md` (nuevo)
 
-**Checkpoint:** ✅ 3 use cases con progress visible end-to-end, manual smoke test verde, sin regresión
+**Checkpoint:** ✅ Template CoC existe, placeholders listos para personalización
 
 ---
 
-## Phase 5: Tests — Integration + E2E
+## Phase 3: FileRuleManifestData Integration (CRITICAL)
 
-- [ ] **Task 5.1:** Integration test: progress bar visible en Clean Install con 10 files (10 `stage_complete` events + orden + `commit_start`/`commit_complete`) → `tests/integration/use-cases/progress-flow.test.ts`
-- [ ] **Task 5.2:** Integration test: progress events log estructurados (`commit:`, `symlink:`, `gitignore:` capturados) → `tests/integration/use-cases/progress-logs.test.ts`
-- [ ] **Task 5.3:** E2E: extender `tests/e2e/01-clean-install.sh` con assertions de `commit:` y `symlink:` en stdout (+10 líneas, preservar 5 assertions originales)
+- [ ] **Task 3.1:** Agregar entrada `CODE_OF_CONDUCT.md` con `category: "standard"` en `FileRuleManifestData.ts` (después de `CONTRIBUTING.md`, antes de `LICENSE`) → `src/domain/entities/FileRuleManifestData.ts` (+6 líneas)
+- [ ] **Task 3.2:** Unit test: manifest incluye `CODE_OF_CONDUCT.md` con `category: "standard"` e `isDirectory: false` → `tests/unit/domain/file-rule-manifest.test.ts` (+15 líneas, o nuevo archivo si no existe)
 
-**Checkpoint:** ✅ 3 integration tests + 1 E2E extension pasan, sin regresión en suite completa
-
----
-
-## Phase 6: Help Command — Template (PARALLEL BRANCH)
-
-- [ ] **Task 6.1:** Crear `template/obligatorio/commands/help.md` con frontmatter `agent: huitzilopochtli` + 6 opciones (What is Códice? / Start new project / Update existing / SDD cycle / List 13 commands / Troubleshooting) + Rules + Suggested Next Step (<100 líneas)
-
-**Checkpoint:** ✅ `commands/help.md` creado, frontmatter correcto, listo para auto-discovery
+**Checkpoint:** ✅ Manifest conoce el CoC, unit test pasa, sin regresión
 
 ---
 
-## Phase 7: Help Command — Plugin Defaults
+## Phase 4: Cross-references (PARALLEL)
 
-- [ ] **Task 7.1:** Agregar `/help: "huitzilopochtli"` a `COMMAND_AGENT_MAP` → `template/obligatorio/.opencode/plugins/src/defaults.ts` (+2 líneas, comentario `// FEV-14`)
-- [ ] **Task 7.2:** Agregar `INTENT_PATTERNS["/help"]` con 15+ keywords EN/ES (help, ayuda, como uso, how to use, what is, que es, show commands, list commands, menu, onboarding, getting started, como empezar, donde empiezo, documentation, docs, manual) → mismo archivo (+16 líneas)
-- [ ] **Task 7.3:** Agregar `COMMAND_PHASE_MAP["/help"] = "idle"` (informational, sin progresión SDD) → mismo archivo (+2 líneas)
-- [ ] **Task 7.4:** Agregar `PHASE_SUGGESTIONS.idle.huitzilopochtli = "Consider /help to discover available commands, or /spec to start a new project."` → mismo archivo (+2 líneas)
-- [ ] **Task 7.5:** Integration test: plugin auto-discovers `/help` (temp dir + mock `help.md`, assert `commandAgentMap["/help"] === "huitzilopochtli"`) → `tests/plugin/integration/help-command-discovery.test.ts`
+- [ ] **Task 4.1:** Agregar `## Code of Conduct` section a `CONTRIBUTING.md` (antes de `## Quick Start`, link a `CODE_OF_CONDUCT.md` + Contributor Covenant v2.1) → `CONTRIBUTING.md` (+5 líneas)
+- [ ] **Task 4.2:** Agregar `## Code of Conduct` section a `README.md` (antes de `## License`, menciona project + template CoC) → `README.md` (+10 líneas)
 
-**Checkpoint:** ✅ /help registrado en 4 default maps, plugin auto-discovery test pasa, sin regresión en plugin tests
+**Checkpoint:** ✅ Ambos docs cross-referencian al CoC, sin broken links
 
 ---
 
-## Phase 8: Documentation
+## Phase 5: E2E Test
 
-- [ ] **Task 8.1:** Actualizar Wiki `docs/wiki-source/Commands.md` (Mermaid +/help, table +1 row, Command Details +/help subsection, 12→13 commands count) (+20 líneas)
-- [ ] **Task 8.2:** Actualizar `README.md` (Features "12 Slash Commands"→"13 Slash Commands", Mermaid +/help node, Full Cycle table +/help row, nueva sección "## Progress Bar") (+25 líneas, <300 total)
-- [ ] **Task 8.3:** Actualizar `docs/WORKFLOW.md` (FEV-14 status "📋 Listo"→"✅ Completo", sección resultados, métricas) (+15 líneas, <300 total)
-- [ ] **Task 8.4:** Actualizar `CHANGELOG.md` (FEV-14 entry en sección v1.2.0 - Unreleased, Keep a Changelog format Added) (+15 líneas, <350 total)
+- [ ] **Task 5.1:** Extender `tests/e2e/01-clean-install.sh` con 2 asserts: (1) `CODE_OF_CONDUCT.md` existe en destino, (2) contiene `Our Pledge` → `tests/e2e/01-clean-install.sh` (+2 líneas)
 
-**Checkpoint:** ✅ Todos los docs consistentes, sin broken links, FEV-14 marcado completo
+**Checkpoint:** ✅ E2E confirma entrega end-to-end, 19/19 pasan
 
 ---
 
-## Phase 9: Verification & Ship
+## Phase 6: Documentation & Verification
 
-- [ ] **Task 9.1:** `just check` (Biome + tsc) → 0 errors
-- [ ] **Task 9.2:** `bun test tests/` → ~781 tests, 0 fail (761 + ~20 new)
-- [ ] **Task 9.3:** `just test:e2e` → 19/19 (18 existing + 1 extended)
-- [ ] **Task 9.4:** Coverage report → no regression vs 96.98% lines baseline
-- [ ] **Task 9.5:** Code Review 5-ejes by Tezcatlipoca → 0 Critical, report en `docs/diagnosis/fix07-v1.2-phase4-ux.md`
-- [ ] **Task 9.6:** Ship Review GO/NO-GO → GO, PR mergeado a `develop`
+- [ ] **Task 6.1:** Reemplazar `_No unreleased changes._` en `CHANGELOG.md` con `### Added` (5 bullets) + `### Changed` (1 bullet) entries de FEV-15 → `CHANGELOG.md` (+15 líneas)
+- [ ] **Task 6.2:** Marcar FEV-15 `✅ Completo` en `docs/WORKFLOW.md` línea 35 + agregar nueva sección "Fase FEV-15" con resultados (≥810 tests, 2 CoC files, 1 manifest entry) → `docs/WORKFLOW.md` (+20 líneas, <300 total)
+- [ ] **Task 6.3:** Mover FEV-15 a "Resolved" en `docs/TECH_DEBT.md` con Issue #55 marcado `✅` → `docs/TECH_DEBT.md` (+8 líneas)
+- [ ] **Task 6.4:** `just check` → 0 errors
+- [ ] **Task 6.5:** `bun test` → ≥810 tests, 0 fail (809 baseline + 1 new manifest test)
+- [ ] **Task 6.6:** `just test:e2e` → 19/19 (1 modified: `01-clean-install.sh` con CoC asserts)
+- [ ] **Task 6.7:** Commit con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer (5-6 atomic commits)
 
-**Checkpoint:** ✅ Todos DoD items satisfied, FEV-14 cerrado, FEV-15 ready
+**Checkpoint:** ✅ Todos DoD items satisfied, FEV-15 cerrado, v1.2.0 ready
 
 ---
 
-## DoD Checklist — FEV-14 ✅ COMPLETED
+## DoD Checklist — FEV-15
 
 ### Functional
-- [x] Issue #47 resuelto: progress bar visible durante Clean, Project, Update install
-- [x] Issue #56 resuelto: `/help` command con 6 opciones
-- [x] Progress muestra: archivo actual, total, %, completion
-- [x] Log events emitidos: `commit:`, `symlink:`, `gitignore:`, `error:`, `skip:`
-- [x] `/help` registrado en COMMAND_AGENT_MAP, INTENT_PATTERNS, COMMAND_PHASE_MAP, PHASE_SUGGESTIONS
-- [x] `/help` offers 6 options vía question tool
-- [x] Plugin auto-discovers `commands/help.md` (Pillar 1, FEV-13)
+
+- [ ] **Issue #55 resuelto** — Code of Conduct existe para project y template
+- [ ] **Project `CODE_OF_CONDUCT.md` creado** (Contributor Covenant v2.1, contact: `dev@fisherk2.com`)
+- [ ] **Template `CODE_OF_CONDUCT.md` creado** como placeholder personalizable (3 placeholders: `[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]`)
+- [ ] **`FileRuleManifestData.ts` actualizado** con `category: "standard"` (CRÍTICO)
+- [ ] **`CONTRIBUTING.md` actualizado** con sección `## Code of Conduct` (antes de `## Quick Start`)
+- [ ] **`README.md` actualizado** con sección `## Code of Conduct` (antes de `## License`)
+- [ ] **E2E test extendido**: `tests/e2e/01-clean-install.sh` verifica que `CODE_OF_CONDUCT.md` se entrega con contenido `Our Pledge`
 
 ### Quality
-- [x] `just check`: 0 errors
-- [x] `bun test`: 809 tests, 0 fail
-- [x] Code review: 0 Critical (after fixes), 0 Important open
+
+- [ ] `just check`: 0 errors, 0 warnings
+- [ ] `bun test`: ≥810 tests, 0 fail
+- [ ] `just test:e2e`: 19/19 scenarios passing
+- [ ] Manifest unit test cubre nueva entrada
+- [ ] No `any` types introducidos
+- [ ] No code changes fuera de docs/manifest/test scope
 
 ### Documentation
-- [x] WORKFLOW.md: FEV-14 marked complete
-- [x] CHANGELOG.md: FEV-14 entry
-- [x] No broken internal links
+
+- [ ] `CHANGELOG.md`: FEV-15 entry bajo `[Unreleased]` (Added + Changed)
+- [ ] `docs/WORKFLOW.md`: FEV-15 marcado `✅ Completo` con results section
+- [ ] `docs/TECH_DEBT.md`: FEV-15 row movido a "Resolved" subsection
+- [ ] No broken internal links
+- [ ] No `template/obligatorio/CODE_OF_CONDUCT.md` (intencional — CoC es personalizable)
 
 ### Process
-- [x] Atomic commits with Co-Authored-By trailers
-- [x] Code review executed (5-ejes by Tezcatlipoca)
-- [x] Ship Review: GO decision
-- [x] No version bump (v1.2.0 at close of FEV-12 ✅ + 13 ✅ + 14 ✅ + 15)
+
+- [ ] 5-6 atomic commits siguiendo Conventional Commits
+- [ ] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
+- [ ] Branch `feat/fev15-community` desde `develop`
+- [ ] No version bump (v1.2.0 cierra con FEV-12/13/14/15 coordinado)
 
 ---
 
 ## Resumen de Archivos a Modificar/Crear
 
-### Nuevos archivos (10)
-1. `src/domain/types/ProgressEvent.ts` (~40 líneas)
-2. `tests/unit/application/i-user-prompt.test.ts` (~80 líneas)
-3. `tests/integration/adapters/clack-prompts-progress.test.ts` (~120 líneas)
-4. `tests/integration/use-cases/progress-flow.test.ts` (~150 líneas)
-5. `tests/integration/use-cases/progress-logs.test.ts` (~100 líneas)
-6. `template/obligatorio/commands/help.md` (~85 líneas)
-7. `tests/plugin/integration/help-command-discovery.test.ts` (~80 líneas)
-8. `docs/diagnosis/fix07-v1.2-phase4-ux.md` (code review report)
+### Nuevos archivos (2)
 
-### Archivos modificados (10)
-1. `src/domain/ports/IFileMergeEngine.ts` (+10 líneas)
-2. `src/domain/services/FileMergeEngine.ts` (+30 líneas)
-3. `tests/unit/domain/file-merge-engine.test.ts` (+50 líneas)
-4. `src/application/ports/IUserPrompt.ts` (+25 líneas)
-5. `src/infrastructure/adapters/ClackPromptsAdapter.ts` (+50 líneas)
-6. `src/application/use-cases/CleanInstallUseCase.ts` (+30 líneas)
-7. `src/application/use-cases/ProjectInstallUseCase.ts` (+30 líneas)
-8. `src/application/use-cases/UpdateWorkspaceUseCase.ts` (+30 líneas)
-9. `template/obligatorio/.opencode/plugins/src/defaults.ts` (+22 líneas en 4 maps)
-10. `tests/integration/use-cases/{clean,project,update}-install.test.ts` (+30 líneas c/u)
-11. `tests/e2e/01-clean-install.sh` (+10 líneas)
-12. `docs/wiki-source/Commands.md` (+20 líneas)
-13. `README.md` (+25 líneas)
-14. `docs/WORKFLOW.md` (+15 líneas)
-15. `CHANGELOG.md` (+15 líneas)
+1. `CODE_OF_CONDUCT.md` (~140 líneas) — Project CoC, Contributor Covenant v2.1
+2. `template/estandar/CODE_OF_CONDUCT.md` (~120 líneas) — Template CoC, placeholder personalizable
 
-**Total:** 18 archivos (10 nuevos + 8 modificados, 3 de tests adicionales)
+### Archivos modificados (8)
+
+1. `src/domain/entities/FileRuleManifestData.ts` (+6 líneas) — Manifest entry
+2. `tests/unit/domain/file-rule-manifest.test.ts` (+15 líneas) — Unit test
+3. `CONTRIBUTING.md` (+5 líneas) — `## Code of Conduct` section
+4. `README.md` (+10 líneas) — `## Code of Conduct` section
+5. `tests/e2e/01-clean-install.sh` (+2 líneas) — E2E asserts
+6. `CHANGELOG.md` (+15 líneas) — FEV-15 entry
+7. `docs/WORKFLOW.md` (+20 líneas) — FEV-15 complete + results
+8. `docs/TECH_DEBT.md` (+8 líneas) — FEV-15 Resolved
+
+**Total:** 10 archivos (2 nuevos + 8 modificados), ~141 líneas añadidas
+
+### Archivos NO tocados (intencional)
+
+- `template/obligatorio/` — CoC NO es obligatorio (preserva customización del usuario)
+- `template/opcional/` — CoC no es item de checklist
+- Wiki pages — Omitido por decisión del usuario
+- `src/` beyond `FileRuleManifestData.ts` — Sin cambios de lógica de código
+- `src/cli/`, `src/infrastructure/`, `src/application/` — Out of scope (CoC es solo docs)
 
 ---
 
 ## Métricas Esperadas
 
-| Métrica | Baseline (v1.1.3 + FEV-13) | Meta v1.2.0-FEV14 | Actual |
-|---------|------------------------------|---------------------|--------|
-| Tests (pass/fail) | 761 / 0 | ~781 / 0 | 809 / 0 ✅ |
-| Comandos SDD | 12 | 13 (+/help) | 13 ✅ |
-| `just check` errores | 0 | 0 | 0 ✅ |
-| Coverage (lines) | 96.98% | ≥96.98% | ≥96.98% ✅ |
-| Plugin file | 366 líneas | 366 (sin tocar) | 366 ✅ |
-| Issues cerrados | — | #47, #56 | #47, #56 ✅ |
+| Métrica | Baseline (post-FEV-14) | Meta FEV-15 | Verificación |
+|---------|------------------------|-------------|--------------|
+| Tests (pass/fail) | 809 / 0 | ≥810 / 0 | `bun test` |
+| E2E scenarios | 19 / 19 | 19 / 19 (1 extended) | `just test:e2e` |
+| `just check` errors | 0 | 0 | `just check` |
+| Coverage (lines) | ≥96.98% | ≥96.98% (no regression) | `bun test --coverage` |
+| Files touched | — | 10 (2 new + 8 modified) | `git diff --stat` |
+| Lines added | — | ~141 | `git diff --shortstat` |
+| CoC files | 0 | 2 (project + template) | `find . -name "CODE_OF_CONDUCT.md"` |
+| Manifest entries (standard) | 17 | 18 | `grep -c "category: \"standard\"" FileRuleManifestData.ts` |
+| Issues resolved | — | #55 | GitHub issues |
+| Version bump | — | None (v1.2.0 closes coordinated) | `package.json` |
 
 ---
 
 ## Dependency Graph (Mermaid)
 
 ```mermaid
-graph LR
-    P0[Phase 0: Prep] --> P1[Phase 1: Domain]
-    P1 --> P2[Phase 2: Ports]
-    P2 --> P3[Phase 3: TUI]
-    P3 --> P4[Phase 4: UseCases]
-    P4 --> P5[Phase 5: Tests]
-    P0 --> P6[Phase 6: Help Template]
-    P6 --> P7[Phase 7: Plugin Defaults]
-    P5 --> P8[Phase 8: Docs]
-    P7 --> P8
-    P8 --> P9[Phase 9: Verify]
-    P9 --> SHIP[PR Merge]
+graph TD
+    P0[Phase 0: Prep] --> P1[Phase 1: Project CoC]
+    P1 --> P2[Phase 2: Template CoC]
+    P2 --> P3[Phase 3: Manifest Entry]
+    P3 --> P3T[Task 3.2: Manifest Test]
+    P1 --> P4A[Task 4.1: CONTRIBUTING.md]
+    P2 --> P4B[Task 4.2: README.md]
+    P3 --> P5[Phase 5: E2E Test]
+    P3 --> P6A[Task 6.1: CHANGELOG]
+    P6A --> P6B[Task 6.2: WORKFLOW]
+    P6B --> P6C[Task 6.3: TECH_DEBT]
+    P5 --> P6D[Task 6.4: just check]
+    P6D --> P6E[Task 6.5: just test:e2e]
+    P6E --> P6F[Task 6.7: Commit]
+    P6F --> DONE[PR Ready]
 
     classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
-    classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
     classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
+    classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
 
-    class P1,P2,P3,P4 crit
-    class P6,P7 par
-    class P5,P8,P9,SHIP gate
+    class P3 crit
+    class P6D,P6E,P6F,DONE gate
+    class P4A,P4B par
 ```
 
-**Critical path:** Phase 0 → 1 → 2 → 3 → 4 → 5 → 8 → 9 (~15h)
-**Parallel branch:** Phase 0 → 6 → 7 → 8 (~3h, agent separado)
-**Convergence:** Phase 8 espera ambos branches
-**Final gate:** Phase 9 (verificación + ship)
+**Critical path:** Phase 0 → 1 → 2 → 3 → 5 → 6 (~2h wall-clock)
+**Parallel opportunity:** Tasks 4.1 and 4.2 (CONTRIBUTING.md + README.md) — independientes, pueden dividirse entre dos agentes
+**Risk:** Phase 3 (FileRuleManifestData) es el único lugar donde un bug silenciosamente rompería la entrega del template — Task 3.2 + Task 5.1 lo cubren
 
 ---
 
 ## Próximo Paso
 
 Una vez aprobado el plan:
-1. **Implementar Phase 0-5** (progress bar) — sequential, ~14h
-2. **Parallel:** Phase 6-7 (help command) — puede ser otro agente, ~3h
-3. **Convergence:** Phase 8 (docs)
-4. **Ship:** Phase 9
+1. **Phase 0** (preparación) — crear branch, verificar baseline (~5min)
+2. **Phase 1-5** (implementación) — secuencial, ~90min
+3. **Phase 6** (docs + verificación) — ~25min
+4. **Total:** ~2h wall-clock
 
 **Comando sugerido:** `> Run /build to start Phase 0 (preparation)`
 
 ---
 
-**Estimated effort:** 17-20h wall-clock (con paralelización)
-**Dependencies:** FEV-13 ✅ cerrado
-**Blockers:** Ninguno
-**Decision Log:** Ver sección "Decisiones UX Confirmadas" arriba
+*Última actualización: 2026-07-30 — Moctezuma (Strategic Planner) — FEV-15 ready to build*
 
----
-
-*Última actualización: 2026-07-30 — Tlaloc (Builder) — FEV-14 COMPLETED*
+Co-Authored-By: Moctezuma <dev@fisherk2.com>
