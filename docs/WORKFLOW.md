@@ -159,30 +159,38 @@ SDD plugin refactorizado con auto-discovery y configuración-driven behavior:
 
 ### Fase FEV-14 — UX Enhancements (v1.2 Phase 4) ✅ Completo
 
-**Fecha:** 2026-07-29 | **Issues:** #47 (Progress bar), #56 (/help command)
+**Fecha:** 2026-07-29 → 2026-07-30 | **Issues:** #47 (Progress bar), #56 (/help command)
 
 #### Resultados
 
 Progress bar implementado durante la instalación (modos Clean, Project, Update):
-- `IProgressHandler` port + `executeWithProgress` callback en `IFileMergeEngine`
-- `ProgressBarAdapter` en `ClackPromptsAdapter` con spinner @clack/prompts
-- Eventos estructurados: file copy, symlink, gitignore generation
-- Progreso muestra: archivo actual, archivos procesados, total, porcentaje
+- `ProgressEvent` discriminated union (6 variantes) en capa Domain — zero external deps
+- `ProgressCallback` opcional en `IFileMergeEngine.execute()` (backward compatible)
+- `FileMergeEngine` pre-computa qué archivos serán staged para total preciso (barra siempre llega 100%)
+- `ClackPromptsAdapter` implementa `clack.progress()` + `clack.log()` con eventos estructurados
+- Callback `createProgressCallback()` extraído a `helpers.ts` (DRY — eliminó duplicación en 3 use cases)
 
 Comando `/help` creado y asignado a Huitzilopochtli:
 - 6 opciones interactivas vía question tool: discover Códice, start project, update workspace, learn SDD cycle, list all 13 commands, troubleshoot
 - Registrado en `COMMAND_AGENT_MAP`, `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS`
-- Wiki Commands.md actualizado con documentación del comando
+- Plugin auto-discovers `commands/help.md` via filesystem scanning (Pillar 1, FEV-13)
 
-**Métricas finales:** 807 tests, 0 fail, 13 commands, `just check` 0 errores.
+Spec/ADR templates actualizados a formatos industriales (MADR v4.0 + RFC-based).
+
+**Code review (Tezcatlipoca):** 🔴 Critical: progress bar re-creation on every stage_start (fixed: barStarted flag); symlink/gitignore logs emitted BEFORE operations (fixed: moved to postInstall.ts). ⚠️ IMPORTANT: total included skipped files (fixed: pre-computed stageDecisions); premature log events DRY violation (fixed: moved to shared postInstall.ts); redundant completeProgress() calls (fixed: removed). 💡 SUGGESTIONS: inline import() types (fixed); JSDoc mismatch (fixed).
+
+**Métricas finales:** 809 tests, 0 fail, 1727 expects, `just check` 0 errores, 12 warnings (pre-existing).
 
 **Archivos clave:**
-- `IProgressHandler.ts` (nuevo) — progress reporting port
-- `ProgressBarAdapter.ts` (nuevo) — spinner-based progress adapter
-- `FileMergeEngine.ts` (actualizado) — progress callback integration
+- `src/domain/types/ProgressEvent.ts` (nuevo) — discriminated union 6 variantes
+- `src/domain/services/FileMergeEngine.ts` (actualizado) — pre-computación stageDecisions + emisión eventos
+- `src/application/helpers.ts` (actualizado) — `createProgressCallback()` extraído (DRY)
+- `src/application/postInstall.ts` (actualizado) — log events emitidos después de cada operación
 - `template/obligatorio/commands/help.md` (nuevo) — /help command definition
-- `sdd-pipeline.ts` (actualizado) — /help registrado en todos los maps
-- `tests/integration/` — 14 nuevos tests de progress events
+- `template/obligatorio/.opencode/plugins/src/defaults.ts` (actualizado) — /help en 4 maps
+- `tests/integration/use-cases/progress-flow.test.ts` (nuevo) — 9 tests de progress events
+- `tests/integration/use-cases/progress-logs.test.ts` (nuevo) — 5 tests de structured logs
+- `tests/integration/adapters/clack-prompts-progress.test.ts` (nuevo) — 7 tests de adapter
 
 ---
 
@@ -247,5 +255,5 @@ Issue #55 identifica la falta de un Code of Conduct para el proyecto y el templa
 - **FEV-11:** ✅ Completo — Binary Removal (Issue #46, npm-only distribution)
 - **FEV-12:** ✅ Completado — References Restructuring (Issues #54, #52)
 - **FEV-13:** ✅ Completo — Documentation Overhaul + SDD Decoupling (Issues #51, #53)
-- **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56)
+- **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** 📋 Pendiente — Community Standards (Issue #55)

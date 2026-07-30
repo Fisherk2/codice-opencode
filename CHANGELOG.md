@@ -7,31 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- **FEV-13 — SDD Plugin Auto-Discovery (Issue #53):** 6 hardcoded maps extracted to `autoDiscovery.ts` — `COMMAND_AGENT_MAP`, `VALID_SUBAGENTS`, and `AGENT_MENTION_PATTERNS` now detected automatically from filesystem (`commands/*.md`, `agents/*.md`). New files: `autoDiscovery.ts` (182 lines), `destructivePatterns.ts`, `normalizeBash.ts`. See [ADR-013](specs/adr/adr-013-plugin-auto-discovery.md).
-- **FEV-13 — Config-Driven Plugin Behavior (Issue #53):** `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS` moved to `defaults.ts` with optional `opencode.json` `sddPipeline` section override. Plugin works without config (backward compatible).
-
-### Changed
-
-- **FEV-13 — Wiki Rewrite (Issue #51):** 8 Wiki pages rewritten for end users — removed all "edit sdd-pipeline.ts" references. Instructions now direct users to create `agents/my-agent.md`, `commands/my-command.md`, `skills/my-skill/SKILL.md` instead.
-- **FEV-13 — Quality Infrastructure (Issue #53):** Biome config extended to plugin directories. Justfile targets added: `check-plugin`, `test-plugin-unit`, `test-plugin-integration`. Plugin test suites: `tests/plugin/unit/`, `tests/plugin/integration/`.
-- **FEV-13 — Documentation Reduction (Issue #51):** WORKFLOW.md, CHANGELOG.md, SPEC.md audited and trimmed to target line counts (<300, <350, <400 respectively).
-
-### Added (FEV-14)
-
-- **Progress bar during installation (Issue #47):** `IProgressHandler` port + `ProgressBarAdapter` with @clack/prompts spinner. Progress events fire for file copy, symlink creation, and gitignore generation. Visible in all three modes (Clean, Project, Update) with current file, count, and percentage display.
-- **New `/help` slash command for onboarding (Issue #56):** Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 13 commands, troubleshoot issues. Assigned to Huitzilopochtli.
-- **`/help` registered in pipeline maps:** Added to `COMMAND_AGENT_MAP`, `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, and `PHASE_SUGGESTIONS` in sdd-pipeline.ts.
-- **14 new integration tests** for progress events and flow verification.
-- **E2E test extended** with progress assertions.
+_No unreleased changes._
 
 ## [1.2.0] — 2026-07-28
+
+### Added
+
+- **ADR-011:** Binary Removal — documents the architectural decision (see `specs/adr/adr-011-binary-removal.md`)
+- **`tests/e2e/codice.sh`:** Wrapper script for `bun run src/cli/main.ts` in E2E tests
+- **FEV-13 — SDD Plugin Auto-Discovery (Issue #53):** 6 hardcoded maps extracted to `autoDiscovery.ts` — `COMMAND_AGENT_MAP`, `VALID_SUBAGENTS`, and `AGENT_MENTION_PATTERNS` now detected automatically from filesystem (`commands/*.md`, `agents/*.md`). New files: `autoDiscovery.ts` (182 lines), `destructivePatterns.ts`, `normalizeBash.ts`. See [ADR-013](specs/adr/adr-013-plugin-auto-discovery.md).
+- **FEV-13 — Config-Driven Plugin Behavior (Issue #53):** `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS` moved to `defaults.ts` with optional `opencode.json` `sddPipeline` section override. Plugin works without config (backward compatible).
+- **FEV-14 — Progress bar during installation (Issue #47):** `ProgressEvent` discriminated union (6 variants: `stage_start`, `stage_complete`, `stage_skip`, `commit_start`, `commit_complete`, `error`) in Domain layer. `ProgressCallback` optional on `IFileMergeEngine.execute()`. `ClackPromptsAdapter` implements `clack.progress()` (heavy style) with `showProgressBar(total, label)`, `updateProgress(current, filePath)`, `completeProgress()`. `logProgressEvent(message)` dispatches by category prefix: `commit:` → success, `symlink:` → success, `gitignore:` → info, `error:` → error, `skip:` → warn. Visible in all three modes (Clean, Project, Update).
+- **FEV-14 — New `/help` slash command for onboarding (Issue #56):** Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 13 commands, troubleshoot issues. Assigned to Huitzilopochtli. Template: `template/obligatorio/commands/help.md` (63 lines).
+- **FEV-14 — `/help` registered in pipeline maps:** Added to `COMMAND_AGENT_MAP`, `INTENT_PATTERNS` (15 EN/ES keywords), `COMMAND_PHASE_MAP` (`idle`), and `PHASE_SUGGESTIONS` in `defaults.ts`.
+- **FEV-14 — Spec/ADR templates with industry formats:** MADR v4.0 ADR template (`template/estandar/specs/adr/adr-template.md`) and RFC-based spec template (`template/estandar/specs/spec-template.md`) replace previous placeholders.
+- **FEV-14 — 14 new integration tests** for progress events, structured logs, and adapter methods.
+- **FEV-14 — E2E test extended** with progress assertions (commit/symlink messages in stdout).
 
 ### Changed
 
 - **BREAKING: Binary compilation removed.** The only installation method is now `bunx @fisherk2-dev/codice` (or `npx @fisherk2-dev/codice`). Compiled binaries are no longer produced or distributed. Users in air-gapped environments can use `npm pack` to download the tarball. See [ADR-011](specs/adr/adr-011-binary-removal.md) for migration details.
 - **FEV-12 (References Restructuring):** 59 reference files moved from centralized `template/obligatorio/references/` to `skills/<name>/references/` for co-location with their primary skill. `opencode.json` now includes a `references` section with 3 example entries (local path + 2 remote repos). `docs/WORKFLOW.md` and `docs/TECH_DEBT.md` removed from `instructions` array. Agent models updated: huitzilopochtli → deepseek-v4-flash, moctezuma steps 20→30, tlaloc steps 90→100. `docs-mcp-server` removed; `codebase-memory-mcp` added (disabled by default). See [ADR-012](specs/adr/adr-012-references-co-location.md).
+- **FEV-13 — Wiki Rewrite (Issue #51):** 8 Wiki pages rewritten for end users — removed all "edit sdd-pipeline.ts" references. Instructions now direct users to create `agents/my-agent.md`, `commands/my-command.md`, `skills/my-skill/SKILL.md` instead.
+- **FEV-13 — Quality Infrastructure (Issue #53):** Biome config extended to plugin directories. Justfile targets added: `check-plugin`, `test-plugin-unit`, `test-plugin-integration`. Plugin test suites: `tests/plugin/unit/`, `tests/plugin/integration/`.
+- **FEV-13 — Documentation Reduction (Issue #51):** WORKFLOW.md, CHANGELOG.md, SPEC.md audited and trimmed to target line counts (<300, <350, <400 respectively).
+- **FEV-14 — DRY extraction — `createProgressCallback()` helper:** Duplicated ~30-line progress callback (3 copies × 30 lines = ~90 lines) extracted to shared `createProgressCallback(userPrompt, label)` in `src/application/helpers.ts`. All 3 use cases now call the shared helper (each reduced by ~28 lines).
+- **FEV-14 — Symlink/gitignore log events moved to `postInstall.ts`:** Log events (`symlink: Created .opencode/agents`, `gitignore: Generated .gitignore`) now emit AFTER each operation completes in `runPostInstallSteps()`, not predicted before. Fixes false success on failure.
+- **FEV-14 — 13 command files updated** with explicit subagent delegation patterns (sequential only, never parallel).
+- **SC-15:** Updated to "npm package (tarball) size < 5MB" (previous SC-15 about compiled binaries removed)
+- **ARCHITECTURE.md:** Added ADR-011 to ADR table
+
+### Fixed
+
+- **FEV-14 — Progress bar re-creation on every `stage_start` (CRITICAL):** `showProgressBar()` was called on every event, orphaning previous `clack.progress()` instances. Fixed: added `barStarted` closure flag — bar initializes once, advances on subsequent events.
+- **FEV-14 — Progress total included skipped files:** `total` counted all non-virtual rules, but only some got staged. Fixed: `FileMergeEngine` pre-computes `stageDecisions` Map; `total` reflects only staged files. Bar always reaches 100%.
+- **FEV-14 — Symlink/gitignore logs emitted before operations (CRITICAL):** Success log was emitted before the actual symlink/gitignore creation. If creation failed, log falsely claimed success. Fixed: logs moved inside `runPostInstallSteps()`.
+- **FEV-14 — Redundant `completeProgress()` calls:** Use cases called `completeProgress()` on merge failure, but the progress callback already handled this via the `error` event. Fixed: removed 3 redundant calls.
+- **FEV-14 — Inline `import()` types in tests:** Test file used `import("path").Type` syntax 6 times. Fixed: top-level imports added, inline references removed.
 
 ### Removed
 
@@ -41,16 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Binary install documentation** — Offline/air-gapped binary install section removed from README
 - **Binary build instructions** — Removed from CONTRIBUTING.md
 - **SC-15** — "Compiled binaries are produced for Linux, macOS, and Windows x64" removed from SPEC.md
-
-### Added
-
-- **ADR-011:** Binary Removal — documents the architectural decision (see `specs/adr/adr-011-binary-removal.md`)
-- **`tests/e2e/codice.sh`:** Wrapper script for `bun run src/cli/main.ts` in E2E tests
-
-### Changed (non-breaking)
-
-- **SC-15:** Updated to "npm package (tarball) size < 5MB" (previous SC-15 about compiled binaries removed)
-- **ARCHITECTURE.md:** Added ADR-011 to ADR table
 
 ## [1.1.3] — 2026-07-11
 
