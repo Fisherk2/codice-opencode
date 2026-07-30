@@ -201,6 +201,8 @@ bunx @fisherk2-dev/codice --version
 bunx @fisherk2-dev/codice --help
 ```
 
+> Use `--verbose` for detailed logging of every step.
+
 ### Flags
 
 | Flag | Description |
@@ -268,10 +270,6 @@ flowchart LR
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
 | `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
 | Symlinks not created | If `.opencode/agents` is missing after installation, re-run the installer. Symlinks are created during post-installation and require write permissions in the project directory |
-
-### Progress Bar
-
-During installation (Clean, Project, and Update modes), Códice displays a live progress bar with file-by-file visibility. You'll see the current file being processed, total files completed, percentage progress, and structured log events for each operation (file copy, symlink creation, gitignore generation). Use `--verbose` for detailed logging of every step.
 
 ---
 
