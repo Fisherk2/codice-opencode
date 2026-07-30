@@ -144,8 +144,7 @@ Códice installs an OpenCode workspace template organized into three file catego
 2. Update the agent catalog at the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents).
 3. Update delegation tables of primary agents that can invoke the new agent (quetzalcoatl, tlaloc, mictlantecuhtli).
 4. Update huitzilopochtli's catalog in `agents/huitzilopochtli.md`.
-5. Add the name to `VALID_SUBAGENTS` Set in `.opencode/plugins/sdd-pipeline.ts`.
-6. Restart your OpenCode session.
+5. Restart your OpenCode session.
 
 **Primary agents** additionally require: SDD plugin hooks, orchestration patterns, and persona table updates.
 
@@ -162,7 +161,7 @@ Códice installs an OpenCode workspace template organized into three file catego
 
 1. Create `commands/<command-name>.md` with YAML frontmatter (`description`, `agent` target).
 2. Write numbered steps referencing skills (`@skills/name/SKILL.md`) and using the `question` tool at decision points.
-3. Update documentation and add to `COMMAND_AGENT_MAP` in `.opencode/plugins/sdd-pipeline.ts`.
+3. Update documentation and add to the [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands).
 4. Restart your OpenCode session.
 
 ### Add a New MCP Server
@@ -207,4 +206,4 @@ See [docs/wiki-source/README.md](docs/wiki-source/README.md) for the full proced
 
 ---
 
-*Last revised: 2026-07-11*
+*Last revised: 2026-07-30*
