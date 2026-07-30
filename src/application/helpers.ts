@@ -16,6 +16,7 @@
 
 import type { IFileSystem } from "../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../domain/ports/IStagingSystem";
+import type { ProgressCallback } from "../domain/types/ProgressEvent";
 import { failure, type Result, success } from "../domain/types/Result";
 import type { IUserPrompt } from "./ports/IUserPrompt";
 
@@ -105,4 +106,56 @@ export async function writeVersionFileSafe(
 			),
 		);
 	}
+}
+
+/**
+ * Create a progress callback wired to the given TUI prompt adapter.
+ *
+ * Shared across all three installation modes (Clean, Project, Update)
+ * to avoid duplicating the switch-on-event-type pattern.
+ *
+ * The callback:
+ * - Sets up a progress bar once on the first stage_start event.
+ * - Advances the bar per file via updateProgress.
+ * - Logs structured events for commit start/complete and errors.
+ * - Catches listener exceptions to ensure the progress bar is always
+ *   completed, even if a downstream handler throws.
+ *
+ * @param userPrompt - TUI adapter implementing IUserPrompt.
+ * @param label - Descriptive label for the progress bar (e.g. "Clean install...").
+ * @returns A ProgressCallback suitable for FileMergeEngine.execute().
+ */
+export function createProgressCallback(userPrompt: IUserPrompt, label: string): ProgressCallback {
+	let barStarted = false;
+	return (event) => {
+		try {
+			switch (event.type) {
+				case "stage_start":
+					if (!barStarted) {
+						userPrompt.showProgressBar(event.total, label);
+						barStarted = true;
+					}
+					userPrompt.updateProgress(event.current, event.filePath);
+					break;
+				case "stage_complete":
+					userPrompt.updateProgress(event.current, event.filePath);
+					break;
+				case "stage_skip":
+					break;
+				case "commit_start":
+					userPrompt.logProgressEvent(`commit: Committing ${event.total} files atomically...`);
+					break;
+				case "commit_complete":
+					userPrompt.logProgressEvent(`commit: ${event.total} files committed`);
+					userPrompt.completeProgress();
+					break;
+				case "error":
+					userPrompt.logProgressEvent(`error: ${event.filePath}: ${event.message}`);
+					userPrompt.completeProgress();
+					break;
+			}
+		} catch {
+			userPrompt.completeProgress();
+		}
+	};
 }

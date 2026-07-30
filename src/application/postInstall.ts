@@ -104,6 +104,9 @@ export interface PostInstallOptions {
  * 3. Create .devin/{skills,workflows,rules/*} symlinks (only if .devin selected).
  * 4. Write .codice-version file with version + optional selections.
  *
+ * Each step emits a logProgressEvent AFTER the operation completes, so the
+ * log reflects actual results — not predicted intent.
+ *
  * @returns Result indicating success (version written) or failure (version write error).
  */
 export async function runPostInstallSteps(
@@ -126,6 +129,7 @@ export async function runPostInstallSteps(
 
 	// Step 1: Generate .gitignore from template (graceful on failure)
 	await createGitignoreSafe(gitignoreCreator, userPrompt, destinationPath);
+	userPrompt.logProgressEvent("gitignore: Generated .gitignore");
 
 	// Step 2: Create .opencode/ symlinks always
 	await createSymlinksWithWarning(
@@ -135,10 +139,16 @@ export async function runPostInstallSteps(
 		"opencode",
 		retryHint,
 	);
+	for (const spec of opencodeSymlinks) {
+		userPrompt.logProgressEvent(`symlink: Created ${spec.linkPath}`);
+	}
 
 	// Step 3: Create .devin/ symlinks only if user selected .devin
 	if (selectedOptionals.includes(".devin")) {
 		await createSymlinksWithWarning(symlinkCreator, userPrompt, devinSymlinks, "devin");
+		for (const spec of devinSymlinks) {
+			userPrompt.logProgressEvent(`symlink: Created ${spec.linkPath}`);
+		}
 	}
 
 	// Step 4: Write version file with optionalSelections recorded

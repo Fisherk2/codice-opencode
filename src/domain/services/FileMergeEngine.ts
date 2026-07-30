@@ -35,8 +35,15 @@ export class FileMergeEngine implements IFileMergeEngine {
 		// with optional sub-paths, so each file is copied only once.
 		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
 
-		// Count files eligible for staging (exclude virtual noTemplateCopy entries).
-		const total = rules.filter((r) => !r.noTemplateCopy).length;
+		// Pre-compute which non-virtual rules should be staged, so we can
+		// report an accurate total to the progress bar (it will always reach
+		// 100% because total reflects only files that will actually be staged).
+		const stageDecisions = new Map<string, boolean>();
+		for (const rule of rules) {
+			if (rule.noTemplateCopy) continue;
+			stageDecisions.set(rule.path, await this.shouldStage(rule, selected));
+		}
+		const total = [...stageDecisions.values()].filter(Boolean).length;
 		let current = 0;
 
 		// Phase 1: Stage all files
@@ -51,9 +58,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 				continue;
 			}
 
-			current++;
-
-			const shouldStage = await this.shouldStage(rule, selected);
+			const shouldStage = stageDecisions.get(rule.path)!;
 			if (!shouldStage) {
 				this.safeEmit(onProgress, {
 					type: "stage_skip",
@@ -62,6 +67,8 @@ export class FileMergeEngine implements IFileMergeEngine {
 				});
 				continue;
 			}
+
+			current++;
 
 			const excludeSubDirs = this.computeExclusions(rule, optionalPaths);
 

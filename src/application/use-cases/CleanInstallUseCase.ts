@@ -3,9 +3,8 @@ import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../domain/entities/Fi
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
-import type { ProgressCallback } from "../../domain/types/ProgressEvent";
 import { failure, type Result, success } from "../../domain/types/Result";
-import { checkWritable, confirmOverwrite } from "../helpers";
+import { checkWritable, confirmOverwrite, createProgressCallback } from "../helpers";
 import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
@@ -83,51 +82,16 @@ export class CleanInstallUseCase {
 		const allRules = this.buildRules(selectedOptionals);
 
 		// Phase 5: Execute merge with progress
-		const label = "Clean install...";
-		const onProgress: ProgressCallback = (event) => {
-			try {
-				switch (event.type) {
-					case "stage_start":
-						this.userPrompt.showProgressBar(event.total, label);
-						this.userPrompt.updateProgress(event.current, event.filePath);
-						break;
-					case "stage_complete":
-						this.userPrompt.updateProgress(event.current, event.filePath);
-						break;
-					case "stage_skip":
-						break;
-					case "commit_start":
-						this.userPrompt.logProgressEvent(
-							`commit: Committing ${event.total} files atomically...`,
-						);
-						break;
-					case "commit_complete":
-						this.userPrompt.logProgressEvent(`commit: ${event.total} files committed`);
-						this.userPrompt.completeProgress();
-						break;
-					case "error":
-						this.userPrompt.logProgressEvent(`error: ${event.filePath}: ${event.message}`);
-						this.userPrompt.completeProgress();
-						break;
-				}
-			} catch {
-				this.userPrompt.completeProgress();
-			}
-		};
+		const onProgress = createProgressCallback(this.userPrompt, "Clean install...");
 
 		const mergeResult = await this.mergeEngine.execute(allRules, undefined, onProgress);
 		if (!mergeResult.ok) {
-			this.userPrompt.completeProgress();
+			// progress callback already called completeProgress() on the error event
 			return failure(new Error(mergeResult.error.message));
 		}
 
-		// Post-merge log events
-		this.userPrompt.logProgressEvent("symlink: Created .opencode/agents");
-		this.userPrompt.logProgressEvent("symlink: Created .opencode/commands");
-		this.userPrompt.logProgressEvent("symlink: Created .opencode/skills");
-		this.userPrompt.logProgressEvent("gitignore: Generated .gitignore");
-
-		// Phase 6: Post-install steps
+		// Phase 6: Post-install steps (log events emitted inside runPostInstallSteps
+		// after each operation, not predicted before)
 		return await this.runPostInstall(destinationPath, selectedOptionals, options?.version);
 	}
 
