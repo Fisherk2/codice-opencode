@@ -13,6 +13,7 @@ import type { FileRule } from "../../../src/domain/entities/FileRule";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
+import type { ProgressEvent } from "../../../src/domain/types/ProgressEvent";
 
 // ---- Mock IFileSystem + IStagingSystem ----
 
@@ -435,11 +436,11 @@ describe("FileMergeEngine — Exclusion logic", () => {
 
 describe("FileMergeEngine — Progress events", () => {
 	function collectEvents(): {
-		cb: (e: import("../../../src/domain/types/ProgressEvent").ProgressEvent) => void;
-		events: import("../../../src/domain/types/ProgressEvent").ProgressEvent[];
+		cb: (e: ProgressEvent) => void;
+		events: ProgressEvent[];
 	} {
-		const events: import("../../../src/domain/types/ProgressEvent").ProgressEvent[] = [];
-		const cb = (e: import("../../../src/domain/types/ProgressEvent").ProgressEvent): void => {
+		const events: ProgressEvent[] = [];
+		const cb = (e: ProgressEvent): void => {
 			events.push(e);
 		};
 		return { cb, events };
@@ -468,7 +469,7 @@ describe("FileMergeEngine — Progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const { cb, events } = collectEvents();
 
-		const rules: import("../../../src/domain/entities/FileRule").FileRule[] = [
+		const rules: FileRule[] = [
 			{
 				path: ".devin",
 				category: "optional",
@@ -612,7 +613,7 @@ describe("FileMergeEngine — Progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const { cb, events } = collectEvents();
 
-		const rules: import("../../../src/domain/entities/FileRule").FileRule[] = [
+		const rules: FileRule[] = [
 			{ path: "opencode.json", category: "mandatory", isDirectory: false, description: "Config" },
 			{
 				path: ".devin",

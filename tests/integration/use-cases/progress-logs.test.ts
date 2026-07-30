@@ -166,7 +166,7 @@ describe("CleanInstallUseCase structured log events", () => {
 		expect(prompt.logProgressEvent).toHaveBeenCalledWith("gitignore: Generated .gitignore");
 	});
 
-	it("should emit commit messages before symlink and gitignore messages", async () => {
+	it("should emit commit messages before gitignore and symlink messages", async () => {
 		const { stub: fs } = createMockFileSystem();
 		const engine = new FileMergeEngine(fs);
 		const prompt = createMockPrompt();
@@ -193,17 +193,18 @@ describe("CleanInstallUseCase structured log events", () => {
 		const commitCompleteIdx = logEntries.findIndex(
 			(msg) => msg.startsWith("commit: ") && msg.endsWith("committed"),
 		);
-		const symlinkIdx = logEntries.findIndex((msg) => msg.startsWith("symlink:"));
 		const gitignoreIdx = logEntries.findIndex((msg) => msg.startsWith("gitignore:"));
+		const symlinkIdx = logEntries.findIndex((msg) => msg.startsWith("symlink:"));
 
 		// All indices should be found
 		expect(commitStartIdx).toBeGreaterThanOrEqual(0);
 		expect(commitCompleteIdx).toBeGreaterThan(commitStartIdx);
-		expect(symlinkIdx).toBeGreaterThan(commitCompleteIdx);
-		expect(gitignoreIdx).toBeGreaterThan(symlinkIdx);
+		// gitignore and symlink events now emit AFTER commit (from postInstall.ts)
+		expect(gitignoreIdx).toBeGreaterThan(commitCompleteIdx);
+		expect(symlinkIdx).toBeGreaterThan(gitignoreIdx);
 	});
 
-	it("should emit 6 structured log events in total (2 commit + 3 symlink + 1 gitignore)", async () => {
+	it("should emit log events for all opencode and devin symlinks (2 commit + 1 gitignore + 10 symlinks)", async () => {
 		const { stub: fs } = createMockFileSystem();
 		const engine = new FileMergeEngine(fs);
 		const prompt = createMockPrompt();
@@ -229,9 +230,12 @@ describe("CleanInstallUseCase structured log events", () => {
 		const gitignoreCalls = prompt.logEntries.filter((msg) => msg.startsWith("gitignore:"));
 
 		expect(commitCalls).toHaveLength(2);
-		expect(symlinkCalls).toHaveLength(3);
+		// All opencode (3) + devin (7) symlinks get log events
+		expect(symlinkCalls).toHaveLength(OPENCODE_SYMLINKS.length + DEVIN_SYMLINKS.length);
 		expect(gitignoreCalls).toHaveLength(1);
-		expect(prompt.logEntries).toHaveLength(6);
+		expect(prompt.logEntries).toHaveLength(
+			2 + 1 + OPENCODE_SYMLINKS.length + DEVIN_SYMLINKS.length,
+		);
 	});
 
 	it("should emit only commit log events when merge fails (no symlink/gitignore)", async () => {
