@@ -2,13 +2,13 @@
 
 First off, thank you for considering contributing to Códice!
 
-This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). By participating, you are expected to uphold this code.
+By participating, you agree to abide by this project's [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ---
 
 ## Code of Conduct
 
-This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). By participating, you are expected to uphold this code. Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for details.
+This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/), version 2.1. Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before contributing.
 
 ## Quick Start
 

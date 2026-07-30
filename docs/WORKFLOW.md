@@ -203,7 +203,7 @@ Spec/ADR templates actualizados a formatos industriales (MADR v4.0 + RFC-based).
 Issue #55 resuelto — Code of Conduct para el proyecto y el template de workspace:
 
 - **Project `CODE_OF_CONDUCT.md`** (root): Contributor Covenant v2.1, contacto `dev@fisherk2.com`, 7 secciones (Pledge, Standards, Enforcement Responsibilities, Scope, Enforcement, Enforcement Guidelines, Attribution).
-- **Template `CODE_OF_CONDUCT.md`** (`template/estandar/`): Placeholder personalizable con 3 placeholders (`[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]`). Misma estructura que el proyecto.
+- **Template `CODE_OF_CONDUCT.md`** (`template/estandar/`): Placeholder personalizable con 2 placeholders (`[PROJECT_NAME]`, `[CONTACT_EMAIL]`). Misma estructura que el proyecto.
 - **Manifest integration (CRÍTICO):** `CODE_OF_CONDUCT.md` registrado en `FileRuleManifestData.ts` con `category: "standard"`. Sin este cambio, el template CoC nunca llegaría al destino.
 - **Unit test:** Dos nuevos tests en `file-rule-manifest.test.ts`: verifica que `CODE_OF_CONDUCT.md` está en el manifest con `category: "standard"` e `isDirectory: false`.
 - **Cross-references:** `CONTRIBUTING.md` ganó sección `## Code of Conduct` (antes de Quick Start); `README.md` ganó la misma sección (antes de License) con referencia al template.

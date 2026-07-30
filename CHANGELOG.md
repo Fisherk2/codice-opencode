@@ -7,17 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- **FEV-15 — Project Code of Conduct (Issue #55):** `CODE_OF_CONDUCT.md` added to repo root, adapted from [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html). Contact: `dev@fisherk2.com`. Sections: Pledge, Standards, Enforcement Responsibilities, Scope, Enforcement, Enforcement Guidelines, Attribution.
-- **FEV-15 — Template Code of Conduct:** `template/estandar/CODE_OF_CONDUCT.md` created as a customizable placeholder for workspace users. Includes 3 placeholders (`[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]`) that users replace when adopting the template.
-- **FEV-15 — Manifest integration:** `CODE_OF_CONDUCT.md` registered in `FileRuleManifestData.ts` with `category: "standard"` so the template CoC is delivered to user destinations.
-- **FEV-15 — Cross-references:** `CONTRIBUTING.md` gains a `## Code of Conduct` section (before `## Quick Start`); `README.md` gains the same section (before `## License`).
-- **FEV-15 — E2E test extension:** `tests/e2e/01-clean-install.sh` asserts `CODE_OF_CONDUCT.md` is delivered and contains `Our Pledge`.
-
-### Changed
-
-- **FEV-15 — FileRuleManifestData delivery surface:** 1 new entry in `FileRuleManifestData.ts` (now tracks 18 standard files, was 17).
+_No unreleased changes._
 
 ## [1.2.0] — 2026-07-28
 
@@ -33,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **FEV-14 — Spec/ADR templates with industry formats:** MADR v4.0 ADR template (`template/estandar/specs/adr/adr-template.md`) and RFC-based spec template (`template/estandar/specs/spec-template.md`) replace previous placeholders.
 - **FEV-14 — 14 new integration tests** for progress events, structured logs, and adapter methods.
 - **FEV-14 — E2E test extended** with progress assertions (commit/symlink messages in stdout).
+- **FEV-15 — Project Code of Conduct (Issue #55):** `CODE_OF_CONDUCT.md` added to repo root, adapted from [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html). Contact: `dev@fisherk2.com`.
+- **FEV-15 — Template Code of Conduct:** `template/estandar/CODE_OF_CONDUCT.md` created as a customizable placeholder. Includes 2 placeholders (`[PROJECT_NAME]`, `[CONTACT_EMAIL]`).
+- **FEV-15 — Manifest integration:** `CODE_OF_CONDUCT.md` registered in `FileRuleManifestData.ts` with `category: "standard"` (18 standard files, was 17).
+- **FEV-15 — Cross-references:** `CONTRIBUTING.md` and `README.md` updated with `## Code of Conduct` sections.
+- **FEV-15 — E2E test extension:** `tests/e2e/01-clean-install.sh` asserts `CODE_OF_CONDUCT.md` delivery and content.
 
 ### Changed
 
@@ -46,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **FEV-14 — 13 command files updated** with explicit subagent delegation patterns (sequential only, never parallel).
 - **SC-15:** Updated to "npm package (tarball) size < 5MB" (previous SC-15 about compiled binaries removed)
 - **ARCHITECTURE.md:** Added ADR-011 to ADR table
+- **FEV-15 — FileRuleManifestData delivery surface:** 1 new entry in `FileRuleManifestData.ts` (now tracks 18 standard files, was 17).
 
 ### Fixed
 
