@@ -54,6 +54,8 @@ function createMockFileSystem(): {
 			calls.writeVersionFile.push(data);
 		}),
 		readVersionFile: mockFn(() => Promise.resolve(null)),
+		walkTemplateDirectory: mockFn(() => Promise.resolve([])),
+		walkDestinationDirectory: mockFn(() => Promise.resolve([])),
 	};
 
 	return { stub, calls };

@@ -40,4 +40,24 @@ export interface IFileSystem {
 	 * Read the .codice-version file from destination root.
 	 */
 	readVersionFile(): Promise<string | null>;
+
+	/**
+	 * Walk a directory relative to the template root and return
+	 * relative paths of all files within it, sorted.
+	 *
+	 * @param relativePath - Path relative to the template root
+	 *   (e.g. "docs" walks template/estandar/docs on disk).
+	 * @returns Sorted array of file paths relative to the given directory.
+	 */
+	walkTemplateDirectory(relativePath: string): Promise<readonly string[]>;
+
+	/**
+	 * Walk a directory relative to the destination root and return
+	 * relative paths of all files within it, sorted.
+	 *
+	 * @param relativePath - Path relative to the destination root
+	 *   (e.g. "docs" walks <dest>/docs on disk).
+	 * @returns Sorted array of file paths relative to the given directory.
+	 */
+	walkDestinationDirectory(relativePath: string): Promise<readonly string[]>;
 }

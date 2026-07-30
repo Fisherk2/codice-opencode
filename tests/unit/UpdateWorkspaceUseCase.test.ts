@@ -21,6 +21,7 @@ import type { IFileMergeEngine } from "../../src/domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../src/domain/ports/IFileSystem";
 import type { IVersionComparator, ReleaseType } from "../../src/domain/ports/IVersionComparator";
 import type { MergeError } from "../../src/domain/types/MergeError";
+import type { ProgressCallback } from "../../src/domain/types/ProgressEvent";
 import { type Result, success } from "../../src/domain/types/Result";
 import type { ComparisonResult } from "../../src/domain/types/version";
 
@@ -54,6 +55,12 @@ class FakeFileSystem implements IFileSystem {
 	async readVersionFile(): Promise<string | null> {
 		return null;
 	}
+	async walkTemplateDirectory(_path: string): Promise<readonly string[]> {
+		return [];
+	}
+	async walkDestinationDirectory(_path: string): Promise<readonly string[]> {
+		return [];
+	}
 }
 
 class CaptureMergeEngine implements IFileMergeEngine {
@@ -61,6 +68,8 @@ class CaptureMergeEngine implements IFileMergeEngine {
 	async execute(
 		rules: readonly FileRule[],
 		_selectedOptionals?: readonly string[],
+		_onProgress?: ProgressCallback,
+		_isUpdateMode?: boolean,
 	): Promise<Result<void, MergeError>> {
 		this.capturedRules = Array.from(rules);
 		return success(undefined);

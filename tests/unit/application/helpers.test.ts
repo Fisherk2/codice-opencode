@@ -13,6 +13,8 @@ function createMockFileSystem(opts?: { isEmpty?: boolean }): IFileSystem {
 		isEmpty: mockFn(() => Promise.resolve(opts?.isEmpty ?? true)),
 		writeVersionFile: mockFn(async () => {}),
 		readVersionFile: mockFn(() => Promise.resolve(null)),
+		walkTemplateDirectory: mockFn(() => Promise.resolve([])),
+		walkDestinationDirectory: mockFn(() => Promise.resolve([])),
 	};
 }
 

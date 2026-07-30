@@ -51,6 +51,8 @@ function createMockFs(): {
 		isEmpty: async () => true,
 		writeVersionFile: async () => {},
 		readVersionFile: async () => null,
+		walkTemplateDirectory: async (_path: string) => [],
+		walkDestinationDirectory: async (_path: string) => [],
 	};
 
 	return { fs: mockFs, calls };
@@ -326,9 +328,9 @@ describe("FileMergeEngine — Error handling", () => {
 		// No files to stage
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
 		expect(stageCalls.length).toBe(0);
-		// commitStaging is still called (no-op on empty staging dir)
+		// commitStaging is NOT called when total is 0 (nothing staged)
 		const commitCalls = calls.filter((c) => c.method === "commitStaging");
-		expect(commitCalls.length).toBe(1);
+		expect(commitCalls.length).toBe(0);
 	});
 
 	test("does NOT call commitStaging if stageFile failed", async () => {

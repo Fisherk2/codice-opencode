@@ -5,6 +5,7 @@ import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import { VERSION_FILE_NAME } from "../config/constants";
 import { AtomicStager } from "./AtomicStager";
 import { TemplateResolver } from "./TemplateResolver";
+import { walkDirectory } from "./directoryWalker";
 
 /**
  * Bun-compatible filesystem adapter with atomic staging support.
@@ -189,5 +190,25 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		} catch {
 			return null;
 		}
+	}
+
+	/**
+	 * Walk a directory relative to the template root and return
+	 * relative paths of all files within it.
+	 */
+	async walkTemplateDirectory(relativePath: string): Promise<readonly string[]> {
+		const resolved = await this.templateResolver.resolvePath(relativePath);
+		const files = await walkDirectory(resolved);
+		return files.map((f) => path.relative(resolved, f)).sort();
+	}
+
+	/**
+	 * Walk a directory relative to the destination root and return
+	 * relative paths of all files within it.
+	 */
+	async walkDestinationDirectory(relativePath: string): Promise<readonly string[]> {
+		const resolved = this.atomicStager.resolveDestinationPath(relativePath);
+		const files = await walkDirectory(resolved);
+		return files.map((f) => path.relative(resolved, f)).sort();
 	}
 }

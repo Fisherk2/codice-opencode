@@ -137,6 +137,8 @@ function createMockFileSystem(writeVersionShouldFail = false): IFileSystem & ISt
 			}
 		}),
 		readVersionFile: mockFn(() => Promise.resolve(null)),
+		walkTemplateDirectory: mockFn(() => Promise.resolve([])),
+		walkDestinationDirectory: mockFn(() => Promise.resolve([])),
 	};
 }
 

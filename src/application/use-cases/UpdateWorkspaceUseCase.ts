@@ -147,7 +147,7 @@ export class UpdateWorkspaceUseCase {
 		// Execute the merge engine with progress
 		const onProgress = createProgressCallback(this.userPrompt, "Updating files...");
 
-		const mergeResult = await this.mergeEngine.execute(updateRules, undefined, onProgress);
+		const mergeResult = await this.mergeEngine.execute(updateRules, undefined, onProgress, true);
 		if (!mergeResult.ok) {
 			// progress callback already called completeProgress() on the error event
 			return failure(new Error(mergeResult.error.message));

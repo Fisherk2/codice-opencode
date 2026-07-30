@@ -20,11 +20,15 @@ export interface IFileMergeEngine {
 	 *   execution. Receives a discriminated ProgressEvent describing the current
 	 *   phase, file path, and progress counters. The callback is wrapped in a
 	 *   try/catch so that a faulty listener never interrupts the merge.
+	 * @param isUpdateMode - When true, standard directories use tree-level diffing
+	 *   to stage only files that are new in the template but missing in the
+	 *   destination, instead of skipping the entire directory. Defaults to false.
 	 * @returns Result<void, MergeError> — success if all operations complete.
 	 */
 	execute(
 		rules: readonly FileRule[],
 		selectedOptionals?: readonly string[],
 		onProgress?: ProgressCallback,
+		isUpdateMode?: boolean,
 	): Promise<Result<void, MergeError>>;
 }

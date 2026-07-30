@@ -69,3 +69,33 @@ test-plugin-integration:
 # Run plugin E2E tests
 test-plugin-e2e:
     bash tests/plugin/e2e/run-plugin-e2e.sh
+
+# ─── Performance Benchmarks ────────────────────────────────────────────────────
+
+# Run installation performance benchmarks with hyperfine.
+# Requires: cargo install hyperfine (or download from GitHub releases)
+bench:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p tests/fixtures/bench
+    echo "Benchmarking Clean Install..."
+    hyperfine \
+        --warmup 1 \
+        --runs 5 \
+        --export-json tests/fixtures/bench/clean-install.json \
+        --command-name "clean-install" \
+        "bun run src/cli/main.ts --mode clean --dest tests/fixtures/bench/clean --force"
+    echo "Benchmarking Project Install..."
+    hyperfine \
+        --warmup 1 \
+        --runs 5 \
+        --export-json tests/fixtures/bench/project-install.json \
+        --command-name "project-install" \
+        "bun run src/cli/main.ts --mode project --dest tests/fixtures/bench/project --force"
+    echo "Benchmarking Update Workspace..."
+    hyperfine \
+        --warmup 1 \
+        --runs 5 \
+        --export-json tests/fixtures/bench/update-workspace.json \
+        --command-name "update-workspace" \
+        "bun run src/cli/main.ts --mode update --dest tests/fixtures/bench/update --force"

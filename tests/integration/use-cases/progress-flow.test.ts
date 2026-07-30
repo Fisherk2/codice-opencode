@@ -56,6 +56,8 @@ function createMockFileSystem(): {
 		isEmpty: mockFn(() => Promise.resolve(true)),
 		writeVersionFile: mockFn(() => Promise.resolve()),
 		readVersionFile: mockFn(() => Promise.resolve(null)),
+		walkTemplateDirectory: mockFn(() => Promise.resolve([])),
+		walkDestinationDirectory: mockFn(() => Promise.resolve([])),
 	};
 
 	return { stub, calls };
