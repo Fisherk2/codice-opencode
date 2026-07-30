@@ -215,14 +215,7 @@ If `/deploy` introduces a new SDD phase (e.g., a "Deploy" phase between Ship and
 
 Review the `## Suggested Next Step` blocks in existing commands to see if any should add `/deploy` as a suggestion. For example, `/ship` could suggest: *"Run `/deploy` to push to production, or run `/docs-update` for documentation maintenance."*
 
-### Step 6: Update Documentation
-
-Add the new command to:
-- [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) — Command creation documentation
-- [Configuration](Configuration) — Full `opencode.json` reference and customization guide
-- `README.md` — Full-cycle phase table and Mermaid diagram (if applicable)
-
-### Step 7: Restart OpenCode
+### Step 6: Restart OpenCode
 
 Restart your OpenCode session so it recognizes the new command file.
 

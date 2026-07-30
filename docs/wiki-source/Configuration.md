@@ -281,7 +281,6 @@ The `references` section configures local directories or Git repositories that a
   }
 }
 ```
-```
 
 > **Note:** These are examples — add your own references by editing `opencode.json`. The template does not ship with all 18 skill references pre-configured; users add the ones they need.
 

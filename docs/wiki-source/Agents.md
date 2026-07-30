@@ -247,11 +247,7 @@ task:
   "joke-teller": allow
 ```
 
-### Step 5: Update the Agent Index
-
-Add the new agent to the global catalog on the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents) page under the appropriate domain section.
-
-### Step 6: Restart OpenCode
+### Step 5: Restart OpenCode
 
 Restart your OpenCode session so it recognizes the new agent. Without a restart, `task("joke-teller")` will fail because OpenCode only loads agent files at startup.
 
