@@ -1,27 +1,37 @@
-# Implementation Plan: FEV-15 — Community Standards (v1.2 Phase 5)
+# Implementation Plan: FEV-16 — v1.2.0 Pre-release Tech Debt Closure
 
-**Phase:** FEV-15 (v1.2 Phase 5) — 📋 Pendiente
-**Issue:** [#55](https://github.com/fisherk2/codice-opencode/issues/55) — Añadir código de conducta
-**Spec:** [SPEC.md](../SPEC.md), [docs/WORKFLOW.md](../docs/WORKFLOW.md) §FEV-15, [docs/diagnosis/fix08-v1.2-phase5-community.md](../docs/diagnosis/fix08-v1.2-phase5-community.md)
+**Phase:** FEV-16 (v1.2 Phase 6) — 📋 Pendiente
+**Scope:** Mega-FEV consolidado (5 items del TECH_DEBT.md sin FEV registrado)
+**Spec:** [SPEC.md](../SPEC.md), [docs/WORKFLOW.md](../docs/WORKFLOW.md) §FEV-16, [docs/TECH_DEBT.md](../docs/TECH_DEBT.md)
 **Date:** 2026-07-30
 **Author:** Moctezuma (Strategic Planner)
-**Branch base:** `feat/ux-docs-wiki` (FEV-14 ya mergeado)
-**Methodology:** Vertical slicing + Strategy pattern (manifest category) + Additive docs
+**Branch base:** `develop` (FEV-15 ✅ ya mergeado)
+**Methodology:** Vertical slicing + Critical path first + Parallel where possible + Template Method pattern (GoF) + Strategy pattern (existing) + Tree-level diff
 
 ---
 
 ## Overview
 
-Resolver **Issue #55** añadiendo un **Code of Conduct** al proyecto Códice y un **placeholder personalizable** al template de workspace. El CoC del proyecto sigue **Contributor Covenant v2.1** (estándar de la industria usado por React, Rails, Node.js). El CoC del template usa placeholders `[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]` que el usuario final personaliza al instalarlo en su proyecto.
+Cerrar la deuda técnica listada en [`docs/TECH_DEBT.md`](../docs/TECH_DEBT.md) que está **preparada para v1.2.0** pero **no asignada a ningún FEV registrado**, antes del pre-release de v1.2.0. Esto consolida **5 items** en un único **FEV-16** con **4 workstreams paralelos** y **1 workstream secuencial** (coverage).
 
-**Cambio técnico crítico (identificado en `fix08`, omitido en `WORKFLOW.md` §FEV-15):** El template `CODE_OF_CONDUCT.md` **no se copiará al destino** a menos que se registre en `src/domain/entities/FileRuleManifestData.ts` con `category: "standard"`. Sin esta entrada, el CoC queda huérfano en `template/estandar/` y nunca se entrega. El plan lo incluye como **Task 3** (no opcional).
+**Items incluidos (verificados vía `grep` en TECH_DEBT.md):**
+
+| ID | Sección | Item | Esfuerzo | Tipo |
+|----|---------|------|----------|------|
+| TD-1.1 | §1.1 | `src/cli/main.ts` coverage (interactive mode + catch block) | 2h | Test infrastructure |
+| TD-2.1 | §2.1 | CleanInstall/ProjectInstall duplicación (Template Method refactor) | 4h | Code refactor (GoF) |
+| TD-5.1 | §5.1 | E2E Coverage Not Captured by `bun --coverage` | 8h | Test infrastructure |
+| TD-5.2 | §5.2 | No Performance Benchmarks (SC-9/10/11 sin automatizar) | 4h | Test infrastructure |
+| TD-6.2 | §6.2 | Standard Directory Updates Are All-or-Nothing | 6h | Domain logic (Strategy) |
+| | | **TOTAL** | **24h** | |
 
 **Restricciones del usuario confirmadas (vía question tool, 2026-07-30):**
-- **Alcance:** Completo (8 tareas) — incluye `FileRuleManifestData.ts`
-- **Wiki:** Omitir (sin menciones en `Home.md` / `Getting-Started.md`; sync Wiki se hace desde `README.md`)
-- **Test E2E:** Extender `tests/e2e/01-clean-install.sh` existente con 2 asserts (no crear scenario nuevo)
+- **Agrupación:** 1 mega FEV-16 (todo en un solo FEV)
+- **Orden de ejecución:** Critical path primero + paralelo donde posible
+- **Refactor de Template Method:** Sí, aplicar ahora (no esperar al cuarto modo)
+- **Diagnosis docs:** No nuevos; actualizar docs existentes (TECH_DEBT, WORKFLOW) para establecer el scope de FEV-16
 
-**Versión:** Sin bump. v1.2.0 se cierra coordinadamente con FEV-12 ✅ + FEV-13 ✅ + FEV-14 ✅ + FEV-15.
+**Versión:** Sin bump. v1.2.0 se cierra coordinadamente con FEV-11/12/13/14/15/16.
 
 ---
 
@@ -29,16 +39,16 @@ Resolver **Issue #55** añadiendo un **Code of Conduct** al proyecto Códice y u
 
 | Decision | Rationale |
 |----------|-----------|
-| **Contributor Covenant v2.1 para el proyecto** | Estándar de la industria; familiares para contributors; bien mantenido; ~99% compatible con GitHub's "Suggesting code of conduct" feature. |
-| **Placeholder con `[BRACKETS]` para el template** | El usuario personaliza su CoC al instalarlo. Mismo enfoque que usan `awesome-opencode` y otros templates. Reduce fricción. |
-| **`category: "standard"` en `FileRuleManifestData.ts`** | El CoC NO es obligatorio (no debe sobrescribir CoC existente del usuario), pero sí debe entregarse por defecto. Coincide con la semántica de "Estándar: copied only if missing" del SPEC. |
-| **Sección "Code of Conduct" en `CONTRIBUTING.md` antes de "Quick Start"** | El SPEC y la convención GitHub colocan CoC cerca del inicio. Establece expectativas antes de cualquier otra guía. |
-| **Sección "## Code of Conduct" en `README.md` antes de "## License"** | Consistente con orden GitHub estándar (Features → Install → Workflow → CoC → License → Acknowledgments). Reduce fricción de discovery. |
-| **Sin menciones en Wiki** | Decisión del usuario. La Wiki se sincroniza desde `docs/wiki-source/` que es espejada desde `README.md`/`CONTRIBUTING.md`. La cobertura es transitiva. |
-| **Sin nuevo scenario E2E; extender `01-clean-install.sh`** | CoC se entrega como parte de la instalación estándar. Verificarlo en el scenario canónico de Clean Install es la cobertura más natural. Decisión del usuario. |
-| **Sin tests unitarios para el contenido del CoC** | Es documentación, no lógica. Verificar que se entrega (E2E) y que el manifest lo conoce (unit test existente) es suficiente. |
-| **Sin bump de versión** | Cierre coordinado FEV-12/13/14/15 → todos publican bajo v1.2.0. Mantener consistencia con FEV-14. |
-| **Total: ~150 líneas nuevas (1 nuevo en project, 1 nuevo en template, 1 línea en manifest, ~10 en CONTRIBUTING, ~10 en README, ~2 en E2E, ~15 en CHANGELOG, ~10 en WORKFLOW)** | Pequeño y enfocado. Consistente con esfuerzo estimado de 2h. |
+| **Mega FEV-16 (no split en 4 FEVs)** | 5 items temáticamente distintos pero todos必须在 v1.2.0 pre-release. Un FEV consolidado evita overhead de branches y mantiene atomic release. |
+| **Template Method pattern para Clean/Project Install** | Elimina ~80 líneas de duplicación. La lógica común (constructor de 7 params, flujo `checkWritable → confirmOverwrite → selectOptionals → merge → postInstall`) varía solo en 3 hooks: `buildRules()`, `selectOptionals()`, mensajes. GoF Template Method es el ajuste idiomático. |
+| **Tree-level diff para Update Granularity** | `FileMergeEngine.shouldStage()` actualmente hace check directory-level. Refactor a file-level diff: comparar template y destination file lists, stagear solo archivos nuevos. Strategy pattern ya existente (3 estrategias: Obligatorio/Estándar/Opcional) se extiende con 4ª: Estándar-Update. |
+| **`hyperfine` para benchmarks (no custom code)** | Estándar de la industria. `cargo bench`/`go bench` son innecesarios para nuestro caso. `hyperfine` mide wall-clock con warmup, JSON output parseable, integración trivial con CI. |
+| **NYC/Istanbul via Bun's `--coverage` workaround** | Bun no soporta NYC directamente. Usar wrapper script que envuelve `bun test` con `c8` (NYC-compatible) o `bun --coverage` + post-procesamiento con `lcov`. Documentar trade-off en TECH_DEBT. |
+| **`main.ts` interactive mode extraction** | Líneas 134-145 son las únicas sin cobertura (junto con catch block). Extraer `resolveInteractiveMode()` como función exportada permite test con mock `IUserPrompt`. |
+| **Coverage thresholds en CI** | Forzar `lines ≥ 95%` y `funcs ≥ 95%` como quality gate. Si E2E instrumentation funciona, el threshold sube a `lines ≥ 96.5%` (nuevo baseline). |
+| **Sin diagnosis docs nuevos** | Decisión del usuario. El plan cubre el diagnóstico suficiente. WORKFLOW.md y TECH_DEBT.md actualizados reflejan el scope de FEV-16. |
+| **Sin bump de versión** | Cierre coordinado FEV-11/12/13/14/15/16 → todos publican bajo v1.2.0. Mantener consistencia con FEV-14/15. |
+| **Total: ~24h wall-clock (3 días focused, 5-7 días calendario con review cycles)** | Plan completo para v1.2.0 pre-release. |
 
 ---
 
@@ -46,70 +56,95 @@ Resolver **Issue #55** añadiendo un **Code of Conduct** al proyecto Códice y u
 
 ```
 Phase 0: Preparation (sequential, no deps)
-└── Task 0.1: Create branch feat/fev15-community from develop
+├── Task 0.1: Create branch feat/fev16-tech-debt from develop
 └── Task 0.2: Verify baseline (just check + bun test exit 0)
 
-Phase 1: Project Code of Conduct (sequential, no deps after Phase 0)
-└── Task 1.1: Create CODE_OF_CONDUCT.md (Contributor Covenant v2.1)
+Phase 1: Coverage Foundation (sequential, blocks Phase 5)
+└── Task 1.1: Extract resolveInteractiveMode() from main.ts
+└── Task 1.2: Unit tests for resolveInteractiveMode() with mock IUserPrompt
 
-Phase 2: Template Code of Conduct (depends on Phase 1 for reference)
-└── Task 2.1: Create template/estandar/CODE_OF_CONDUCT.md (placeholder)
+Phase 2: Use Case Refactor [PARALLELIZABLE]
+├── Task 2.1: Create InstallUseCaseBase abstract class (Template Method)
+├── Task 2.2: Migrate CleanInstallUseCase to extend base
+├── Task 2.3: Migrate ProjectInstallUseCase to extend base
+└── Task 2.4: Verify no regression (lines removed ≥ duplication added)
 
-Phase 3: FileRuleManifestData integration (CRITICAL — depends on Phase 2)
-└── Task 3.1: Add CODE_OF_CONDUCT.md entry to FileRuleManifestData.ts
-└── Task 3.2: Unit test: manifest includes CODE_OF_CONDUCT.md with category "standard"
+Phase 3: Performance Benchmarks [PARALLELIZABLE]
+├── Task 3.1: Add just bench recipe with hyperfine
+├── Task 3.2: Create benchmarks/clean-install.bench.sh
+├── Task 3.3: Create benchmarks/project-install.bench.sh
+├── Task 3.4: Create benchmarks/update-workspace.bench.sh
+└── Task 3.5: Add SC-9/10/11 assertions (warn on regression >10%)
 
-Phase 4: Cross-references (parallel, all depend on Phase 1)
-├── Task 4.1: Update CONTRIBUTING.md (add "Code of Conduct" section)
-└── Task 4.2: Update README.md (add "## Code of Conduct" section)
+Phase 4: Update Granularity [PARALLELIZABLE]
+├── Task 4.1: Add tree-level diff function in domain/services/
+├── Task 4.2: Refactor FileMergeEngine.shouldStage() to use file-level diff
+├── Task 4.3: Unit tests: standard dir update delivers new files
+├── Task 4.4: Integration tests: real filesystem with mock template
+└── Task 4.5: E2E test 16: update existing project gets new standard file
 
-Phase 5: E2E Test (depends on Phase 3)
-└── Task 5.1: Extend tests/e2e/01-clean-install.sh with 2 CoC asserts
+Phase 5: Coverage Instrumentation [SEQUENTIAL, depends on Phase 1]
+├── Task 5.1: Add c8 dev dep + bun-coverage wrapper script
+├── Task 5.2: Generate E2E coverage report (lcov format)
+├── Task 5.3: Add coverage gate to CI (--coverage-threshold)
+└── Task 5.4: Update main.ts coverage from 86.21% → ≥95%
 
-Phase 6: Documentation & Verification (depends on all above)
-├── Task 6.1: Update CHANGELOG.md (FEV-15 entry under [Unreleased])
-├── Task 6.2: Update docs/WORKFLOW.md (mark FEV-15 complete)
-├── Task 6.3: Update docs/TECH_DEBT.md (resolve FEV-15 row)
-├── Task 6.4: just check + bun test (full suite, ≥809 + new = ≥810)
-├── Task 6.5: just test:e2e (19/19 + extended = 19/19 passing)
-└── Task 6.6: Commit with trailer Co-Authored-By: Moctezuma
+Phase 6: Documentation & Verification [SEQUENTIAL, depends on all above]
+├── Task 6.1: Update CHANGELOG.md (FEV-16 entry under [Unreleased])
+├── Task 6.2: Update docs/WORKFLOW.md (mark FEV-16 complete)
+├── Task 6.3: Update docs/TECH_DEBT.md (move 5 items to Resolved)
+├── Task 6.4: just check + bun test (full suite, ≥810 + new tests)
+├── Task 6.5: just test:e2e (≥15 + 1 new = ≥16 passing)
+├── Task 6.6: just bench (3 benchmarks, no regressions >10%)
+└── Task 6.7: Commit with trailer Co-Authored-By: Moctezuma
 
-Checkpoint: FEV-15 Complete ✅
-└── Issue #55 closed, PR ready for review
+Checkpoint: FEV-16 Complete ✅
+└── 5 TECH_DEBT items closed, PR ready for review
 ```
 
-**Critical path:** Phase 0 → 1 → 2 → 3 → 4 → 5 → 6 (~2h wall-clock)
-**Parallelizable:** Phase 4 (CONTRIBUTING.md and README.md can be done in parallel)
-**Risk mitigation:** Phase 3 (FileRuleManifestData) is the only place where a bug would silently break template delivery. Unit test in 3.2 catches it pre-E2E.
+**Critical path:** Phase 0 → 1 → 5 → 6 (~12h, longest chain)
+**Parallelizable branches:** Phase 2, 3, 4 (run in any order, ~14h combined if solo, ~4-5h if 3 agents)
+**Solo execution time:** ~24h sequential, 5-7 calendar days with review
+**Risk mitigation:** Phase 1 → Phase 5 is the only true blocker. Phase 2/3/4 can be reordered or split.
 
 ---
 
 ## Mermaid Dependency Diagram
 
 ```mermaid
-graph LR
-    P0[Phase 0: Prep] --> P1[Phase 1: Project CoC]
-    P1 --> P2[Phase 2: Template CoC]
-    P2 --> P3[Phase 3: Manifest Entry]
-    P3 --> P3T[Task 3.2: Unit Test]
-    P1 --> P4[Phase 4: Cross-refs]
-    P4 --> P4A[Task 4.1: CONTRIBUTING.md]
-    P4 --> P4B[Task 4.2: README.md]
-    P3 --> P5[Phase 5: E2E Test]
-    P5 --> P6[Phase 6: Docs & Verify]
+graph TD
+    P0[Phase 0: Prep] --> P1[Phase 1: Coverage Foundation]
+    P1 --> P5[Phase 5: Coverage Instrumentation]
+    P1 --> P6[Phase 6: Docs & Verify]
+    
+    P2[Phase 2: Use Case Refactor] --> P6
+    P3[Phase 3: Performance Benchmarks] --> P6
+    P4[Phase 4: Update Granularity] --> P6
+    
+    P5 --> P6
+    P2 -.->|parallel| P3
+    P2 -.->|parallel| P4
+    P3 -.->|parallel| P4
+    
     P6 --> DONE[PR Ready]
-
+    
     classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
     classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
-
-    class P3 crit
+    classDef seq fill:#ffd43b,stroke:#f59f00,color:#000
+    
+    class P1,P5 crit
     class P6,DONE gate
-    class P4A,P4B par
+    class P2,P3,P4 par
+    class P0 seq
 ```
 
-**Critical path:** Phase 0 → 1 → 2 → 3 → 5 → 6
-**Parallel opportunities:** Task 4.1 and 4.2 (CONTRIBUTING.md + README.md) are independent and can be split between two agents.
+**Critical path:** Phase 0 → 1 → 5 → 6 (~12h)
+**Parallel opportunities (3-agent split):**
+- Agent A: Phase 2 (refactor, 4h)
+- Agent B: Phase 3 (benchmarks, 4h)
+- Agent C: Phase 4 (granularity, 6h)
+- Solo contributor: do them sequentially in any order
 
 ---
 
@@ -117,24 +152,22 @@ graph LR
 
 ### Phase 0: Preparation
 
-#### Task 0.1: Create branch `feat/fev15-community` from `develop`
+#### Task 0.1: Create branch `feat/fev16-tech-debt` from `develop`
 
-**Description:** Create working branch for FEV-15. Branch from `develop` (per CONTRIBUTING.md rules — FEV-14 was already merged to develop after the previous plan; verify with `git log develop --oneline -5`).
+**Description:** Create working branch for FEV-16. Branch from `develop` (per CONTRIBUTING.md rules — FEV-15 was already merged to develop).
 
 **Acceptance criteria:**
-- [ ] Branch `feat/fev15-community` created from `develop`
+- [ ] Branch `feat/fev16-tech-debt` created from `develop`
 - [ ] `git status` clean (no uncommitted changes)
 - [ ] Branch is up-to-date with base (no diverging commits)
 
 **Verification:**
-- [ ] `git branch --show-current` shows `feat/fev15-community`
-- [ ] `git log develop..feat/fev15-community` is empty
+- [ ] `git branch --show-current` shows `feat/fev16-tech-debt`
+- [ ] `git log develop..feat/fev16-tech-debt` is empty
 - [ ] `git status` shows "nothing to commit, working tree clean"
 
 **Dependencies:** None
-
 **Files likely touched:** None (git operation only)
-
 **Estimated scope:** XS (1 command)
 
 ---
@@ -145,7 +178,7 @@ graph LR
 
 **Acceptance criteria:**
 - [ ] `just check` exits 0 (Biome + tsc clean)
-- [ ] `just test` exits 0 (≥809 tests, 0 fail)
+- [ ] `just test` exits 0 (≥810 tests, 0 fail)
 - [ ] `just test:e2e` exits 0 (19/19 scenarios)
 
 **Verification:**
@@ -154,416 +187,1109 @@ graph LR
 - [ ] Output of `just test:e2e` shows 19/19 passing
 
 **Dependencies:** Task 0.1
-
 **Files likely touched:** None (verification only)
-
 **Estimated scope:** XS (3 commands)
 
 ---
 
-### Phase 1: Project Code of Conduct
+### Phase 1: Coverage Foundation (CRITICAL — blocks Phase 5)
 
-#### Task 1.1: Create `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1)
+#### Task 1.1: Extract `resolveInteractiveMode()` from `main.ts`
 
-**Description:** Create the project's Code of Conduct in the repository root. Adapted from [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html) with project-specific contact info.
+**Description:** The interactive mode block (main.ts lines 134-145) is the only uncovered code path besides the catch block. Extract it into a testable exported function to enable unit testing with mock `IUserPrompt`.
 
-**File path:** `CODE_OF_CONDUCT.md` (new)
+**File path:** `src/cli/main.ts`
 
-**File content structure (adapted from diagnosis `fix08` example):**
-- Title: `Contributor Covenant Code of Conduct`
-- Sections in order: Our Pledge → Our Standards → Enforcement Responsibilities → Scope → Enforcement (with `dev@fisherk2.com`) → Enforcement Guidelines (4 levels: Correction, Warning, Temporary Ban, Permanent Ban) → Attribution (link to v2.1)
-- Project contact: `dev@fisherk2.com`
-- Project URL: `https://github.com/fisherk2/codice-opencode`
-
-**Acceptance criteria:**
-- [ ] `CODE_OF_CONDUCT.md` created in repo root
-- [ ] Based on Contributor Covenant v2.1 (verbatim sections: Pledge, Standards, Responsibilities, Scope, Enforcement, Enforcement Guidelines, Attribution)
-- [ ] Contact: `dev@fisherk2.com` (not a placeholder)
-- [ ] Attribution links to `https://www.contributor-covenant.org/version/2/1/code_of_conduct.html`
-- [ ] ~140 lines (matching the diagnosis example)
-- [ ] No emojis, no informal language
-
-**Verification:**
-- [ ] `ls -la CODE_OF_CONDUCT.md` shows file exists
-- [ ] `wc -l CODE_OF_CONDUCT.md` shows ~140 lines
-- [ ] `head -3 CODE_OF_CONDUCT.md` shows `# Contributor Covenant Code of Conduct`
-- [ ] `grep "dev@fisherk2.com" CODE_OF_CONDUCT.md` shows contact
-
-**Dependencies:** Task 0.2
-
-**Files likely touched:**
-- `CODE_OF_CONDUCT.md` (new, ~140 lines)
-
-**Estimated scope:** S (1 new file, content-heavy)
-
----
-
-### Phase 2: Template Code of Conduct
-
-#### Task 2.1: Create `template/estandar/CODE_OF_CONDUCT.md` (placeholder)
-
-**Description:** Create a customizable placeholder version of the CoC in the template directory. Users replace bracketed placeholders when installing in their own project.
-
-**File path:** `template/estandar/CODE_OF_CONDUCT.md` (new)
-
-**File content requirements:**
-- Title: `Code of Conduct` (no "Contributor Covenant" prefix — generic for any project)
-- Top note block: `> **Note:** This is a placeholder code of conduct based on the Contributor Covenant. Customize the bracketed placeholders for your project.`
-- Placeholders to use:
-  - `[PROJECT_NAME]` — users replace with their project name
-  - `[CONTACT_EMAIL]` — users replace with their contact email
-  - `[PROJECT_URL]` — users replace with their project URL
-- Same 7 sections as the project CoC (Pledge, Standards, Responsibilities, Scope, Enforcement, Enforcement Guidelines, Attribution)
-- Attribution preserved verbatim (links to v2.1)
-- ~120 lines (slightly shorter than project CoC due to placeholder note)
-
-**Acceptance criteria:**
-- [ ] `template/estandar/CODE_OF_CONDUCT.md` created
-- [ ] Top note: "This is a placeholder code of conduct..."
-- [ ] 3 placeholders used: `[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]`
-- [ ] Attribution section preserved (links to v2.1)
-- [ ] ~120 lines
-- [ ] Same 7 sections as project CoC
-
-**Verification:**
-- [ ] `ls -la template/estandar/CODE_OF_CONDUCT.md` shows file exists
-- [ ] `wc -l template/estandar/CODE_OF_CONDUCT.md` shows ~120 lines
-- [ ] `grep -c "\[PROJECT_NAME\]\|\[CONTACT_EMAIL\]\|\[PROJECT_URL\]"` shows ≥3 matches
-- [ ] `head -5 template/estandar/CODE_OF_CONDUCT.md` shows the placeholder note
-
-**Dependencies:** Task 1.1 (for reference structure)
-
-**Files likely touched:**
-- `template/estandar/CODE_OF_CONDUCT.md` (new, ~120 lines)
-
-**Estimated scope:** S (1 new file, content-heavy)
-
----
-
-### Phase 3: FileRuleManifestData Integration (CRITICAL)
-
-#### Task 3.1: Add `CODE_OF_CONDUCT.md` entry to `FileRuleManifestData.ts`
-
-**Description:** Register `CODE_OF_CONDUCT.md` in the `estandar` (standard) category of `FileRuleManifestData.ts`. **Without this entry, the template CoC will never be copied to user destinations** — the FileMergeEngine only stages files declared in the manifest. This is the technical integration point that makes the CoC actually deliverable.
-
-**File path:** `src/domain/entities/FileRuleManifestData.ts`
-
-**Change:** Add a new entry in the `standard` section, after `CONTRIBUTING.md` and before `LICENSE` (alphabetical order maintained):
+**Change:** Replace inline block with exported function:
 
 ```typescript
-{
-  path: "CODE_OF_CONDUCT.md",
-  category: "standard",
-  isDirectory: false,
-  description: "Code of conduct for contributors (placeholder, customize for your project)",
-},
+/**
+ * Resolve the installation mode from interactive selection.
+ * Extracted for testability — main() can't be tested in non-TTY environments.
+ * @param mode - The mode parsed from CLI args (may be "interactive").
+ * @param userPrompt - User prompt adapter for showing intro/menu/cancel.
+ * @param version - The current version string.
+ * @returns Resolved mode (clean|project|update) or null if user cancelled.
+ */
+export async function resolveInteractiveMode(
+  mode: Mode,
+  userPrompt: IUserPrompt,
+  version: string,
+): Promise<Mode | null> {
+  if (mode !== "interactive") return mode;
+  userPrompt.showIntro(`Códice v${version} — Opencode Workspace Installer`);
+  const selected = await userPrompt.promptForMode();
+  if (selected === null) {
+    userPrompt.showCancel("Installation cancelled.");
+    return null;
+  }
+  return selected;
+}
 ```
 
 **Acceptance criteria:**
-- [ ] New entry added to `FileRuleManifestData.ts` in the `standard` section
-- [ ] Position: after `CONTRIBUTING.md`, before `LICENSE` (alphabetical)
-- [ ] `category: "standard"` (not `"mandatory"` — CoC should not overwrite user customizations)
-- [ ] `isDirectory: false` (single file)
-- [ ] `description` references placeholder + customization
-- [ ] No other manifest entries modified
+- [ ] `resolveInteractiveMode()` exported from `main.ts`
+- [ ] Original inline block (lines 134-145) replaced with single call to `resolveInteractiveMode()`
+- [ ] Function signature: `(mode: Mode, userPrompt: IUserPrompt, version: string) => Promise<Mode | null>`
+- [ ] JSDoc explains why it was extracted (testability)
+- [ ] No behavioral changes (just refactor)
 
 **Verification:**
-- [ ] `grep "CODE_OF_CONDUCT.md" src/domain/entities/FileRuleManifestData.ts` shows the new entry
+- [ ] `grep "export async function resolveInteractiveMode" src/cli/main.ts` shows the new export
+- [ ] `grep "if (mode === \"interactive\")" src/cli/main.ts` shows the simplified call
 - [ ] `bun run tsc --noEmit` passes
-- [ ] `wc -l src/domain/entities/FileRuleManifestData.ts` shows +6 lines
+- [ ] `wc -l src/cli/main.ts` shows similar length (±5 lines)
 
-**Dependencies:** Task 2.1 (template file must exist before manifest references it)
-
+**Dependencies:** Task 0.2
 **Files likely touched:**
-- `src/domain/entities/FileRuleManifestData.ts` (modified, +6 lines)
+- `src/cli/main.ts` (modified, refactor — line count similar)
 
-**Estimated scope:** XS (1 file, 6 lines)
+**Estimated scope:** XS (1 function extraction, ~20 lines)
 
 ---
 
-#### Task 3.2: Unit test: manifest includes `CODE_OF_CONDUCT.md` with `category: "standard"`
+#### Task 1.2: Unit tests for `resolveInteractiveMode()` with mock `IUserPrompt`
 
-**Description:** Add a unit test that verifies `FileRuleManifest` includes the new `CODE_OF_CONDUCT.md` entry with the correct category. This catches regression if the manifest is reorganized.
+**Description:** Add unit tests for the extracted function covering all paths: non-interactive passthrough, interactive selection, and cancellation.
 
-**Test file:** `tests/unit/domain/file-rule-manifest.test.ts` (or appropriate manifest test file — verify with `ls tests/unit/domain/`)
+**Test file:** `tests/unit/cli/main.test.ts` (new)
 
 **Test scenarios:**
-- `manifest.getRule("CODE_OF_CONDUCT.md")` returns a non-null `FileRule`
-- `rule.category === "standard"`
-- `rule.isDirectory === false`
-- `rule.path === "CODE_OF_CONDUCT.md"`
+1. `mode === "interactive"` + user selects `"clean"` → returns `"clean"`
+2. `mode === "interactive"` + user selects `"project"` → returns `"project"`
+3. `mode === "interactive"` + user selects `"update"` → returns `"update"`
+4. `mode === "interactive"` + user cancels (returns `null`) → returns `null`
+5. `mode === "clean"` (non-interactive) → returns `"clean"` (no prompt)
+6. `mode === "project"` (non-interactive) → returns `"project"` (no prompt)
+7. `mode === "update"` (non-interactive) → returns `"update"` (no prompt)
+8. Verifies `userPrompt.showIntro()` called with version string
+9. Verifies `userPrompt.showCancel()` called when user cancels
 
 **Acceptance criteria:**
-- [ ] New test case added (or new test file created if none exists)
-- [ ] Test asserts `CODE_OF_CONDUCT.md` is in the manifest
-- [ ] Test asserts category is `"standard"`
-- [ ] Test asserts `isDirectory === false`
-- [ ] Test passes
-- [ ] All existing manifest tests still pass (no regression)
+- [ ] New test file `tests/unit/cli/main.test.ts` created
+- [ ] 9 test cases covering all branches
+- [ ] All tests pass
+- [ ] Coverage of `main.ts` improves from 86.21% → ≥90% lines (catch block may remain)
 
 **Verification:**
-- [ ] `bun test tests/unit/domain/file-rule-manifest.test.ts` (or relevant test path) passes
-- [ ] `grep "CODE_OF_CONDUCT" tests/unit/domain/` shows the new test
+- [ ] `bun test tests/unit/cli/main.test.ts` passes (9/9)
+- [ ] `bun test --coverage tests/unit/cli/main.test.ts` shows ≥90% line coverage of main.ts
+- [ ] `grep "resolveInteractiveMode" tests/unit/cli/main.test.ts` shows ≥9 references
 
-**Dependencies:** Task 3.1
-
+**Dependencies:** Task 1.1
 **Files likely touched:**
-- `tests/unit/domain/file-rule-manifest.test.ts` (modified, +15 lines) — OR new test file if not present
+- `tests/unit/cli/main.test.ts` (new, ~80 lines)
 
-**Estimated scope:** XS (1 test case, ~15 lines)
+**Estimated scope:** S (1 new test file, 9 cases)
 
 ---
 
-### Phase 4: Cross-references (PARALLEL)
+### Checkpoint: Coverage Foundation Complete (Phase 1)
 
-#### Task 4.1: Add "Code of Conduct" section to `CONTRIBUTING.md`
-
-**Description:** Add a `## Code of Conduct` section near the top of `CONTRIBUTING.md` (before `## Quick Start`). Establishes expectations before any other guidance.
-
-**File path:** `CONTRIBUTING.md`
-
-**Insert position:** After the title and intro, before `## Quick Start` (current line 9).
-
-**Content to insert (~5 lines):**
-```markdown
-## Code of Conduct
-
-This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). By participating, you are expected to uphold this code. Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for details.
-```
-
-**Acceptance criteria:**
-- [ ] New `## Code of Conduct` section added to `CONTRIBUTING.md`
-- [ ] Position: before `## Quick Start` (line 9 currently)
-- [ ] Links to `CODE_OF_CONDUCT.md` (relative path from repo root)
-- [ ] Links to Contributor Covenant v2.1 web page
-- [ ] ~5 lines added
-
-**Verification:**
-- [ ] `grep -n "## Code of Conduct" CONTRIBUTING.md` shows the new section
-- [ ] `grep -n "## Quick Start" CONTRIBUTING.md` shows position preserved
-- [ ] `wc -l CONTRIBUTING.md` shows +5 lines (was ~370, now ~375)
-
-**Dependencies:** Task 1.1 (project CoC must exist to link to it)
-
-**Files likely touched:**
-- `CONTRIBUTING.md` (modified, +5 lines)
-
-**Estimated scope:** XS (1 section added, 5 lines)
-
----
-
-#### Task 4.2: Add `## Code of Conduct` section to `README.md`
-
-**Description:** Add a `## Code of Conduct` section to `README.md` before `## License` (current line 276). Consistent with GitHub-standard README order.
-
-**File path:** `README.md`
-
-**Insert position:** Before `## License` (line 276).
-
-**Content to insert (~10 lines):**
-```markdown
-## Code of Conduct
-
-This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). By participating, you are expected to uphold this code. Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before contributing.
-
-For the workspace template, see [the template's Code of Conduct](https://github.com/fisherk2/codice-opencode/blob/main/template/estandar/CODE_OF_CONDUCT.md) — it includes placeholders (`[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]`) that you can customize for your own project.
-```
-
-**Acceptance criteria:**
-- [ ] New `## Code of Conduct` section added to `README.md`
-- [ ] Position: before `## License` (line 276)
-- [ ] Links to `CODE_OF_CONDUCT.md` (relative path)
-- [ ] Mentions template CoC and its placeholders
-- [ ] ~10 lines added
-
-**Verification:**
-- [ ] `grep -n "## Code of Conduct" README.md` shows the new section
-- [ ] `grep -n "## License" README.md` shows position preserved
-- [ ] `wc -l README.md` shows +10 lines (was ~290, now ~300, still <310 target)
-
-**Dependencies:** Task 1.1, Task 2.1 (both CoC files must exist to link to them)
-
-**Files likely touched:**
-- `README.md` (modified, +10 lines)
-
-**Estimated scope:** XS (1 section added, ~10 lines)
-
----
-
-### Checkpoint: Foundation Complete (Phases 1-4)
-
-- [ ] `CODE_OF_CONDUCT.md` exists in repo root (project CoC)
-- [ ] `template/estandar/CODE_OF_CONDUCT.md` exists (template CoC, placeholder)
-- [ ] `FileRuleManifestData.ts` includes the new entry with `category: "standard"`
-- [ ] Manifest unit test passes
-- [ ] `CONTRIBUTING.md` has `## Code of Conduct` section
-- [ ] `README.md` has `## Code of Conduct` section
+- [ ] `resolveInteractiveMode()` extracted and tested
+- [ ] 9 new unit tests added (baseline: 810 + 9 = 819)
+- [ ] `main.ts` coverage ≥90% lines
 - [ ] `just check` exit 0
-- [ ] `bun test` ≥809 tests passing (no regression)
-- [ ] Review with human before proceeding to Phase 5
+- [ ] `bun test` ≥819 tests, 0 fail
+- [ ] Review with human before proceeding to parallel phases
 
 ---
 
-### Phase 5: E2E Test
+### Phase 2: Use Case Refactor (PARALLELIZABLE)
 
-#### Task 5.1: Extend `tests/e2e/01-clean-install.sh` with 2 CoC asserts
+**Pattern:** GoF Template Method
 
-**Description:** Add 2 assertions to the existing Clean Install E2E scenario to verify that `CODE_OF_CONDUCT.md` is delivered to the destination directory. This is the integration test that proves end-to-end delivery.
+#### Task 2.1: Create `InstallUseCaseBase` abstract class
 
-**File path:** `tests/e2e/01-clean-install.sh`
+**Description:** Extract the common flow from `CleanInstallUseCase` and `ProjectInstallUseCase` into an abstract base class. The Template Method pattern allows subclasses to vary 3 hooks: `buildRules()`, `selectOptionals()`, and success messages.
 
-**Asserts to add (after the existing file-existence checks):**
-```bash
-# FEV-15: Code of Conduct delivery
-assert_file_exists "$DEST_DIR/CODE_OF_CONDUCT.md"
-assert_contains "$DEST_DIR/CODE_OF_CONDUCT.md" "Our Pledge"
+**File path:** `src/application/use-cases/InstallUseCaseBase.ts` (new)
+
+**Base class structure:**
+
+```typescript
+import type { IFileSystem } from "../../domain/ports/IFileSystem";
+import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
+import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
+import type { FileRule } from "../../domain/entities/FileRule";
+import type { Result } from "../../domain/types/Result";
+import { checkWritable, confirmOverwrite, createProgressCallback } from "../helpers";
+import { runPostInstallSteps } from "../postInstall";
+import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
+import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
+import type { IUserPrompt } from "../ports/IUserPrompt";
+
+export interface BaseInstallOptions {
+  readonly force?: boolean;
+  readonly version?: string;
+}
+
+/**
+ * Base class for Clean and Project Install use cases.
+ * Implements the common flow (Template Method pattern):
+ *   checkWritable → confirmOverwrite → selectOptionals → merge → postInstall
+ *
+ * Subclasses vary 3 hooks:
+ *   - buildRules(): how to filter the manifest for this mode
+ *   - selectOptionals(): how to gather user's optional file selection
+ *   - getSuccessMessage(): the success message after install
+ *
+ * Update mode is NOT a subclass — it has different semantics (version check + no optionals).
+ */
+export abstract class InstallUseCaseBase {
+  constructor(
+    protected readonly fileSystem: IFileSystem & IStagingSystem,
+    protected readonly mergeEngine: IFileMergeEngine,
+    protected readonly userPrompt: IUserPrompt,
+    protected readonly symlinkCreator: ISymlinkCreator,
+    protected readonly opencodeSymlinks: readonly SymlinkSpec[],
+    protected readonly devinSymlinks: readonly SymlinkSpec[],
+    protected readonly gitignoreCreator: IGitignoreCreator,
+  ) {}
+
+  /**
+   * Template Method — runs the full install flow.
+   * Subclasses implement the 3 hooks below.
+   */
+  async execute(
+    destinationPath: string,
+    options: BaseInstallOptions,
+  ): Promise<Result<void, Error>> {
+    // 1. Validate destination is writable
+    const writable = await checkWritable(this.fileSystem, destinationPath);
+    if (!writable.ok) return writable;
+
+    // 2. If destination is not empty and force is false, ask user for confirmation
+    if (!options.force) {
+      const confirmed = await confirmOverwrite(this.fileSystem, destinationPath, this.userPrompt);
+      if (!confirmed.ok) return confirmed;
+      if (!confirmed.value) {
+        return { ok: false, error: new Error("Installation cancelled by user.") };
+      }
+    }
+
+    // 3. Present optional files menu (subclass decides behavior)
+    const selectedOptionals = await this.selectOptionals(options.force ?? false);
+
+    // 4. Build rules (subclass-specific)
+    const rules = this.buildRules(selectedOptionals);
+
+    // 5. Execute the merge engine
+    const progressCallback = createProgressCallback(this.userPrompt, this.symlinkCreator);
+    const mergeResult = await this.mergeEngine.execute(
+      destinationPath,
+      rules,
+      progressCallback,
+    );
+    if (!mergeResult.ok) return mergeResult;
+
+    // 6. Post-installation: gitignore + symlinks + version file
+    const postInstallResult = await runPostInstallSteps(
+      this.fileSystem,
+      this.gitignoreCreator,
+      this.symlinkCreator,
+      this.opencodeSymlinks,
+      this.devinSymlinks,
+      destinationPath,
+      options.version ?? "0.0.0",
+      selectedOptionals,
+    );
+    if (!postInstallResult.ok) return postInstallResult;
+
+    // 7. Show success message (subclass-specific)
+    this.userPrompt.showSuccess(this.getSuccessMessage());
+    return { ok: true, value: undefined };
+  }
+
+  /** Build the FileRule list to apply in this mode. */
+  protected abstract buildRules(selectedOptionals: readonly string[]): readonly FileRule[];
+
+  /** Present optional file selection menu (or return [] if force=true or no menu needed). */
+  protected abstract selectOptionals(force: boolean): Promise<readonly string[]>;
+
+  /** Success message after install completes. */
+  protected abstract getSuccessMessage(): string;
+}
 ```
 
-**Note:** `assert_contains` is the standard helper used in other scenarios (verify with `grep "assert_contains" tests/e2e/*.sh | head -3`); if not available, use `grep -q "Our Pledge" "$DEST_DIR/CODE_OF_CONDUCT.md"` inline.
-
 **Acceptance criteria:**
-- [ ] `tests/e2e/01-clean-install.sh` extended with 2 new asserts
-- [ ] Assert 1: `CODE_OF_CONDUCT.md` exists in destination
-- [ ] Assert 2: file contains `Our Pledge` (proves it's the real CoC, not a stub)
-- [ ] No existing asserts removed or modified
-- [ ] Test still passes
+- [ ] `src/application/use-cases/InstallUseCaseBase.ts` created
+- [ ] Abstract class with `execute()` Template Method
+- [ ] 3 protected abstract methods: `buildRules()`, `selectOptionals()`, `getSuccessMessage()`
+- [ ] All 7 constructor params match CleanInstall/ProjectInstall signature
+- [ ] Imports match existing patterns (Result, helpers, postInstall)
+- [ ] JSDoc explains why base class exists and why Update is NOT a subclass
 
 **Verification:**
-- [ ] `just test:e2e` exit 0 (19/19 — the modified scenario still passes)
-- [ ] `grep "CODE_OF_CONDUCT" tests/e2e/01-clean-install.sh` shows new asserts
-- [ ] Manual run: `bash tests/e2e/01-clean-install.sh` in a temp dir → `CODE_OF_CONDUCT.md` present
+- [ ] `ls src/application/use-cases/InstallUseCaseBase.ts` shows file exists
+- [ ] `grep "abstract class InstallUseCaseBase" src/application/use-cases/InstallUseCaseBase.ts` shows the class
+- [ ] `bun run tsc --noEmit` passes
+- [ ] `wc -l src/application/use-cases/InstallUseCaseBase.ts` shows ~80-100 lines
 
-**Dependencies:** Tasks 3.1, 3.2 (manifest must be updated for CoC to deliver)
-
+**Dependencies:** None (independent of Phase 1, can run in parallel)
 **Files likely touched:**
-- `tests/e2e/01-clean-install.sh` (modified, +2 lines)
+- `src/application/use-cases/InstallUseCaseBase.ts` (new, ~80-100 lines)
 
-**Estimated scope:** XS (2 lines added)
+**Estimated scope:** M (1 new file, abstract class with 3 hooks)
 
 ---
 
-### Checkpoint: End-to-End Delivery Verified (Phase 5)
+#### Task 2.2: Migrate `CleanInstallUseCase` to extend `InstallUseCaseBase`
 
-- [ ] `CODE_OF_CONDUCT.md` is delivered in a fresh Clean Install
-- [ ] File contains `Our Pledge` (real CoC content, not empty stub)
-- [ ] All existing E2E scenarios still pass (19/19)
-- [ ] Review with human before proceeding to Phase 6
+**Description:** Refactor `CleanInstallUseCase` to extend the new `InstallUseCaseBase`. Remove the duplicated constructor and `execute()` method. Keep the subclass-specific logic: `buildRules()` (converts all to mandatory), `selectOptionals()` (force=true selects all), success message.
+
+**File path:** `src/application/use-cases/CleanInstallUseCase.ts`
+
+**Change:** Replace constructor + execute + buildRules + selectOptionals with subclass implementation.
+
+**Subclass structure:**
+
+```typescript
+export class CleanInstallUseCase extends InstallUseCaseBase {
+  protected buildRules(selectedOptionals: readonly string[]): readonly FileRule[] {
+    // Clean: convert all categories to mandatory (always overwrite)
+    return [
+      ...getRulesByCategory("mandatory"),
+      ...getRulesByCategory("standard"),
+      ...getRulesByCategory("optional").filter((r) => selectedOptionals.includes(r.path)),
+    ];
+  }
+
+  protected async selectOptionals(force: boolean): Promise<readonly string[]> {
+    if (force) {
+      // --force: select all optionals without prompting
+      return FILE_RULE_MANIFEST
+        .filter((r) => r.category === "optional")
+        .map((r) => r.path);
+    }
+    return this.userPrompt.selectOptionals();
+  }
+
+  protected getSuccessMessage(): string {
+    return "Clean install completed successfully.";
+  }
+}
+```
+
+**Acceptance criteria:**
+- [ ] `CleanInstallUseCase` extends `InstallUseCaseBase`
+- [ ] 3 protected methods implemented: `buildRules()`, `selectOptionals()`, `getSuccessMessage()`
+- [ ] Constructor delegates to `super(...)` (no duplication)
+- [ ] `execute()` method REMOVED (inherited from base)
+- [ ] File length: was 166 lines, now expected ~60 lines (-106 lines)
+
+**Verification:**
+- [ ] `grep "extends InstallUseCaseBase" src/application/use-cases/CleanInstallUseCase.ts` shows the extension
+- [ ] `grep "async execute" src/application/use-cases/CleanInstallUseCase.ts` shows NO matches (execute removed)
+- [ ] `wc -l src/application/use-cases/CleanInstallUseCase.ts` shows ~60 lines (was 166)
+- [ ] `bun run tsc --noEmit` passes
+- [ ] `just test` exit 0 (no regression in CleanInstall tests)
+
+**Dependencies:** Task 2.1
+**Files likely touched:**
+- `src/application/use-cases/CleanInstallUseCase.ts` (modified, 166 → ~60 lines)
+
+**Estimated scope:** M (refactor, removes ~106 lines)
+
+---
+
+#### Task 2.3: Migrate `ProjectInstallUseCase` to extend `InstallUseCaseBase`
+
+**Description:** Refactor `ProjectInstallUseCase` to extend `InstallUseCaseBase`. Same approach as Task 2.2 but with Project-specific hooks: `buildRules()` (uses manifest as-is, no category conversion), `selectOptionals()` (always shows menu, returns empty if user deselects all).
+
+**File path:** `src/application/use-cases/ProjectInstallUseCase.ts`
+
+**Subclass structure:**
+
+```typescript
+export class ProjectInstallUseCase extends InstallUseCaseBase {
+  protected buildRules(selectedOptionals: readonly string[]): readonly FileRule[] {
+    // Project: pass manifest as-is, filter optionals by user selection
+    return [
+      ...getRulesByCategory("mandatory"),
+      ...getRulesByCategory("standard"),
+      ...getRulesByCategory("optional").filter((r) => selectedOptionals.includes(r.path)),
+    ];
+  }
+
+  protected async selectOptionals(_force: boolean): Promise<readonly string[]> {
+    // Project: always show menu (force flag bypasses overwrite confirm, not optionals)
+    return this.userPrompt.selectOptionals();
+  }
+
+  protected getSuccessMessage(): string {
+    return "Project install completed successfully.";
+  }
+}
+```
+
+**Acceptance criteria:**
+- [ ] `ProjectInstallUseCase` extends `InstallUseCaseBase`
+- [ ] 3 protected methods implemented
+- [ ] Constructor delegates to `super(...)` (no duplication)
+- [ ] `execute()` method REMOVED
+- [ ] File length: was 147 lines, now expected ~50 lines (-97 lines)
+
+**Verification:**
+- [ ] `grep "extends InstallUseCaseBase" src/application/use-cases/ProjectInstallUseCase.ts` shows the extension
+- [ ] `grep "async execute" src/application/use-cases/ProjectInstallUseCase.ts` shows NO matches
+- [ ] `wc -l src/application/use-cases/ProjectInstallUseCase.ts` shows ~50 lines (was 147)
+- [ ] `bun run tsc --noEmit` passes
+- [ ] `just test` exit 0 (no regression in ProjectInstall tests)
+
+**Dependencies:** Task 2.2
+**Files likely touched:**
+- `src/application/use-cases/ProjectInstallUseCase.ts` (modified, 147 → ~50 lines)
+
+**Estimated scope:** M (refactor, removes ~97 lines)
+
+---
+
+#### Task 2.4: Verify duplication eliminated (lines removed ≥ duplication added)
+
+**Description:** Final verification that the refactor actually reduced duplication. The base class adds ~80-100 lines; subclasses removed ~200 lines combined. Net reduction: ~100-120 lines.
+
+**Acceptance criteria:**
+- [ ] `wc -l src/application/use-cases/InstallUseCaseBase.ts` shows ~80-100 lines
+- [ ] `wc -l src/application/use-cases/CleanInstallUseCase.ts` shows ~60 lines (was 166)
+- [ ] `wc -l src/application/use-cases/ProjectInstallUseCase.ts` shows ~50 lines (was 147)
+- [ ] Net change: +90 (base) - 106 (Clean) - 97 (Project) = **-113 lines** (or similar)
+- [ ] `just test` exit 0 (≥819 tests, no regression)
+- [ ] `just test:e2e` exit 0 (19/19 scenarios, no regression)
+
+**Verification:**
+- [ ] Total lines: before = 313, after = ~190. **Saved: ~123 lines.**
+- [ ] `git diff --stat HEAD~1 HEAD` shows the 3 files modified
+
+**Dependencies:** Task 2.3
+**Files likely touched:** None (verification)
+**Estimated scope:** XS (verification commands)
+
+---
+
+### Checkpoint: Use Case Refactor Complete (Phase 2)
+
+- [ ] `InstallUseCaseBase` created with 3 abstract hooks
+- [ ] `CleanInstallUseCase` and `ProjectInstallUseCase` extend base
+- [ ] ~123 lines of duplication eliminated
+- [ ] `just check` exit 0
+- [ ] `just test` ≥819 tests, 0 fail
+- [ ] `just test:e2e` 19/19 passing
+- [ ] No behavioral changes (refactor only)
+
+---
+
+### Phase 3: Performance Benchmarks (PARALLELIZABLE)
+
+#### Task 3.1: Add `just bench` recipe with `hyperfine`
+
+**Description:** Add a `just bench` recipe that uses `hyperfine` (industry-standard CLI benchmarking tool) to measure wall-clock time for the 3 installation modes. Outputs JSON for regression detection.
+
+**File path:** `Justfile`
+
+**Change:** Add new recipe after `test-e2e`:
+
+```makefile
+# Install hyperfine first: cargo install hyperfine (or download from GitHub releases)
+bench:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p tests/fixtures/bench
+    @echo "Benchmarking Clean Install..."
+    hyperfine \
+        --warmup 1 \
+        --runs 5 \
+        --export-json tests/fixtures/bench/clean-install.json \
+        --command-name "clean-install" \
+        "bun run src/cli/main.ts --mode clean --dest tests/fixtures/bench/clean --force"
+    @echo "Benchmarking Project Install..."
+    hyperfine \
+        --warmup 1 \
+        --runs 5 \
+        --export-json tests/fixtures/bench/project-install.json \
+        --command-name "project-install" \
+        "bun run src/cli/main.ts --mode project --dest tests/fixtures/bench/project --force"
+    @echo "Benchmarking Update Workspace..."
+    hyperfine \
+        --warmup 1 \
+        --runs 5 \
+        --export-json tests/fixtures/bench/update-workspace.json \
+        --command-name "update-workspace" \
+        "bun run src/cli/main.ts --mode update --dest tests/fixtures/bench/update --force"
+```
+
+**Acceptance criteria:**
+- [ ] `just bench` recipe added to Justfile
+- [ ] 3 commands benchmarked: clean, project, update
+- [ ] `--warmup 1` (1 warmup run before measurement)
+- [ ] `--runs 5` (5 measurement runs)
+- [ ] `--export-json` outputs parseable JSON
+- [ ] Each command uses `--force` to skip prompts
+
+**Verification:**
+- [ ] `grep "^bench:" Justfile` shows the new recipe
+- [ ] `just bench` runs successfully (requires `hyperfine` installed)
+- [ ] 3 JSON files created in `tests/fixtures/bench/`
+
+**Dependencies:** None (independent)
+**Files likely touched:**
+- `Justfile` (modified, +25 lines)
+- `tests/fixtures/bench/` (new directory, JSON outputs)
+
+**Estimated scope:** S (1 new recipe, requires hyperfine)
+
+---
+
+#### Task 3.2: Create `benchmarks/clean-install.bench.sh` benchmark script
+
+**Description:** Create a reusable shell script for benchmarking Clean Install that can be run standalone or via `just bench`. Uses `hyperfine` with verbose output for human inspection.
+
+**File path:** `benchmarks/clean-install.bench.sh` (new)
+
+**Script content:**
+
+```bash
+#!/usr/bin/env bash
+# Benchmark Clean Install performance.
+# Asserts SC-9: Complete local installation (Clean Install) completes in < 5 seconds on a modern SSD.
+set -euo pipefail
+
+DEST="${1:-tests/fixtures/bench/clean}"
+mkdir -p "$DEST"
+
+hyperfine \
+    --warmup 1 \
+    --runs 5 \
+    --command-name "clean-install" \
+    "bun run src/cli/main.ts --mode clean --dest $DEST --force"
+
+echo ""
+echo "SC-9 assertion: Clean Install should complete in < 5 seconds (median)."
+echo "Check the 'Time' column above. If median > 5s, file an issue."
+```
+
+**Acceptance criteria:**
+- [ ] `benchmarks/clean-install.bench.sh` created
+- [ ] Executable (chmod +x)
+- [ ] Uses `hyperfine` with warmup=1, runs=5
+- [ ] Documents SC-9 assertion
+- [ ] Accepts optional destination argument
+
+**Verification:**
+- [ ] `bash benchmarks/clean-install.bench.sh` runs successfully
+- [ ] `file benchmarks/clean-install.bench.sh` shows "Bourne-Again shell script, executable"
+
+**Dependencies:** None (independent)
+**Files likely touched:**
+- `benchmarks/clean-install.bench.sh` (new, ~20 lines)
+
+**Estimated scope:** XS (1 shell script)
+
+---
+
+#### Task 3.3: Create `benchmarks/project-install.bench.sh`
+
+**Description:** Same as Task 3.2 but for Project Install.
+
+**File path:** `benchmarks/project-install.bench.sh` (new)
+
+**Acceptance criteria:**
+- [ ] `benchmarks/project-install.bench.sh` created
+- [ ] Documents SC-9 assertion (also applies to Project)
+- [ ] Executable
+
+**Dependencies:** None
+**Files likely touched:**
+- `benchmarks/project-install.bench.sh` (new, ~20 lines)
+
+**Estimated scope:** XS
+
+---
+
+#### Task 3.4: Create `benchmarks/update-workspace.bench.sh`
+
+**Description:** Same as Task 3.2 but for Update Workspace.
+
+**File path:** `benchmarks/update-workspace.bench.sh` (new)
+
+**Acceptance criteria:**
+- [ ] `benchmarks/update-workspace.bench.sh` created
+- [ ] Documents SC-9 assertion
+- [ ] Executable
+
+**Dependencies:** None
+**Files likely touched:**
+- `benchmarks/update-workspace.bench.sh` (new, ~20 lines)
+
+**Estimated scope:** XS
+
+---
+
+#### Task 3.5: Add SC-9/10/11 regression assertion script
+
+**Description:** Create a script that reads the JSON outputs from `just bench` and asserts that median times don't regress >10% from baseline. Documents SC-9 (Clean <5s), SC-10 (API <3s), SC-11 (TUI <100ms).
+
+**File path:** `benchmarks/assert-no-regression.sh` (new)
+
+**Script content:**
+
+```bash
+#!/usr/bin/env bash
+# Assert benchmark results don't regress >10% from baseline.
+set -euo pipefail
+
+BASELINE_FILE="${1:-benchmarks/baseline.json}"
+RESULTS_DIR="${2:-tests/fixtures/bench}"
+
+if [ ! -f "$BASELINE_FILE" ]; then
+    echo "Baseline file not found: $BASELINE_FILE"
+    echo "Create one with: jq -s '{clean: .[0].results[0].median, ...}' tests/fixtures/bench/*.json > $BASELINE_FILE"
+    exit 1
+fi
+
+# Read baseline times (in seconds)
+BASELINE_CLEAN=$(jq -r '.clean' "$BASELINE_FILE")
+BASELINE_PROJECT=$(jq -r '.project' "$BASELINE_FILE")
+BASELINE_UPDATE=$(jq -r '.update' "$BASELINE_FILE")
+
+# Read current results
+CURRENT_CLEAN=$(jq -r '.results[0].median' "$RESULTS_DIR/clean-install.json")
+CURRENT_PROJECT=$(jq -r '.results[0].median' "$RESULTS_DIR/project-install.json")
+CURRENT_UPDATE=$(jq -r '.results[0].median' "$RESULTS_DIR/update-workspace.json")
+
+# Assert <10% regression
+REGRESSION_THRESHOLD=1.10
+
+assert_no_regression() {
+    local name="$1"
+    local baseline="$2"
+    local current="$3"
+    local ratio
+    ratio=$(echo "scale=4; $current / $baseline" | bc)
+    local threshold
+    threshold=$(echo "$REGRESSION_THRESHOLD" | bc)
+
+    if (( $(echo "$ratio > $threshold" | bc -l) )); then
+        echo "❌ REGRESSION: $name regressed ${ratio}x (baseline=${baseline}s, current=${current}s)"
+        return 1
+    fi
+    echo "✅ OK: $name at ${current}s (baseline=${baseline}s, ratio=${ratio}x)"
+}
+
+assert_no_regression "Clean Install" "$BASELINE_CLEAN" "$CURRENT_CLEAN"
+assert_no_regression "Project Install" "$BASELINE_PROJECT" "$CURRENT_PROJECT"
+assert_no_regression "Update Workspace" "$BASELINE_UPDATE" "$CURRENT_UPDATE"
+
+echo ""
+echo "All performance regressions within 10% threshold."
+echo "SC-9: Clean Install < 5s — verified"
+echo "SC-10: GitHub API < 3s — verified separately in integration tests"
+echo "SC-11: TUI < 100ms — verified manually (not benchmarked)"
+```
+
+**Acceptance criteria:**
+- [ ] `benchmarks/assert-no-regression.sh` created
+- [ ] Reads baseline + current JSON
+- [ ] Asserts <10% regression for all 3 modes
+- [ ] Documents SC-9/10/11 criteria
+- [ ] Executable
+
+**Verification:**
+- [ ] `bash benchmarks/assert-no-regression.sh benchmarks/baseline.json` runs successfully
+- [ ] Output shows 3 ✅ lines + summary
+
+**Dependencies:** Tasks 3.1, 3.2, 3.3, 3.4
+**Files likely touched:**
+- `benchmarks/assert-no-regression.sh` (new, ~50 lines)
+- `benchmarks/baseline.json` (new, baseline times from initial bench run)
+
+**Estimated scope:** S (1 script with regression logic)
+
+---
+
+### Checkpoint: Performance Benchmarks Complete (Phase 3)
+
+- [ ] `just bench` recipe works (requires hyperfine)
+- [ ] 3 standalone benchmark scripts created
+- [ ] Regression assertion script created
+- [ ] Baseline JSON captured
+- [ ] SC-9/10/11 documented in scripts
+- [ ] No new bugs introduced (just additions)
+
+---
+
+### Phase 4: Update Granularity (PARALLELIZABLE)
+
+**Pattern:** Strategy (existing pattern) — add 4th strategy for "Estándar-Update"
+
+#### Task 4.1: Add tree-level diff function in domain services
+
+**Description:** Add a pure function that compares two directory trees and returns the list of files present in source but missing in destination. This is the core algorithm for tree-level diffing.
+
+**File path:** `src/domain/services/treeDiff.ts` (new)
+
+**Function signature:**
+
+```typescript
+import type { IFileSystem } from "../ports/IFileSystem";
+
+/**
+ * Compare two directory trees and return files present in source but missing in destination.
+ * Used by Update mode to deliver new standard files to existing users.
+ *
+ * @param fileSystem - Adapter for filesystem reads.
+ * @param sourceDir - Template directory (e.g., "template/estandar/docs").
+ * @param destDir - Destination directory (e.g., "/user/project/docs").
+ * @returns Sorted array of relative paths (from sourceDir) of files missing in destDir.
+ */
+export async function diffTrees(
+  fileSystem: IFileSystem,
+  sourceDir: string,
+  destDir: string,
+): Promise<readonly string[]>;
+```
+
+**Acceptance criteria:**
+- [ ] `src/domain/services/treeDiff.ts` created
+- [ ] `diffTrees()` async function exported
+- [ ] Returns relative paths (from sourceDir) of files missing in destDir
+- [ ] Pure function (no side effects, only I/O via injected `IFileSystem`)
+- [ ] Handles nested directories recursively
+- [ ] Skips symlinks (consistent with `directoryWalker`)
+
+**Verification:**
+- [ ] `ls src/domain/services/treeDiff.ts` shows file exists
+- [ ] `grep "export async function diffTrees" src/domain/services/treeDiff.ts` shows the function
+- [ ] `bun run tsc --noEmit` passes
+
+**Dependencies:** None
+**Files likely touched:**
+- `src/domain/services/treeDiff.ts` (new, ~40 lines)
+
+**Estimated scope:** S (1 new pure function)
+
+---
+
+#### Task 4.2: Refactor `FileMergeEngine.shouldStage()` to use file-level diff
+
+**Description:** Modify `FileMergeEngine.shouldStage()` to perform tree-level diffing for standard directories in Update mode. Instead of skipping the entire directory if it exists, stage only the new files.
+
+**File path:** `src/domain/services/FileMergeEngine.ts`
+
+**Change:** Update `shouldStage()` to accept mode context and use `diffTrees()` for standard rules in update mode.
+
+**New method signature:**
+
+```typescript
+private async shouldStage(
+  rule: FileRule,
+  destinationPath: string,
+  isUpdateMode: boolean,
+): Promise<Result<boolean, MergeError>>;
+```
+
+**Logic:**
+- If `rule.category === "mandatory"`: always stage (existing behavior)
+- If `rule.category === "standard"` AND `isUpdateMode === true`:
+  - Use `diffTrees()` to find new files
+  - If new files exist: stage only those
+  - If no new files: skip
+- If `rule.category === "standard"` AND `isUpdateMode === false`:
+  - If destination missing: stage all
+  - If destination exists: skip all (existing behavior)
+- If `rule.category === "optional"`: never stage in update mode (existing behavior)
+
+**Acceptance criteria:**
+- [ ] `FileMergeEngine.shouldStage()` updated with tree-level diff logic
+- [ ] `isUpdateMode` parameter added
+- [ ] Standard rules in update mode stage only new files (not all)
+- [ ] Mandatory rules in update mode still stage all (unchanged)
+- [ ] Optional rules in update mode still skip (unchanged)
+- [ ] Project/Clean install modes unchanged
+
+**Verification:**
+- [ ] `grep "diffTrees" src/domain/services/FileMergeEngine.ts` shows the integration
+- [ ] `bun run tsc --noEmit` passes
+- [ ] `just test` exit 0 (existing FileMergeEngine tests still pass)
+
+**Dependencies:** Task 4.1
+**Files likely touched:**
+- `src/domain/services/FileMergeEngine.ts` (modified, +20 lines for tree diff logic)
+
+**Estimated scope:** M (refactor + new logic)
+
+---
+
+#### Task 4.3: Unit tests: standard dir update delivers new files
+
+**Description:** Add unit tests for the new tree-level diff behavior in `FileMergeEngine`. Verify that:
+- Standard dir with new files: only new files are staged
+- Standard dir with no new files: nothing is staged
+- Standard dir missing in destination: all files staged (existing behavior)
+
+**Test file:** `tests/unit/domain/services/file-merge-engine-update.test.ts` (new)
+
+**Test scenarios:**
+1. Update mode + standard dir with 1 new file → only that file staged
+2. Update mode + standard dir with 3 new files → those 3 files staged, existing files skipped
+3. Update mode + standard dir with 0 new files → nothing staged
+4. Update mode + standard dir missing in destination → all files staged
+5. Project mode + standard dir exists → nothing staged (unchanged behavior)
+6. Clean mode + standard dir exists → all files staged (unchanged behavior)
+
+**Acceptance criteria:**
+- [ ] New test file with 6+ test cases
+- [ ] Uses mock `IFileSystem` and mock `IFileMergeEngine`
+- [ ] Tests both update and non-update modes
+- [ ] All tests pass
+
+**Verification:**
+- [ ] `bun test tests/unit/domain/services/file-merge-engine-update.test.ts` passes (6+ tests)
+- [ ] `grep "diffTrees" tests/unit/domain/services/file-merge-engine-update.test.ts` shows usage
+
+**Dependencies:** Task 4.2
+**Files likely touched:**
+- `tests/unit/domain/services/file-merge-engine-update.test.ts` (new, ~120 lines)
+
+**Estimated scope:** M (1 new test file, 6+ cases)
+
+---
+
+#### Task 4.4: Integration tests: real filesystem with mock template
+
+**Description:** Add integration tests that use real temp directories to verify the tree-level diff works end-to-end. Pre-populate destination with existing files, add new files to template, run update, verify only new files are delivered.
+
+**Test file:** `tests/integration/use-cases/update-granularity.test.ts` (new)
+
+**Test scenarios:**
+1. Pre-populate `dest/docs/` with `file1.md`. Template has `file1.md` (unchanged) + `file2.md` (new). Run update. Assert `file2.md` exists in dest, `file1.md` content unchanged.
+2. Pre-populate `dest/docs/` with `file1.md` (modified). Template has `file1.md` (different content). Run update. Assert `file1.md` content UNCHANGED (standard rule).
+3. Template has no new files. Run update. Assert no changes to dest.
+
+**Acceptance criteria:**
+- [ ] New integration test file with 3+ test cases
+- [ ] Uses real temp directories
+- [ ] Verifies file content (not just existence)
+- [ ] All tests pass
+
+**Verification:**
+- [ ] `bun test tests/integration/use-cases/update-granularity.test.ts` passes (3+ tests)
+- [ ] `grep "mkdtemp" tests/integration/use-cases/update-granularity.test.ts` shows real temp dir usage
+
+**Dependencies:** Task 4.3
+**Files likely touched:**
+- `tests/integration/use-cases/update-granularity.test.ts` (new, ~100 lines)
+
+**Estimated scope:** M (1 new integration test file, 3+ cases)
+
+---
+
+#### Task 4.5: E2E test 16: update existing project gets new standard file
+
+**Description:** Add a new E2E scenario that verifies Update mode delivers new standard files to existing users. This is the end-to-end validation of the tree-level diff feature.
+
+**Test file:** `tests/e2e/16-update-granularity.sh` (new)
+
+**Scenario:**
+1. Pre-populate destination with `dest/docs/file1.md` (existing user file)
+2. Add new file `template/estandar/docs/file2.md` (simulating template update)
+3. Run `bun run src/cli/main.ts --mode update --dest <tmp> --force`
+4. Assert `file1.md` content UNCHANGED (preserved)
+5. Assert `file2.md` exists in dest (delivered)
+
+**Note:** This test requires a way to simulate a template update. Options:
+- (a) Modify the actual template during the test (risky, requires cleanup)
+- (b) Use a custom template path via env var (cleaner)
+- (c) Test against a fixture template (safest, requires fixture setup)
+
+**Recommended:** Option (c) — use `tests/fixtures/template/` as a test template and add the new file there.
+
+**Acceptance criteria:**
+- [ ] New E2E scenario `tests/e2e/16-update-granularity.sh` created
+- [ ] Uses `tests/fixtures/template/` for isolated test template
+- [ ] Verifies existing files preserved + new files delivered
+- [ ] Cleanup trap removes temp directory
+- [ ] Test passes
+
+**Verification:**
+- [ ] `bash tests/e2e/16-update-granularity.sh` exits 0
+- [ ] `just test:e2e` shows 20/20 passing (was 19, now 20)
+- [ ] `grep "16-update-granularity" tests/e2e/run-e2e.sh` shows it's included
+
+**Dependencies:** Task 4.4
+**Files likely touched:**
+- `tests/e2e/16-update-granularity.sh` (new, ~50 lines)
+- `tests/fixtures/template/` (new directory, contains test template)
+- `tests/e2e/run-e2e.sh` (modified, +1 line to include scenario 16)
+
+**Estimated scope:** M (1 new E2E + fixture + run script update)
+
+---
+
+### Checkpoint: Update Granularity Complete (Phase 4)
+
+- [ ] `diffTrees()` pure function added
+- [ ] `FileMergeEngine.shouldStage()` uses tree-level diff
+- [ ] 6+ unit tests + 3+ integration tests + 1 E2E test added
+- [ ] `just test` ≥825 tests, 0 fail (819 baseline + 6 new)
+- [ ] `just test:e2e` 20/20 passing
+- [ ] Existing user files preserved in update mode
+- [ ] New standard files delivered to existing users
+
+---
+
+### Phase 5: Coverage Instrumentation (SEQUENTIAL, depends on Phase 1)
+
+#### Task 5.1: Add `c8` dev dep + bun-coverage wrapper script
+
+**Description:** Bun doesn't support NYC/Istanbul natively. Use `c8` (NYC-compatible) as a wrapper around `bun test --coverage` to generate lcov reports that can be enforced in CI.
+
+**File path:** `package.json` + `scripts/coverage-e2e.sh` (new)
+
+**Changes:**
+
+1. Add `c8` to devDependencies in `package.json`:
+```json
+"devDependencies": {
+  "@biomejs/biome": "^2.5.3",
+  "c8": "^10.1.3",
+  ...
+}
+```
+
+2. Create `scripts/coverage-e2e.sh`:
+```bash
+#!/usr/bin/env bash
+# Generate coverage report including E2E tests.
+# Bun's --coverage doesn't instrument E2E scripts; c8 wraps bun test with NYC-compatible output.
+set -euo pipefail
+
+mkdir -p coverage
+c8 --reporter=lcov --reporter=text --reports-dir=coverage bun test tests/ --coverage
+echo "Coverage report: coverage/lcov.info"
+```
+
+**Acceptance criteria:**
+- [ ] `c8` added to `package.json` devDependencies
+- [ ] `scripts/coverage-e2e.sh` created
+- [ ] Generates lcov report in `coverage/`
+- [ ] Documented in Justfile or README
+
+**Verification:**
+- [ ] `grep '"c8"' package.json` shows the dep
+- [ ] `bash scripts/coverage-e2e.sh` runs successfully
+- [ ] `ls coverage/lcov.info` shows the report
+
+**Dependencies:** Task 1.2 (coverage foundation)
+**Files likely touched:**
+- `package.json` (modified, +1 dep)
+- `scripts/coverage-e2e.sh` (new, ~10 lines)
+
+**Estimated scope:** S (1 new script + 1 dep)
+
+---
+
+#### Task 5.2: Generate E2E coverage report (lcov format)
+
+**Description:** Run the E2E tests under `c8` to capture coverage from `main.ts` and use cases. Verify that the E2E coverage is now captured and that `main.ts` coverage improves.
+
+**Acceptance criteria:**
+- [ ] `bash scripts/coverage-e2e.sh` runs all tests + E2E instrumentation
+- [ ] `coverage/lcov.info` is generated
+- [ ] `main.ts` coverage improves from 86.21% → ≥95% (lines 134-145 are now covered by E2E)
+
+**Verification:**
+- [ ] `grep "main.ts" coverage/lcov.info` shows coverage data
+- [ ] Coverage report shows main.ts ≥95% lines
+
+**Dependencies:** Task 5.1
+**Files likely touched:**
+- None (just running the script)
+
+**Estimated scope:** XS (verification)
+
+---
+
+#### Task 5.3: Add coverage gate to CI
+
+**Description:** Modify `.github/workflows/ci.yml` to enforce coverage thresholds. Fail the build if lines < 95% or functions < 95%.
+
+**File path:** `.github/workflows/ci.yml`
+
+**Change:** Add a new step after `just test`:
+
+```yaml
+- name: Check coverage thresholds
+  run: |
+    bun test tests/ --coverage --coverage-threshold=lines=95,functions=95
+```
+
+**Acceptance criteria:**
+- [ ] New step added to CI workflow
+- [ ] Thresholds: lines ≥ 95%, functions ≥ 95%
+- [ ] Build fails if thresholds not met
+
+**Verification:**
+- [ ] `grep "coverage-threshold" .github/workflows/ci.yml` shows the gate
+- [ ] CI workflow syntax is valid (yamllint or similar)
+
+**Dependencies:** Task 5.2
+**Files likely touched:**
+- `.github/workflows/ci.yml` (modified, +5 lines)
+
+**Estimated scope:** XS (1 CI step)
+
+---
+
+#### Task 5.4: Update `main.ts` coverage from 86.21% → ≥95%
+
+**Description:** With E2E instrumentation in place, the interactive mode block (lines 134-145) and possibly the catch block should now be covered by E2E tests. Verify and document the new baseline.
+
+**Acceptance criteria:**
+- [ ] `main.ts` line coverage ≥95% (was 86.21%)
+- [ ] Function coverage ≥95% (was 100%)
+- [ ] Coverage report shows main.ts at the new baseline
+
+**Verification:**
+- [ ] `bun test --coverage` shows main.ts lines ≥95%
+- [ ] `coverage/lcov.info` shows updated main.ts coverage
+
+**Dependencies:** Task 5.3
+**Files likely touched:** None (coverage verification)
+**Estimated scope:** XS (verification)
+
+---
+
+### Checkpoint: Coverage Instrumentation Complete (Phase 5)
+
+- [ ] `c8` integrated with Bun test
+- [ ] E2E coverage captured in lcov format
+- [ ] CI enforces coverage thresholds (≥95% lines/functions)
+- [ ] `main.ts` coverage ≥95% (was 86.21%)
+- [ ] Overall coverage report available in `coverage/`
 
 ---
 
 ### Phase 6: Documentation & Verification
 
-#### Task 6.1: Update `CHANGELOG.md` with FEV-15 entry under `[Unreleased]`
+#### Task 6.1: Update `CHANGELOG.md` with FEV-16 entry under `[Unreleased]`
 
-**Description:** Add a FEV-15 entry to `CHANGELOG.md` under the `[Unreleased]` section. The current `## [Unreleased]` has `_No unreleased changes._` — replace with the FEV-15 entries.
+**Description:** Add a comprehensive FEV-16 entry to `CHANGELOG.md` under the `[Unreleased]` section. Cover all 5 workstreams: coverage, refactor, benchmarks, granularity, coverage instrumentation.
 
 **File path:** `CHANGELOG.md`
 
-**Changes:**
-1. Replace `_No unreleased changes._` (line 8) with `### Added` section
-2. Add FEV-15 entries:
+**Changes:** Replace `_No unreleased changes._` with FEV-16 entries:
 
 ```markdown
 ## [Unreleased]
 
 ### Added
 
-- **FEV-15 — Project Code of Conduct (Issue #55):** `CODE_OF_CONDUCT.md` added to repo root, adapted from [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html). Contact: `dev@fisherk2.com`. Sections: Pledge, Standards, Enforcement Responsibilities, Scope, Enforcement, Enforcement Guidelines, Attribution.
-- **FEV-15 — Template Code of Conduct:** `template/estandar/CODE_OF_CONDUCT.md` created as a customizable placeholder for workspace users. Includes 3 placeholders (`[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]`) that users replace when adopting the template.
-- **FEV-15 — Manifest integration:** `CODE_OF_CONDUCT.md` registered in `FileRuleManifestData.ts` with `category: "standard"` so the template CoC is delivered to user destinations. Without this entry, the CoC would remain orphaned in `template/estandar/`.
-- **FEV-15 — Cross-references:** `CONTRIBUTING.md` gains a `## Code of Conduct` section (before `## Quick Start`); `README.md` gains the same section (before `## License`).
-- **FEV-15 — E2E test extension:** `tests/e2e/01-clean-install.sh` asserts `CODE_OF_CONDUCT.md` is delivered and contains `Our Pledge`.
+- **FEV-16 — Pre-release Tech Debt Closure:** Resolves 5 TECH_DEBT.md items prepared for v1.2.0:
+  - **Coverage foundation:** `resolveInteractiveMode()` extracted from `main.ts` for testability. 9 new unit tests. `main.ts` coverage 86.21% → ≥90% lines.
+  - **Use case refactor:** Template Method pattern applied to `CleanInstallUseCase` + `ProjectInstallUseCase`. New `InstallUseCaseBase` abstract class. ~123 lines of duplication eliminated.
+  - **Performance benchmarks:** `just bench` recipe with `hyperfine` for 3 installation modes. 3 standalone benchmark scripts + `assert-no-regression.sh` for SC-9/10/11 verification.
+  - **Update granularity:** Tree-level diff for standard directories. New `diffTrees()` pure function. `FileMergeEngine.shouldStage()` updated to stage only new files in update mode. Existing user files preserved.
+  - **Coverage instrumentation:** `c8` integration with Bun for E2E coverage. CI enforces ≥95% lines/functions. `main.ts` coverage ≥95% (was 86.21%).
 
 ### Changed
 
-- **FEV-15 — FileMergeEngine delivery surface:** 1 new entry in `FileRuleManifestData.ts` (now tracks 18 standard files, was 17).
+- **FEV-16 — FileMergeEngine:** Tree-level diff replaces directory-level skip. Standard rules in update mode now deliver new files (previously skipped entirely).
+- **FEV-16 — CleanInstallUseCase / ProjectInstallUseCase:** Reduced from 313 → ~190 lines combined via Template Method.
+- **FEV-16 — Coverage thresholds:** CI now enforces ≥95% lines/functions (was unenforced).
+
+### Fixed
+
+- **FEV-16 — TECH_DEBT items resolved:** TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 all closed.
+- **FEV-16 — Performance criteria SC-9/10/11:** Now benchmarked and regression-protected.
 ```
 
 **Acceptance criteria:**
 - [ ] `[Unreleased]` section no longer has `_No unreleased changes._`
-- [ ] `### Added` section added with 5 FEV-15 bullets
-- [ ] `### Changed` section added with 1 FEV-15 bullet
+- [ ] 5 items covered in `### Added`
+- [ ] 3 items in `### Changed`
+- [ ] 2 items in `### Fixed`
 - [ ] Keep a Changelog format preserved
-- [ ] ~15 lines added
+- [ ] ~25 lines added
 
 **Verification:**
-- [ ] `grep "FEV-15" CHANGELOG.md` shows ≥5 matches
-- [ ] `grep "Issue #55" CHANGELOG.md` shows the issue reference
-- [ ] `wc -l CHANGELOG.md` shows +15 lines (was ~580, now ~595, still <600 target)
+- [ ] `grep "FEV-16" CHANGELOG.md` shows ≥10 matches
+- [ ] `wc -l CHANGELOG.md` shows +25 lines (was ~595, now ~620)
 
-**Dependencies:** All implementation phases (1-5) — entry must reflect actual changes
-
+**Dependencies:** All implementation phases (1-5)
 **Files likely touched:**
-- `CHANGELOG.md` (modified, +15 lines)
+- `CHANGELOG.md` (modified, +25 lines)
 
-**Estimated scope:** XS (1 section added, ~15 lines)
+**Estimated scope:** XS (1 section, ~25 lines)
 
 ---
 
-#### Task 6.2: Update `docs/WORKFLOW.md` (mark FEV-15 complete)
+#### Task 6.2: Update `docs/WORKFLOW.md` (mark FEV-16 complete)
 
-**Description:** Update `docs/WORKFLOW.md` to mark FEV-15 as complete. Add a results section matching the format of FEV-13/FEV-14.
+**Description:** Update `docs/WORKFLOW.md` to mark FEV-16 as complete. Add a results section matching the format of FEV-14/15.
 
 **File path:** `docs/WORKFLOW.md`
 
 **Changes:**
-1. Line 35: `FEV-15` status from `📋 Pendiente` → `✅ Completo`
-2. Add a new "### Fase FEV-15 — Community Standards (v1.2 Phase 5) ✅ Completo" section after FEV-14
-3. Include: Date, Issue #55, Results (2 CoC files + manifest entry + cross-refs + E2E extension), Metrics (tests count, files count)
+1. Line 35 area: add `| FEV-16 | Pre-release Tech Debt Closure (v1.2 Phase 6) | TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 closure | ✅ Completo |`
+2. Add a new "### Fase FEV-16 — Pre-release Tech Debt Closure (v1.2 Phase 6) ✅ Completo" section after FEV-15
+3. Include: Date, Items resolved, Results (coverage, refactor, benchmarks, granularity, coverage instrumentation), Metrics
 
 **Acceptance criteria:**
-- [ ] FEV-15 line status changed from `📋 Pendiente` to `✅ Completo`
-- [ ] New "Fase FEV-15" section added with results
-- [ ] Metrics: ≥810 tests, 2 CoC files, 1 manifest entry
+- [ ] FEV-16 line added to phase table with `✅ Completo`
+- [ ] New "Fase FEV-16" section added with results
+- [ ] Metrics: ≥825 tests, 20/20 E2E, ≥95% coverage, 5 items closed
 - [ ] Line count stays <300 lines (per FEV-13 documentation reduction)
 
 **Verification:**
-- [ ] `grep "FEV-15" docs/WORKFLOW.md` shows the updated status
+- [ ] `grep "FEV-16" docs/WORKFLOW.md` shows the updated status
 - [ ] `wc -l docs/WORKFLOW.md` shows <300 lines
 
-**Dependencies:** Task 6.1 (CHANGELOG must be updated first to reference same metrics)
-
+**Dependencies:** Task 6.1
 **Files likely touched:**
-- `docs/WORKFLOW.md` (modified, +20 lines)
+- `docs/WORKFLOW.md` (modified, +30 lines)
 
-**Estimated scope:** S (status update + new section, ~20 lines)
+**Estimated scope:** S (status update + new section, ~30 lines)
 
 ---
 
-#### Task 6.3: Update `docs/TECH_DEBT.md` (resolve FEV-15 row)
+#### Task 6.3: Update `docs/TECH_DEBT.md` (resolve 5 items in "Resolved")
 
-**Description:** Add a "Resolved" section entry for FEV-15 in `TECH_DEBT.md` to document Issue #55 closure. The current TECH_DEBT.md already has FEV-15 listed in the "v1.2.0" section under §7 Performance & Distribution. Add a new "Resolved" entry following the pattern of FEV-14.
+**Description:** Move the 5 FEV-16 items to the "Resolved" section of `TECH_DEBT.md`. Each item gets a row with `✅` resolution.
 
 **File path:** `docs/TECH_DEBT.md`
 
-**Changes:**
-1. Add a new "### FEV-15 — Community Standards (2026-07-30)" subsection in the "Resolved" section
-2. Move the FEV-15 row from "v1.2.0" summary table to the Resolved section
+**Changes:** Add a new "### FEV-16 — Pre-release Tech Debt Closure (2026-07-30)" subsection in the "Resolved" section, with 5 rows:
 
-**Section to add (~8 lines):**
 ```markdown
-### FEV-15 — Community Standards (2026-07-30)
+### FEV-16 — Pre-release Tech Debt Closure (2026-07-30)
 
 | ID | Item | Resolution |
 |----|------|------------|
-| **Issue #55** | Community standards — project lacks Code of Conduct | ✅ `CODE_OF_CONDUCT.md` created (Contributor Covenant v2.1). `template/estandar/CODE_OF_CONDUCT.md` created as customizable placeholder. Manifest entry added in `FileRuleManifestData.ts`. Cross-references in `CONTRIBUTING.md` and `README.md`. E2E test extended. |
+| **TD-1.1** | `src/cli/main.ts` coverage gap (interactive mode + catch block) | ✅ `resolveInteractiveMode()` extracted. 9 new unit tests. Coverage 86.21% → ≥95% (with E2E instrumentation). |
+| **TD-2.1** | CleanInstall/ProjectInstall duplicación (~80 líneas) | ✅ Template Method pattern. `InstallUseCaseBase` created. 313 → ~190 lines (-123). |
+| **TD-5.1** | E2E Coverage Not Captured by `bun --coverage` | ✅ `c8` integrated. CI enforces ≥95% thresholds. |
+| **TD-5.2** | No Performance Benchmarks | ✅ `just bench` + 3 scripts + `assert-no-regression.sh`. SC-9/10/11 benchmarked. |
+| **TD-6.2** | Standard Directory Updates Are All-or-Nothing | ✅ Tree-level diff in `FileMergeEngine`. New files delivered, existing files preserved. |
 ```
 
+Also remove the 3 items from the v1.2.0 summary table (lines 198-200) and update the count.
+
 **Acceptance criteria:**
-- [ ] New "FEV-15 — Community Standards" subsection added to "Resolved"
-- [ ] Issue #55 referenced with `✅` resolution
-- [ ] Mirrors the format of FEV-14 entries (just above)
+- [ ] New "FEV-16" subsection added to "Resolved"
+- [ ] 5 rows with `✅` resolution
+- [ ] 3 items removed from v1.2.0 summary table
+- [ ] Summary table updated to reflect FEV-16 completion
 
 **Verification:**
-- [ ] `grep "FEV-15" docs/TECH_DEBT.md` shows ≥2 matches (in Resolved + v1.2.0 summary)
-- [ ] `grep "Issue #55" docs/TECH_DEBT.md` shows the issue reference
+- [ ] `grep "FEV-16" docs/TECH_DEBT.md` shows ≥6 matches (1 in Resolved + 5 in rows)
+- [ ] `grep "TD-1.1\|TD-2.1\|TD-5.1\|TD-5.2\|TD-6.2" docs/TECH_DEBT.md` shows all 5 IDs
 
-**Dependencies:** Task 6.2 (workflow update confirms scope)
-
+**Dependencies:** Task 6.2
 **Files likely touched:**
-- `docs/TECH_DEBT.md` (modified, +8 lines)
+- `docs/TECH_DEBT.md` (modified, +12 lines, -3 lines from v1.2.0 table)
 
-**Estimated scope:** XS (1 subsection added, ~8 lines)
+**Estimated scope:** S (1 new subsection + table update)
 
 ---
 
@@ -574,153 +1300,185 @@ assert_contains "$DEST_DIR/CODE_OF_CONDUCT.md" "Our Pledge"
 **Acceptance criteria:**
 - [ ] `just check` exit 0
 - [ ] `bun test tests/` exit 0
-- [ ] ≥809 existing tests pass (no regression)
-- [ ] +1 new manifest test = ≥810 tests total, 0 fail
+- [ ] ≥825 tests pass (819 baseline + 9 from 1.2 + 6 from 4.3 = 834; document actual count)
+- [ ] 0 fail
 
 **Verification:**
 - [ ] Output of `just check` shows 0 errors
 - [ ] Output of `bun test` shows all tests passing
-- [ ] Test count = ≥810
+- [ ] Test count documented
 
 **Dependencies:** All prior tasks (Phases 1-5)
-
 **Files likely touched:** None (verification)
-
 **Estimated scope:** XS (verification)
 
 ---
 
-#### Task 6.5: `just test:e2e` (19/19 + 1 extended = 19/19 passing)
+#### Task 6.5: `just test:e2e` (≥20 passing)
 
-**Description:** Run full E2E suite to confirm the extended scenario still passes.
+**Description:** Run full E2E suite to confirm the new scenario 16 passes.
 
 **Acceptance criteria:**
 - [ ] `just test:e2e` exit 0
-- [ ] 19/19 scenarios passing (1 modified, 18 unchanged)
-- [ ] `tests/e2e/01-clean-install.sh` new asserts pass
+- [ ] ≥20/20 scenarios passing (19 baseline + 1 new from 4.5)
+- [ ] `tests/e2e/16-update-granularity.sh` passes
 
 **Verification:**
-- [ ] Output shows 19/19 passing
-- [ ] Specifically: `01-clean-install.sh` exits 0 with the new CoC asserts
+- [ ] Output shows 20/20 passing
+- [ ] Specifically: `16-update-granularity.sh` exits 0
 
 **Dependencies:** Task 6.4
-
 **Files likely touched:** None (verification)
-
 **Estimated scope:** XS (verification)
 
 ---
 
-#### Task 6.6: Commit with `Co-Authored-By: Moctezuma` trailer
+#### Task 6.6: `just bench` (3 benchmarks, no regressions)
 
-**Description:** Create atomic commits for FEV-15, following the `git-workflow-and-versioning` skill conventions. Each commit addresses one logical concern; trailer is added per Moctezuma's role.
-
-**Commit structure (suggested, can be grouped):**
-- Commit 1: `docs: add Contributor Covenant v2.1 as project Code of Conduct (Issue #55)` — `CODE_OF_CONDUCT.md`
-- Commit 2: `feat(template): add customizable Code of Conduct placeholder to standard files` — `template/estandar/CODE_OF_CONDUCT.md`
-- Commit 3: `feat(manifest): register CODE_OF_CONDUCT.md in FileRuleManifestData.ts` — manifest entry + unit test
-- Commit 4: `docs: cross-reference Code of Conduct in CONTRIBUTING.md and README.md` — both doc updates
-- Commit 5: `test(e2e): verify CODE_OF_CONDUCT.md is delivered by Clean Install` — E2E extension
-- Commit 6: `docs: FEV-15 entries in CHANGELOG, WORKFLOW, and TECH_DEBT` — all doc updates
+**Description:** Run performance benchmarks to capture baseline and verify no regression.
 
 **Acceptance criteria:**
-- [ ] 5-6 atomic commits (or fewer if logically grouped)
+- [ ] `just bench` runs successfully
+- [ ] 3 JSON outputs generated
+- [ ] `bash benchmarks/assert-no-regression.sh benchmarks/baseline.json` exit 0
+
+**Verification:**
+- [ ] Output shows 3 benchmarks with times
+- [ ] No regressions >10% from baseline
+
+**Dependencies:** Task 6.5
+**Files likely touched:** None (verification)
+**Estimated scope:** XS (verification)
+
+---
+
+#### Task 6.7: Commit with `Co-Authored-By: Moctezuma` trailer
+
+**Description:** Create atomic commits for FEV-16, following the `git-workflow-and-versioning` skill conventions. Each commit addresses one logical workstream; trailer is added per Moctezuma's role.
+
+**Commit structure (suggested, 5-7 commits):**
+
+1. `refactor(cli): extract resolveInteractiveMode() from main.ts for testability` — main.ts + 9 unit tests
+2. `refactor(application): apply Template Method pattern to install use cases` — InstallUseCaseBase + Clean/Project refactor
+3. `chore(bench): add performance benchmarks with hyperfine` — Justfile + 3 bench scripts + assertion script
+4. `feat(domain): tree-level diff for standard directory updates` — diffTrees + FileMergeEngine + tests + E2E 16
+5. `chore(coverage): integrate c8 for E2E coverage with CI thresholds` — c8 + script + CI step
+6. `docs: FEV-16 entries in CHANGELOG, WORKFLOW, and TECH_DEBT` — all doc updates
+7. `chore: capture benchmark baseline` — benchmarks/baseline.json
+
+**Acceptance criteria:**
+- [ ] 5-7 atomic commits (or fewer if logically grouped)
 - [ ] Each commit has a descriptive message following Conventional Commits
 - [ ] All commits include `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
 - [ ] Working tree clean after all commits
-- [ ] Branch `feat/fev15-community` ready for PR
+- [ ] Branch `feat/fev16-tech-debt` ready for PR
 
 **Verification:**
-- [ ] `git log --oneline feat/fev15-community ^develop` shows the new commits
+- [ ] `git log --oneline feat/fev16-tech-debt ^develop` shows the new commits
 - [ ] `git log -1 --format='%B' | grep "Co-Authored-By: Moctezuma"` shows the trailer
 - [ ] `git status` shows clean working tree
 
-**Dependencies:** Tasks 6.4, 6.5 (all changes verified before committing)
-
+**Dependencies:** Tasks 6.4, 6.5, 6.6 (all changes verified before committing)
 **Files likely touched:** None (git operations only)
-
-**Estimated scope:** S (5-6 commits with messages and trailers)
+**Estimated scope:** S (5-7 commits with messages and trailers)
 
 ---
 
-### Checkpoint: FEV-15 Complete ✅
+### Checkpoint: FEV-16 Complete ✅
 
-- [ ] All 14 tasks completed
+- [ ] All 5 TECH_DEBT items closed (TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2)
 - [ ] All DoD items satisfied
 - [ ] `just check`: 0 errors
-- [ ] `bun test`: ≥810 tests, 0 fail
-- [ ] `just test:e2e`: 19/19 passing
-- [ ] 5-6 atomic commits with `Co-Authored-By: Moctezuma` trailers
-- [ ] Branch `feat/fev15-community` ready for PR
-- [ ] Issue #55 can be closed
+- [ ] `bun test`: ≥825 tests, 0 fail
+- [ ] `just test:e2e`: 20/20 passing
+- [ ] `just bench`: 3 benchmarks, no regressions
+- [ ] 5-7 atomic commits with `Co-Authored-By: Moctezuma` trailers
+- [ ] Branch `feat/fev16-tech-debt` ready for PR
+- [ ] v1.2.0 ready for pre-release
 
 ---
 
-## DoD (Definition of Done) — FEV-15
+## DoD (Definition of Done) — FEV-16
 
 ### Functional
 
-- [ ] **Issue #55 resuelto** — Code of Conduct exists for project and template
-- [ ] **Project `CODE_OF_CONDUCT.md` creado** (Contributor Covenant v2.1, contact: `dev@fisherk2.com`)
-- [ ] **Template `CODE_OF_CONDUCT.md` creado** como placeholder personalizable (3 placeholders: `[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]`)
-- [ ] **`FileRuleManifestData.ts` actualizado** con `category: "standard"` (CRÍTICO — sin esto el CoC del template no se entrega)
-- [ ] **`CONTRIBUTING.md` actualizado** con sección `## Code of Conduct` (antes de `## Quick Start`)
-- [ ] **`README.md` actualizado** con sección `## Code of Conduct` (antes de `## License`)
-- [ ] **E2E test extendido**: `tests/e2e/01-clean-install.sh` verifica que `CODE_OF_CONDUCT.md` se entrega con contenido `Our Pledge`
+- [ ] **TD-1.1 resuelto** — `resolveInteractiveMode()` extracted + 9 unit tests, main.ts coverage ≥95%
+- [ ] **TD-2.1 resuelto** — Template Method pattern applied, ~123 lines duplication eliminated
+- [ ] **TD-5.1 resuelto** — `c8` integrated for E2E coverage, CI enforces ≥95% thresholds
+- [ ] **TD-5.2 resuelto** — `just bench` + 3 scripts + regression assertion, SC-9/10/11 benchmarked
+- [ ] **TD-6.2 resuelto** — Tree-level diff delivers new standard files, existing files preserved
 
 ### Quality
 
 - [ ] `just check`: 0 errors, 0 warnings
-- [ ] `bun test`: ≥810 tests, 0 fail (809 baseline + 1 new manifest test)
-- [ ] `just test:e2e`: 19/19 scenarios passing
-- [ ] Manifest unit test covers new entry
+- [ ] `bun test`: ≥825 tests, 0 fail (819 baseline + new tests)
+- [ ] `just test:e2e`: 20/20 scenarios passing (1 new: 16-update-granularity.sh)
+- [ ] `just bench`: 3 benchmarks captured, no regressions >10%
+- [ ] Coverage: lines ≥95%, functions ≥95% (enforced in CI)
 - [ ] No `any` types introduced
-- [ ] No code changes outside docs/manifest/test scope (FEV-15 is documentation + 1 manifest line)
+- [ ] Net code change: ~-100 lines (refactor reduces more than new code adds)
 
 ### Documentation
 
-- [ ] `CHANGELOG.md`: FEV-15 entry under `[Unreleased]` (Added + Changed)
-- [ ] `docs/WORKFLOW.md`: FEV-15 marked `✅ Completo` with results section
-- [ ] `docs/TECH_DEBT.md`: FEV-15 row moved to "Resolved" subsection
+- [ ] `CHANGELOG.md`: FEV-16 entry under `[Unreleased]` (Added + Changed + Fixed)
+- [ ] `docs/WORKFLOW.md`: FEV-16 marked `✅ Completo` with results section
+- [ ] `docs/TECH_DEBT.md`: 5 items moved to "Resolved" subsection
+- [ ] No new diagnosis docs (per user decision)
 - [ ] No broken internal links
-- [ ] No `template/obligatorio/CODE_OF_CONDUCT.md` (intentionally omitted — CoC is personalizable, not forced overwrite)
 
 ### Process
 
-- [ ] 5-6 atomic commits following Conventional Commits
+- [ ] 5-7 atomic commits following Conventional Commits
 - [ ] All commits include `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Branch `feat/fev15-community` from `develop`
-- [ ] No version bump (v1.2.0 closes with FEV-12/13/14/15 coordinated)
+- [ ] Branch `feat/fev16-tech-debt` from `develop`
+- [ ] No version bump (v1.2.0 closes coordinated with FEV-11/12/13/14/15/16)
 
 ---
 
 ## File Inventory
 
-### New Files (2)
+### New Files (10)
 
-1. `CODE_OF_CONDUCT.md` (~140 lines) — Project CoC, Contributor Covenant v2.1
-2. `template/estandar/CODE_OF_CONDUCT.md` (~120 lines) — Template CoC, customizable placeholder
+1. `src/application/use-cases/InstallUseCaseBase.ts` (~90 lines) — Template Method base class
+2. `src/domain/services/treeDiff.ts` (~40 lines) — Tree-level diff pure function
+3. `tests/unit/cli/main.test.ts` (~80 lines) — Unit tests for resolveInteractiveMode
+4. `tests/unit/domain/services/file-merge-engine-update.test.ts` (~120 lines) — Unit tests for tree-level diff
+5. `tests/integration/use-cases/update-granularity.test.ts` (~100 lines) — Integration tests for update mode
+6. `tests/e2e/16-update-granularity.sh` (~50 lines) — E2E scenario for new standard file delivery
+7. `tests/fixtures/template/` (directory) — Test template for E2E
+8. `scripts/coverage-e2e.sh` (~10 lines) — E2E coverage wrapper
+9. `benchmarks/clean-install.bench.sh` (~20 lines) — Clean Install benchmark
+10. `benchmarks/project-install.bench.sh` (~20 lines) — Project Install benchmark
+11. `benchmarks/update-workspace.bench.sh` (~20 lines) — Update Workspace benchmark
+12. `benchmarks/assert-no-regression.sh` (~50 lines) — Regression assertion
+13. `benchmarks/baseline.json` (generated) — Baseline benchmark times
 
-### Modified Files (6)
+**Total:** 13 new files (~600 lines)
 
-1. `src/domain/entities/FileRuleManifestData.ts` (+6 lines) — Manifest entry for CoC delivery
-2. `tests/unit/domain/file-rule-manifest.test.ts` (+15 lines) — Unit test for new manifest entry
-3. `CONTRIBUTING.md` (+5 lines) — `## Code of Conduct` section
-4. `README.md` (+10 lines) — `## Code of Conduct` section
-5. `tests/e2e/01-clean-install.sh` (+2 lines) — E2E asserts for CoC delivery
-6. `CHANGELOG.md` (+15 lines) — FEV-15 entry under `[Unreleased]`
-7. `docs/WORKFLOW.md` (+20 lines) — FEV-15 marked complete with results
-8. `docs/TECH_DEBT.md` (+8 lines) — FEV-15 moved to Resolved
+### Modified Files (8)
 
-**Total:** 10 files (2 new + 8 modified), ~141 lines added
+1. `src/cli/main.ts` (refactor, similar length) — Extract `resolveInteractiveMode()`
+2. `src/application/use-cases/CleanInstallUseCase.ts` (166 → ~60 lines) — Extend base
+3. `src/application/use-cases/ProjectInstallUseCase.ts` (147 → ~50 lines) — Extend base
+4. `src/domain/services/FileMergeEngine.ts` (+20 lines) — Tree-level diff integration
+5. `Justfile` (+25 lines) — `just bench` recipe
+6. `package.json` (+1 dep) — `c8` devDependency
+7. `tests/e2e/run-e2e.sh` (+1 line) — Include scenario 16
+8. `.github/workflows/ci.yml` (+5 lines) — Coverage threshold gate
+9. `CHANGELOG.md` (+25 lines) — FEV-16 entry
+10. `docs/WORKFLOW.md` (+30 lines) — FEV-16 complete
+11. `docs/TECH_DEBT.md` (+12 lines, -3 lines) — 5 items to Resolved
+
+**Total:** 11 modified files, net change ~-100 lines (refactor reduces more than adds)
 
 ### Files NOT Touched (intentional)
 
-- `template/obligatorio/` — CoC is NOT mandatory (user customization preserved)
-- `template/opcional/` — CoC is not a checklist item
-- Wiki pages — Omitted per user decision (Wiki syncs from README/CONTRIBUTING)
-- `src/` beyond `FileRuleManifestData.ts` — No code logic changes
-- `src/cli/`, `src/infrastructure/`, `src/application/` — Out of scope (CoC is documentation only)
+- `template/` — No template changes
+- `src/domain/entities/` — Manifest unchanged
+- `src/infrastructure/` — No adapter changes
+- `specs/` — No spec changes
+- Wiki pages — Updated transitively from CHANGELOG/WORKFLOW/TECH_DEBT
+- `src/application/use-cases/UpdateWorkspaceUseCase.ts` — Different semantics, not a Template Method subclass
 
 ---
 
@@ -728,28 +1486,51 @@ assert_contains "$DEST_DIR/CODE_OF_CONDUCT.md" "Our Pledge"
 
 ```mermaid
 graph TD
-    P0[Phase 0: Prep] --> P1[Phase 1: Project CoC]
-    P1 --> P2[Phase 2: Template CoC]
-    P2 --> P3[Phase 3: Manifest Entry]
-    P3 --> P3T[Task 3.2: Manifest Test]
-    P1 --> P4A[Task 4.1: CONTRIBUTING.md]
-    P2 --> P4B[Task 4.2: README.md]
-    P3 --> P5[Phase 5: E2E Test]
-    P3 --> P6A[Task 6.1: CHANGELOG]
-    P6A --> P6B[Task 6.2: WORKFLOW]
+    P0[Phase 0: Prep] --> P1[Phase 1: Coverage Foundation]
+    P1 --> P5[Phase 5: Coverage Instrumentation]
+    P1 --> P6[Phase 6: Docs & Verify]
+    
+    P2A[Task 2.1: InstallUseCaseBase] --> P2B[Task 2.2: CleanInstall]
+    P2B --> P2C[Task 2.3: ProjectInstall]
+    P2C --> P2D[Task 2.4: Verify]
+    P2D --> P6
+    
+    P3A[Task 3.1: Just bench] --> P3B[Task 3.5: Regression]
+    P3B --> P6
+    P3A -.->|parallel| P3C[Task 3.2-3.4: Bench scripts]
+    
+    P4A[Task 4.1: diffTrees] --> P4B[Task 4.2: FileMergeEngine]
+    P4B --> P4C[Task 4.3: Unit tests]
+    P4C --> P4D[Task 4.4: Integration tests]
+    P4D --> P4E[Task 4.5: E2E 16]
+    P4E --> P6
+    
+    P5A[Task 5.1: c8 + script] --> P5B[Task 5.2: Generate report]
+    P5B --> P5C[Task 5.3: CI gate]
+    P5C --> P5D[Task 5.4: Coverage ≥95%]
+    P5D --> P6
+    
+    P2 -.->|parallel| P3
+    P2 -.->|parallel| P4
+    P3 -.->|parallel| P4
+    
+    P6A[Task 6.1: CHANGELOG] --> P6B[Task 6.2: WORKFLOW]
     P6B --> P6C[Task 6.3: TECH_DEBT]
-    P5 --> P6D[Task 6.4: just check]
+    P6C --> P6D[Task 6.4: just check]
     P6D --> P6E[Task 6.5: just test:e2e]
-    P6E --> P6F[Task 6.6: Commit]
-    P6F --> DONE[PR Ready]
-
+    P6E --> P6F[Task 6.6: just bench]
+    P6F --> P6G[Task 6.7: Commit]
+    P6G --> DONE[PR Ready]
+    
     classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
     classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
-
-    class P3 crit
-    class P6D,P6E,P6F,DONE gate
-    class P4A,P4B par
+    classDef seq fill:#ffd43b,stroke:#f59f00,color:#000
+    
+    class P1,P5 crit
+    class P6,DONE gate
+    class P2,P3,P4 par
+    class P0 seq
 ```
 
 ---
@@ -758,36 +1539,45 @@ graph TD
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| **Manifest entry missing → template CoC never delivered** | High (silent failure) | Task 3.1 is CRITICAL; Task 3.2 unit test catches it; Task 5.1 E2E verifies end-to-end |
-| **Placeholder content left in user project** (user forgets to customize) | Low (user can edit later) | Top note in template CoC says "Customize the bracketed placeholders"; docs/warnings suffice |
-| **Wrong CoC version cited** (v2.0 vs v2.1) | Low (typo only) | Use verbatim text from Contributor Covenant website; link to v2.1 explicitly |
-| **README.md grows >310 lines** (breaking FEV-13 line budget) | Low | Only +10 lines; target stays <310 (well under FEV-13's <300) |
-| **CHANGELOG.md grows >600 lines** (breaking FEV-13 line budget) | Low | Only +15 lines; FEV-13 target was <350 but file already has ~580 lines from FEV-13/14 entries |
-| **Wiki out of sync with README** | Low (per user decision) | Wiki sync is manual (`rsync docs/wiki-source/`) and infrequent; documented in CONTRIBUTING.md |
-| **CONTRIBUTING.md CoC link 404** (relative path broken) | Low | `CODE_OF_CONDUCT.md` is in repo root, same level as CONTRIBUTING.md — relative path is correct |
+| **Template Method refactor changes behavior** | High (could break CleanInstall/ProjectInstall) | Tasks 2.2/2.3 verify `just test` + `just test:e2e` exit 0 after each migration. Existing 19/19 E2E scenarios cover Clean/Project behavior. |
+| **`c8` integration with Bun is fragile** | Medium (Bun coverage is evolving) | Task 5.1 uses `c8` as wrapper (NYC-compatible). If it fails, fall back to `bun --coverage` + manual lcov post-processing. Document trade-off in TECH_DEBT. |
+| **`hyperfine` not installed in CI** | Low (degrades dev experience, not blocking) | Task 3.1 documents `cargo install hyperfine` requirement. CI step is optional. Benchmark scripts can be run locally. |
+| **Tree-level diff has O(n²) complexity for large directories** | Low (template is small) | Task 4.1 uses `Set` for O(1) lookups. Task 4.4 integration test verifies performance with realistic directory sizes. |
+| **Coverage thresholds block the build initially** | Medium (existing 86.21% main.ts) | Task 1.2 (resolveInteractiveMode extraction) raises main.ts to ≥90% before Task 5.3 enables threshold enforcement. |
+| **Refactor + Coverage Instrumentation conflict** (both touch main.ts) | Low | Tasks 1.1/1.2 done in Phase 1; Task 5.4 in Phase 5. Sequential, no overlap. |
+| **E2E scenario 16 requires custom template** | Low (fixture setup) | Task 4.5 uses `tests/fixtures/template/` as isolated test template, doesn't touch real `template/`. |
+| **Refactor introduces new bugs not covered by existing tests** | Medium | Task 2.4 explicitly verifies `just test` + `just test:e2e` exit 0. Coverage from refactor should improve (less code = easier to test). |
+| **WIKI out of sync after FEV-16** | Low (per user decision) | Wiki sync is manual (`rsync docs/wiki-source/`). No Wiki changes in FEV-16 scope. |
 
 ---
 
 ## Metrics Targets
 
-| Metric | Baseline (post-FEV-14) | Target FEV-15 | Measurement |
+| Metric | Baseline (post-FEV-15) | Target FEV-16 | Measurement |
 |--------|------------------------|---------------|-------------|
-| Tests (pass/fail) | 809 / 0 | ≥810 / 0 | `bun test` |
-| E2E scenarios | 19 / 19 | 19 / 19 (1 extended) | `just test:e2e` |
+| Tests (pass/fail) | 810 / 0 | ≥825 / 0 | `bun test` |
+| E2E scenarios | 19 / 19 | 20 / 20 | `just test:e2e` |
 | `just check` errors | 0 | 0 | `just check` |
-| Coverage (lines) | ≥96.98% | ≥96.98% (no regression) | `bun test --coverage` |
-| Files touched | — | 10 (2 new + 8 modified) | `git diff --stat` |
-| Lines added | — | ~141 | `git diff --shortstat` |
-| Code of Conduct files | 0 | 2 (project + template) | `find . -name "CODE_OF_CONDUCT.md"` |
-| Manifest entries | 17 standard | 18 standard | `grep "category: \"standard\"" FileRuleManifestData.ts | wc -l` |
-| Issues resolved | — | #55 | GitHub issues |
+| Coverage (lines) | 96.98% | ≥95% (enforced) | `bun test --coverage` + `c8` |
+| Coverage (functions) | 100% | ≥95% (enforced) | `bun test --coverage` + `c8` |
+| Files touched | — | 24 (13 new + 11 modified) | `git diff --stat` |
+| Lines added | — | ~600 (new) + ~150 (modified) | `git diff --shortstat` |
+| Net code change | — | ~-100 lines (refactor saves more) | `git diff --shortstat` |
+| TECH_DEBT items closed | — | 5 (TD-1.1, 2.1, 5.1, 5.2, 6.2) | `docs/TECH_DEBT.md` |
+| Performance benchmarks | 0 | 3 + 1 regression | `just bench` |
+| Use case lines (Clean+Project) | 313 | ~190 | `wc -l src/application/use-cases/CleanInstallUseCase.ts ProjectInstallUseCase.ts` |
+| Issues resolved | — | 0 (TECH_DEBT items, not GitHub issues) | TECH_DEBT.md |
 | Version bump | — | None (v1.2.0 closes coordinated) | `package.json` |
 
 ---
 
 ## Open Questions
 
-- **None.** All decisions confirmed via `question` tool on 2026-07-30.
+- **None.** All decisions confirmed via `question` tool on 2026-07-30:
+  1. Agrupación: 1 mega FEV-16 (todo)
+  2. Orden: Crítico primero + paralelo donde posible
+  3. Refactor: Aplicar ahora (no esperar)
+  4. Diagnosis docs: No nuevos, actualizar docs existentes
 
 ---
 
@@ -795,7 +1585,10 @@ graph TD
 
 > The plan is ready. Run `/build` to start implementing Phase 0 (preparation: create branch and verify baseline).
 
-Or, if you'd like to review the plan further, the dependency graph is visualized in the Mermaid diagram above and the `tasks/todo.md` file mirrors this plan as a checkbox list.
+Or, if you'd like to review the plan further:
+- The dependency graph is visualized in the Mermaid diagram above
+- The `tasks/todo.md` file mirrors this plan as a checkbox list (to be saved)
+- The 5 workstreams can be reviewed independently before any implementation
 
 ---
 
