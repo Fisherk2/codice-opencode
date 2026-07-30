@@ -83,7 +83,11 @@ assert_file_exists "$TEMP_DIR/AGENTS.md"
 assert_file_exists "$TEMP_DIR/CHANGELOG.md"
 assert_file_exists "$TEMP_DIR/SPEC.md"
 assert_file_exists "$TEMP_DIR/CODE_OF_CONDUCT.md"
-assert_contains "$TEMP_DIR/CODE_OF_CONDUCT.md" "Our Pledge"
+if ! grep -q "Our Pledge" "$TEMP_DIR/CODE_OF_CONDUCT.md"; then
+    log_fail "Expected CODE_OF_CONDUCT.md to contain 'Our Pledge' (real CoC content)"
+    exit 1
+fi
+log_pass "CODE_OF_CONDUCT.md contains Our Pledge"
 
 log_info "Verifying opcional files..."
 
