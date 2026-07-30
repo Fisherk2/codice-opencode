@@ -82,6 +82,8 @@ assert_file_exists "$TEMP_DIR/.env.example"
 assert_file_exists "$TEMP_DIR/AGENTS.md"
 assert_file_exists "$TEMP_DIR/CHANGELOG.md"
 assert_file_exists "$TEMP_DIR/SPEC.md"
+assert_file_exists "$TEMP_DIR/CODE_OF_CONDUCT.md"
+assert_contains "$TEMP_DIR/CODE_OF_CONDUCT.md" "Our Pledge"
 
 log_info "Verifying opcional files..."
 
