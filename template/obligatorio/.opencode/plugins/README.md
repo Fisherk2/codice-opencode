@@ -29,7 +29,7 @@ OpenCode already manages permissions, agent configs, skills, and commands via YA
 
 ## Runtime Files
 
-- `.opencode/plugins/.sdd-audit.log` — audit trace with automatic rotation (>500 lines → truncates to 250)
+- `.opencode/plugins/.sdd-audit.log` — audit trace with automatic rotation (>500 lines -> truncates to 250)
 
 Ignored by git.
 
@@ -59,7 +59,7 @@ The plugin blocks destructive commands for ALL agents — a global safety net th
 | Databases | 4 | mongo/mongosh dropDatabase, redis FLUSHALL/FLUSHDB, mysqladmin drop |
 | PostgreSQL CLI | 1 | psql -c with drop/alter system/truncate |
 
-Commands are normalized before matching: comments stripped, whitespace collapsed. The full pattern list is in `sdd-pipeline.ts`.
+Commands are normalized before matching: comments stripped, whitespace collapsed. The full pattern list is in `src/destructivePatterns.ts`.
 
 #### Defense-in-Depth
 
@@ -72,7 +72,7 @@ Both layers must be updated together when adding new restrictions. The plugin ca
 
 ### 2. Subagent Name Validation
 
-The plugin validates that subagent names in `task()` exist in the catalog (**103 agents**: 97 subagents + 6 primary). If the LLM invents a name, it receives an error:
+The plugin validates that subagent names in `task()` exist in the catalog (**104 agents**: 98 subagents + 6 primary). If the LLM invents a name, it receives an error:
 
 ```
 Unknown subagent: "python-wizard". Use an agent from the VALID_SUBAGENTS catalog.
@@ -94,7 +94,7 @@ The `VALID_SUBAGENTS` Set contains all valid agent names organized by domain:
 | DX & Tooling | 5 | cli-developer, tooling-engineer, mcp-developer, dx-optimizer, context-manager |
 | Processes | 5 | git-workflow-manager, incident-responder, project-manager, scrum-master, legacy-modernizer |
 | Specialized Domains | 6 | fintech-engineer, payment-integration, blockchain-developer, game-developer, iot-engineer, embedded-systems |
-| Documentation & Research | 5 | docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, search-specialist |
+| Documentation & Research | 6 | docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, search-specialist, obsidian-vault-writer |
 | Product & Business | 9 | business-analyst, product-manager, competitive-analyst, content-marketer, market-researcher, sales-engineer, seo-specialist, trend-analyst, ux-researcher |
 
 Validation checks `args.subagent_type`, `args.agent`, `args.name`, `args.type`, or `args.subagent` for the name.
@@ -135,24 +135,25 @@ The plugin tracks the active agent via two mechanisms:
 ### 1. Agent Mention Patterns (user messages)
 Detection of mentions in user messages:
 ```
-@tlaloc, agente tezcatlipoca → updates active agent
+@tlaloc, agente tezcatlipoca -> updates active agent
 ```
 
 ### 2. Command-Agent Map (slash commands)
 Mapping of slash commands to their primary agent:
 ```
-/build → tlaloc
-/code-simplify → tlaloc
-/design → quetzalcoatl
-/diagnosis → quetzalcoatl
-/docs-update → quetzalcoatl
-/evolve → quetzalcoatl
-/plan → moctezuma
-/review → tezcatlipoca
-/ship → mictlantecuhtli
-/spec → quetzalcoatl
-/test → mictlantecuhtli
-/webperf → mictlantecuhtli
+/build -> tlaloc
+/code-simplify -> tlaloc
+/design -> quetzalcoatl
+/diagnosis -> quetzalcoatl
+/docs-update -> quetzalcoatl
+/evolve -> quetzalcoatl
+/help -> huitzilopochtli
+/plan -> moctezuma
+/review -> tezcatlipoca
+/ship -> mictlantecuhtli
+/spec -> quetzalcoatl
+/test -> mictlantecuhtli
+/webperf -> mictlantecuhtli
 ```
 
 **Complete flow:**
@@ -165,13 +166,33 @@ Primary agents can delegate to subagents via `task()`. Each subagent operates in
 
 | Primary agent | Can delegate? | Config source |
 |----------------|:---:|---|
-| huitzilopochtli | ✅ | Agent YAML frontmatter |
-| quetzalcoatl | ✅ | Agent YAML frontmatter |
-| moctezuma | ❌ | Agent YAML frontmatter |
-| tlaloc | ✅ | Agent YAML frontmatter |
-| mictlantecuhtli | ✅ | Agent YAML frontmatter |
-| tezcatlipoca | ❌ | Agent YAML frontmatter |
+| huitzilopochtli | Yes | Agent YAML frontmatter |
+| quetzalcoatl | Yes | Agent YAML frontmatter |
+| moctezuma | No | Agent YAML frontmatter |
+| tlaloc | Yes | Agent YAML frontmatter |
+| mictlantecuhtli | Yes | Agent YAML frontmatter |
+| tezcatlipoca | No | Agent YAML frontmatter |
 
-## Source
+## Module Architecture
 
-Plugin: `sdd-pipeline.ts` (~664 lines)
+The plugin uses a 3-pillar architecture to minimize hardcoded configuration:
+
+| Pillar | Module | Purpose |
+|--------|--------|---------|
+| Auto-discovery | `src/autoDiscovery.ts` | Scans `commands/*.md` and `agents/*.md` to derive configuration from filesystem |
+| Config-driven | `src/configLoader.ts` + `src/defaults.ts` | Loads `opencode.json` `sddPipeline` overrides, merged with canonical defaults |
+| Quality infra | Biome + tests | Linting, formatting, and test coverage enforcement |
+
+### Source files
+
+| File | Lines | Responsibility |
+|------|:-----:|----------------|
+| `sdd-pipeline.ts` | 366 | Plugin entry point, hook implementations |
+| `src/autoDiscovery.ts` | 190 | Filesystem scanning for commands and agents |
+| `src/configLoader.ts` | 228 | opencode.json config loading with defaults merge |
+| `src/defaults.ts` | 529 | All hardcoded configuration maps |
+| `src/destructivePatterns.ts` | 95 | Blocked command patterns (safety boundary) |
+| `src/normalizeBash.ts` | 40 | Bash command normalization for pattern matching |
+| `src/types.ts` | 60 | TypeScript type definitions |
+
+**Total:** `sdd-pipeline.ts` (366 lines) + 6 modules in `src/` (1142 lines) = **1508 lines** across 7 files.
