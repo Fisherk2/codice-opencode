@@ -6,6 +6,10 @@ This project adheres to the [Contributor Covenant](https://www.contributor-coven
 
 ---
 
+## Code of Conduct
+
+This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). By participating, you are expected to uphold this code. Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for details.
+
 ## Quick Start
 
 ```bash

@@ -273,6 +273,14 @@ flowchart LR
 
 ---
 
+## Code of Conduct
+
+This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). By participating, you are expected to uphold this code. Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before contributing.
+
+For the workspace template, see the [template's Code of Conduct](template/estandar/CODE_OF_CONDUCT.md) — it includes placeholders (`[PROJECT_NAME]`, `[CONTACT_EMAIL]`, `[PROJECT_URL]`) that you can customize for your own project.
+
+---
+
 ## License
 
 MIT — See [LICENSE](LICENSE) for details.
