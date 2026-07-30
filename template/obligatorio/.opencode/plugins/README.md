@@ -128,8 +128,6 @@ Suggestions are **advisory only** — they never block the agent.
 4. **After each tool**: `tool.execute.after` logs to the audit log.
 5. **On compaction**: `experimental.session.compacting` re-injects the SDD state into the compacted context.
 
-> The meta-skill (`using-agent-skills`) is **not** injected automatically to save tokens (~4,000 per call). OpenCode exposes it as an available skill; agents load it on demand with the `skill` tool.
-
 ## Agent Detection
 
 The plugin tracks the active agent via two mechanisms:

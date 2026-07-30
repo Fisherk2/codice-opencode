@@ -1,6 +1,6 @@
 # Skills — Agent Knowledge Base
 
-Skills are the workspace's reusable knowledge base. Each skill is a Markdown file that teaches an agent how to perform a specific task domain — from writing robust Bash scripts to designing professional UI/UX, from running incident response to auditing dependencies. Together they form a library of **52 engineering process guides** that agents load on demand.
+Skills are the workspace's reusable knowledge base. Each skill is a Markdown file that teaches an agent how to perform a specific task domain — from writing robust Bash scripts to designing professional UI/UX, from running incident response to auditing dependencies. Together they form a library of **51 engineering process guides** that agents load on demand.
 
 > For the official OpenCode skills documentation, see [opencode.ai/docs/skills](https://opencode.ai/docs/skills).
 
@@ -35,44 +35,25 @@ skills/
 ├── test-driven-development/SKILL.md      # RED-GREEN-Refactor workflow
 ├── security-and-hardening/SKILL.md       # OWASP, input validation, least privilege
 ├── ui-ux-design-pro/SKILL.md             # Professional UI/UX design systems
-├── using-agent-skills/SKILL.md           # Meta-skill: skill discovery index
 ├── obsidian-vault/SKILL.md              # Vault management and organization
 ├── obsidian-markdown/SKILL.md           # Obsidian Flavored Markdown syntax
 ├── obsidian-cli/SKILL.md                # Obsidian CLI command reference
-└── ... (52 skill directories total, many with references/ subdirectories)
+└── ... (51 skill directories total, many with references/ subdirectories)
 ```
 
 ---
 
 ## How Agents Use Skills
 
-When an agent encounters a task, it consults the **skill discovery tree** in `skills/using-agent-skills/SKILL.md` to find the right skill. The discovery tree organizes skills by development phase and routes the agent to the appropriate workflow:
+When an agent encounters a task, it scans the `skills/` directory at startup to discover available skills. Each skill's `SKILL.md` frontmatter includes a `description` that tells the agent when it applies. The agent matches the task against these descriptions and loads the appropriate skill on demand.
 
-```
-Task arrives
-    │
-    ├── New project/feature/change? ──→ spec-driven-development
-    │   ├── Need README? ───────────→ crafting-effective-readmes
-    │   ├── Designing architecture? ──→ architecture-diagrams
-    │   └── Designing UI/UX? ───────→ ui-ux-design-pro
-    ├── Implementing code? ───────────→ incremental-implementation
-    │   ├── API work? ──────────────→ api-and-interface-design
-    │   ├── Database work? ─────────→ db-migration
-    │   └── Writing shell scripts? ──→ bash-defensive-patterns
-    ├── Writing/running tests? ──────→ test-driven-development
-    ├── Something broke? ────────────→ debugging-and-error-recovery
-    │   └── Production incident? ───→ incident-response
-    ├── Reviewing code? ─────────────→ code-review-and-quality
-    └── Deploying/launching? ────────→ shipping-and-launch
-```
-
-This indexing is automatic — agents discover skills by scanning the `skills/` directory at startup. If the skill exists, the agent can find and use it.
+This discovery is automatic — no manual registration or index maintenance is required. If the skill exists in `skills/`, the agent can find and use it.
 
 ---
 
 ## Full Skill Catalog
 
-The workspace ships with 52 skills covering the full development lifecycle:
+The workspace ships with 51 skills covering the full development lifecycle:
 
 | Phase | Skill | Purpose |
 |-------|-------|---------|
@@ -131,7 +112,7 @@ The workspace ships with 52 skills covering the full development lifecycle:
 
 ## How to Add a New Skill
 
-Adding a custom skill requires creating the skill file and registering it in the discovery index. Here is the step-by-step procedure.
+Adding a custom skill requires creating the skill file in the `skills/` directory. OpenCode discovers skills automatically at startup — no manual registration needed.
 
 ### Step 1: Create the Skill Directory and File
 
@@ -197,22 +178,7 @@ Example:
 - [ ] Temporary files are cleaned up on exit.
 ```
 
-### Step 4: Update the Skill Discovery Index
-
-Open `skills/using-agent-skills/SKILL.md` and add your skill to the appropriate section of the discovery tree and the Quick Reference table. For `my-shell-scripting`, this would go under the Build phase alongside `bash-defensive-patterns`:
-
-In the **discovery tree**:
-```
-    ├── Writing robust shell scripts? ──→ bash-defensive-patterns
-    ├── Writing portable shell scripts? ──→ my-shell-scripting
-```
-
-In the **Quick Reference** table:
-```
-| Build | my-shell-scripting | Best practices for writing portable, maintainable shell scripts |
-```
-
-### Step 5: Restart OpenCode
+### Step 4: Restart OpenCode
 
 Restart your OpenCode session. Skills are loaded at startup, so a restart is required before agents can discover and use the new skill.
 

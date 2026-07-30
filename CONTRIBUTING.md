@@ -153,9 +153,8 @@ Códice installs an OpenCode workspace template organized into three file catego
 1. Create `skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description`).
 2. Include actionable numbered steps, verification criteria, and exit conditions.
 3. (Optional) Add extended reference material in `skills/<skill-name>/references/` — these become available to agents via the `reference` section in `opencode.json`.
-4. Add to the discovery tree in `skills/using-agent-skills/SKILL.md`.
-5. Add to the [GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills).
-6. Restart your OpenCode session.
+4. Add to the [GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills).
+5. Restart your OpenCode session.
 
 ### Add a New Command
 
