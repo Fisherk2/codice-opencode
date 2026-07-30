@@ -40,6 +40,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Writes a warning-level message to stderr with the `[sdd-pipeline]` prefix.
+ *
+ * Used instead of `console.warn()` to satisfy the `noConsole` lint rule while
+ * preserving the same behaviour in an agent-context CLI plugin.
+ */
+function logWarning(message: string): void {
+	process.stderr.write(`[sdd-pipeline] ${message}\n`);
+}
+
 // ---------------------------------------------------------------------------
 // Merge helpers
 // ---------------------------------------------------------------------------
@@ -47,7 +57,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /**
  * Merges a user-provided command → phase map with the default map.
  *
- * - Invalid phase values are skipped with a `console.warn`.
+ * - Invalid phase values are skipped with a `logWarning()`.
  * - Valid entries override defaults on conflict.
  * - New entries (commands not in defaults) are added.
  *
@@ -62,8 +72,8 @@ function mergeCommandPhaseMap(userValue: unknown): Record<string, string> {
 	for (const [command, phase] of Object.entries(userValue)) {
 		const phaseStr = String(phase);
 		if (!isValidPhase(phaseStr)) {
-			console.warn(
-				`[sdd-pipeline] Invalid phase "${phaseStr}" for command "${command}". ` +
+			logWarning(
+				`Invalid phase "${phaseStr}" for command "${command}". ` +
 					`Must be one of: ${VALID_PHASES_STR}. Skipping.`,
 			);
 			continue;
@@ -77,7 +87,7 @@ function mergeCommandPhaseMap(userValue: unknown): Record<string, string> {
 /**
  * Merges a user-provided intent pattern map with the default map.
  *
- * - Keys that do not start with `"/"` are skipped with a `console.warn`.
+ * - Keys that do not start with `"/"` are skipped with a `logWarning()`.
  * - Valid entries override defaults on conflict.
  * - New entries (keys not in defaults) are added.
  *
@@ -93,9 +103,7 @@ function mergeIntentPatterns(userValue: unknown): Record<string, readonly string
 
 	for (const [key, value] of Object.entries(userValue)) {
 		if (!key.startsWith("/")) {
-			console.warn(
-				`[sdd-pipeline] Invalid intent pattern key "${key}". Must start with "/". Skipping.`,
-			);
+			logWarning(`Invalid intent pattern key "${key}". Must start with "/". Skipping.`);
 			continue;
 		}
 		// Normalise to a readonly array of strings
@@ -109,7 +117,7 @@ function mergeIntentPatterns(userValue: unknown): Record<string, readonly string
  * Merges a user-provided phase suggestions map with the default map.
  *
  * - Phase keys that are not valid SDD phase names are skipped with a
- *   `console.warn`.
+ *   `logWarning()`.
  * - Within valid phases, user-provided agent suggestions override defaults
  *   at the agent level.
  *
@@ -129,8 +137,8 @@ function mergePhaseSuggestions(
 
 	for (const [phase, agentMap] of Object.entries(userValue)) {
 		if (!isValidPhase(phase)) {
-			console.warn(
-				`[sdd-pipeline] Invalid phase "${phase}" in phaseSuggestions. ` +
+			logWarning(
+				`Invalid phase "${phase}" in phaseSuggestions. ` +
 					`Must be one of: ${VALID_PHASES_STR}. Skipping.`,
 			);
 			continue;
@@ -168,7 +176,7 @@ function mergePhaseSuggestions(
  * - `commandPhaseMap` values: must be a valid SDD phase (case-insensitive)
  * - `intentPatterns` keys: must start with `"/"`
  * - `phaseSuggestions` keys: must be a valid SDD phase name
- * - Invalid entries are **skipped** (with `console.warn`), not erroring out
+ * - Invalid entries are **skipped** (with `logWarning()`), not erroring out
  * - Parse errors in `opencode.json` return defaults (with warning)
  *
  * @param projectDir - Absolute path to the project root directory.
@@ -194,9 +202,8 @@ export function loadSddConfig(projectDir: string): SddPipelineConfig {
 		const raw = readFileSync(configPath, "utf-8");
 		parsed = JSON.parse(raw);
 	} catch {
-		console.warn(
-			`[sdd-pipeline] Invalid or unreadable opencode.json at ${configPath}. ` +
-				"Falling back to defaults.",
+		logWarning(
+			`Invalid or unreadable opencode.json at ${configPath}. ` + "Falling back to defaults.",
 		);
 		return DEFAULT_SDD_PIPELINE_CONFIG;
 	}

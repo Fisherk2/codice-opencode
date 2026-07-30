@@ -5,10 +5,10 @@
 // and captures console.warn for validation warning checking.
 // ---------------------------------------------------------------------------
 
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { loadSddConfig } from "../configLoader";
 import { DEFAULT_SDD_PIPELINE_CONFIG } from "../types";
 
@@ -80,11 +80,9 @@ describe("configLoader.ts — loadSddConfig()", () => {
 		expect(result.intentPatterns!["/build"]!.includes("build")).toBe(true);
 
 		// phaseSuggestions: default keys preserved, user overrides applied at agent level
-		expect(result.phaseSuggestions!["build"]!["tlaloc"]).toBe(
-			"Custom build suggestion for tlaloc.",
-		);
-		expect(result.phaseSuggestions!["build"]!["huitzilopochtli"]).toBeDefined(); // default preserved
-		expect(result.phaseSuggestions!["define"]).toBeDefined(); // default phase preserved
+		expect(result.phaseSuggestions!.build!.tlaloc).toBe("Custom build suggestion for tlaloc.");
+		expect(result.phaseSuggestions!.build!.huitzilopochtli).toBeDefined(); // default preserved
+		expect(result.phaseSuggestions!.define).toBeDefined(); // default phase preserved
 	});
 
 	// ── Scenario 2: Partial config ────────────────────────────────────────────
@@ -110,8 +108,8 @@ describe("configLoader.ts — loadSddConfig()", () => {
 		expect(result.intentPatterns!["/build"]!.includes("build")).toBe(true);
 
 		// phaseSuggestions = full defaults
-		expect(result.phaseSuggestions!["define"]).toBeDefined();
-		expect(result.phaseSuggestions!["ship"]).toBeDefined();
+		expect(result.phaseSuggestions!.define).toBeDefined();
+		expect(result.phaseSuggestions!.ship).toBeDefined();
 	});
 
 	// ── Scenario 3: Missing sddPipeline key ───────────────────────────────────
@@ -191,7 +189,7 @@ describe("configLoader.ts — loadSddConfig()", () => {
 		expect(result.intentPatterns!["/valid-cmd"]).toEqual(["some keyword"]);
 		// Invalid entries skipped
 		expect(result.intentPatterns!["bad-key-no-slash"]).toBeUndefined();
-		expect(result.intentPatterns!["another_bad"]).toBeUndefined();
+		expect(result.intentPatterns!.another_bad).toBeUndefined();
 		// Defaults preserved
 		expect(result.intentPatterns!["/spec"]).toBeDefined();
 		// Warnings logged
@@ -215,14 +213,14 @@ describe("configLoader.ts — loadSddConfig()", () => {
 		const result = loadSddConfig(tempDir);
 
 		// Valid phase entry merged
-		expect(result.phaseSuggestions!["build"]!["tlaloc"]).toBe("Custom build suggestion.");
-		expect(result.phaseSuggestions!["build"]!["huitzilopochtli"]).toBeDefined(); // default preserved
+		expect(result.phaseSuggestions!.build!.tlaloc).toBe("Custom build suggestion.");
+		expect(result.phaseSuggestions!.build!.huitzilopochtli).toBeDefined(); // default preserved
 		// Invalid entries skipped
 		expect(result.phaseSuggestions!["not-a-phase"]).toBeUndefined();
 		expect(result.phaseSuggestions!["also-bad"]).toBeUndefined();
 		// Default phases preserved
-		expect(result.phaseSuggestions!["define"]).toBeDefined();
-		expect(result.phaseSuggestions!["ship"]).toBeDefined();
+		expect(result.phaseSuggestions!.define).toBeDefined();
+		expect(result.phaseSuggestions!.ship).toBeDefined();
 		// Warnings logged
 		expect(warnMessages.length).toBeGreaterThanOrEqual(2);
 		expect(warnMessages.some((m) => m.includes("not-a-phase"))).toBe(true);

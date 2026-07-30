@@ -25,8 +25,8 @@ describe("types.ts — DEFAULT_SDD_PIPELINE_CONFIG", () => {
 	test("has phaseSuggestions with expected values", () => {
 		const suggestions = DEFAULT_SDD_PIPELINE_CONFIG.phaseSuggestions;
 		expect(suggestions).toBeDefined();
-		expect(suggestions!["define"]).toBeDefined();
-		expect(suggestions!["ship"]).toBeDefined();
+		expect(suggestions!.define).toBeDefined();
+		expect(suggestions!.ship).toBeDefined();
 	});
 
 	test("all fields are optional (can be omitted)", () => {

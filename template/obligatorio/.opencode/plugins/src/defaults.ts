@@ -389,10 +389,24 @@ export const INTENT_PATTERNS: Readonly<Record<string, readonly string[]>> = {
 		"regenerate docs",
 		"docs update",
 	],
-	"/help": [ // FEV-14 — onboarding command
-		"help", "ayuda", "como uso", "how to use", "what is", "que es",
-		"show commands", "list commands", "menu", "onboarding", "getting started",
-		"como empezar", "donde empiezo", "documentation", "docs", "manual",
+	"/help": [
+		// FEV-14 — onboarding command
+		"help",
+		"ayuda",
+		"como uso",
+		"how to use",
+		"what is",
+		"que es",
+		"show commands",
+		"list commands",
+		"menu",
+		"onboarding",
+		"getting started",
+		"como empezar",
+		"donde empiezo",
+		"documentation",
+		"docs",
+		"manual",
 	],
 } as const;
 
@@ -427,7 +441,8 @@ export const COMMAND_PHASE_MAP: Readonly<Record<string, string>> = {
  */
 export const PHASE_SUGGESTIONS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 	idle: {
-		huitzilopochtli: "Consider /help to discover available commands, or /spec to start a new project.", // FEV-14 — onboarding command
+		huitzilopochtli:
+			"Consider /help to discover available commands, or /spec to start a new project.", // FEV-14 — onboarding command
 	},
 	define: {
 		moctezuma:

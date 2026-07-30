@@ -171,11 +171,20 @@ function parseAgentFromFrontmatter(content: string): string | null {
 	}
 
 	const frontmatterText = match[1];
+	if (!frontmatterText) {
+		return null;
+	}
+
 	const agentMatch = frontmatterText.match(AGENT_FIELD_REGEX);
 	if (!agentMatch) {
 		return null;
 	}
 
-	const value = agentMatch[1].trim();
+	const rawValue = agentMatch[1];
+	if (!rawValue) {
+		return null;
+	}
+
+	const value = rawValue.trim();
 	return value.length > 0 ? value : null;
 }

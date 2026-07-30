@@ -9,6 +9,14 @@ import { writeFileSync } from "node:fs";
 import { relative } from "node:path";
 import type { ReferenceMapping } from "./analyze-references";
 
+/**
+ * Write a line to stdout (replaces console.log for Biome noConsole compliance).
+ * Script files are allowed to use process.* methods.
+ */
+function println(message: string): void {
+	process.stdout.write(`${message}\n`);
+}
+
 // ── Stats ──────────────────────────────────────────────────────────────────────
 
 export interface Stats {
@@ -119,7 +127,7 @@ export function generateMarkdown(
 	}
 
 	writeFileSync(outputFile, lines.join("\n"), "utf-8");
-	console.log(`\n  Output written to: ${relative(projectRoot, outputFile)}`);
+	println(`\n  Output written to: ${relative(projectRoot, outputFile)}`);
 }
 
 // ── Console summary ────────────────────────────────────────────────────────────
@@ -127,18 +135,18 @@ export function generateMarkdown(
 export function printSummary(mappings: ReferenceMapping[]): void {
 	const { high, med, low, uniqueSkills } = computeStats(mappings);
 
-	console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-	console.log("  FEV-12 Reference Analysis Summary");
-	console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-	console.log(`  Total files analyzed:  ${mappings.length}`);
-	console.log(`  Unique skills target:  ${uniqueSkills}`);
-	console.log(`  HIGH confidence:       ${high}  (direct SKILL.md mention)`);
-	console.log(`  MEDIUM confidence:     ${med}  (cross-reference resolution)`);
-	console.log(`  LOW confidence:        ${low}  (content-based / manual override)`);
-	console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+	println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+	println("  FEV-12 Reference Analysis Summary");
+	println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+	println(`  Total files analyzed:  ${mappings.length}`);
+	println(`  Unique skills target:  ${uniqueSkills}`);
+	println(`  HIGH confidence:       ${high}  (direct SKILL.md mention)`);
+	println(`  MEDIUM confidence:     ${med}  (cross-reference resolution)`);
+	println(`  LOW confidence:        ${low}  (content-based / manual override)`);
+	println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
 	for (const m of mappings) {
 		const icon = m.confidence === "HIGH" ? "✓" : m.confidence === "MEDIUM" ? "~" : "?";
-		console.log(`  ${icon} ${m.filename.padEnd(42)} → ${m.targetSkill}`);
+		println(`  ${icon} ${m.filename.padEnd(42)} → ${m.targetSkill}`);
 	}
 }
