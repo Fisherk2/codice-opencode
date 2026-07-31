@@ -1,7 +1,7 @@
 # Technical Debt — Códice
 
 **Last updated:** 2026-07-30
-**Status:** Active reference for improvement planning
+**Status:** v1.2.0 pre-release ready — all FEV-16 items resolved, code review fixes applied
 **Current version:** v1.2.0 (844 tests, 0 fail)
 
 ---
@@ -57,6 +57,7 @@
 | **TD-5.1** | E2E Coverage Not Captured by `bun --coverage` | ✅ `c8` evaluated (incompatible with Bun/JSC™). Native Bun coverage + CI gate ≥95%. |
 | **TD-5.2** | No Performance Benchmarks | ✅ `just bench` + 3 standalone scripts + `assert-no-regression.sh`. SC-9/10/11 benchmarked. |
 | **TD-6.2** | Standard Directory Updates Are All-or-Nothing | ✅ Tree-level diff (`diffTrees()`) in FileMergeEngine. New files delivered, existing files preserved. 11+3+1 tests. |
+| **CR-Fixes** | Code review fixes (post-FEV-16): error context enrichment (`wrapMergeError`), standard `Result` from `stageOne`, exhaustiveness guard in `shouldStage` | ✅ `MergeError` phase/path preserved in user messages; `stageOne` returns `Result<void, MergeError>` (no null sentinel); compile-time guard for new `RuleCategory` values. |
 
 **Known test pattern** (2026-07-30): `MinimalInstallUseCase` test stub uses `{} as any` for 7 dependency mocks in `install-use-case-base.test.ts`. Acceptable for now — the stub is minimal, the `eslint-disable` comment is clear, and full mocks would bloat the test. Revisit if this pattern spreads to other test files.
 
@@ -68,7 +69,7 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 
 ## 1. Coverage Gaps
 
-### 1.1 `src/cli/main.ts` — 86.21% lines (100.00% functions)
+### 1.1 `src/cli/main.ts` — RESOLVED in FEV-16 (98.90% lines)
 
 | Item | Detail |
 |------|--------|
@@ -87,7 +88,7 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 
 ## 2. Architectural Debt
 
-### 2.1 CleanInstallUseCase / ProjectInstallUseCase duplicación (~80 líneas)
+### 2.1 CleanInstallUseCase / ProjectInstallUseCase duplicación (~80 líneas) — RESOLVED in FEV-16 (Template Method)
 
 | Item | Detail |
 |------|--------|
@@ -121,7 +122,7 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 
 ## 5. Process Debt
 
-### 5.1 E2E Coverage Not Captured by `bun --coverage`
+### 5.1 E2E Coverage Not Captured by `bun --coverage` — RESOLVED in FEV-16 (CI gate ≥95%)
 
 | Item | Detail |
 |------|--------|
@@ -132,7 +133,7 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 | **Target** | Future (v1.2.0+) |
 | **Effort** | 8h |
 
-### 5.2 No Performance Benchmarks
+### 5.2 No Performance Benchmarks — RESOLVED in FEV-16 (just bench + assert-no-regression)
 
 | Item | Detail |
 |------|--------|

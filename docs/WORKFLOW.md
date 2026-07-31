@@ -238,6 +238,7 @@ FEV-16 cierra 5 items del TECH_DEBT.md preparados para v1.2.0 sin FEV registrado
 - **TD-5.1 (Coverage instrumentation):** `c8` evaluado (incompatible con Bun/JSC). CI gate ≥95% nativo. Coverage overall 98.10%.
 - **TD-5.2 (Benchmarks):** `just bench` con hyperfine. 3 scripts standalone + regression assertion (<10%).
 - **TD-6.2 (Update granularity):** `diffTrees()` tree-level diff. 11 unit + 3 integration + 1 E2E test. E2E #16 passes.
+Código simplificado: `stageOne()` extraído, `stagePlanner` total plegado, `walkRelative` helper, `resolveInteractiveMode` tipo retornado acotado. Code review post-FEV-16: `wrapMergeError()` para preservar contexto de fase/path en errores, `stageOne` retorna `Result` estándar, guardia de exhaustividad en `shouldStage`.
 
 **7 commits atómicos**, 0 errores `just check`, 844 tests 0 fail.
 
@@ -253,6 +254,17 @@ FEV-16 cierra 5 items del TECH_DEBT.md preparados para v1.2.0 sin FEV registrado
 | TECH_DEBT items closed | 1 (Issue #55) | 5 (TD-1.1, 2.1, 5.1, 5.2, 6.2) |
 | Performance benchmarks | 0 | 3 + regression assertion |
 | Use case lines | 313 (Clean+Project) | 145 (+195 base = 340 total) |
+
+---
+
+### Estado del Pre-release v1.2.0 ✅ Listo para ajustes finales
+
+**Fecha:** 2026-07-30 | **Tests:** 844 pass / 0 fail | **Coverage:** 98.77% func / 97.84% line | **E2E:** 15/16 (06-path-traversal pre-existing)
+
+Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v1.2.0 listo para:
+- Ajustes finales de documentación
+- Validación en entorno CI completo
+- Tag de pre-release (beta/rc) cuando el autor lo indique
 
 ---
 
