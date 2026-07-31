@@ -58,6 +58,8 @@
 | **TD-5.2** | No Performance Benchmarks | ✅ `just bench` + 3 standalone scripts + `assert-no-regression.sh`. SC-9/10/11 benchmarked. |
 | **TD-6.2** | Standard Directory Updates Are All-or-Nothing | ✅ Tree-level diff (`diffTrees()`) in FileMergeEngine. New files delivered, existing files preserved. 11+3+1 tests. |
 
+**Known test pattern** (2026-07-30): `MinimalInstallUseCase` test stub uses `{} as any` for 7 dependency mocks in `install-use-case-base.test.ts`. Acceptable for now — the stub is minimal, the `eslint-disable` comment is clear, and full mocks would bloat the test. Revisit if this pattern spreads to other test files.
+
 ### Prior (v1.0.11)
 
 All resolved debt from v1.0.11 and earlier removed. For historical reference, see git history.

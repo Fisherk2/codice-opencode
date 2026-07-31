@@ -146,6 +146,9 @@ export function createProgressCallback(userPrompt: IUserPrompt, label: string): 
 					userPrompt.logProgressEvent(`commit: Committing ${event.total} files atomically...`);
 					break;
 				case "commit_complete":
+					// commit_complete is only emitted when total > 0 (FileMergeEngine
+					// skips commit when nothing was staged), so the progress bar is
+					// guaranteed to have been started by a prior stage_start.
 					userPrompt.logProgressEvent(`commit: ${event.total} files committed`);
 					userPrompt.completeProgress();
 					break;

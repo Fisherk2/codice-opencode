@@ -7,30 +7,22 @@ import { commitError, stagingError } from "../types/MergeError";
 import type { ProgressCallback, ProgressEvent } from "../types/ProgressEvent";
 import type { Result } from "../types/Result";
 import { failure, success } from "../types/Result";
-import { diffTrees } from "./treeDiff";
+import { computeStagePlan } from "./stagePlanner";
 
 /**
- * Orchestrates file merging according to classification rules.
- *
- * - mandatory: always stages (overwrites destination).
+ * Orchestrates atomic file merging according to classification rules:
+ * - mandatory: always stages (overwrites).
  * - standard: stages only if destination does NOT exist.
  * - optional: stages only if user selected AND destination missing.
  *
- * In update mode (isUpdateMode=true), standard directories use tree-level
- * diffing to stage only files that are new in the template but missing in
- * the destination, instead of skipping the entire directory.
- *
- * Guarantees atomic writes: stage all first → commit (rename) or rollback.
+ * In update mode, standard directories use tree-level diffing
+ * (computeStagePlan) to deliver only new files instead of skipping
+ * entire directories.
  */
 export class FileMergeEngine implements IFileMergeEngine {
 	constructor(private readonly fileSystem: IFileSystem & IStagingSystem) {}
 
-	/**
-	 * Execute merge rules against the destination directory.
-	 * @param onProgress - Optional progress callback (exceptions are swallowed).
-	 * @param isUpdateMode - When true, standard directories use tree-level diffing
-	 *   to stage only new files instead of skipping the entire directory.
-	 */
+	/** Execute merge rules. @param isUpdateMode enables tree-level diff for standard dirs. */
 	async execute(
 		rules: readonly FileRule[],
 		selectedOptionals?: readonly string[],
@@ -38,48 +30,18 @@ export class FileMergeEngine implements IFileMergeEngine {
 		isUpdateMode = false,
 	): Promise<Result<void, MergeError>> {
 		const selected = new Set(selectedOptionals ?? []);
-
-		// Compute subdirectory exclusions for standard dirs that overlap
-		// with optional sub-paths, so each file is copied only once.
+		// Pre-computed by stagePlanner.ts.
+		const { stageDecisions, expandedDirs, total } = await computeStagePlan(
+			this.fileSystem,
+			rules,
+			selected,
+			isUpdateMode,
+		);
 		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
-
-		// Cache of expanded file lists for standard directories in update mode.
-		// Key: rule path. Value: list of relative file paths to stage individually.
-		const expandedDirs = new Map<string, readonly string[]>();
-
-		// Pre-compute which non-virtual rules should be staged, so we can
-		// report an accurate total to the progress bar (it will always reach
-		// 100% because total reflects only files that will actually be staged).
-		const stageDecisions = new Map<string, boolean>();
-		for (const rule of rules) {
-			if (rule.noTemplateCopy) continue;
-
-			if (isUpdateMode && rule.isDirectory && rule.category === "standard") {
-				// Tree-level diff: stage only files new in template but missing in dest
-				const newFiles = await diffTrees(this.fileSystem, rule.path, rule.path);
-				if (newFiles.length > 0) {
-					expandedDirs.set(rule.path, newFiles);
-				}
-				stageDecisions.set(rule.path, newFiles.length > 0);
-			} else {
-				stageDecisions.set(rule.path, await this.shouldStage(rule, selected));
-			}
-		}
-
-		// Compute total: expanded directories contribute per-file count,
-		// regular rules contribute 1 each.
-		let total = 0;
-		for (const [path, decision] of stageDecisions) {
-			if (decision === true) {
-				const expanded = expandedDirs.get(path);
-				total += expanded?.length ?? 1;
-			}
-		}
 		let current = 0;
 
 		// Phase 1: Stage all files
 		for (const rule of rules) {
-			// Content generated post-installation (e.g., .devin/ symlinks)
 			if (rule.noTemplateCopy) {
 				this.safeEmit(onProgress, {
 					type: "stage_skip",
@@ -89,7 +51,9 @@ export class FileMergeEngine implements IFileMergeEngine {
 				continue;
 			}
 
-			const shouldStage = stageDecisions.get(rule.path)!;
+			const shouldStage = stageDecisions.get(rule.path);
+			// Defensive guard: prevents crash if a future rule type skips pre-computation.
+			if (shouldStage === undefined) continue;
 			if (!shouldStage) {
 				this.safeEmit(onProgress, {
 					type: "stage_skip",
@@ -168,8 +132,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 			});
 		}
 
-		// Phase 2: Commit staging (atomic rename)
-		// Skip commit when nothing was staged (e.g. all standard files already exist)
+		// Phase 2: Commit staging (atomic rename). Skip when nothing was staged.
 		if (total > 0) {
 			this.safeEmit(onProgress, { type: "commit_start", total });
 
@@ -188,36 +151,12 @@ export class FileMergeEngine implements IFileMergeEngine {
 		return success(undefined);
 	}
 
-	/** Decide whether a rule's file should be staged based on category and state. */
-	private async shouldStage(rule: FileRule, selected: Set<string>): Promise<boolean> {
-		if (rule.category === "mandatory") {
-			return true;
-		}
-
-		if (rule.category === "standard") {
-			const exists = await this.fileSystem.destinationExists(rule.path);
-			return !exists;
-		}
-
-		if (rule.category === "optional") {
-			if (!selected.has(rule.path)) {
-				return false;
-			}
-			const exists = await this.fileSystem.destinationExists(rule.path);
-			return !exists;
-		}
-
-		return false;
-	}
-
 	/** Emit event via optional callback, swallowing listener exceptions. */
 	private safeEmit(onProgress: ProgressCallback | undefined, event: ProgressEvent): void {
 		if (!onProgress) return;
 		try {
 			onProgress(event);
-		} catch {
-			// Swallow callback exceptions — see safeEmit contract.
-		}
+		} catch {}
 	}
 
 	private skipReason(rule: FileRule, selected: Set<string>, isUpdateMode = false): string {
@@ -236,10 +175,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 		return "Skipped by classification rule";
 	}
 
-	/**
-	 * Compute subdirectory exclusions for standard dirs overlapping
-	 * optional sub-paths (e.g. "docs/guides" → exclude "guides" from "docs" walk).
-	 */
+	/** Compute subdir exclusions when standard and optional dirs overlap. */
 	private computeExclusions(rule: FileRule, optionalPaths: string[]): Set<string> | undefined {
 		// Only standard directories get exclusions; mandatory always overwrites everything.
 		if (!rule.isDirectory || rule.category !== "standard") {

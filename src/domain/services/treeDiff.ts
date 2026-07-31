@@ -8,7 +8,8 @@ import type { IFileSystem } from "../ports/IFileSystem";
  * @param fileSystem - Adapter for filesystem reads (template + destination).
  * @param sourceDir - Relative path within the template directory (e.g. "docs").
  * @param destDir - Relative path within the destination directory (e.g. "docs").
- * @returns Sorted array of relative paths from sourceDir of files missing in destDir.
+ * @returns Sorted array (lexicographic) of relative paths from sourceDir
+ *   of files present in the template but missing in the destination.
  */
 export async function diffTrees(
 	fileSystem: IFileSystem,
