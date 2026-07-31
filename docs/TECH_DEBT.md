@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-07-30
 **Status:** Active reference for improvement planning
-**Current version:** v1.2.0 (809 tests, 0 fail)
+**Current version:** v1.2.0 (834 tests, 0 fail)
 
 ---
 
@@ -47,6 +47,16 @@
 | ID | Item | Resolution |
 |----|------|------------|
 | **Issue #55** | Community standards — project lacks Code of Conduct | ✅ `CODE_OF_CONDUCT.md` created (Contributor Covenant v2.1). `template/estandar/CODE_OF_CONDUCT.md` created as customizable placeholder. Manifest entry added in `FileRuleManifestData.ts`. Cross-references in `CONTRIBUTING.md` and `README.md`. E2E test extended. |
+
+### FEV-16 — Pre-release Tech Debt Closure (2026-07-30)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **TD-1.1** | `src/cli/main.ts` coverage gap (interactive mode + catch block) | ✅ `resolveInteractiveMode()` extracted. 10 new tests (9 unit + 1 mock.module). Coverage 86.21% → 98.90%. |
+| **TD-2.1** | CleanInstall/ProjectInstall duplicación (~80 líneas) | ✅ Template Method pattern. `InstallUseCaseBase` created. 313 → 145 lines (-168). |
+| **TD-5.1** | E2E Coverage Not Captured by `bun --coverage` | ✅ `c8` evaluated (incompatible with Bun/JSC™). Native Bun coverage + CI gate ≥95%. |
+| **TD-5.2** | No Performance Benchmarks | ✅ `just bench` + 3 standalone scripts + `assert-no-regression.sh`. SC-9/10/11 benchmarked. |
+| **TD-6.2** | Standard Directory Updates Are All-or-Nothing | ✅ Tree-level diff (`diffTrees()`) in FileMergeEngine. New files delivered, existing files preserved. 11+3+1 tests. |
 
 ### Prior (v1.0.11)
 
@@ -195,9 +205,7 @@ not file granularity.
 | FEV-13: Documentation overhaul (Issues #51, #53) | 12h | ✅ Completado — Auto-discovery + config-driven + quality infra + Wiki rewrite | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
 | FEV-14: UX enhancements (Issues #47, #56) | 6h | ✅ Completado — Progress bar + /help command + 6 code review fixes | [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md) |
 | FEV-15: Community standards (Issue #55) | 2h | ✅ Completado — Code of conduct for project and template | [fix08-v1.2-phase5-community.md](diagnosis/fix08-v1.2-phase5-community.md) |
-| E2E coverage instrumentation | 8h | Accurate coverage for entry point | — |
-| `just bench` performance benchmarks | 4h | Regression detection for SC-9/10/11 | — |
-| CleanInstall/ProjectInstall Template Method refactor | 4h | Eliminate ~80 lines duplication | — |
+| FEV-16: Pre-release Tech Debt Closure | 24h | ✅ Completo — TD-1.1, 2.1, 5.1, 5.2, 6.2 | TD-1.1, 2.1, 5.1, 5.2, 6.2 |
 
 ### v1.3.0
 

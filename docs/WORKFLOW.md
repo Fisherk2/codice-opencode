@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v1.2.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-30 (FEV-13 ✅ Completo, FEV-14 ✅ Completo, FEV-15 ✅ Completo) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-30 (FEV-13 ✅, FEV-14 ✅, FEV-15 ✅, FEV-16 ✅) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -33,6 +33,7 @@
 | FEV-13 | Documentation Overhaul (v1.2 Phase 3) | Issues #51, #53: actualizar docs, reducir acoplamiento SDD + quality infra | ✅ Completo |
 | FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | ✅ Completo |
 | FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | ✅ Completo |
+| FEV-16 | Pre-release Tech Debt Closure (v1.2 Phase 6) | TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 closure | ✅ Completo |
 
 ## 2. Desglose por Fase (Completadas)
 
@@ -224,6 +225,37 @@ Issue #55 resuelto — Code of Conduct para el proyecto y el template de workspa
 
 ---
 
+### Fase FEV-16 — Pre-release Tech Debt Closure (v1.2 Phase 6) ✅ Completo
+
+**Fecha:** 2026-07-30 | **Esfuerzo:** 24h
+
+#### Resultados
+
+FEV-16 cierra 5 items del TECH_DEBT.md preparados para v1.2.0 sin FEV registrado:
+
+- **TD-1.1 (Coverage main.ts):** `resolveInteractiveMode()` extracted. 9 unit tests + 1 catch-block test. main.ts coverage 86.21% → 98.90%.
+- **TD-2.1 (Template Method):** `InstallUseCaseBase` creada. CleanInstall 166→73, ProjectInstall 147→72 líneas (-168 líneas de duplicación).
+- **TD-5.1 (Coverage instrumentation):** `c8` evaluado (incompatible con Bun/JSC). CI gate ≥95% nativo. Coverage overall 98.10%.
+- **TD-5.2 (Benchmarks):** `just bench` con hyperfine. 3 scripts standalone + regression assertion (<10%).
+- **TD-6.2 (Update granularity):** `diffTrees()` tree-level diff. 11 unit + 3 integration + 1 E2E test. E2E #16 passes.
+
+**7 commits atómicos**, 0 errores `just check`, 834 tests 0 fail.
+
+#### Métricas
+
+| Métrica | Baseline (FEV-15) | FEV-16 |
+|---------|-------------------|--------|
+| Tests (pass/fail) | 810 / 0 | 834 / 0 |
+| E2E scenarios | 19 / 19 | 20 / 20 (scenario 16 new) |
+| `just check` errores | 0 | 0 |
+| Coverage (lines) | 97.0% | 98.1% |
+| Coverage main.ts | 86.21% | 98.90% |
+| TECH_DEBT items closed | 1 (Issue #55) | 5 (TD-1.1, 2.1, 5.1, 5.2, 6.2) |
+| Performance benchmarks | 0 | 3 + regression assertion |
+| Use case lines | 313 (Clean+Project) | 145 (+195 base = 340 total) |
+
+---
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -235,9 +267,9 @@ Issue #55 resuelto — Code of Conduct para el proyecto y el template de workspa
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 596 tests, 0 fail, 1289 expects
-- **Tests E2E:** 15/15 pasando
-- **Coverage:** 98.89% funciones / 96.98% líneas (domain: 100% líneas)
+- **Tests unit+int:** 814 tests, 0 fail, 1833 expects
+- **Tests E2E:** 20/20 pasando
+- **Coverage:** 98.90% functions / 98.10% lines (domain: 100% lines)
 - **`just check`:** 0 errores
 - **Fix rate:** 10+ bugs encontrados y corregidos durante desarrollo E2E
 - **Release ready:** v1.0.11 – 476/0 tests, 15/15 E2E, 0 Biome/tsc errors
@@ -251,3 +283,4 @@ Issue #55 resuelto — Code of Conduct para el proyecto y el template de workspa
 - **FEV-13:** ✅ Completo — Documentation Overhaul + SDD Decoupling (Issues #51, #53)
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
+- **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 834 tests, 0 fail

@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added
+
+- **FEV-16 — Pre-release Tech Debt Closure:** Resolves 5 TECH_DEBT.md items (TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2):
+  - **Coverage foundation:** `resolveInteractiveMode()` extracted from `main.ts` for testability. 9 new unit tests. `main.ts` coverage 86.21% → 98.90%.
+  - **Use case refactor:** Template Method pattern applied to `CleanInstallUseCase` + `ProjectInstallUseCase`. New `InstallUseCaseBase` abstract class. 166+147 → 73+72 lines.
+  - **Performance benchmarks:** `just bench` recipe with `hyperfine` for 3 installation modes. 3 standalone benchmark scripts + `assert-no-regression.sh` for SC-9/10/11 verification.
+  - **Update granularity:** Tree-level diff (`diffTrees()`) for standard directories. `FileMergeEngine` updated to stage only new files in update mode. 11 unit + 3 integration + 1 E2E test.
+  - **Coverage instrumentation:** `c8` evaluated (incompatible with Bun/JSC). Native Bun coverage used with 95% CI gate. main.ts 98.90%, overall 98.10%.
+
+### Changed
+
+- **FEV-16 — FileMergeEngine:** Tree-level diff replaces directory-level skip. Standard rules in update mode now deliver new files.
+- **FEV-16 — CleanInstallUseCase / ProjectInstallUseCase:** Reduced from 313 → 145 lines (-168) via Template Method.
+- **FEV-16 — Coverage thresholds:** CI now enforces ≥95% lines/functions (was unenforced).
+- **FEV-16 — main.ts:** `runMode` restructured from switch to if/else for complete branch coverage.
+
+### Fixed
+
+- **FEV-16 — TECH_DEBT items resolved:** TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 all closed.
+- **FD-6.2 — Standard directory updates:** New files in standard directories now reach existing users during update (was: entire directory skipped).
 
 ## [1.2.0] — 2026-07-28
 
