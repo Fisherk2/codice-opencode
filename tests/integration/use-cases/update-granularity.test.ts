@@ -59,7 +59,10 @@ describe("Update granularity — tree-level diff via real filesystem", () => {
 	/**
 	 * Create a rule matching the category directory naming convention.
 	 */
-	function makeRule(relativePath: string, category: "mandatory" | "standard" | "optional"): FileRule {
+	function _makeRule(
+		relativePath: string,
+		category: "mandatory" | "standard" | "optional",
+	): FileRule {
 		return {
 			path: relativePath,
 			category,
@@ -128,9 +131,7 @@ describe("Update granularity — tree-level diff via real filesystem", () => {
 		await Bun.write(path.join(destDocs, "file1.md"), "# File 1 (user modified)");
 
 		// Walk destination to see current state
-		const destFilesBefore = (
-			await fs.readdir(path.join(destDir, "docs"))
-		).sort();
+		const destFilesBefore = (await fs.readdir(path.join(destDir, "docs"))).sort();
 
 		const fsAdapter = new BunFileSystem(templateDir, destDir);
 		const engine = new FileMergeEngine(fsAdapter);
@@ -141,9 +142,7 @@ describe("Update granularity — tree-level diff via real filesystem", () => {
 
 		expect(result.ok).toBe(true);
 		// Destination should have same files as before
-		const destFilesAfter = (
-			await fs.readdir(path.join(destDir, "docs"))
-		).sort();
+		const destFilesAfter = (await fs.readdir(path.join(destDir, "docs"))).sort();
 		expect(destFilesAfter).toEqual(destFilesBefore);
 		// Content should be preserved (user modification)
 		const file1Content = await readFile(path.join(destDir, "docs", "file1.md"));

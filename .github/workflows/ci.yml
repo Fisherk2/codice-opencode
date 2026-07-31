@@ -61,3 +61,8 @@ jobs:
         if: runner.os == 'Linux'
         run: just test-e2e
         timeout-minutes: 10
+
+      - name: Coverage check with threshold (Linux only)
+        if: runner.os == 'Linux'
+        run: just coverage-check 95
+        timeout-minutes: 15

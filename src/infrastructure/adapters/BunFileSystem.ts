@@ -4,8 +4,8 @@ import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import { VERSION_FILE_NAME } from "../config/constants";
 import { AtomicStager } from "./AtomicStager";
-import { TemplateResolver } from "./TemplateResolver";
 import { walkDirectory } from "./directoryWalker";
+import { TemplateResolver } from "./TemplateResolver";
 
 /**
  * Bun-compatible filesystem adapter with atomic staging support.

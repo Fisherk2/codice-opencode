@@ -17,7 +17,7 @@ format-check:
     bunx @biomejs/biome ci src/ tests/
 
 check:
-    bunx @biomejs/biome ci . && bun run tsc --noEmit
+    bunx @biomejs/biome ci src/ tests/ && bun run tsc --noEmit
 
 # Exclude template/obligatorio/skills/ and skills/ — external code with own test deps
 IGNORE_PATTERNS := "--path-ignore-patterns=template/obligatorio/skills/**,skills/**"
@@ -33,6 +33,11 @@ test-integration:
 
 test-coverage:
     bun test tests/ --coverage {{IGNORE_PATTERNS}}
+
+# Generate lcov coverage report and enforce minimum threshold (default: 95%)
+# Usage: just coverage-check [threshold]
+coverage-check threshold="95":
+    bash scripts/coverage-check.sh {{threshold}}
 
 test-watch:
     bun test tests/ --watch {{IGNORE_PATTERNS}}

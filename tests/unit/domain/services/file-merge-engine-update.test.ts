@@ -243,7 +243,7 @@ describe("FileMergeEngine — Update mode + standard file (not directory)", () =
 
 describe("FileMergeEngine — Progress events in update mode", () => {
 	test("emits stage_skip when standard directory has no new files", async () => {
-		const { fs, calls } = createMockFs();
+		const { fs, calls: _calls } = createMockFs();
 		// All files already exist in dest
 		fs.destinationExists = async (path: string) => path === "docs";
 		fs.walkTemplateDirectory = async (path: string) => {
@@ -258,9 +258,14 @@ describe("FileMergeEngine — Progress events in update mode", () => {
 
 		const rules = [rule("docs", "standard", true)];
 		const events: unknown[] = [];
-		const result = await engine.execute(rules, undefined, (e) => {
-			events.push(e);
-		}, true);
+		const result = await engine.execute(
+			rules,
+			undefined,
+			(e) => {
+				events.push(e);
+			},
+			true,
+		);
 
 		expect(result.ok).toBe(true);
 		const skips = events.filter((e: unknown) => (e as { type: string }).type === "stage_skip");
@@ -276,19 +281,19 @@ describe("FileMergeEngine — Progress events in update mode", () => {
 		};
 		const engine = new FileMergeEngine(fs);
 
-		const rules = [
-			rule("opencode.json", "mandatory"),
-			rule("docs", "standard", true),
-		];
+		const rules = [rule("opencode.json", "mandatory"), rule("docs", "standard", true)];
 
 		const events: unknown[] = [];
-		await engine.execute(rules, undefined, (e) => {
-			events.push(e);
-		}, true);
-
-		const starts = events.filter(
-			(e: unknown) => (e as { type: string }).type === "stage_start",
+		await engine.execute(
+			rules,
+			undefined,
+			(e) => {
+				events.push(e);
+			},
+			true,
 		);
+
+		const starts = events.filter((e: unknown) => (e as { type: string }).type === "stage_start");
 		// mandatory + 2 expanded files = 3 total
 		expect(starts.length).toBe(3);
 		for (const event of starts) {

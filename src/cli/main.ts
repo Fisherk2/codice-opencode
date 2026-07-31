@@ -91,26 +91,22 @@ export async function runMode(
 	destinationPath: string,
 	options: CliOptions,
 ): Promise<Result<void, Error>> {
-	switch (mode) {
-		case "clean": {
-			return deps.cleanInstall.execute(destinationPath, {
-				force: options.force,
-				version: VERSION,
-			});
-		}
-		case "project": {
-			return deps.projectInstall.execute(destinationPath, {
-				force: options.force,
-				version: VERSION,
-			});
-		}
-		case "update": {
-			return deps.updateWorkspace.execute(destinationPath, {
-				force: options.force,
-				version: VERSION,
-			});
-		}
+	if (mode === "clean") {
+		return deps.cleanInstall.execute(destinationPath, {
+			force: options.force,
+			version: VERSION,
+		});
 	}
+	if (mode === "project") {
+		return deps.projectInstall.execute(destinationPath, {
+			force: options.force,
+			version: VERSION,
+		});
+	}
+	return deps.updateWorkspace.execute(destinationPath, {
+		force: options.force,
+		version: VERSION,
+	});
 }
 
 // ---------------------------------------------------------------------------
