@@ -147,7 +147,7 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 
 			if (this.verbose) {
 				// biome-ignore lint/suspicious/noConsole: verbose diagnostic output
-				console.warn(`[info] Created symlink: ${linkPath} → ${target}`);
+				console.warn(`[info] Created symlink: ${resolvedLinkPath} → ${target}`);
 			}
 
 			return success(undefined);

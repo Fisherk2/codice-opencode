@@ -98,7 +98,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 			return [];
 		}
 
-		return result as string[];
+		return result;
 	}
 
 	private progressBar: ReturnType<typeof clack.progress> | null = null;
