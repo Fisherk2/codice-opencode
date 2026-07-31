@@ -134,11 +134,21 @@ describe("defaults.ts — spot-check known keys", () => {
 });
 
 describe("defaults.ts — DESTRUCTIVE_PATTERNS spot-check", () => {
-	test("contains critical destructive patterns", () => {
-		const patterns = DESTRUCTIVE_PATTERNS.map((p) => p.source);
-		expect(patterns.some((s) => s.includes("rm"))).toBe(true);
-		expect(patterns.some((s) => s.includes("shred"))).toBe(true);
-		expect(patterns.some((s) => s.includes("git push"))).toBe(true);
-		expect(patterns.some((s) => s.includes("drop table"))).toBe(true);
+	test("blocks representative destructive commands", () => {
+		const blocks = (cmd: string) => DESTRUCTIVE_PATTERNS.some((p) => p.test(cmd));
+		// Filesystem
+		expect(blocks("rm -rf /")).toBe(true);
+		expect(blocks("shred file")).toBe(true);
+		// Git
+		expect(blocks("git push --force origin main")).toBe(true);
+		// SQL
+		expect(blocks("DROP TABLE users")).toBe(true);
+	});
+
+	test("allows non-destructive commands", () => {
+		const blocks = (cmd: string) => DESTRUCTIVE_PATTERNS.some((p) => p.test(cmd));
+		expect(blocks("ls -la")).toBe(false);
+		expect(blocks("git push origin main")).toBe(false);
+		expect(blocks("SELECT * FROM users")).toBe(false);
 	});
 });

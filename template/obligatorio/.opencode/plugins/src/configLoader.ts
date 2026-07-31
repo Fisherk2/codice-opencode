@@ -7,8 +7,8 @@
 // Uses only Node.js `fs` module — no Bun-specific APIs.
 // ---------------------------------------------------------------------------
 
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { DEFAULTS } from "./defaults";
 import type { SddPipelineConfig } from "./types";
 import { DEFAULT_SDD_PIPELINE_CONFIG } from "./types";
@@ -202,9 +202,7 @@ export function loadSddConfig(projectDir: string): SddPipelineConfig {
 		const raw = readFileSync(configPath, "utf-8");
 		parsed = JSON.parse(raw);
 	} catch {
-		logWarning(
-			`Invalid or unreadable opencode.json at ${configPath}. ` + "Falling back to defaults.",
-		);
+		logWarning(`Invalid or unreadable opencode.json at ${configPath}. Falling back to defaults.`);
 		return DEFAULT_SDD_PIPELINE_CONFIG;
 	}
 

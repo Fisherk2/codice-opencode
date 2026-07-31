@@ -184,7 +184,7 @@ describe("main() — SIGINT handling", () => {
 	let origOn: typeof process.on;
 	let origOff: typeof process.off;
 	let origExit2: typeof process.exit;
-	let capturedHandler: (() => void) | null;
+	let capturedHandlers: Array<() => void>;
 	let sigintExitMock: ReturnType<typeof mockFn>;
 	const testDir = "/tmp/test-codice-sigint";
 
@@ -192,12 +192,15 @@ describe("main() — SIGINT handling", () => {
 		origOn = process.on;
 		origOff = process.off;
 		origExit2 = process.exit;
-		capturedHandler = null;
+		capturedHandlers = [];
 		sigintExitMock = mockFn(() => {}); // no throw — needed for callback
 
-		// Mock process.on to capture the SIGINT handler
+		// Mock process.on to collect every SIGINT handler. Bun may register its
+		// own internal handlers AFTER the plugin's, so we capture all of them
+		// and locate the plugin's handler in the test rather than assuming
+		// the last registration wins.
 		const onMock = mockFn((_event: string, handler: (..._args: unknown[]) => void) => {
-			if (_event === "SIGINT") capturedHandler = handler as () => void;
+			if (_event === "SIGINT") capturedHandlers.push(handler as () => void);
 			return process;
 		});
 		process.on = onMock as unknown as typeof process.on;
@@ -216,6 +219,27 @@ describe("main() — SIGINT handling", () => {
 		await fs.rm(testDir, { recursive: true, force: true });
 	});
 
+	/**
+	 * Invoke each captured SIGINT handler once, in registration order, until
+	 * one triggers the mocked process.exit. Returns that handler — or null if
+	 * none of the captured handlers invoked process.exit (e.g. only Bun's
+	 * internal handlers were registered).
+	 *
+	 * Our handler is idempotent (second invocation is a no-op), so the search
+	 * itself counts as the first SIGINT when the returned handler is invoked
+	 * again by the caller.
+	 */
+	function findExitTriggeringHandler(): (() => void) | null {
+		for (const handler of capturedHandlers) {
+			const before = sigintExitMock.mock.calls.length;
+			handler();
+			if (sigintExitMock.mock.calls.length > before) {
+				return handler;
+			}
+		}
+		return null;
+	}
+
 	it("registers SIGINT handler on process.on", async () => {
 		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
 
@@ -225,7 +249,7 @@ describe("main() — SIGINT handling", () => {
 			// OK — main may reject if install finishes or fails
 		}
 
-		expect(capturedHandler).not.toBeNull();
+		expect(capturedHandlers.length).toBeGreaterThan(0);
 		// Verify the first exit was SUCCESS (install completed) or ERROR (install failed)
 		expect(sigintExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
 	});
@@ -239,12 +263,10 @@ describe("main() — SIGINT handling", () => {
 			// OK
 		}
 
-		expect(capturedHandler).not.toBeNull();
-
 		const callCountBefore = sigintExitMock.mock.calls.length;
-		capturedHandler!();
+		const handler = findExitTriggeringHandler();
 
-		// Should have incremented by exactly 1
+		expect(handler).not.toBeNull();
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
 		const lastCall = sigintExitMock.mock.calls[callCountBefore] as unknown[];
 		expect(lastCall[0]).toBe(EXIT_INTERRUPT);
@@ -259,16 +281,15 @@ describe("main() — SIGINT handling", () => {
 			// OK
 		}
 
-		expect(capturedHandler).not.toBeNull();
-
 		const callCountBefore = sigintExitMock.mock.calls.length;
+		const handler = findExitTriggeringHandler();
 
-		// First SIGINT — should call process.exit
-		capturedHandler!();
+		// First SIGINT already fired inside the search — mock incremented once
+		expect(handler).not.toBeNull();
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
 
-		// Second SIGINT — should be idempotent
-		capturedHandler!();
+		// Second SIGINT — same handler is idempotent
+		handler!();
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
 	});
 });

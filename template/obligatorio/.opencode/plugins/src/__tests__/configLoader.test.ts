@@ -2,7 +2,9 @@
 // configLoader.test.ts — Unit tests for loadSddConfig()
 //
 // Uses real temp directories (no mocks) to verify filesystem interactions,
-// and captures console.warn for validation warning checking.
+// and captures process.stderr.write for validation warning checking —
+// logWarning() writes to stderr (not console.warn) to satisfy the
+// noConsole lint rule.
 // ---------------------------------------------------------------------------
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
@@ -27,16 +29,20 @@ function writeJson(relativePath: string, data: unknown): void {
 
 let tempDir: string;
 let warnMessages: string[];
+let origStderrWrite: typeof process.stderr.write;
 
 beforeEach(() => {
 	tempDir = mkdtempSync(join(tmpdir(), "config-loader-test-"));
 	warnMessages = [];
-	console.warn = (...args: unknown[]) => {
+	origStderrWrite = process.stderr.write;
+	process.stderr.write = ((...args: unknown[]) => {
 		warnMessages.push(args.map(String).join(" "));
-	};
+		return true;
+	}) as typeof process.stderr.write;
 });
 
 afterEach(() => {
+	process.stderr.write = origStderrWrite;
 	rmSync(tempDir, { recursive: true, force: true });
 });
 

@@ -71,6 +71,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 	// OQ-3: warn when a commands/ file has no commandPhaseMap entry
 	for (const command of Object.keys(commandAgentMap)) {
 		if (!commandPhaseMap[command]) {
+			// biome-ignore lint/suspicious/noConsole: intentional plugin telemetry log
 			console.debug(
 				`[sdd-pipeline] Command "${command}" has no commandPhaseMap entry, defaulting to "idle"`,
 			);
@@ -116,6 +117,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 			const keep = lines.slice(-(MAX_AUDIT_LINES / 2));
 			writeFileSync(auditLogPath, `${keep.join("\n")}\n`);
 			auditLineCount = keep.length;
+			// biome-ignore lint/suspicious/noConsole: intentional plugin telemetry log
 			console.debug("[sdd-pipeline] Audit log truncated on init");
 		}
 	};
@@ -124,6 +126,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 	try {
 		maybeRotateAuditLog();
 	} catch (err: unknown) {
+		// biome-ignore lint/suspicious/noConsole: intentional plugin telemetry log
 		console.debug("[sdd-pipeline] Could not truncate audit log:", formatError(err));
 	}
 
@@ -146,6 +149,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 			appendFileSync(auditLogPath, entry);
 			auditLineCount++;
 		} catch (err: unknown) {
+			// biome-ignore lint/suspicious/noConsole: intentional plugin telemetry log
 			console.debug("[sdd-pipeline] Could not write audit log:", formatError(err));
 		}
 	};
@@ -204,6 +208,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 					`Injected SDD state (agent: ${sddState.agent_type}, phase: ${sddState.pipeline_phase})`,
 				);
 			} catch (err: unknown) {
+				// biome-ignore lint/suspicious/noConsole: intentional plugin error log
 				console.error("[sdd-pipeline] Error in system.transform:", formatError(err));
 			}
 		},
@@ -258,19 +263,20 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 				// Uses word-boundary regex to avoid false positives on common English
 				// substrings (e.g., "relationship status" should NOT match /ship,
 				// "I protest this decision" should NOT match /test).
-			for (const [command, keywords] of Object.entries(intentPatterns)) {
-				if (
-					keywords.some((kw) => {
-						const escaped = escapeRegExp(kw);
-						return new RegExp(`\\b${escaped}\\b`, "i").test(content);
-					})
-				) {
+				for (const [command, keywords] of Object.entries(intentPatterns)) {
+					if (
+						keywords.some((kw) => {
+							const escaped = escapeRegExp(kw);
+							return new RegExp(`\\b${escaped}\\b`, "i").test(content);
+						})
+					) {
 						sddState.last_intent = command;
 						audit("chat.message", `intent=${command}`);
 						break;
 					}
 				}
 			} catch (err: unknown) {
+				// biome-ignore lint/suspicious/noConsole: intentional plugin error log
 				console.error("[sdd-pipeline] Error in chat.message:", formatError(err));
 			}
 		},
@@ -315,6 +321,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 						"";
 
 					if (!subagentName && Object.keys(args).length > 0) {
+						// biome-ignore lint/suspicious/noConsole: intentional plugin telemetry log
 						console.debug(
 							"[sdd-pipeline] task() args have no recognizable subagent key:",
 							Object.keys(args),
@@ -331,6 +338,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 			} catch (err: unknown) {
 				// [R2] Re-throw our own SddError instances; log everything else
 				if (err instanceof SddError) throw err;
+				// biome-ignore lint/suspicious/noConsole: intentional plugin error log
 				console.error("[sdd-pipeline] Error in tool.before:", formatError(err));
 			}
 		},
@@ -344,6 +352,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 				const inp = input as { tool?: string } | undefined;
 				audit("tool.after", `${inp?.tool ?? "unknown"} completed`);
 			} catch (err: unknown) {
+				// biome-ignore lint/suspicious/noConsole: intentional plugin error log
 				console.error("[sdd-pipeline] Error in tool.after:", formatError(err));
 			}
 		},
@@ -360,6 +369,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 
 				audit("session.compacting", "Injected SDD state");
 			} catch (err: unknown) {
+				// biome-ignore lint/suspicious/noConsole: intentional plugin error log
 				console.error("[sdd-pipeline] Error in session.compacting:", formatError(err));
 			}
 		},

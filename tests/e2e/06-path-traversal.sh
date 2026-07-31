@@ -2,13 +2,16 @@
 #===============================================================================
 # F4-T7: Path Traversal E2E
 #
-# Scenario: Run CLI in a directory with a symlink attempting traversal
-# Expected: Binary handles the situation gracefully
+# Scenario: Attempt to install into a path that escapes the destination
+#           boundary using ../ sequences and system directories
+# Expected: CLI rejects the destination at parse time (exit != 0)
 #           No files written outside the destination boundary
 #
-# Note: The CLI always uses process.cwd() as the destination and expects
-# a template/ subdirectory. Path traversal prevention is built into
-# BunFileSystem which validates all internal file operations.
+# Note: With ADR-007 (template source cascade), the CLI resolves the template
+# from the package root in source mode, so a missing template/ in cwd is no
+# longer an error. Path traversal prevention is enforced at two layers:
+#   - validateDestPath (CLI parse time) rejects ../ and system directories
+#   - BunFileSystem / TemplateResolver validate all internal file operations
 #===============================================================================
 
 set -Eeuo pipefail
@@ -20,55 +23,45 @@ source "$(dirname "$0")/common.sh"
 
 log_step "F4-T7: Path Traversal E2E"
 
-# Resolve CLI
-
-# Create temp directory WITHOUT template
 TEMP_DIR="$(create_temp_dir)"
 log_info "Test directory: $TEMP_DIR"
 
-# Do NOT provide a proper template directory — only create a minimal
-# obligatorio dir with no real files, to trigger a resolution error
-mkdir -p "$TEMP_DIR/template/obligatorio"
-# Create a symlink pointing outside to test path traversal protection
-ln -s /etc/passwd "$TEMP_DIR/template/obligatorio/escape.txt" 2>/dev/null || true
-
 # ---------------------------------------------------------------------------
-# Execute — expect exit code 1 (no valid template files)
+# Execute — expect rejection of traversal destinations
 # ---------------------------------------------------------------------------
 
-log_info "Running: $CODICE_CLI --clean --force in $TEMP_DIR"
+log_info "Running: $CODICE_CLI --clean --force --dest '$TEMP_DIR/../escape'"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && $CODICE_CLI --clean --force) 2>/dev/null || EXIT_CODE=$?
+$CODICE_CLI --clean --force --dest "$TEMP_DIR/../escape" >/dev/null 2>&1 || EXIT_CODE=$?
 
-# The binary should exit with error because no valid template files exist
 if [[ "$EXIT_CODE" -eq 0 ]]; then
-    log_fail "CLI exited with code 0 despite missing template content (expected error)"
+    log_fail "CLI accepted a path traversal destination (expected rejection)"
     exit 1
 fi
-log_pass "CLI exited with non-zero code $EXIT_CODE (expected — no valid template)"
+log_pass "CLI rejected path traversal destination (exit $EXIT_CODE)"
+
+log_info "Running: $CODICE_CLI --clean --force --dest /etc"
+EXIT_CODE=0
+$CODICE_CLI --clean --force --dest /etc >/dev/null 2>&1 || EXIT_CODE=$?
+
+if [[ "$EXIT_CODE" -eq 0 ]]; then
+    log_fail "CLI accepted a system directory as destination (expected rejection)"
+    exit 1
+fi
+log_pass "CLI rejected system directory destination (exit $EXIT_CODE)"
 
 # ---------------------------------------------------------------------------
-# Assertions
+# Assertions — no files written outside the intended boundary
 # ---------------------------------------------------------------------------
 
 log_info "Verifying no files were written outside the destination..."
 
-# If the CLI somehow wrote files despite the error, make sure they stay in TEMP_DIR
 OUTSIDE_FILES=$(find /tmp -maxdepth 3 -name "*.codice-*" -newer "$TEMP_DIR" 2>/dev/null || true)
 if echo "$OUTSIDE_FILES" | grep -v "^$" | head -1 >/dev/null 2>&1; then
     log_warn "Found codice-related files outside temp dir (may be from other processes)"
 fi
 
-# Verify the symlink still exists and points to the right place
-if [[ -L "$TEMP_DIR/escape.txt" ]]; then
-    LINK_TARGET=$(readlink "$TEMP_DIR/escape.txt")
-    if [[ "$LINK_TARGET" == "/etc/passwd" ]]; then
-        log_pass "Symlink was not followed or removed by the CLI"
-    fi
-fi
-
 log_info "Verifying no .codice-staging dir was left behind..."
-
 if [[ -d "$TEMP_DIR/.codice-staging" ]]; then
     log_fail "Staging directory was left behind despite error!"
     exit 1

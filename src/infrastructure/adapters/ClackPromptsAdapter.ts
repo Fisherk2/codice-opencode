@@ -33,6 +33,9 @@ const MODE_OPTIONS = [
  * Map progress-event categories to their @clack/prompts display call.
  * Data-driven dispatch replaces the switch statement — adding a category
  * now requires only a new entry here.
+ *
+ * Lookups go through Object.hasOwn so prototype keys like "__proto__" or
+ * "toString" cannot resolve to an inherited member.
  */
 const PROGRESS_EMITTERS: Record<string, (text: string) => void> = {
 	commit: (text) => clack.log.success(`✓ ${text}`),
@@ -158,9 +161,8 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		if (colonIdx > 0) {
 			const category = message.slice(0, colonIdx).trim().toLowerCase();
 			const text = message.slice(colonIdx + 1).trim();
-			const emit = PROGRESS_EMITTERS[category];
-			if (emit) {
-				emit(text);
+			if (Object.hasOwn(PROGRESS_EMITTERS, category)) {
+				PROGRESS_EMITTERS[category]!(text);
 				return;
 			}
 		}

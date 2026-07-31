@@ -230,7 +230,7 @@ describe("discoverAgentMentionPatterns()", () => {
 		expect(result).toHaveProperty("tezcatlipoca");
 
 		// Check huitzilopochtli patterns
-		const huitziPatterns = result["huitzilopochtli"];
+		const huitziPatterns = result.huitzilopochtli;
 		expect(huitziPatterns).toHaveLength(2);
 		expect(huitziPatterns[0]).toBeInstanceOf(RegExp);
 		expect(huitziPatterns[1]).toBeInstanceOf(RegExp);

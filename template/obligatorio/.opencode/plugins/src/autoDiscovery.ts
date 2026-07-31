@@ -10,8 +10,8 @@
 // YAML frontmatter is parsed manually via regex (no external deps).
 // ---------------------------------------------------------------------------
 
-import { existsSync, readdirSync, readFileSync } from "fs";
-import { basename, extname } from "path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { basename, extname } from "node:path";
 import { escapeRegExp } from "./escapeRegExp";
 import { PRIMARY_AGENTS } from "./validSubagents";
 

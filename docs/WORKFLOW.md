@@ -259,7 +259,7 @@ Código simplificado: `stageOne()` extraído, `stagePlanner` total plegado, `wal
 
 ### Estado del Pre-release v1.2.0 ✅ Listo para ajustes finales
 
-**Fecha:** 2026-07-30 | **Tests:** 844 pass / 0 fail | **Coverage:** 98.77% func / 97.84% line | **E2E:** 15/16 (06-path-traversal pre-existing)
+**Fecha:** 2026-07-31 | **Tests:** 910+ pass / 0 fail | **Coverage:** 98.77% func / 97.84% line | **E2E:** 16/16 (06-path-traversal corregido)
 
 Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v1.2.0 listo para:
 - Ajustes finales de documentación
