@@ -19,6 +19,7 @@ export async function computeStagePlan(
 }> {
 	const expandedDirs = new Map<string, readonly string[]>();
 	const stageDecisions = new Map<string, boolean>();
+	let total = 0;
 
 	for (const rule of rules) {
 		if (rule.noTemplateCopy) continue;
@@ -30,18 +31,12 @@ export async function computeStagePlan(
 				expandedDirs.set(rule.path, newFiles);
 			}
 			stageDecisions.set(rule.path, newFiles.length > 0);
+			// Expanded directories contribute per-file count to the total.
+			total += newFiles.length;
 		} else {
-			stageDecisions.set(rule.path, await shouldStage(rule, fileSystem, selected));
-		}
-	}
-
-	// Compute total: expanded directories contribute per-file count,
-	// regular rules contribute 1 each.
-	let total = 0;
-	for (const [path, decision] of stageDecisions) {
-		if (decision === true) {
-			const expanded = expandedDirs.get(path);
-			total += expanded?.length ?? 1;
+			const decision = await shouldStage(rule, fileSystem, selected);
+			stageDecisions.set(rule.path, decision);
+			if (decision) total += 1;
 		}
 	}
 
