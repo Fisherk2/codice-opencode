@@ -4,7 +4,6 @@
  * Extracts duplicated orchestration of:
  * - .gitignore generation (graceful on failure)
  * - .opencode/ symlink creation (always)
- * - .devin/ symlink creation (conditional on .devin selection)
  * - .codice-version file write
  *
  * Both modes share the exact same sequence; the only differences
@@ -85,7 +84,6 @@ export interface PostInstallOptions {
 	readonly symlinkCreator: ISymlinkCreator;
 	readonly userPrompt: IUserPrompt;
 	readonly opencodeSymlinks: readonly SymlinkSpec[];
-	readonly devinSymlinks: readonly SymlinkSpec[];
 	readonly destinationPath: string;
 	readonly selectedOptionals: readonly string[];
 	readonly version?: string;
@@ -101,8 +99,7 @@ export interface PostInstallOptions {
  * Both modes follow the same sequence after a successful merge:
  * 1. Generate .gitignore from template (graceful on failure).
  * 2. Create .opencode/{agents,commands,skills} symlinks (always).
- * 3. Create .devin/{skills,workflows,rules/*} symlinks (only if .devin selected).
- * 4. Write .codice-version file with version + optional selections.
+ * 3. Write .codice-version file with version + optional selections.
  *
  * Each step emits a logProgressEvent AFTER the operation completes, so the
  * log reflects actual results — not predicted intent.
@@ -118,7 +115,6 @@ export async function runPostInstallSteps(
 		symlinkCreator,
 		userPrompt,
 		opencodeSymlinks,
-		devinSymlinks,
 		destinationPath,
 		selectedOptionals,
 		version,
@@ -143,15 +139,7 @@ export async function runPostInstallSteps(
 		userPrompt.logProgressEvent(`symlink: Created ${spec.linkPath}`);
 	}
 
-	// Step 3: Create .devin/ symlinks only if user selected .devin
-	if (selectedOptionals.includes(".devin")) {
-		await createSymlinksWithWarning(symlinkCreator, userPrompt, devinSymlinks, "devin");
-		for (const spec of devinSymlinks) {
-			userPrompt.logProgressEvent(`symlink: Created ${spec.linkPath}`);
-		}
-	}
-
-	// Step 4: Write version file with optionalSelections recorded
+	// Step 3: Write version file with optionalSelections recorded
 	const versionResult = await writeVersionFileSafe(
 		fileSystem,
 		{

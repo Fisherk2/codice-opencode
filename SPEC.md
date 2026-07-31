@@ -285,8 +285,8 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 4. **Update Workspace:** Pre-populate with older version. Run update mode. Assert only obligatorio and estandar files are updated; optional files untouched.
 5. **Atomic Rollback (SIGINT):** Simulate a crash mid-operation. Assert destination directory is in its original state, staging directory is absent or cleaned.
 6. **Path Traversal Rejection:** Attempt to install to a path outside the allowed base using `../` sequences. Assert exit code 1 and no files written outside boundary.
-7. **Symlinks Clean Install:** Run CLI in empty directory. Assert all 10 symlinks exist and resolve correctly.
-8. **Symlinks Project Install:** Pre-populate destination without `.devin`. Run project install with `--force`. Assert `.opencode/` symlinks exist, `.devin/` symlinks absent. Then run again selecting `.devin`. Assert `.devin/` symlinks present.
+7. **Symlinks Clean Install:** Run CLI in empty directory. Assert all 3 symlinks exist and resolve correctly.
+8. **Symlinks Project Install:** Run project install with `--force`. Assert `.opencode/` symlinks exist.
 9. **Symlinks Idempotency:** Run CLI twice in the same directory. Assert symlinks are created only once and remain valid.
 10. **Update No Symlinks:** Run update mode on an existing installation. Assert no symlinks are created or modified.
 11. **Gitignore Clean Install:** Run CLI in empty directory. Assert `.gitignore` exists in destination with correct content.

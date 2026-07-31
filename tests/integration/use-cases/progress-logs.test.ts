@@ -10,7 +10,7 @@ import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
-import { DEVIN_SYMLINKS, OPENCODE_SYMLINKS } from "../../../src/infrastructure/config/symlinks";
+import { OPENCODE_SYMLINKS } from "../../../src/infrastructure/config/symlinks";
 
 /** Entries that require actual template file staging (excludes noTemplateCopy) */
 const STAGEABLE_COUNT = FILE_RULE_MANIFEST.filter((r) => !r.noTemplateCopy).length;
@@ -143,7 +143,6 @@ describe("CleanInstallUseCase structured log events", () => {
 			prompt,
 			symlinkCreator,
 			OPENCODE_SYMLINKS,
-			DEVIN_SYMLINKS,
 			gitignoreCreator,
 		);
 
@@ -180,7 +179,6 @@ describe("CleanInstallUseCase structured log events", () => {
 			prompt,
 			symlinkCreator,
 			OPENCODE_SYMLINKS,
-			DEVIN_SYMLINKS,
 			gitignoreCreator,
 		);
 
@@ -206,7 +204,7 @@ describe("CleanInstallUseCase structured log events", () => {
 		expect(symlinkIdx).toBeGreaterThan(gitignoreIdx);
 	});
 
-	it("should emit log events for all opencode and devin symlinks (2 commit + 1 gitignore + 10 symlinks)", async () => {
+	it("should emit log events for all opencode symlinks (2 commit + 1 gitignore + 3 symlinks)", async () => {
 		const { stub: fs } = createMockFileSystem();
 		const engine = new FileMergeEngine(fs);
 		const prompt = createMockPrompt();
@@ -218,7 +216,6 @@ describe("CleanInstallUseCase structured log events", () => {
 			prompt,
 			symlinkCreator,
 			OPENCODE_SYMLINKS,
-			DEVIN_SYMLINKS,
 			gitignoreCreator,
 		);
 
@@ -232,12 +229,10 @@ describe("CleanInstallUseCase structured log events", () => {
 		const gitignoreCalls = prompt.logEntries.filter((msg) => msg.startsWith("gitignore:"));
 
 		expect(commitCalls).toHaveLength(2);
-		// All opencode (3) + devin (7) symlinks get log events
-		expect(symlinkCalls).toHaveLength(OPENCODE_SYMLINKS.length + DEVIN_SYMLINKS.length);
+		// All opencode (3) symlinks get log events
+		expect(symlinkCalls).toHaveLength(OPENCODE_SYMLINKS.length);
 		expect(gitignoreCalls).toHaveLength(1);
-		expect(prompt.logEntries).toHaveLength(
-			2 + 1 + OPENCODE_SYMLINKS.length + DEVIN_SYMLINKS.length,
-		);
+		expect(prompt.logEntries).toHaveLength(2 + 1 + OPENCODE_SYMLINKS.length);
 	});
 
 	it("should emit only commit log events when merge fails (no symlink/gitignore)", async () => {
@@ -254,7 +249,6 @@ describe("CleanInstallUseCase structured log events", () => {
 			prompt,
 			symlinkCreator,
 			OPENCODE_SYMLINKS,
-			DEVIN_SYMLINKS,
 			gitignoreCreator,
 		);
 
@@ -274,7 +268,7 @@ describe("CleanInstallUseCase structured log events", () => {
 		expect(errorCalls[0]).toContain("Disk full");
 	});
 
-	it("should still emit symlink/gitignore log events when .devin is not selected", async () => {
+	it("should still emit symlink/gitignore log events when no optionals are selected", async () => {
 		const { stub: fs } = createMockFileSystem();
 		const engine = new FileMergeEngine(fs);
 		const prompt = createMockPrompt();
@@ -288,7 +282,6 @@ describe("CleanInstallUseCase structured log events", () => {
 			prompt,
 			symlinkCreator,
 			OPENCODE_SYMLINKS,
-			DEVIN_SYMLINKS,
 			gitignoreCreator,
 		);
 

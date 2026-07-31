@@ -4,9 +4,8 @@
 #
 # Scenario: Run --project --force and verify:
 #   1. No optional files are copied (force skips all optionals)
-#   2. .devin/ symlinks are NOT created (not selected)
-#   3. optionalSelections in .codice-version is empty
-#   4. .opencode symlinks ARE created (always)
+#   2. optionalSelections in .codice-version is empty
+#   3. .opencode symlinks ARE created (always)
 #===============================================================================
 
 set -Eeuo pipefail
@@ -72,14 +71,6 @@ log_info "Verifying optional files are absent..."
 assert_file_missing "$TEMP_DIR/Dockerfile"
 assert_file_missing "$TEMP_DIR/Justfile"
 assert_file_missing "$TEMP_DIR/scripts/build.sh"
-
-# Verify .devin/ symlinks do NOT exist (not selected via --force)
-log_info "Verifying .devin/ symlinks are absent..."
-if [[ -L "$TEMP_DIR/.devin/skills" ]]; then
-    log_fail ".devin/skills symlink should NOT exist when .devin was not selected"
-    exit 1
-fi
-log_pass ".devin/symlinks correctly absent"
 
 # Verify .opencode symlinks ARE created (always)
 log_info "Verifying .opencode symlinks..."

@@ -25,7 +25,6 @@ workspace/
 ├── specs/                # Modular specifications + ADRs
 ├── tasks/                # Execution tasks (SDD pipeline)
 ├── .opencode/            # OpenCode runtime configuration
-├── .devin/               # Devin compatibility layer (optional)
 └── .gitignore            # Standard ignore patterns
 ```
 
@@ -172,19 +171,6 @@ OpenCode's internal configuration directory:
 
 The `plugins/sdd-pipeline.ts` file is the SDD Pipeline plugin entry point — it orchestrates the development lifecycle by wiring together auto-discovery, configuration, and hook handlers. Supporting modules in `src/` handle auto-discovery (`autoDiscovery.ts`), config loading (`configLoader.ts`), and defaults (`defaults.ts`). This is an always-present file (obligatorio) that gets updated with template releases.
 
-### `.devin/` — Devin Compatibility Layer (Optional)
-
-When selected during installation, the template adds a `.devin/` directory that makes the workspace compatible with Devin-style agent runners:
-
-```
-.devin/
-├── rules/              # Hardcoded Devin rules
-├── skills/             # Symlink to skills/
-└── workflows/          # Symlink to commands/
-```
-
-This is an optional component — it is only installed if you explicitly choose it from the optional files menu.
-
 ---
 
 ## File Classification
@@ -195,7 +181,7 @@ The template organizes files into three categories that determine how they behav
 |----------|----------|----------|
 | **Obligatorio** | Always present, updated on every install | `opencode.json`, `agents/`, `commands/`, `skills/`, `.opencode/plugins/` |
 | **Estándar** | Created if missing, preserved if present | `README.md`, `CONTRIBUTING.md`, `docs/`, `specs/`, `tasks/` |
-| **Opcional** | Installed only if you choose them | `.devin/`, `Dockerfile`, `Justfile`, `.gitmessage` |
+| **Opcional** | Installed only if you choose them | `Dockerfile`, `Justfile`, `.gitmessage` |
 
 This means you can customize `README.md` or `docs/ARCHITECTURE.md` without fear of them being overwritten — the installer respects your existing content.
 

@@ -51,7 +51,6 @@ export abstract class InstallUseCaseBase {
 	 * @param userPrompt - Adapter for interactive user prompts
 	 * @param symlinkCreator - Adapter for post-installation symlink generation
 	 * @param opencodeSymlinks - Always-created .opencode/ symlinks (3)
-	 * @param devinSymlinks - Conditional .devin/ symlinks (7, created only if .devin selected)
 	 * @param gitignoreCreator - Adapter for post-installation .gitignore generation
 	 */
 	constructor(
@@ -60,7 +59,6 @@ export abstract class InstallUseCaseBase {
 		protected readonly userPrompt: IUserPrompt,
 		protected readonly symlinkCreator: ISymlinkCreator,
 		protected readonly opencodeSymlinks: readonly SymlinkSpec[],
-		protected readonly devinSymlinks: readonly SymlinkSpec[],
 		protected readonly gitignoreCreator: IGitignoreCreator,
 	) {}
 
@@ -188,7 +186,6 @@ export abstract class InstallUseCaseBase {
 			symlinkCreator: this.symlinkCreator,
 			userPrompt: this.userPrompt,
 			opencodeSymlinks: this.opencodeSymlinks,
-			devinSymlinks: this.devinSymlinks,
 			destinationPath,
 			selectedOptionals,
 			version,

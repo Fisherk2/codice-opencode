@@ -203,14 +203,14 @@ describe("FileMergeEngine — noTemplateCopy rules", () => {
 
 		const rules: FileRule[] = [
 			{
-				path: ".devin",
+				path: ".virtual-entry",
 				category: "optional",
 				isDirectory: true,
 				description: "Virtual entry",
 				noTemplateCopy: true,
 			},
 		];
-		const result = await engine.execute(rules, [".devin"]);
+		const result = await engine.execute(rules, [".virtual-entry"]);
 
 		expect(result.ok).toBe(true);
 		// stageFile should NOT be called for noTemplateCopy rules
@@ -226,7 +226,7 @@ describe("FileMergeEngine — noTemplateCopy rules", () => {
 		const rules: FileRule[] = [
 			{ path: "opencode.json", category: "mandatory", isDirectory: false, description: "Config" },
 			{
-				path: ".devin",
+				path: ".virtual-entry",
 				category: "optional",
 				isDirectory: true,
 				description: "Virtual",
@@ -234,12 +234,12 @@ describe("FileMergeEngine — noTemplateCopy rules", () => {
 			},
 			{ path: "Justfile", category: "optional", isDirectory: false, description: "Optional file" },
 		];
-		const result = await engine.execute(rules, [".devin", "Justfile"]);
+		const result = await engine.execute(rules, [".virtual-entry", "Justfile"]);
 
 		expect(result.ok).toBe(true);
 		const staged = calls.filter((c) => c.method === "stageFile").map((c) => c.args[0]);
 		// opencode.json (mandatory) and Justfile (optional, selected, missing) should be staged
-		// .devin (noTemplateCopy) should be skipped
+		// .virtual-entry (noTemplateCopy) should be skipped
 		expect(staged).toEqual(["opencode.json", "Justfile"]);
 	});
 });
@@ -473,19 +473,19 @@ describe("FileMergeEngine — Progress events", () => {
 
 		const rules: FileRule[] = [
 			{
-				path: ".devin",
+				path: ".virtual-entry",
 				category: "optional",
 				isDirectory: true,
 				description: "Virtual",
 				noTemplateCopy: true,
 			},
 		];
-		await engine.execute(rules, [".devin"], cb);
+		await engine.execute(rules, [".virtual-entry"], cb);
 
 		const skips = events.filter((e) => e.type === "stage_skip");
 		expect(skips.length).toBe(1);
 		if (skips[0]?.type === "stage_skip") {
-			expect(skips[0].filePath).toBe(".devin");
+			expect(skips[0].filePath).toBe(".virtual-entry");
 			expect(skips[0].reason).toContain("no template copy");
 		}
 	});

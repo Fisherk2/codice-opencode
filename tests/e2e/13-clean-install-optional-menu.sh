@@ -7,7 +7,6 @@
 #
 # Key deltas vs test 01-clean-install:
 # - Verifies optionalSelections in .codice-version is populated
-# - Verifies .devin/ symlinks are created (selected via force)
 #===============================================================================
 
 set -Eeuo pipefail
@@ -83,15 +82,6 @@ assert_file_exists "$TEMP_DIR/Justfile"
 assert_file_exists "$TEMP_DIR/scripts/build.sh"
 assert_file_exists "$TEMP_DIR/scripts/test.sh"
 
-# Verify .devin/ symlinks exist (force auto-selects all, including .devin)
-log_info "Verifying .devin/ symlinks (created because .devin was auto-selected)..."
-assert_symlink_exists "$TEMP_DIR/.devin/skills"
-assert_symlink_target "$TEMP_DIR/.devin/skills" "../skills"
-assert_symlink_exists "$TEMP_DIR/.devin/workflows"
-assert_symlink_target "$TEMP_DIR/.devin/workflows" "../commands"
-assert_symlink_exists "$TEMP_DIR/.devin/rules/CODE_STYLE.md"
-assert_symlink_target "$TEMP_DIR/.devin/rules/CODE_STYLE.md" "../../docs/CODE_STYLE.md"
-
 # Verify .opencode symlinks always created
 log_info "Verifying .opencode symlinks..."
 assert_symlink_exists "$TEMP_DIR/.opencode/agents"
@@ -117,14 +107,7 @@ if ! echo "$VERSION_DATA" | grep -q '"optionalSelections"'; then
     echo "    Version data: $VERSION_DATA" >&2
     exit 1
 fi
-
-# Verify .devin is in optionalSelections (since force auto-selects all)
-if ! echo "$VERSION_DATA" | grep -q '".devin"'; then
-    log_fail ".devin should be in optionalSelections when --force is used"
-    echo "    Version data: $VERSION_DATA" >&2
-    exit 1
-fi
-log_pass "optionalSelections present with .devin included (force auto-selects all)"
+log_pass "optionalSelections present in .codice-version (force auto-selects all)"
 
 # Verify staging directory was cleaned
 if [[ -d "$TEMP_DIR/.codice-staging" ]]; then

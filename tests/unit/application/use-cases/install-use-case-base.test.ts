@@ -21,10 +21,10 @@ import type { FileRule } from "../../../../src/domain/entities/FileRule";
 class MinimalInstallUseCase extends InstallUseCaseBase {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- minimal stub, not production code
 	constructor() {
-		// Provide empty mocks for all 7 dependencies. None of the default
+		// Provide empty mocks for all 6 dependencies. None of the default
 		// methods under test touch these — they exist only to satisfy the
 		// abstract constructor contract.
-		super({} as any, {} as any, {} as any, {} as any, [], [], {} as any);
+		super({} as any, {} as any, {} as any, {} as any, [], {} as any);
 	}
 
 	protected buildRules(_selectedOptionals: readonly string[]): readonly FileRule[] {

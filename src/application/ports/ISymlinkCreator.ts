@@ -16,9 +16,8 @@ export interface SymlinkSpec {
  * Port for creating symbolic links in the installed workspace.
  *
  * Symlinks bridge the gap between the flat template structure and the
- * nested directory layout that OpenCode/Devin expect. For example:
+ * nested directory layout that OpenCode expects. For example:
  *   .opencode/agents → ../agents
- *   .devin/skills   → ../skills
  *
  * These symlinks exist as real symlinks in the local dev template but
  * are resolved by npm when packaging, so they must be recreated
