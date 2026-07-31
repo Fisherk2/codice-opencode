@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **BREAKING: `.devin/` optional directory removed.** The `.devin/` compatibility layer (7 symlinks: `skills`, `workflows`, `rules/*`) is no longer installed. `DEVIN_SYMLINKS` configuration, `devinSymlinks` parameter from the use case chain, and `.devin` manifest entry all removed. 6 tests eliminated, 838 pass/0 fail. Users who selected `.devin` during installation will no longer see it in the optional files menu.
 - **Binary compilation recipes** — `just build`, `just build-all` removed from Justfile
 - **Binary distribution from CI/CD** — `ci.yml` no longer builds/smoke-tests/upload binaries; `release.yml` no longer builds/checksums/attaches binaries to GitHub Releases
 - **Binary resolution from E2E test infrastructure** — `setup_binary()` and related fallback logic (80+ lines) replaced with direct `bun run src/cli/main.ts`
