@@ -9,31 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **FEV-16 — Pre-release Tech Debt Closure:** Resolves 5 TECH_DEBT.md items (TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2):
-  - **Coverage foundation:** `resolveInteractiveMode()` extracted from `main.ts` for testability. 9 new unit tests. `main.ts` coverage 86.21% → 98.90%.
-  - **Use case refactor:** Template Method pattern applied to `CleanInstallUseCase` + `ProjectInstallUseCase`. New `InstallUseCaseBase` abstract class. 166+147 → 73+72 lines.
-  - **Performance benchmarks:** `just bench` recipe with `hyperfine` for 3 installation modes. 3 standalone benchmark scripts + `assert-no-regression.sh` for SC-9/10/11 verification.
-  - **Update granularity:** Tree-level diff (`diffTrees()`) for standard directories. `FileMergeEngine` updated to stage only new files in update mode. 11 unit + 3 integration + 1 E2E test.
-  - **Coverage instrumentation:** `c8` evaluated (incompatible with Bun/JSC). Native Bun coverage used with 95% CI gate. main.ts 98.90%, overall 98.10%.
-
 ### Changed
-
-- **FEV-16 — FileMergeEngine:** Tree-level diff replaces directory-level skip. Standard rules in update mode now deliver new files.
-- **FEV-16 — CleanInstallUseCase / ProjectInstallUseCase:** Reduced from 313 → 145 lines (-168) via Template Method.
-- **FEV-16 — Coverage thresholds:** CI now enforces ≥95% lines/functions (was unenforced).
-- **FEV-16 — main.ts:** `runMode` restructured from switch to if/else for complete branch coverage.
-- **FEV-16 — Code review simplifications:** `stageOne()` extraction, `stagePlanner` total folding, `walkRelative` helper, `resolveInteractiveMode` return type narrowed, `promptForMode` async removed.
 
 ### Fixed
 
-- **FEV-16 — TECH_DEBT items resolved:** TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 all closed.
-- **FD-6.2 — Standard directory updates:** New files in standard directories now reach existing users during update (was: entire directory skipped).
-- **CR-Fixes — Error context enrichment:** `wrapMergeError()` preserves `MergeError` phase/path in user-facing messages (e.g. "Disk full during staging of opencode.json"). Affects `InstallUseCaseBase` and `UpdateWorkspaceUseCase`.
-- **CR-Fixes — stageOne standard Result:** `FileMergeEngine.stageOne()` returns `Result<void, MergeError>` instead of null sentinel. Call sites use `!result.ok` for consistency.
-- **CR-Fixes — Exhaustiveness guard:** `shouldStage()` in `stagePlanner.ts` uses `assertNever()` for compile-time safety on `RuleCategory`. Unreachable `return false` replaced.
-- **CR-Fixes — Coverage script hardening:** `coverage-check.sh` passes lcov path via env var instead of shell-in-Python interpolation.
-
-## [1.2.0] — 2026-07-28
+## [1.2.0]
 
 ### Added
 
@@ -52,7 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **FEV-15 — Manifest integration:** `CODE_OF_CONDUCT.md` registered in `FileRuleManifestData.ts` with `category: "standard"` (11 standard files, was 10).
 - **FEV-15 — Cross-references:** `CONTRIBUTING.md` and `README.md` updated with `## Code of Conduct` sections.
 - **FEV-15 — E2E test extension:** `tests/e2e/01-clean-install.sh` asserts `CODE_OF_CONDUCT.md` delivery and content.
-- **FEV-16 — Pre-release Tech Debt Closure:** 5 TECH_DEBT items resolved (TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2). Template Method pattern for use cases, tree-level diff for update mode, performance benchmarks, coverage CI gate.
+- **FEV-16 — Pre-release Tech Debt Closure:** Resolves 5 TECH_DEBT.md items (TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2):
+  - **Coverage foundation:** `resolveInteractiveMode()` extracted from `main.ts` for testability. 9 new unit tests. `main.ts` coverage 86.21% → 98.90%.
+  - **Use case refactor:** Template Method pattern applied to `CleanInstallUseCase` + `ProjectInstallUseCase`. New `InstallUseCaseBase` abstract class. 166+147 → 73+72 lines.
+  - **Performance benchmarks:** `just bench` recipe with `hyperfine` for 3 installation modes. 3 standalone benchmark scripts + `assert-no-regression.sh` for SC-9/10/11 verification.
+  - **Update granularity:** Tree-level diff (`diffTrees()`) for standard directories. `FileMergeEngine` updated to stage only new files in update mode. 11 unit + 3 integration + 1 E2E test.
+  - **Coverage instrumentation:** `c8` evaluated (incompatible with Bun/JSC). Native Bun coverage used with 95% CI gate. main.ts 98.90%, overall 98.10%.
 
 ### Changed
 
@@ -67,6 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SC-15:** Updated to "npm package (tarball) size < 5MB" (previous SC-15 about compiled binaries removed)
 - **ARCHITECTURE.md:** Added ADR-011 to ADR table
 - **FEV-15 — FileRuleManifestData delivery surface:** 1 new entry in `FileRuleManifestData.ts` (now tracks 11 standard files, was 10).
+- **FEV-16 — FileMergeEngine:** Tree-level diff replaces directory-level skip. Standard rules in update mode now deliver new files.
+- **FEV-16 — CleanInstallUseCase / ProjectInstallUseCase:** Reduced from 313 → 145 lines (-168) via Template Method.
+- **FEV-16 — Coverage thresholds:** CI now enforces ≥95% lines/functions (was unenforced).
+- **FEV-16 — main.ts:** `runMode` restructured from switch to if/else for complete branch coverage.
+- **FEV-16 — Code review simplifications:** `stageOne()` extraction, `stagePlanner` total folding, `walkRelative` helper, `resolveInteractiveMode` return type narrowed, `promptForMode` async removed.
 
 ### Fixed
 
@@ -75,8 +65,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **FEV-14 — Symlink/gitignore logs emitted before operations (CRITICAL):** Success log was emitted before the actual symlink/gitignore creation. If creation failed, log falsely claimed success. Fixed: logs moved inside `runPostInstallSteps()`.
 - **FEV-14 — Redundant `completeProgress()` calls:** Use cases called `completeProgress()` on merge failure, but the progress callback already handled this via the `error` event. Fixed: removed 3 redundant calls.
 - **FEV-14 — Inline `import()` types in tests:** Test file used `import("path").Type` syntax 6 times. Fixed: top-level imports added, inline references removed.
-- **FEV-16 — Standard directory updates:** New files in standard directories now reach existing users during update mode (tree-level diff).
-- **FEV-16 — main.ts coverage:** `resolveInteractiveMode()` extracted; coverage 86.21% → 98.90%.
+- **FEV-16 — TECH_DEBT items resolved:** TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 all closed.
+- **FD-6.2 — Standard directory updates:** New files in standard directories now reach existing users during update (was: entire directory skipped).
+- **CR-Fixes — Error context enrichment:** `wrapMergeError()` preserves `MergeError` phase/path in user-facing messages (e.g. "Disk full during staging of opencode.json"). Affects `InstallUseCaseBase` and `UpdateWorkspaceUseCase`.
+- **CR-Fixes — stageOne standard Result:** `FileMergeEngine.stageOne()` returns `Result<void, MergeError>` instead of null sentinel. Call sites use `!result.ok` for consistency.
+- **CR-Fixes — Exhaustiveness guard:** `shouldStage()` in `stagePlanner.ts` uses `assertNever()` for compile-time safety on `RuleCategory`. Unreachable `return false` replaced.
+- **CR-Fixes — Coverage script hardening:** `coverage-check.sh` passes lcov path via env var instead of shell-in-Python interpolation.
 
 ### Removed
 
