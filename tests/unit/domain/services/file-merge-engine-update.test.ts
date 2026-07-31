@@ -84,7 +84,7 @@ describe("FileMergeEngine — Update mode + standard directory (tree-level diff)
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("docs", "standard", true)];
-		const result = await engine.execute(rules, undefined, undefined, true);
+		const result = await engine.execute(rules, { updateMode: true });
 
 		expect(result.ok).toBe(true);
 		// Should stage the new file docs/new-file.md
@@ -107,7 +107,7 @@ describe("FileMergeEngine — Update mode + standard directory (tree-level diff)
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("docs", "standard", true)];
-		const result = await engine.execute(rules, undefined, undefined, true);
+		const result = await engine.execute(rules, { updateMode: true });
 
 		expect(result.ok).toBe(true);
 		// Nothing should be staged — all files already in dest
@@ -126,7 +126,7 @@ describe("FileMergeEngine — Update mode + standard directory (tree-level diff)
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("docs", "standard", true)];
-		const result = await engine.execute(rules, undefined, undefined, true);
+		const result = await engine.execute(rules, { updateMode: true });
 
 		expect(result.ok).toBe(true);
 		// Both files should be staged individually
@@ -146,7 +146,7 @@ describe("FileMergeEngine — Project mode + standard directory exists", () => {
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("docs", "standard", true)];
-		const result = await engine.execute(rules, undefined, undefined, false);
+		const result = await engine.execute(rules, { updateMode: false });
 
 		expect(result.ok).toBe(true);
 		// Should NOT stage anything — existing behavior for standard dirs
@@ -162,7 +162,7 @@ describe("FileMergeEngine — Clean mode + standard directory exists", () => {
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("docs", "mandatory", true)];
-		const result = await engine.execute(rules, undefined, undefined, false);
+		const result = await engine.execute(rules, { updateMode: false });
 
 		expect(result.ok).toBe(true);
 		// Mandatory: always staged regardless of destination state
@@ -178,7 +178,7 @@ describe("FileMergeEngine — Update mode + mandatory category", () => {
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("opencode.json", "mandatory")];
-		const result = await engine.execute(rules, undefined, undefined, true);
+		const result = await engine.execute(rules, { updateMode: true });
 
 		expect(result.ok).toBe(true);
 		// Mandatory: always staged in any mode
@@ -192,7 +192,7 @@ describe("FileMergeEngine — Update mode + mandatory category", () => {
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("agents", "mandatory", true)];
-		const result = await engine.execute(rules, undefined, undefined, true);
+		const result = await engine.execute(rules, { updateMode: true });
 
 		expect(result.ok).toBe(true);
 		// Mandatory directories are NOT subject to tree-level diff
@@ -211,7 +211,7 @@ describe("FileMergeEngine — Update mode + standard file (not directory)", () =
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("README.md", "standard")]; // not a directory
-		const result = await engine.execute(rules, undefined, undefined, true);
+		const result = await engine.execute(rules, { updateMode: true });
 
 		expect(result.ok).toBe(true);
 		// Standard files still use destinationExists check in update mode
@@ -225,7 +225,7 @@ describe("FileMergeEngine — Update mode + standard file (not directory)", () =
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("README.md", "standard")];
-		const result = await engine.execute(rules, undefined, undefined, true);
+		const result = await engine.execute(rules, { updateMode: true });
 
 		expect(result.ok).toBe(true);
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
@@ -253,14 +253,12 @@ describe("FileMergeEngine — Progress events in update mode", () => {
 
 		const rules = [rule("docs", "standard", true)];
 		const events: unknown[] = [];
-		const result = await engine.execute(
-			rules,
-			undefined,
-			(e) => {
+		const result = await engine.execute(rules, {
+			onProgress: (e) => {
 				events.push(e);
 			},
-			true,
-		);
+			updateMode: true,
+		});
 
 		expect(result.ok).toBe(true);
 		const skips = events.filter((e: unknown) => (e as { type: string }).type === "stage_skip");
@@ -279,14 +277,12 @@ describe("FileMergeEngine — Progress events in update mode", () => {
 		const rules = [rule("opencode.json", "mandatory"), rule("docs", "standard", true)];
 
 		const events: unknown[] = [];
-		await engine.execute(
-			rules,
-			undefined,
-			(e) => {
+		await engine.execute(rules, {
+			onProgress: (e) => {
 				events.push(e);
 			},
-			true,
-		);
+			updateMode: true,
+		});
 
 		const starts = events.filter((e: unknown) => (e as { type: string }).type === "stage_start");
 		// mandatory + 2 expanded files = 3 total

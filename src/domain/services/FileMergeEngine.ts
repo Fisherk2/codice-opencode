@@ -1,5 +1,5 @@
 import type { FileRule } from "../entities/FileRule";
-import type { IFileMergeEngine } from "../ports/IFileMergeEngine";
+import type { IFileMergeEngine, MergeExecuteOptions } from "../ports/IFileMergeEngine";
 import type { IFileSystem } from "../ports/IFileSystem";
 import type { IStagingSystem } from "../ports/IStagingSystem";
 import type { MergeError } from "../types/MergeError";
@@ -22,14 +22,14 @@ import { computeStagePlan } from "./stagePlanner";
 export class FileMergeEngine implements IFileMergeEngine {
 	constructor(private readonly fileSystem: IFileSystem & IStagingSystem) {}
 
-	/** Execute merge rules. @param isUpdateMode enables tree-level diff for standard dirs. */
+	/** Execute merge rules. @param options.updateMode enables tree-level diff for standard dirs. */
 	async execute(
 		rules: readonly FileRule[],
-		selectedOptionals?: readonly string[],
-		onProgress?: ProgressCallback,
-		isUpdateMode = false,
+		options?: MergeExecuteOptions,
 	): Promise<Result<void, MergeError>> {
-		const selected = new Set(selectedOptionals ?? []);
+		const selected = new Set(options?.selectedOptionals ?? []);
+		const isUpdateMode = options?.updateMode ?? false;
+		const onProgress = options?.onProgress;
 		// Pre-computed by stagePlanner.ts.
 		const { stageDecisions, expandedDirs, total } = await computeStagePlan(
 			this.fileSystem,

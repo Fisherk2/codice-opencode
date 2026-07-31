@@ -61,9 +61,7 @@ class CaptureMergeEngine implements IFileMergeEngine {
 	capturedRules: { path: string; category: string }[] = [];
 	async execute(
 		rules: readonly FileRule[],
-		_selectedOptionals?: readonly string[],
-		_onProgress?: ProgressCallback,
-		_isUpdateMode?: boolean,
+		_options?: { selectedOptionals?: readonly string[]; onProgress?: ProgressCallback; updateMode?: boolean },
 	): Promise<Result<void, MergeError>> {
 		this.capturedRules = Array.from(rules);
 		return success(undefined);

@@ -98,7 +98,7 @@ export abstract class InstallUseCaseBase {
 		// Phase 5: Execute merge with progress callback
 		const onProgress = createProgressCallback(this.userPrompt, this.getProgressLabel());
 
-		const mergeResult = await this.mergeEngine.execute(rules, selectedOptionals, onProgress);
+		const mergeResult = await this.mergeEngine.execute(rules, { selectedOptionals, onProgress });
 		if (!mergeResult.ok) {
 			return failure(wrapMergeError(mergeResult.error));
 		}

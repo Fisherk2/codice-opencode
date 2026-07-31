@@ -153,7 +153,7 @@ describe("FileMergeEngine — Optional rules", () => {
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("Justfile", "optional")];
-		const result = await engine.execute(rules, ["Justfile"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["Justfile"] });
 
 		expect(result.ok).toBe(true);
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
@@ -168,7 +168,7 @@ describe("FileMergeEngine — Optional rules", () => {
 
 		const rules = [rule("Justfile", "optional")];
 		// User did NOT select Justfile
-		const result = await engine.execute(rules, []);
+		const result = await engine.execute(rules, { selectedOptionals: [] });
 
 		expect(result.ok).toBe(true);
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
@@ -181,7 +181,7 @@ describe("FileMergeEngine — Optional rules", () => {
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("Justfile", "optional")];
-		const result = await engine.execute(rules, ["Justfile"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["Justfile"] });
 
 		expect(result.ok).toBe(true);
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
@@ -205,7 +205,7 @@ describe("FileMergeEngine — noTemplateCopy rules", () => {
 				noTemplateCopy: true,
 			},
 		];
-		const result = await engine.execute(rules, [".virtual-entry"]);
+		const result = await engine.execute(rules, { selectedOptionals: [".virtual-entry"] });
 
 		expect(result.ok).toBe(true);
 		// stageFile should NOT be called for noTemplateCopy rules
@@ -229,7 +229,9 @@ describe("FileMergeEngine — noTemplateCopy rules", () => {
 			},
 			{ path: "Justfile", category: "optional", isDirectory: false, description: "Optional file" },
 		];
-		const result = await engine.execute(rules, [".virtual-entry", "Justfile"]);
+		const result = await engine.execute(rules, {
+			selectedOptionals: [".virtual-entry", "Justfile"],
+		});
 
 		expect(result.ok).toBe(true);
 		const staged = calls.filter((c) => c.method === "stageFile").map((c) => c.args[0]);
@@ -252,7 +254,7 @@ describe("FileMergeEngine — Mixed rules", () => {
 			rule("README.md", "standard"), // exists → skip
 			rule("Justfile", "optional"),
 		];
-		const result = await engine.execute(rules, ["Justfile"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["Justfile"] });
 
 		expect(result.ok).toBe(true);
 		const staged = calls.filter((c) => c.method === "stageFile").map((c) => c.args[0]);
@@ -355,7 +357,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 			rule("docs", "standard", true), // standard directory
 			rule("docs/guides", "optional", true), // optional sub-path
 		];
-		const result = await engine.execute(rules, ["docs/guides"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["docs/guides"] });
 
 		expect(result.ok).toBe(true);
 
@@ -377,7 +379,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 			rule("agents", "mandatory", true), // mandatory directory
 			rule("agents/expert", "optional", true), // optional sub-path
 		];
-		const result = await engine.execute(rules, ["agents/expert"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["agents/expert"] });
 
 		expect(result.ok).toBe(true);
 
@@ -396,7 +398,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 			rule("docs", "standard", true), // standard directory
 			rule("Justfile", "optional"), // unrelated optional
 		];
-		const result = await engine.execute(rules, ["Justfile"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["Justfile"] });
 
 		expect(result.ok).toBe(true);
 
@@ -415,7 +417,9 @@ describe("FileMergeEngine — Exclusion logic", () => {
 			rule("specs/design", "optional", true),
 			rule("specs/adr", "optional", true),
 		];
-		const result = await engine.execute(rules, ["specs/design", "specs/adr"]);
+		const result = await engine.execute(rules, {
+			selectedOptionals: ["specs/design", "specs/adr"],
+		});
 
 		expect(result.ok).toBe(true);
 
@@ -450,7 +454,7 @@ describe("FileMergeEngine — Progress events", () => {
 		const { cb, events } = collectEvents();
 
 		const rules = [rule("opencode.json", "mandatory"), rule("README.md", "standard")];
-		const result = await engine.execute(rules, undefined, cb);
+		const result = await engine.execute(rules, { onProgress: cb });
 
 		expect(result.ok).toBe(true);
 		const starts = events.filter((e) => e.type === "stage_start");
@@ -475,7 +479,10 @@ describe("FileMergeEngine — Progress events", () => {
 				noTemplateCopy: true,
 			},
 		];
-		await engine.execute(rules, [".virtual-entry"], cb);
+		await engine.execute(rules, {
+			selectedOptionals: [".virtual-entry"],
+			onProgress: cb,
+		});
 
 		const skips = events.filter((e) => e.type === "stage_skip");
 		expect(skips.length).toBe(1);
@@ -491,7 +498,7 @@ describe("FileMergeEngine — Progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const { cb, events } = collectEvents();
 
-		await engine.execute([rule("README.md", "standard")], undefined, cb);
+		await engine.execute([rule("README.md", "standard")], { onProgress: cb });
 
 		const skips = events.filter((e) => e.type === "stage_skip");
 		expect(skips.length).toBe(1);
@@ -506,7 +513,7 @@ describe("FileMergeEngine — Progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const { cb, events } = collectEvents();
 
-		await engine.execute([rule("opencode.json", "mandatory")], undefined, cb);
+		await engine.execute([rule("opencode.json", "mandatory")], { onProgress: cb });
 
 		const hasCommitStart = events.some((e) => e.type === "commit_start");
 		const hasCommitComplete = events.some((e) => e.type === "commit_complete");
@@ -522,7 +529,7 @@ describe("FileMergeEngine — Progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const { cb, events } = collectEvents();
 
-		const result = await engine.execute([rule("opencode.json", "mandatory")], undefined, cb);
+		const result = await engine.execute([rule("opencode.json", "mandatory")], { onProgress: cb });
 
 		expect(result.ok).toBe(false);
 		const errors = events.filter((e) => e.type === "error");
@@ -541,7 +548,9 @@ describe("FileMergeEngine — Progress events", () => {
 			throw new Error("Callback crashed");
 		};
 
-		const result = await engine.execute([rule("opencode.json", "mandatory")], undefined, throwCb);
+		const result = await engine.execute([rule("opencode.json", "mandatory")], {
+			onProgress: throwCb,
+		});
 
 		expect(result.ok).toBe(true);
 	});
@@ -551,7 +560,7 @@ describe("FileMergeEngine — Progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const { cb, events } = collectEvents();
 
-		await engine.execute([rule("opencode.json", "mandatory")], undefined, cb);
+		await engine.execute([rule("opencode.json", "mandatory")], { onProgress: cb });
 
 		expect(events.length).toBeGreaterThanOrEqual(4);
 		expect(events[0]?.type).toBe("stage_start");
@@ -571,7 +580,7 @@ describe("FileMergeEngine — Progress events", () => {
 			rule("README.md", "standard"),
 			rule("Justfile", "standard"),
 		];
-		await engine.execute(rules, undefined, cb);
+		await engine.execute(rules, { onProgress: cb });
 
 		const starts = events.filter((e) => e.type === "stage_start");
 		expect(starts.length).toBe(3);
@@ -621,7 +630,7 @@ describe("FileMergeEngine — Progress events", () => {
 			},
 			{ path: "Justfile", category: "optional", isDirectory: false, description: "Optional file" },
 		];
-		await engine.execute(rules, ["Justfile"], cb);
+		await engine.execute(rules, { selectedOptionals: ["Justfile"], onProgress: cb });
 
 		const starts = events.filter((e) => e.type === "stage_start");
 		expect(starts.length).toBe(2); // only 2 non-noTemplateCopy rules

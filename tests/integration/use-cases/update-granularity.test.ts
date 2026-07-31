@@ -107,7 +107,7 @@ describe("Update granularity — tree-level diff via real filesystem", () => {
 
 		const rules: FileRule[] = [makeDirRule("docs", "standard")];
 
-		const result = await engine.execute(rules, undefined, undefined, true);
+		const result = await engine.execute(rules, { updateMode: true });
 
 		expect(result.ok).toBe(true);
 		await expect(fileExists(path.join(destDir, "docs", "file2.md"))).resolves.toBe(true);
@@ -138,7 +138,7 @@ describe("Update granularity — tree-level diff via real filesystem", () => {
 
 		const rules: FileRule[] = [makeDirRule("docs", "standard")];
 
-		const result = await engine.execute(rules, undefined, undefined, true);
+		const result = await engine.execute(rules, { updateMode: true });
 
 		expect(result.ok).toBe(true);
 		// Destination should have same files as before
@@ -166,7 +166,7 @@ describe("Update granularity — tree-level diff via real filesystem", () => {
 
 		const rules: FileRule[] = [makeDirRule("docs", "standard")];
 
-		const result = await engine.execute(rules, undefined, undefined, true);
+		const result = await engine.execute(rules, { updateMode: true });
 
 		expect(result.ok).toBe(true);
 		await expect(fileExists(path.join(destDir, "docs", "file1.md"))).resolves.toBe(true);

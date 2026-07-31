@@ -72,8 +72,10 @@ describe("FileMergeEngine progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 
-		const result = await engine.execute(rules, undefined, (event) => {
-			events.push(event);
+		const result = await engine.execute(rules, {
+			onProgress: (event) => {
+				events.push(event);
+			},
 		});
 
 		expect(result.ok).toBe(true);
@@ -102,8 +104,10 @@ describe("FileMergeEngine progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 
-		const result = await engine.execute(rules, undefined, (event) => {
-			events.push(event);
+		const result = await engine.execute(rules, {
+			onProgress: (event) => {
+				events.push(event);
+			},
 		});
 
 		expect(result.ok).toBe(true);
@@ -136,8 +140,10 @@ describe("FileMergeEngine progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 
-		const result = await engine.execute(rules, undefined, (event) => {
-			events.push(event);
+		const result = await engine.execute(rules, {
+			onProgress: (event) => {
+				events.push(event);
+			},
 		});
 
 		expect(result.ok).toBe(true);
@@ -180,8 +186,11 @@ describe("FileMergeEngine progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 
-		const result = await engine.execute(rules, [], (event) => {
-			events.push(event);
+		const result = await engine.execute(rules, {
+			selectedOptionals: [],
+			onProgress: (event) => {
+				events.push(event);
+			},
 		});
 
 		expect(result.ok).toBe(true);
@@ -215,8 +224,10 @@ describe("FileMergeEngine progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 
-		const result = await engine.execute(rules, undefined, (event) => {
-			events.push(event);
+		const result = await engine.execute(rules, {
+			onProgress: (event) => {
+				events.push(event);
+			},
 		});
 
 		expect(result.ok).toBe(false);
@@ -247,8 +258,10 @@ describe("FileMergeEngine progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 
-		const result = await engine.execute(rules, undefined, (event) => {
-			events.push(event);
+		const result = await engine.execute(rules, {
+			onProgress: (event) => {
+				events.push(event);
+			},
 		});
 
 		expect(result.ok).toBe(false);
@@ -288,8 +301,11 @@ describe("FileMergeEngine progress events", () => {
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 
-		const result = await engine.execute(rules, ["virtual-entry"], (event) => {
-			events.push(event);
+		const result = await engine.execute(rules, {
+			selectedOptionals: ["virtual-entry"],
+			onProgress: (event) => {
+				events.push(event);
+			},
 		});
 
 		expect(result.ok).toBe(true);
@@ -323,11 +339,13 @@ describe("FileMergeEngine progress events", () => {
 
 		// Callback that throws on the second event
 		let callCount = 0;
-		const result = await engine.execute(rules, undefined, (_event) => {
-			callCount++;
-			if (callCount === 2) {
-				throw new Error("Callback crashed");
-			}
+		const result = await engine.execute(rules, {
+			onProgress: (_event) => {
+				callCount++;
+				if (callCount === 2) {
+					throw new Error("Callback crashed");
+				}
+			},
 		});
 
 		// The merge should still succeed even though the callback threw
