@@ -41,9 +41,7 @@ function createMockFileSystem(): {
 	};
 
 	const stub: IFileSystem & IStagingSystem = {
-		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),
-		getStagingPath: mockFn((path: string) => `.codice-staging/${path}`),
 		stageFile: mockFn(async (path: string) => {
 			calls.stageFile.push(path);
 		}) as (path: string, excludeSubDirs?: Set<string>) => Promise<void>,
@@ -73,8 +71,6 @@ function createMockPrompt(): IUserPrompt {
 		showInfo: mockFn(() => {}),
 		confirm: mockFn(() => Promise.resolve(true)),
 		selectOptional: mockFn(() => Promise.resolve([...allOptionalPaths])),
-		showSpinner: mockFn(() => {}),
-		stopSpinner: mockFn(() => {}),
 		showProgressBar: mockFn(() => {}),
 		updateProgress: mockFn(() => {}),
 		completeProgress: mockFn(() => {}),

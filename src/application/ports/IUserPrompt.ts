@@ -31,17 +31,6 @@ export interface IUserPrompt {
 	selectOptional(options: readonly FileRule[]): Promise<string[]>;
 
 	/**
-	 * Show a spinner with a message during async operations.
-	 * @param message - Status message to display.
-	 */
-	showSpinner(message: string): void;
-
-	/**
-	 * Stop the current spinner.
-	 */
-	stopSpinner(): void;
-
-	/**
 	 * Display a multi-file progress bar.
 	 * @param total - Total number of files to process.
 	 * @param label - Optional label to display alongside the bar.

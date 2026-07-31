@@ -75,21 +75,6 @@ export class TemplateResolver {
 	}
 
 	/**
-	 * Read a file from the template directory.
-	 * Searches each category subdirectory in order (obligatorio → estandar → opcional),
-	 * resolves the file path, and returns the file contents.
-	 *
-	 * @param relativePath - Path relative to the template root.
-	 * @returns The file contents as a string.
-	 * @throws Error if the file is not found in any category or the path is invalid.
-	 */
-	async readFile(relativePath: string): Promise<string> {
-		const fullPath = await this.resolvePath(relativePath);
-		const file = Bun.file(fullPath);
-		return file.text();
-	}
-
-	/**
 	 * Resolve a relative path to its full template file path by searching
 	 * each category subdirectory (obligatorio, estandar, opcional) in order.
 	 * Supports both files and directories.

@@ -12,9 +12,7 @@ import { failure, success } from "../../../src/domain/types/Result";
 function createMockDeps(): Dependencies {
 	return {
 		fileSystem: {
-			readTemplateFile: mockFn(() => Promise.resolve("")),
 			destinationExists: mockFn(() => Promise.resolve(false)),
-			getStagingPath: mockFn((p: string) => `staging/${p}`),
 			stageFile: mockFn(() => Promise.resolve()),
 			commitStaging: mockFn(() => Promise.resolve()),
 			cleanStaging: mockFn(() => Promise.resolve()),
@@ -28,8 +26,6 @@ function createMockDeps(): Dependencies {
 			showInfo: mockFn(() => {}),
 			confirm: mockFn(() => Promise.resolve(true)),
 			selectOptional: mockFn(() => Promise.resolve([])),
-			showSpinner: mockFn(() => {}),
-			stopSpinner: mockFn(() => {}),
 			showIntro: mockFn(() => {}),
 			showSuccess: mockFn(() => {}),
 			showCancel: mockFn(() => {}),

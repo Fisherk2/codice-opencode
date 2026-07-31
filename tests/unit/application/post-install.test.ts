@@ -56,8 +56,6 @@ function createMockPrompt(): { stub: IUserPrompt; warnings: string[]; successes:
 			showInfo: mockFn(() => {}),
 			confirm: mockFn(() => Promise.resolve(true)),
 			selectOptional: mockFn(() => Promise.resolve([])),
-			showSpinner: mockFn(() => {}),
-			stopSpinner: mockFn(() => {}),
 			showProgressBar: mockFn(() => {}),
 			updateProgress: mockFn(() => {}),
 			completeProgress: mockFn(() => {}),
@@ -115,9 +113,7 @@ function createMockSymlinkCreator(shouldFail = false): ISymlinkCreator & { calls
 
 function createMockFileSystem(writeVersionShouldFail = false): IFileSystem & IStagingSystem {
 	return {
-		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),
-		getStagingPath: mockFn((path: string) => `.codice-staging/${path}`),
 		stageFile: mockFn(async () => {}),
 		commitStaging: mockFn(async () => {}),
 		cleanStaging: mockFn(async () => {}),

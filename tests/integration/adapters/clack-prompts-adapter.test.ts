@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
 
 /**
@@ -72,11 +72,6 @@ describe("ClackPromptsAdapter", () => {
 		mockOutro.mockReset();
 		mockCancel.mockReset();
 		mockIsCancel.mockReset();
-	});
-
-	afterEach(() => {
-		// Clean up spinner state
-		adapter.stopSpinner();
 	});
 
 	it("creates instance with explicit constructor", () => {
@@ -203,23 +198,6 @@ describe("ClackPromptsAdapter", () => {
 
 			const result = await adapter.selectOptional(options);
 			expect(result).toEqual([]);
-		});
-	});
-
-	describe("spinner", () => {
-		it("should start spinner with message", () => {
-			adapter.showSpinner("Installing...");
-			expect(mockSpinner).toHaveBeenCalledTimes(1);
-
-			// Should be able to call stopSpinner without error
-			adapter.stopSpinner();
-		});
-
-		it("should replace existing spinner", () => {
-			adapter.showSpinner("First task...");
-			adapter.showSpinner("Second task...");
-			// Second call should have stopped the first spinner
-			adapter.stopSpinner();
 		});
 	});
 

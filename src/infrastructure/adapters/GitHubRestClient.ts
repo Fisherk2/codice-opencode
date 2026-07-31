@@ -49,23 +49,6 @@ export class GitHubRestClient implements IGitHubClient {
 		return tag;
 	}
 
-	/**
-	 * Fetch the release notes/changelog for the latest version.
-	 * @returns Release body text or null if unavailable.
-	 */
-	async getLatestReleaseNotes(): Promise<string | null> {
-		try {
-			const data = await this.fetchLatestRelease();
-			if (data === null) {
-				return null;
-			}
-			const body = data.body;
-			return typeof body === "string" ? body : null;
-		} catch {
-			return null;
-		}
-	}
-
 	// ---------------------------------------------------------------------------
 	// Private helpers
 	// ---------------------------------------------------------------------------

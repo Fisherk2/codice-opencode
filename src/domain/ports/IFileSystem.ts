@@ -10,13 +10,6 @@
  */
 export interface IFileSystem {
 	/**
-	 * Read a file from the template directory.
-	 * @param relativePath - Path relative to template root.
-	 * @returns File contents as a string.
-	 */
-	readTemplateFile(relativePath: string): Promise<string>;
-
-	/**
 	 * Check if a path exists in the destination.
 	 */
 	destinationExists(relativePath: string): Promise<boolean>;

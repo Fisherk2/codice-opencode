@@ -7,7 +7,6 @@ import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 
 function createMockFileSystem(opts?: { isEmpty?: boolean }): IFileSystem {
 	return {
-		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),
 		isWritable: mockFn(() => Promise.resolve(true)),
 		isEmpty: mockFn(() => Promise.resolve(opts?.isEmpty ?? true)),
@@ -36,8 +35,6 @@ function createMockPrompt(opts?: { confirmResult?: boolean }): {
 				return Promise.resolve(opts?.confirmResult ?? true);
 			}),
 			selectOptional: mockFn(() => Promise.resolve([])),
-			showSpinner: mockFn(() => {}),
-			stopSpinner: mockFn(() => {}),
 			showProgressBar: mockFn(() => {}),
 			updateProgress: mockFn(() => {}),
 			completeProgress: mockFn(() => {}),

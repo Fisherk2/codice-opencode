@@ -32,8 +32,6 @@ function createMockUserPrompt(
 		showInfo: mockFn(() => {}),
 		confirm: mockFn(() => Promise.resolve(true)),
 		selectOptional: mockFn(() => Promise.resolve([])),
-		showSpinner: mockFn(() => {}),
-		stopSpinner: mockFn(() => {}),
 		showProgressBar: mockFn(() => {}),
 		updateProgress: mockFn(() => {}),
 		completeProgress: mockFn(() => {}),

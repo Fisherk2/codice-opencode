@@ -55,11 +55,6 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		this.destinationRoot = resolvedDest;
 	}
 
-	/** Read a file from the template directory. */
-	async readTemplateFile(relativePath: string): Promise<string> {
-		return this.templateResolver.readFile(relativePath);
-	}
-
 	/** Check if a path exists in the destination directory. */
 	async destinationExists(relativePath: string): Promise<boolean> {
 		// resolveDestinationPath throws on path traversal — NOT caught, so it propagates
@@ -70,11 +65,6 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		} catch (err) {
 			return classifyAccessError(err);
 		}
-	}
-
-	/** Get the staging path for a given destination path (does not create it). */
-	getStagingPath(relativePath: string): string {
-		return this.atomicStager.resolveStagingPath(relativePath);
 	}
 
 	/**

@@ -32,7 +32,6 @@ function createMockFs(config: FsConfig = {}): IFileSystem {
 	const destFiles = config.destFiles ?? new Map();
 
 	return {
-		readTemplateFile: async () => "",
 		destinationExists: async (path: string): Promise<boolean> => {
 			return exists.get(path) ?? false;
 		},

@@ -190,45 +190,6 @@ describe("GitHubRestClient", () => {
 		});
 	});
 
-	describe("getLatestReleaseNotes", () => {
-		it("should return the release body text", async () => {
-			mockFetchOnce(
-				new Response(
-					JSON.stringify({
-						tag_name: "v1.0.0",
-						body: "## Release Notes\n\n- Feature A\n- Bug fix B",
-					}),
-					{
-						status: 200,
-						headers: { "Content-Type": "application/json" },
-					},
-				),
-			);
-
-			const notes = await client.getLatestReleaseNotes();
-			expect(notes).toBe("## Release Notes\n\n- Feature A\n- Bug fix B");
-		});
-
-		it("should return null when body is missing", async () => {
-			mockFetchOnce(
-				new Response(JSON.stringify({ tag_name: "v1.0.0" }), {
-					status: 200,
-					headers: { "Content-Type": "application/json" },
-				}),
-			);
-
-			const notes = await client.getLatestReleaseNotes();
-			expect(notes).toBeNull();
-		});
-
-		it("should return null on HTTP error", async () => {
-			mockFetchOnce(new Response("Server Error", { status: 500 }));
-
-			const notes = await client.getLatestReleaseNotes();
-			expect(notes).toBeNull();
-		});
-	});
-
 	describe("timeout behavior", () => {
 		it("should return null when request exceeds timeout", async () => {
 			// Create a client with very short timeout

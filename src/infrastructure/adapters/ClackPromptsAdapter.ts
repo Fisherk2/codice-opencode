@@ -36,8 +36,6 @@ export class ClackPromptsAdapter implements IUserPrompt {
 	// biome-ignore lint/complexity/noUselessConstructor: Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
 	constructor() {}
 
-	private spinner: ReturnType<typeof clack.spinner> | null = null;
-
 	/**
 	 * Display a warning message using @clack/prompts note() with yellow styling.
 	 */
@@ -101,23 +99,6 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		}
 
 		return result as string[];
-	}
-
-	/** Show a spinner during async operations. */
-	showSpinner(message: string): void {
-		if (this.spinner) {
-			this.spinner.stop();
-		}
-		this.spinner = clack.spinner();
-		this.spinner.start(message);
-	}
-
-	/** Stop and clear the current spinner. */
-	stopSpinner(): void {
-		if (this.spinner) {
-			this.spinner.stop();
-			this.spinner = null;
-		}
 	}
 
 	private progressBar: ReturnType<typeof clack.progress> | null = null;

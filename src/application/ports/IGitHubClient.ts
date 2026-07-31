@@ -9,10 +9,4 @@ export interface IGitHubClient {
 	 * (network error, timeout, HTTP error, malformed response).
 	 */
 	getLatestReleaseTag(): Promise<string | null>;
-
-	/**
-	 * Fetch the release notes/changelog for the latest version.
-	 * @returns Release body text or null if unavailable.
-	 */
-	getLatestReleaseNotes(): Promise<string | null>;
 }

@@ -29,14 +29,9 @@ function createMockFs(): {
 	const calls: CallRecord[] = [];
 
 	const mockFs: IFileSystem & IStagingSystem = {
-		readTemplateFile: async () => "",
 		destinationExists: async (path: string) => {
 			calls.push({ method: "destinationExists", args: [path] });
 			return true; // default: file already exists
-		},
-		getStagingPath: (path: string) => {
-			calls.push({ method: "getStagingPath", args: [path] });
-			return `staging/${path}`;
 		},
 		stageFile: async (relativePath: string, excludeSubDirs?: Set<string>) => {
 			calls.push({ method: "stageFile", args: [relativePath, excludeSubDirs] });

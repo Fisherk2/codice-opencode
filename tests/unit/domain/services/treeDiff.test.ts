@@ -27,7 +27,6 @@ function createMockFs(): DiffTreesMock {
 	const destWalkCalls: string[] = [];
 
 	const fs: IFileSystem = {
-		readTemplateFile: async () => "",
 		destinationExists: async (relativePath: string) => {
 			destExistsCalls.push(relativePath);
 			return true; // default: destination exists

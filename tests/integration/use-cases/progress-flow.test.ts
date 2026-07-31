@@ -40,9 +40,7 @@ function createMockFileSystem(): {
 	};
 
 	const stub: IFileSystem & IStagingSystem = {
-		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),
-		getStagingPath: mockFn((path: string) => `.codice-staging/${path}`),
 		stageFile: mockFn(async (path: string) => {
 			calls.stageFile.push(path);
 		}) as (path: string, excludeSubDirs?: Set<string>) => Promise<void>,

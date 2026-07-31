@@ -30,9 +30,7 @@ function createMockFileSystem(): {
 	};
 
 	const stub: IFileSystem & IStagingSystem = {
-		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),
-		getStagingPath: mockFn((path: string) => `.codice-staging/${path}`),
 		stageFile: mockFn(async (path: string) => {
 			calls.stageFile.push(path);
 		}) as (path: string, excludeSubDirs?: Set<string>) => Promise<void>,
@@ -78,8 +76,6 @@ function createMockPrompt(): IUserPrompt {
 		showInfo: mockFn(() => {}),
 		confirm: mockFn(() => Promise.resolve(true)),
 		selectOptional: mockFn((_options: FileRule[]) => Promise.resolve([])),
-		showSpinner: mockFn(() => {}),
-		stopSpinner: mockFn(() => {}),
 		showProgressBar: mockFn(() => {}),
 		updateProgress: mockFn(() => {}),
 		completeProgress: mockFn(() => {}),
@@ -95,7 +91,6 @@ function createMockPrompt(): IUserPrompt {
 function createMockGitHubClient(tagName: string | null = "v1.0.0"): IGitHubClient {
 	return {
 		getLatestReleaseTag: mockFn(() => Promise.resolve(tagName)),
-		getLatestReleaseNotes: mockFn(() => Promise.resolve("Release notes")),
 	};
 }
 
