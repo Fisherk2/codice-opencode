@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-07-30
 **Status:** Active reference for improvement planning
-**Current version:** v1.2.0 (834 tests, 0 fail)
+**Current version:** v1.2.0 (844 tests, 0 fail)
 
 ---
 

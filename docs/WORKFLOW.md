@@ -239,13 +239,13 @@ FEV-16 cierra 5 items del TECH_DEBT.md preparados para v1.2.0 sin FEV registrado
 - **TD-5.2 (Benchmarks):** `just bench` con hyperfine. 3 scripts standalone + regression assertion (<10%).
 - **TD-6.2 (Update granularity):** `diffTrees()` tree-level diff. 11 unit + 3 integration + 1 E2E test. E2E #16 passes.
 
-**7 commits atómicos**, 0 errores `just check`, 834 tests 0 fail.
+**7 commits atómicos**, 0 errores `just check`, 844 tests 0 fail.
 
 #### Métricas
 
 | Métrica | Baseline (FEV-15) | FEV-16 |
 |---------|-------------------|--------|
-| Tests (pass/fail) | 810 / 0 | 834 / 0 |
+| Tests (pass/fail) | 810 / 0 | 844 / 0 |
 | E2E scenarios | 19 / 19 | 20 / 20 (scenario 16 new) |
 | `just check` errores | 0 | 0 |
 | Coverage (lines) | 97.0% | 98.1% |
@@ -267,7 +267,7 @@ FEV-16 cierra 5 items del TECH_DEBT.md preparados para v1.2.0 sin FEV registrado
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 814 tests, 0 fail, 1833 expects
+- **Tests unit+int:** 844 tests, 0 fail, 1806 expects
 - **Tests E2E:** 20/20 pasando
 - **Coverage:** 98.90% functions / 98.10% lines (domain: 100% lines)
 - **`just check`:** 0 errores
@@ -283,4 +283,4 @@ FEV-16 cierra 5 items del TECH_DEBT.md preparados para v1.2.0 sin FEV registrado
 - **FEV-13:** ✅ Completo — Documentation Overhaul + SDD Decoupling (Issues #51, #53)
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
-- **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 834 tests, 0 fail
+- **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
