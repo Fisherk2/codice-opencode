@@ -69,7 +69,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 				for (const file of expanded) {
 					current++;
 					const result = await this.stageOne(`${rule.path}/${file}`, current, total, onProgress);
-					if (result) return result;
+					if (!result.ok) return result;
 				}
 				continue;
 			}
@@ -77,7 +77,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 			current++;
 			const excludeSubDirs = this.computeExclusions(rule, optionalPaths);
 			const result = await this.stageOne(rule.path, current, total, onProgress, excludeSubDirs);
-			if (result) return result;
+			if (!result.ok) return result;
 		}
 
 		// Phase 2: Commit staging (atomic rename). Skip when nothing was staged.
@@ -110,7 +110,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 	/**
 	 * Stage a single file with progress events.
 	 * @returns A Failure after emitting error + cleaning staging if staging fails,
-	 *   or null on success.
+	 *   or success(undefined) on success.
 	 */
 	private async stageOne(
 		filePath: string,
@@ -118,7 +118,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 		total: number,
 		onProgress: ProgressCallback | undefined,
 		excludeSubDirs?: Set<string>,
-	): Promise<Result<void, MergeError> | null> {
+	): Promise<Result<void, MergeError>> {
 		this.safeEmit(onProgress, {
 			type: "stage_start",
 			current,
@@ -145,7 +145,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 			total,
 			filePath,
 		});
-		return null;
+		return success(undefined);
 	}
 
 	private skipReason(rule: FileRule, selected: Set<string>, isUpdateMode = false): string {
