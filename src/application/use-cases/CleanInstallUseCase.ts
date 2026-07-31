@@ -15,7 +15,11 @@
  */
 
 import type { FileRule } from "../../domain/entities/FileRule";
-import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../domain/entities/FileRuleManifest";
+import {
+	FILE_RULE_MANIFEST,
+	getRulesByCategory,
+	isRuleSelected,
+} from "../../domain/entities/FileRuleManifest";
 import { InstallUseCaseBase } from "./InstallUseCaseBase";
 
 export type { BaseInstallOptions } from "./InstallUseCaseBase";
@@ -32,9 +36,10 @@ export class CleanInstallUseCase extends InstallUseCaseBase {
 	 * Unselected optional files are excluded from the rule set entirely.
 	 */
 	protected buildRules(selectedOptionals: readonly string[]): readonly FileRule[] {
-		return FILE_RULE_MANIFEST.filter(
-			(r) => r.category !== "optional" || selectedOptionals.includes(r.path),
-		).map((r) => ({ ...r, category: "mandatory" as const }));
+		return FILE_RULE_MANIFEST.filter((r) => isRuleSelected(r, selectedOptionals)).map((r) => ({
+			...r,
+			category: "mandatory" as const,
+		}));
 	}
 
 	/**

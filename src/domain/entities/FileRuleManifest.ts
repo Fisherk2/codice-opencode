@@ -57,6 +57,15 @@ export function getOptionalRules(): readonly FileRule[] {
 	return getRulesByCategory("optional");
 }
 
+/**
+ * Decide whether a rule belongs in the effective rule set: keep it when it is
+ * not optional, or when it is an optional rule the user explicitly selected.
+ * Centralizes the optional-inclusion predicate shared by install use cases.
+ */
+export function isRuleSelected(rule: FileRule, selectedOptionals: readonly string[]): boolean {
+	return rule.category !== "optional" || selectedOptionals.includes(rule.path);
+}
+
 // ---- Internal helpers ----
 
 /**
