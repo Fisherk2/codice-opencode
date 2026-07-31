@@ -750,4 +750,21 @@ describe("computeStagePlan — Update mode: tree diff edge cases", () => {
 		expect(result.expandedDirs.get("docs")).toEqual(["a.md", "m.md", "z.md"]);
 		expect(result.total).toBe(3);
 	});
+
+	// ---- assertNever compile-time guard ----
+
+	test("throws on unrecognized rule category (assertNever guard)", async () => {
+		const fs = createMockFs();
+		const bogusRule = {
+			path: "test",
+			category: "bogus" as FileRule["category"],
+			isDirectory: false,
+			description: "should trigger assertNever",
+		};
+		const rules: FileRule[] = [bogusRule];
+
+		await expect(computeStagePlan(fs, rules, new Set(), false)).rejects.toThrow(
+			"Unhandled rule category: bogus",
+		);
+	});
 });

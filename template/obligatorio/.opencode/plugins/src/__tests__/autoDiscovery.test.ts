@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
 	discoverAgentMentionPatterns,
@@ -147,6 +147,31 @@ describe("discoverCommandAgentMap()", () => {
 		const result = discoverCommandAgentMap(commandsDir);
 
 		expect(result).toEqual({ "/spec": "quetzalcoatl" });
+	});
+
+	test("9. Unreadable .md file is silently skipped (catch block)", () => {
+		createTestFixture(commandsDir);
+		const unreadable = join(commandsDir, "unreadable.md");
+		writeFileSync(unreadable, "secret", "utf-8");
+		chmodSync(unreadable, 0o000);
+		writeCommandFile(commandsDir, "build.md", { agent: "tlaloc" });
+
+		const result = discoverCommandAgentMap(commandsDir);
+
+		expect(result).toEqual({ "/build": "tlaloc" });
+
+		// Restore permissions so the afterEach cleanup can delete the file.
+		chmodSync(unreadable, 0o644);
+	});
+
+	test("10. Empty frontmatter (blank between --- delimiters) skips the file", () => {
+		createTestFixture(commandsDir);
+		writeFileSync(join(commandsDir, "empty-fm.md"), "---\n\n---\nagent: quetzalcoatl\n", "utf-8");
+		writeCommandFile(commandsDir, "build.md", { agent: "tlaloc" });
+
+		const result = discoverCommandAgentMap(commandsDir);
+
+		expect(result).toEqual({ "/build": "tlaloc" });
 	});
 });
 

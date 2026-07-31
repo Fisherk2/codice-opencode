@@ -2,15 +2,9 @@ import * as clack from "@clack/prompts";
 import type { IUserPrompt } from "../../application/ports/IUserPrompt";
 import type { FileRule } from "../../domain/entities/FileRule";
 
-/**
- * @clack/prompts adapter implementing IUserPrompt.
- * Sync display methods; async interactive methods.
- */
+/** @clack/prompts adapter implementing IUserPrompt. */
 
-/**
- * Mode-selection menu options. Hoisted so the array is built once
- * instead of on every promptForMode() call.
- */
+/** Mode-selection menu options — hoisted to avoid re-allocation on every call. */
 const MODE_OPTIONS = [
 	{
 		value: "clean" as const,
@@ -29,14 +23,7 @@ const MODE_OPTIONS = [
 	},
 ];
 
-/**
- * Map progress-event categories to their @clack/prompts display call.
- * Data-driven dispatch replaces the switch statement — adding a category
- * now requires only a new entry here.
- *
- * Lookups go through Object.hasOwn so prototype keys like "__proto__" or
- * "toString" cannot resolve to an inherited member.
- */
+/** Progress-event → @clack/prompts display call. Uses Object.hasOwn to block prototype-key injection. */
 const PROGRESS_EMITTERS: Record<string, (text: string) => void> = {
 	commit: (text) => clack.log.success(`✓ ${text}`),
 	symlink: (text) => clack.log.success(`🔗 ${text}`),
@@ -116,9 +103,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		return result as string[];
 	}
 
-	/**
-	 * Show a spinner with a message during async operations.
-	 */
+	/** Show a spinner during async operations. */
 	showSpinner(message: string): void {
 		if (this.spinner) {
 			this.spinner.stop();
@@ -127,9 +112,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		this.spinner.start(message);
 	}
 
-	/**
-	 * Stop the current spinner.
-	 */
+	/** Stop and clear the current spinner. */
 	stopSpinner(): void {
 		if (this.spinner) {
 			this.spinner.stop();
@@ -197,11 +180,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		clack.cancel(`❌ ${message}`);
 	}
 
-	/**
-	 * Present the mode selection menu to the user.
-	 * Implements IUserPrompt.promptForMode().
-	 * @returns Selected mode, or null if user cancelled.
-	 */
+	/** Present mode selection menu. Returns selected mode or null on cancel. */
 	async promptForMode(): Promise<"clean" | "project" | "update" | null> {
 		const result = await clack.select({
 			message: "Select installation mode:",

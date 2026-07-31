@@ -1,9 +1,5 @@
 /**
- * Códice — Opencode Workspace Installer
- *
- * CLI entry point for the interactive installer.
- * Parses command-line arguments, wires dependencies via DI,
- * and launches the appropriate installation mode.
+ * Códice CLI entry point — parses args, wires dependencies, launches installer mode.
  */
 
 import type { IUserPrompt } from "../application/ports/IUserPrompt";
@@ -45,13 +41,8 @@ export function promptForMode(
 }
 
 /**
- * Resolve the installation mode, showing an interactive menu if mode is "interactive".
- * Extracted from main() to enable testing with a mock IUserPrompt.
- *
- * @param mode - Current mode (may be "interactive").
- * @param userPrompt - The user prompt adapter instance.
- * @param version - Current version string for the intro message.
- * @returns Resolved non-interactive mode, or null if user cancelled from the interactive menu.
+ * Resolve the installation mode. Shows interactive menu if mode is "interactive",
+ * otherwise returns the mode directly. Returns null on user cancel.
  */
 export async function resolveInteractiveMode(
 	mode: Mode,
