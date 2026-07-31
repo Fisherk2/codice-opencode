@@ -20,7 +20,8 @@ import { DEFAULT_SDD_PIPELINE_CONFIG } from "./types";
 /** Valid SDD pipeline phases (case-insensitive on input). */
 const VALID_PHASES = new Set(["idle", "define", "plan", "build", "verify", "review", "ship"]);
 
-const VALID_PHASES_STR = "idle, define, plan, build, verify, review, ship";
+/** Human-readable phase list for warning messages — derived from VALID_PHASES. */
+const VALID_PHASES_STR = [...VALID_PHASES].join(", ");
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -145,9 +146,8 @@ function mergePhaseSuggestions(
 		}
 
 		if (isRecord(agentMap)) {
-			if (!merged[phase]) {
-				merged[phase] = {};
-			}
+			// merged is seeded from DEFAULTS.PHASE_SUGGESTIONS, which covers
+			// every phase accepted by isValidPhase — the entry always exists.
 			for (const [agent, suggestion] of Object.entries(agentMap)) {
 				merged[phase][agent] = String(suggestion);
 			}

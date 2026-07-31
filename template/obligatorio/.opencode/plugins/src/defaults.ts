@@ -1,14 +1,22 @@
 // ---------------------------------------------------------------------------
 // DEFAULTS — SDD Pipeline Configuration
 //
-// This module contains all hardcoded configuration maps extracted from the
-// sdd-pipeline plugin. These are the canonical defaults that the plugin
-// falls back to when no overrides are provided in the opencode.json config.
+// Barrel module for the hardcoded configuration maps used by the SDD pipeline
+// plugin. These are the canonical defaults that the plugin falls back to when
+// no overrides are provided in the opencode.json config.
 //
+// Data-heavy tables live in dedicated modules (validSubagents.ts,
+// intentPatterns.ts) to keep every file under the 200-line convention.
 // All exports are deeply readonly to prevent accidental mutation at runtime.
 // ---------------------------------------------------------------------------
 
+import { escapeRegExp } from "./escapeRegExp";
+import { INTENT_PATTERNS } from "./intentPatterns";
+import { PRIMARY_AGENTS, VALID_SUBAGENTS } from "./validSubagents";
+
 export { DESTRUCTIVE_PATTERNS } from "./destructivePatterns";
+export { INTENT_PATTERNS } from "./intentPatterns";
+export { PRIMARY_AGENTS, VALID_SUBAGENTS } from "./validSubagents";
 
 /**
  * Maps slash commands to their primary agent.
@@ -30,384 +38,6 @@ export const COMMAND_AGENT_MAP: Readonly<Record<string, string>> = {
 	"/code-simplify": "tlaloc",
 	"/webperf": "mictlantecuhtli",
 	"/help": "huitzilopochtli", // FEV-14 — onboarding command
-} as const;
-
-/**
- * Valid subagent names for task() validation.
- *
- * Set of all 104 known agents (98 subagents + 6 primary agents).
- * Used to validate task() calls at runtime — rejects invented or
- * misspelled subagent names before they reach the agent runtime.
- */
-export const VALID_SUBAGENTS: ReadonlySet<string> = new Set([
-	// Primary agents
-	"huitzilopochtli",
-	"quetzalcoatl",
-	"moctezuma",
-	"tlaloc",
-	"mictlantecuhtli",
-	"tezcatlipoca",
-	// Backend & APIs
-	"backend-developer",
-	"typescript-pro",
-	"python-pro",
-	"golang-pro",
-	"rust-engineer",
-	"java-architect",
-	"csharp-developer",
-	"fastapi-developer",
-	"graphql-architect",
-	"spring-boot-engineer",
-	"django-developer",
-	"laravel-specialist",
-	"php-pro",
-	"nextjs-developer",
-	"elixir-expert",
-	"ruby-pro",
-	"kotlin-specialist",
-	"websocket-engineer",
-	"microservices-architect",
-	"cpp-pro",
-	"javascript-pro",
-	"fullstack-developer",
-	// Frontend & Mobile
-	"angular-architect",
-	"flutter-expert",
-	"frontend-developer",
-	"mobile-app-developer",
-	"mobile-developer",
-	"react-specialist",
-	"swift-expert",
-	"vue-expert",
-	// Database & Data
-	"database-optimizer",
-	"postgres-pro",
-	"sql-pro",
-	"data-analyst",
-	"data-engineer",
-	"data-scientist",
-	"data-researcher",
-	"database-administrator",
-	// DevOps & Infra
-	"docker-expert",
-	"kubernetes-specialist",
-	"terraform-engineer",
-	"devops-engineer",
-	"build-engineer",
-	"sre-engineer",
-	"cloud-architect",
-	"platform-engineer",
-	"network-engineer",
-	"azure-infra-engineer",
-	"deployment-engineer",
-	// Security
-	"security-auditor",
-	"dependency-manager",
-	"legal-advisor",
-	// Testing & QA
-	"test-engineer",
-	"code-reviewer",
-	"accessibility-tester",
-	"chaos-engineer",
-	"refactorer",
-	"error-detective",
-	"error-coordinator",
-	"web-performance-auditor",
-	// Debugging
-	"debugger",
-	// AI / ML
-	"ai-engineer",
-	"llm-architect",
-	"mlops-engineer",
-	"machine-learning-engineer",
-	"nlp-engineer",
-	"prompt-engineer",
-	// DX & Tooling
-	"cli-developer",
-	"tooling-engineer",
-	"mcp-developer",
-	"dx-optimizer",
-	"context-manager",
-	// Processes
-	"git-workflow-manager",
-	"incident-responder",
-	"project-manager",
-	"scrum-master",
-	"legacy-modernizer",
-	// Specialized Domains
-	"fintech-engineer",
-	"payment-integration",
-	"blockchain-developer",
-	"game-developer",
-	"iot-engineer",
-	"embedded-systems",
-	// Documentation & Research
-	"docs-writer",
-	"research-analyst",
-	"knowledge-synthesizer",
-	"scientific-literature-researcher",
-	"search-specialist",
-	"obsidian-vault-writer", // (FEV-8) — Obsidian vault administration
-	// Product & Business
-	"business-analyst",
-	"product-manager",
-	"competitive-analyst",
-	"content-marketer",
-	"market-researcher",
-	"sales-engineer",
-	"seo-specialist",
-	"trend-analyst",
-	"ux-researcher",
-]);
-
-/**
- * Maps natural-language intent keywords to slash commands.
- *
- * Used to detect what the user wants to do from their message content
- * (e.g., "implement this feature" → /build). Each command has an array
- * of trigger phrases in both English and Spanish.
- */
-export const INTENT_PATTERNS: Readonly<Record<string, readonly string[]>> = {
-	"/spec": [
-		"nueva feature",
-		"requisito",
-		"idea",
-		"necesito",
-		"quiero crear",
-		"new feature",
-		"requirement",
-		"spec",
-		"especificacion",
-		"especifica",
-		"create",
-		"define",
-		"write spec",
-		"specification",
-		"what should",
-		"proposal",
-		"need a feature",
-	],
-	"/design": [
-		"design",
-		"diseña",
-		"diseñar",
-		"ui",
-		"ux",
-		"interface",
-		"interfaz",
-		"mockup",
-		"wireframe",
-		"layout",
-		"component design",
-		"design system",
-		"user experience",
-		"user interface",
-		"visual",
-		"frontend design",
-	],
-	"/evolve": [
-		"evolucion",
-		"evolve",
-		"evolucionar",
-		"proyecto existente",
-		"documentacion viva",
-		"living documentation",
-		"actualizar docs",
-		"modificar spec",
-		"nuevo requisito",
-		"cambio de requisitos",
-		"refinar specs",
-		"resolver issue",
-		"mantenimiento evolutivo",
-		"cliente cambio",
-		"client change",
-		"nueva funcionalidad",
-		"cambiar arquitectura",
-		"update documentation",
-	],
-	"/plan": [
-		"planifica",
-		"divide",
-		"tasks",
-		"plan",
-		"divide en tareas",
-		"divide en",
-		"desglosa",
-		"breakdown",
-		"task breakdown",
-		"planning",
-		"organize",
-		"steps",
-		"milestones",
-		"task list",
-		"todos",
-		"to-do",
-		"story points",
-		"estimate",
-	],
-	"/build": [
-		"implementa",
-		"codifica",
-		"construye",
-		"implement",
-		"build",
-		"code",
-		"escribe el codigo",
-		"escribe codigo",
-		"write code",
-		"create file",
-		"add functionality",
-		"make",
-		"generate",
-		"develop",
-		"produce",
-		"set up",
-		"scaffold",
-		"boilerplate",
-		"create function",
-		"create class",
-		"create module",
-		"create component",
-	],
-	"/test": [
-		"test",
-		"prueba",
-		"pruebas",
-		"testing",
-		"unit test",
-		"integration test",
-		"e2e",
-		"specs",
-		"coverage",
-		"assert",
-		"mock",
-		"stub",
-		"tdd",
-		"red-green",
-	],
-	"/review": [
-		"revisa",
-		"review",
-		"codigo",
-		"code review",
-		"revisar codigo",
-		"code quality",
-		"audit",
-		"inspect",
-		"check code",
-		"verify code",
-		"static analysis",
-		"lint",
-		"clean code",
-		"best practices",
-	],
-	"/ship": [
-		"ship",
-		"deploy",
-		"lanza",
-		"lanzamiento",
-		"deployment",
-		"publicar",
-		"release",
-		"publish",
-		"launch",
-		"go live",
-		"rollout",
-		"staging",
-		"production",
-		"ci/cd",
-		"pipeline",
-		"deliver",
-	],
-	"/code-simplify": [
-		"simplifica",
-		"refactor",
-		"limpia",
-		"simplify",
-		"simplificar",
-		"simplify code",
-		"clean up",
-		"refactor code",
-		"improve code",
-		"technical debt",
-		"complex",
-		"duplicate",
-		"extract method",
-		"reduce complexity",
-		"make it simpler",
-		"cleanup",
-	],
-	"/webperf": [
-		"performance",
-		"rendimiento",
-		"core web vitals",
-		"lighthouse",
-		"web performance",
-		"cargar",
-		"lcp",
-		"inp",
-		"cls",
-		"performance audit",
-		"speed",
-		"velocidad",
-		"optimizar pagina",
-		"page speed",
-		"carga de pagina",
-		"optimizar rendimiento",
-	],
-	"/diagnosis": [
-		"diagnostico",
-		"diagnosis",
-		"diagnosticar",
-		"analyze issue",
-		"analizar problema",
-		"investigar",
-		"bug report",
-		"issue analysis",
-		"root cause",
-		"causa raiz",
-		"por que falla",
-		"why is it failing",
-		"revisar issue",
-		"check issue",
-		"troubleshoot",
-		"solucionar",
-	],
-	"/docs-update": [
-		"actualizar docs",
-		"update docs",
-		"update documentation",
-		"sync docs",
-		"sincronizar documentacion",
-		"docs outdated",
-		"migrar docs",
-		"migrate docs",
-		"actualizar documentacion",
-		"sync documentation",
-		"documentacion desactualizada",
-		"regenerar docs",
-		"regenerate docs",
-		"docs update",
-	],
-	"/help": [
-		// FEV-14 — onboarding command
-		"help",
-		"ayuda",
-		"como uso",
-		"how to use",
-		"what is",
-		"que es",
-		"show commands",
-		"list commands",
-		"menu",
-		"onboarding",
-		"getting started",
-		"como empezar",
-		"donde empiezo",
-		"documentation",
-		"docs",
-		"manual",
-	],
 } as const;
 
 /**
@@ -494,14 +124,13 @@ export const PHASE_SUGGESTIONS: Readonly<Record<string, Readonly<Record<string, 
  * a user @mentions or references them by name, triggering an agent
  * switch in the pipeline.
  */
-export const AGENT_MENTION_PATTERNS: Readonly<Record<string, readonly RegExp[]>> = {
-	huitzilopochtli: [/@huitzilopochtli\b/i, /agente\s+huitzilopochtli/i],
-	quetzalcoatl: [/@quetzalcoatl\b/i, /agente\s+quetzalcoatl/i],
-	moctezuma: [/@moctezuma\b/i, /agente\s+moctezuma/i],
-	tlaloc: [/@tlaloc\b/i, /agente\s+tlaloc/i],
-	mictlantecuhtli: [/@mictlantecuhtli\b/i, /agente\s+mictlantecuhtli/i],
-	tezcatlipoca: [/@tezcatlipoca\b/i, /agente\s+tezcatlipoca/i],
-} as const;
+export const AGENT_MENTION_PATTERNS: Readonly<Record<string, readonly RegExp[]>> =
+	Object.fromEntries(
+		PRIMARY_AGENTS.map((agent) => {
+			const escaped = escapeRegExp(agent);
+			return [agent, [new RegExp(`@${escaped}\\b`, "i"), new RegExp(`agente\\s+${escaped}`, "i")]];
+		}),
+	) as Readonly<Record<string, readonly RegExp[]>>;
 
 /**
  * Aggregated DEFAULTS object containing all 6 configuration maps.

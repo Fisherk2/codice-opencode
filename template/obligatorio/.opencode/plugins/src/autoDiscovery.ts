@@ -12,6 +12,8 @@
 
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { basename, extname } from "path";
+import { escapeRegExp } from "./escapeRegExp";
+import { PRIMARY_AGENTS } from "./validSubagents";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -22,20 +24,6 @@ const FRONTMATTER_REGEX = /^---\s*\n([\s\S]*?)\n---\s*(?:\n|$)/;
 
 /** Regex to extract the `agent:` field value from raw YAML frontmatter text. */
 const AGENT_FIELD_REGEX = /^agent:\s*(.+)$/m;
-
-/**
- * The 6 primary agent names that are always valid — even when no corresponding
- * `.md` file exists in the user's `agents/` directory. This ensures the SDD
- * pipeline never rejects calls to built-in agents.
- */
-const PRIMARY_AGENTS: readonly string[] = [
-	"huitzilopochtli",
-	"quetzalcoatl",
-	"moctezuma",
-	"tlaloc",
-	"mictlantecuhtli",
-	"tezcatlipoca",
-] as const;
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -123,8 +111,7 @@ export function discoverAgentMentionPatterns(agents: Set<string>): Record<string
 
 	for (const agent of agents) {
 		if (!primary.has(agent)) continue; // Only primary agents get mention patterns
-		// Escape special regex characters in the agent name to avoid injection
-		const escaped = agent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		const escaped = escapeRegExp(agent);
 		patterns[agent] = [new RegExp(`@${escaped}\\b`, "i"), new RegExp(`agente\\s+${escaped}`, "i")];
 	}
 

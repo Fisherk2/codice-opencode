@@ -8,6 +8,7 @@ import {
 } from "./src/autoDiscovery";
 import { loadSddConfig } from "./src/configLoader";
 import { DEFAULTS, DESTRUCTIVE_PATTERNS } from "./src/defaults";
+import { escapeRegExp } from "./src/escapeRegExp";
 import { normalizeBash } from "./src/normalizeBash";
 
 // ---------------------------------------------------------------------------
@@ -60,10 +61,12 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 	const agentMentionPatterns = discoverAgentMentionPatterns(validSubagents);
 
 	// ── Configuration loading (Pillar 2) — merge user config with defaults ──
+	// loadSddConfig already deep-merges every section with DEFAULTS, so
+	// the ?? fallback only narrows the optional type — values are complete.
 	const sddConfig = loadSddConfig(projectDir);
-	const commandPhaseMap = { ...DEFAULTS.COMMAND_PHASE_MAP, ...sddConfig.commandPhaseMap };
-	const intentPatterns = { ...DEFAULTS.INTENT_PATTERNS, ...sddConfig.intentPatterns };
-	const phaseSuggestions = { ...DEFAULTS.PHASE_SUGGESTIONS, ...sddConfig.phaseSuggestions };
+	const commandPhaseMap = sddConfig.commandPhaseMap ?? DEFAULTS.COMMAND_PHASE_MAP;
+	const intentPatterns = sddConfig.intentPatterns ?? DEFAULTS.INTENT_PATTERNS;
+	const phaseSuggestions = sddConfig.phaseSuggestions ?? DEFAULTS.PHASE_SUGGESTIONS;
 
 	// OQ-3: warn when a commands/ file has no commandPhaseMap entry
 	for (const command of Object.keys(commandAgentMap)) {
@@ -255,13 +258,13 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 				// Uses word-boundary regex to avoid false positives on common English
 				// substrings (e.g., "relationship status" should NOT match /ship,
 				// "I protest this decision" should NOT match /test).
-				for (const [command, keywords] of Object.entries(intentPatterns)) {
-					if (
-						keywords.some((kw) => {
-							const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-							return new RegExp(`\\b${escaped}\\b`, "i").test(content);
-						})
-					) {
+			for (const [command, keywords] of Object.entries(intentPatterns)) {
+				if (
+					keywords.some((kw) => {
+						const escaped = escapeRegExp(kw);
+						return new RegExp(`\\b${escaped}\\b`, "i").test(content);
+					})
+				) {
 						sddState.last_intent = command;
 						audit("chat.message", `intent=${command}`);
 						break;
