@@ -33,24 +33,20 @@ export class GitHubRestClient implements IGitHubClient {
 	 * @returns The tag name (e.g. "v1.0.0") or null on failure.
 	 */
 	async getLatestReleaseTag(): Promise<string | null> {
-		try {
-			const data = await this.fetchLatestRelease();
-			if (data === null) {
-				return null;
-			}
-			const tag = data.tag_name;
-			if (typeof tag !== "string") {
-				return null;
-			}
-			// Validate tag is a valid semver (including pre-release tags like v1.0.0-beta)
-			if (semver.valid(tag) === null) {
-				return null;
-			}
-			return tag;
-		} catch {
-			// Catch any unexpected errors gracefully
+		// fetchLatestRelease never throws — all error conditions return null.
+		const data = await this.fetchLatestRelease();
+		if (data === null) {
 			return null;
 		}
+		const tag = data.tag_name;
+		if (typeof tag !== "string") {
+			return null;
+		}
+		// Validate tag is a valid semver (including pre-release tags like v1.0.0-beta)
+		if (semver.valid(tag) === null) {
+			return null;
+		}
+		return tag;
 	}
 
 	/**

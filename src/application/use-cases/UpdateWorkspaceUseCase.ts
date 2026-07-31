@@ -110,7 +110,7 @@ export class UpdateWorkspaceUseCase {
 				}
 			}
 		} catch {
-			// No version file found — this is a first update in an existing project
+			// No version file or corrupted JSON — treat as a first update in an existing project
 		}
 
 		// Check GitHub for latest version (informational only)

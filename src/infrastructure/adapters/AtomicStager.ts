@@ -1,5 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { STAGING_DIR_NAME } from "../config/constants";
 import { walkDirectory } from "./directoryWalker";
 import { resolveWithinRoot } from "./pathResolver";
 
@@ -23,7 +24,7 @@ export class AtomicStager {
 	 */
 	constructor(destinationRoot: string) {
 		this.destinationRoot = destinationRoot;
-		this.stagingRoot = path.join(destinationRoot, ".codice-staging");
+		this.stagingRoot = path.join(destinationRoot, STAGING_DIR_NAME);
 	}
 
 	// ---------------------------------------------------------------------------

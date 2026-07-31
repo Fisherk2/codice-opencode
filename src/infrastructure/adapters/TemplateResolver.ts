@@ -1,6 +1,13 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { TEMPLATE_DIR_NAME } from "../config/constants";
+import { isPathWithin } from "./pathResolver";
+
+/**
+ * Template category subdirectories, searched in priority order.
+ * Mirrors the Spanish↔English mapping documented in FileRule.ts.
+ */
+const TEMPLATE_CATEGORIES = ["obligatorio", "estandar", "opcional"];
 
 /**
  * Resolves template file paths within a structured template directory.
@@ -107,17 +114,14 @@ export class TemplateResolver {
 			);
 		}
 
-		const categories = ["obligatorio", "estandar", "opcional"];
+		const categories = TEMPLATE_CATEGORIES;
 		for (const category of categories) {
 			const fullPath = path.join(this.templateRoot, category, relativePath);
 
 			// Verify resolved path stays within templateRoot — prevents symlink escape
 			// and traversal via path components like `subdir/../../../etc/passwd`.
-			// The trailing separator prevents substring prefix matching (e.g. /home/project
-			// vs /home/project-evil).
 			const resolved = path.resolve(fullPath);
-			const templateWithSep = path.resolve(this.templateRoot) + path.sep;
-			if (!resolved.startsWith(templateWithSep)) {
+			if (!isPathWithin(this.templateRoot, resolved)) {
 				throw new Error(`Template path escapes template directory: ${relativePath}.`);
 			}
 
