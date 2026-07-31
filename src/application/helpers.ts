@@ -16,6 +16,7 @@
 
 import type { IFileSystem } from "../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../domain/ports/IStagingSystem";
+import type { MergeError } from "../domain/types/MergeError";
 import type { ProgressCallback } from "../domain/types/ProgressEvent";
 import { failure, type Result, success } from "../domain/types/Result";
 import type { IUserPrompt } from "./ports/IUserPrompt";
@@ -161,4 +162,16 @@ export function createProgressCallback(userPrompt: IUserPrompt, label: string): 
 			userPrompt.completeProgress();
 		}
 	};
+}
+
+/**
+ * Wrap a domain MergeError into a generic Error with enriched context.
+ *
+ * MergeError carries structured phase/path information that would be lost
+ * when converting to the generic Error returned by use cases. Appending
+ * phase and (when known) path keeps the user-facing message actionable.
+ */
+export function wrapMergeError(err: MergeError): Error {
+	const context = err.path ? ` during ${err.phase} of ${err.path}` : ` during ${err.phase}`;
+	return new Error(`${err.message}${context}`);
 }

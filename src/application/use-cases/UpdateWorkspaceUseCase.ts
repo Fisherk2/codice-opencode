@@ -9,6 +9,7 @@ import {
 	checkWritable,
 	confirmOverwrite,
 	createProgressCallback,
+	wrapMergeError,
 	writeVersionFileSafe,
 } from "../helpers";
 import type { IGitHubClient } from "../ports/IGitHubClient";
@@ -150,7 +151,7 @@ export class UpdateWorkspaceUseCase {
 		const mergeResult = await this.mergeEngine.execute(updateRules, undefined, onProgress, true);
 		if (!mergeResult.ok) {
 			// progress callback already called completeProgress() on the error event
-			return failure(new Error(mergeResult.error.message));
+			return failure(wrapMergeError(mergeResult.error));
 		}
 
 		const safeVersion = this.resolveNewVersion(options);

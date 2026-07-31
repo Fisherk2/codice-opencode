@@ -17,7 +17,12 @@ import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
-import { checkWritable, confirmOverwrite, createProgressCallback } from "../helpers";
+import {
+	checkWritable,
+	confirmOverwrite,
+	createProgressCallback,
+	wrapMergeError,
+} from "../helpers";
 import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
@@ -97,7 +102,7 @@ export abstract class InstallUseCaseBase {
 
 		const mergeResult = await this.mergeEngine.execute(rules, selectedOptionals, onProgress);
 		if (!mergeResult.ok) {
-			return failure(new Error(mergeResult.error.message));
+			return failure(wrapMergeError(mergeResult.error));
 		}
 
 		// Phase 6: Post-install steps (gitignore, symlinks, version file)
