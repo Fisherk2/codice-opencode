@@ -69,6 +69,7 @@ temp/
 
 # ─── Testing / Coverage ──────────────────────────────────────────────────────
 .nyc_output/
+coverage/
 lcov.info
 *.lcov
 junit/
