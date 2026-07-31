@@ -39,7 +39,7 @@
       "model": "opencode-go/mimo-v2.5",
       "color": "#2d2d2d",
       "temperature": 0.2,
-      "steps": 60
+      "steps": 100
     },
     "tezcatlipoca": {
       "model": "opencode-go/glm-5.2",
