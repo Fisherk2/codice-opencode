@@ -43,11 +43,15 @@ if [[ ! -f "$COVERAGE_DIR/lcov.info" ]]; then
     exit 1
 fi
 
+# Pass the lcov path via env var so no shell interpolation reaches the Python source
+export COVERAGE_LCOV_PATH="$COVERAGE_DIR/lcov.info"
+
 python3 -c "
+import os
 import sys
 lf_total = 0
 lh_total = 0
-with open('$COVERAGE_DIR/lcov.info') as f:
+with open(os.environ['COVERAGE_LCOV_PATH']) as f:
     for line in f:
         line = line.strip()
         if line.startswith('LF:'):
@@ -66,7 +70,7 @@ print(f'Total line coverage: {coverage:.2f}% ({lh_total}/{lf_total} lines)')
 # Check main.ts specifically
 main_lf = 0
 main_lh = 0
-with open('$COVERAGE_DIR/lcov.info') as f:
+with open(os.environ['COVERAGE_LCOV_PATH']) as f:
     in_main = False
     for line in f:
         line = line.strip()
