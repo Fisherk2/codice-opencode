@@ -198,8 +198,7 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 	 */
 	async walkTemplateDirectory(relativePath: string): Promise<readonly string[]> {
 		const resolved = await this.templateResolver.resolvePath(relativePath);
-		const files = await walkDirectory(resolved);
-		return files.map((f) => path.relative(resolved, f)).sort();
+		return this.walkRelative(resolved);
 	}
 
 	/**
@@ -208,7 +207,12 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 	 */
 	async walkDestinationDirectory(relativePath: string): Promise<readonly string[]> {
 		const resolved = this.atomicStager.resolveDestinationPath(relativePath);
-		const files = await walkDirectory(resolved);
-		return files.map((f) => path.relative(resolved, f)).sort();
+		return this.walkRelative(resolved);
+	}
+
+	/** Walk an absolute directory, returning lexicographically sorted relative paths. */
+	private async walkRelative(absolutePath: string): Promise<readonly string[]> {
+		const files = await walkDirectory(absolutePath);
+		return files.map((f) => path.relative(absolutePath, f)).sort();
 	}
 }
