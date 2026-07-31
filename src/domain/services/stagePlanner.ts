@@ -62,5 +62,12 @@ async function shouldStage(
 		return !exists;
 	}
 
-	return false;
+	// All three categories are handled above; TypeScript narrows
+	// rule.category to never here, so this is a compile-time guard.
+	return assertNever(rule.category);
+}
+
+/** Fail at compile time if a new RuleCategory is added without handling. */
+function assertNever(value: never): never {
+	throw new Error(`Unhandled rule category: ${String(value)}`);
 }
