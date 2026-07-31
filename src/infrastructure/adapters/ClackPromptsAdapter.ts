@@ -6,6 +6,42 @@ import type { FileRule } from "../../domain/entities/FileRule";
  * @clack/prompts adapter implementing IUserPrompt.
  * Sync display methods; async interactive methods.
  */
+
+/**
+ * Mode-selection menu options. Hoisted so the array is built once
+ * instead of on every promptForMode() call.
+ */
+const MODE_OPTIONS = [
+	{
+		value: "clean" as const,
+		label: "Clean Install",
+		hint: "Complete template overwrite (all files)",
+	},
+	{
+		value: "project" as const,
+		label: "Project Install",
+		hint: "Selective merge with file classification",
+	},
+	{
+		value: "update" as const,
+		label: "Update Workspace",
+		hint: "Update to latest template version",
+	},
+];
+
+/**
+ * Map progress-event categories to their @clack/prompts display call.
+ * Data-driven dispatch replaces the switch statement — adding a category
+ * now requires only a new entry here.
+ */
+const PROGRESS_EMITTERS: Record<string, (text: string) => void> = {
+	commit: (text) => clack.log.success(`✓ ${text}`),
+	symlink: (text) => clack.log.success(`🔗 ${text}`),
+	gitignore: (text) => clack.log.info(`📄 ${text}`),
+	error: (text) => clack.log.error(`✗ ${text}`),
+	skip: (text) => clack.log.warn(`⊘ ${text}`),
+};
+
 export class ClackPromptsAdapter implements IUserPrompt {
 	// biome-ignore lint/complexity/noUselessConstructor: Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
 	constructor() {}
@@ -122,22 +158,10 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		if (colonIdx > 0) {
 			const category = message.slice(0, colonIdx).trim().toLowerCase();
 			const text = message.slice(colonIdx + 1).trim();
-			switch (category) {
-				case "commit":
-					clack.log.success(`✓ ${text}`);
-					return;
-				case "symlink":
-					clack.log.success(`🔗 ${text}`);
-					return;
-				case "gitignore":
-					clack.log.info(`📄 ${text}`);
-					return;
-				case "error":
-					clack.log.error(`✗ ${text}`);
-					return;
-				case "skip":
-					clack.log.warn(`⊘ ${text}`);
-					return;
+			const emit = PROGRESS_EMITTERS[category];
+			if (emit) {
+				emit(text);
+				return;
 			}
 		}
 		clack.log.step(message);
@@ -179,23 +203,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 	async promptForMode(): Promise<"clean" | "project" | "update" | null> {
 		const result = await clack.select({
 			message: "Select installation mode:",
-			options: [
-				{
-					value: "clean" as const,
-					label: "Clean Install",
-					hint: "Complete template overwrite (all files)",
-				},
-				{
-					value: "project" as const,
-					label: "Project Install",
-					hint: "Selective merge with file classification",
-				},
-				{
-					value: "update" as const,
-					label: "Update Workspace",
-					hint: "Update to latest template version",
-				},
-			],
+			options: MODE_OPTIONS,
 		});
 		if (clack.isCancel(result)) return null;
 		return result as "clean" | "project" | "update";

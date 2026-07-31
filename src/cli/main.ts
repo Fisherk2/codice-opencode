@@ -72,6 +72,49 @@ export async function resolveInteractiveMode(
 }
 
 // ---------------------------------------------------------------------------
+// Terminal flags and signal handling
+// ---------------------------------------------------------------------------
+
+/**
+ * Handle terminal flags (--version, --help) which must be processed
+ * before any I/O. Exits the process after printing.
+ */
+function handleTerminalFlags(args: readonly string[]): void {
+	if (args.includes("--version") || args.includes("-V")) {
+		printVersion();
+		process.exit(EXIT_SUCCESS);
+	}
+
+	if (args.includes("--help") || args.includes("-h")) {
+		printHelp();
+		process.exit(EXIT_SUCCESS);
+	}
+}
+
+/**
+ * Install a SIGINT handler that exits immediately to avoid races with async
+ * cleanup. Returns the teardown function that removes the handler.
+ *
+ * The staging directory will be left behind but cleaned up by the caller
+ * (e.g., the test harness's trap handler or the OS temp file cleanup).
+ */
+function registerSigintHandler(): () => void {
+	// Double SIGINT: already handling — exit immediately on the second signal
+	let interrupted = false;
+	const handleSigint = (): void => {
+		if (interrupted) return;
+		interrupted = true;
+		// biome-ignore lint/suspicious/noConsole: intentional CLI output
+		console.error("\nInterrupted by user.");
+		process.exit(EXIT_INTERRUPT);
+	};
+	process.on("SIGINT", handleSigint);
+	return () => {
+		process.off("SIGINT", handleSigint);
+	};
+}
+
+// ---------------------------------------------------------------------------
 // Mode execution
 // ---------------------------------------------------------------------------
 
@@ -91,22 +134,17 @@ export async function runMode(
 	destinationPath: string,
 	options: CliOptions,
 ): Promise<Result<void, Error>> {
-	if (mode === "clean") {
-		return deps.cleanInstall.execute(destinationPath, {
-			force: options.force,
-			version: VERSION,
-		});
-	}
-	if (mode === "project") {
-		return deps.projectInstall.execute(destinationPath, {
-			force: options.force,
-			version: VERSION,
-		});
-	}
-	return deps.updateWorkspace.execute(destinationPath, {
+	const execOptions = {
 		force: options.force,
 		version: VERSION,
-	});
+	};
+	if (mode === "clean") {
+		return deps.cleanInstall.execute(destinationPath, execOptions);
+	}
+	if (mode === "project") {
+		return deps.projectInstall.execute(destinationPath, execOptions);
+	}
+	return deps.updateWorkspace.execute(destinationPath, execOptions);
 }
 
 // ---------------------------------------------------------------------------
@@ -116,16 +154,7 @@ export async function runMode(
 async function main(): Promise<void> {
 	const args = process.argv.slice(2);
 
-	// Terminal flags — handle these first, before any I/O
-	if (args.includes("--version") || args.includes("-V")) {
-		printVersion();
-		process.exit(EXIT_SUCCESS);
-	}
-
-	if (args.includes("--help") || args.includes("-h")) {
-		printHelp();
-		process.exit(EXIT_SUCCESS);
-	}
+	handleTerminalFlags(args);
 
 	// Parse mode and options
 	const parsed = parseArgs(args);
@@ -142,17 +171,7 @@ async function main(): Promise<void> {
 	const deps = createDependencies(destinationPath, options.verbose);
 
 	// SIGINT handler — immediately exit to avoid races with async cleanup.
-	// The staging directory will be left behind but cleaned up by the caller
-	// (e.g., the test harness's trap handler or the OS temp file cleanup).
-	let interrupted = false;
-	const handleSigint = (): void => {
-		if (interrupted) return; // Double SIGINT: already handling
-		interrupted = true;
-		// biome-ignore lint/suspicious/noConsole: intentional CLI output
-		console.error("\nInterrupted by user.");
-		process.exit(EXIT_INTERRUPT);
-	};
-	process.on("SIGINT", handleSigint);
+	const unregisterSigint = registerSigintHandler();
 
 	try {
 		// Resolve interactive mode (show menu if needed)
@@ -175,7 +194,7 @@ async function main(): Promise<void> {
 		console.error(`Fatal error: ${message}`);
 		process.exit(EXIT_ERROR);
 	} finally {
-		process.off("SIGINT", handleSigint);
+		unregisterSigint();
 	}
 }
 

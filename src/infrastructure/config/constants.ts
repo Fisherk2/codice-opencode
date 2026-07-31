@@ -7,6 +7,23 @@ export const GITHUB_REPO = "codice-opencode";
 const GITHUB_API_DEFAULT = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
 
 /**
+ * Whether the override URL is a well-formed HTTPS URL pointing at github.com.
+ * Accepts subdomains (e.g. api.github.com) but rejects other hosts to prevent
+ * exfiltrating repository metadata to an arbitrary endpoint.
+ */
+function isValidGitHubApiUrl(url: string): boolean {
+	try {
+		const parsed = new URL(url);
+		return (
+			parsed.protocol === "https:" &&
+			(parsed.hostname === "github.com" || parsed.hostname.endsWith(".github.com"))
+		);
+	} catch {
+		return false; // URL constructor failed — not a valid URL
+	}
+}
+
+/**
  * Get the GitHub API URL for the latest release.
  *
  * The URL can be overridden via the CODICE_GITHUB_API_URL environment variable
@@ -26,17 +43,10 @@ export function getGitHubApiUrl(): string {
 		return envUrl;
 	}
 
-	try {
-		const url = new URL(envUrl);
-		if (
-			url.protocol === "https:" &&
-			(url.hostname === "github.com" || url.hostname.endsWith(".github.com"))
-		) {
-			return envUrl;
-		}
-	} catch {
-		// URL constructor failed — not a valid URL
+	if (isValidGitHubApiUrl(envUrl)) {
+		return envUrl;
 	}
+
 	// biome-ignore lint/suspicious/noConsole: production warning for invalid env var override
 	console.warn(
 		`[warn] CODICE_GITHUB_API_URL must be an HTTPS URL pointing to github.com. Got "${envUrl}". Falling back to default.`,

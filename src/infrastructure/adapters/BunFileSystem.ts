@@ -7,6 +7,24 @@ import { AtomicStager } from "./AtomicStager";
 import { walkDirectory } from "./directoryWalker";
 import { TemplateResolver } from "./TemplateResolver";
 
+/** Temporary file used to probe destination writability (removed after check). */
+const WRITE_TEST_FILE_NAME = ".codice-write-test";
+
+/** Suffix for the temp file that is atomically renamed to the version file. */
+const VERSION_FILE_TMP_SUFFIX = ".tmp";
+
+/**
+ * Whether an fs error code means the path exists (even if unreadable).
+ * ENOENT means absent; EACCES/EPERM mean present but permission-blocked.
+ * Any other code is treated as absent — staging will surface a clearer error.
+ */
+function classifyAccessError(err: unknown): boolean {
+	const code = (err as NodeJS.ErrnoException).code;
+	if (code === "ENOENT") return false;
+	if (code === "EACCES" || code === "EPERM") return true; // exists but unreadable
+	return false; // conservative: staging will fail with clearer message if unwritable
+}
+
 /**
  * Bun-compatible filesystem adapter with atomic staging support.
  *
@@ -37,25 +55,12 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		this.destinationRoot = resolvedDest;
 	}
 
-	// ---------------------------------------------------------------------------
-	// IFileSystem implementation — template operations
-	// ---------------------------------------------------------------------------
-
-	/**
-	 * Read a file from the template directory.
-	 * Delegates to TemplateResolver which searches category subdirectories.
-	 */
+	/** Read a file from the template directory. */
 	async readTemplateFile(relativePath: string): Promise<string> {
 		return this.templateResolver.readFile(relativePath);
 	}
 
-	// ---------------------------------------------------------------------------
-	// IFileSystem implementation — destination operations
-	// ---------------------------------------------------------------------------
-
-	/**
-	 * Check if a path exists in the destination directory.
-	 */
+	/** Check if a path exists in the destination directory. */
 	async destinationExists(relativePath: string): Promise<boolean> {
 		// resolveDestinationPath throws on path traversal — NOT caught, so it propagates
 		const fullPath = this.atomicStager.resolveDestinationPath(relativePath);
@@ -63,17 +68,11 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 			await fs.access(fullPath);
 			return true;
 		} catch (err) {
-			const code = (err as NodeJS.ErrnoException).code;
-			if (code === "ENOENT") return false;
-			if (code === "EACCES" || code === "EPERM") return true; // exists but unreadable — staging will surface real error
-			return false; // conservative: staging will fail with clearer message if path is unwritable
+			return classifyAccessError(err);
 		}
 	}
 
-	/**
-	 * Get the staging path for a given destination path.
-	 * Does NOT create the staging directory.
-	 */
+	/** Get the staging path for a given destination path (does not create it). */
 	getStagingPath(relativePath: string): string {
 		return this.atomicStager.resolveStagingPath(relativePath);
 	}
@@ -92,24 +91,15 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		await this.atomicStager.stageFile(resolved, relativePath, excludeSubDirs);
 	}
 
-	/**
-	 * Atomic rename: promote all staged files to the destination.
-	 * Delegates to AtomicStager which handles backup and rollback.
-	 */
+	/** Atomic rename: promote all staged files to the destination. */
 	async commitStaging(): Promise<void> {
 		await this.atomicStager.commitStaging();
 	}
 
-	/**
-	 * Remove the staging directory recursively.
-	 */
+	/** Remove the staging directory recursively. */
 	async cleanStaging(): Promise<void> {
 		await this.atomicStager.cleanStaging();
 	}
-
-	// ---------------------------------------------------------------------------
-	// IFileSystem implementation — writability and directory state
-	// ---------------------------------------------------------------------------
 
 	/**
 	 * Check if the destination directory is writable by attempting
@@ -117,7 +107,7 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 	 */
 	async isWritable(): Promise<boolean> {
 		try {
-			const testFile = path.join(this.destinationRoot, ".codice-write-test");
+			const testFile = path.join(this.destinationRoot, WRITE_TEST_FILE_NAME);
 			await Bun.write(testFile, "test");
 			await fs.unlink(testFile);
 			return true;
@@ -145,22 +135,17 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		}
 	}
 
-	// ---------------------------------------------------------------------------
-	// IFileSystem implementation — version file operations
-	// ---------------------------------------------------------------------------
-
 	/**
 	 * Write the version file (.codice-version) to the destination root.
 	 * Uses atomic write via Bun.write to a temp file, then renames.
 	 */
 	async writeVersionFile(versionData: string): Promise<void> {
 		const versionFilePath = path.join(this.destinationRoot, VERSION_FILE_NAME);
-		const tempPath = `${versionFilePath}.tmp`;
+		const tempPath = `${versionFilePath}${VERSION_FILE_TMP_SUFFIX}`;
 
 		try {
-			// Write to temp file first
+			// Write to temp file first, then atomic rename
 			await Bun.write(tempPath, versionData);
-			// Atomic rename
 			await fs.rename(tempPath, versionFilePath);
 		} catch (error) {
 			// Clean up temp file if rename failed
@@ -174,10 +159,7 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		}
 	}
 
-	/**
-	 * Read the version file (.codice-version) from the destination root.
-	 * Returns null if the file does not exist.
-	 */
+	/** Read the version file (.codice-version) from the destination root. */
 	async readVersionFile(): Promise<string | null> {
 		try {
 			const versionFilePath = path.join(this.destinationRoot, VERSION_FILE_NAME);
@@ -192,19 +174,13 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		}
 	}
 
-	/**
-	 * Walk a directory relative to the template root and return
-	 * relative paths of all files within it.
-	 */
+	/** Walk a directory relative to the template root. */
 	async walkTemplateDirectory(relativePath: string): Promise<readonly string[]> {
 		const resolved = await this.templateResolver.resolvePath(relativePath);
 		return this.walkRelative(resolved);
 	}
 
-	/**
-	 * Walk a directory relative to the destination root and return
-	 * relative paths of all files within it.
-	 */
+	/** Walk a directory relative to the destination root. */
 	async walkDestinationDirectory(relativePath: string): Promise<readonly string[]> {
 		const resolved = this.atomicStager.resolveDestinationPath(relativePath);
 		return this.walkRelative(resolved);
