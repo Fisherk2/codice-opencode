@@ -38,7 +38,7 @@ export { main };
  * @param userPrompt - The user prompt adapter instance.
  * @returns Selected mode, or null if user cancelled.
  */
-export async function promptForMode(
+export function promptForMode(
 	userPrompt: IUserPrompt,
 ): Promise<"clean" | "project" | "update" | null> {
 	return userPrompt.promptForMode();
@@ -51,13 +51,13 @@ export async function promptForMode(
  * @param mode - Current mode (may be "interactive").
  * @param userPrompt - The user prompt adapter instance.
  * @param version - Current version string for the intro message.
- * @returns Resolved mode, or null if user cancelled from the interactive menu.
+ * @returns Resolved non-interactive mode, or null if user cancelled from the interactive menu.
  */
 export async function resolveInteractiveMode(
 	mode: Mode,
 	userPrompt: IUserPrompt,
 	version: string,
-): Promise<Mode | null> {
+): Promise<"clean" | "project" | "update" | null> {
 	if (mode !== "interactive") {
 		return mode;
 	}
@@ -159,11 +159,8 @@ async function main(): Promise<void> {
 		const resolved = await resolveInteractiveMode(mode, deps.userPrompt, VERSION);
 		if (resolved === null) process.exit(EXIT_INTERRUPT);
 
-		// resolved is guaranteed to be non-interactive (null case handled above)
-		const executionMode = resolved as "clean" | "project" | "update";
-
 		// Execute the selected mode
-		const result = await runMode(executionMode, deps, destinationPath, options);
+		const result = await runMode(resolved, deps, destinationPath, options);
 
 		// Handle result — each use case calls showSuccess/showCancel/showError on its own
 		if (!result.ok) {
