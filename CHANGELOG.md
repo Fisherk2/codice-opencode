@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Review fixes from `/ship` v1.2.0-beta.1:** All observations from the 4-persona ship review addressed:
+  - **Security:** `CODICE_BYPASS_URL_VALIDATION` is now gated behind `NODE_ENV=test` so the URL-validation escape hatch can never be active in production (`src/infrastructure/config/constants.ts`). Coordinated with the 4 E2E scripts and `tests/integration/cli/main.test.ts` that set it.
+  - **Path safety:** `withTrailingSeparator("/")` now returns the filesystem root unchanged instead of producing `//` (`src/infrastructure/adapters/pathResolver.ts`).
+  - **Perf:** `FileMergeEngine.execute()` only allocates the optional-path list when standard directory rules exist; staging cleanup now also runs when nothing was staged (`total === 0`).
+  - **Comments:** Untrusted-input note for `.codice-version` parsing in `UpdateWorkspaceUseCase`; empty catch in `safeEmit` documented as intentional; `PROGRESS_EMITTERS` comment corrected.
+  - **Tests:** Direct unit tests added for `isPathWithin`/`withTrailingSeparator` (`tests/unit/adapters/path-resolver.test.ts`) and `isRuleSelected` (`tests/unit/domain/file-rule-manifest.test.ts`); unused `_makeRule` helper removed from `tests/integration/use-cases/update-granularity.test.ts`.
+- **Dependencies:** `@biomejs/biome` 2.5.3 → 2.5.6, `@types/semver` 7.7.1 → 7.8.0 (TypeScript 6.x deferred — 7.x not yet adopted).
 - **ADR-011:** Binary Removal — documents the architectural decision (see `specs/adr/adr-011-binary-removal.md`)
 - **`tests/e2e/codice.sh`:** Wrapper script for `bun run src/cli/main.ts` in E2E tests
 - **FEV-13 — SDD Plugin Auto-Discovery (Issue #53):** 6 hardcoded maps extracted to `autoDiscovery.ts` — `COMMAND_AGENT_MAP`, `VALID_SUBAGENTS`, and `AGENT_MENTION_PATTERNS` now detected automatically from filesystem (`commands/*.md`, `agents/*.md`). New files: `autoDiscovery.ts` (182 lines), `destructivePatterns.ts`, `normalizeBash.ts`. See [ADR-013](specs/adr/adr-013-plugin-auto-discovery.md).
