@@ -7,13 +7,13 @@ Invoke @skills/code-review-and-quality/SKILL.md.
 
 Review the current changes (staged or recent commits) across all five axes:
 
-1. **Correctness** — Does it match the spec? Edge cases handled? Tests adequate? Use @skills/error-handling-patterns/SKILL.md for error path and resilience review
-2. **Readability** — Clear names? Straightforward logic? Well-organized? Use @skills/solid/SKILL.md to evaluate SOLID principles and clean code
-3. **Architecture** — Follows existing patterns? Clean boundaries? Right abstraction level? Use @skills/design-patterns/SKILL.md for architectural decisions and pattern usage
-4. **Security** — Input validated? Secrets safe? Auth checked? Use @skills/security-and-hardening/SKILL.md
-5. **Performance** — No N+1 queries? No unbounded ops? Use @skills/performance-optimization/SKILL.md
+1. **Correctness** — Does it match the spec? Edge cases handled? Tests adequate? Load `error-handling-patterns` skill for error path and resilience review
+2. **Readability** — Clear names? Straightforward logic? Well-organized? Load `solid` skill to evaluate SOLID principles and clean code
+3. **Architecture** — Follows existing patterns? Clean boundaries? Right abstraction level? Load `design-patterns` skill for architectural decisions and pattern usage
+4. **Security** — Input validated? Secrets safe? Auth checked? Load `security-and-hardening` skill
+5. **Performance** — No N+1 queries? No unbounded ops? Load `performance-optimization`
 
-For frontend changes, also use @skills/design-taste-frontend/SKILL.md to review visual consistency and design quality.
+For frontend changes, also load `design-taste-frontend` skill to review visual consistency and design quality.
 
 Categorize findings as Critical, Important, or Suggestion. For structural improvements, reference @skills/refactoring-patterns/SKILL.md in fix recommendations.
 

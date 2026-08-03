@@ -1,7 +1,7 @@
 # ─── Node / Bun ───────────────────────────────────────────────────────────────
 node_modules/
 
-# Build output — compiled binary (populated by CI)
+# Build output (compiled binary path — CI no longer produces binaries as of v1.2.0; kept for `just clean`)
 dist/
 
 # ─── Entorno ─────────────────────────────────────────────────────────────────
@@ -69,6 +69,7 @@ temp/
 
 # ─── Testing / Coverage ──────────────────────────────────────────────────────
 .nyc_output/
+coverage/
 lcov.info
 *.lcov
 junit/

@@ -46,11 +46,18 @@ describe("CI Workflow Configuration", () => {
 		expect(ciYaml).toContain("just test");
 	});
 
-	test("has just build step", () => {
-		expect(ciYaml).toContain("just build");
+	test("just build step is removed (binary compilation removed in v1.2.0)", () => {
+		expect(ciYaml).not.toContain("just build");
 	});
 
 	test("has just test-e2e step", () => {
 		expect(ciYaml).toContain("just test-e2e");
+	});
+
+	test("binary build and smoke test steps are removed", () => {
+		expect(ciYaml).not.toContain("Build binary");
+		expect(ciYaml).not.toContain("Smoke test binary");
+		expect(ciYaml).not.toContain("dist/codice");
+		expect(ciYaml).not.toContain("Upload binary artifact");
 	});
 });

@@ -1,6 +1,8 @@
 # ADR-006: npm Publication as Primary Distribution Method
 
-**Status:** Accepted
+**Status:** Superseded (see ADR-011)
+
+> **Note — v1.2.0 (ADR-011):** The compiled binary alternative described below was removed in v1.2.0. npm/bunx is now the **sole** distribution method. See [ADR-011: Binary Removal](./adr-011-binary-removal.md) for details.
 
 **Date:** 2026-06-16
 

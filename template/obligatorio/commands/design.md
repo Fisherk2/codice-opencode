@@ -1,5 +1,5 @@
 ---
-description: Design UI/UX specifications — create or edit structured specification documents for design systems, user flows, and component architectures for creative projects
+description: Create or edit structured specification documents for UI/UX, design systems, user flows, and component architectures for creative projects
 agent: quetzalcoatl
 ---
 
@@ -7,9 +7,9 @@ Invoke @skills/ui-ux-design-pro/SKILL.md to begin the design process.
 
 ## Phase 0 — Pre-flight: Understand Design Scope
 
-If the user's request is vague or missing key functional and non-functional requirements, invoke @skills/interview-me/SKILL.md to extract intent before proceeding.
+If the user's request is vague or missing key functional and non-functional requirements, load the `interview-me` skill to extract intent before proceeding.
 
-If the user has a rough idea but needs to explore design variations, invoke @skills/idea-refine/SKILL.md to generate and evaluate options.
+If the user has a rough idea but needs to explore design variations, load `idea-refine` skill to generate and evaluate options.
 
 Use the `question` tool to clarify interactively:
 
@@ -46,37 +46,26 @@ Once all reports are back, synthesize into a comprehensive design specification:
 2. **Technical Constraints** — Pull from `frontend-developer` and @skills/frontend-ui-engineering/SKILL.md for component architecture, state management, API needs, performance
 3. **Accessibility** — Integrate `accessibility-tester` requirements: WCAG compliance, keyboard nav, screen readers
 4. **Design System** — Define tokens, colors, typography, spacing, components using @skills/design-taste-frontend/SKILL.md for metric-based UI/UX rules
-5. **User Flows** — Create flow diagrams using @skills/architecture-diagrams/SKILL.md, combining UX research and technical constraints
+5. **User Flows** — Create flow diagrams loading `architecture-diagrams` skill, combining UX research and technical constraints
 
 ## Phase C — Save Design Specification
 
-1. Save the design specification to @docs/DESIGN.md:
+1. Save the design specification to @docs/DESIGN.md with this requirements:
 
-```markdown
-# [Project Name] — Design Specification
-## Overview
-[Project description and goals]
-## User Personas
-[From ux-researcher output]
-## User Flows
-[Flow diagrams and user journeys]
-## Design System
-### Tokens
-- Colors, typography, spacing, shadows
-### Components
-- Component hierarchy and states
-### Patterns
-- Interaction patterns and conventions
-## Technical Constraints
-[From frontend-developer output]
-## Accessibility Requirements
-[From accessibility-tester output]
-## References
-- [Inspiration links]
-- [Brand guidelines]
-```
+- Project Name and Version
+- Overview - Project description and goals
+- User Personas - From `ux-researcher` output
+- User Flows - Flow diagrams and user journeys
+- Design System 
+- Tokens - Colors, typography, spacing, shadows
+- Components - Component hierarchy and states
+- Patterns - Interaction patterns and conventions
+- Technical Constraints From `frontend-developer` output
+- Accessibility Requirements - From `accessibility-tester` output
+- References - Inspiration links, Brand guidelines 
 
 2. Also create or update supporting files in @specs/design/
+3. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
 ## Rules
 

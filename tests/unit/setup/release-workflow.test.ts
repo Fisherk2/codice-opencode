@@ -2,14 +2,12 @@
  * Release Workflow Configuration Tests
  *
  * Verifies the release.yml GitHub Actions workflow structure:
- * version validation, npm publish step, binary asset upload,
+ * version validation, npm publish step, release creation,
  * and security hardening (SHA pinning).
  */
 
 import { beforeAll, describe, expect, test } from "bun:test";
 import { readTextFile } from "./helpers";
-
-const BINARY_NAMES = ["codice-linux", "codice-macos", "codice-windows.exe"] as const;
 
 describe("Release Workflow Configuration", () => {
 	let releaseYaml: string;
@@ -28,25 +26,6 @@ describe("Release Workflow Configuration", () => {
 	test("supports workflow_dispatch with tag input", () => {
 		expect(releaseYaml).toContain("workflow_dispatch:");
 		expect(releaseYaml).toContain("tag:");
-	});
-
-	// --- Build job ---
-
-	test("has 3-platform build matrix (ubuntu, macos, windows)", () => {
-		expect(releaseYaml).toContain("ubuntu-latest");
-		expect(releaseYaml).toContain("macos-latest");
-		expect(releaseYaml).toContain("windows-latest");
-	});
-
-	test("build uses just build", () => {
-		expect(releaseYaml).toContain("just build");
-	});
-
-	test("uploads binary artifacts", () => {
-		expect(releaseYaml).toContain("upload-artifact");
-		for (const name of BINARY_NAMES) {
-			expect(releaseYaml).toContain(name);
-		}
 	});
 
 	// --- Version validation ---
@@ -128,24 +107,25 @@ describe("Release Workflow Configuration", () => {
 
 	// --- Release job ---
 
-	test("has release job that depends on build", () => {
-		expect(releaseYaml).toContain("needs: build");
-	});
-
 	test("release job has contents:write permission", () => {
 		expect(releaseYaml).toContain("contents: write");
 	});
 
-	test("creates GitHub release with binary assets", () => {
+	test("creates GitHub release without binary assets", () => {
 		expect(releaseYaml).toContain("action-gh-release");
-		for (const name of BINARY_NAMES) {
-			expect(releaseYaml).toContain(name);
-		}
+		// Binary names should NOT be present (binary removal in v1.2.0)
+		expect(releaseYaml).not.toContain("codice-linux");
+		expect(releaseYaml).not.toContain("codice-macos");
+		expect(releaseYaml).not.toContain("codice-windows.exe");
+		expect(releaseYaml).not.toContain("sha256sum");
+		expect(releaseYaml).not.toContain("checksums-sha256.txt");
 	});
 
-	test("generates SHA-256 checksums for binaries", () => {
-		expect(releaseYaml).toContain("sha256sum");
-		expect(releaseYaml).toContain("checksums-sha256.txt");
+	test("release job does not depend on build job (build job removed in v1.2.0)", () => {
+		// Build job was removed with binary compilation (FEV-11)
+		expect(releaseYaml).not.toContain("needs: build");
+		expect(releaseYaml).not.toContain("Build binary");
+		expect(releaseYaml).not.toContain("upload-artifact");
 	});
 
 	test("extracts release body from CHANGELOG", () => {

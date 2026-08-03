@@ -6,19 +6,13 @@
  * never leaves the destination in an inconsistent state.
  *
  * Separated from IFileSystem per the Interface Segregation Principle:
- * staging concerns (getStagingPath, stageFile, commitStaging, cleanStaging)
+ * staging concerns (stageFile, commitStaging, cleanStaging)
  * form a cohesive, independently testable unit.
  *
  * Consumers that only perform staging operations (no template reads or
  * destination queries) should depend on IStagingSystem alone.
  */
 export interface IStagingSystem {
-	/**
-	 * Get the staging path for a given destination path.
-	 * Does NOT create the staging directory.
-	 */
-	getStagingPath(relativePath: string): string;
-
 	/**
 	 * Stage a file or directory by resolving the template path and writing
 	 * to the staging directory. If the path resolves to a directory and

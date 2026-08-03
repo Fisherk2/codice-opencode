@@ -23,14 +23,14 @@
 
 **OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
 
-A production-grade workspace integrating 45 engineering skills + 1 meta-skill organized in 10 SDD cycle phases (3 optional) + Extra, slash commands, and specialized agents to accelerate AI-assisted development. Designed for teams and developers who want consistent quality in AI-assisted projects.
+A production-grade workspace integrating 51 engineering skills organized in 10 SDD cycle phases (3 optional) + Extra, slash commands, and specialized agents to accelerate AI-assisted development. Designed for teams and developers who want consistent quality in AI-assisted projects.
 
 ---
 
 ## Features
 
 - **52 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, Obsidian vault management, and more, organized in 10 SDD phases (3 optional) + Extra
-- **12 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`
+- **13 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`
 - **6 Main Agents + 98 Subagents** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 98 subagents specialized in frontend, backend, DevOps, testing, security, and more
 - **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
 - **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
@@ -180,34 +180,6 @@ That's it. Bun downloads and runs the latest version automatically.
 
 > **Next steps:** After installation, visit the [GitHub Wiki → Getting Started](https://github.com/fisherk2/codice-opencode/wiki/Getting-Started) guide to configure models, install plugin dependencies, and start your first workflow.
 
-### Offline / Air-gapped Alternative
-
-If you don't have Bun installed or prefer a standalone binary, download the compiled binary for your platform:
-
-#### Linux (x64) / macOS (x64)
-
-```bash
-# Download the latest binary for your platform:
-curl -L -o codice https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-linux
-# macOS: replace `codice-linux` with `codice-macos`
-
-# Make it executable:
-chmod +x codice
-
-# Run the installer:
-./codice
-```
-
-#### Windows (x64)
-
-```powershell
-# Download the latest binary:
-curl -L -o codice.exe https://github.com/Fisherk2/codice-opencode/releases/latest/download/codice-windows.exe
-
-# Run the installer:
-.\codice.exe
-```
-
 ### Usage
 
 Códice presents an interactive menu with three installation modes:
@@ -219,16 +191,17 @@ Códice presents an interactive menu with three installation modes:
 | **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
 
 ```bash
-# Interactive menu (default) — via bunx or binary:
-bunx @fisherk2-dev/codice     # via npm (requires Bun)
-./codice                   # via compiled binary (standalone)
+# Interactive menu (default):
+bunx @fisherk2-dev/codice
 
 # Direct mode with flags:
 bunx @fisherk2-dev/codice --dest ./my-project
-./codice --force
-./codice --version
-codice --help
+bunx @fisherk2-dev/codice --force
+bunx @fisherk2-dev/codice --version
+bunx @fisherk2-dev/codice --help
 ```
+
+> Use `--verbose` for detailed logging of every step.
 
 ### Flags
 
@@ -237,7 +210,7 @@ codice --help
 | `--dest <path>` | Target installation directory (default: current directory) |
 | `--force` | Skip all confirmation prompts |
 | `--verbose` | Enable structured logging to stderr |
-| `--version` | Print binary version and exit |
+| `--version` | Print package version and exit |
 | `--clean` | Run Clean Install mode (skip interactive menu) |
 | `--project` | Run Project Install mode (skip interactive menu) |
 | `--update` | Run Update Workspace mode (skip interactive menu) |
@@ -263,12 +236,14 @@ flowchart LR
     K -.-> C
     L["/docs-update<br/>DOCS"] -.-> A
     M["/diagnosis<br/>DIAGNOSE"] -.-> C
+    N["/help<br/>HELP"] -.-> A
 ```
 
 ### Full Cycle
 
 | Phase | Command | Agent | What It Does | Main Skills |
 |------|---------|--------|--------------|-------------|
+| Onboarding | `/help` | huitzilopochtli | Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 13 commands, troubleshoot issues | |
 | Design (optional) | `/design` | quetzalcoatl | Parallel fan-out: UX research, technical feasibility, accessibility. Merges into design specification in `specs/design/` | ui-ux-design-pro, design-taste-frontend, frontend-ui-engineering |
 | Define (new) | `/spec` | quetzalcoatl | Detects project state (3 cases), clarifies requirements, generates docs (PRD, TRD, ARCHITECTURE, WORKFLOW) and synthesizes into SPEC.md | spec-driven-development, clean-ddd-hexagonal, architecture-diagrams, idea-refine, interview-me |
 | Evolve (mature) | `/evolve` | quetzalcoatl | Creates new specs or modifies existing ones for mature projects with version history. Redirects to `/spec` for new/immature projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
@@ -284,161 +259,6 @@ flowchart LR
 
 ---
 
-## Workspace Structure
-
-```
-project-root/
-├── AGENTS.md                   # Agent personas and orchestration
-├── CHANGELOG.md                # Release history
-├── CONTRIBUTING.md             # How to add agents and skills
-├── Justfile                    # Task runner commands
-├── LICENSE                     # MIT License
-├── Makefile                    # Build targets
-├── README.md                   # Project overview
-├── SPEC.md                     # Project specification
-├── opencode.json               # OpenCode configuration
-├── skills-lock.json            # Skill dependency lockfile
-├── requirements.txt            # Python dependencies
-├── .env.example                # Environment variables template
-│
-├── agents/                     # 104 agent persona files (6 primary + 98 subagents)
-│   ├── huitzilopochtli.md      #   Supreme Orchestrator
-│   ├── quetzalcoatl.md         #   Visionary Architect
-│   ├── moctezuma.md            #   Strategic Commander
-│   ├── tlaloc.md               #   Rain God Builder
-│   ├── mictlantecuhtli.md      #   Underworld Judge
-│   ├── tezcatlipoca.md         #   Smoking Mirror Critic
-│   └── ... (96+ subagent files)
-│
-├── commands/                   # 12 slash commands for OpenCode
-│   ├── build.md                #   BUILD
-│   ├── code-simplify.md        #   SIMPLIFY (recommended pre-review)
-│   ├── design.md               #   DESIGN (optional, UI/UX)
-│   ├── diagnosis.md            #   DIAGNOSE (issue analysis)
-│   ├── docs-update.md          #   DOCS (sync documentation)
-│   ├── evolve.md               #   EVOLVE (mature projects)
-│   ├── plan.md                 #   PLAN
-│   ├── review.md               #   REVIEW
-│   ├── ship.md                 #   SHIP
-│   ├── spec.md                 #   DEFINE (new projects)
-│   ├── test.md                 #   VERIFY
-│   └── webperf.md              #   WEBPERF (optional, perf. audit)
-│
-├── .opencode/                  # OpenCode runtime config
-│   ├── agents -> ../agents     #   Symlink to agents
-│   ├── commands -> ../commands #   Symlink to commands
-│   ├── skills -> ../skills     #   Symlink to skills
-│   ├── plugins/                #   SDD pipeline plugin
-│       ├── sdd-pipeline.ts     #     Pipeline state machine
-│       └── sdd-workflow-test.md #   Workflow test specs
-│
-├── skills/                     # 52 skills (engineering + meta-skill)
-│   ├── using-agent-skills/     #   META: skill discovery
-│   ├── idea-refine/            #   DEFINE / EVOLVE
-│   ├── spec-driven-development/#   DEFINE / EVOLVE
-│   ├── agent-md-refactor/      #   DEFINE (PRE-FLIGHT)
-│   ├── env-setup/              #   DEFINE (PRE-FLIGHT)
-│   ├── clean-ddd-hexagonal/    #   DEFINE / PLAN / BUILD
-│   ├── design-patterns/        #   DEFINE / PLAN / REVIEW
-│   ├── architecture-diagrams/  #   DEFINE / PLAN / SHIP
-│   ├── ui-ux-design-pro/       #   DEFINE / BUILD
-│   ├── interview-me/           #   DEFINE / EVOLVE (extract requirements)
-│   ├── doubt-driven-development/ # EVOLVE / BUILD (stress-test decisions)
-│   ├── planning-and-task-breakdown/ # PLAN
-│   ├── incremental-implementation/  # BUILD
-│   ├── test-driven-development/     # BUILD
-│   ├── source-driven-development/   # BUILD
-│   ├── context-engineering/         # BUILD
-│   ├── frontend-ui-engineering/     # BUILD
-│   ├── api-and-interface-design/    # BUILD
-│   ├── api-spec-generation/         # BUILD
-│   ├── docker-optimize/             # BUILD / SHIP
-│   ├── db-migration/                # BUILD / SHIP
-│   ├── solid/                       # BUILD / REVIEW
-│   ├── clean-code/                  # BUILD / REVIEW
-│   ├── error-handling-patterns/     # BUILD / VERIFY / REVIEW
-│   ├── design-taste-frontend/       # BUILD / VERIFY / REVIEW
-│   ├── bash-defensive-patterns/     # BUILD / SHIP
-│   ├── observability-and-instrumentation/ # BUILD / VERIFY / SHIP
-│   ├── browser-testing-with-devtools/ # VERIFY / WEBPERF
-│   ├── debugging-and-error-recovery/  # VERIFY
-│   ├── code-review-and-quality/       # REVIEW
-│   ├── code-simplification/           # SIMPLIFY
-│   ├── security-and-hardening/        # REVIEW
-│   ├── dependency-audit/              # REVIEW
-│   ├── performance-optimization/      # REVIEW
-│   ├── performance-analysis/          # REVIEW
-│   ├── refactoring-patterns/          # SIMPLIFY
-│   ├── git-workflow-and-versioning/   # SHIP
-│   ├── changelog-generate/            # SHIP
-│   ├── ci-cd-and-automation/          # SHIP
-│   ├── deprecation-and-migration/     # SHIP
-│   ├── documentation-and-adrs/        # SHIP / EVOLVE
-│   ├── shipping-and-launch/           # SHIP
-│   ├── incident-response/             # SHIP / VERIFY
-│   ├── crafting-effective-readmes/    # DEFINE / SHIP
-│   ├── xlsx/                          # EXTRA
-│   └── excel-analysis/                # EXTRA
-│
-├── references/                 # 59 technical reference files
-│   ├── testing-patterns.md
-│   ├── security-checklist.md
-│   ├── performance-checklist.md
-│   ├── accessibility-checklist.md
-│   ├── clean-code.md
-│   ├── code-smells.md
-│   ├── design-patterns.md
-│   ├── solid-principles.md
-│   ├── error-handling.md
-│   ├── tdd.md
-│   ├── architecture.md
-│   ├── DDD-STRATEGIC.md
-│   ├── DDD-TACTICAL.md
-│   ├── HEXAGONAL.md
-│   ├── CQRS-EVENTS.md
-│   ├── refactoring-smell-catalog.md
-│   ├── component-patterns.md
-│   ├── color-system.md
-│   ├── typography.md
-│   └── ... (59 files total — see references/ for the full list)
-│
-├── docs/                       # Project documentation
-│   ├── APPFLOW.md              #   Application flow
-│   ├── ARCHITECTURE.md         #   System architecture decisions
-│   ├── CODE_STYLE.md           #   Coding conventions
-│   ├── DESIGN.md               #   Design directions
-│   ├── PRD.md                  #   Product requirements
-│   ├── SCHEMA.md               #   Data schema
-│   ├── TRD.md                  #   Technical requirements
-│   └── WORKFLOW.md             #   Implementation workflow
-│
-├── specs/                      # Project specifications
-│   ├── spec-xx.md              #   Feature specs
-│   ├── adr/                    #   Architecture Decision Records
-│   │   └── adr-xxx.md          #     Template
-│   └── design/                 #   Design docs
-│       ├── components.md
-│       ├── style-guide.md
-│       └── user-flow.md
-│
-├── scripts/                    # Helper scripts
-│   ├── build.sh
-│   ├── lint.sh
-│   ├── setup.sh
-│   └── test.sh
-│
-├── tasks/                      # Task tracking
-│   ├── plan.md                 #   Current plan
-│   └── todo.md                 #   Todo list
-│
-├── src/                        # Source code
-└── tests/                      # Tests
-```
-
-**Note:** The `.opencode/agents`, `.opencode/commands`, and `.opencode/skills` directories are symlinks created automatically by the Códice installer after copying template files. This ensures compatibility with npm packaging (which strips symlinks from tarballs).
-
----
-
 ## Troubleshooting
 
 | Problem | Solution |
@@ -446,18 +266,10 @@ project-root/
 | `bunx @fisherk2-dev/codice` not found | Ensure Bun is installed: `curl -fsSL https://bun.sh/install \| bash` |
 | `bunx` shows no output or hangs | Try `bunx @fisherk2-dev/codice@latest` or use `npx @fisherk2-dev/codice` instead |
 | `bunx` uses a cached version | Run `bunx --fresh @fisherk2-dev/codice` |
-| `Permission denied` (binary) | Run `chmod +x` on the downloaded binary, or prepend `sudo` |
-| Binary not found after install | Ensure the binary is in your `$PATH`, or use `./codice` |
 | GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
 | `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
 | Symlinks not created | If `.opencode/agents` is missing after installation, re-run the installer. Symlinks are created during post-installation and require write permissions in the project directory |
-
----
-
-## License
-
-MIT — See [LICENSE](LICENSE) for details.
 
 ---
 

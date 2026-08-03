@@ -2,24 +2,39 @@ import * as clack from "@clack/prompts";
 import type { IUserPrompt } from "../../application/ports/IUserPrompt";
 import type { FileRule } from "../../domain/entities/FileRule";
 
-/**
- * @clack/prompts adapter implementing the IUserPrompt interface.
- * Provides an interactive TUI for the installer using @clack/prompts primitives.
- *
- * Display methods (showWarning, showInfo, showIntro, showSuccess, showCancel,
- * showError) are synchronous — they do not wait for user interaction.
- * Interactive methods (confirm, selectOptional) return promises.
- */
-export class ClackPromptsAdapter implements IUserPrompt {
-	/**
-	 * Explicit empty constructor.
-	 * Present to avoid Bun's coverage tool counting an implicit constructor
-	 * as an uncovered function. (REF: TECH_DEBT.md TD-1.2)
-	 */
-	// biome-ignore lint/complexity/noUselessConstructor: Needed to fix Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
-	constructor() {}
+/** @clack/prompts adapter implementing IUserPrompt. */
 
-	private spinner: ReturnType<typeof clack.spinner> | null = null;
+/** Mode-selection menu options — hoisted to avoid re-allocation on every call. */
+const MODE_OPTIONS = [
+	{
+		value: "clean" as const,
+		label: "Clean Install",
+		hint: "Complete template overwrite (all files)",
+	},
+	{
+		value: "project" as const,
+		label: "Project Install",
+		hint: "Selective merge with file classification",
+	},
+	{
+		value: "update" as const,
+		label: "Update Workspace",
+		hint: "Update to latest template version",
+	},
+];
+
+/** Progress-event category → @clack/prompts display call. Looked up by logProgressEvent via Object.hasOwn. */
+const PROGRESS_EMITTERS: Record<string, (text: string) => void> = {
+	commit: (text) => clack.log.success(`✓ ${text}`),
+	symlink: (text) => clack.log.success(`🔗 ${text}`),
+	gitignore: (text) => clack.log.info(`📄 ${text}`),
+	error: (text) => clack.log.error(`✗ ${text}`),
+	skip: (text) => clack.log.warn(`⊘ ${text}`),
+};
+
+export class ClackPromptsAdapter implements IUserPrompt {
+	// biome-ignore lint/complexity/noUselessConstructor: Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
+	constructor() {}
 
 	/**
 	 * Display a warning message using @clack/prompts note() with yellow styling.
@@ -83,28 +98,39 @@ export class ClackPromptsAdapter implements IUserPrompt {
 			return [];
 		}
 
-		return result as string[];
+		return result;
 	}
 
-	/**
-	 * Show a spinner with a message during async operations.
-	 */
-	showSpinner(message: string): void {
-		if (this.spinner) {
-			this.spinner.stop();
-		}
-		this.spinner = clack.spinner();
-		this.spinner.start(message);
+	private progressBar: ReturnType<typeof clack.progress> | null = null;
+
+	showProgressBar(total: number, label?: string): void {
+		this.progressBar = clack.progress({ max: total, style: "heavy" });
+		if (label) this.progressBar.start(label);
 	}
 
-	/**
-	 * Stop the current spinner.
-	 */
-	stopSpinner(): void {
-		if (this.spinner) {
-			this.spinner.stop();
-			this.spinner = null;
+	updateProgress(_current: number, filePath: string): void {
+		if (!this.progressBar) return;
+		this.progressBar.advance(1, `Processing: ${filePath}`);
+	}
+
+	completeProgress(): void {
+		if (this.progressBar) {
+			this.progressBar.stop();
+			this.progressBar = null;
 		}
+	}
+
+	logProgressEvent(message: string): void {
+		const colonIdx = message.indexOf(":");
+		if (colonIdx > 0) {
+			const category = message.slice(0, colonIdx).trim().toLowerCase();
+			const text = message.slice(colonIdx + 1).trim();
+			if (Object.hasOwn(PROGRESS_EMITTERS, category)) {
+				PROGRESS_EMITTERS[category]!(text);
+				return;
+			}
+		}
+		clack.log.step(message);
 	}
 
 	/**
@@ -135,33 +161,12 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		clack.cancel(`❌ ${message}`);
 	}
 
-	/**
-	 * Present the mode selection menu to the user.
-	 * Implements IUserPrompt.promptForMode().
-	 * @returns Selected mode, or null if user cancelled.
-	 */
+	/** Present mode selection menu. Returns selected mode or null on cancel. */
 	async promptForMode(): Promise<"clean" | "project" | "update" | null> {
 		const result = await clack.select({
 			message: "Select installation mode:",
-			options: [
-				{
-					value: "clean" as const,
-					label: "Clean Install",
-					hint: "Complete template overwrite (all files)",
-				},
-				{
-					value: "project" as const,
-					label: "Project Install",
-					hint: "Selective merge with file classification",
-				},
-				{
-					value: "update" as const,
-					label: "Update Workspace",
-					hint: "Update to latest template version",
-				},
-			],
+			options: MODE_OPTIONS,
 		});
-
 		if (clack.isCancel(result)) return null;
 		return result as "clean" | "project" | "update";
 	}

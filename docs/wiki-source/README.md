@@ -38,5 +38,5 @@ git push
 7. `Agents.md` — Agentes y guía para añadir nuevos
 8. `Commands.md` — Comandos SDD y guía para añadir nuevos
 9. `Skills.md` — Skills y guía para añadir nuevos
-10. `Customization-Guide.md` — Recetas de customización
+10. `Configuration.md` — Guía de configuración y personalización
 11. `Troubleshooting.md` — Solución de problemas

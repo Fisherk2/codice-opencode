@@ -1,8 +1,8 @@
 /**
  * TemplateResolver — Source mode auto-detection tests (F55-T2)
  *
- * Tests the automatic detection of source vs compiled mode and
- * backward compatibility with explicit templateRoot.
+ * Tests the automatic detection of source mode and backward
+ * compatibility with explicit templateRoot.
  */
 import { describe, expect, test } from "bun:test";
 import * as path from "node:path";

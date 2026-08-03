@@ -9,7 +9,7 @@ Detect input type:
 
 - **Remote issue** — user provided a GitHub/GitLab URL or issue number → fetch and summarize
 - **Local bug** — user describes symptoms or error messages → use as-is
-- **Vague report** — invoke @skills/interview-me/SKILL.md to extract: symptoms, when it started, expected vs actual behavior.
+- **Vague report** — load `interview-me` skill to extract: symptoms, when it started, expected vs actual behavior.
 
 **Always use the `question` tool to let the user confirm what problem they want to analyze — never decide automatically, even if the issue or symptoms seem clear or trivial.** The user must answer doubts, suggestions, and ambiguities before proceeding.
 
@@ -25,18 +25,18 @@ Do not proceed without a clear target.
 
 ## Phase 1: Analyze
 
-Delegate to analysis subagents based on problem type. **No implementation — analysis only.**
+**Delegate** to analysis subagents based on problem type. **No implementation — analysis only.**
 
 | Problem type | Subagent | Skill |
 |-------------|----------|-------|
-| Error / crash / stack trace | `error-detective` | @skills/debugging-and-error-recovery/SKILL.md |
-| Code quality / logic bug | `code-reviewer` | @skills/code-review-and-quality/SKILL.md |
-| Security vulnerability | `security-auditor` | @skills/security-and-hardening/SKILL.md |
-| Performance issue | `web-performance-auditor` | @skills/performance-analysis/SKILL.md |
+| Error / crash / stack trace | `error-detective` | `debugging-and-error-recovery` |
+| Code quality / logic bug | `code-reviewer` | `code-review-and-quality` |
+| Security vulnerability | `security-auditor` | `security-and-hardening` |
+| Performance issue | `web-performance-auditor` | `performance-analysis` |
 | Database / query problem | `database-optimizer` | — |
-| Dependency issue (CVE, license) | — | @skills/dependency-audit/SKILL.md |
+| Dependency issue (CVE, license) | — | `dependency-audit` |
 
-For problems spanning multiple domains, invoke subagents **sequentially**. Synthesize findings before documenting.
+For problems spanning multiple domains, invoke subagents **sequentially** and load skills **on demand**. Synthesize findings before documenting.
 
 Use terminal tools to investigate: check logs, inspect config, test components, run diagnostics.
 
@@ -62,6 +62,8 @@ Create diagnosis in `docs/diagnosis/` using @docs/diagnosis/diagnosis-template.m
 - If the diagnosis reveals an existing fix in progress, update the existing diagnosis instead of creating a new one
 
 Invoke `question-tool` to confirm the diagnosis or ask for clarification if needed to make changes before proceeding with plan creation.
+
+Finally, commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
 ## Suggested Next Step
 

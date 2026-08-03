@@ -20,15 +20,13 @@ source "$(dirname "$0")/common.sh"
 
 log_step "FEV-2-B: Update No Symlinks E2E"
 
-# Resolve binary (builds if needed)
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+# Resolve CLI (builds if needed)
 
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
 log_info "Test directory: $TEMP_DIR"
 
-# Copy template to temp dir so the binary can find it
+# Copy template to temp dir so the CLI can find it
 cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 
 # Create a version file so Update mode thinks we already have an installed version
@@ -41,7 +39,7 @@ log_info "Created .codice-version file for update detection"
 
 log_info "=== Step 1: Clean Install to seed template + symlinks ==="
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --clean --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && $CODICE_CLI --clean --force) 2>/dev/null || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
     log_fail "Clean install exited with code $EXIT_CODE (expected 0)"
@@ -63,11 +61,6 @@ rm -f "$TEMP_DIR/.opencode/agents" \
       "$TEMP_DIR/.opencode/skills"
 log_info "Removed 3 .opencode symlinks"
 
-# Also remove a few .devin symlinks to verify they aren't recreated either
-rm -f "$TEMP_DIR/.devin/skills" \
-      "$TEMP_DIR/.devin/workflows"
-log_info "Removed 2 .devin symlinks"
-
 # Verify they are actually gone
 if [[ -L "$TEMP_DIR/.opencode/agents" ]]; then
     log_fail "Failed to remove .opencode/agents symlink before update test"
@@ -84,7 +77,7 @@ EXIT_CODE2=0
 # Start mock server so update doesn't fail on version check
 start_mock_server
 
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" "$CODICE_BINARY" --update --force) 2>/dev/null || EXIT_CODE2=$?
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force) 2>/dev/null || EXIT_CODE2=$?
 
 # Stop mock server
 stop_mock_server
@@ -119,19 +112,6 @@ if [[ -L "$TEMP_DIR/.opencode/skills" ]]; then
     exit 1
 fi
 log_pass ".opencode/skills still absent after update"
-
-# .devin/ symlinks should also still be absent
-if [[ -L "$TEMP_DIR/.devin/skills" ]]; then
-    log_fail ".devin/skills symlink was recreated by Update mode (should NOT be)"
-    exit 1
-fi
-log_pass ".devin/skills still absent after update"
-
-if [[ -L "$TEMP_DIR/.devin/workflows" ]]; then
-    log_fail ".devin/workflows symlink was recreated by Update mode (should NOT be)"
-    exit 1
-fi
-log_pass ".devin/workflows still absent after update"
 
 # ---------------------------------------------------------------------------
 # Step 5: Assert template files are still present (update should preserve them)

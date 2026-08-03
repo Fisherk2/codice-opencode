@@ -4,6 +4,7 @@ import type { ISymlinkCreator, SymlinkSpec } from "../../application/ports/ISyml
 import type { Result } from "../../domain/types/Result";
 import { failure, success } from "../../domain/types/Result";
 import { type SymlinkError, symlinkError } from "../../domain/types/SymlinkError";
+import { isPathWithin } from "./pathResolver";
 
 const fsPromises = fs.promises;
 
@@ -52,9 +53,7 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 	async createSymlink(target: string, linkPath: string): Promise<Result<void, SymlinkError>> {
 		const resolvedLinkPath = path.resolve(this.workspaceRoot, linkPath);
 
-		// Extract root + trailing separator for consistent prefix matching (used twice below).
-		const rootWithSep = path.resolve(this.workspaceRoot) + path.sep;
-		if (!resolvedLinkPath.startsWith(rootWithSep)) {
+		if (!isPathWithin(this.workspaceRoot, resolvedLinkPath)) {
 			return failure(
 				symlinkError(
 					target,
@@ -72,7 +71,7 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 		const resolvedTarget = path.resolve(linkParentDir, target);
 
 		// Defense-in-depth: ensure the resolved target stays within the workspace root
-		if (!resolvedTarget.startsWith(rootWithSep)) {
+		if (!isPathWithin(this.workspaceRoot, resolvedTarget)) {
 			return failure(
 				symlinkError(
 					target,
@@ -141,14 +140,14 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 			// Determine the target type for Windows compatibility:
 			// Windows requires `type: 'dir'` for directory symlinks.
 			const targetStat = await fsPromises.stat(resolvedTarget);
-			const symlinkType = targetStat.isDirectory() ? "dir" : ("file" as "dir" | "file");
+			const symlinkType = targetStat.isDirectory() ? "dir" : "file";
 
 			// Use relative target path for the symlink (portable across machines)
 			await fsPromises.symlink(target, resolvedLinkPath, symlinkType);
 
 			if (this.verbose) {
 				// biome-ignore lint/suspicious/noConsole: verbose diagnostic output
-				console.warn(`[info] Created symlink: ${linkPath} → ${target}`);
+				console.warn(`[info] Created symlink: ${resolvedLinkPath} → ${target}`);
 			}
 
 			return success(undefined);

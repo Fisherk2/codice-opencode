@@ -18,11 +18,11 @@ The template ships with **9 MCP servers** pre-configured in `opencode.json`. Thr
 | `chrome-devtools` | Local | ❌ Disabled | `/webperf` Deep mode, browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`xlsx` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
-| `docs-mcp-server` | Local | ❌ Disabled | Open-source documentation queries |
 | `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
 | `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
 | `vercel-grep` | Remote | ✅ Enabled | GitHub code search across 1M+ repos |
 | `gitmcp` | Remote | ✅ Enabled | GitHub repository documentation |
+| `codebase-memory-mcp` | Local (global install) | ❌ Disabled | Knowledge graph for codebase intelligence |
 
 ---
 
@@ -254,49 +254,96 @@ For lightweight sessions without a full Jupyter server:
 
 ---
 
-### Grounded Docs MCP Server — Open-Source Documentation Queries
+### Codebase Memory MCP — Knowledge Graph for Code Intelligence
 
-Local stdio-based MCP server that provides up-to-date library documentation from official sources. Open-source alternative to Context7. Indexes docs from websites, GitHub, npm, PyPI, and local files.
+Local MCP server that indexes your codebase into a persistent knowledge graph. Provides structural search, call tracing, architecture analysis, dead code detection, and 15 other tools. Supports 158 languages via tree-sitter. Ships as a single static binary — zero dependencies, no API keys required.
 
-**Pre-configured as:** `"enabled": false` — requires manual startup of the server first.
+**Pre-configured as:** `"enabled": false` — requires global installation on the user's machine.
 
 #### Prerequisites
 
-- Node.js 22+ (already present in this workspace)
-- No API key required
+- **Global installation** — The MCP binary must be installed globally (not via `npx`). The installer auto-configures OpenCode.
 
-#### Quick Start
+#### Quick Start (Recommended)
 
-**Enable the MCP server** in `opencode.json` — no manual server process needed:
+**One-line install** (macOS / Linux):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.ps1 -OutFile install.ps1
+Unblock-File .\install.ps1
+.\install.ps1
+```
+
+The installer auto-detects OpenCode and configures the MCP entry. After installation:
+
+1. **Restart OpenCode** for the change to take effect.
+2. **Enable the MCP** in `opencode.json` (set `"enabled": true`):
+   ```json
+   {
+     "mcp": {
+       "codebase-memory-mcp": {
+         "enabled": true
+       }
+     }
+   }
+   ```
+3. Say **"Index this project"** to your agent — done.
+
+#### Alternative: npm / PyPI / Homebrew
+
+```bash
+# npm
+npm install -g codebase-memory-mcp
+
+# PyPI
+pip install codebase-memory-mcp
+
+# Homebrew (macOS/Linux)
+brew install codebase-memory-mcp
+```
+
+#### Manual Configuration
+
+If you prefer not to use the install command, add to `opencode.json`:
 
 ```json
 {
   "mcp": {
-    "docs-mcp-server": {
-      "type": "local",
-      "command": ["npx", "-y", "@arabold/docs-mcp-server@latest"],
-      "enabled": true
+    "codebase-memory-mcp": {
+      "command": "/path/to/codebase-memory-mcp",
+      "args": []
     }
   }
 }
 ```
 
-OpenCode manages the server lifecycle automatically via stdio.
-
-> **Tip:** You can also access the Web UI at `http://localhost:6280` when the server is running to add documentation interactively, or index docs via CLI:
-> ```bash
-> npx @arabold/docs-mcp-server@latest scrape react https://react.dev/reference/react
-> npx @arabold/docs-mcp-server@latest search react "useEffect" --output yaml
-> ```
-
-#### Available Tools
+#### Available Tools (15 total)
 
 | Tool | Purpose |
 |------|---------|
-| `fetch_docs` | Fetch documentation for a specific library URL |
-| `search_docs` | Semantic search across indexed documentation |
+| `search_graph` | Search functions, classes, routes, variables by pattern |
+| `search_code` | Graph-augmented code search |
+| `trace_path` | Trace callers/callees, impact analysis |
+| `get_code_snippet` | Read specific function/class source code |
+| `query_graph` | Cypher queries for complex patterns |
+| `get_architecture` | High-level project summary |
+| `detect_changes` | Git diff impact mapping |
+| `manage_adr` | Architecture Decision Records |
+| `index_repository` | Index or re-index the codebase |
+| `ingest_traces` | Enhance graph with runtime traces |
+| `get_graph_schema` | Knowledge graph schema |
+| `index_status` | Check indexing status |
+| `list_projects` | List all indexed projects |
+| `delete_project` | Remove a project from the index |
+| `context7_query-docs` | Query Context7 documentation (built-in) |
 
-> **Repository:** [github.com/arabold/docs-mcp-server](https://github.com/arabold/docs-mcp-server) | **Web:** [grounded.tools](https://grounded.tools)
+> **Repository:** [github.com/DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | **License:** MIT | **Stars:** 36K+
 
 ---
 
@@ -577,7 +624,7 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 | Feature | MCP Required | Without MCP |
 |---------|--------------|-------------|
 | Documentation queries (`find-docs` skill) | `context7` | Falls back to training data |
-| Open-source documentation queries | `docs-mcp-server` | Falls back to context7 |
+| Codebase intelligence (search, trace, architecture) | `codebase-memory-mcp` | File-by-file exploration (slow, token-heavy) |
 | Real-time web search (API key) | `tavily` | Falls back to training data |
 | Web scraping and crawling (API key) | `firecrawl` | Not available |
 | GitHub code search | `vercel-grep` | Manual GitHub browsing |

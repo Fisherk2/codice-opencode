@@ -34,39 +34,10 @@ test-integration:
 test-coverage:
     bun test tests/ --coverage {{IGNORE_PATTERNS}}
 
-# Build for current platform (auto-detects OS)
-build:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    case "$(uname -s)" in
-        Linux*)  binary="./dist/codice-linux" ;;
-        Darwin*) binary="./dist/codice-macos" ;;
-        *)       binary="./dist/codice-windows.exe" ;;
-    esac
-    echo "=== Building $binary ==="
-    mkdir -p dist
-    bun build --compile src/cli/main.ts --outfile "$binary"
-
-# Cross-compile for all 3 platforms (requires Bun cross-compilation support)
-build-all:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    failures=0
-    mkdir -p dist
-    echo "=== Building codice-linux (x64) ==="
-    bun build --compile --target=bun-linux-x64 src/cli/main.ts --outfile ./dist/codice-linux \
-        || { echo "FAILED: codice-linux" >&2; ((failures++)); }
-    echo "=== Building codice-macos (x64) ==="
-    bun build --compile --target=bun-darwin-x64 src/cli/main.ts --outfile ./dist/codice-macos \
-        || { echo "FAILED: codice-macos" >&2; ((failures++)); }
-    echo "=== Building codice-windows.exe (x64) ==="
-    bun build --compile --target=bun-windows-x64 src/cli/main.ts --outfile ./dist/codice-windows.exe \
-        || { echo "FAILED: codice-windows.exe" >&2; ((failures++)); }
-    if [ "$failures" -gt 0 ]; then
-        echo "FAILED: $failures build(s) failed" >&2
-        exit 1
-    fi
-    echo "All builds succeeded"
+# Generate lcov coverage report and enforce minimum threshold (default: 95%)
+# Usage: just coverage-check [threshold]
+coverage-check threshold="95":
+    bash scripts/coverage-check.sh {{threshold}}
 
 test-watch:
     bun test tests/ --watch {{IGNORE_PATTERNS}}
@@ -80,7 +51,56 @@ test-packaging-skip:
     SKIP_NETWORK_TESTS=1 bun test tests/integration/packaging/ {{IGNORE_PATTERNS}}
 
 test-e2e:
-    just build && SKIP_BUILD=1 bash tests/e2e/run-e2e.sh
+    bash tests/e2e/run-e2e.sh
 
+# Remove legacy dist/ directory (binary compilation removed in v1.2.0; kept for cleanup of old artifacts)
 clean:
-    rm -rf dist/*
+    rm -rf dist
+
+# ─── Plugin Quality ──────────────────────────────────────────────────────────
+
+# Lint all plugin files with Biome
+check-plugin:
+    bunx @biomejs/biome check template/obligatorio/.opencode/plugins/ template/opcional/.opencode/plugins/
+
+# Run plugin unit tests
+test-plugin-unit:
+    bun test ./template/obligatorio/.opencode/plugins/src/__tests__/*.test.ts
+
+# Run plugin integration tests
+test-plugin-integration:
+    bun test tests/plugin/integration/
+
+# Run plugin E2E tests
+test-plugin-e2e:
+    bash tests/plugin/e2e/run-plugin-e2e.sh
+
+# ─── Performance Benchmarks ────────────────────────────────────────────────────
+
+# Run installation performance benchmarks with hyperfine.
+# Requires: cargo install hyperfine (or download from GitHub releases)
+bench:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p tests/fixtures/bench
+    echo "Benchmarking Clean Install..."
+    hyperfine \
+        --warmup 1 \
+        --runs 5 \
+        --export-json tests/fixtures/bench/clean-install.json \
+        --command-name "clean-install" \
+        "bun run src/cli/main.ts --mode clean --dest tests/fixtures/bench/clean --force"
+    echo "Benchmarking Project Install..."
+    hyperfine \
+        --warmup 1 \
+        --runs 5 \
+        --export-json tests/fixtures/bench/project-install.json \
+        --command-name "project-install" \
+        "bun run src/cli/main.ts --mode project --dest tests/fixtures/bench/project --force"
+    echo "Benchmarking Update Workspace..."
+    hyperfine \
+        --warmup 1 \
+        --runs 5 \
+        --export-json tests/fixtures/bench/update-workspace.json \
+        --command-name "update-workspace" \
+        "bun run src/cli/main.ts --mode update --dest tests/fixtures/bench/update --force"

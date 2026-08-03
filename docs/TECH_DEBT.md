@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-07-11
-**Status:** Active reference for improvement planning
-**Current version:** v1.1.3 (587 tests, 0 fail, ~1255 expects, 100.00% funcs / 98.08% lines)
+**Last updated:** 2026-07-30
+**Status:** v1.2.0 pre-release ready — all FEV-16 items resolved, code review fixes applied
+**Current version:** v1.2.0 (844 tests, 0 fail)
 
 ---
 
@@ -24,6 +24,43 @@
 |----|------|------------|
 | **TD-CR-1** | Code review fixes: GitHubRestClient catch simplification, UpdateWorkspaceUseCase helper normalization, Windows SYSTEM_DIRS, resolveWithinRoot normalization, VERSION module extraction, AtomicStager fs.copyFile, CleanInstall/ProjectInstall duplication documented | ✅ All 11 code review findings resolved (4 Important, 7 Suggestions) |
 
+### FEV-13 — Documentation Overhaul + SDD Plugin Decoupling (2026-07-29)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **Issue #53** | SDD plugin coupling — 6 hardcoded maps (`COMMAND_AGENT_MAP`, `VALID_SUBAGENTS`, `AGENT_MENTION_PATTERNS`, `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS`) required manual editing of `sdd-pipeline.ts` for every new command/agent/skill | ✅ Extracted to `autoDiscovery.ts` (filesystem scanning) + `defaults.ts` (config-driven defaults). Auto-discovery detects commands/agents from filesystem; config loaded from `opencode.json` `sddPipeline` section. Plugin reduced from 665→<400 lines. |
+| **Issue #51** | Documentation outdated in `docs/` and `template/estandar/docs/`; Wiki pages referenced internal implementation details ("edit sdd-pipeline.ts") | ✅ 8 Wiki pages rewritten for end users. WORKFLOW.md, CHANGELOG.md, SPEC.md under target line counts. ADR-013 created. |
+
+### FEV-14 — UX Enhancements (2026-07-30)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **CRITICAL-1** | Progress bar re-created on every `stage_start` event | ✅ Added `barStarted` closure flag in `createProgressCallback()`. Bar initializes once on first `stage_start`, advances on subsequent events. |
+| **CRITICAL-2** | Symlink/gitignore log events emitted BEFORE operations | ✅ Moved 4 log event lines from `CleanInstallUseCase` and `ProjectInstallUseCase` into `postInstall.ts:runPostInstallSteps()` — each log now emits AFTER the corresponding operation completes. |
+| **IMPORTANT-1** | Progress `total` included skipped files, never reaching 100% | ✅ `FileMergeEngine` pre-computes `stageDecisions` Map; `total` counts only files that pass `shouldStage`. `current++` moved after the check. |
+| **IMPORTANT-2** | Inline `import()` types in test file | ✅ Top-level `import type { ProgressEvent }` added; 6 inline references replaced. |
+| **IMPORTANT-3** | DRY violation — 4 log event lines duplicated in 2 use cases | ✅ Resolved by CRITICAL-2 fix (events now live in shared `postInstall.ts`). |
+| **SUGGESTION-1** | Redundant `completeProgress()` calls in 3 use cases | ✅ Removed 3 redundant calls — callback already handles via `error`/`commit_complete` events. |
+
+### FEV-15 — Community Standards (2026-07-30)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **Issue #55** | Community standards — project lacks Code of Conduct | ✅ `CODE_OF_CONDUCT.md` created (Contributor Covenant v2.1). `template/estandar/CODE_OF_CONDUCT.md` created as customizable placeholder. Manifest entry added in `FileRuleManifestData.ts`. Cross-references in `CONTRIBUTING.md` and `README.md`. E2E test extended. |
+
+### FEV-16 — Pre-release Tech Debt Closure (2026-07-30)
+
+| ID | Item | Resolution |
+|----|------|------------|
+| **TD-1.1** | `src/cli/main.ts` coverage gap (interactive mode + catch block) | ✅ `resolveInteractiveMode()` extracted. 10 new tests (9 unit + 1 mock.module). Coverage 86.21% → 98.90%. |
+| **TD-2.1** | CleanInstall/ProjectInstall duplicación (~80 líneas) | ✅ Template Method pattern. `InstallUseCaseBase` created. 313 → 145 lines (-168). |
+| **TD-5.1** | E2E Coverage Not Captured by `bun --coverage` | ✅ `c8` evaluated (incompatible with Bun/JSC™). Native Bun coverage + CI gate ≥95%. |
+| **TD-5.2** | No Performance Benchmarks | ✅ `just bench` + 3 standalone scripts + `assert-no-regression.sh`. SC-9/10/11 benchmarked. |
+| **TD-6.2** | Standard Directory Updates Are All-or-Nothing | ✅ Tree-level diff (`diffTrees()`) in FileMergeEngine. New files delivered, existing files preserved. 11+3+1 tests. |
+| **CR-Fixes** | Code review fixes (post-FEV-16): error context enrichment (`wrapMergeError`), standard `Result` from `stageOne`, exhaustiveness guard in `shouldStage` | ✅ `MergeError` phase/path preserved in user messages; `stageOne` returns `Result<void, MergeError>` (no null sentinel); compile-time guard for new `RuleCategory` values. |
+
+**Known test pattern** (2026-07-30): `MinimalInstallUseCase` test stub uses `{} as any` for 7 dependency mocks in `install-use-case-base.test.ts`. Acceptable for now — the stub is minimal, the `eslint-disable` comment is clear, and full mocks would bloat the test. Revisit if this pattern spreads to other test files.
+
 ### Prior (v1.0.11)
 
 All resolved debt from v1.0.11 and earlier removed. For historical reference, see git history.
@@ -32,7 +69,7 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 
 ## 1. Coverage Gaps
 
-### 1.1 `src/cli/main.ts` — 86.21% lines (100.00% functions)
+### 1.1 `src/cli/main.ts` — RESOLVED in FEV-16 (98.90% lines)
 
 | Item | Detail |
 |------|--------|
@@ -51,7 +88,7 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 
 ## 2. Architectural Debt
 
-### 2.1 CleanInstallUseCase / ProjectInstallUseCase duplicación (~80 líneas)
+### 2.1 CleanInstallUseCase / ProjectInstallUseCase duplicación (~80 líneas) — RESOLVED in FEV-16 (Template Method)
 
 | Item | Detail |
 |------|--------|
@@ -85,7 +122,7 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 
 ## 5. Process Debt
 
-### 5.1 E2E Coverage Not Captured by `bun --coverage`
+### 5.1 E2E Coverage Not Captured by `bun --coverage` — RESOLVED in FEV-16 (CI gate ≥95%)
 
 | Item | Detail |
 |------|--------|
@@ -96,7 +133,7 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 | **Target** | Future (v1.2.0+) |
 | **Effort** | 8h |
 
-### 5.2 No Performance Benchmarks
+### 5.2 No Performance Benchmarks — RESOLVED in FEV-16 (just bench + assert-no-regression)
 
 | Item | Detail |
 |------|--------|
@@ -140,19 +177,12 @@ not file granularity.
 
 ## 7. Performance & Distribution
 
-### 7.1 Binary Size Reduction — 74MB → <20MB
+### 7.1 Binary Size Reduction — RESOLVED in v1.2.0
 
 | Item | Detail |
 |------|--------|
 | **Problem** | Compiled binaries are too large: `codice-linux` is **74MB** (ELF x64). macOS and Windows builds are similar. This exceeds reasonable download sizes for a CLI tool and bloats GitHub Release assets. |
-| **Root cause** | Bun's `--compile` bundles the entire runtime + all dependencies + the embedded template directory into a single executable. The template alone (agents, skills, commands, docs) is substantial, and Bun includes its full JS runtime regardless of what's used. |
-| **Impact** | Users downloading via `curl` or GitHub Releases wait longer. npm package size also increases. CDN and storage costs grow. Competing CLI tools (e.g., `gh`, `rg`) ship binaries <10MB. |
-| **Target** | <20MB per platform binary (73% reduction from current 74MB). |
-| **Proposed strategies** | 1. **Externalize template**: Ship template as a separate npm package or downloadable tarball instead of embedding in the binary. Binary becomes a pure installer/downloader. 2. **Bun tree-shaking**: Investigate `--minify` and dead code elimination flags. 3. **UPX compression**: Compress binaries with UPX (adds runtime decompression, ~30-50% reduction). 4. **Lazy template fetch**: Binary fetches template from GitHub Releases API on first run, caching locally. |
-| **Trade-offs** | Externalizing template adds a network dependency on first install. UPX adds antivirus false positives. Lazy fetch requires internet. Best approach: externalize template + keep offline fallback via `--offline` flag using embedded template. |
-| **Risk** | Medium. Externalizing template changes the distribution model. Requires ADR before implementation. |
-| **Target release** | v1.2.0 |
-| **Effort** | 8-12h (including ADR, implementation, and cross-platform testing) |
+| **Resolution** | **FEV-11 (Issue #46):** Remove all binary compilation and distribution logic. The only installation method will be via package managers (npm/bunx). This eliminates the binary size problem entirely by removing binaries. See [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md). |
 
 ---
 
@@ -169,14 +199,40 @@ not file granularity.
 | `IFileSystem` port split (ISP) | ✅ IFileSystem (6) + IStagingSystem (4) |
 | Explicit constructors in `VersionComparator` + `ClackPromptsAdapter` | ✅ Resolved in FEV-6 (v1.1.0) |
 
-### Future (v1.2.0+)
+### v1.2.0
 
-| Item | Effort | Impact |
-|------|--------|--------|
-| Binary size reduction (74MB → <20MB) | 8-12h | 73% smaller downloads, faster installs, lower CDN costs |
-| E2E coverage instrumentation | 8h | Accurate coverage for entry point |
-| `just bench` performance benchmarks | 4h | Regression detection for SC-9/10/11 |
-| CleanInstall/ProjectInstall Template Method refactor | 4h | Eliminate ~80 lines duplication, prepare for new install modes |
+| Item | Effort | Impact | Diagnosis |
+|------|--------|--------|-----------|
+| FEV-11: Binary removal (Issue #46) — BREAKING | — | ✅ npm-only distribution as per ADR-011. Binary compilation removed from build system, CI/CD, E2E tests, and docs. | [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md) |
+| FEV-12: References restructuring (Issues #54, #52) | 8h | ✅ Completado — Self-contained skills, configurable references | [fix05-v1.2-phase2-references.md](diagnosis/fix05-v1.2-phase2-references.md) |
+| FEV-13: Documentation overhaul (Issues #51, #53) | 12h | ✅ Completado — Auto-discovery + config-driven + quality infra + Wiki rewrite | [fix06-v1.2-phase3-documentation.md](diagnosis/fix06-v1.2-phase3-documentation.md) |
+| FEV-14: UX enhancements (Issues #47, #56) | 6h | ✅ Completado — Progress bar + /help command + 6 code review fixes | [fix07-v1.2-phase4-ux.md](diagnosis/fix07-v1.2-phase4-ux.md) |
+| FEV-15: Community standards (Issue #55) | 2h | ✅ Completado — Code of conduct for project and template | [fix08-v1.2-phase5-community.md](diagnosis/fix08-v1.2-phase5-community.md) |
+| FEV-16: Pre-release Tech Debt Closure | 24h | ✅ Completo — TD-1.1, 2.1, 5.1, 5.2, 6.2 | TD-1.1, 2.1, 5.1, 5.2, 6.2 |
+
+### v1.3.0
+
+The following items are planned for v1.3 and beyond. No diagnosis has been created yet — these will be addressed after v1.2 is complete.
+
+#### Alternative Package Managers — Issue #24
+
+| Item | Detail |
+|------|--------|
+| **Issue** | [#24](https://github.com/fisherk2/codice-opencode/issues/24) — Añadir mas opciones de instalacion |
+| **Description** | Implement and maintain alternative package managers to npm in case of incidents. Proposals: uv with pip, cargo, composer, pnpm, yarn. |
+| **Risk** | Medium. Multiple package managers increase maintenance burden and testing complexity. |
+| **Target** | v1.3 |
+| **Effort** | 8-12h (including testing across multiple package managers) |
+
+#### Internationalization (i18n) — Issue #22
+
+| Item | Detail |
+|------|--------|
+| **Issue** | [#22](https://github.com/fisherk2/codice-opencode/issues/22) — Añadir accesibilidad de idiomas |
+| **Description** | Add language selection at CLI startup. Options: (1) Manual selection from 5 languages (English, Spanish, + 3 more), (2) Automatic detection based on host locale. All interactive menu text must be translated. |
+| **Risk** | Medium. Requires i18n infrastructure, translation files, and locale detection logic. |
+| **Target** | v1.3 |
+| **Effort** | 6-10h (including translation infrastructure and 5 language translations) |
 
 ---
 
