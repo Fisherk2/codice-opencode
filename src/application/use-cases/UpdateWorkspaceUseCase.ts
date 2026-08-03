@@ -5,7 +5,13 @@ import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
-import { checkWritable, confirmOverwrite, writeVersionFileSafe } from "../helpers";
+import {
+	checkWritable,
+	confirmOverwrite,
+	createProgressCallback,
+	wrapMergeError,
+	writeVersionFileSafe,
+} from "../helpers";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 
@@ -39,7 +45,7 @@ export class UpdateWorkspaceUseCase {
 	 * @param userPrompt - Adapter for interactive user prompts
 	 * @param gitHubClient - Adapter for GitHub API version checking
 	 * @param versionComparator - Domain service for semantic version comparison
-	 * @param bundledVersion - The version of the template bundled in this binary
+	 * @param bundledVersion - The version of the template bundled in the package
 	 */
 	constructor(
 		private readonly fileSystem: IFileSystem & IStagingSystem,
@@ -86,14 +92,16 @@ export class UpdateWorkspaceUseCase {
 			if (!confirmed) return success(undefined);
 		}
 
-		// Read local version info (best-effort)
+		// Read local version info (best-effort). .codice-version lives in the
+		// user's project directory and is UNTRUSTED input: every field is
+		// validated and typed before use; malformed JSON falls back gracefully.
 		let installedVersion = "0.0.0";
 		let previousOptionalSelections: string[] = [];
 		try {
 			const versionData = await this.fileSystem.readVersionFile();
 			if (versionData) {
 				const parsed = JSON.parse(versionData);
-				// Validate fields (defense-in-depth — .codice-version could be corrupted)
+				// Validate fields (defense-in-depth — .codice-version could be corrupted or tampered)
 				if (typeof parsed.installedVersion === "string") {
 					installedVersion = parsed.installedVersion;
 				}
@@ -104,7 +112,7 @@ export class UpdateWorkspaceUseCase {
 				}
 			}
 		} catch {
-			// No version file found — this is a first update in an existing project
+			// No version file or corrupted JSON — treat as a first update in an existing project
 		}
 
 		// Check GitHub for latest version (informational only)
@@ -139,10 +147,16 @@ export class UpdateWorkspaceUseCase {
 		// Estándar rules respect destinationExists (preserve existing user files).
 		const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional");
 
-		// Execute the merge engine
-		const mergeResult = await this.mergeEngine.execute(updateRules);
+		// Execute the merge engine with progress
+		const onProgress = createProgressCallback(this.userPrompt, "Updating files...");
+
+		const mergeResult = await this.mergeEngine.execute(updateRules, {
+			onProgress,
+			updateMode: true,
+		});
 		if (!mergeResult.ok) {
-			return failure(new Error(mergeResult.error.message));
+			// progress callback already called completeProgress() on the error event
+			return failure(wrapMergeError(mergeResult.error));
 		}
 
 		const safeVersion = this.resolveNewVersion(options);
@@ -168,7 +182,7 @@ export class UpdateWorkspaceUseCase {
 	 * Resolve the version string to write to .codice-version.
 	 * Priority: explicit flag > bundled template > fallback to "0.0.0".
 	 *
-	 * The bundled template version is always available (compile-time constant),
+	 * The bundled template version is always available,
 	 * so the chain never reaches the fallback — kept for type safety.
 	 */
 	private resolveNewVersion(options: UpdateWorkspaceOptions | undefined): string {

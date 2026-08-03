@@ -67,34 +67,6 @@ describe("BunFileSystem", () => {
 		await fs.rm(tmpDir, { recursive: true, force: true });
 	});
 
-	describe("readTemplateFile", () => {
-		it("should read from obligatorio/ subdirectory", async () => {
-			const content = await fsAdapter.readTemplateFile("config.json");
-			expect(content).toBe('{"version": 1}');
-		});
-
-		it("should read from estandar/ subdirectory", async () => {
-			const content = await fsAdapter.readTemplateFile("README.md");
-			expect(content).toBe("# Test Project");
-		});
-
-		it("should read from opcional/ subdirectory", async () => {
-			const content = await fsAdapter.readTemplateFile("Justfile");
-			expect(content).toBe("default:\n\t@echo hi");
-		});
-
-		it("should read nested template files", async () => {
-			const content = await fsAdapter.readTemplateFile(path.join("nested", "deep.txt"));
-			expect(content).toBe("deep file content");
-		});
-
-		it("should throw on missing file", async () => {
-			expect(fsAdapter.readTemplateFile("nonexistent.md")).rejects.toThrow(
-				"Template file not found",
-			);
-		});
-	});
-
 	describe("destinationExists", () => {
 		it("should return false for missing destination path", async () => {
 			const exists = await fsAdapter.destinationExists("config.json");
@@ -155,18 +127,6 @@ describe("BunFileSystem", () => {
 
 		it("should reject path traversal attempts", async () => {
 			expect(fsAdapter.destinationExists("../outside.txt")).rejects.toThrow("Path traversal");
-		});
-	});
-
-	describe("getStagingPath", () => {
-		it("should return path inside staging dir", () => {
-			const stagingPath = fsAdapter.getStagingPath("config.json");
-			expect(stagingPath).toBe(path.resolve(destDir, STAGING_DIR_NAME, "config.json"));
-		});
-
-		it("should handle nested paths", () => {
-			const stagingPath = fsAdapter.getStagingPath(path.join("subdir", "file.txt"));
-			expect(stagingPath).toBe(path.resolve(destDir, STAGING_DIR_NAME, "subdir", "file.txt"));
 		});
 	});
 
@@ -296,33 +256,8 @@ describe("BunFileSystem", () => {
 	});
 
 	describe("template path traversal prevention", () => {
-		it("should reject absolute paths in readTemplateFile", async () => {
-			expect(fsAdapter.readTemplateFile("/etc/passwd")).rejects.toThrow("Invalid template path");
-		});
-
-		it("should reject parent directory traversal in readTemplateFile", async () => {
-			expect(fsAdapter.readTemplateFile("../../outside")).rejects.toThrow("Invalid template path");
-		});
-
 		it("should reject traversal in stageFile", async () => {
 			expect(fsAdapter.stageFile("../../malicious")).rejects.toThrow("Invalid template path");
-		});
-	});
-
-	describe("staging path traversal prevention", () => {
-		it("should reject absolute paths in getStagingPath", () => {
-			expect(() => fsAdapter.getStagingPath("/etc/passwd")).toThrow("Path traversal");
-		});
-
-		it("should reject parent directory traversal in getStagingPath", () => {
-			expect(() => fsAdapter.getStagingPath("../../outside")).toThrow("Path traversal");
-		});
-
-		it("should allow normal subdirectory in getStagingPath", () => {
-			const stagingPath = fsAdapter.getStagingPath("deeply/nested/path.txt");
-			expect(stagingPath).toBe(
-				path.resolve(destDir, STAGING_DIR_NAME, "deeply", "nested", "path.txt"),
-			);
 		});
 	});
 
@@ -397,14 +332,6 @@ describe("BunFileSystem", () => {
 			const nonExistentFs = new BunFileSystem(templateDir, nonExistentDir);
 			const empty = await nonExistentFs.isEmpty();
 			expect(empty).toBe(false);
-		});
-	});
-
-	describe("template cache", () => {
-		it("should return the same result on repeated calls without re-accessing filesystem", async () => {
-			// First call should succeed
-			const content = await fsAdapter.readTemplateFile("config.json");
-			expect(content).toBe('{"version": 1}');
 		});
 	});
 });

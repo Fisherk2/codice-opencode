@@ -259,6 +259,74 @@ Add your own files here if there are documents you want the model to always know
 
 ---
 
+## References — Skill Reference Material
+
+The `references` section configures local directories or Git repositories that agents can load as reference material. The template ships with **3 example entries** to demonstrate the available reference types:
+
+```json
+"references": {
+  "clean-code": {
+    "path": "./skills/clean-code/references",
+    "description": "Reference materials for clean code principles, naming, functions, and formatting"
+  },
+  "codice-opencode": {
+    "repository": "Fisherk2/codice-opencode",
+    "branch": "main",
+    "description": "Códice repository — OpenCode workspace installer reference"
+  },
+  "opencode": {
+    "repository": "anomalyco/opencode",
+    "branch": "main",
+    "description": "Official OpenCode repository — CLI, API, and configuration reference"
+  }
+}
+```
+
+> **Note:** These are examples — add your own references by editing `opencode.json`. The template does not ship with all 18 skill references pre-configured; users add the ones they need.
+
+### Fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `path` | For local refs | Relative path to the reference directory (from `opencode.json`) |
+| `repository` | For remote refs | Git repository in `owner/repo` format |
+| `branch` | ❌ | Git branch to use (default: repository default) |
+| `description` | ✅ | Plain-language description to help the agent decide when to load this reference |
+| `hidden` | ❌ | If `true`, hides the reference from TUI listings (default: `false`) |
+
+### How to Use
+
+In the OpenCode TUI, type `@<alias>` to load the reference material into the current conversation. For example, `@clean-code` loads all files from `skills/clean-code/references/`.
+
+### Add a Custom Reference
+
+To add your own reference directory:
+
+```json
+"references": {
+  "my-docs": {
+    "path": "./docs/references",
+    "description": "Project-specific architecture decisions and API contracts"
+  }
+}
+```
+
+Or a remote repository:
+
+```json
+"references": {
+  "my-org-docs": {
+    "repository": "my-org/technical-docs",
+    "branch": "main",
+    "description": "Organization-wide technical documentation"
+  }
+}
+```
+
+> **Official docs:** [opencode.ai/docs/references](https://opencode.ai/docs/references) — Full reference for the configuration format.
+
+---
+
 ## Permissions — Security Boundaries
 
 The `permission` section controls what agents can do. The template uses a **default-deny** model: most operations require explicit approval, while safe read-only commands are pre-approved.
@@ -347,9 +415,9 @@ The `mcp` section configures Model Context Protocol servers that extend agent ca
 | `chrome-devtools` | Local | ❌ Disabled | Web performance & browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation |
 | `jupyter` | Local | ❌ Disabled | Jupyter notebook automation |
-| `docs-mcp-server` | Local | ❌ Disabled | Open-source documentation queries |
 | `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
 | `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
+| `codebase-memory-mcp` | Local (global install) | ❌ Disabled | Knowledge graph for codebase intelligence |
 
 Three servers are enabled by default (`context7`, `vercel-grep`, `gitmcp`). To activate the others:
 

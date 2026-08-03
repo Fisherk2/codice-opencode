@@ -24,9 +24,7 @@ workspace/
 ├── docs/                 # Project documentation
 ├── specs/                # Modular specifications + ADRs
 ├── tasks/                # Execution tasks (SDD pipeline)
-├── references/           # Shared reference library
 ├── .opencode/            # OpenCode runtime configuration
-├── .devin/               # Devin compatibility layer (optional)
 └── .gitignore            # Standard ignore patterns
 ```
 
@@ -90,31 +88,38 @@ Each command file contains numbered steps, `question` tool prompts at decision p
 
 ### `skills/` — Specialized Knowledge Domains
 
-Skills are the workspace's knowledge base — **46 skill directories**, each containing a `SKILL.md` file that teaches an agent how to perform a specific task domain:
+Skills are the workspace's knowledge base — **52 skill directories**, each containing a `SKILL.md` file that teaches an agent how to perform a specific task domain. Many skills also include a `references/` subdirectory with extended reference material co-located with the skill:
 
 | Skill | Purpose |
 |-------|---------|
 | `clean-code/` | Write readable, maintainable code |
+| `clean-code/references/` | Code smells, naming conventions, formatting, functions, testing principles |
 | `test-driven-development/` | Drive development with tests |
+| `test-driven-development/references/` | Testing patterns reference |
 | `security-and-hardening/` | Harden code against vulnerabilities |
+| `security-and-hardening/references/` | Security checklist |
 | `architecture-diagrams/` | Create Mermaid and C4 diagrams |
-| `ci-cd-and-automation/` | Set up build and deployment pipelines |
-| ... | *(46 total skills)* |
+| `architecture-diagrams/references/` | 10 diagram reference documents |
+| ... | *(52 total skills, 18 with references/ subdirectories)* |
 
-Skills are referenced inline by commands and agents using the `@skills/skill-name/SKILL.md` path. This keeps workflows composable — a single command may invoke multiple skills at different steps.
+Skills are referenced inline by commands and agents using the `@skills/skill-name/SKILL.md` path. This keeps workflows composable — a single command may invoke multiple skills at different steps. Reference material within `skills/<name>/references/` is loaded by agents via the `reference` section in `opencode.json` and accessed with `@<skill-name>` in the OpenCode TUI.
 
-### `references/` — Shared Reference Library
+### Reference Files — Co-located with Skills
 
-A flat directory of **59 reference documents** covering software engineering best practices:
+The template ships **59 reference documents** covering software engineering best practices. Unlike the original centralized model, references are now **co-located** with their primary skill:
 
-- Architecture patterns (C4 diagrams, deployment diagrams, sequence diagrams)
-- Design patterns (SOLID principles, DDD tactical/strategic, hexagonal architecture)
-- Code quality (clean code, code smells, refactoring catalog, testing patterns)
-- UI/UX (typography, color systems, icon patterns, spacing and layout)
-- README standards (art of README, standard-readme spec, maximal/minimal examples)
-- Security checklists, performance checklists, accessibility guidelines
+| Reference File | Located In |
+|---------------|------------|
+| Architecture diagrams (arch-*.md) | `skills/architecture-diagrams/references/` |
+| DDD tactical, strategic, hexagonal | `skills/clean-ddd-hexagonal/references/` |
+| Clean code, code smells, naming | `skills/clean-code/references/` |
+| Refactoring techniques (6 files) | `skills/refactoring-patterns/references/` |
+| UI/UX system (13 files) | `skills/ui-ux-design-pro/references/` |
+| SOLID, object design, TDD | `skills/solid/references/` |
+| README standards | `skills/crafting-effective-readmes/references/` |
+| Security, performance, error handling | Each in its respective skill's `references/` |
 
-These references are imported by agents via `read()` when they need authoritative guidance on a topic.
+This co-location makes skills **self-contained**: installing a skill also installs its reference material. References are exposed via OpenCode's native `reference` section in `opencode.json`, accessible by invoking `@<skill-name>` in the OpenCode TUI.
 
 ### `docs/` — Project Documentation
 
@@ -164,20 +169,7 @@ OpenCode's internal configuration directory:
 └── .gitignore
 ```
 
-The `plugins/sdd-pipeline.ts` file contains the Source-Driven Development orchestration logic — command routing, agent identity detection, and phase transitions. This is an always-present file (obligatorio) that gets updated with template releases.
-
-### `.devin/` — Devin Compatibility Layer (Optional)
-
-When selected during installation, the template adds a `.devin/` directory that makes the workspace compatible with Devin-style agent runners:
-
-```
-.devin/
-├── rules/              # Hardcoded Devin rules
-├── skills/             # Symlink to skills/
-└── workflows/          # Symlink to commands/
-```
-
-This is an optional component — it is only installed if you explicitly choose it from the optional files menu.
+The `plugins/sdd-pipeline.ts` file is the SDD Pipeline plugin entry point — it orchestrates the development lifecycle by wiring together auto-discovery, configuration, and hook handlers. Supporting modules in `src/` handle auto-discovery (`autoDiscovery.ts`), config loading (`configLoader.ts`), and defaults (`defaults.ts`). This is an always-present file (obligatorio) that gets updated with template releases.
 
 ---
 
@@ -189,7 +181,7 @@ The template organizes files into three categories that determine how they behav
 |----------|----------|----------|
 | **Obligatorio** | Always present, updated on every install | `opencode.json`, `agents/`, `commands/`, `skills/`, `.opencode/plugins/` |
 | **Estándar** | Created if missing, preserved if present | `README.md`, `CONTRIBUTING.md`, `docs/`, `specs/`, `tasks/` |
-| **Opcional** | Installed only if you choose them | `.devin/`, `Dockerfile`, `Justfile`, `.gitmessage` |
+| **Opcional** | Installed only if you choose them | `Dockerfile`, `Justfile`, `.gitmessage` |
 
 This means you can customize `README.md` or `docs/ARCHITECTURE.md` without fear of them being overwritten — the installer respects your existing content.
 
@@ -202,7 +194,7 @@ The workspace is designed around a **cycle** that repeats as your project evolve
 1. You type a slash command (e.g., `/spec`)
 2. OpenCode routes the command to the target primary agent
 3. The agent reads the command file from `commands/` and follows its steps
-4. At each step, the agent may invoke skills from `skills/` or reference documents from `references/`
+4. At each step, the agent may invoke skills from `skills/` or load reference material from `skills/<name>/references/` via the `reference` section
 5. The agent may delegate sub-tasks to subagents defined in `agents/`
 6. The result is written to the appropriate directory (`specs/`, `docs/`, `tasks/`, `src/`, etc.)
 7. The command suggests the next logical command in the cycle
@@ -215,8 +207,7 @@ The workspace is designed around a **cycle** that repeats as your project evolve
 |-----------|-------|---------|
 | `agents/` | ~104 | AI agent persona definitions |
 | `commands/` | 12 | Slash command workflows |
-| `skills/` | 46 | Specialized knowledge domains |
-| `references/` | 59 | Engineering reference library |
+| `skills/` | 52 + 59 refs | Specialized knowledge domains with co-located reference material |
 | `docs/` | 5+ | Project documentation |
 | `specs/` | 3+ | Modular specs and ADRs |
 

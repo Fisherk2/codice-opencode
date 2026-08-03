@@ -14,6 +14,7 @@ import {
 	getOptionalRules,
 	getRulesByCategory,
 	getStandardRules,
+	isRuleSelected,
 } from "../../../src/domain/entities/FileRuleManifest";
 
 // ---- Manifest completeness ----
@@ -103,6 +104,19 @@ describe("Category distribution", () => {
 		expect(paths).toContain("Justfile");
 		expect(paths).toContain("scripts");
 	});
+
+	test("standard rules include CODE_OF_CONDUCT.md", () => {
+		const standard = getStandardRules();
+		const paths = standard.map((r) => r.path);
+		expect(paths).toContain("CODE_OF_CONDUCT.md");
+	});
+
+	test("CODE_OF_CONDUCT.md rule has correct category and attributes", () => {
+		const rule = createFileRule("CODE_OF_CONDUCT.md");
+		expect(rule).not.toBeNull();
+		expect(rule!.category).toBe("standard");
+		expect(rule!.isDirectory).toBe(false);
+	});
 });
 
 // ---- createFileRule helper ----
@@ -149,5 +163,55 @@ describe("Edge cases", () => {
 		const rule = createFileRule("agents/");
 		expect(rule).not.toBeNull();
 		expect(rule!.path).toBe("agents");
+	});
+});
+
+// ---- isRuleSelected predicate ----
+
+describe("isRuleSelected", () => {
+	const mandatory = {
+		path: "opencode.json",
+		category: "mandatory" as const,
+		isDirectory: false,
+		description: "m",
+	};
+	const standard = {
+		path: "README.md",
+		category: "standard" as const,
+		isDirectory: false,
+		description: "s",
+	};
+	const optionalA = {
+		path: "Justfile",
+		category: "optional" as const,
+		isDirectory: false,
+		description: "o1",
+	};
+	const optionalB = {
+		path: "scripts",
+		category: "optional" as const,
+		isDirectory: true,
+		description: "o2",
+	};
+
+	test("keeps mandatory rules regardless of selection", () => {
+		expect(isRuleSelected(mandatory, [])).toBe(true);
+		expect(isRuleSelected(mandatory, ["Justfile"])).toBe(true);
+	});
+
+	test("keeps standard rules regardless of selection", () => {
+		expect(isRuleSelected(standard, [])).toBe(true);
+		expect(isRuleSelected(standard, ["Justfile"])).toBe(true);
+	});
+
+	test("keeps an optional rule when it is selected", () => {
+		expect(isRuleSelected(optionalA, ["Justfile"])).toBe(true);
+		expect(isRuleSelected(optionalB, ["Justfile", "scripts"])).toBe(true);
+	});
+
+	test("drops an optional rule when it is not selected", () => {
+		expect(isRuleSelected(optionalA, [])).toBe(false);
+		expect(isRuleSelected(optionalA, ["scripts"])).toBe(false);
+		expect(isRuleSelected(optionalB, ["Justfile"])).toBe(false);
 	});
 });

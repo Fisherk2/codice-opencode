@@ -1,10 +1,12 @@
 # ADR-002: Bun as Runtime and Compiler
 
 ## Status
-Accepted
+Superseded (see ADR-011)
+
+> **Note — v1.2.0 (ADR-011):** Binary compilation was removed in v1.2.0. Bun remains the development runtime, but standalone binary distribution is no longer supported. The only installation method is via `bunx @fisherk2-dev/codice` or `npx @fisherk2-dev/codice`. See [ADR-011: Binary Removal](./adr-011-binary-removal.md) for details.
 
 ## Context
-The CLI must be distributed as a single binary with zero runtime dependencies. Users should not need Node.js, Bun, or any other runtime installed.
+The CLI must be distributed as a single binary with zero runtime dependencies. Users should not need Node.js, Bun, or any other runtime installed. *(Note: this requirement was removed in v1.2.0 — ADR-011)*
 
 ## Decision
 Use Bun (>= 1.1.x) for both development and compilation:

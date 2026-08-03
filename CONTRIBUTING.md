@@ -2,9 +2,13 @@
 
 First off, thank you for considering contributing to Códice!
 
-This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). By participating, you are expected to uphold this code.
+By participating, you agree to abide by this project's [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ---
+
+## Code of Conduct
+
+This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html), version 2.1. Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before contributing.
 
 ## Quick Start
 
@@ -51,14 +55,14 @@ just test           # All unit + integration tests
 just test:unit      # Domain logic only (pure functions, entities)
 just test:integration  # Adapters + use cases with mocked externals
 just test-packaging # npm tarball structure validation (5 scenarios)
-just test:e2e       # Compiled binary against isolated directories (15 scenarios)
+just test:e2e       # CLI against isolated directories (15 scenarios)
 just test-watch     # Watch mode for development
 just test:coverage  # With coverage report
 ```
 
 - **Unit tests:** > 90% coverage target. Domain layer only.
 - **Integration tests:** Adapters with real temp dirs. No live network calls.
-- **E2E tests:** Compiled binary, isolated dirs, 15 scenarios. Bash scripts (Linux CI only).
+- **E2E tests:** `bun run src/cli/main.ts`, isolated dirs, 15 scenarios. Bash scripts (Linux CI only).
 
 ---
 
@@ -144,8 +148,7 @@ Códice installs an OpenCode workspace template organized into three file catego
 2. Update the agent catalog at the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents).
 3. Update delegation tables of primary agents that can invoke the new agent (quetzalcoatl, tlaloc, mictlantecuhtli).
 4. Update huitzilopochtli's catalog in `agents/huitzilopochtli.md`.
-5. Add the name to `VALID_SUBAGENTS` Set in `.opencode/plugins/sdd-pipeline.ts`.
-6. Restart your OpenCode session.
+5. Restart your OpenCode session.
 
 **Primary agents** additionally require: SDD plugin hooks, orchestration patterns, and persona table updates.
 
@@ -153,7 +156,7 @@ Códice installs an OpenCode workspace template organized into three file catego
 
 1. Create `skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description`).
 2. Include actionable numbered steps, verification criteria, and exit conditions.
-3. Add to the discovery tree in `skills/using-agent-skills/SKILL.md`.
+3. (Optional) Add extended reference material in `skills/<skill-name>/references/` — these become available to agents via the `reference` section in `opencode.json`.
 4. Add to the [GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills).
 5. Restart your OpenCode session.
 
@@ -161,7 +164,7 @@ Códice installs an OpenCode workspace template organized into three file catego
 
 1. Create `commands/<command-name>.md` with YAML frontmatter (`description`, `agent` target).
 2. Write numbered steps referencing skills (`@skills/name/SKILL.md`) and using the `question` tool at decision points.
-3. Update documentation and add to `COMMAND_AGENT_MAP` in `.opencode/plugins/sdd-pipeline.ts`.
+3. Update documentation and add to the [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands).
 4. Restart your OpenCode session.
 
 ### Add a New MCP Server
@@ -199,11 +202,11 @@ See [docs/wiki-source/README.md](docs/wiki-source/README.md) for the full proced
 ## References
 
 - **npm Publishing:** `@fisherk2-dev/codice` with dist-tags `latest`, `beta`, `rc`. See [docs/TRD.md](docs/TRD.md).
-- **CI/CD Pipeline:** `ci.yml` (quality matrix) + `release.yml` (tag → build → npm publish). See [.github/workflows/](.github/workflows/).
+- **CI/CD Pipeline:** `ci.yml` (quality matrix) + `release.yml` (tag → npm publish). See [.github/workflows/](.github/workflows/).
 - **Release Checklist:** Pre-release test → merge to main → tag → verify CI → verify npm → sync develop.
 - **Reporting Issues:** Include expected vs actual behavior, steps to reproduce, environment, and verbose logs.
-- **GitHub Wiki:** [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents), [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills), [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands), [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers), [Customization Guide](https://github.com/fisherk2/codice-opencode/wiki/Customization-Guide).
+- **GitHub Wiki:** [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents), [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills), [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands), [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers), [Configuration](https://github.com/fisherk2/codice-opencode/wiki/Configuration).
 
 ---
 
-*Last revised: 2026-07-11*
+*Last revised: 2026-07-30*

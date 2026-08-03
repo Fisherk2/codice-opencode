@@ -9,7 +9,7 @@ Before installing Códice, you need **OpenCode** installed on your system. OpenC
 - **[Install OpenCode](https://opencode.ai/docs/installation)** — follow the official installation guide for your platform
 - **Verify the installation** by running `opencode --version` in your terminal
 
-> Códice does not require Bun, Node.js, or any runtime to be pre-installed on the target machine. The installer is distributed as a standalone binary or via `bunx`/`npx` and handles everything itself.
+> Códice is distributed via npm and executed with `bunx @fisherk2-dev/codice`. Bun is the recommended runtime.
 
 ## Install the Workspace
 
@@ -66,13 +66,12 @@ your-project/
 ├── docs/                      # Documentation templates
 ├── specs/                     # Modular specifications and ADRs
 ├── tasks/                     # Task breakdowns (created by /plan)
-├── references/                # Engineering reference materials
 ├── .opencode/
 │   ├── plugins/               # SDD pipeline and orchestrator plugins
 │   └── agents/ → agents/      # Symlink to agents directory
-├── agents/                    # 6 primary agents + 96+ subagents
+├── agents/                    # 6 primary agents + 98 subagents
 ├── commands/                  # 12 SDD slash commands
-└── skills/                    # 45+ engineering skills
+└── skills/                    # 52 engineering skills
 ```
 
 For a detailed breakdown of every file and directory, see [Workspace Structure](Workspace-Structure).
@@ -168,6 +167,6 @@ Each command suggests the next logical step when it finishes, guiding you throug
 - [Workspace Structure](Workspace-Structure) — Learn what each file and directory does
 - [Commands](Commands) — Detailed reference for all 12 slash commands
 - [Agents](Agents) — Understand each agent's role, permissions, and recommended models
-- [Customization Guide](Customization-Guide) — Adapt the workspace to your team's workflow
+- [Configuration](Configuration) — Configure models, agents, permissions, MCP, and more
 
 For OpenCode-specific questions (agent configuration, permission model, MCP servers), refer to the [official OpenCode documentation](https://opencode.ai/docs).

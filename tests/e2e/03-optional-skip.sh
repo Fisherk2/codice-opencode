@@ -19,9 +19,7 @@ source "$(dirname "$0")/common.sh"
 
 log_step "F4-T4: Optional Skip E2E"
 
-# Resolve binary
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+# Resolve CLI
 
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
@@ -33,15 +31,15 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 # Execute
 # ---------------------------------------------------------------------------
 
-log_info "Running: $CODICE_BINARY --project --force in $TEMP_DIR"
+log_info "Running: $CODICE_CLI --project --force in $TEMP_DIR"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --project --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && $CODICE_CLI --project --force) 2>/dev/null || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     exit 1
 fi
-log_pass "Binary exited with code 0"
+log_pass "CLI exited with code 0"
 
 # ---------------------------------------------------------------------------
 # Assertions

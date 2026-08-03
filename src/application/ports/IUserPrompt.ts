@@ -31,15 +31,33 @@ export interface IUserPrompt {
 	selectOptional(options: readonly FileRule[]): Promise<string[]>;
 
 	/**
-	 * Show a spinner with a message during async operations.
-	 * @param message - Status message to display.
+	 * Display a multi-file progress bar.
+	 * @param total - Total number of files to process.
+	 * @param label - Optional label to display alongside the bar.
 	 */
-	showSpinner(message: string): void;
+	showProgressBar(total: number, label?: string): void;
 
 	/**
-	 * Stop the current spinner.
+	 * Update the progress bar to show current file being processed.
+	 * @param current - Number of files completed (0-indexed).
+	 * @param filePath - Path of the file currently being processed.
 	 */
-	stopSpinner(): void;
+	updateProgress(current: number, filePath: string): void;
+
+	/**
+	 * Mark the progress bar as complete. Cleans up any resources.
+	 * Must be called after the last file is processed, even on error paths,
+	 * to ensure the terminal cursor and TUI state are restored.
+	 */
+	completeProgress(): void;
+
+	/**
+	 * Log a structured progress event message.
+	 * Messages should follow the pattern: "category: message"
+	 * e.g., "commit: 47 files committed", "symlink: Created .opencode/agents"
+	 * @param message - The event message to log (may include category prefix for styling).
+	 */
+	logProgressEvent(message: string): void;
 
 	/**
 	 * Display the application intro header.

@@ -1,20 +1,17 @@
 /**
  * postInstall.ts — shared post-installation orchestration tests
  *
- * Covers 13 scenarios:
+ * Covers 10 scenarios:
  * 1. createGitignoreSafe — success → no warning shown
  * 2. createGitignoreSafe — failure → warning shown
  * 3. createSymlinksWithWarning — success → no warning
  * 4. createSymlinksWithWarning — failure without retryHint → no re-run hint
  * 5. createSymlinksWithWarning — failure with retryHint → re-run hint present
- * 6. runPostInstallSteps — .devin NOT selected → devin symlinks NOT called
- * 7. runPostInstallSteps — .devin selected → devin symlinks called
- * 8. runPostInstallSteps — version defaults to "0.0.0" when undefined
- * 9. runPostInstallSteps — version file success → showSuccess called
- * 10. runPostInstallSteps — version file failure → returns Failure, no success
- * 11. runPostInstallSteps — devin symlinks fail → warning shown
- * 12. runPostInstallSteps — gitignore fails → continues to symlinks + version file
- * 13. runPostInstallSteps — retryHint=true → re-run hint in opencode warning
+ * 6. runPostInstallSteps — version defaults to "0.0.0" when undefined
+ * 7. runPostInstallSteps — version file success → showSuccess called
+ * 8. runPostInstallSteps — version file failure → returns Failure, no success
+ * 9. runPostInstallSteps — gitignore fails → continues to symlinks + version file
+ * 10. runPostInstallSteps — retryHint=true → re-run hint in opencode warning
  */
 
 import { describe, expect, mock as mockFn, test } from "bun:test";
@@ -41,11 +38,6 @@ const MOCK_OPENCODE_SYMLINKS: readonly SymlinkSpec[] = [
 	{ linkPath: ".opencode/skills", target: "../skills" },
 ];
 
-const MOCK_DEVIN_SYMLINKS: readonly SymlinkSpec[] = [
-	{ linkPath: ".devin/skills", target: "../skills" },
-	{ linkPath: ".devin/workflows", target: "../workflows" },
-];
-
 // ── Mock factory helpers ──────────────────────────────────────────
 
 function createMockPrompt(): { stub: IUserPrompt; warnings: string[]; successes: string[] } {
@@ -64,8 +56,10 @@ function createMockPrompt(): { stub: IUserPrompt; warnings: string[]; successes:
 			showInfo: mockFn(() => {}),
 			confirm: mockFn(() => Promise.resolve(true)),
 			selectOptional: mockFn(() => Promise.resolve([])),
-			showSpinner: mockFn(() => {}),
-			stopSpinner: mockFn(() => {}),
+			showProgressBar: mockFn(() => {}),
+			updateProgress: mockFn(() => {}),
+			completeProgress: mockFn(() => {}),
+			logProgressEvent: mockFn(() => {}),
 			showIntro: mockFn(() => {}),
 			showCancel: mockFn(() => {}),
 			showError: mockFn(() => {}),
@@ -119,9 +113,7 @@ function createMockSymlinkCreator(shouldFail = false): ISymlinkCreator & { calls
 
 function createMockFileSystem(writeVersionShouldFail = false): IFileSystem & IStagingSystem {
 	return {
-		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),
-		getStagingPath: mockFn((path: string) => `.codice-staging/${path}`),
 		stageFile: mockFn(async () => {}),
 		commitStaging: mockFn(async () => {}),
 		cleanStaging: mockFn(async () => {}),
@@ -133,6 +125,8 @@ function createMockFileSystem(writeVersionShouldFail = false): IFileSystem & ISt
 			}
 		}),
 		readVersionFile: mockFn(() => Promise.resolve(null)),
+		walkTemplateDirectory: mockFn(() => Promise.resolve([])),
+		walkDestinationDirectory: mockFn(() => Promise.resolve([])),
 	};
 }
 
@@ -146,7 +140,6 @@ function createDefaultPostInstallOptions(
 		symlinkCreator: createMockSymlinkCreator(),
 		userPrompt: prompt.stub,
 		opencodeSymlinks: MOCK_OPENCODE_SYMLINKS,
-		devinSymlinks: MOCK_DEVIN_SYMLINKS,
 		destinationPath: "/tmp/project",
 		selectedOptionals: [],
 		version: "1.0.0",
@@ -224,34 +217,6 @@ describe("createSymlinksWithWarning", () => {
 // ── runPostInstallSteps tests ─────────────────────────────────────
 
 describe("runPostInstallSteps", () => {
-	test("skips devin symlinks when .devin is NOT in selectedOptionals", async () => {
-		const symlinkCreator = createMockSymlinkCreator(false);
-		const options = createDefaultPostInstallOptions({
-			symlinkCreator,
-			selectedOptionals: [], // .devin not selected
-		});
-
-		const result = await runPostInstallSteps(options);
-
-		expect(result.ok).toBe(true);
-		// createSymlinks called once (opencode only), not twice
-		expect(symlinkCreator.calls).toBe(1);
-	});
-
-	test("creates devin symlinks when .devin IS in selectedOptionals", async () => {
-		const symlinkCreator = createMockSymlinkCreator(false);
-		const options = createDefaultPostInstallOptions({
-			symlinkCreator,
-			selectedOptionals: [".devin"], // .devin selected
-		});
-
-		const result = await runPostInstallSteps(options);
-
-		expect(result.ok).toBe(true);
-		// createSymlinks called twice (opencode + devin)
-		expect(symlinkCreator.calls).toBe(2);
-	});
-
 	test("uses '0.0.0' as default version when version is undefined", async () => {
 		const fs = createMockFileSystem(false);
 		const writeVersionFile = fs.writeVersionFile as ReturnType<typeof mockFn>;
@@ -294,51 +259,6 @@ describe("runPostInstallSteps", () => {
 		expect(prompt.successes).toHaveLength(0);
 	});
 
-	test("shows warning when .devin symlinks fail but opencode succeeds", async () => {
-		const prompt = createMockPrompt();
-		let symlinkCalls = 0;
-		const symlinkCreator: ISymlinkCreator & { calls: number } = {
-			get calls() {
-				return symlinkCalls;
-			},
-			createSymlink: mockFn(() =>
-				Promise.resolve({ ok: true, value: undefined } as Result<void, SymlinkError>),
-			),
-			createSymlinks: mockFn(async () => {
-				symlinkCalls++;
-				// First call (opencode) succeeds, second call (devin) fails
-				if (symlinkCalls === 2) {
-					return {
-						ok: false as const,
-						error: [
-							{
-								target: ".devin/skills",
-								linkPath: ".devin/skills",
-								message: "Permission denied",
-							},
-						] satisfies SymlinkError[],
-					};
-				}
-				return { ok: true as const, value: undefined };
-			}) as (symlinks: readonly SymlinkSpec[]) => Promise<Result<void, SymlinkError[]>>,
-		};
-
-		const options = createDefaultPostInstallOptions({
-			symlinkCreator,
-			userPrompt: prompt.stub,
-			selectedOptionals: [".devin"],
-		});
-
-		const result = await runPostInstallSteps(options);
-
-		expect(result.ok).toBe(true);
-		// Both opencode + devin should be attempted
-		expect(symlinkCreator.calls).toBe(2);
-		// Warning should be for .devin/ failure
-		expect(prompt.warnings).toHaveLength(1);
-		expect(prompt.warnings[0]).toContain(".devin/");
-	});
-
 	test("continues to symlinks and version file when gitignore creation fails", async () => {
 		const prompt = createMockPrompt();
 		const gitignoreCreator = createMockGitignoreCreator(true);
@@ -351,7 +271,6 @@ describe("runPostInstallSteps", () => {
 			symlinkCreator,
 			fileSystem: fs,
 			userPrompt: prompt.stub,
-			selectedOptionals: [".devin"],
 		});
 
 		const result = await runPostInstallSteps(options);
@@ -360,8 +279,8 @@ describe("runPostInstallSteps", () => {
 		// Gitignore warning was shown
 		expect(prompt.warnings).toHaveLength(1);
 		expect(prompt.warnings[0]).toContain(".gitignore");
-		// Symlinks still created (opencode + devin)
-		expect(symlinkCreator.calls).toBe(2);
+		// Symlinks still created (opencode)
+		expect(symlinkCreator.calls).toBe(1);
 		// Version file still written
 		expect(writeVersionFile).toHaveBeenCalledTimes(1);
 	});
@@ -374,7 +293,6 @@ describe("runPostInstallSteps", () => {
 			symlinkCreator,
 			userPrompt: prompt.stub,
 			retryHint: true,
-			selectedOptionals: [], // .devin not selected → only opencode symlinks attempted
 		});
 
 		const result = await runPostInstallSteps(options);

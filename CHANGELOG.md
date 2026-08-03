@@ -7,6 +7,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+### Fixed
+
+## [1.2.0-beta.1] — 2026-08-03
+
+### Added
+
+- **Review fixes from `/ship` v1.2.0-beta.1:** All observations from the 4-persona ship review addressed:
+  - **Security:** `CODICE_BYPASS_URL_VALIDATION` is now gated behind `NODE_ENV=test` so the URL-validation escape hatch can never be active in production (`src/infrastructure/config/constants.ts`). Coordinated with the 4 E2E scripts and `tests/integration/cli/main.test.ts` that set it.
+  - **Path safety:** `withTrailingSeparator("/")` now returns the filesystem root unchanged instead of producing `//` (`src/infrastructure/adapters/pathResolver.ts`).
+  - **Perf:** `FileMergeEngine.execute()` only allocates the optional-path list when standard directory rules exist; staging cleanup now also runs when nothing was staged (`total === 0`).
+  - **Comments:** Untrusted-input note for `.codice-version` parsing in `UpdateWorkspaceUseCase`; empty catch in `safeEmit` documented as intentional; `PROGRESS_EMITTERS` comment corrected.
+  - **Tests:** Direct unit tests added for `isPathWithin`/`withTrailingSeparator` (`tests/unit/adapters/path-resolver.test.ts`) and `isRuleSelected` (`tests/unit/domain/file-rule-manifest.test.ts`); unused `_makeRule` helper removed from `tests/integration/use-cases/update-granularity.test.ts`.
+- **Dependencies:** `@biomejs/biome` 2.5.3 → 2.5.6, `@types/semver` 7.7.1 → 7.8.0 (TypeScript 6.x deferred — 7.x not yet adopted).
+- **ADR-011:** Binary Removal — documents the architectural decision (see `specs/adr/adr-011-binary-removal.md`)
+- **`tests/e2e/codice.sh`:** Wrapper script for `bun run src/cli/main.ts` in E2E tests
+- **FEV-13 — SDD Plugin Auto-Discovery (Issue #53):** 6 hardcoded maps extracted to `autoDiscovery.ts` — `COMMAND_AGENT_MAP`, `VALID_SUBAGENTS`, and `AGENT_MENTION_PATTERNS` now detected automatically from filesystem (`commands/*.md`, `agents/*.md`). New files: `autoDiscovery.ts` (182 lines), `destructivePatterns.ts`, `normalizeBash.ts`. See [ADR-013](specs/adr/adr-013-plugin-auto-discovery.md).
+- **FEV-13 — Config-Driven Plugin Behavior (Issue #53):** `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS` moved to `defaults.ts` with optional `opencode.json` `sddPipeline` section override. Plugin works without config (backward compatible).
+- **FEV-14 — Progress bar during installation (Issue #47):** `ProgressEvent` discriminated union (6 variants: `stage_start`, `stage_complete`, `stage_skip`, `commit_start`, `commit_complete`, `error`) in Domain layer. `ProgressCallback` optional on `IFileMergeEngine.execute()`. `ClackPromptsAdapter` implements `clack.progress()` (heavy style) with `showProgressBar(total, label)`, `updateProgress(current, filePath)`, `completeProgress()`. `logProgressEvent(message)` dispatches by category prefix: `commit:` → success, `symlink:` → success, `gitignore:` → info, `error:` → error, `skip:` → warn. Visible in all three modes (Clean, Project, Update).
+- **FEV-14 — New `/help` slash command for onboarding (Issue #56):** Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 13 commands, troubleshoot issues. Assigned to Huitzilopochtli. Template: `template/obligatorio/commands/help.md` (63 lines).
+- **FEV-14 — `/help` registered in pipeline maps:** Added to `COMMAND_AGENT_MAP`, `INTENT_PATTERNS` (15 EN/ES keywords), `COMMAND_PHASE_MAP` (`idle`), and `PHASE_SUGGESTIONS` in `defaults.ts`.
+- **FEV-14 — Spec/ADR templates with industry formats:** MADR v4.0 ADR template (`template/estandar/specs/adr/adr-template.md`) and RFC-based spec template (`template/estandar/specs/spec-template.md`) replace previous placeholders.
+- **FEV-14 — 14 new integration tests** for progress events, structured logs, and adapter methods.
+- **FEV-14 — E2E test extended** with progress assertions (commit/symlink messages in stdout).
+- **FEV-15 — Project Code of Conduct (Issue #55):** `CODE_OF_CONDUCT.md` added to repo root, adapted from [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html). Contact: `dev@fisherk2.com`.
+- **FEV-15 — Template Code of Conduct:** `template/estandar/CODE_OF_CONDUCT.md` created as a customizable placeholder. Includes 2 placeholders (`[PROJECT_NAME]`, `[CONTACT_EMAIL]`).
+- **FEV-15 — Manifest integration:** `CODE_OF_CONDUCT.md` registered in `FileRuleManifestData.ts` with `category: "standard"` (11 standard files, was 10).
+- **FEV-15 — Cross-references:** `CONTRIBUTING.md` and `README.md` updated with `## Code of Conduct` sections.
+- **FEV-15 — E2E test extension:** `tests/e2e/01-clean-install.sh` asserts `CODE_OF_CONDUCT.md` delivery and content.
+- **FEV-16 — Pre-release Tech Debt Closure:** Resolves 5 TECH_DEBT.md items (TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2):
+  - **Coverage foundation:** `resolveInteractiveMode()` extracted from `main.ts` for testability. 9 new unit tests. `main.ts` coverage 86.21% → 98.90%.
+  - **Use case refactor:** Template Method pattern applied to `CleanInstallUseCase` + `ProjectInstallUseCase`. New `InstallUseCaseBase` abstract class. 166+147 → 73+72 lines.
+  - **Performance benchmarks:** `just bench` recipe with `hyperfine` for 3 installation modes. 3 standalone benchmark scripts + `assert-no-regression.sh` for SC-9/10/11 verification.
+  - **Update granularity:** Tree-level diff (`diffTrees()`) for standard directories. `FileMergeEngine` updated to stage only new files in update mode. 11 unit + 3 integration + 1 E2E test.
+  - **Coverage instrumentation:** `c8` evaluated (incompatible with Bun/JSC). Native Bun coverage used with 95% CI gate. main.ts 98.90%, overall 98.10%.
+
+### Changed
+
+- **BREAKING: Binary compilation removed.** The only installation method is now `bunx @fisherk2-dev/codice` (or `npx @fisherk2-dev/codice`). Compiled binaries are no longer produced or distributed. Users in air-gapped environments can use `npm pack` to download the tarball. See [ADR-011](specs/adr/adr-011-binary-removal.md) for migration details.
+- **FEV-12 (References Restructuring):** 59 reference files moved from centralized `template/obligatorio/references/` to `skills/<name>/references/` for co-location with their primary skill. `opencode.json` now includes a `references` section with 3 example entries (local path + 2 remote repos). `docs/WORKFLOW.md` and `docs/TECH_DEBT.md` removed from `instructions` array. Agent models updated: huitzilopochtli → deepseek-v4-flash, moctezuma steps 20→30, tlaloc steps 90→100. `docs-mcp-server` removed; `codebase-memory-mcp` added (disabled by default). See [ADR-012](specs/adr/adr-012-references-co-location.md).
+- **FEV-13 — Wiki Rewrite (Issue #51):** 8 Wiki pages rewritten for end users — removed all "edit sdd-pipeline.ts" references. Instructions now direct users to create `agents/my-agent.md`, `commands/my-command.md`, `skills/my-skill/SKILL.md` instead.
+- **FEV-13 — Quality Infrastructure (Issue #53):** Biome config extended to plugin directories. Justfile targets added: `check-plugin`, `test-plugin-unit`, `test-plugin-integration`. Plugin test suites: `tests/plugin/unit/`, `tests/plugin/integration/`.
+- **FEV-13 — Documentation Reduction (Issue #51):** WORKFLOW.md, CHANGELOG.md, SPEC.md audited and trimmed to target line counts (<300, <350, <400 respectively).
+- **FEV-14 — DRY extraction — `createProgressCallback()` helper:** Duplicated ~30-line progress callback (3 copies × 30 lines = ~90 lines) extracted to shared `createProgressCallback(userPrompt, label)` in `src/application/helpers.ts`. All 3 use cases now call the shared helper (each reduced by ~28 lines).
+- **FEV-14 — Symlink/gitignore log events moved to `postInstall.ts`:** Log events (`symlink: Created .opencode/agents`, `gitignore: Generated .gitignore`) now emit AFTER each operation completes in `runPostInstallSteps()`, not predicted before. Fixes false success on failure.
+- **FEV-14 — 13 command files updated** with explicit subagent delegation patterns (sequential only, never parallel).
+- **SC-15:** Updated to "npm package (tarball) size < 5MB" (previous SC-15 about compiled binaries removed)
+- **ARCHITECTURE.md:** Added ADR-011 to ADR table
+- **FEV-15 — FileRuleManifestData delivery surface:** 1 new entry in `FileRuleManifestData.ts` (now tracks 11 standard files, was 10).
+- **FEV-16 — FileMergeEngine:** Tree-level diff replaces directory-level skip. Standard rules in update mode now deliver new files.
+- **FEV-16 — CleanInstallUseCase / ProjectInstallUseCase:** Reduced from 313 → 145 lines (-168) via Template Method.
+- **FEV-16 — Coverage thresholds:** CI now enforces ≥95% lines/functions (was unenforced).
+- **FEV-16 — main.ts:** `runMode` restructured from switch to if/else for complete branch coverage.
+- **FEV-16 — Code review simplifications:** `stageOne()` extraction, `stagePlanner` total folding, `walkRelative` helper, `resolveInteractiveMode` return type narrowed, `promptForMode` async removed.
+- **FEV-17 — Code simplification pass (Issue #53):**
+  - `IFileMergeEngine.execute` accepts `MergeExecuteOptions` object instead of positional params (improves call-site readability).
+  - `FileRuleManifest.isRuleSelected` shared optional-filter predicate extracted from `CleanInstallUseCase` and `ProjectInstallUseCase`.
+  - Test-only dead surface removed: `IUserPrompt.showSpinner/stopSpinner`, `IGitHubClient.getLatestReleaseNotes`, `IVersionComparator.isUpdateAvailable/getReleaseType/ReleaseType`, `IStagingSystem.getStagingPath`, `IFileSystem.readTemplateFile` (447 lines, 29 files).
+  - `pathResolver.withTrailingSeparator` and `isPathWithin` shared helpers; `TemplateResolver`, `BunSymlinkCreator`, `BunGitignoreCreator` refactored to use them.
+  - `GitHubRestClient` outer try/catch removed (redundant after domain error mapping).
+  - `ClackPromptsAdapter.selectOptional` redundant `as string[]` cast removed.
+  - `BunSymlinkCreator` verbose log now reports `resolvedLinkPath` (actual created path).
+  - Plugin `configLoader.ts` 226→88 lines; extracted `mergeConfig.ts` (159 lines) for config merging helpers.
+  - Plugin SDD pipeline modularized (655→379 lines + src/ modules).
+
+### Fixed
+
+- **FEV-14 — Progress bar re-creation on every `stage_start` (CRITICAL):** `showProgressBar()` was called on every event, orphaning previous `clack.progress()` instances. Fixed: added `barStarted` closure flag — bar initializes once, advances on subsequent events.
+- **FEV-14 — Progress total included skipped files:** `total` counted all non-virtual rules, but only some got staged. Fixed: `FileMergeEngine` pre-computes `stageDecisions` Map; `total` reflects only staged files. Bar always reaches 100%.
+- **FEV-14 — Symlink/gitignore logs emitted before operations (CRITICAL):** Success log was emitted before the actual symlink/gitignore creation. If creation failed, log falsely claimed success. Fixed: logs moved inside `runPostInstallSteps()`.
+- **FEV-14 — Redundant `completeProgress()` calls:** Use cases called `completeProgress()` on merge failure, but the progress callback already handled this via the `error` event. Fixed: removed 3 redundant calls.
+- **FEV-14 — Inline `import()` types in tests:** Test file used `import("path").Type` syntax 6 times. Fixed: top-level imports added, inline references removed.
+- **FEV-16 — TECH_DEBT items resolved:** TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 all closed.
+- **FD-6.2 — Standard directory updates:** New files in standard directories now reach existing users during update (was: entire directory skipped).
+- **CR-Fixes — Error context enrichment:** `wrapMergeError()` preserves `MergeError` phase/path in user-facing messages (e.g. "Disk full during staging of opencode.json"). Affects `InstallUseCaseBase` and `UpdateWorkspaceUseCase`.
+- **CR-Fixes — stageOne standard Result:** `FileMergeEngine.stageOne()` returns `Result<void, MergeError>` instead of null sentinel. Call sites use `!result.ok` for consistency.
+- **CR-Fixes — Exhaustiveness guard:** `shouldStage()` in `stagePlanner.ts` uses `assertNever()` for compile-time safety on `RuleCategory`. Unreachable `return false` replaced.
+- **CR-Fixes — Coverage script hardening:** `coverage-check.sh` passes lcov path via env var instead of shell-in-Python interpolation.
+
+### Removed
+
+- **BREAKING: `.devin/` optional directory removed.** The `.devin/` compatibility layer (7 symlinks: `skills`, `workflows`, `rules/*`) is no longer installed. `DEVIN_SYMLINKS` configuration, `devinSymlinks` parameter from the use case chain, and `.devin` manifest entry all removed. 6 tests eliminated, 838 pass/0 fail. Users who selected `.devin` during installation will no longer see it in the optional files menu.
+- **Binary compilation recipes** — `just build`, `just build-all` removed from Justfile
+- **Binary distribution from CI/CD** — `ci.yml` no longer builds/smoke-tests/upload binaries; `release.yml` no longer builds/checksums/attaches binaries to GitHub Releases
+- **Binary resolution from E2E test infrastructure** — `setup_binary()` and related fallback logic (80+ lines) replaced with direct `bun run src/cli/main.ts`
+- **Binary install documentation** — Offline/air-gapped binary install section removed from README
+- **Binary build instructions** — Removed from CONTRIBUTING.md
+- **SC-15** — "Compiled binaries are produced for Linux, macOS, and Windows x64" removed from SPEC.md
+
 ## [1.1.3] — 2026-07-11
 
 ### Fixed
@@ -63,7 +155,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plugin README:** Updated to document 15 categories with 53 patterns and Defense-in-Depth subsection explaining dual-layer enforcement.
 - **Step counts (Issue #27, FEV-6):** Adjusted for 6 primary agents (huitzilopochtli:25, quetzalcoatl:60, moctezuma:20, tlaloc:90, mictlantecuhtli:60, tezcatlipoca:50).
 - **SECURITY.md (Issue #28, FEV-6):** Created at docs/SECURITY.md and template/estandar/docs/SECURITY.md.
-- **5 new MCP servers (Issue #29, FEV-9):** Expanded MCP catalog from 4 to 9 servers. New additions: `docs-mcp-server` (Grounded Docs, replaces shutdown Docfork), `tavily` (real-time web search, TAVILY_API_KEY), `firecrawl` (web scraping, FIRECRAWL_API_KEY), `vercel-grep` (GitHub code search), `gitmcp` (GitHub repo docs). Three servers enabled by default: `context7`, `vercel-grep`, `gitmcp`.
+- **5 new MCP servers (Issue #29, FEV-9):** Expanded MCP catalog from 4 to 9 servers. New additions: `tavily` (real-time web search, TAVILY_API_KEY), `firecrawl` (web scraping, FIRECRAWL_API_KEY), `vercel-grep` (GitHub code search), `gitmcp` (GitHub repo docs). Three servers enabled by default: `context7`, `vercel-grep`, `gitmcp`.
 - **Agent KNOWLEDGE chain updated (Issue #29, FEV-9):** All 6 primary agents now reference MCP server category: `AGENTS.md → SPEC.md → docs/ → skills/ → MCP servers → Web search → Question-tool`.
 - **Wiki expansion (Issue #29, FEV-9):** `MCP-Servers.md` extended from 4 to 9 pre-configured servers with detailed setup sections for each new MCP.
 - **npm packaging integration tests (TD-5.3, FEV-10):** 5 scenarios (A-E) using `bun pm pack` to validate tarball structure, binary version, symlink exclusion, gitignore renaming, and clean install from extracted package.
@@ -111,273 +203,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New bypass attempt test cases added (commit a7c3d08):** `find -execdir rm`, `find -execdir curl`, `chmod 0777`, `chmod -R 0777` — all verified blocked at regex level.
 - **33 new behavioral tests for DESTRUCTIVE_PATTERNS (FEV-7 code review, commit 92a9cec):** Comprehensive test suite added covering positive matches (33 patterns), negative matches (13 safe patterns), bypass attempts (4), and `normalizeBash` (7 edge cases) for the destructive command regex engine.
 
-## [1.0.15] — 2026-07-09
+## Early Development (v1.0.x)
 
-### Fixed
+### [1.0.15] — 2026-07-09
 
-- **Wiki `README.md` removed from GitHub Wiki**: `docs/wiki-source/README.md` es documentación interna del proceso de sincronización, no una página de usuario. Eliminado del wiki remoto.
-- **npm republish blocked**: v1.0.14 no pudo republicarse tras unpublish (política de npm). Release bump a v1.0.15.
+- **Fixed:** Wiki README removed from GitHub Wiki; npm republish blocked (v1.0.14 retraction policy)
+- **Changed:** Wiki repo cloned inside project (`docs/wiki-source/.wiki/`), `.gitignore` updated
 
-### Changed
+### [1.0.14] — 2026-07-09
 
-- **Wiki repo clonado dentro del proyecto**: En vez de `/tmp/wiki`, ahora se clona en `docs/wiki-source/.wiki/` (gitignored). Sincronización con `rsync --exclude='README.md'`.
-- **`.gitignore` actualizado**: Nueva entrada `/docs/wiki-source/.wiki/` para excluir el clon de la Wiki del repo principal.
-- **Instrucciones de sincronización actualizadas**: `docs/wiki-source/README.md` ahora documenta el uso de `rsync` con `--exclude='README.md'`.
+- **Added:** GitHub Wiki (9 end-user pages), pre-release tag support (beta/rc), Git Workflow/CI-CD/Release Checklist in CONTRIBUTING.md
+- **Changed:** `ci.yml` triggers on `develop` branch; `release.yml` detects pre-release tags; post-install orchestration extracted to shared `runPostInstallSteps()`; `helpers.ts` split for 200-line limit
+- **Removed:** `docs/opencode/` from project root and template
+- **Fixed:** Issue #23 (CI/CD 3-stage pipeline), Issue #25 (GitHub Wiki)
 
-## [1.0.14] — 2026-07-09
+### [1.0.13] — 2026-06-27
 
-### Added
+- **Added:** `docs-update/` command, `diagnosis/` command, `docs/diagnosis/` directory in template
+- **Changed:** `evolve/` command simplified; agent governance (Quetzalcoatl/Moctezuma permissions); SDD determinism; command suggestions removed from agents
+- **Fixed:** Issue #15 (governance and determinism)
 
-- **GitHub Wiki for workspace documentation**: 9 end-user pages (Home, Getting Started, Workspace Structure, Configuration, Agents, Commands, Skills, Customization Guide, Troubleshooting). Source of truth in `docs/wiki-source/`, synced to `https://github.com/fisherk2/codice-opencode/wiki`.
-- **Pre-release tag support in `release.yml`**: Tags like `v1.0.14-beta.1` are detected and published to npm with `--tag beta` and GitHub Pre-release. Tags like `v1.0.14-rc.1` use `--tag rc`. Production tags use `--tag latest` and full GitHub Release.
-- **Git Workflow section in CONTRIBUTING.md**: Documents the 3-stage pipeline (develop → main → tags), branch naming conventions, and PR requirements.
-- **CI/CD Pipeline section in CONTRIBUTING.md**: Documents `ci.yml` and `release.yml` workflows with troubleshooting guide for common issues.
-- **Release Checklist template in CONTRIBUTING.md**: Pre-release, release, and post-release checklists with concrete v1.0.14 example.
-- **npm Publishing section in CONTRIBUTING.md**: dist-tags (latest/beta/rc), version naming, creating and consuming test packages.
+### [1.0.12] — 2026-06-27
 
-### Changed
+- **Fixed:** Windows CI symlink test skipped on Windows; E2E stdout verification for update message
 
-- **`ci.yml` triggers on `develop` branch**: Push and PR to `develop` now run the full CI pipeline, enabling the 3-stage workflow.
-- **`release.yml` detects pre-release tags**: New `Detect release type` step parses tag suffix and sets npm tag (beta/rc/latest), prerelease flag, and `make_latest` behavior dynamically.
-- **CONTRIBUTING.md expanded**: Added 4 new sections — Git Workflow, npm Publishing, CI/CD Pipeline, Release Checklist (158 lines added).
-- **Refactored post-install orchestration**: Extracted duplicated `.gitignore` generation, symlink creation, and version file write from `CleanInstallUseCase` and `ProjectInstallUseCase` into a shared `runPostInstallSteps()` helper in `src/application/postInstall.ts`. Both modes now delegate to the same helper; behavioral differences are preserved via options (Clean Install sets `retryHint=true` for re-run hint in warnings; Project Install does not).
-- **`helpers.ts` split**: Extracted `createGitignoreSafe`, `createSymlinksWithWarning`, and `runPostInstallSteps` into new `src/application/postInstall.ts` (159 lines) to comply with the 200-line file limit. `helpers.ts` reduced from 204 to 71 lines.
+### [1.0.11] — 2026-06-26
 
-### Removed
+- **Fixed:** Update workspace directory detection (`Bun.file()`→`fs.access()`); GitHub version check repository name corrected
 
-- **`docs/opencode/` from project root**: 12 files deleted (backup saved to `~/.cache/codice-backup/`). Users should refer to the GitHub Wiki or opencode.ai/docs.
-- **`docs/opencode/` from template `opcional`**: 12 files deleted from the template. The Wiki is now the canonical documentation source.
-- **`docs/opencode` entry from `FileRuleManifestData`**: Removed lines 166-171 from the manifest.
+### [1.0.10] — 2026-06-26
 
-### Fixed
+- **Added:** `noTemplateCopy` flag on `FileRule`; optional files menu in Clean Install; `.devin` directory support; shared `createSymlinksWithWarning` helper
+- **Fixed:** `.devin` directory not found in bunx mode (CRITICAL); inconsistent Clean/Project Install UX
 
-- **Issue #23**: CI/CD workflow standardized with 3-stage pipeline (develop → main → tags), pre-release support, and comprehensive documentation.
-- **Issue #25**: GitHub Wiki created and populated; `docs/opencode/` removed from root and template; all internal references updated to point to Wiki or OpenCode docs.
+### [1.0.9] — 2026-06-26
 
-## [1.0.13] — 2026-06-27
+- **Fixed:** Issue #11 — `.gitignore` post-install generation for bunx compatibility
+- **Added:** `IGitignoreCreator` port, `GitignoreError` type, `BunGitignoreCreator` adapter, 10 new tests, 2 E2E scenarios
+- **Deprecated:** v1.0.8 (gitignore not found in bunx mode)
 
-### Added
+### [1.0.8] — 2026-06-26
 
-- **New `docs-update/` command**: Dedicated command for updating, migrating, and synchronizing documentation with code and configuration files. Includes pre-flight analysis of existing docs, question-tool integration for resolving contradictions, and strict restrictions (no `tasks/` writes, no code implementation).
-- **New `diagnosis/` command**: Analyzes remote repository issues, detects problems, and documents technical diagnostics in `docs/diagnosis/`. Creates structured diagnosis files with metadata, symptoms, root cause analysis, and verification steps. Includes `docs/diagnosis/README.md` and `diagnosis-template.md` in the template.
-- **`docs/diagnosis/` directory in template**: New standard directory for operational technical knowledge. Contains README explaining its purpose and a template for documenting diagnoses.
+- **Fixed:** TypeScript strict mode errors (3 `tsc --noEmit` fixes)
+- **Deprecated:** v1.0.7 (TypeScript compilation errors)
 
-### Changed
+### [1.0.7] — 2026-06-26
 
-- **Refactored `evolve/` command**: Simplified scope to only create new specs for mature projects with robust versions. Removed ability to write to `tasks/` or implement code. Added pre-flight to detect project maturity level.
-- **Agent governance — Quetzalcoatl**: Updated permissions to prohibit writing to `tasks/`, source code (`src/`), and configuration files. Quetzalcoatl now exclusively writes documentation.
-- **Agent governance — Moctezuma**: Updated permissions to restrict writing exclusively to `tasks/` directory and its files.
-- **SDD determinism**: All SDD lifecycle commands now suggest the next command to execute upon completion (e.g., `spec/` suggests `plan/`, `plan/` suggests `build/`, etc.).
-- **Removed command suggestions from agent configurations**: Primary agents no longer suggest specific commands. Instead, they suggest invoking other primary agents (e.g., Quetzalcoatl suggests invoking Moctezuma for execution planning).
+- **Fixed:** Issue #8 (CRITICAL) — npm resolves symlinks in tarballs; `.opencode/{agents,commands,skills}` removed from manifest
+- **Added:** `ISymlinkCreator` port + `BunSymlinkCreator` adapter; post-install symlink generation (10 symlinks); `.devin` single optional unit
+- **Changed:** Manifest entries reduced from 35 to 32
+- **Deprecated:** v1.0.6 (symlink packaging issue)
 
-### Fixed
+### [1.0.6] — 2026-06-25
 
-- **Issue #15**: Resolved governance and determinism issues in workspace commands. `evolve/` no longer executes tasks outside its scope (writing to `tasks/`, implementing code). Clear separation of concerns between documentation (Quetzalcoatl), planning (Moctezuma), and implementation (Tlaloc).
+- **Fixed:** Issue #8 (CRITICAL) — template path resolution in bunx mode (`detectTemplateRoot` path corrected)
+- **Added:** 4 missing optional manifest entries; manifest completeness test; directory walker exclusion logic
 
-## [1.0.12] — 2026-06-27
+### [1.0.5] — 2026-06-25
 
-### Fixed
+- **Added:** ADR-007 (template resolution for bunx/npm); credential file permissions; TECH_DEBT.md; DIP architectural fix; `promptForMode()` in `IUserPrompt`; URL/env validation
+- **Changed:** UpdateWorkspace rule transformation preserves Estándar files; CONTRIBUTING.md rewritten; dependencies updated
+- **Fixed:** Issue #6 (CRITICAL) — bunx template detection cascade; Issue #2 (CRITICAL) — update preserves standard files
+- **Security:** Extended credential denial patterns
 
-- **Windows CI: broken symlink test skipped on Windows**: Symlink tests (`destinationExists`) now skip on Windows where elevated privileges are required for `fs.symlink()`.
-- **E2E: stdout verification for update success message**: E2E scenario 15 now captures both stdout and stderr. Assertion #9 checks for "Workspace update complete" in stdout (where `@clack/prompts` writes it), not stderr.
+### [1.0.4] — 2026-06-17
 
-## [1.0.11] — 2026-06-26
+- **Added:** VersionComparator exported validators; 8 new unit tests; pathResolver guard test; ClackPromptsAdapter tests; TECH_DEBT.md
+- **Changed:** Coverage to 97.66% functions / 96.52% lines
 
-### Fixed
+### [1.0.3] — 2026-06-16
 
-- **Update Workspace no sobrescribe directorios standard existentes (regresión de FEV-1 #2)**: `BunFileSystem.destinationExists()` usaba `Bun.file().exists()` que solo funciona con archivos, no con directorios. Cambiado a `fs.access()` que detecta correctamente tanto archivos como directorios. Esto evita que directorios como `docs/`, `specs/` y `tasks/` sean sobrescritos durante una actualización.
-- **GitHub version check funciona correctamente**: El nombre del repositorio en `constants.ts:5` era `"11-codice-opencode"` en vez de `"codice-opencode"`, causando un 404 en la API de GitHub.
-
-## [1.0.10] — 2026-06-26
-
-### Added
-
-- **`noTemplateCopy` flag on `FileRule`**: New optional field that marks manifest entries whose content is generated entirely post-installation (e.g., `.devin/` symlinks via `BunSymlinkCreator`). These entries still appear in the optional file selection UX but skip template file resolution and staging, preventing `Template file not found` errors for npm-stripped content.
-- **Optional files menu in Clean Install**: Clean Install now shows the same optional files selection menu as Project Install, allowing users to choose which optional files to include. Previously, Clean Install copied all optional files automatically without user interaction. Use `--force` to skip the menu and include all optionals.
-- **`.devin` directory support**: `TemplateResolver` now detects and copies directories recursively, resolving the `Template file not found: .devin` error that occurred because `.devin` is a directory (not a file) and npm tarballs strip directory symlinks.
-- **Extracted shared `createSymlinksWithWarning` helper**: Both use cases now delegate symlink guard logic to a shared helper in `src/application/helpers.ts`, eliminating ~24 lines of duplicated warning code across 4 methods.
-
-### Fixed
-
-- **`.devin` directory not found** (CRITICAL): `bunx @fisherk2-dev/codice` failed with `Template file not found: .devin` in all install modes. Root cause: npm strips symlinks from packages during publication, and `.devin/` contains ONLY symlinks. Solution: `.devin` stays in the optional manifest with `noTemplateCopy: true` — its content is generated post-installation by `BunSymlinkCreator` via `DEVIN_SYMLINKS` (7 symlinks), following the same pattern as `.opencode/{agents,commands,skills}` removal in v1.0.6-B.
-- **Inconsistent UX between Clean Install and Project Install**: Clean Install now presents the optional files selection menu, matching Project Install behavior.
-
-## [1.0.9] — 2026-06-26
-
-### Fixed
-
-- **Issue #11** — `bunx @fisherk2-dev/codice` now works correctly in all 3 modes. Root cause: npm hard-excludes `.gitignore` files from packages (not bypassable via `files` or `.npmignore`). Solution: renamed `template/estandar/.gitignore` to `template/estandar/gitignore` (no dot prefix) and generate the `.gitignore` file post-installation via `BunGitignoreCreator` in Clean Install and Project Install modes. Update Workspace preserves the user's existing `.gitignore`.
-- **Symlinks and gitignore**: Both `.opencode/` and `.devin/` symlinks and `.gitignore` are now generated in the correct order after file merge (per ADR-FEV2C-10).
-
-### Added
-
-- `IGitignoreCreator` port in `application/ports/` for Clean Architecture-compliant post-install gitignore generation.
-- `GitignoreError` type in `domain/types/` with 4 error codes (`READ_FAILED`, `WRITE_FAILED`, `TEMPLATE_NOT_FOUND`, `PATH_ESCAPE`) and factory functions.
-- `BunGitignoreCreator` adapter in `infrastructure/adapters/` — reads `gitignore` (no dot) from template and writes `.gitignore` to destination. Idempotent: skips if file already exists, skips real directories.
-- 8 new unit/integration tests for gitignore resolution and generation (6 BunGitignoreCreator + 2 TemplateResolver).
-- 2 new E2E scenarios (11-gitignore-clean-install, 12-gitignore-project-install) verifying `.gitignore` post-install generation and idempotency.
-
-### Deprecated
-
-- **v1.0.8** — deprecated on npm due to Issue #11 (`.gitignore` not found in `bunx` mode).
-
-## [1.0.8] — 2026-06-26
-
-### Fixed
-
-- **TypeScript strict mode errors**: Fixed 3 `tsc --noEmit` errors that caused CI failures across all platforms:
-  - `parse-args.ts`: `args[i]` narrowed to `string` (was `string | undefined`)
-  - `project-install.test.ts`: Mock return types use `as const` to match `Result<void, SymlinkError>` literal types
-  - `bun-symlink-creator.test.ts`: Added optional chaining for `result.error[i]` access
-
-### Deprecated
-
-- **v1.0.7** — deprecated on npm due to TypeScript compilation errors in CI.
-
-## [1.0.7] — 2026-06-26
-
-### Fixed
-
-- **Issue #8 (CRITICAL)**: `bunx @fisherk2-dev/codice` failed with `Template file not found: .opencode/agents` in all 3 install modes because npm resolves symlinks when creating the tarball. The `.opencode/{agents,commands,skills}` paths were symlinks in the dev template (`→ ../{agents,commands,skills}/`) that were dereferenced during packaging. Removed the 3 manifest entries — the real directories (`agents/`, `commands/`, `skills/`) at the root level remain and cover the same files.
-
-### Added
-
-- **Post-installation symlink generation**: After Clean Install (always) and Project Install (based on selection), the installer now recreates 10 symlinks that npm resolves during packaging:
-  - `.opencode/agents`, `.opencode/commands`, `.opencode/skills` → `../*` (3, always)
-  - `.devin/skills`, `.devin/workflows` → `../*` (2, conditional on `.devin` selection)
-  - `.devin/rules/*` → `../../*` (5, conditional on `.devin` selection)
-- **New port/adapter**: `ISymlinkCreator` port + `BunSymlinkCreator` adapter implementing post-install symlink creation with idempotent, safe behavior (skips existing symlinks and real directories).
-- **Manifest entry `.devin/rules` renamed to `.devin`**: Clearer UX — the entire `.devin/` directory (rules, skills, workflows) is now a single optional unit.
-
-### Changed
-
-- `FILE_RULE_MANIFEST` entries reduced from 35 to 32 (3 symlink entries removed). Mandatory count: 11 → 8.
-
-### Deprecated
-
-- **v1.0.6** — use v1.0.7 which fixes the symlink packaging issue.
-
-## [1.0.6] — 2026-06-25
-
-### Fixed
-
-- **Issue #8 (CRITICAL)**: `bunx @fisherk2-dev/codice` failed with `Template file not found: opencode.json` because `TemplateResolver.detectTemplateRoot()` resolved `import.meta.dir` relative to `src/infrastructure/adapters/` instead of the package root. Corrected source-mode detection path from `../../template` to `../../../template` so npm/bunx packages find `template/obligatorio/opencode.json`.
-
-### Added
-
-- **Manifest completeness**: 4 missing optional entries added to `FileRuleManifestData.ts` — `.devin/rules`, `.gitmessage`, `.opencode/plugins/sdd-workflow-test.md`, `docs/opencode`. Total optional entries: 9 → 13.
-- **Manifest completeness test**: `file-rule-manifest.test.ts` with 7 tests covering file existence, path coverage, unique paths, and category count guards. Detects when files are added to `template/opcional/` without updating the manifest.
-- **Exclusion logic in directory walker**: When a standard directory (e.g. `docs/`) overlaps with optional sub-paths (e.g. `docs/opencode/`), the directory walker now excludes those subdirectories to prevent double-copying. The exclusion is computed automatically from the manifest rule overlap.
-
-## [1.0.5] — 2026-06-25
-
-### Added
-
-- **ADR-007**: Template resolution for bunx/npm mode — third detection path `../template/` relative to `import.meta.dir`
-- **Credential file permissions**: Extended `permissions.read.deny` in `opencode.json` to include `.npmrc`, `.pem`, `*.key`, `*.p12`, `*.pfx`, `credentials.json`, `service-account*.json`
-- **TECH_DEBT.md in template**: Placeholder in `template/estandar/docs/TECH_DEBT.md` with structured format for tracking technical debt
-- **Internal link fixes**: Updated relative paths in `README.md` and `CONTRIBUTING.md` to reflect `obligatorio/`, `estandar/`, `opcional/` directory structure (Issue #4)
-- **DIP architectural fix**: `Dependencies` interface now uses `IFileSystem` and `IUserPrompt` port types instead of concrete adapter types
-- **`promptForMode()` in `IUserPrompt` interface**: Moved from concrete `ClackPromptsAdapter` to port interface for proper Dependency Inversion
-- **CWD fallback warning**: `TemplateResolver.detectTemplateRoot()` warns via stderr when falling back to current working directory
-- **URL validation for `CODICE_GITHUB_API_URL`**: Environment variable validated for HTTPS protocol and github.com hostname
-- **FileRule category mapping docs**: Spanish→English directory mapping (obligatorio/→mandatory, estandar/→standard, opcional/→optional) added to JSDoc
-- **Symlink skip logging**: `directoryWalker.skipSymlinks()` logs to stderr when verbose mode is enabled
-- **Version file field validation**: `.codice-version` JSON fields validated with type guards before access
-- **Bash deny pattern documentation**: `_comment` and `_comment_suffix` fields added to `opencode.json` explaining `* .file` vs `* .file *` convention
-
-### Changed
-
-- **UpdateWorkspaceUseCase rule transformation**: `standard` rules no longer converted to `mandatory` in update mode; only `obligatorio` rules are elevated, preserving `destinationExists()` check for standard files
-- **CONTRIBUTING.md rewritten**: "Contributing to the Workspace Template" section now references USER_GUIDE.md detailed procedures for adding agents, skills, and commands
-- **README.md model section synced**: Default and recommended models for all 6 primary agents updated to match `opencode.json` configuration
-- **README.md quick-start flow**: Added post-installation "Next steps" callout linking to `00-setup.md` first-steps guide
-- **Dependencies updated**: `@biomejs/biome` 2.5.0→2.5.1, `@clack/prompts` 1.5.1→1.6.0, `semver` 7.8.4→7.8.5
-
-### Fixed
-
-- **Issue #6 (CRITICAL)**: `bunx @fisherk2-dev/codice` now resolves template files correctly in all modes (compiled, bunx/npm, source) via three-path detection cascade in `TemplateResolver.detectTemplateRoot()`
-- **Issue #2 (CRITICAL)**: Update Workspace mode no longer overwrites existing Standard files (e.g., `README.md`, `AGENTS.md`) — only Obligatorio files are force-copied
-
-### Security
-
-- **Extended credential denial**: Additional credential file patterns denied in both `bash` and `read` permission rules (`.npmrc`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `credentials.json`, `service-account*.json`)
-
-## [1.0.4] — 2026-06-17
-
-### Added
-
-- **VersionComparator refactored**: `validateVersion` and `validateVersions` extracted from private methods to module-level exported functions for direct testability
-- **8 new unit tests**: Direct coverage for `validateVersion` (semver valid, v-prefix, invalid, empty) and `validateVersions` (both valid, local fail-fast, remote invalid, v-prefix both)
-- **pathResolver defense-in-depth guard test**: `.` input passes first guard but triggers second guard; lines 23-26 now at 100% coverage
-- **ClackPromptsAdapter promptForMode tests**: All 4 paths covered — clean, project, update, and cancel (null)
-- **WorkspaceVersion.fromJSON optionalSelections tests**: Array of strings, non-array, and missing key paths
-- **TECH_DEBT.md**: Technical debt catalog with 6 sections (coverage gaps, architectural debt, dependency debt, test infrastructure, process debt, prioritized roadmap)
-
-### Changed
-
-- **Coverage increased**: From 96.84%→97.66% functions / 95.73%→96.52% lines (360 tests, 711 expects)
-- **TECH_DEBT.md moved to docs/**: Cross-referenced from ARCHITECTURE.md
-
-### Fixed
-
-- *(none)*
-
----
-
-## [1.0.3] — 2026-06-16
-
-### Added
-
-- **CLI with 3 installation modes**: Clean Install, Project Install, and Update Workspace
-- **Interactive TUI** powered by @clack/prompts with mode selection, confirmation prompts, and optional file checkboxes
-- **Atomic file operations**: Staging directory + rename pattern guarantees zero corruption on interruption
-- **File classification engine**: Obligatorio (always copy), Estándar (copy if missing), Opcional (user-selected, copy if missing)
-- **Semantic version checking**: Queries GitHub API for latest release, compares with local `.codice-version`
-- **Path traversal prevention**: Validates all paths resolve within destination directory
-- **`--dest` flag**: Safe development playground via `--dest tests/fixtures/workspace/`
-- **`--force` flag**: Skip confirmations for automated installs
-- **`--verbose` flag**: Structured logging for debugging
-- **Cross-platform binaries**: Linux (x64), macOS (x64), Windows (x64) via Bun compilation
-- **CI/CD pipeline**: GitHub Actions with 3-platform matrix, smoke tests, and artifact upload
-- **Release automation**: Tag-triggered workflow builds binaries for all platforms, generates checksums, and creates GitHub Releases
-- **npm publication**: `@fisherk2-dev/codice` package with `bunx` as primary distribution method (ADR-006)
-- **TemplateResolver source mode**: Automatic detection of source vs compiled mode via `detectTemplateRoot()` for npm/bunx compatibility
-- **Version single source of truth**: Version read from `package.json` via `VERSION` constant
-- **Release pipeline with npm publish**: Automatic npm publication on tag push with version validation and error handling
-- **JS bin wrapper**: `bin.js` entry point for npm compatibility
-- **Post-ship review coverage**: 10 pathResolver tests (traversal guards) + 7 directoryWalker tests (symlink skipping, recursion, mixed entries)
-- **Architecture Decision Records**: ADR-001 through ADR-006 documenting all architectural decisions (Clean Architecture, Bun compilation, atomic staging, @clack/prompts TUI, `--dest` flag, npm publication)
-- **E2E test suite**: 6 scenarios covering clean install, project install, optional skip, update workspace, atomic rollback, and path traversal rejection
-- **Unit + Integration tests**: 343 tests with 96.84% function coverage and 94.22% line coverage
-
-### Changed
-
-- **Codebase refactored**: DRY validation with shared helpers, `Array.find()` for manifest lookup, extracted `resolveNewVersion()` helper in `UpdateWorkspaceUseCase`
-- **BunFileSystem decomposed**: `TemplateResolver` and `AtomicStager` extracted as separate classes; `BunFileSystem` becomes a facade (412 → 115 lines)
-- **VersionComparator cleaned up**: DRY semver coercion patterns, prerelease diff fallback to `"none"`
-- **FileRuleManifestData renamed**: `fileRuleManifestData.ts` → `FileRuleManifestData.ts` (PascalCase convention)
-- **IFileSystem port relocated**: Moved from `src/application/ports/` to `src/domain/ports/` for architectural correctness
-- **Package renamed**: From `@fisherk2/codice` to `@fisherk2-dev/codice` for consistent npm scoping
-- **Test coverage increased**: From 89.69% to 96.84% functions / 94.22% lines
-
-### Fixed
-
-- **Template path resolution in compiled binaries**: Binary now resolves `template/` relative to executable path (not `process.cwd()`)
-- **console.warn removed from BunFileSystem.destinationExists**: Unconditional logging replaced with silent error handling (structured logging convention)
-- **v1.0.0/1/2 deprecated on npm**: Only v1.0.3 remains as the active release
-- **GitHub Actions release workflow**: Action pinned to specific SHA (`softprops/action-gh-release@b4309332`) for supply-chain hardening
-- **Cross-platform echo normalization**: Consistent `echo "=== ... ==="` convention across `Justfile` build recipes
-
-### Removed
-
-- Legacy F5/F6 planning files (superseded by WORKFLOW.md)
-
-### Security
-
-- Path traversal prevention maintained and verified (6/6 E2E scenarios passing)
-- PathResolver includes defense-in-depth boundary guard as safety net against future runtime changes
-- All symbolic links skipped during directory walk to prevent symlink-based traversal
-- SHA-256 checksums generated for all release binaries
-
----
+- **Added:** CLI with 3 installation modes (Clean, Project, Update); interactive TUI (@clack/prompts); atomic file operations; file classification engine (Obligatorio/Estándar/Opcional); semantic version checking; path traversal prevention; `--dest`/`--force`/`--verbose` flags; cross-platform binaries; CI/CD pipeline; npm publication; ADR-001–006; E2E test suite (6 scenarios); 343 unit/integration tests
+- **Changed:** Codebase DRY refactored; BunFileSystem decomposed (TemplateResolver + AtomicStager); IFileSystem port relocated; package renamed to `@fisherk2-dev/codice`
+- **Fixed:** Template path resolution in compiled binaries; `console.warn` removed; cross-platform echo normalization; release workflow SHA pinning
+- **Removed:** Legacy F5/F6 planning files
+- **Security:** Path traversal prevention; symlink skipping in directory walk; SHA-256 checksums

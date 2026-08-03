@@ -91,19 +91,6 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 		expect(optionalEntries.length).toBeGreaterThanOrEqual(topLevelCount);
 	});
 
-	test("'.devin' is in optional manifest entries with noTemplateCopy (FEV-2-D)", () => {
-		const devinEntry = FILE_RULE_MANIFEST.find((r) => r.path === ".devin");
-		// .devin stays in the manifest for user selection tracking but uses
-		// noTemplateCopy=true because npm strips its symlinks during packaging.
-		// All .devin/ content is generated post-installation by BunSymlinkCreator
-		// via DEVIN_SYMLINKS. (REF: ADR-FEV2D-6)
-		expect(devinEntry).toBeDefined();
-		expect(devinEntry!.category).toBe("optional");
-		expect(devinEntry!.noTemplateCopy).toBe(true);
-		expect(devinEntry!.isDirectory).toBe(true);
-		expect(FILE_RULE_MANIFEST.find((r) => r.path === ".devin/rules")).toBeUndefined();
-	});
-
 	test("removed .gitignore entry is NOT in standard manifest (FEV-2-C, Issue #11)", () => {
 		const manifestPaths = FILE_RULE_MANIFEST.map((r) => r.path);
 		// .gitignore was removed because npm excludes it from packages.
@@ -132,7 +119,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 		expect(manifestPaths).not.toContain(".opencode/skills");
 	});
 
-	test("all 12 optional manifest entries have unique paths", () => {
+	test("all 11 optional manifest entries have unique paths", () => {
 		const optionalEntries = FILE_RULE_MANIFEST.filter((r) => r.category === "optional");
 		const paths = optionalEntries.map((r) => r.path);
 		const uniquePaths = new Set(paths);
@@ -140,9 +127,9 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 	});
 
 	test.each([
-		["optional", 12],
-		["standard", 10],
-		["mandatory", 8],
+		["optional", 11],
+		["standard", 11],
+		["mandatory", 7],
 	])("category '%s' has %i entries", (category, expectedCount) => {
 		const count = FILE_RULE_MANIFEST.filter((r) => r.category === category).length;
 		if (category === "optional") {

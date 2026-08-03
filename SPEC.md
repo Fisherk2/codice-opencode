@@ -1,16 +1,16 @@
-# Spec: Códice — Opencode Workspace Installer v1.1.3
+# Spec: Códice — Opencode Workspace Installer v1.2.0
 
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v1.1.3  
+**Current Version:** v1.2.0  
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
 ---
 
 ## Objective
 
-Códice is a command-line interface (CLI) tool compiled with Bun that installs and updates OpenCode workspace templates in an atomic, safe, and intelligent manner. It resolves the fragmentation and customization-loss problem that occurs when users manually merge template updates into existing projects.
+Códice is a command-line interface (CLI) tool built with Bun that installs and updates OpenCode workspace templates in an atomic, safe, and intelligent manner. It resolves the fragmentation and customization-loss problem that occurs when users manually merge template updates into existing projects.
 
 ### Problem Statement
 OpenCode workspace templates evolve over time. Users currently face three painful scenarios:
@@ -18,7 +18,7 @@ OpenCode workspace templates evolve over time. Users currently face three painfu
 2. **Existing project:** A user wants to adopt the template without overwriting their existing customizations.
 3. **Update:** A user wants to pull the latest template improvements but fears losing their local modifications.
 
-Códice automates all three scenarios with a single binary, zero external dependencies at runtime, and guaranteed atomic operations.
+Códice automates all three scenarios with a single command, zero external dependencies at runtime, and guaranteed atomic operations.
 
 ### User Stories
 
@@ -34,17 +34,17 @@ Códice automates all three scenarios with a single binary, zero external depend
 
 | Component | Technology | Version / Constraint | Justification |
 |-----------|-----------|---------------------|---------------|
-| Runtime & Compiler | Bun | >= 1.1.x | Native binary compilation, superior startup time, modern filesystem API, single executable output |
-| Language | TypeScript | Strict mode enabled | Type safety at compile time, explicit interfaces for Clean Architecture ports |
-| TUI Framework | @clack/prompts | Latest stable | Zero-dependency tree, modern UX, ideal for compiled binaries, lightweight spinner and prompt primitives |
+| Runtime | Bun | >= 1.1.x | Superior startup time, modern filesystem API, single runtime dependency |
+| Language | TypeScript | Strict mode enabled | Type safety, explicit interfaces for Clean Architecture ports |
+| TUI Framework | @clack/prompts | Latest stable | Zero-dependency tree, modern UX, ideal for CLI tools, lightweight spinner and prompt primitives |
 | Testing Framework | bun:test | Bundled with Bun | Native test runner, built-in mocking, coverage reporting, no additional dependencies |
 | Linting & Formatting | Biome (or eslint + prettier) | Latest stable | Fast formatting, consistent code style enforcement in CI |
-| Task Runner | Just | Latest stable | Cross-platform task definitions (`just setup`, `just test`, `just build`) |
+| Task Runner | Just | Latest stable | Cross-platform task definitions (`just setup`, `just test`, `just check`) |
 | CI/CD Platform | GitHub Actions | Native | Tight integration with repository, free runners for Linux/macOS/Windows, automatic release asset attachment |
 | Version Parsing | semver | Latest stable | Standard semantic version comparison, tag validation |
 
 ### Runtime Constraints
-- The compiled binary must run on Linux (x64), macOS (x64), and Windows (x64) without requiring Node.js, Bun, or any other runtime installation.
+- The package is distributed as source via npm and executed via `bunx @fisherk2-dev/codice` or `npx @fisherk2-dev/codice`. Bun >= 1.1.x is the recommended runtime.
 - All filesystem operations must use Bun's native `Bun.file()` and `Bun.write()` APIs or standard Node.js `fs` polyfills provided by Bun.
 - Network operations are limited to GitHub REST API calls for version checking.
 
@@ -59,7 +59,7 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 | Command | Purpose | Expected Behavior |
 |---------|---------|-------------------|
 | `just setup` | Bootstrap development environment | Install dependencies via `bun install`, verify Bun version >= 1.1.x, create required directories |
-| `just dev` | Run CLI in development mode | Execute `src/cli/main.ts` via `bun run`, enable verbose logging, skip binary compilation |
+| `just dev` | Run CLI in development mode | Execute `src/cli/main.ts` via `bun run`, enable verbose logging |
 | `just lint` | Static analysis | Run Biome (or eslint) across `src/` and `tests/`, fail on warnings, enforce no-explicit-any rule |
 | `just format` | Code formatting | Run Biome format (or prettier) in write mode, fail if unformatted files detected in CI |
 | `just check` | Pre-flight validation | Run `lint`, `format --check`, and `typecheck` in sequence; gate for commits |
@@ -71,23 +71,22 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 | `just test` | Full test suite | Execute `bun test` across all `*.test.ts` files; unit + integration tests |
 | `just test:unit` | Unit tests only | Run tests matching `tests/unit/**/*.test.ts`; target < 1s execution |
 | `just test:integration` | Integration tests only | Run tests matching `tests/integration/**/*.test.ts`; mock filesystem and network |
-| `just test:e2e` | End-to-end tests | Compile binary, execute in isolated temporary directories, validate filesystem state and exit codes |
+| `just test:e2e` | End-to-end tests | Execute via `bun run src/cli/main.ts` in isolated temporary directories, validate filesystem state and exit codes |
 | `just test:coverage` | Coverage report | Run `bun test --coverage`, generate HTML and lcov reports, enforce > 80% threshold |
 
 ### Build & Release Commands
 
 | Command | Purpose | Expected Behavior |
 |---------|---------|-------------------|
-| `just build` | Compile native binary | Run `bun build --compile src/cli/main.ts --outfile ./dist/codice-<platform>` for current platform |
-| `just build:all` | Cross-platform compilation | Trigger GitHub Actions workflow or use local cross-compilation if available; produce `codice-linux`, `codice-macos`, `codice-windows.exe` |
-| `just release` | Draft release | Create GitHub Release with attached binaries, generate release notes from `CHANGELOG.md` |
+| `just build` | *Removed in v1.2.0* | Binary compilation removed. Use `bun run src/cli/main.ts` for local development. |
+| `just release` | Draft release | Create GitHub Release, generate release notes from `CHANGELOG.md` |
 
-### CLI Runtime Commands (Binary)
+### CLI Runtime Commands (Package)
 
 | Command | Purpose | Expected Behavior |
 |---------|---------|-------------------|
 | `codice` | Interactive menu | Launch TUI with three mode options; default entry point for all users |
-| `codice --version` | Version display | Print current binary version and exit with code 0 |
+| `codice --version` | Version display | Print current package version and exit with code 0 |
 | `codice --verbose` | Verbose mode | Enable structured logging to stderr for all operations; useful for debugging |
 | `codice --help` | Help display | Show usage instructions, available flags, and link to documentation |
 | `codice --dest <path>` | Destination directory | Specify the target directory for installation (default: current working directory) |
@@ -158,13 +157,12 @@ codice-opencode/
 ├── tests/
 │   ├── unit/                      # Domain logic tests (pure functions, entities)
 │   ├── integration/               # Adapter tests with mocked external systems
-│   ├── e2e/                       # Shell scripts and fixtures for binary validation
+│   ├── e2e/                       # Shell scripts and fixtures for CLI validation
 │   └── fixtures/                  # Predefined directory trees for merge scenarios
 ├── template/                      # The actual OpenCode workspace template files
 │   ├── obligatorio/               # Files always copied/overwritten
 │   ├── estandar/                  # Files copied only if missing in destination
 │   └── opcional/                  # Files presented as checklist; copied only if selected and missing
-├── dist/                          # Compiled binaries (gitignored, populated by CI)
 ├── docs/                          # Architecture decisions, workflow, PRD, TRD
 ├── specs/                         # Modular specification documents
 │   ├── adr/                       # Architecture Decision Records
@@ -210,43 +208,15 @@ codice-opencode/
 
 ## Code Style
 
-All code must adhere to the following conventions derived from the project's architectural principles.
+All code must adhere to the full conventions in [CODE_STYLE.md](docs/CODE_STYLE.md). Key rules:
 
-### Naming Conventions
-- **Files:** PascalCase for classes, camelCase for utilities. Examples: `FileMergeEngine.ts`, `versionComparator.ts`.
-- **Classes and Interfaces:** Descriptive nouns. `FileMergeEngine` (not `Merger`), `VersionComparator` (not `VersionCheck`). Interfaces prefixed with `I`: `IFileSystem`, `IGitHubClient`.
-- **Functions:** Verb or verb-phrase. `compareVersions`, `stageFileAtomic`, `promptForMode`.
-- **Constants:** SCREAMING_SNAKE_CASE for true constants. `GITHUB_API_TIMEOUT_MS`, `STAGING_DIR_NAME`.
-
-### File Size and Structure
-- Maximum 200 lines per file. If a file exceeds this limit, extract responsibilities into new modules.
-- One primary export per file. Secondary utilities may be co-exported if tightly coupled.
-- Imports grouped by layer: external libraries first, then infrastructure, then application, then domain (domain imports are forbidden outside domain).
-
-### TypeScript Rules
-- Strict mode enabled. No implicit any.
-- Explicit return types on all public methods and exported functions.
-- No `any` type usage. Use `unknown` with type guards when type is genuinely uncertain.
-- Prefer `readonly` arrays and properties where mutation is not intended.
-
-### Comments and Documentation
-- Comments explain **why**, never **what**.
-- Public APIs (ports and use cases) include JSDoc describing purpose, parameters, return values, and error conditions.
-- Avoid obvious comments such as `// Increment i` next to `i++`.
-
-### Error Handling
-- Fail-fast validation at function entry points.
-- Domain services return `Result<T, Error>` instead of throwing exceptions.
-- Error messages must be actionable. Example: "Permission denied at /path/to/file. Run with appropriate permissions or check directory access." instead of "Error EACCES".
-- Infrastructure adapters may catch low-level errors (network, filesystem) and map them to domain error types.
-
-### Pre-Commit Checklist
-Every commit must satisfy:
-- [ ] `just lint` passes with zero errors and zero warnings.
-- [ ] `just test:unit` passes with > 80% coverage.
-- [ ] No `any` types introduced.
-- [ ] Names are descriptive and follow convention.
-- [ ] Documentation updated if public API changed.
+- **Files:** PascalCase for classes, camelCase for utilities. Classes: descriptive nouns, interfaces prefixed with `I`.
+- **Functions:** verb-phrases. **Constants:** `SCREAMING_SNAKE_CASE`.
+- **Max 200 lines per file**, one primary export. Imports: externals → infra → application → domain.
+- **Strict TypeScript** — no `any`, explicit return types, prefer `readonly`.
+- **Comments** explain **why**, never **what**. JSDoc for public APIs.
+- **Error handling:** fail-fast validation, domain returns `Result<T, Error>`, actionable messages.
+- **Pre-commit:** `just lint` + `just test:unit` pass, no `any` introduced, docs updated.
 
 ---
 
@@ -299,27 +269,27 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 
 ### Phase 3: End-to-End (E2E) Tests
 
-**Scope:** Compiled binary behavior in isolated environments.
+**Scope:** CLI behavior in isolated environments.
 **Location:** `tests/e2e/`
-**Tool:** Bash scripts (`bash` or `zx`) that orchestrate the binary.
+**Tool:** Bash scripts (`bash` or `zx`) that orchestrate the CLI.
 **Patterns:**
 - Each test creates a fresh temporary directory as the "project".
-- The binary is compiled once per suite (`bun build --compile`) and copied to the temp directory.
-- Tests invoke the binary with environment variables to mock GitHub API responses (optional) or use `--skip-version-check` flag.
+- The CLI is executed via `bun run src/cli/main.ts` (local development) or `bunx @fisherk2-dev/codice` (published package).
+- Tests invoke the CLI with environment variables to mock GitHub API responses or use `--skip-version-check` flag.
 - Post-execution assertions verify directory contents, file existence, and absence of corruption.
 
 **Scenarios:**
-1. **Clean Install:** Run binary in empty directory. Assert all template files exist in destination.
+1. **Clean Install:** Run CLI in empty directory. Assert all template files exist in destination.
 2. **Project Install (Selective):** Pre-populate destination with a file that also exists in template/estandar. Assert the existing file is preserved, not overwritten.
 3. **Project Install (Optional Skip):** Present optional files, simulate skipping one. Assert skipped file is absent, others are present.
 4. **Update Workspace:** Pre-populate with older version. Run update mode. Assert only obligatorio and estandar files are updated; optional files untouched.
 5. **Atomic Rollback (SIGINT):** Simulate a crash mid-operation. Assert destination directory is in its original state, staging directory is absent or cleaned.
 6. **Path Traversal Rejection:** Attempt to install to a path outside the allowed base using `../` sequences. Assert exit code 1 and no files written outside boundary.
-7. **Symlinks Clean Install:** Run binary in empty directory. Assert all 10 symlinks exist and resolve correctly.
-8. **Symlinks Project Install:** Pre-populate destination without `.devin`. Run project install with `--force`. Assert `.opencode/` symlinks exist, `.devin/` symlinks absent. Then run again selecting `.devin`. Assert `.devin/` symlinks present.
-9. **Symlinks Idempotency:** Run binary twice in the same directory. Assert symlinks are created only once and remain valid.
+7. **Symlinks Clean Install:** Run CLI in empty directory. Assert all 3 symlinks exist and resolve correctly.
+8. **Symlinks Project Install:** Run project install with `--force`. Assert `.opencode/` symlinks exist.
+9. **Symlinks Idempotency:** Run CLI twice in the same directory. Assert symlinks are created only once and remain valid.
 10. **Update No Symlinks:** Run update mode on an existing installation. Assert no symlinks are created or modified.
-11. **Gitignore Clean Install:** Run binary in empty directory. Assert `.gitignore` exists in destination with correct content.
+11. **Gitignore Clean Install:** Run CLI in empty directory. Assert `.gitignore` exists in destination with correct content.
 12. **Gitignore Project Install:** Pre-populate destination with an existing `.gitignore`. Run project install. Assert existing `.gitignore` is preserved, not overwritten.
 13. **Clean Install Optional Menu:** Run clean install. Assert optional files menu is presented to the user before copying.
 14. **Project Install Optional Selection:** Run project install with optional files. Assert only selected optional files are copied.
@@ -330,13 +300,9 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 - Exit codes validated for success (0) and failure (1).
 - No test leaves artifacts in the repository workspace.
 
----
-
 ## Boundaries
 
 ### Always
-
-These actions are always permitted and expected without explicit user confirmation:
 
 - **Validate inputs immediately.** Every path, version string, and user selection is validated at the point of entry. Fail fast with actionable error messages.
 - **Use atomic file operations.** All writes that affect the user's project must go through the staging directory + rename pattern. No direct overwrites of existing user files.
@@ -348,16 +314,12 @@ These actions are always permitted and expected without explicit user confirmati
 
 ### Ask First
 
-These actions require explicit user confirmation or interactive decision before proceeding:
-
 - **Overwriting existing files in Clean Install mode.** If the destination directory is not empty, warn the user and require confirmation before deleting or overwriting anything.
 - **Copying Optional files in Project Install mode.** Present a checkbox list of all optional files. Only copy those the user selects. If the user deselects all, copy none.
 - **Proceeding when GitHub API is unreachable.** If the version check fails due to network issues, ask whether to continue with the local template or abort.
 - **Installing into a directory that does not look like a project.** If the destination lacks expected markers (e.g., no `.git` directory, no `package.json`), ask for confirmation that the user selected the correct path.
 
 ### Never
-
-These actions are explicitly prohibited under all circumstances:
 
 - **Never execute arbitrary code from the template.** Do not run shell scripts, eval JavaScript, or execute binaries embedded in the template directory. The installer is a file copier, not a script runner.
 - **Never hardcode absolute paths.** All paths must be constructed with `path.join()` or `path.resolve()`. No `/home/user/...` or `C:\Users\...` literals in source code.
@@ -369,11 +331,7 @@ These actions are explicitly prohibited under all circumstances:
 - **Never duplicate logic.** Extract shared behavior into domain services or utility functions. Follow DRY.
 - **Never write comments that state the obvious.** Comments must explain intent and rationale, not restate the code.
 
----
-
 ## Success Criteria
-
-The following conditions are specific, testable, and must all be met for the v1.1.3 release to be considered complete.
 
 ### Functional Criteria
 
@@ -403,7 +361,7 @@ The following conditions are specific, testable, and must all be met for the v1.
 | SC-12 | Unit test coverage exceeds 90% for domain layer. | `bun test --coverage` report |
 | SC-13 | Overall test coverage exceeds 80%. | `bun test --coverage` report |
 | SC-14 | All E2E tests pass in CI on Ubuntu latest runner. | GitHub Actions workflow execution |
-| SC-15 | Compiled binaries are produced for Linux, macOS, and Windows x64. | GitHub Actions release artifact verification |
+| SC-15 | The npm package (tarball) size is < 5MB. | `npm pack --dry-run` size verification |
 | SC-16 | The README contains copy-paste installation commands that a non-technical user can execute without modification. | Peer review by non-technical stakeholder |
 | SC-17 | No `any` types exist in the production source code. | `tsc --noEmit` strict check |
 | SC-18 | Path traversal attempts (e.g., destination containing `../../`) are rejected with exit code 1. | E2E security test |
@@ -416,35 +374,16 @@ The following conditions are specific, testable, and must all be met for the v1.
 | SC-20 | CHANGELOG.md exists and follows Keep a Changelog format with Added, Changed, Fixed, and Security sections. | Manual inspection |
 | SC-21 | CI/CD badge is visible in README and reflects the current build status of the `main` branch. | Visual inspection of rendered README |
 
----
 
 ## Modular Specs
-
-The following specifications break down complex subsystems into focused documents. They are referenced here and maintained independently.
 
 - **[File Classification Rules](specs/spec-file-rules.md)** — Detailed definition of the Obligatorio, Estándar, and Opcional categories. Includes the directory structure convention in `template/`, rule precedence, edge cases (nested directories, hidden files), and the algorithm for determining which rule applies to a given file path.
 
 - **[CLI Commands and Modes](specs/spec-cli-commands.md)** — Exhaustive specification of the three installation modes. Includes flow diagrams for each mode, decision trees for user prompts, error handling paths, and the exact TUI text and options presented at each step.
 
----
+- **[SDD Plugin Decoupling](specs/spec-sdd-plugin-decoupling.md)** — Specification for reducing coupling between the SDD pipeline plugin and documentation. Defines auto-discovery of commands/agents, configuration-driven behavioral data, and quality infrastructure (linting, testing). Addresses Issue #53.
 
-## Resolved Decisions
-
-The following architectural decisions have been resolved and are now part of the specification:
-
-| # | Decision | Resolution | Rationale |
-|---|----------|------------|-----------|
-| 1 | **Template Packaging Format** | Embed template files into the binary at compile time via `Bun.file()` on a bundled directory. | Guarantees portability and eliminates "missing template" errors. Binary size increase is acceptable for a workspace installer. |
-| 2 | **Optional File Grouping** | Present optional files grouped by category (e.g., "Config", "Scripts", "Docs") in the TUI when count exceeds 10. | Improves UX for non-technical users. Requires `IUserPrompt` to support grouped multiselect. |
-| 3 | **GitHub Authentication** | Rely solely on unauthenticated requests (60 req/hr). Do not support `GITHUB_TOKEN`. | Simpler for end users. If rate limit is hit, display a clear message and fall back to the embedded local template. |
-| 4 | **Windows Path Handling** | Normalize all paths internally to forward slashes (`/`). The filesystem adapter handles OS-specific translation at the boundary. | Simplifies Path Traversal prevention logic and cross-platform consistency. |
-| 5 | **Local Version Storage** | Persist the installed version in a `.codice-version` file in the project root. | Simplest implementation. The file is small, human-readable, and easy to parse. |
-| 6 | **Rollback on Partial Failure** | If a multi-file operation fails mid-way, automatically roll back all already-copied files from the current staging batch. | Guarantees project consistency. Combined with per-file atomic staging, this provides transaction-like safety. |
-| 7 | **Update Notification in Other Modes** | Version checking is **exclusive** to Update Workspace mode. Clean Install and Project Install do not check for newer versions. | Reduces noise and API calls. Users in install mode are assumed to want the bundled version. |
-| 8 | **Primary Distribution Method** | Publish to npm as `@fisherk2-dev/codice`. Use `bunx @fisherk2-dev/codice` as the official installation method. Provide pre-compiled binaries as offline fallback. | Broadens accessibility beyond Bun users. Eliminates installation friction for npm-native workflows. |
-| 9 | **Post-Installation Generation** | Symlinks and `.gitignore` are generated post-installation via dedicated ports (`ISymlinkCreator`, `IGitignoreCreator`) instead of being packaged in the template. | npm resolves symlinks during packaging and excludes `.gitignore` files. Post-install generation guarantees these files exist correctly regardless of distribution method. |
-
----
+Resolved decisions are documented in the respective ADRs (see `specs/adr/`).
 
 ## References
 
@@ -453,7 +392,5 @@ The following architectural decisions have been resolved and are now part of the
 - **docs/PRD.md** — Product Requirements Document (if exists).
 - **docs/TRD.md** — Technical Requirements Document (if exists).
 - **Reference Repository:** `https://github.com/weisser-dev/awesome-opencode` — Similar installation system for UX and flow inspiration.
-
----
 
 *End of Spec*

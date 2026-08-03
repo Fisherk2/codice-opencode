@@ -36,8 +36,10 @@ describe("Justfile Configuration", () => {
 		expect(justfile).toMatch(/^test:/m);
 	});
 
-	test("has build recipe", () => {
-		expect(justfile).toMatch(/^build:/m);
+	test("build recipe is removed (binary compilation removed in v1.2.0)", () => {
+		expect(justfile).not.toMatch(/^build:/m);
+		expect(justfile).not.toMatch(/^build-all:/m);
+		expect(justfile).not.toMatch(/bun build --compile/);
 	});
 
 	test("lint recipe uses bunx @biomejs/biome", () => {

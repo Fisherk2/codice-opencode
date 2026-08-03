@@ -1,5 +1,5 @@
 ---
-description: Init a new project — establish specs, documentation, and project conventions from scratch
+description: Establish specs, documentation, and project conventions from scratch
 agent: quetzalcoatl
 ---
 
@@ -29,7 +29,8 @@ If the user's request is vague or missing key details (who it's for, what succes
 
 ## Phase 1: Refine Requirements
 
-If the user has a rough idea but needs to explore variations, invoke @skills/idea-refine/SKILL.md to generate and evaluate options.
+**Delegate** appropriate subagents to analyze and refine the user requirements.
+If the user has a rough idea but needs to explore variations, load `idea-refine` skill to generate and evaluate options.
 
 Use the `question` tool to clarify interactively:
 1. **Objective and target users** — what does success look like? Who is this for?
@@ -39,23 +40,27 @@ Use the `question` tool to clarify interactively:
 
 ## Phase 2: Generate Initial Documentation
 
-Invoke @skills/spec-driven-development/SKILL.md to scaffold the project's initial documentation:
+Invoke `docs-writer` subagent and load @skills/spec-driven-development/SKILL.md to scaffold the project's initial documentation following these files and directories:
 
-1. **@AGENTS.md** — Project-level rules, standards, and metadata for AI agents working on this project
-2. **@SPEC.md** — Central specification covering objective, commands, project structure, code style, testing strategy, and boundaries. References modular specs in @specs/
-3. **@docs/** — Initial scaffold: @docs/ARCHITECTURE.md (with ADR index), @docs/SCHEMA.md, @docs/APPFLOW.md, @docs/CODE_STYLE.md
-4. **@specs/spec-<feature>.md** — One modular spec per feature or domain; @SPEC.md references these
-5. **@specs/adr/adr-<nnn>.md** — ADRs for key architecture decisions, linked from @docs/ARCHITECTURE.md (use @skills/documentation-and-adrs/SKILL.md)
-6. If @AGENTS.md or @SPEC.md exceeds **200 lines**, invoke @skills/agent-md-refactor/SKILL.md to modularize into progressive disclosure files in @specs/
+1. **AGENTS.md** — Project-level rules, standards, and metadata for AI agents working on this project
+2. **SPEC.md** — Central specification covering objective, commands, project structure, code style, testing strategy, and boundaries. References modular specs in @specs/
+3. **docs/** — Initial scaffold: @docs/ARCHITECTURE.md (with ADR index), @docs/SCHEMA.md, @docs/APPFLOW.md, @docs/CODE_STYLE.md, @docs/SECURITY.md, @docs/TECH_DEBT.md
+4. **specs/spec-<feature>.md** — One modular spec per feature or domain, use @specs/spec-template.md as template; @SPEC.md references these
+5. **specs/adr/adr-<nnn>.md** — ADRs for key architecture decisions, linked from @docs/ARCHITECTURE.md, use @specs/adr/adr-template.md as template, then, invoke @skills/documentation-and-adrs/SKILL.md to generate ADRs.
 
-During Phase 2, invoke supporting skills as needed:
-- @skills/api-and-interface-design/SKILL.md when defining API contracts
-- @skills/architecture-diagrams/SKILL.md for system architecture diagrams
-- @skills/clean-ddd-hexagonal/SKILL.md if using Clean Architecture or DDD
-- @skills/design-patterns/SKILL.md when applying GoF or enterprise patterns
-- @skills/api-spec-generation/SKILL.md for OpenAPI or AsyncAPI specs
+During Phase 2, load the following supporting skills as needed:
+- `api-and-interface-design` skill when defining API contracts
+- `architecture-diagrams` skill for system architecture diagrams
+- `clean-ddd-hexagonal` skill if using Clean Architecture or DDD
+- `design-patterns` skill when applying GoF or enterprise patterns
+- `api-spec-generation` skill for OpenAPI or AsyncAPI specs
 
-Do **not** touch @specs/design/ or @docs/DESIGN.md — those belong to `/design`.  workspace documentation is managed separately.
+Do **not** touch `specs/design/` or 
+`docs/DESIGN.md` — those belong to `/design`.  workspace documentation is managed separately.
+
+6. If @AGENTS.md or @SPEC.md exceeds **200 lines**, load `agent-md-refactor` skill to modularize into progressive disclosure files in @specs/
+
+7. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
 ## Rules
 

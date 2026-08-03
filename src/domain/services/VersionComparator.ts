@@ -1,22 +1,7 @@
-import { compare, diff as semverDiff, valid } from "semver";
-import type { IVersionComparator, ReleaseType } from "../ports/IVersionComparator";
+import { compare, valid } from "semver";
+import type { IVersionComparator } from "../ports/IVersionComparator";
 import { failure, type Result, success } from "../types/Result";
 import type { ComparisonResult } from "../types/version";
-
-// Module-level map: semver diff strings → ReleaseType (pre* variants map to base type)
-const RELEASE_TYPE_MAP: Partial<
-	Record<
-		"major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease" | "release",
-		ReleaseType
-	>
-> = {
-	major: "major",
-	premajor: "major",
-	minor: "minor",
-	preminor: "minor",
-	patch: "patch",
-	prepatch: "patch",
-};
 
 /**
  * Validate a single version string and return its normalized form.
@@ -85,31 +70,5 @@ export class VersionComparator implements IVersionComparator {
 		if (result < 0) return success("newer");
 		if (result > 0) return success("older");
 		return success("equal");
-	}
-
-	/**
-	 * Convenience method to check if an update is available.
-	 * Returns false if either version is invalid (fail-safe default).
-	 */
-	isUpdateAvailable(local: string, remote: string): boolean {
-		const result = this.compare(local, remote);
-		return result.ok && result.value === "newer";
-	}
-
-	/**
-	 * Determine the release type (major/minor/patch/none) between two versions.
-	 *
-	 * @param local - Installed version string
-	 * @param remote - Target version string
-	 * @returns The type of version bump, or Failure if versions are invalid.
-	 */
-	getReleaseType(local: string, remote: string): Result<ReleaseType, Error> {
-		const validated = validateVersions(local, remote);
-		if (!validated.ok) return validated;
-
-		const diff = semverDiff(validated.value.localValid, validated.value.remoteValid);
-		if (diff === null) return success("none");
-
-		return success(RELEASE_TYPE_MAP[diff] ?? "none");
 	}
 }

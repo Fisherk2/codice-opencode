@@ -25,10 +25,11 @@ export async function walkDirectory(
 	const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
 	for (const entry of entries) {
+		const entryPath = path.join(dirPath, entry.name);
+
 		// Skip symbolic links — they may point outside the intended boundary
 		if (entry.isSymbolicLink()) {
 			if (verbose) {
-				const entryPath = path.join(dirPath, entry.name);
 				// biome-ignore lint/suspicious/noConsole: verbose audit log for security observability
 				console.warn(`[verbose] Skipping symbolic link: ${entryPath}`);
 			}
@@ -40,7 +41,6 @@ export async function walkDirectory(
 			continue;
 		}
 
-		const entryPath = path.join(dirPath, entry.name);
 		if (entry.isDirectory()) {
 			const subFiles = await walkDirectory(entryPath, verbose, excludeNames);
 			files.push(...subFiles);

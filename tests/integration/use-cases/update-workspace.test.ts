@@ -30,9 +30,7 @@ function createMockFileSystem(): {
 	};
 
 	const stub: IFileSystem & IStagingSystem = {
-		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),
-		getStagingPath: mockFn((path: string) => `.codice-staging/${path}`),
 		stageFile: mockFn(async (path: string) => {
 			calls.stageFile.push(path);
 		}) as (path: string, excludeSubDirs?: Set<string>) => Promise<void>,
@@ -56,6 +54,17 @@ function createMockFileSystem(): {
 				}),
 			),
 		),
+		// Provide realistic file lists for standard directories so that
+		// tree-level diffing (diffTrees) works correctly in update mode.
+		// Each standard directory contributes exactly 1 file, matching the old
+		// per-directory count so total staged file counts remain backward compatible.
+		walkTemplateDirectory: mockFn(async (path: string) => {
+			if (path === "docs") return ["APPFLOW.md"];
+			if (path === "specs") return ["spec-template.md"];
+			if (path === "tasks") return ["plan.md"];
+			return [];
+		}),
+		walkDestinationDirectory: mockFn(() => Promise.resolve([])),
 	};
 
 	return { stub, calls };
@@ -67,8 +76,10 @@ function createMockPrompt(): IUserPrompt {
 		showInfo: mockFn(() => {}),
 		confirm: mockFn(() => Promise.resolve(true)),
 		selectOptional: mockFn((_options: FileRule[]) => Promise.resolve([])),
-		showSpinner: mockFn(() => {}),
-		stopSpinner: mockFn(() => {}),
+		showProgressBar: mockFn(() => {}),
+		updateProgress: mockFn(() => {}),
+		completeProgress: mockFn(() => {}),
+		logProgressEvent: mockFn(() => {}),
 		showIntro: mockFn(() => {}),
 		showSuccess: mockFn(() => {}),
 		showCancel: mockFn(() => {}),
@@ -80,7 +91,6 @@ function createMockPrompt(): IUserPrompt {
 function createMockGitHubClient(tagName: string | null = "v1.0.0"): IGitHubClient {
 	return {
 		getLatestReleaseTag: mockFn(() => Promise.resolve(tagName)),
-		getLatestReleaseNotes: mockFn(() => Promise.resolve("Release notes")),
 	};
 }
 
@@ -252,6 +262,16 @@ describe("UpdateWorkspaceUseCase", () => {
 			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(async (path: string) =>
 				standardPaths.includes(path),
 			);
+			// When a standard directory exists in destination, its files must also exist
+			// so that tree-level diffing (diffTrees) correctly identifies nothing is new.
+			(fs.walkDestinationDirectory as ReturnType<typeof mockFn>).mockImplementation(
+				async (path: string) => {
+					if (path === "docs") return ["APPFLOW.md"];
+					if (path === "specs") return ["spec-template.md"];
+					if (path === "tasks") return ["plan.md"];
+					return [];
+				},
+			);
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
@@ -281,6 +301,16 @@ describe("UpdateWorkspaceUseCase", () => {
 			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(async (path: string) =>
 				allPaths.includes(path),
 			);
+			// When standard directories exist in destination, their files must also exist
+			// so tree-level diffing correctly identifies nothing is new.
+			(fs.walkDestinationDirectory as ReturnType<typeof mockFn>).mockImplementation(
+				async (path: string) => {
+					if (path === "docs") return ["APPFLOW.md"];
+					if (path === "specs") return ["spec-template.md"];
+					if (path === "tasks") return ["plan.md"];
+					return [];
+				},
+			);
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
@@ -298,11 +328,18 @@ describe("UpdateWorkspaceUseCase", () => {
 			}
 		});
 
-		it("should skip entire standard directory if it already exists (all-or-nothing granularity)", async () => {
+		it("should stage only new files when standard directory already exists (tree-level diff)", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			// Simulate: "docs" directory exists (return true), everything else missing
 			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(
 				async (path: string) => path === "docs",
+			);
+			// Simulate that "APPFLOW.md" already exists in destination
+			(fs.walkDestinationDirectory as ReturnType<typeof mockFn>).mockImplementation(
+				async (path: string) => {
+					if (path === "docs") return ["APPFLOW.md"];
+					return [];
+				},
 			);
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient("v1.0.0");
@@ -313,7 +350,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			const result = await useCase.execute("/tmp/project", { force: true });
 
 			expect(result.ok).toBe(true);
-			// The "docs" directory should NOT be staged (entirely skipped because it exists)
+			// The "docs" directory exists and APPFLOW.md exists in dest → nothing should be staged from docs
 			const stagedDocs = calls.stageFile.filter(
 				(p: string) => p === "docs" || p.startsWith("docs/"),
 			);
@@ -468,6 +505,31 @@ describe("UpdateWorkspaceUseCase", () => {
 			if (result.ok) return;
 			expect(result.error.message).toContain("version file");
 			expect(calls.cleanStaging).toBe(1);
+		});
+
+		it("should emit progress events during merge", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const engine = new FileMergeEngine(fs);
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Progress bar should have been initialized with the correct label
+			expect(prompt.showProgressBar).toHaveBeenCalled();
+			expect(prompt.showProgressBar).toHaveBeenCalledWith(expect.any(Number), "Updating files...");
+			// Progress updates should have been sent
+			expect(prompt.updateProgress).toHaveBeenCalled();
+			// Commit log event should have been emitted
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(
+				expect.stringContaining("commit: Committing"),
+			);
+			expect(prompt.logProgressEvent).toHaveBeenCalledWith(expect.stringContaining("commit:"));
+			// Progress should have been completed
+			expect(prompt.completeProgress).toHaveBeenCalled();
 		});
 	});
 });

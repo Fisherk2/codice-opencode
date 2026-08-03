@@ -7,12 +7,13 @@ import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 
 function createMockFileSystem(opts?: { isEmpty?: boolean }): IFileSystem {
 	return {
-		readTemplateFile: mockFn(() => Promise.resolve("")),
 		destinationExists: mockFn(() => Promise.resolve(false)),
 		isWritable: mockFn(() => Promise.resolve(true)),
 		isEmpty: mockFn(() => Promise.resolve(opts?.isEmpty ?? true)),
 		writeVersionFile: mockFn(async () => {}),
 		readVersionFile: mockFn(() => Promise.resolve(null)),
+		walkTemplateDirectory: mockFn(() => Promise.resolve([])),
+		walkDestinationDirectory: mockFn(() => Promise.resolve([])),
 	};
 }
 
@@ -34,8 +35,10 @@ function createMockPrompt(opts?: { confirmResult?: boolean }): {
 				return Promise.resolve(opts?.confirmResult ?? true);
 			}),
 			selectOptional: mockFn(() => Promise.resolve([])),
-			showSpinner: mockFn(() => {}),
-			stopSpinner: mockFn(() => {}),
+			showProgressBar: mockFn(() => {}),
+			updateProgress: mockFn(() => {}),
+			completeProgress: mockFn(() => {}),
+			logProgressEvent: mockFn(() => {}),
 			showIntro: mockFn(() => {}),
 			showSuccess: mockFn(() => {}),
 			showCancel: mockFn((msg: string) => {

@@ -2,7 +2,7 @@
 #===============================================================================
 # F4-T2: Clean Install E2E
 #
-# Scenario: Run binary in empty directory
+# Scenario: Run CLI in empty directory
 # Expected: All template files copied (obligatorio + estandar + opcional)
 #
 # This tests the --clean --force mode which skips all interactive prompts.
@@ -18,30 +18,47 @@ source "$(dirname "$0")/common.sh"
 
 log_step "F4-T2: Clean Install E2E"
 
-# Resolve binary (builds if needed)
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+# Resolve CLI (builds if needed)
 
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
 log_info "Test directory: $TEMP_DIR"
 
-# Copy template to temp dir so the binary can find it
+# Copy template to temp dir so the CLI can find it
 cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 
 # ---------------------------------------------------------------------------
 # Execute
 # ---------------------------------------------------------------------------
 
-log_info "Running: $CODICE_BINARY --clean --force in $TEMP_DIR"
+log_info "Running: $CODICE_CLI --clean --force in $TEMP_DIR"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --clean --force) 2>/dev/null || EXIT_CODE=$?
+CLI_OUTPUT=$(cd "$TEMP_DIR" && $CODICE_CLI --clean --force 2>&1) || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     exit 1
 fi
-log_pass "Binary exited with code 0"
+log_pass "CLI exited with code 0"
+
+# ---------------------------------------------------------------------------
+# Assertions: Progress messages in CLI output
+# ---------------------------------------------------------------------------
+log_info "Verifying progress messages..."
+
+if ! echo "$CLI_OUTPUT" | grep -q "Committing"; then
+    log_fail "Expected 'Committing' in progress output (commit progress message)"
+    echo "--- CLI OUTPUT (first 20 lines) ---" >&2
+    echo "$CLI_OUTPUT" | head -n 20 >&2
+    exit 1
+fi
+log_pass "Commit progress message found"
+
+if ! echo "$CLI_OUTPUT" | grep -q ".opencode/agents"; then
+    log_fail "Expected '.opencode/agents' in progress output (symlink log event)"
+    exit 1
+fi
+log_pass "Symlink progress message found"
 
 # ---------------------------------------------------------------------------
 # Assertions
@@ -53,7 +70,8 @@ assert_file_exists "$TEMP_DIR/opencode.json"
 assert_file_exists "$TEMP_DIR/agents/backend-developer.md"
 assert_file_exists "$TEMP_DIR/agents/tlaloc.md"
 assert_file_exists "$TEMP_DIR/commands/build.md"
-assert_file_exists "$TEMP_DIR/references/architecture.md"
+assert_file_exists "$TEMP_DIR/skills/architecture-diagrams/references/architecture.md"
+assert_dir_missing "$TEMP_DIR/references/"
 assert_file_exists "$TEMP_DIR/skills-lock.json"
 
 log_info "Verifying estandar files..."
@@ -64,6 +82,12 @@ assert_file_exists "$TEMP_DIR/.env.example"
 assert_file_exists "$TEMP_DIR/AGENTS.md"
 assert_file_exists "$TEMP_DIR/CHANGELOG.md"
 assert_file_exists "$TEMP_DIR/SPEC.md"
+assert_file_exists "$TEMP_DIR/CODE_OF_CONDUCT.md"
+if ! grep -q "Our Pledge" "$TEMP_DIR/CODE_OF_CONDUCT.md"; then
+    log_fail "Expected CODE_OF_CONDUCT.md to contain 'Our Pledge' (real CoC content)"
+    exit 1
+fi
+log_pass "CODE_OF_CONDUCT.md contains Our Pledge"
 
 log_info "Verifying opcional files..."
 
