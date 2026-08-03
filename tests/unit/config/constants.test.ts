@@ -39,28 +39,43 @@ describe("getGitHubApiUrl", () => {
 
 	describe("CODICE_BYPASS_URL_VALIDATION", () => {
 		const ORIGINAL_BYPASS = process.env.CODICE_BYPASS_URL_VALIDATION;
+		const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
 
 		afterEach(() => {
 			process.env.CODICE_BYPASS_URL_VALIDATION = ORIGINAL_BYPASS;
+			process.env.NODE_ENV = ORIGINAL_NODE_ENV;
 		});
 
-		test("bypass returns env var for HTTP localhost (E2E mock server)", () => {
+		test("bypass returns env var for HTTP localhost when NODE_ENV=test (E2E mock server)", () => {
 			const mockUrl = "http://localhost:4567";
+			process.env.NODE_ENV = "test";
 			process.env.CODICE_BYPASS_URL_VALIDATION = "true";
 			process.env.CODICE_GITHUB_API_URL = mockUrl;
 			const result = getGitHubApiUrl();
 			expect(result).toBe(mockUrl);
 		});
 
-		test("bypass returns env var for any arbitrary URL", () => {
+		test("bypass returns env var for any arbitrary URL when NODE_ENV=test", () => {
 			const mockUrl = "http://not-github.com/api";
+			process.env.NODE_ENV = "test";
 			process.env.CODICE_BYPASS_URL_VALIDATION = "true";
 			process.env.CODICE_GITHUB_API_URL = mockUrl;
 			const result = getGitHubApiUrl();
 			expect(result).toBe(mockUrl);
+		});
+
+		test("bypass is gated: ignored outside NODE_ENV=test even when set to true", () => {
+			const mockUrl = "http://localhost:4567";
+			delete process.env.NODE_ENV;
+			process.env.CODICE_BYPASS_URL_VALIDATION = "true";
+			process.env.CODICE_GITHUB_API_URL = mockUrl;
+			const result = getGitHubApiUrl();
+			// Bypass is disabled in non-test environments — falls back to default
+			expect(result).toBe(DEFAULT_URL);
 		});
 
 		test("bypass is NOT triggered when set to non-true value", () => {
+			process.env.NODE_ENV = "test";
 			process.env.CODICE_BYPASS_URL_VALIDATION = "false";
 			process.env.CODICE_GITHUB_API_URL = "http://api.github.com/repos/test/repo/releases/latest";
 			const result = getGitHubApiUrl();

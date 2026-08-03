@@ -19,8 +19,9 @@ import { VERSION } from "../../src/cli/output";
 import type { FileRule } from "../../src/domain/entities/FileRule";
 import type { IFileMergeEngine } from "../../src/domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../src/domain/ports/IFileSystem";
-import type { IVersionComparator, ReleaseType } from "../../src/domain/ports/IVersionComparator";
+import type { IVersionComparator } from "../../src/domain/ports/IVersionComparator";
 import type { MergeError } from "../../src/domain/types/MergeError";
+import type { ProgressCallback } from "../../src/domain/types/ProgressEvent";
 import { type Result, success } from "../../src/domain/types/Result";
 import type { ComparisonResult } from "../../src/domain/types/version";
 
@@ -29,14 +30,8 @@ import type { ComparisonResult } from "../../src/domain/types/version";
 // ---------------------------------------------------------------------------
 
 class FakeFileSystem implements IFileSystem {
-	async readTemplateFile(_path: string): Promise<string> {
-		return "";
-	}
 	async destinationExists(_path: string): Promise<boolean> {
 		return false;
-	}
-	getStagingPath(relativePath: string): string {
-		return `/tmp/staging/${relativePath}`;
 	}
 	async stageFile(_path: string, _excludeSubDirs?: Set<string>): Promise<void> {}
 	async commitStaging(): Promise<void> {}
@@ -54,13 +49,23 @@ class FakeFileSystem implements IFileSystem {
 	async readVersionFile(): Promise<string | null> {
 		return null;
 	}
+	async walkTemplateDirectory(_path: string): Promise<readonly string[]> {
+		return [];
+	}
+	async walkDestinationDirectory(_path: string): Promise<readonly string[]> {
+		return [];
+	}
 }
 
 class CaptureMergeEngine implements IFileMergeEngine {
 	capturedRules: { path: string; category: string }[] = [];
 	async execute(
 		rules: readonly FileRule[],
-		_selectedOptionals?: readonly string[],
+		_options?: {
+			selectedOptionals?: readonly string[];
+			onProgress?: ProgressCallback;
+			updateMode?: boolean;
+		},
 	): Promise<Result<void, MergeError>> {
 		this.capturedRules = Array.from(rules);
 		return success(undefined);
@@ -71,17 +76,11 @@ class FakeGitHubClient implements IGitHubClient {
 	async getLatestReleaseTag(): Promise<string | null> {
 		return "v1.0.5";
 	}
-	async getLatestReleaseNotes(): Promise<string | null> {
-		return null;
-	}
 }
 
 class FakeGitHubClientBadTag implements IGitHubClient {
 	async getLatestReleaseTag(): Promise<string | null> {
 		return "latest"; // not valid semver
-	}
-	async getLatestReleaseNotes(): Promise<string | null> {
-		return null;
 	}
 }
 
@@ -94,8 +93,10 @@ class FakeUserPrompt implements IUserPrompt {
 	async selectOptional(_options: readonly FileRule[]): Promise<string[]> {
 		return [];
 	}
-	showSpinner(_message: string): void {}
-	stopSpinner(): void {}
+	showProgressBar(_total: number, _label?: string): void {}
+	updateProgress(_current: number, _filePath: string): void {}
+	completeProgress(): void {}
+	logProgressEvent(_message: string): void {}
 	showIntro(_title: string): void {}
 	showSuccess(_message: string): void {}
 	showCancel(_message: string): void {}
@@ -116,12 +117,6 @@ class FakeVersionComparator implements IVersionComparator {
 		if (cmp < 0) return success("newer" as ComparisonResult);
 		if (cmp > 0) return success("older" as ComparisonResult);
 		return success("equal" as ComparisonResult);
-	}
-	isUpdateAvailable(_installed: string, _remote: string): boolean {
-		return true;
-	}
-	getReleaseType(_local: string, _remote: string): Result<ReleaseType, Error> {
-		return success("major" as ReleaseType);
 	}
 }
 

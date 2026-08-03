@@ -173,13 +173,13 @@ After applying this skill, confirm:
 
 | File | Purpose |
 |------|---------|
-| [../../references/LAYERS.md](../../references/LAYERS.md) | Complete layer specifications |
-| [../../references/DDD-STRATEGIC.md](../../references/DDD-STRATEGIC.md) | Bounded contexts, context mapping |
-| [../../references/DDD-TACTICAL.md](../../references/DDD-TACTICAL.md) | Entities, value objects, aggregates (pseudocode) |
-| [../../references/HEXAGONAL.md](../../references/HEXAGONAL.md) | Ports, adapters, naming |
-| [../../references/CQRS-EVENTS.md](../../references/CQRS-EVENTS.md) | Command/query separation, events |
-| [../../references/TESTING.md](../../references/TESTING.md) | Unit, integration, architecture tests |
-| [../../references/CHEATSHEET.md](../../references/CHEATSHEET.md) | Quick decision guide |
+| [./references/LAYERS.md](./references/LAYERS.md) | Complete layer specifications |
+| [./references/DDD-STRATEGIC.md](./references/DDD-STRATEGIC.md) | Bounded contexts, context mapping |
+| [./references/DDD-TACTICAL.md](./references/DDD-TACTICAL.md) | Entities, value objects, aggregates (pseudocode) |
+| [./references/HEXAGONAL.md](./references/HEXAGONAL.md) | Ports, adapters, naming |
+| [./references/CQRS-EVENTS.md](./references/CQRS-EVENTS.md) | Command/query separation, events |
+| [./references/TESTING.md](./references/TESTING.md) | Unit, integration, architecture tests |
+| [./references/CHEATSHEET.md](./references/CHEATSHEET.md) | Quick decision guide |
 
 ## Sources
 

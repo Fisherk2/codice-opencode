@@ -10,339 +10,9 @@
     "reserved": 10000
   },
 
-  "provider": {
-    "anthropic": {
-      "models": {
-        "claude-haiku-4-5": {
-          "options": {
-            "thinking": {
-              "type": "adaptive",
-              "budgetTokens": 4000,
-              "display": "summarized"
-            }
-          },
-          "variants": {
-            "deep-think": {
-              "thinking": {
-                "type": "enabled",
-                "budgetTokens": 8000
-              }
-            },
-            "economy": {
-              "thinking": {
-                "type": "adaptive",
-                "budgetTokens": 2000,
-                "display": "none"
-              }
-            }
-          }
-        },
-        "claude-opus-4-6": {
-          "options": {
-            "thinking": {
-              "type": "adaptive",
-              "display": "summarized"
-            }
-          },
-          "variants": {
-            "deep-think": {
-              "thinking": {
-                "type": "enabled",
-                "budgetTokens": 32000
-              }
-            },
-            "economy": {
-              "thinking": {
-                "type": "adaptive",
-                "display": "none"
-              }
-            }
-          }
-        },
-        "claude-sonnet-4": {
-          "options": {
-            "thinking": {
-              "type": "adaptive",
-              "budgetTokens": 8000,
-              "display": "summarized"
-            }
-          },
-          "variants": {
-            "deep-think": {
-              "thinking": {
-                "type": "enabled",
-                "budgetTokens": 16000
-              }
-            },
-            "economy": {
-              "thinking": {
-                "type": "adaptive",
-                "budgetTokens": 4000,
-                "display": "none"
-              }
-            }
-          }
-        },
-        "claude-sonnet-4-6": {
-          "options": {
-            "thinking": {
-              "type": "adaptive",
-              "budgetTokens": 8000,
-              "display": "summarized"
-            }
-          },
-          "variants": {
-            "deep-think": {
-              "thinking": {
-                "type": "enabled",
-                "budgetTokens": 16000
-              }
-            },
-            "economy": {
-              "thinking": {
-                "type": "adaptive",
-                "budgetTokens": 4000,
-                "display": "none"
-              }
-            }
-          }
-        }
-      }
-    },
-    "deepseek": {
-      "models": {
-        "deepseek-v4-flash": {
-          "options": {
-            "thinking": { "type": "enabled" },
-            "reasoningEffort": "medium"
-          },
-          "variants": {
-            "deep-think": {
-              "thinking": { "type": "enabled" },
-              "reasoningEffort": "high"
-            },
-            "economy": {
-              "thinking": { "type": "disabled" },
-              "reasoningEffort": "low"
-            }
-          }
-        },
-        "deepseek-v4-flash-free": {
-          "options": {
-            "thinking": { "type": "enabled" },
-            "reasoningEffort": "medium"
-          },
-          "variants": {
-            "deep-think": {
-              "thinking": { "type": "enabled" },
-              "reasoningEffort": "high"
-            },
-            "economy": {
-              "thinking": { "type": "disabled" },
-              "reasoningEffort": "low"
-            }
-          }
-        },
-        "deepseek-v4-pro": {
-          "options": {
-            "thinking": { "type": "enabled" },
-            "reasoningEffort": "high"
-          },
-          "variants": {
-            "deep-think": {
-              "thinking": { "type": "enabled" },
-              "reasoningEffort": "max"
-            },
-            "economy": {
-              "thinking": { "type": "disabled" },
-              "reasoningEffort": "low"
-            }
-          }
-        }
-      }
-    },
-    "google": {
-      "models": {
-        "gemini-3.1-pro": {
-          "options": {
-            "thinkingConfig": {
-              "includeThoughts": false,
-              "thinkingLevel": "medium"
-            }
-          },
-          "variants": {
-            "deep-think": {
-              "thinkingConfig": {
-                "includeThoughts": true,
-                "thinkingLevel": "high"
-              }
-            },
-            "economy": {
-              "thinkingConfig": {
-                "includeThoughts": false,
-                "thinkingLevel": "low"
-              }
-            }
-          }
-        },
-        "gemini-3.5-flash": {
-          "options": {
-            "thinkingConfig": {
-              "includeThoughts": false,
-              "thinkingLevel": "medium"
-            }
-          },
-          "variants": {
-            "deep-think": {
-              "thinkingConfig": {
-                "includeThoughts": true,
-                "thinkingLevel": "high"
-              }
-            },
-            "economy": {
-              "thinkingConfig": {
-                "includeThoughts": false,
-                "thinkingLevel": "low"
-              }
-            }
-          }
-        }
-      }
-    },
-    "minimax": {
-      "models": {
-        "minimax-m2.5": { "options": { "temperature": 0.6 } },
-        "minimax-m2.7": { "options": { "temperature": 0.6 } },
-        "minimax-m3": { "options": { "temperature": 0.6 } }
-      }
-    },
-    "moonshot": {
-      "models": {
-        "kimi-k2.5": {
-          "options": { "thinking": { "type": "enabled" } },
-          "variants": {
-            "economy": { "thinking": { "type": "disabled" } }
-          }
-        },
-        "kimi-k2.6": {
-          "options": { "thinking": { "type": "enabled" } },
-          "variants": {
-            "economy": { "thinking": { "type": "disabled" } }
-          }
-        }
-      }
-    },
-    "openai": {
-      "models": {
-        "gpt-5": {
-          "options": {
-            "reasoningEffort": "medium",
-            "textVerbosity": "low",
-            "reasoningSummary": "auto"
-          },
-          "variants": {
-            "deep-think": {
-              "reasoningEffort": "high",
-              "textVerbosity": "low",
-              "reasoningSummary": "auto"
-            },
-            "economy": {
-              "reasoningEffort": "low",
-              "textVerbosity": "low",
-              "reasoningSummary": "none"
-            }
-          }
-        },
-        "gpt-5.1-codex": {
-          "options": {
-            "reasoningEffort": "high",
-            "textVerbosity": "low",
-            "reasoningSummary": "auto"
-          },
-          "variants": {
-            "deep-think": {
-              "reasoningEffort": "xhigh",
-              "textVerbosity": "low"
-            },
-            "economy": {
-              "reasoningEffort": "low",
-              "textVerbosity": "low",
-              "reasoningSummary": "none"
-            }
-          }
-        },
-        "gpt-5.3-codex": {
-          "options": {
-            "reasoningEffort": "high",
-            "textVerbosity": "low",
-            "reasoningSummary": "auto"
-          },
-          "variants": {
-            "deep-think": {
-              "reasoningEffort": "xhigh",
-              "textVerbosity": "low"
-            },
-            "economy": {
-              "reasoningEffort": "low",
-              "textVerbosity": "low",
-              "reasoningSummary": "none"
-            }
-          }
-        },
-        "gpt-5.4-mini": {
-          "options": {
-            "reasoningEffort": "medium",
-            "textVerbosity": "low",
-            "reasoningSummary": "auto"
-          },
-          "variants": {
-            "deep-think": {
-              "reasoningEffort": "xhigh",
-              "textVerbosity": "low"
-            },
-            "economy": {
-              "reasoningEffort": "low",
-              "textVerbosity": "low",
-              "reasoningSummary": "none"
-            }
-          }
-        },
-        "gpt-5.5-pro": {
-          "options": {
-            "reasoningEffort": "high",
-            "textVerbosity": "low",
-            "reasoningSummary": "auto"
-          },
-          "variants": {
-            "deep-think": {
-              "reasoningEffort": "xhigh",
-              "textVerbosity": "low"
-            },
-            "economy": {
-              "reasoningEffort": "medium",
-              "textVerbosity": "low",
-              "reasoningSummary": "none"
-            }
-          }
-        }
-      }
-    },
-    
-    "z-ai": {
-      "models": {
-        "glm-5.1": {
-          "options": { "thinking": { "type": "enabled" } },
-          "variants": {
-            "economy": { "thinking": { "type": "disabled" } }
-          }
-        }
-      }
-    }
-  },
-
   "agent": {
     "huitzilopochtli": {
-      "model": "opencode-go/mimo-v2.5",
+      "model": "opencode-go/deepseek-v4-flash",
       "color": "#d3e22b",
       "temperature": 0.5,
       "steps": 25
@@ -357,19 +27,19 @@
       "model": "opencode-go/minimax-m3",
       "color": "#8B4513",
       "temperature": 0.1,
-      "steps": 20
+      "steps": 30
     },
     "tlaloc": {
       "model": "opencode-go/deepseek-v4-flash",
       "color": "#00ffff",
       "temperature": 0.2,
-      "steps": 90
+      "steps": 100
     },
     "mictlantecuhtli": {
       "model": "opencode-go/mimo-v2.5",
       "color": "#2d2d2d",
       "temperature": 0.2,
-      "steps": 60
+      "steps": 100
     },
     "tezcatlipoca": {
       "model": "opencode-go/glm-5.2",
@@ -391,14 +61,24 @@
     }
   },
 
-  "instructions": [
-    "CONTRIBUTING.md",
-    "SPEC.md",
-    "docs/WORKFLOW.md",
-    "docs/TECH_DEBT.md",
-    "docs/ARCHITECTURE.md",
-    "docs/CODE_STYLE.md"
-  ],
+  "instructions": ["CONTRIBUTING.md", "SPEC.md", "docs/ARCHITECTURE.md", "docs/CODE_STYLE.md"],
+
+  "references": {
+    "clean-code": {
+      "path": "./skills/clean-code/references",
+      "description": "Reference materials for clean code principles, naming, functions, and formatting"
+    },
+    "codice-opencode": {
+      "repository": "Fisherk2/codice-opencode",
+      "branch": "main",
+      "description": "Códice repository — OpenCode workspace installer reference"
+    },
+    "opencode": {
+      "repository": "anomalyco/opencode",
+      "branch": "main",
+      "description": "Official OpenCode repository — CLI, API, and configuration reference"
+    }
+  },
 
   "permission": {
     "task": {
@@ -642,6 +322,9 @@
   },
 
   "mcp": {
+    "codebase-memory-mcp": {
+      "enabled": false
+    },
     "context7": {
       "type": "remote",
       "url": "https://mcp.context7.com/mcp",
@@ -667,11 +350,6 @@
         "MCP_JUPYTER_TOKEN": "mcp-dev-token",
         "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
       }
-    },
-    "docs-mcp-server": {
-      "type": "local",
-      "command": ["npx", "-y", "@arabold/docs-mcp-server@latest"],
-      "enabled": false
     },
     "tavily": {
       "type": "remote",

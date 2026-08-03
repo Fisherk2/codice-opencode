@@ -20,7 +20,7 @@ import { BunSymlinkCreator } from "../infrastructure/adapters/BunSymlinkCreator"
 import { ClackPromptsAdapter } from "../infrastructure/adapters/ClackPromptsAdapter";
 import { GitHubRestClient } from "../infrastructure/adapters/GitHubRestClient";
 import { TemplateResolver } from "../infrastructure/adapters/TemplateResolver";
-import { DEVIN_SYMLINKS, OPENCODE_SYMLINKS } from "../infrastructure/config/symlinks";
+import { OPENCODE_SYMLINKS } from "../infrastructure/config/symlinks";
 import { VERSION } from "./version";
 
 // ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ export function createDependencies(destinationPath?: string, verbose?: boolean):
 	const userPrompt = new ClackPromptsAdapter();
 	const mergeEngine = new FileMergeEngine(fileSystem);
 	const versionComparator = new VersionComparator();
-	// Clean install: .opencode/ symlinks always, .devin/ symlinks conditionally
+	// Clean install: .opencode/ symlinks always created
 	const destRoot = destinationPath ?? process.cwd();
 	const symlinkCreator = new BunSymlinkCreator(destRoot, verbose);
 
@@ -77,7 +77,6 @@ export function createDependencies(destinationPath?: string, verbose?: boolean):
 		userPrompt,
 		symlinkCreator,
 		OPENCODE_SYMLINKS,
-		DEVIN_SYMLINKS,
 		gitignoreCreator,
 	);
 	const projectInstall = new ProjectInstallUseCase(
@@ -86,7 +85,6 @@ export function createDependencies(destinationPath?: string, verbose?: boolean):
 		userPrompt,
 		symlinkCreator,
 		OPENCODE_SYMLINKS,
-		DEVIN_SYMLINKS,
 		gitignoreCreator,
 	);
 	const updateWorkspace = new UpdateWorkspaceUseCase(

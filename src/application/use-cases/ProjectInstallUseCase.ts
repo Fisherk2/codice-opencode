@@ -1,139 +1,74 @@
-import { FILE_RULE_MANIFEST, getRulesByCategory } from "../../domain/entities/FileRuleManifest";
-import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
-import type { IFileSystem } from "../../domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
-import { failure, type Result, success } from "../../domain/types/Result";
-import { checkWritable, confirmOverwrite } from "../helpers";
-import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
-import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
-import type { IUserPrompt } from "../ports/IUserPrompt";
-import { runPostInstallSteps } from "../postInstall";
-
-/**
- * Options for the project install execution.
- */
-export interface ProjectInstallOptions {
-	/** Skip the non-empty directory confirmation prompt */
-	readonly force?: boolean;
-	/** Version tag to write into the version file (e.g. "1.0.0") */
-	readonly version?: string;
-}
-
 /**
  * Mode 2: Project Install — selectively merge template files
  * into an existing project. Preserves user customizations
- * by applying classification rules.
+ * by applying classification rules:
+ *   - Mandatory always overwrites.
+ *   - Standard copies only if missing.
+ *   - Optional copies only if user selected AND missing.
  *
- * Flow:
- * 1. Validate destination is writable.
- * 2. If destination is not empty and force is false, ask user for confirmation.
- * 3. Present optional files as a checklist to the user.
- * 4. Pass all manifest rules + selected optional paths to FileMergeEngine.
- * 5. On merge success, generate .gitignore from template (graceful on failure).
- * 6. Create post-installation symlinks:
- *    - .opencode/{agents,commands,skills} — always created.
- *    - .devin/{skills,workflows,rules/*} — created only if user selected .devin.
- * 7. Write the `.codice-version` file with optionalSelections.
+ * Extends InstallUseCaseBase via the Template Method pattern.
+ * The three abstract hooks specialize the shared flow:
+ * 1. buildRules: Include all non-optional + selected optionals (keep original categories).
+ * 2. selectOptionals: force=true returns empty (no opt-in); else shows interactive menu.
+ * 3. getSuccessMessage: "Project installation complete."
+ *
+ * Flow (inherited from base):
+ * checkWritable → confirmOverwrite → selectOptionals → buildRules →
+ * mergeEngine.execute → runPostInstallSteps
  */
-export class ProjectInstallUseCase {
-	/**
-	 * @param fileSystem - Adapter for filesystem operations (staging, checks)
-	 * @param mergeEngine - Domain service that orchestrates file merging
-	 * @param userPrompt - Adapter for interactive user prompts
-	 * @param symlinkCreator - Adapter for post-installation symlink generation
-	 * @param opencodeSymlinks - Always-created .opencode/ symlinks (3)
-	 * @param devinSymlinks - Conditional .devin/ symlinks (7, created only if .devin selected)
-	 */
-	constructor(
-		private readonly fileSystem: IFileSystem & IStagingSystem,
-		private readonly mergeEngine: IFileMergeEngine,
-		private readonly userPrompt: IUserPrompt,
-		private readonly symlinkCreator: ISymlinkCreator,
-		private readonly opencodeSymlinks: readonly SymlinkSpec[],
-		private readonly devinSymlinks: readonly SymlinkSpec[],
-		private readonly gitignoreCreator: IGitignoreCreator,
-	) {}
 
+import type { FileRule } from "../../domain/entities/FileRule";
+import {
+	FILE_RULE_MANIFEST,
+	getRulesByCategory,
+	isRuleSelected,
+} from "../../domain/entities/FileRuleManifest";
+import { InstallUseCaseBase } from "./InstallUseCaseBase";
+
+export type { BaseInstallOptions } from "./InstallUseCaseBase";
+
+/**
+ * Mode 2: Project Install — selective merge into an existing project.
+ * Preserves user customizations by respecting category rules.
+ */
+export class ProjectInstallUseCase extends InstallUseCaseBase {
 	/**
-	 * Execute a project installation with selective merge.
+	 * Include all non-optional rules plus selected optionals,
+	 * preserving their original categories so the merge engine
+	 * applies the correct behavior (mandatory=overwrite,
+	 * standard=if-missing, optional=if-selected-and-missing).
 	 *
-	 * @param destinationPath - Target directory for installation.
-	 * @param options - Optional flags.
-	 * @returns Result indicating success or a structured error.
+	 * Unselected optional files are excluded from the rule set.
 	 */
-	async execute(
-		destinationPath: string,
-		options?: ProjectInstallOptions,
-	): Promise<Result<void, Error>> {
-		// Phase 1: Validate destination is writable
-		const writableCheck = await checkWritable(this.fileSystem, destinationPath);
-		if (!writableCheck.ok) return writableCheck;
-
-		// Phase 2: Confirm overwrite if destination is not empty
-		const confirmed = await this.confirmOverwrite(destinationPath, options?.force);
-		if (!confirmed) return success(undefined);
-
-		// Phase 3: Select optional files
-		const selectedOptionals = await this.selectOptionals(options?.force);
-
-		// Phase 4: Execute merge engine with manifest rules + selected optionals
-		const mergeResult = await this.mergeEngine.execute(FILE_RULE_MANIFEST, selectedOptionals);
-		if (!mergeResult.ok) {
-			return failure(new Error(mergeResult.error.message));
-		}
-
-		// Phase 5: Post-install steps
-		return await this.runPostInstall(destinationPath, selectedOptionals, options?.version);
+	protected buildRules(selectedOptionals: readonly string[]): readonly FileRule[] {
+		return FILE_RULE_MANIFEST.filter((r) => isRuleSelected(r, selectedOptionals));
 	}
 
 	/**
-	 * Ask for confirmation if destination is not empty.
-	 * Skips prompt when force=true.
-	 * Delegates to the shared {@link confirmOverwrite} helper.
-	 * @returns true if the operation should proceed, false if cancelled.
+	 * Present optional file checklist.
+	 * When force=true, returns empty (no interactive prompt, no optional files).
+	 * Otherwise shows the interactive menu via IUserPrompt.
 	 */
-	private async confirmOverwrite(destinationPath: string, force?: boolean): Promise<boolean> {
-		return confirmOverwrite(
-			this.fileSystem,
-			this.userPrompt,
-			`The destination directory "${destinationPath}" is not empty. Some existing files may be overwritten. Continue?`,
-			"Project installation cancelled by user.",
-			force,
-		);
-	}
-
-	/**
-	 * Present optional file checklist, or return empty when force=true.
-	 * In project mode, force skips all optional files (no interaction).
-	 * @returns List of selected optional file paths.
-	 */
-	private async selectOptionals(force?: boolean): Promise<readonly string[]> {
+	protected async selectOptionals(force: boolean): Promise<readonly string[]> {
 		if (force) return [];
-		const optionalRules = getRulesByCategory("optional");
-		return await this.userPrompt.selectOptional(optionalRules);
+		return await this.userPrompt.selectOptional(getRulesByCategory("optional"));
 	}
 
-	/**
-	 * Generate .gitignore (warning on failure), create symlinks, and write version file.
-	 * Delegates to shared helper to avoid duplicating post-install orchestration.
-	 */
-	private async runPostInstall(
-		destinationPath: string,
-		selectedOptionals: readonly string[],
-		version?: string,
-	): Promise<Result<void, Error>> {
-		return runPostInstallSteps({
-			fileSystem: this.fileSystem,
-			gitignoreCreator: this.gitignoreCreator,
-			symlinkCreator: this.symlinkCreator,
-			userPrompt: this.userPrompt,
-			opencodeSymlinks: this.opencodeSymlinks,
-			devinSymlinks: this.devinSymlinks,
-			destinationPath,
-			selectedOptionals,
-			version,
-			operationLabel: "Installation",
-			successMessage: "Project installation complete.",
-		});
+	protected getSuccessMessage(): string {
+		return "Project installation complete.";
+	}
+
+	// -- Overridable defaults for mode-specific copy --
+
+	protected override getConfirmMessage(destinationPath: string): string {
+		return `The destination directory "${destinationPath}" is not empty. Some existing files may be overwritten. Continue?`;
+	}
+
+	protected override getCancelMessage(): string {
+		return "Project installation cancelled by user.";
+	}
+
+	protected override getProgressLabel(): string {
+		return "Project install...";
 	}
 }

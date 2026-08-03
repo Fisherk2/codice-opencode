@@ -1,7 +1,9 @@
 # ADR-007: Template Resolution for bunx/npm Mode
 
 ## Status
-Accepted
+Accepted (partially superseded)
+
+> **Note — v1.2.0 (ADR-011):** The compiled binary mode (Ruta 3) described below was removed in v1.2.0. The three-path cascade is now a two-path cascade (bunx/npm, source, CWD fallback). See [ADR-011: Binary Removal](./adr-011-binary-removal.md) for details.
 
 ## Date
 2026-06-17
@@ -11,10 +13,10 @@ Quetzalcoatl (Visionary Sage)
 
 ## Context
 
-Códice is distributed via two channels:
+Códice was originally distributed via two channels:
 
-1. **Compiled binary** (GitHub Releases) — template resolved relative to `process.execPath`
-2. **npm package** (`@fisherk2-dev/codice`) via `bunx` — template resolved relative to `import.meta.dir`
+1. **Compiled binary** (GitHub Releases) — template resolved relative to `process.execPath` *(removed in v1.2.0 — ADR-011)*
+2. **npm package** (`@fisherk2-dev/codice`) via `bunx` — template resolved relative to `import.meta.dir` (*now the sole distribution method*)
 
 ADR-006 established npm publication as the primary distribution method. However, `TemplateResolver.detectTemplateRoot()` only implemented two detection paths:
 
@@ -49,11 +51,11 @@ node_modules/@fisherk2-dev/codice/
 
 **Path resolution analysis:**
 
-| Mode | `process.execPath` | `import.meta.dir` | Template path | Works? |
-|------|-------------------|-------------------|---------------|--------|
-| Compiled binary | `/path/to/codice-linux` | N/A | `../template/` → `/path/to/template/` | ✅ Yes |
-| Source development | N/A | `/repo/src/cli/` | `../../template/` → `/repo/template/` | ✅ Yes |
-| bunx/npm | `/usr/local/bin/bun` | `.../node_modules/@fisherk2-dev/codice/src/cli/` | `../../template/` → `.../node_modules/@fisherk2-dev/codice/template/` | ❌ No (off by one level) |
+| Mode | `import.meta.dir` | Template path | Works? |
+|------|-------------------|---------------|--------|
+| Source development | `/repo/src/cli/` | `../../template/` → `/repo/template/` | ✅ Yes |
+| bunx/npm | `.../node_modules/@fisherk2-dev/codice/src/cli/` | `../../template/` → `.../node_modules/@fisherk2-dev/codice/template/` | ❌ No (off by one level) |
+| Compiled binary | *(removed in v1.2.0 — ADR-011)* | N/A | ❌ Removed |
 
 The missing path is `../template/` relative to `import.meta.dir` in bunx mode.
 
@@ -87,8 +89,9 @@ static detectTemplateRoot(): string {
 The detection order is:
 1. bunx/npm mode (must be first — `import.meta.dir` resolves in all source modes)
 2. Source development mode (repo root — checked only if bunx path doesn't exist)
-3. Compiled binary mode (standalone — least specific, checked last)
-4. CWD fallback (backward compatibility, error surfaces at file-read time)
+3. CWD fallback (backward compatibility, error surfaces at file-read time)
+
+> **Note:** A compiled binary mode path (Ruta 3) was removed in v1.2.0 (ADR-011). The cascade is now two paths plus CWD fallback.
 
 Note: The CWD fallback replaces the previously planned `TemplateNotFoundError` throw. This is intentional — if the template exists at CWD, it works without error; if not, the error surfaces naturally when `resolvePath()` attempts to read a file from the non-existent directory.
 
@@ -96,14 +99,11 @@ Note: The CWD fallback replaces the previously planned `TemplateNotFoundError` t
 
 ### Positive
 
-- **bunx/npm mode works**: `bunx @fisherk2-dev/codice` now resolves templates correctly in all three execution contexts
-- **Backward compatible**: Existing compiled binary and source development modes continue to work unchanged
+- **bunx/npm mode works**: `bunx @fisherk2-dev/codice` now resolves templates correctly in all execution contexts
 - **No configuration required**: Detection is automatic based on filesystem existence checks
 - **ADR-006 validated**: Confirms that npm publication as primary distribution is viable
 
 ### Negative
-
-- **Slightly more complex**: Three detection paths instead of two increases cognitive load for future maintainers
 - **Order sensitivity**: The detection order matters; swapping paths could cause incorrect resolution in edge cases
 - **Test coverage required**: Each path needs explicit integration tests to prevent regression
 
@@ -115,11 +115,12 @@ Note: The CWD fallback replaces the previously planned `TemplateNotFoundError` t
 
 ## Compliance
 
-- ADR-002 (Bun compilation) remains valid — compiled binary path is preserved as Ruta 1
+- ADR-002 (Bun compilation) — superseded by ADR-011 for binary compilation; Bun remains the development runtime
 - ADR-003 (Atomic staging) is unaffected — file merge engine behavior is identical
 - ADR-004 (@clack/prompts) is unaffected — TUI layer is unchanged
 - ADR-005 (`--dest` flag) is unaffected — CLI arguments and behavior are identical
-- ADR-006 (npm publication) is now fully functional — the primary distribution method works as intended
+- ADR-006 (npm publication) — reaffirmed; npm/bunx is now the sole distribution method
+- ADR-011 (Binary removal) — cascading note; compiled binary path removed from template resolution
 
 ## References
 

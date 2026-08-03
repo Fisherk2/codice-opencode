@@ -16,8 +16,6 @@ source "$(dirname "$0")/common.sh"
 
 log_step "FEV-2-C: Gitignore Clean Install E2E"
 
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
 
 # ---------------------------------------------------------------------------
 # Test: Clean Install → .gitignore exists with content from template
@@ -30,15 +28,15 @@ log_info "Test directory: $TEMP_DIR"
 
 cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 
-log_info "Running: $CODICE_BINARY --clean --force in $TEMP_DIR"
+log_info "Running: $CODICE_CLI --clean --force in $TEMP_DIR"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --clean --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && $CODICE_CLI --clean --force) 2>/dev/null || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     exit 1
 fi
-log_pass "Binary exited with code 0"
+log_pass "CLI exited with code 0"
 
 # Verify .gitignore was generated
 assert_file_exists "$TEMP_DIR/.gitignore"

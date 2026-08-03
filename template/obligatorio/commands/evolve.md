@@ -28,40 +28,39 @@ PROJECT STATE DETECTED:
 - MATURITY: [MATURE / IMMATURE]
 ```
 
-**If the project is NOT mature**, suggest using `/spec` or `/docs-update` instead:
-
-> This project does not appear mature enough for `/evolve`. `/evolve` is designed for projects with established versions, documentation, and active development. Use `/spec` to create initial specifications for a new project or `/docs-update` to enhance existing documentation.
+**If the project is NOT mature**, stop and suggest using `/spec` or `/docs-update` instead.
 
 **If the project IS mature**, proceed to the goal determination phase.
 
 ## Phase 0: Determine Goal
 
-If the user's request is vague or missing key details, invoke @skills/interview-me/SKILL.md to extract the full intent before proceeding.
+If the user's request is vague or missing key details, load `interview-me` skill to extract the full intent before proceeding.
 
-**Always use the `question` tool to let the user choose a route — never decide automatically, even if the request seems clear or trivial.** The user must explicitly select a route before proceeding. Present these options:
+**Always use the `question` tool to let the user choose a route — never decide automatically.** Present these options:
 
 - **A) New or modified specs** — Add new features, change existing behavior, respond to new requirements
 - **B) Something else** — Let the user describe a different goal
 
-> **Note:** If you need to update living documentation, invoke `/docs-update`. If you need to resolve an issue or bug, invoke `/diagnosis`. This command focuses exclusively on creating and modifying specs for mature projects.
-
 ## Phase 1: Execute — New or Modified Specs
 
 1. **Clarify intent** — what's the new requirement? Why is it changing?
-2. If requirements are vague, invoke @skills/interview-me/SKILL.md first to extract intent, then @skills/idea-refine/SKILL.md to explore variations
-3. Use @skills/spec-driven-development/SKILL.md to generate structured specs for the new or changed requirements
-4. **Determine scope** — does this change existing specs or create new ones?
+2. If requirements are vague, load `interview-me` skill to extract intent, then load `idea-refine` skill to explore variations
+3. **Select subagent** — inspect available subagents for requirement analysis and `docs-writer` for spec drafting.
+4. **Delegate** — invoke appropriate subagents to analyze requirements and refine specs.
+5. **Generate specs** — `docs-writer` should load @skills/spec-driven-development/SKILL.md to generate structured specs for the new or changed requirements in `specs/` using @specs/spec-template.md as a template.
+6. **Determine scope** — does this change existing specs or create new ones?
    - New feature → create `specs/spec-<feature>.md`
    - Modify existing → update relevant spec files
-5. **Document architecture impact** — update @specs/adr/ if the change affects architecture
-6. Include updated architecture diagrams using @skills/architecture-diagrams/SKILL.md
-7. For non-trivial decisions, invoke @skills/doubt-driven-development/SKILL.md
-8. If @SPEC.md or @AGENTS.md exceeds **200 lines**, invoke @skills/agent-md-refactor/SKILL.md to modularize into @specs/
-9. **Spec update done — do NOT touch code files.** Now hand off implementation:
+7. **Document architecture impact** — update or add ADRs using @specs/adr/adr-template.md in `specs/adr/` if the change affects architecture
+8. Include updated architecture diagrams using @skills/architecture-diagrams/SKILL.md
+9. For non-trivial decisions, load @skills/doubt-driven-development/SKILL.md
+10. If @SPEC.md or @AGENTS.md exceeds **200 lines**, load `agent-md-refactor`skill to modularize into @specs/
+11. **Spec update done — do NOT touch code files.** Now hand off implementation:
    - If the change is simple (single file, limited scope): tell the user to run `/build`
    - If the change is complex (multi-file, needs planning): tell the user to run `/plan` then `/build`
    - Do not invoke other primary agents (Tlaloc, Moctezuma, etc.) via `task()`
-10. Use the `question` tool to confirm with the user before proceeding
+12. Use the `question` tool to confirm with the user before proceeding.
+13. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
 ## Rules
 

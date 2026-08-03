@@ -11,7 +11,11 @@
  */
 import { describe, expect, test } from "bun:test";
 import * as path from "node:path";
-import { resolveWithinRoot } from "../../../src/infrastructure/adapters/pathResolver";
+import {
+	isPathWithin,
+	resolveWithinRoot,
+	withTrailingSeparator,
+} from "../../../src/infrastructure/adapters/pathResolver";
 
 const ROOT = "/workspace/project";
 
@@ -100,5 +104,71 @@ describe("resolveWithinRoot", () => {
 
 	test("includes context label in error message", () => {
 		expect(() => resolveWithinRoot(ROOT, "/etc/passwd", "staging")).toThrow("staging");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// isPathWithin + withTrailingSeparator — security-critical containment checks
+//
+// These are the path-containment primitives used by BunSymlinkCreator,
+// TemplateResolver, and BunGitignoreCreator to prevent symlink and copy
+// operations from escaping the workspace root.
+// ---------------------------------------------------------------------------
+
+describe("withTrailingSeparator", () => {
+	const SEP = path.sep;
+
+	test("appends separator to a non-root path", () => {
+		const input = path.resolve("home", "project");
+		expect(withTrailingSeparator(input)).toBe(`${input}${SEP}`);
+	});
+
+	test("keeps an already-trailing-separator path unchanged", () => {
+		const input = `${path.resolve("home", "project")}${SEP}`;
+		expect(withTrailingSeparator(input)).toBe(input);
+	});
+
+	test("keeps filesystem root unchanged (no double separator)", () => {
+		// On POSIX path.sep is "/"; on Windows path.resolve("\\") yields "C:\\".
+		// Either way the result must equal the resolved root and never contain "//".
+		expect(withTrailingSeparator(path.sep)).toBe(path.resolve(path.sep));
+		expect(withTrailingSeparator(path.sep)).not.toContain(`${SEP}${SEP}`);
+	});
+
+	test("resolves relative input before appending", () => {
+		const resolved = path.resolve("rel/dir");
+		expect(withTrailingSeparator("rel/dir")).toBe(`${resolved}${SEP}`);
+	});
+});
+
+describe("isPathWithin", () => {
+	const ROOT = "/workspace/project";
+
+	test("returns true for a direct child", () => {
+		expect(isPathWithin(ROOT, "/workspace/project/src/index.ts")).toBe(true);
+	});
+
+	test("returns true for a nested descendant", () => {
+		expect(isPathWithin(ROOT, "/workspace/project/a/b/c/file.ts")).toBe(true);
+	});
+
+	test("returns false for a sibling directory (prefix-match attack)", () => {
+		// /workspace/project-evil must NOT be considered within /workspace/project
+		expect(isPathWithin(ROOT, "/workspace/project-evil/file.ts")).toBe(false);
+	});
+
+	test("returns false for a path outside the root", () => {
+		expect(isPathWithin(ROOT, "/other/place/file.ts")).toBe(false);
+	});
+
+	test("returns false for the root itself (strict containment)", () => {
+		expect(isPathWithin(ROOT, "/workspace/project")).toBe(false);
+	});
+
+	test("returns false for the filesystem root as boundary (documented limitation)", () => {
+		// With "/" as boundary every absolute path trivially matches; callers
+		// must never use the filesystem root as a containment boundary
+		// (parse-args.ts blocks it as a destination).
+		expect(isPathWithin("/", "/etc/passwd")).toBe(true);
 	});
 });

@@ -170,11 +170,11 @@ Subagents cover 98+ domain specialties organized into categories:
 | Specialized Domains | fintech-engineer, payment-integration, blockchain-developer, game-developer, iot-engineer, embedded-systems | ~6 |
 | Processes | git-workflow-manager, incident-responder, project-manager, scrum-master, legacy-modernizer | ~5 |
 
-Subagents are registered in the `VALID_SUBAGENTS` Set within `.opencode/plugins/sdd-pipeline.ts`. This set is used to validate all `task()` calls — if you try to delegate to an agent name not in this set, the SDD plugin rejects it with an error. This prevents the AI from inventing non-existent agent names.
+Subagents are auto-discovered from the `agents/` directory. The SDD plugin scans this directory at session start and registers every `.md` file's basename as a valid subagent. No plugin edits are required.
 
 ## How to Add a New Subagent
 
-Adding a new agent to the workspace requires updating the agent definition, the validation set, and the agent index. Follow these steps:
+Adding a new agent only requires creating a single markdown file. The SDD plugin detects it automatically on the next session start.
 
 ### Step 1: Determine Agent Type
 
@@ -184,7 +184,7 @@ For this guide, we will create a **subagent** called `joke-teller`.
 
 ### Step 2: Create the Agent File
 
-Create `agents/joke-teller.md` with YAML frontmatter and a markdown body:
+Create `agents/joke-teller.md` with YAML frontmatter and a markdown body. The SDD plugin will discover this file and register `joke-teller` as a valid subagent automatically:
 
 ```markdown
 ---
@@ -232,19 +232,9 @@ to the development process. When invoked, you:
 - **Do not invoke from:** Another persona. This agent works standalone.
 ```
 
-### Step 3: Register in VALID_SUBAGENTS
+### Step 3: (Skipped — Auto-Discovery)
 
-Open `.opencode/plugins/sdd-pipeline.ts` and find the `VALID_SUBAGENTS` Set (around line 163). Add your agent name to the appropriate category section:
-
-```typescript
-const VALID_SUBAGENTS = new Set([
-  // ... existing agents ...
-  // DX & Tooling
-  'cli-developer', 'tooling-engineer', 'mcp-developer', 'dx-optimizer', 'context-manager',
-  'joke-teller',  // <-- add here
-  // ...
-])
-```
+Previous versions of Códice required registering agents in a hardcoded `VALID_SUBAGENTS` set inside the SDD plugin. This is no longer necessary — the plugin auto-discovers agents by scanning the `agents/` directory at session start. Simply creating `agents/joke-teller.md` is sufficient.
 
 ### Step 4: Update Delegation Tables
 
@@ -257,11 +247,7 @@ task:
   "joke-teller": allow
 ```
 
-### Step 5: Update the Agent Index
-
-Add the new agent to the global catalog on the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents) page under the appropriate domain section.
-
-### Step 6: Restart OpenCode
+### Step 5: Restart OpenCode
 
 Restart your OpenCode session so it recognizes the new agent. Without a restart, `task("joke-teller")` will fail because OpenCode only loads agent files at startup.
 

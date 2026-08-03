@@ -9,6 +9,7 @@ import {
 } from "../../domain/types/GitignoreError";
 import type { Result } from "../../domain/types/Result";
 import { failure, success } from "../../domain/types/Result";
+import { isPathWithin } from "./pathResolver";
 
 const fsPromises = fs.promises;
 
@@ -57,11 +58,9 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 
 		// Defense-in-depth: ensure resolved destination stays within workspace root.
 		// This complements the CLI-level validateDestPath() guard, mirroring the
-		// containment pattern in BunSymlinkCreator.
-		const rootWithSep = this.workspaceRoot.endsWith(path.sep)
-			? this.workspaceRoot
-			: `${this.workspaceRoot}${path.sep}`;
-		if (resolvedDest !== this.workspaceRoot && !resolvedDest.startsWith(rootWithSep)) {
+		// containment pattern in BunSymlinkCreator. The root itself is allowed
+		// (gitignore may target the workspace root directly).
+		if (resolvedDest !== this.workspaceRoot && !isPathWithin(this.workspaceRoot, resolvedDest)) {
 			return failure(
 				gitignoreWriteError(
 					resolvedDest,

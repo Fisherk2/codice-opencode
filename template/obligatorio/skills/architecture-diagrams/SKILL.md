@@ -68,19 +68,19 @@ graph TB
 
 ## Reference Guides
 
-Detailed implementations in the `../../references/` directory:
+Detailed implementations in the `./references/` directory:
 
 | Guide | Contents |
 |---|---|
-| [System Architecture Diagram](../../references/arch-system-architecture-diagram.md) | System Architecture Diagram |
-| [Sequence Diagram](../../references/arch-sequence-diagram.md) | Sequence Diagram |
-| [C4 Context Diagram](../../references/arch-c4-context-diagram.md) | C4 Context Diagram |
-| [Component Diagram](../../references/arch-component-diagram.md) | Component Diagram |
-| [Deployment Diagram](../../references/arch-deployment-diagram.md) | Deployment Diagram |
-| [Data Flow Diagram](../../references/arch-data-flow-diagram.md) | Data Flow Diagram |
-| [Class Diagram](../../references/arch-class-diagram.md) | Class Diagram |
-| [Component Diagram](../../references/arch-component-diagram-2.md) | Component Diagram |
-| [Deployment Diagram](../../references/arch-deployment-diagram-2.md) | Deployment Diagram |
+| [System Architecture Diagram](./references/arch-system-architecture-diagram.md) | System Architecture Diagram |
+| [Sequence Diagram](./references/arch-sequence-diagram.md) | Sequence Diagram |
+| [C4 Context Diagram](./references/arch-c4-context-diagram.md) | C4 Context Diagram |
+| [Component Diagram](./references/arch-component-diagram.md) | Component Diagram |
+| [Deployment Diagram](./references/arch-deployment-diagram.md) | Deployment Diagram |
+| [Data Flow Diagram](./references/arch-data-flow-diagram.md) | Data Flow Diagram |
+| [Class Diagram](./references/arch-class-diagram.md) | Class Diagram |
+| [Component Diagram](./references/arch-component-diagram-2.md) | Component Diagram |
+| [Deployment Diagram](./references/arch-deployment-diagram-2.md) | Deployment Diagram |
 
 ## Best Practices
 

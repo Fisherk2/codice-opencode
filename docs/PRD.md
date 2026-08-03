@@ -1,5 +1,5 @@
-# Product Requirements Document – Códice: Opencode Workspace Installer v1.0.13
-**Fecha:** 2026-06-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Product Requirements Document – Códice: Opencode Workspace Installer v1.1.3
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-07-27 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 0. Descripción General
 Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñada para instalar, configurar y actualizar plantillas de espacios de trabajo de OpenCode (`opencode`). Su objetivo es proporcionar una experiencia de instalación "a prueba de tontos", rápida, segura y con fusión inteligente de archivos, preservando las personalizaciones del usuario.
@@ -18,6 +18,11 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - Menú de archivos opcionales en ambos modos de instalación (Limpia y Proyecto).
   - Flags no-interactivos: `--dest`, `--force`, `--mode`.
   - Publicación npm como método oficial de distribución (`bunx @fisherk2-dev/codice`).
+  - Gobernanza de agentes: regla de no-assumption (preguntar antes de actuar) y delegación-first para los 6 agentes primarios.
+  - Restricciones de comandos destructivos: 53 patrones bash bloqueados en dos capas (plugin sdd-pipeline.ts + opencode.json).
+  - 9 MCP servers pre-configurados (3 habilitados por defecto: context7, vercel-grep, gitmcp).
+  - Subagente obsidian-vault-writer + 3 skills de Obsidian para administración de vaults.
+  - ISP split: `IFileSystem` (6 métodos) + `IStagingSystem` (4 métodos) para segregación de interfaces.
 - **Alcance del MVP (Out):** 
   - Instalación de dependencias de terceros fuera del template.
   - Soporte para múltiples fuentes de plantillas (solo se soporta el template empaquetado en el binario).
@@ -41,11 +46,11 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 ## 4. Requisitos Funcionales
 | REQ-ID | Descripción | Reglas de Negocio | Estado | Trazabilidad (TRD/Flow) |
 |--------|-------------|-------------------|--------|--------------------------|
-| RF-01 | Menú Interactivo TUI | Usar `@clack/prompts`. Debe ser intuitivo, con spinners y validación de entrada. | Especificado | HU-01, HU-02, HU-03 |
-| RF-02 | Motor de Fusión de Archivos | Evaluar archivo por archivo. Reglas: Obligatorio (sobrescribir), Estándar (omitir si existe), Opcional (checklist -> omitir si existe). | Especificado | HU-02, HU-05 |
-| RF-03 | Atomicidad de Operaciones | Toda escritura debe ocurrir primero en un directorio temporal (`.codice-staging`). Solo al finalizar con éxito, se mueve a la ubicación final. | Especificado | HU-05 |
-| RF-04 | Gestión de Versiones Local | Crear/actualizar `.codice-version` con el tag de la versión instalada (ej: "v1.0.0"). | Especificado | HU-01, HU-03 |
-| RF-05 | Consulta de Versión Remota | Consultar `GET https://api.github.com/repos/{owner}/{repo}/releases/latest`. Comparar con versión local usando semver. | Especificado | HU-03 |
+| RF-01 | Menú Interactivo TUI | Usar `@clack/prompts`. Debe ser intuitivo, con spinners y validación de entrada. | Implementado | HU-01, HU-02, HU-03 |
+| RF-02 | Motor de Fusión de Archivos | Evaluar archivo por archivo. Reglas: Obligatorio (sobrescribir), Estándar (omitir si existe), Opcional (checklist -> omitir si existe). | Implementado | HU-02, HU-05 |
+| RF-03 | Atomicidad de Operaciones | Toda escritura debe ocurrir primero en un directorio temporal (`.codice-staging`). Solo al finalizar con éxito, se mueve a la ubicación final. | Implementado | HU-05 |
+| RF-04 | Gestión de Versiones Local | Crear/actualizar `.codice-version` con el tag de la versión instalada (ej: "v1.0.0"). | Implementado | HU-01, HU-03 |
+| RF-05 | Consulta de Versión Remota | Consultar `GET https://api.github.com/repos/{owner}/{repo}/releases/latest`. Comparar con versión local usando semver. | Implementado | HU-03 |
 
 ## 5. Requisitos No Funcionales
 - **Rendimiento:** La consulta de versión remota debe tomar < 2 segundos. La extracción del template empaquetado debe tomar < 5 segundos.
@@ -67,5 +72,6 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---------|-------|-------|--------|--------------|
 | 0.1.0 | 2026-06-13 | Fisherk2 | Creación inicial del PRD basado en cuestionario de clarificación. | ✅ Aprobado |
+| 1.1.3 | 2026-07-27 | Fisherk2 | Sincronizado con v1.1.3: gobernanza de agentes, restricciones de comandos, 9 MCP servers, Obsidian subagent, ISP split. | ✅ Aprobado |
 
 ---

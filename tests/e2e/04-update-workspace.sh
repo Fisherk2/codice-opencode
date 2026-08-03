@@ -27,10 +27,6 @@ source "$(dirname "$0")/common.sh"
 
 log_step "F4-T5: Update Workspace E2E"
 
-# Resolve binary
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
-
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
 log_info "Test directory: $TEMP_DIR"
@@ -61,18 +57,18 @@ log_info "Mock GitHub API pointing to $CODICE_GITHUB_API_URL"
 # Execute
 # ---------------------------------------------------------------------------
 
-log_info "Running: $CODICE_BINARY --update --force in $TEMP_DIR"
+log_info "Running: $CODICE_CLI --update --force in $TEMP_DIR"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" "$CODICE_BINARY" --update --force) 2>/dev/null || EXIT_CODE=$?
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force) 2>/dev/null || EXIT_CODE=$?
 
 # Stop mock server
 stop_mock_server
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     exit 1
 fi
-log_pass "Binary exited with code 0"
+log_pass "CLI exited with code 0"
 
 # ---------------------------------------------------------------------------
 # Assertions
@@ -126,18 +122,18 @@ if [[ ! -f "$TEMP_DIR/.codice-version" ]]; then
     exit 1
 fi
 
-# Get the binary's own version (from package.json, bundled at compile time)
-BINARY_VERSION=$("$CODICE_BINARY" --version 2>/dev/null | sed 's/^Códice v//')
-log_info "Binary version: $BINARY_VERSION"
+# Get the CLI version (from package.json)
+CLI_VERSION=$($CODICE_CLI --version 2>/dev/null | sed 's/^Códice v//')
+log_info "CLI version: $CLI_VERSION"
 
 VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
-# After update, version file should reflect the binary's own version (not the remote tag)
-if ! echo "$VERSION_DATA" | grep -q "\"installedVersion\"\s*:\s*\"${BINARY_VERSION}\""; then
-    log_fail "Version file was not updated to binary version ${BINARY_VERSION}"
+# After update, version file should reflect the CLI version (not the remote tag)
+if ! echo "$VERSION_DATA" | grep -q "\"installedVersion\"\s*:\s*\"${CLI_VERSION}\""; then
+    log_fail "Version file was not updated to CLI version ${CLI_VERSION}"
     echo "    Version data: $VERSION_DATA" >&2
     exit 1
 fi
-log_pass "Version file updated to binary version ${BINARY_VERSION}"
+log_pass "Version file updated to CLI version ${CLI_VERSION}"
 
 log_info "Verifying optional selections preserved from old version..."
 

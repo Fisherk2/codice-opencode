@@ -1,9 +1,5 @@
 /**
- * Códice — Opencode Workspace Installer
- *
- * CLI entry point for the interactive installer.
- * Parses command-line arguments, wires dependencies via DI,
- * and launches the appropriate installation mode.
+ * Códice CLI entry point — parses args, wires dependencies, launches installer mode.
  */
 
 import type { IUserPrompt } from "../application/ports/IUserPrompt";
@@ -38,10 +34,75 @@ export { main };
  * @param userPrompt - The user prompt adapter instance.
  * @returns Selected mode, or null if user cancelled.
  */
-export async function promptForMode(
+export function promptForMode(
 	userPrompt: IUserPrompt,
 ): Promise<"clean" | "project" | "update" | null> {
 	return userPrompt.promptForMode();
+}
+
+/**
+ * Resolve the installation mode. Shows interactive menu if mode is "interactive",
+ * otherwise returns the mode directly. Returns null on user cancel.
+ */
+export async function resolveInteractiveMode(
+	mode: Mode,
+	userPrompt: IUserPrompt,
+	version: string,
+): Promise<"clean" | "project" | "update" | null> {
+	if (mode !== "interactive") {
+		return mode;
+	}
+
+	userPrompt.showIntro(`Códice v${version} — Opencode Workspace Installer`);
+	const selected = await promptForMode(userPrompt);
+	if (selected === null) {
+		userPrompt.showCancel("Installation cancelled.");
+		return null;
+	}
+	return selected;
+}
+
+// ---------------------------------------------------------------------------
+// Terminal flags and signal handling
+// ---------------------------------------------------------------------------
+
+/**
+ * Handle terminal flags (--version, --help) which must be processed
+ * before any I/O. Exits the process after printing.
+ */
+function handleTerminalFlags(args: readonly string[]): void {
+	if (args.includes("--version") || args.includes("-V")) {
+		printVersion();
+		process.exit(EXIT_SUCCESS);
+	}
+
+	if (args.includes("--help") || args.includes("-h")) {
+		printHelp();
+		process.exit(EXIT_SUCCESS);
+	}
+}
+
+/**
+ * Install a SIGINT handler that exits immediately to avoid races with async
+ * cleanup. Returns the teardown function that removes the handler.
+ *
+ * The staging directory will be left behind but cleaned up by the caller
+ * (e.g., the test harness's trap handler or the OS temp file cleanup).
+ */
+function registerSigintHandler(): () => void {
+	// Double SIGINT: already handling — exit immediately on the second signal
+	let interrupted = false;
+	const handleSigint = (): void => {
+		if (interrupted) return;
+		interrupted = true;
+		// biome-ignore lint/suspicious/noConsole: intentional CLI output
+		console.error("\nInterrupted by user.");
+		process.exit(EXIT_INTERRUPT);
+	};
+	process.on("SIGINT", handleSigint);
+	return () => {
+		process.off("SIGINT", handleSigint);
+	};
 }
 
 // ---------------------------------------------------------------------------
@@ -64,26 +125,17 @@ export async function runMode(
 	destinationPath: string,
 	options: CliOptions,
 ): Promise<Result<void, Error>> {
-	switch (mode) {
-		case "clean": {
-			return deps.cleanInstall.execute(destinationPath, {
-				force: options.force,
-				version: VERSION,
-			});
-		}
-		case "project": {
-			return deps.projectInstall.execute(destinationPath, {
-				force: options.force,
-				version: VERSION,
-			});
-		}
-		case "update": {
-			return deps.updateWorkspace.execute(destinationPath, {
-				force: options.force,
-				version: VERSION,
-			});
-		}
+	const execOptions = {
+		force: options.force,
+		version: VERSION,
+	};
+	if (mode === "clean") {
+		return deps.cleanInstall.execute(destinationPath, execOptions);
 	}
+	if (mode === "project") {
+		return deps.projectInstall.execute(destinationPath, execOptions);
+	}
+	return deps.updateWorkspace.execute(destinationPath, execOptions);
 }
 
 // ---------------------------------------------------------------------------
@@ -93,16 +145,7 @@ export async function runMode(
 async function main(): Promise<void> {
 	const args = process.argv.slice(2);
 
-	// Terminal flags — handle these first, before any I/O
-	if (args.includes("--version") || args.includes("-V")) {
-		printVersion();
-		process.exit(EXIT_SUCCESS);
-	}
-
-	if (args.includes("--help") || args.includes("-h")) {
-		printHelp();
-		process.exit(EXIT_SUCCESS);
-	}
+	handleTerminalFlags(args);
 
 	// Parse mode and options
 	const parsed = parseArgs(args);
@@ -119,36 +162,15 @@ async function main(): Promise<void> {
 	const deps = createDependencies(destinationPath, options.verbose);
 
 	// SIGINT handler — immediately exit to avoid races with async cleanup.
-	// The staging directory will be left behind but cleaned up by the caller
-	// (e.g., the test harness's trap handler or the OS temp file cleanup).
-	let interrupted = false;
-	const handleSigint = (): void => {
-		if (interrupted) return; // Double SIGINT: already handling
-		interrupted = true;
-		// biome-ignore lint/suspicious/noConsole: intentional CLI output
-		console.error("\nInterrupted by user.");
-		process.exit(EXIT_INTERRUPT);
-	};
-	process.on("SIGINT", handleSigint);
+	const unregisterSigint = registerSigintHandler();
 
 	try {
-		// Resolve interactive mode (show menu)
-		let resolvedMode: Mode = mode;
-		if (mode === "interactive") {
-			deps.userPrompt.showIntro(`Códice v${VERSION} — Opencode Workspace Installer`);
-			const selected = await promptForMode(deps.userPrompt);
-			if (selected === null) {
-				deps.userPrompt.showCancel("Installation cancelled.");
-				process.exit(EXIT_INTERRUPT);
-			}
-			resolvedMode = selected;
-		}
-
-		// At this point resolvedMode is guaranteed to be a non-interactive mode
-		const executionMode = resolvedMode as "clean" | "project" | "update";
+		// Resolve interactive mode (show menu if needed)
+		const resolved = await resolveInteractiveMode(mode, deps.userPrompt, VERSION);
+		if (resolved === null) process.exit(EXIT_INTERRUPT);
 
 		// Execute the selected mode
-		const result = await runMode(executionMode, deps, destinationPath, options);
+		const result = await runMode(resolved, deps, destinationPath, options);
 
 		// Handle result — each use case calls showSuccess/showCancel/showError on its own
 		if (!result.ok) {
@@ -163,7 +185,7 @@ async function main(): Promise<void> {
 		console.error(`Fatal error: ${message}`);
 		process.exit(EXIT_ERROR);
 	} finally {
-		process.off("SIGINT", handleSigint);
+		unregisterSigint();
 	}
 }
 

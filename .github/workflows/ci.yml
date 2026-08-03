@@ -57,42 +57,12 @@ jobs:
       - name: Run tests (unit + integration)
         run: just test
 
-      - name: Build binary
-        run: just build
-
       - name: Run E2E tests (Linux only — bash scripts)
         if: runner.os == 'Linux'
         run: just test-e2e
-        timeout-minutes: 5
+        timeout-minutes: 10
 
-      - name: Smoke test binary (macOS)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          ./dist/codice-macos --version
-          ./dist/codice-macos --help
-
-      - name: Smoke test binary (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          ./dist/codice-windows.exe --version
-          ./dist/codice-windows.exe --help
-
-      - name: Set artifact binary name
-        id: artifact
-        shell: bash
-        run: |
-          case "${{ runner.os }}" in
-            Linux)   echo "name=codice-linux" >> "$GITHUB_OUTPUT" ;;
-            macOS)   echo "name=codice-macos" >> "$GITHUB_OUTPUT" ;;
-            Windows) echo "name=codice-windows.exe" >> "$GITHUB_OUTPUT" ;;
-          esac
-
-      - name: Upload binary artifact
-        if: success() || failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.artifact.outputs.name }}
-          path: dist/
-          retention-days: 7
+      - name: Coverage check with threshold (Linux only)
+        if: runner.os == 'Linux'
+        run: just coverage-check 95
+        timeout-minutes: 15

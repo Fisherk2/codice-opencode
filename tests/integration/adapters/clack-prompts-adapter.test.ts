@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
+import * as realClack from "@clack/prompts";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
 
 /**
@@ -11,6 +12,14 @@ import type { FileRule } from "../../../src/domain/entities/FileRule";
 // globally within the test runner. The mock must include ALL functions that
 // any tested module might call, otherwise those functions will be undefined.
 // In particular, ClackPromptsAdapter.promptForMode() needs `select`.
+//
+// The mock is also NOT auto-restored between test files, so it is undone in
+// afterAll below. Leaving it installed makes every later-loaded test file use
+// the stub, and Bun's file order is filesystem-dependent (ext4/NTFS vs APFS) —
+// that is exactly how a leaked mock.module turns into a platform-only CI
+// failure. Snapshot the real exports BEFORE mock.module runs.
+
+const realClackExports = { ...realClack };
 
 const mockNote = mock();
 const mockConfirm = mock();
@@ -24,6 +33,20 @@ const mockIntro = mock();
 const mockOutro = mock();
 const mockCancel = mock();
 const mockIsCancel = mock(() => false);
+const mockProgress = mock(() => ({
+	start: mock(),
+	advance: mock(),
+	stop: mock(),
+}));
+const mockLog = {
+	message: mock(),
+	info: mock(),
+	success: mock(),
+	step: mock(),
+	warn: mock(),
+	warning: mock(),
+	error: mock(),
+};
 
 mock.module("@clack/prompts", () => ({
 	note: mockNote,
@@ -35,7 +58,14 @@ mock.module("@clack/prompts", () => ({
 	outro: mockOutro,
 	cancel: mockCancel,
 	isCancel: mockIsCancel,
+	progress: mockProgress,
+	log: mockLog,
 }));
+
+// Restore the real module so later-loaded test files are unaffected.
+afterAll(() => {
+	mock.module("@clack/prompts", () => realClackExports);
+});
 
 // Import after mock is set up
 const { ClackPromptsAdapter } = await import(
@@ -56,11 +86,6 @@ describe("ClackPromptsAdapter", () => {
 		mockOutro.mockReset();
 		mockCancel.mockReset();
 		mockIsCancel.mockReset();
-	});
-
-	afterEach(() => {
-		// Clean up spinner state
-		adapter.stopSpinner();
 	});
 
 	it("creates instance with explicit constructor", () => {
@@ -187,23 +212,6 @@ describe("ClackPromptsAdapter", () => {
 
 			const result = await adapter.selectOptional(options);
 			expect(result).toEqual([]);
-		});
-	});
-
-	describe("spinner", () => {
-		it("should start spinner with message", () => {
-			adapter.showSpinner("Installing...");
-			expect(mockSpinner).toHaveBeenCalledTimes(1);
-
-			// Should be able to call stopSpinner without error
-			adapter.stopSpinner();
-		});
-
-		it("should replace existing spinner", () => {
-			adapter.showSpinner("First task...");
-			adapter.showSpinner("Second task...");
-			// Second call should have stopped the first spinner
-			adapter.stopSpinner();
 		});
 	});
 

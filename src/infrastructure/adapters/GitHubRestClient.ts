@@ -1,5 +1,5 @@
 import semver from "semver";
-// Import version for User-Agent header — bundle-friendly (Bun includes package.json at compile time)
+// Import version for User-Agent header — Bun resolves package.json at runtime, no special setup needed
 import { version as pkgVersion } from "../../../package.json";
 import type { IGitHubClient } from "../../application/ports/IGitHubClient";
 import { GITHUB_API_TIMEOUT_MS, getGitHubApiUrl } from "../config/constants";
@@ -33,41 +33,20 @@ export class GitHubRestClient implements IGitHubClient {
 	 * @returns The tag name (e.g. "v1.0.0") or null on failure.
 	 */
 	async getLatestReleaseTag(): Promise<string | null> {
-		try {
-			const data = await this.fetchLatestRelease();
-			if (data === null) {
-				return null;
-			}
-			const tag = data.tag_name;
-			if (typeof tag !== "string") {
-				return null;
-			}
-			// Validate tag is a valid semver (including pre-release tags like v1.0.0-beta)
-			if (semver.valid(tag) === null) {
-				return null;
-			}
-			return tag;
-		} catch {
-			// Catch any unexpected errors gracefully
+		// fetchLatestRelease never throws — all error conditions return null.
+		const data = await this.fetchLatestRelease();
+		if (data === null) {
 			return null;
 		}
-	}
-
-	/**
-	 * Fetch the release notes/changelog for the latest version.
-	 * @returns Release body text or null if unavailable.
-	 */
-	async getLatestReleaseNotes(): Promise<string | null> {
-		try {
-			const data = await this.fetchLatestRelease();
-			if (data === null) {
-				return null;
-			}
-			const body = data.body;
-			return typeof body === "string" ? body : null;
-		} catch {
+		const tag = data.tag_name;
+		if (typeof tag !== "string") {
 			return null;
 		}
+		// Validate tag is a valid semver (including pre-release tags like v1.0.0-beta)
+		if (semver.valid(tag) === null) {
+			return null;
+		}
+		return tag;
 	}
 
 	// ---------------------------------------------------------------------------

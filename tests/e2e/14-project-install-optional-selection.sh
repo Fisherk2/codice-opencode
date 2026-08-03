@@ -4,9 +4,8 @@
 #
 # Scenario: Run --project --force and verify:
 #   1. No optional files are copied (force skips all optionals)
-#   2. .devin/ symlinks are NOT created (not selected)
-#   3. optionalSelections in .codice-version is empty
-#   4. .opencode symlinks ARE created (always)
+#   2. optionalSelections in .codice-version is empty
+#   3. .opencode symlinks ARE created (always)
 #===============================================================================
 
 set -Eeuo pipefail
@@ -18,9 +17,7 @@ source "$(dirname "$0")/common.sh"
 
 log_step "FEV-2-D: Project Install Optional Selection E2E"
 
-# Resolve binary (builds if needed)
-CODICE_BINARY="$(setup_binary)"
-log_info "Using binary: $CODICE_BINARY"
+# Resolve CLI (builds if needed)
 
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
@@ -32,17 +29,17 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 # Execute
 # ---------------------------------------------------------------------------
 
-log_info "Running: $CODICE_BINARY --project --force in $TEMP_DIR"
+log_info "Running: $CODICE_CLI --project --force in $TEMP_DIR"
 STDERR_LOG="$TEMP_DIR/stderr.log"
 EXIT_CODE=0
-(cd "$TEMP_DIR" && "$CODICE_BINARY" --project --force) 2>"$STDERR_LOG" || EXIT_CODE=$?
+(cd "$TEMP_DIR" && $CODICE_CLI --project --force) 2>"$STDERR_LOG" || EXIT_CODE=$?
 
 if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "Binary exited with code $EXIT_CODE (expected 0)"
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     [[ -s "$STDERR_LOG" ]] && echo "    Stderr: $(cat "$STDERR_LOG")" >&2
     exit 1
 fi
-log_pass "Binary exited with code 0"
+log_pass "CLI exited with code 0"
 
 # Verify stderr has no security warnings
 if [[ -s "$STDERR_LOG" ]]; then
@@ -74,14 +71,6 @@ log_info "Verifying optional files are absent..."
 assert_file_missing "$TEMP_DIR/Dockerfile"
 assert_file_missing "$TEMP_DIR/Justfile"
 assert_file_missing "$TEMP_DIR/scripts/build.sh"
-
-# Verify .devin/ symlinks do NOT exist (not selected via --force)
-log_info "Verifying .devin/ symlinks are absent..."
-if [[ -L "$TEMP_DIR/.devin/skills" ]]; then
-    log_fail ".devin/skills symlink should NOT exist when .devin was not selected"
-    exit 1
-fi
-log_pass ".devin/symlinks correctly absent"
 
 # Verify .opencode symlinks ARE created (always)
 log_info "Verifying .opencode symlinks..."

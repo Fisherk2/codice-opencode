@@ -174,8 +174,6 @@ The affected symlinks are:
 | `.opencode/commands` | `../commands` |
 | `.opencode/skills` | `../skills` |
 
-Additionally, if the `.devin/` optional directory was selected, inner symlinks (`.devin/skills`, `.devin/workflows`, `.devin/rules/*`) may also be missing.
-
 **Solution:** Re-run the installer in force mode to regenerate all symlinks without overwriting your existing template files:
 
 ```bash
@@ -185,7 +183,7 @@ bunx @fisherk2-dev/codice --force --mode clean
 The `--force` flag skips confirmation prompts, and `--mode clean` ensures the full post-installation generation step runs. This will:
 
 1. Re-copy mandatory files (safe — they always match the current template)
-2. Re-generate all symlinks in `.opencode/` and (if applicable) `.devin/`
+2. Re-generate all symlinks in `.opencode/`
 3. Preserve your existing standard and optional files
 
 If symlinks are consistently missing after every install, verify that your project directory is writable by the current user (see Issue #3 above).
@@ -279,6 +277,6 @@ ls -la .opencode/agents .opencode/commands .opencode/skills
 - **When reporting a bug**, include:
   - Your operating system and version
   - Códice version (`codice --version`)
-  - How you ran the installer (bunx, npx, or binary)
+  - How you ran the installer (bunx or npx)
   - The full output with `--verbose` flag
   - Steps to reproduce the issue

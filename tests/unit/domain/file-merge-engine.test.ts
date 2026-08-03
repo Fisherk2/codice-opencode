@@ -13,6 +13,7 @@ import type { FileRule } from "../../../src/domain/entities/FileRule";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
+import type { ProgressEvent } from "../../../src/domain/types/ProgressEvent";
 
 // ---- Mock IFileSystem + IStagingSystem ----
 
@@ -28,14 +29,9 @@ function createMockFs(): {
 	const calls: CallRecord[] = [];
 
 	const mockFs: IFileSystem & IStagingSystem = {
-		readTemplateFile: async () => "",
 		destinationExists: async (path: string) => {
 			calls.push({ method: "destinationExists", args: [path] });
 			return true; // default: file already exists
-		},
-		getStagingPath: (path: string) => {
-			calls.push({ method: "getStagingPath", args: [path] });
-			return `staging/${path}`;
 		},
 		stageFile: async (relativePath: string, excludeSubDirs?: Set<string>) => {
 			calls.push({ method: "stageFile", args: [relativePath, excludeSubDirs] });
@@ -50,6 +46,8 @@ function createMockFs(): {
 		isEmpty: async () => true,
 		writeVersionFile: async () => {},
 		readVersionFile: async () => null,
+		walkTemplateDirectory: async (_path: string) => [],
+		walkDestinationDirectory: async (_path: string) => [],
 	};
 
 	return { fs: mockFs, calls };
@@ -155,7 +153,7 @@ describe("FileMergeEngine — Optional rules", () => {
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("Justfile", "optional")];
-		const result = await engine.execute(rules, ["Justfile"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["Justfile"] });
 
 		expect(result.ok).toBe(true);
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
@@ -170,7 +168,7 @@ describe("FileMergeEngine — Optional rules", () => {
 
 		const rules = [rule("Justfile", "optional")];
 		// User did NOT select Justfile
-		const result = await engine.execute(rules, []);
+		const result = await engine.execute(rules, { selectedOptionals: [] });
 
 		expect(result.ok).toBe(true);
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
@@ -183,7 +181,7 @@ describe("FileMergeEngine — Optional rules", () => {
 		const engine = new FileMergeEngine(fs);
 
 		const rules = [rule("Justfile", "optional")];
-		const result = await engine.execute(rules, ["Justfile"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["Justfile"] });
 
 		expect(result.ok).toBe(true);
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
@@ -200,14 +198,14 @@ describe("FileMergeEngine — noTemplateCopy rules", () => {
 
 		const rules: FileRule[] = [
 			{
-				path: ".devin",
+				path: ".virtual-entry",
 				category: "optional",
 				isDirectory: true,
 				description: "Virtual entry",
 				noTemplateCopy: true,
 			},
 		];
-		const result = await engine.execute(rules, [".devin"]);
+		const result = await engine.execute(rules, { selectedOptionals: [".virtual-entry"] });
 
 		expect(result.ok).toBe(true);
 		// stageFile should NOT be called for noTemplateCopy rules
@@ -223,7 +221,7 @@ describe("FileMergeEngine — noTemplateCopy rules", () => {
 		const rules: FileRule[] = [
 			{ path: "opencode.json", category: "mandatory", isDirectory: false, description: "Config" },
 			{
-				path: ".devin",
+				path: ".virtual-entry",
 				category: "optional",
 				isDirectory: true,
 				description: "Virtual",
@@ -231,12 +229,14 @@ describe("FileMergeEngine — noTemplateCopy rules", () => {
 			},
 			{ path: "Justfile", category: "optional", isDirectory: false, description: "Optional file" },
 		];
-		const result = await engine.execute(rules, [".devin", "Justfile"]);
+		const result = await engine.execute(rules, {
+			selectedOptionals: [".virtual-entry", "Justfile"],
+		});
 
 		expect(result.ok).toBe(true);
 		const staged = calls.filter((c) => c.method === "stageFile").map((c) => c.args[0]);
 		// opencode.json (mandatory) and Justfile (optional, selected, missing) should be staged
-		// .devin (noTemplateCopy) should be skipped
+		// .virtual-entry (noTemplateCopy) should be skipped
 		expect(staged).toEqual(["opencode.json", "Justfile"]);
 	});
 });
@@ -254,7 +254,7 @@ describe("FileMergeEngine — Mixed rules", () => {
 			rule("README.md", "standard"), // exists → skip
 			rule("Justfile", "optional"),
 		];
-		const result = await engine.execute(rules, ["Justfile"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["Justfile"] });
 
 		expect(result.ok).toBe(true);
 		const staged = calls.filter((c) => c.method === "stageFile").map((c) => c.args[0]);
@@ -325,9 +325,9 @@ describe("FileMergeEngine — Error handling", () => {
 		// No files to stage
 		const stageCalls = calls.filter((c) => c.method === "stageFile");
 		expect(stageCalls.length).toBe(0);
-		// commitStaging is still called (no-op on empty staging dir)
+		// commitStaging is NOT called when total is 0 (nothing staged)
 		const commitCalls = calls.filter((c) => c.method === "commitStaging");
-		expect(commitCalls.length).toBe(1);
+		expect(commitCalls.length).toBe(0);
 	});
 
 	test("does NOT call commitStaging if stageFile failed", async () => {
@@ -357,7 +357,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 			rule("docs", "standard", true), // standard directory
 			rule("docs/guides", "optional", true), // optional sub-path
 		];
-		const result = await engine.execute(rules, ["docs/guides"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["docs/guides"] });
 
 		expect(result.ok).toBe(true);
 
@@ -379,7 +379,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 			rule("agents", "mandatory", true), // mandatory directory
 			rule("agents/expert", "optional", true), // optional sub-path
 		];
-		const result = await engine.execute(rules, ["agents/expert"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["agents/expert"] });
 
 		expect(result.ok).toBe(true);
 
@@ -398,7 +398,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 			rule("docs", "standard", true), // standard directory
 			rule("Justfile", "optional"), // unrelated optional
 		];
-		const result = await engine.execute(rules, ["Justfile"]);
+		const result = await engine.execute(rules, { selectedOptionals: ["Justfile"] });
 
 		expect(result.ok).toBe(true);
 
@@ -417,7 +417,9 @@ describe("FileMergeEngine — Exclusion logic", () => {
 			rule("specs/design", "optional", true),
 			rule("specs/adr", "optional", true),
 		];
-		const result = await engine.execute(rules, ["specs/design", "specs/adr"]);
+		const result = await engine.execute(rules, {
+			selectedOptionals: ["specs/design", "specs/adr"],
+		});
 
 		expect(result.ok).toBe(true);
 
@@ -428,5 +430,227 @@ describe("FileMergeEngine — Exclusion logic", () => {
 		expect(excludeSet).toBeDefined();
 		expect(excludeSet?.has("design")).toBe(true);
 		expect(excludeSet?.has("adr")).toBe(true);
+	});
+});
+
+// ---- Progress events ----
+
+describe("FileMergeEngine — Progress events", () => {
+	function collectEvents(): {
+		cb: (e: ProgressEvent) => void;
+		events: ProgressEvent[];
+	} {
+		const events: ProgressEvent[] = [];
+		const cb = (e: ProgressEvent): void => {
+			events.push(e);
+		};
+		return { cb, events };
+	}
+
+	test("emits stage_start + stage_complete for each staged file", async () => {
+		const { fs } = createMockFs();
+		fs.destinationExists = async () => false;
+		const engine = new FileMergeEngine(fs);
+		const { cb, events } = collectEvents();
+
+		const rules = [rule("opencode.json", "mandatory"), rule("README.md", "standard")];
+		const result = await engine.execute(rules, { onProgress: cb });
+
+		expect(result.ok).toBe(true);
+		const starts = events.filter((e) => e.type === "stage_start");
+		const completes = events.filter((e) => e.type === "stage_complete");
+		expect(starts.length).toBe(2);
+		expect(completes.length).toBe(2);
+		expect(starts[0]?.filePath).toBe("opencode.json");
+		expect(starts[1]?.filePath).toBe("README.md");
+	});
+
+	test("emits stage_skip for noTemplateCopy files", async () => {
+		const { fs } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+		const { cb, events } = collectEvents();
+
+		const rules: FileRule[] = [
+			{
+				path: ".virtual-entry",
+				category: "optional",
+				isDirectory: true,
+				description: "Virtual",
+				noTemplateCopy: true,
+			},
+		];
+		await engine.execute(rules, {
+			selectedOptionals: [".virtual-entry"],
+			onProgress: cb,
+		});
+
+		const skips = events.filter((e) => e.type === "stage_skip");
+		expect(skips.length).toBe(1);
+		if (skips[0]?.type === "stage_skip") {
+			expect(skips[0].filePath).toBe(".virtual-entry");
+			expect(skips[0].reason).toContain("no template copy");
+		}
+	});
+
+	test("emits stage_skip for standard file when destination exists", async () => {
+		const { fs } = createMockFs();
+		// Default: destinationExists returns true
+		const engine = new FileMergeEngine(fs);
+		const { cb, events } = collectEvents();
+
+		await engine.execute([rule("README.md", "standard")], { onProgress: cb });
+
+		const skips = events.filter((e) => e.type === "stage_skip");
+		expect(skips.length).toBe(1);
+		if (skips[0]?.type === "stage_skip") {
+			expect(skips[0].filePath).toBe("README.md");
+			expect(skips[0].reason).toBe("Destination already exists");
+		}
+	});
+
+	test("emits commit_start + commit_complete", async () => {
+		const { fs } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+		const { cb, events } = collectEvents();
+
+		await engine.execute([rule("opencode.json", "mandatory")], { onProgress: cb });
+
+		const hasCommitStart = events.some((e) => e.type === "commit_start");
+		const hasCommitComplete = events.some((e) => e.type === "commit_complete");
+		expect(hasCommitStart).toBe(true);
+		expect(hasCommitComplete).toBe(true);
+	});
+
+	test("emits error when staging fails", async () => {
+		const { fs } = createMockFs();
+		fs.stageFile = async () => {
+			throw new Error("Disk full");
+		};
+		const engine = new FileMergeEngine(fs);
+		const { cb, events } = collectEvents();
+
+		const result = await engine.execute([rule("opencode.json", "mandatory")], { onProgress: cb });
+
+		expect(result.ok).toBe(false);
+		const errors = events.filter((e) => e.type === "error");
+		expect(errors.length).toBe(1);
+		if (errors[0]?.type === "error") {
+			expect(errors[0].filePath).toBe("opencode.json");
+			expect(errors[0].message).toContain("Disk full");
+		}
+	});
+
+	test("callback exception is swallowed (merge completes)", async () => {
+		const { fs } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+
+		const throwCb = (): void => {
+			throw new Error("Callback crashed");
+		};
+
+		const result = await engine.execute([rule("opencode.json", "mandatory")], {
+			onProgress: throwCb,
+		});
+
+		expect(result.ok).toBe(true);
+	});
+
+	test("events emitted in correct order for single mandatory file", async () => {
+		const { fs } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+		const { cb, events } = collectEvents();
+
+		await engine.execute([rule("opencode.json", "mandatory")], { onProgress: cb });
+
+		expect(events.length).toBeGreaterThanOrEqual(4);
+		expect(events[0]?.type).toBe("stage_start");
+		expect(events[1]?.type).toBe("stage_complete");
+		expect(events[2]?.type).toBe("commit_start");
+		expect(events[3]?.type).toBe("commit_complete");
+	});
+
+	test("correct current/total values in progress events", async () => {
+		const { fs } = createMockFs();
+		fs.destinationExists = async () => false;
+		const engine = new FileMergeEngine(fs);
+		const { cb, events } = collectEvents();
+
+		const rules = [
+			rule("opencode.json", "mandatory"),
+			rule("README.md", "standard"),
+			rule("Justfile", "standard"),
+		];
+		await engine.execute(rules, { onProgress: cb });
+
+		const starts = events.filter((e) => e.type === "stage_start");
+		expect(starts.length).toBe(3);
+		// total should be 3 for all start events
+		for (const event of starts) {
+			if (event.type === "stage_start") {
+				expect(event.total).toBe(3);
+			}
+		}
+		// current should increment: 1, 2, 3
+		expect(starts[0]?.type === "stage_start" && starts[0].current).toBe(1);
+		expect(starts[1]?.type === "stage_start" && starts[1].current).toBe(2);
+		expect(starts[2]?.type === "stage_start" && starts[2].current).toBe(3);
+	});
+
+	test("no events emitted when onProgress is undefined (backward compat)", async () => {
+		const { fs } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+
+		let spyCalled = false;
+		const originalStageFile = fs.stageFile;
+		fs.stageFile = async (path: string, excludeSubDirs?: Set<string>) => {
+			spyCalled = true;
+			await originalStageFile(path, excludeSubDirs);
+		};
+
+		const result = await engine.execute([rule("opencode.json", "mandatory")]);
+
+		expect(result.ok).toBe(true);
+		expect(spyCalled).toBe(true);
+	});
+
+	test("progress events include correct total with mixed noTemplateCopy rules", async () => {
+		const { fs } = createMockFs();
+		fs.destinationExists = async () => false;
+		const engine = new FileMergeEngine(fs);
+		const { cb, events } = collectEvents();
+
+		const rules: FileRule[] = [
+			{ path: "opencode.json", category: "mandatory", isDirectory: false, description: "Config" },
+			{
+				path: ".devin",
+				category: "optional",
+				isDirectory: true,
+				description: "Virtual",
+				noTemplateCopy: true,
+			},
+			{ path: "Justfile", category: "optional", isDirectory: false, description: "Optional file" },
+		];
+		await engine.execute(rules, { selectedOptionals: ["Justfile"], onProgress: cb });
+
+		const starts = events.filter((e) => e.type === "stage_start");
+		expect(starts.length).toBe(2); // only 2 non-noTemplateCopy rules
+
+		// total should be 2 (excluding noTemplateCopy)
+		for (const event of starts) {
+			if (event.type === "stage_start") {
+				expect(event.total).toBe(2);
+			}
+		}
+
+		// commit events should also use total=2
+		const commitStart = events.find((e) => e.type === "commit_start");
+		expect(commitStart).toBeDefined();
+		if (commitStart?.type === "commit_start") {
+			expect(commitStart.total).toBe(2);
+		}
+
+		// stage_skip should have been emitted for .devin
+		const skips = events.filter((e) => e.type === "stage_skip");
+		expect(skips.length).toBe(1);
 	});
 });

@@ -11,7 +11,7 @@ Scan the project for existing documentation and identify what's present, what's 
 2. Scan @docs/ — list all documents with last-modified dates
 3. Read @CHANGELOG.md — what recent changes might need documentation updates?
 4. Read @README.md — is it up to date with respect to the current project?
-5. Read @CONTRIBUTING.md — is it written with a workflow appropriate for contributors?
+5. Read @CONTRIBUTING.md — is it written with a workflow appropriate for contributors with respect @skills/git-workflow-and-versioning/SKILL.md conventions?
 6. Check @specs/ and @specs/adr/ — any ADRs that should be created or updated?
 7. Read @AGENTS.md — does it reference files or conventions that no longer exist?
 
@@ -36,8 +36,6 @@ Use the `question` tool to let the user choose the scope — never decide automa
 
 ## Phase 0: Resolve Contradictions
 
-If the user's request is vague or missing key details, invoke @skills/interview-me/SKILL.md to extract the full intent before proceeding.
-
 **Before writing anything**, use the `question` tool to resolve any contradictions found between code/configuration and current documentation:
 
 1. Does @docs/ARCHITECTURE.md reflect the actual architecture?
@@ -47,23 +45,21 @@ If the user's request is vague or missing key details, invoke @skills/interview-
 
 ## Phase 1: Synchronize Documentation
 
-1. **Update existing docs** to reflect current codebase state:
-   - @docs/ARCHITECTURE.md — update ADR index, layer descriptions, component diagrams
-   - @docs/SCHEMA.md — update if data models changed
-   - @docs/DESIGN.md — update if UI/UX project changed
-   - @docs/APPFLOW.md — update if user flows changed
-   - @docs/CODE_STYLE.md — refine conventions based on actual code patterns
-   - @docs/SECURITY.md — update if security policy needs more information about how to report critical issues
+**Delegate** to appropriate subagents for each documentation area:
+
+1. **Update existing docs** — @docs/ARCHITECTURE.md, @docs/SCHEMA.md, @docs/DESIGN.md, @docs/APPFLOW.md, @docs/CODE_STYLE.md, @docs/SECURITY.md, @docs/TECH_DEBT.md, @docs/SECURITY.md
 2. **Create missing docs** if gaps were identified:
    - @docs/ARCHITECTURE.md if missing
    - @docs/SCHEMA.md if missing
    - @docs/SECURITY.md if missing
+   - @CODE_OF_CONDUCT.md if missing
    - @docs/CODE_STYLE.md if missing
    - @specs/ if missing specs to document
    - @specs/adr/ ADRs for significant decisions
-3. **Create ADRs** for significant decisions made since last documentation pass (use @skills/documentation-and-adrs/SKILL.md)
-4. If @SPEC.md or @AGENTS.md exceeds **200 lines**, invoke @skills/agent-md-refactor/SKILL.md to modularize into @specs/
+3. **Create ADRs** for significant decisions (load @skills/documentation-and-adrs/SKILL.md)
+4. If @SPEC.md or @AGENTS.md exceeds **200 lines**, load `agent-md-refactor` skill to modularize into @specs/
 5. Use the `question` tool to confirm changes with the user before writing
+6. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
 ## Rules
 

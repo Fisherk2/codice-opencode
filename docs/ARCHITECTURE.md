@@ -8,27 +8,30 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 | ADR | Title | Status | Key Decision |
 |-----|-------|--------|--------------|
 | [ADR-001](../specs/adr/adr-001-clean-architecture.md) | Clean Architecture | Accepted | 4-layer structure with dependency rule |
-| [ADR-002](../specs/adr/adr-002-bun-compilation.md) | Bun as Runtime/Compiler | Accepted | Single binary, zero runtime deps |
+| [ADR-002](../specs/adr/adr-002-bun-compilation.md) | Bun as Runtime/Compiler | Accepted | Bun as runtime and compiler |
 | [ADR-003](../specs/adr/adr-003-atomic-staging.md) | Atomic File Operations | Accepted | Staging + rename pattern |
 | [ADR-004](../specs/adr/adr-004-clack-prompts.md) | TUI with @clack/prompts | Accepted | Lightweight interactive prompts |
 | [ADR-005](../specs/adr/adr-005-dest-flag-and-workspace.md) | `--dest` Flag and Workspace Directory | Accepted | Safe dev playground via `--dest` + `tests/fixtures/workspace/` |
-| [ADR-006](../specs/adr/adr-006-npm-publication.md) | npm Publication as Primary Distribution | Accepted | `bunx @fisherk2-dev/codice` as primary, binary as offline fallback |
-| [ADR-007](../specs/adr/adr-007-template-resolver-source-mode.md) | Template Resolution for bunx/npm Mode | Accepted | Three-path detection cascade (compiled, bunx/npm, source) |
+| [ADR-006](../specs/adr/adr-006-npm-publication.md) | npm Publication as Primary Distribution | Accepted | `bunx @fisherk2-dev/codice` as primary distribution method |
+| [ADR-007](../specs/adr/adr-007-template-resolver-source-mode.md) | Template Resolution for bunx/npm Mode | Accepted | Three-path detection cascade (source, bunx/npm, cwd) |
 | [ADR-008](../specs/adr/adr-008-symlink-post-install.md) | Post-Installation Symlink Generation | Accepted | ISymlinkCreator port + BunSymlinkCreator adapter for npm-compatible symlinks |
 | [ADR-009](../specs/adr/adr-009-gitignore-post-install.md) | Post-Installation Gitignore Generation | Accepted | IGitignoreCreator port + BunGitignoreCreator adapter for npm-compatible gitignore generation |
 | [ADR-010](../specs/adr/adr-010-no-template-copy-flag.md) | noTemplateCopy Flag for Virtual Manifest Entries | Accepted | `noTemplateCopy?` field on FileRule for entries whose content is generated post-installation (e.g., `.devin/` symlinks) |
+| [ADR-011](../specs/adr/adr-011-binary-removal.md) | Binary Removal | Accepted | npm/bunx as sole distribution; binary compilation removed |
+| [ADR-012](../specs/adr/adr-012-references-co-location.md) | References Co-location | Accepted | References co-located with skills, exposed via `reference` section |
+| [ADR-013](../specs/adr/adr-013-plugin-auto-discovery.md) | SDD Plugin Auto-Discovery & Configuration | Accepted | Three-pillar approach: filesystem auto-discovery + JSON config + quality infra |
 
 > **Note:** `TemplateResolver` and `AtomicStager` are extracted classes (not full ADRs). They are SRP-based refactorings of `BunFileSystem` that follow the existing ADR-003 (atomic staging) pattern.
 
 ### SPEC.md Resolved Decisions Coverage
 
-All seven resolved decisions from [SPEC.md](../SPEC.md) are covered by the ADRs above or by their implementation:
+All nine resolved decisions from [SPEC.md](../SPEC.md) are covered by the ADRs above or by their implementation:
 
 | # | Decision | Covered By | Status |
 |---|----------|------------|--------|
-| 1 | Template Packaging Format (embed into binary) | ADR-002 (Bun compilation) | Documented |
+| 1 | Template Packaging Format | ADR-011 (Binary removal — template bundled with npm package) | Documented |
 | 2 | Optional File Grouping in TUI | ADR-004 (Clack prompts, IUserPrompt supports grouped multiselect) | Documented |
-| 3 | GitHub Authentication (unauthenticated only) | ADR-002 (compiled binary, no runtime deps) | Documented |
+| 3 | GitHub Authentication (unauthenticated only) | ADR-002 (cross-platform via Bun, no runtime deps needed) | Documented |
 | 4 | Windows Path Handling (normalize to `/`) | ADR-002 (cross-platform via Bun) | Documented |
 | 5 | Local Version Storage (`.codice-version` file) | ADR-005 (dest flag affects version file location) | Documented |
 | 6 | Rollback on Partial Failure | ADR-003 (atomic staging + backup/rollback) | Documented |

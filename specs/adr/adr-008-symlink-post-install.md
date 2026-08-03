@@ -139,7 +139,7 @@ Apply symlink generation uniformly across Clean, Project, and Update modes.
 
 ## Compliance
 
-- ADR-002 (Bun compilation) remains valid — compiled binary path is preserved
+- ADR-002 (Bun compilation) — superseded by ADR-011 for binary compilation; Bun remains the development runtime
 - ADR-003 (Atomic staging) is unaffected — symlinks are created after staging completes
 - ADR-004 (@clack/prompts) is unaffected — TUI layer handles optional selection for `.devin/`
 - ADR-005 (`--dest` flag) is unaffected — symlinks are relative to the destination directory

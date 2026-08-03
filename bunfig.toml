@@ -40,10 +40,4 @@ dir = "~/.bun/install/cache"
 # Don't disable the cache
 disable = false
 
-# ─── Build Settings ──────────────────────────────────────────────────────────
 
-# These are defaults; CLI flags override them.
-# For cross-platform compilation, use:
-#   bun build --compile --target=bun-linux-x64-latest
-#   bun build --compile --target=bun-darwin-x64-latest
-#   bun build --compile --target=bun-windows-x64-latest

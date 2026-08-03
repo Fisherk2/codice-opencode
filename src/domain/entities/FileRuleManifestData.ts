@@ -52,12 +52,6 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: true,
 		description: "Skill definitions managed by installer",
 	},
-	{
-		path: "references",
-		category: "mandatory",
-		isDirectory: true,
-		description: "Reference files managed by installer",
-	},
 
 	// =============================================
 	// ESTANDAR (Standard) — copied only if missing
@@ -79,6 +73,12 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		category: "standard",
 		isDirectory: false,
 		description: "Contribution guidelines; user may tailor",
+	},
+	{
+		path: "CODE_OF_CONDUCT.md",
+		category: "standard",
+		isDirectory: false,
+		description: "Code of conduct for contributors (placeholder, customize for your project)",
 	},
 	{
 		path: "LICENSE",
@@ -125,16 +125,6 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		description: "Task tracking directory; user may extend",
 	},
 
-	// NOTE: .devin uses noTemplateCopy=true. Symlinks generated post-install
-	// by BunSymlinkCreator. Entry exists only for UX selection tracking (ADR-010).
-	{
-		path: ".devin",
-		category: "optional",
-		isDirectory: true,
-		noTemplateCopy: true,
-		description:
-			"Devin configuration directory (rules, skills, workflows); team-specific AI agent customization",
-	},
 	// =============================================
 	// OPCIONAL (Optional) — only if user opts in
 	// =============================================

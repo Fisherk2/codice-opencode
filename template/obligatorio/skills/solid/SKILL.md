@@ -43,7 +43,7 @@ The goal of software: Enable developers to **discover, understand, add, change, 
 
 **Design happens during REFACTORING, not during coding.**
 
-See: [../../references/tdd.md](../../references/tdd.md)
+See: [./references/tdd.md](./references/tdd.md)
 
 ### 2. Apply SOLID Principles Rigorously
 
@@ -57,7 +57,7 @@ Every class, every module, every function:
 | **I**SP - Interface Segregation | "Are clients forced to depend on unused methods?" |
 | **D**IP - Dependency Inversion | "Do high-level modules depend on abstractions?" |
 
-See: [../../references/solid-principles.md](../../references/solid-principles.md)
+See: [./references/solid-principles.md](./references/solid-principles.md)
 
 ### 3. Write Clean, Human-Readable Code
 
@@ -91,7 +91,7 @@ class OrderId { constructor(private readonly value: string) {} }
 // GOOD: function createOrder(userId: UserId, email: Email)
 ```
 
-See: [../../references/clean-code.md](../../references/clean-code.md)
+See: [../clean-code/references/clean-code.md](../clean-code/references/clean-code.md)
 
 ### 4. Design with Responsibility in Mind
 
@@ -107,7 +107,7 @@ See: [../../references/clean-code.md](../../references/clean-code.md)
 - **Controller** - Makes decisions, delegates work
 - **Interfacer** - Transforms data between systems
 
-See: [../../references/object-design.md](../../references/object-design.md)
+See: [./references/object-design.md](./references/object-design.md)
 
 ### 5. Manage Complexity Ruthlessly
 
@@ -124,7 +124,7 @@ See: [../../references/object-design.md](../../references/object-design.md)
 - KISS - Simplest solution that works
 - DRY - But only after Rule of Three (wait for 3 duplications)
 
-See: [../../references/complexity.md](../../references/complexity.md)
+See: [../code-simplification/references/complexity.md](../code-simplification/references/complexity.md)
 
 ### 6. Architect for Change
 
@@ -140,7 +140,7 @@ See: [../../references/complexity.md](../../references/complexity.md)
 - Source code dependencies point toward high-level policies
 - Infrastructure depends on domain, never reverse
 
-See: [../../references/architecture.md](../../references/architecture.md)
+See: [../architecture-diagrams/references/architecture.md](../architecture-diagrams/references/architecture.md)
 
 ## The Four Elements of Simple Design (XP)
 
@@ -168,7 +168,7 @@ In priority order:
 | Parallel Inheritance | Merge hierarchies |
 | Speculative Generality | YAGNI - remove unused abstractions |
 
-See: [../../references/code-smells.md](../../references/code-smells.md)
+See: [../clean-code/references/code-smells.md](../clean-code/references/code-smells.md)
 
 ## Design Patterns Awareness
 
@@ -178,7 +178,7 @@ See: [../../references/code-smells.md](../../references/code-smells.md)
 
 **Warning:** Don't force patterns. Let them emerge from refactoring.
 
-See: [../../references/design-patterns.md](../../references/design-patterns.md)
+See: [../design-patterns/references/design-patterns.md](../design-patterns/references/design-patterns.md)
 
 ## Testing Strategy
 
@@ -205,7 +205,7 @@ expect(result).toBe(5);
 // GOOD: 'when adding 2 + 3, returns 5'
 ```
 
-See: [../../references/TESTING.md](../../references/TESTING.md)
+See: [../clean-ddd-hexagonal/references/TESTING.md](../clean-ddd-hexagonal/references/TESTING.md)
 
 ## Behavioral Principles
 
