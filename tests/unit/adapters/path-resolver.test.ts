@@ -116,21 +116,28 @@ describe("resolveWithinRoot", () => {
 // ---------------------------------------------------------------------------
 
 describe("withTrailingSeparator", () => {
+	const SEP = path.sep;
+
 	test("appends separator to a non-root path", () => {
-		expect(withTrailingSeparator("/home/project")).toBe("/home/project/");
+		const input = path.resolve("home", "project");
+		expect(withTrailingSeparator(input)).toBe(`${input}${SEP}`);
 	});
 
 	test("keeps an already-trailing-separator path unchanged", () => {
-		expect(withTrailingSeparator("/home/project/")).toBe("/home/project/");
+		const input = `${path.resolve("home", "project")}${SEP}`;
+		expect(withTrailingSeparator(input)).toBe(input);
 	});
 
-	test("keeps filesystem root unchanged (no // sequence)", () => {
-		expect(withTrailingSeparator("/")).toBe("/");
+	test("keeps filesystem root unchanged (no double separator)", () => {
+		// On POSIX path.sep is "/"; on Windows path.resolve("\\") yields "C:\\".
+		// Either way the result must equal the resolved root and never contain "//".
+		expect(withTrailingSeparator(path.sep)).toBe(path.resolve(path.sep));
+		expect(withTrailingSeparator(path.sep)).not.toContain(`${SEP}${SEP}`);
 	});
 
 	test("resolves relative input before appending", () => {
 		const resolved = path.resolve("rel/dir");
-		expect(withTrailingSeparator("rel/dir")).toBe(`${resolved}${path.sep}`);
+		expect(withTrailingSeparator("rel/dir")).toBe(`${resolved}${SEP}`);
 	});
 });
 
