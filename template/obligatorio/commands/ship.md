@@ -85,6 +85,8 @@ Produce a single output for user review:
 - [accessibility-tester report] *(if UI detected)*
 ```
 
+*If you find any Blockers/Recommended fixes:* resolve each one at a time via @skills/incremental-implementation/SKILL.md (implement→test→verify→commit), confirm all tests pass, then atomic-commit with descriptive messages per @skills/git-workflow-and-versioning/SKILL.md.
+
 ## Rules
 
 1. The Phase A personas run in parallel — never sequentially.
