@@ -9,6 +9,11 @@ import * as path from "node:path";
  */
 export function withTrailingSeparator(root: string): string {
 	const resolved = path.resolve(root);
+	// The filesystem root must never gain a second separator (`//`), and a
+	// root-as-boundary trivially contains every absolute path. Callers must
+	// not use the root as a containment boundary; parse-args.ts already
+	// blocks `/` as a destination.
+	if (resolved === path.sep) return resolved;
 	return resolved.endsWith(path.sep) ? resolved : `${resolved}${path.sep}`;
 }
 
