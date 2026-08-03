@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [1.2.0-beta.2] — 2026-08-03
+
+### Added
+
+- **`/test` command:** now ensures a `test/` directory exists with `unit/`, `integration/`, and `e2e/` subdirectories; if `test/` exists but is not separated, prompts the user (via `question`) whether to refactor and standardize existing tests into those three directories (per `@skills/test-driven-development/SKILL.md` test-pyramid convention).
+- **`/ship` command:** adds a post-Phase-C incremental-fix phase that resolves all review observations one at a time using `@skills/incremental-implementation/SKILL.md`, verifies all tests pass, then creates atomic commits with descriptive messages (matching `/code-simplify` and `/test` conventions).
+
 ## [1.2.0-beta.1] — 2026-08-03
 
 ### Added
