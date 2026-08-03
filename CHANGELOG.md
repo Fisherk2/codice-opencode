@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-## [1.2.0]
+## [1.2.0-beta.1] — 2026-08-03
 
 ### Added
 
@@ -57,6 +57,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **FEV-16 — Coverage thresholds:** CI now enforces ≥95% lines/functions (was unenforced).
 - **FEV-16 — main.ts:** `runMode` restructured from switch to if/else for complete branch coverage.
 - **FEV-16 — Code review simplifications:** `stageOne()` extraction, `stagePlanner` total folding, `walkRelative` helper, `resolveInteractiveMode` return type narrowed, `promptForMode` async removed.
+- **FEV-17 — Code simplification pass (Issue #53):**
+  - `IFileMergeEngine.execute` accepts `MergeExecuteOptions` object instead of positional params (improves call-site readability).
+  - `FileRuleManifest.isRuleSelected` shared optional-filter predicate extracted from `CleanInstallUseCase` and `ProjectInstallUseCase`.
+  - Test-only dead surface removed: `IUserPrompt.showSpinner/stopSpinner`, `IGitHubClient.getLatestReleaseNotes`, `IVersionComparator.isUpdateAvailable/getReleaseType/ReleaseType`, `IStagingSystem.getStagingPath`, `IFileSystem.readTemplateFile` (447 lines, 29 files).
+  - `pathResolver.withTrailingSeparator` and `isPathWithin` shared helpers; `TemplateResolver`, `BunSymlinkCreator`, `BunGitignoreCreator` refactored to use them.
+  - `GitHubRestClient` outer try/catch removed (redundant after domain error mapping).
+  - `ClackPromptsAdapter.selectOptional` redundant `as string[]` cast removed.
+  - `BunSymlinkCreator` verbose log now reports `resolvedLinkPath` (actual created path).
+  - Plugin `configLoader.ts` 226→88 lines; extracted `mergeConfig.ts` (159 lines) for config merging helpers.
+  - Plugin SDD pipeline modularized (655→379 lines + src/ modules).
 
 ### Fixed
 
