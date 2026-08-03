@@ -37,7 +37,12 @@ export class FileMergeEngine implements IFileMergeEngine {
 			selected,
 			isUpdateMode,
 		);
-		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
+		// Optional path list is only consumed by computeExclusions, which runs
+		// solely for standard directory rules — skip the allocation otherwise.
+		const hasStandardDirs = rules.some((r) => r.category === "standard" && r.isDirectory);
+		const optionalPaths = hasStandardDirs
+			? rules.filter((r) => r.category === "optional").map((r) => r.path)
+			: [];
 		let current = 0;
 
 		// Phase 1: Stage all files
@@ -94,6 +99,11 @@ export class FileMergeEngine implements IFileMergeEngine {
 			}
 
 			this.safeEmit(onProgress, { type: "commit_complete", total });
+		} else {
+			// Nothing staged this run, but a staging directory could remain from
+			// an earlier interrupted operation — remove it so the destination
+			// never accumulates .codice-staging artifacts.
+			await this.fileSystem.cleanStaging();
 		}
 
 		return success(undefined);
@@ -104,7 +114,9 @@ export class FileMergeEngine implements IFileMergeEngine {
 		if (!onProgress) return;
 		try {
 			onProgress(event);
-		} catch {}
+		} catch {
+			// Intentional: a faulty progress listener must never interrupt the merge.
+		}
 	}
 
 	/**
