@@ -363,12 +363,17 @@ describe("main() — execution path", () => {
 	it("exits with EXIT_ERROR on update with --update when version is missing", async () => {
 		const testDir = "/tmp/test-main-update";
 		const prevApiUrl = process.env.CODICE_GITHUB_API_URL;
+		const prevBypass = process.env.CODICE_BYPASS_URL_VALIDATION;
+		const prevNodeEnv = process.env.NODE_ENV;
 
 		try {
 			await fs.mkdir(testDir, { recursive: true });
 
 			// Mock version check: CODICE_GITHUB_API_URL points to a non-existent
-			// server so the version check fails gracefully.
+			// server so the version check fails gracefully. Bypass is gated to
+			// NODE_ENV=test, which must be set for the mock URL to be honored.
+			process.env.NODE_ENV = "test";
+			process.env.CODICE_BYPASS_URL_VALIDATION = "true";
 			process.env.CODICE_GITHUB_API_URL = "http://localhost:1/nonexistent";
 			process.argv = ["bun", "main.ts", "--update", "--force", "--dest", testDir];
 
@@ -381,6 +386,8 @@ describe("main() — execution path", () => {
 			expect(execExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
 		} finally {
 			process.env.CODICE_GITHUB_API_URL = prevApiUrl;
+			process.env.CODICE_BYPASS_URL_VALIDATION = prevBypass;
+			process.env.NODE_ENV = prevNodeEnv;
 			await fs.rm(testDir, { recursive: true, force: true });
 		}
 	});

@@ -77,7 +77,7 @@ EXIT_CODE2=0
 # Start mock server so update doesn't fail on version check
 start_mock_server
 
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" $CODICE_CLI --update --force) 2>/dev/null || EXIT_CODE2=$?
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force) 2>/dev/null || EXIT_CODE2=$?
 
 # Stop mock server
 stop_mock_server

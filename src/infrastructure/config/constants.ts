@@ -38,8 +38,10 @@ export function getGitHubApiUrl(): string {
 	const envUrl = process.env.CODICE_GITHUB_API_URL;
 	if (!envUrl) return GITHUB_API_DEFAULT;
 
-	// Allow bypassing URL validation for E2E testing (e.g., http://localhost:4567 mock server)
-	if (process.env.CODICE_BYPASS_URL_VALIDATION === "true") {
+	// Allow bypassing URL validation for E2E testing (e.g., http://localhost:4567 mock server).
+	// Gated behind NODE_ENV=test so the escape hatch is never active in production
+	// (an attacker who controls env vars could otherwise redirect the version check).
+	if (process.env.CODICE_BYPASS_URL_VALIDATION === "true" && process.env.NODE_ENV === "test") {
 		return envUrl;
 	}
 

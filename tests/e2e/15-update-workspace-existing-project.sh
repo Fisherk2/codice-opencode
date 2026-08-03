@@ -69,7 +69,7 @@ log_info "Running: $CODICE_CLI --update --force in $TEMP_DIR"
 EXIT_CODE=0
 STDERR_FILE="$TEMP_DIR/stderr.log"
 STDOUT_FILE="$TEMP_DIR/stdout.log"
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" $CODICE_CLI --update --force) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
 
 # Stop mock server
 stop_mock_server
