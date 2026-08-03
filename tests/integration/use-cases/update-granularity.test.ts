@@ -56,21 +56,6 @@ describe("Update granularity — tree-level diff via real filesystem", () => {
 		await fs.rm(tmpDir, { recursive: true, force: true });
 	});
 
-	/**
-	 * Create a rule matching the category directory naming convention.
-	 */
-	function _makeRule(
-		relativePath: string,
-		category: "mandatory" | "standard" | "optional",
-	): FileRule {
-		return {
-			path: relativePath,
-			category,
-			isDirectory: false,
-			description: `Test rule for ${relativePath}`,
-		};
-	}
-
 	function makeDirRule(
 		relativePath: string,
 		category: "mandatory" | "standard" | "optional",
