@@ -92,14 +92,16 @@ export class UpdateWorkspaceUseCase {
 			if (!confirmed) return success(undefined);
 		}
 
-		// Read local version info (best-effort)
+		// Read local version info (best-effort). .codice-version lives in the
+		// user's project directory and is UNTRUSTED input: every field is
+		// validated and typed before use; malformed JSON falls back gracefully.
 		let installedVersion = "0.0.0";
 		let previousOptionalSelections: string[] = [];
 		try {
 			const versionData = await this.fileSystem.readVersionFile();
 			if (versionData) {
 				const parsed = JSON.parse(versionData);
-				// Validate fields (defense-in-depth — .codice-version could be corrupted)
+				// Validate fields (defense-in-depth — .codice-version could be corrupted or tampered)
 				if (typeof parsed.installedVersion === "string") {
 					installedVersion = parsed.installedVersion;
 				}

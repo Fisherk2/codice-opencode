@@ -23,7 +23,7 @@ const MODE_OPTIONS = [
 	},
 ];
 
-/** Progress-event → @clack/prompts display call. Uses Object.hasOwn to block prototype-key injection. */
+/** Progress-event category → @clack/prompts display call. Looked up by logProgressEvent via Object.hasOwn. */
 const PROGRESS_EMITTERS: Record<string, (text: string) => void> = {
 	commit: (text) => clack.log.success(`✓ ${text}`),
 	symlink: (text) => clack.log.success(`🔗 ${text}`),
