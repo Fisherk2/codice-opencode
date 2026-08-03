@@ -1,4 +1,12 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
+import * as realClack from "@clack/prompts";
+
+// Bun's mock.module() is process-global and is NOT auto-restored between test
+// files, so the real exports are snapshotted here (before mock.module runs)
+// and reinstalled in afterAll. Leaking the stub would silently break any test
+// file loaded afterwards, and Bun's file order is filesystem-dependent —
+// the classic cause of a macOS-only / Windows-only CI failure.
+const realClackExports = { ...realClack };
 
 // Track calls to clack.progress and clack.log methods
 const progressOpts: Array<{ max?: number; style?: string }> = [];
@@ -51,6 +59,11 @@ mock.module("@clack/prompts", () => ({
 		}) as (msg: string) => void,
 	},
 }));
+
+// Restore the real module so later-loaded test files are unaffected.
+afterAll(() => {
+	mock.module("@clack/prompts", () => realClackExports);
+});
 
 // Import after mock is set up
 const { ClackPromptsAdapter } = await import(

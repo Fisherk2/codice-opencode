@@ -1,67 +1,92 @@
 /**
  * Unit tests for main() catch block (unexpected thrown errors).
  *
- * Uses mock.module to inject a throwing use case into the DI container
- * BEFORE importing main(), so that runMode() throws inside the try block
- * and the catch block handles it.
+ * Injects a throwing use case into the DI container via mock.module so that
+ * runMode() throws inside main()'s try block and the catch block handles it.
  *
- * This covers lines 179-182 in main.ts (the catch-block path).
+ * This covers the catch-block path in main.ts (Fatal error + EXIT_ERROR).
+ *
+ * ---------------------------------------------------------------------------
+ * WHY THE MOCK IS SCOPED AND RESTORED
+ * ---------------------------------------------------------------------------
+ * Bun's `mock.module()` mutates the process-global module registry and is NOT
+ * restored automatically between test files. Every test file loaded after this
+ * one in the same `bun test` process would keep seeing the stubbed container.
+ *
+ * That leak caused macOS-only CI failures: Bun walks test files in filesystem
+ * order, which differs per filesystem (ext4/NTFS vs APFS). On macOS this file
+ * loaded BEFORE tests/integration/cli/main.test.ts, so createDependencies()
+ * there returned the stub — `fileSystem` was `{}` (no isWritable) and every
+ * use case threw "Unexpected internal error" (exit 1 instead of EXIT_SUCCESS).
+ *
+ * The mock is therefore installed in beforeAll and undone in afterAll, so the
+ * suite stays order-independent across platforms.
  */
 
-import { describe, expect, mock, spyOn, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, mock, spyOn, test } from "bun:test";
+
+// Imported (and captured) BEFORE any mock.module call so the genuine
+// implementation can be put back once this file's tests are done.
+import * as containerModule from "../../../src/cli/container";
+import { main } from "../../../src/cli/main";
+import { EXIT_ERROR } from "../../../src/cli/output";
+
+const CONTAINER_MODULE_PATH = "../../../src/cli/container";
+
+const realCreateDependencies = containerModule.createDependencies;
 
 // -----------------------------------------------------------------------
-// Mock the container module BEFORE importing main
+// Container stub
 // -----------------------------------------------------------------------
 
 const mockExecute = () => {
 	throw new Error("Unexpected internal error");
 };
 
-mock.module("../../../src/cli/container", () => ({
-	createDependencies: () => ({
-		fileSystem: {} as Record<string, unknown>,
-		userPrompt: {
-			showIntro: () => {},
-			showWarning: () => {},
-			showInfo: () => {},
-			confirm: () => Promise.resolve(true),
-			selectOptional: () => Promise.resolve([]),
-			showProgressBar: () => {},
-			updateProgress: () => {},
-			completeProgress: () => {},
-			logProgressEvent: () => {},
-			promptForMode: () => Promise.resolve("clean" as const),
-			showSuccess: () => {},
-			showCancel: () => {},
-			showError: () => {},
-		},
-		cleanInstall: { execute: mockExecute },
-		projectInstall: { execute: mockExecute },
-		updateWorkspace: { execute: mockExecute },
-	}),
-}));
+function installContainerStub(): void {
+	mock.module(CONTAINER_MODULE_PATH, () => ({
+		createDependencies: () => ({
+			fileSystem: {} as Record<string, unknown>,
+			userPrompt: {
+				showIntro: () => {},
+				showWarning: () => {},
+				showInfo: () => {},
+				confirm: () => Promise.resolve(true),
+				selectOptional: () => Promise.resolve([]),
+				showProgressBar: () => {},
+				updateProgress: () => {},
+				completeProgress: () => {},
+				logProgressEvent: () => {},
+				promptForMode: () => Promise.resolve("clean" as const),
+				showSuccess: () => {},
+				showCancel: () => {},
+				showError: () => {},
+			},
+			cleanInstall: { execute: mockExecute },
+			projectInstall: { execute: mockExecute },
+			updateWorkspace: { execute: mockExecute },
+		}),
+	}));
+}
 
-// -----------------------------------------------------------------------
-// Now import main — it will see the mocked createDependencies
-// -----------------------------------------------------------------------
-
-import { main } from "../../../src/cli/main";
-import { EXIT_ERROR } from "../../../src/cli/output";
+function restoreContainerModule(): void {
+	mock.module(CONTAINER_MODULE_PATH, () => ({
+		createDependencies: realCreateDependencies,
+	}));
+}
 
 // -----------------------------------------------------------------------
 // Tests
 // -----------------------------------------------------------------------
 
 describe("main() — catch block", () => {
-	let origArgv: string[];
-	let origExit: typeof process.exit;
-	let exitCode = -1;
+	beforeAll(installContainerStub);
+	afterAll(restoreContainerModule);
 
 	test("handles unexpected throw from use case with Fatal error and EXIT_ERROR", async () => {
-		origArgv = process.argv;
-		origExit = process.exit;
-		exitCode = -1;
+		const origArgv = process.argv;
+		const origExit = process.exit;
+		let exitCode = -1;
 
 		// Capture process.exit code
 		process.exit = ((code: number) => {
@@ -73,26 +98,28 @@ describe("main() — catch block", () => {
 
 		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", "/tmp/test-main-catch"];
 
+		// Snapshotted inside `finally` because mockRestore() also clears the
+		// recorded calls, and the restore must happen even if main() throws.
+		let fatalMessages: string[] = [];
+
 		try {
 			await main();
 		} catch {
 			// main() may or may not throw depending on how the mock resolves
+		} finally {
+			fatalMessages = consoleSpy.mock.calls
+				.map((args: unknown[]) => String(args[0] ?? ""))
+				.filter((message: string) => message.includes("Fatal error"));
+			consoleSpy.mockRestore();
+			process.exit = origExit;
+			process.argv = origArgv;
 		}
 
 		// Verify catch block handled the error
 		expect(exitCode).toBe(EXIT_ERROR);
 
 		// Verify "Fatal error" message was logged
-		const fatalCalls = consoleSpy.mock.calls.filter(
-			(args: string[]) => args[0] && String(args[0]).includes("Fatal error"),
-		);
-		expect(fatalCalls.length).toBeGreaterThanOrEqual(1);
-		expect(String(fatalCalls[0]?.[0])).toContain("Unexpected internal error");
-
-		consoleSpy.mockRestore();
-
-		// Restore
-		process.exit = origExit;
-		process.argv = origArgv;
+		expect(fatalMessages.length).toBeGreaterThanOrEqual(1);
+		expect(fatalMessages[0]).toContain("Unexpected internal error");
 	});
 });

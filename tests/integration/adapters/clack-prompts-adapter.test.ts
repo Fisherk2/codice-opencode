@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
+import * as realClack from "@clack/prompts";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
 
 /**
@@ -11,6 +12,14 @@ import type { FileRule } from "../../../src/domain/entities/FileRule";
 // globally within the test runner. The mock must include ALL functions that
 // any tested module might call, otherwise those functions will be undefined.
 // In particular, ClackPromptsAdapter.promptForMode() needs `select`.
+//
+// The mock is also NOT auto-restored between test files, so it is undone in
+// afterAll below. Leaving it installed makes every later-loaded test file use
+// the stub, and Bun's file order is filesystem-dependent (ext4/NTFS vs APFS) —
+// that is exactly how a leaked mock.module turns into a platform-only CI
+// failure. Snapshot the real exports BEFORE mock.module runs.
+
+const realClackExports = { ...realClack };
 
 const mockNote = mock();
 const mockConfirm = mock();
@@ -52,6 +61,11 @@ mock.module("@clack/prompts", () => ({
 	progress: mockProgress,
 	log: mockLog,
 }));
+
+// Restore the real module so later-loaded test files are unaffected.
+afterAll(() => {
+	mock.module("@clack/prompts", () => realClackExports);
+});
 
 // Import after mock is set up
 const { ClackPromptsAdapter } = await import(
