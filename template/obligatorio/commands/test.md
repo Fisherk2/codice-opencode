@@ -11,6 +11,7 @@ Detect the project's quality infrastructure:
 2. **Linter** — Check for linter configs.
 3. **Formatter** — Check for formatter configs.
 4. **Typechecker** — Check for typechecker configs.
+5. **Test directory structure** — Ensure `test/` exists with `unit/`, `integration/`, `e2e/` subdirs (create missing); if `test/` exists but is not separated, use `question` to ask whether to refactor existing tests into those dirs (test-pyramid convention, @skills/test-driven-development/SKILL.md).
 
 Output summary:
 
@@ -50,7 +51,7 @@ For each confirmed tool:
 
 ## Phase 2: Test-Driven Development
 
-Load @skills/test-driven-development/SKILL.md skill to follow the TDD process.
+Load @skills/test-driven-development/SKILL.md skill and work on @test/ folder to follow the TDD process.
 
 **Supporting skills (load as needed):**
 
