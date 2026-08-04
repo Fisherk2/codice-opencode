@@ -1,8 +1,9 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-07-30
-**Status:** v1.2.0 pre-release ready — all FEV-16 items resolved, code review fixes applied
+**Last updated:** 2026-08-04
+**Status:** v2.0.0 specs drafted — agent pack system + installer UX v2
 **Current version:** v1.2.0 (844 tests, 0 fail)
+**Next version:** v2.0.0 (agent packs + installer UX overhaul)
 
 ---
 
@@ -210,9 +211,21 @@ not file granularity.
 | FEV-15: Community standards (Issue #55) | 2h | ✅ Completado — Code of conduct for project and template | [fix08-v1.2-phase5-community.md](diagnosis/fix08-v1.2-phase5-community.md) |
 | FEV-16: Pre-release Tech Debt Closure | 24h | ✅ Completo — TD-1.1, 2.1, 5.1, 5.2, 6.2 | TD-1.1, 2.1, 5.1, 5.2, 6.2 |
 
-### v1.3.0
+### v2.0.0 — Agent Pack System & Installer UX v2
 
-The following items are planned for v1.3 and beyond. No diagnosis has been created yet — these will be addressed after v1.2 is complete.
+Specs drafted: [spec-agent-packs.md](../specs/spec-agent-packs.md), [spec-installer-ux-v2.md](../specs/spec-installer-ux-v2.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md).
+
+| ID | Item | Effort | Risk | Description |
+|----|------|--------|------|-------------|
+| **TD-V2-1** | Remove hardcoded `VALID_SUBAGENTS` | 2h | Low | Delete `VALID_SUBAGENTS` Set from `validSubagents.ts`; keep `PRIMARY_AGENTS` constant. Update `defaults.ts` to remove references. Update `sdd-pipeline.ts` fallback from `DEFAULTS.VALID_SUBAGENTS` to `new Set(PRIMARY_AGENTS)`. Update error message from "VALID_SUBAGENTS catalog" to "agents/ directory". Update tests in `defaults.test.ts`. |
+| **TD-V2-2** | Unify `task:` permissions for 4 primary agents | 1h | Medium | Change huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli from explicit allow-lists to `"*": allow` + deny 5 primaries. Moctezuma and tezcatlipoca unchanged (`task: "*": deny`). Medium risk because permission changes affect agent delegation behavior — verify with integration tests. |
+| **TD-V2-3** | Remove AVAILABLE SUBAGENTS sections from 3 agent files | 1h | Low | Remove "AVAILABLE SUBAGENTS" sections from `quetzalcoatl.md`, `tlaloc.md`, `mictlantecuhtli.md`. Keep `huitzilopochtli.md` as canonical reference. Moctezuma and tezcatlipoca have no such sections (no change needed). |
+| **TD-V2-4** | Update CONTRIBUTING.md and Wiki Agents.md | 1h | Low | CONTRIBUTING.md: remove "Update delegation tables" from step 3, remove "persona table updates" from primary agent requirements. Wiki Agents.md: remove "Step 4: Update Delegation Tables", update permission model examples, update primary agent table, update agent count. |
+| **TD-V2-5** | Update SDD-Pipeline.md wiki and error messages | 0.5h | Low | Update wiki documentation to reflect auto-discovery of packs (recursive scan of `packs/` subdirectories). Update error messages referencing "VALID_SUBAGENTS catalog" to "agents/ directory". |
+
+### v2.2.0
+
+The following items are planned for v2.2.0 and beyond. No specs have been created yet.
 
 #### Alternative Package Managers — Issue #24
 
@@ -221,7 +234,7 @@ The following items are planned for v1.3 and beyond. No diagnosis has been creat
 | **Issue** | [#24](https://github.com/fisherk2/codice-opencode/issues/24) — Añadir mas opciones de instalacion |
 | **Description** | Implement and maintain alternative package managers to npm in case of incidents. Proposals: uv with pip, cargo, composer, pnpm, yarn. |
 | **Risk** | Medium. Multiple package managers increase maintenance burden and testing complexity. |
-| **Target** | v1.3 |
+| **Target** | v2.2.0 |
 | **Effort** | 8-12h (including testing across multiple package managers) |
 
 #### Internationalization (i18n) — Issue #22
@@ -231,8 +244,26 @@ The following items are planned for v1.3 and beyond. No diagnosis has been creat
 | **Issue** | [#22](https://github.com/fisherk2/codice-opencode/issues/22) — Añadir accesibilidad de idiomas |
 | **Description** | Add language selection at CLI startup. Options: (1) Manual selection from 5 languages (English, Spanish, + 3 more), (2) Automatic detection based on host locale. All interactive menu text must be translated. |
 | **Risk** | Medium. Requires i18n infrastructure, translation files, and locale detection logic. |
-| **Target** | v1.3 |
+| **Target** | v2.2.0 |
 | **Effort** | 6-10h (including translation infrastructure and 5 language translations) |
+
+#### Package Deletion Mechanism
+
+| Item | Detail |
+|------|--------|
+| **Description** | No mechanism to remove packs once installed. Agents from a deselected pack persist in the destination `agents/` directory. Users must manually delete agent files or reinstall Códice from scratch. |
+| **Risk** | Medium. Requires a new installer mode or flag (e.g., `--remove-pack business`) that identifies and deletes agents belonging to a specific pack. Must handle agents that exist in multiple packs (single-assignment rule simplifies this). |
+| **Target** | v2.2.0 |
+| **Effort** | 4-6h |
+
+#### Automatic Pack Updates Detection
+
+| Item | Detail |
+|------|--------|
+| **Description** | When a pack's agents change between versions (new agents added, agents removed, agents modified), the updater should show a diff or changelog specific to the user's installed packs. Currently, update is a blind overwrite of agents from installed packs. |
+| **Risk** | Low. Requires comparing template pack contents against destination `agents/` directory and generating a human-readable diff. |
+| **Target** | v2.2.0 |
+| **Effort** | 3-4h |
 
 ---
 
