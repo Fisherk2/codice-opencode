@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v1.2.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-30 (FEV-13 ✅, FEV-14 ✅, FEV-15 ✅, FEV-16 ✅) | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v2.0.0
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-04 (v2.0.0 planning: FEV-17 a FEV-23) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -34,6 +34,13 @@
 | FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | ✅ Completo |
 | FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | ✅ Completo |
 | FEV-16 | Pre-release Tech Debt Closure (v1.2 Phase 6) | TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 closure | ✅ Completo |
+| FEV-17 | Template Directory Restructuring (v2.0 Phase 1) | `core/` + `packs/` restructure, FileRuleManifestData + TemplateResolver update | 🔲 Planificado |
+| FEV-18 | Agent Classification & Migration (v2.0 Phase 2) | ~345 IDEAL agents → packs, 59 IMPROVABLE merged, 13 REDUNDANT removed | 🔲 Planificado |
+| FEV-19 | Permission Unification & Subagent Table Removal (v2.0 Phase 3) | TD-V2-2, TD-V2-3, TD-V2-4: unified `task:` + docs update | 🔲 Planificado |
+| FEV-20 | Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4) | TD-V2-1, TD-V2-5: plugin cleanup + auto-discovery recursive scan | 🔲 Planificado |
+| FEV-21 | Installer UX — Pack Selection & Version Detection (v2.0 Phase 5) | Pack wizard, version gating, `.codice-version` metadata format | 🔲 Planificado |
+| FEV-22 | Installer UX — Updater with Pack Scoping (v2.0 Phase 6) | Option A (current packs) + Option B (add packs), CLI flags | 🔲 Planificado |
+| FEV-23 | v2.0.0 Testing & Integration | Unit/integration/E2E updates for pack-aware installer | 🔲 Planificado |
 
 ## 2. Desglose por Fase (Completadas)
 
@@ -268,7 +275,86 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 
 ---
 
-## 4. Estrategia de Pruebas por Fase
+## 5. Desglose por Fase evolutiva — v2.0.0 (Planificado)
+
+> **Specs:** [spec-agent-packs.md](../specs/spec-agent-packs.md), [spec-installer-ux-v2.md](../specs/spec-installer-ux-v2.md)
+> **ADRs:** [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md)
+> **Tech Debt:** [TECH_DEBT.md](./TECH_DEBT.md) — TD-V2-1 a TD-V2-5
+
+### FEV-17 — Template Directory Restructuring 🔲
+**Esfuerzo:** ~4h | **Dependencias:** ninguna | **Spec:** S5-PACKS §2
+- Restructure `template/obligatorio/` → `core/` (infra: .opencode, commands, skills) + `packs/` (agentes)
+- Mover agentes existentes a `packs/main/` (6 primarios) y `packs/writers/` (3 writers)
+- Crear directorios vacíos para los 8 packs seleccionables
+- Actualizar `FileRuleManifestData.ts` para nuevas rutas `core/` y `packs/`
+- Actualizar `TemplateResolver` para resolver desde `core/` y `packs/<pack-id>/`
+- Actualizar tests E2E para nueva estructura de directorios
+**Resultado:** Template con estructura `core/` + `packs/` funcional. 0 regresiones E2E.
+
+### FEV-18 — Agent Classification & Migration 🔲
+**Esfuerzo:** ~8h | **Dependencias:** FEV-17 | **Spec:** S5-PACKS §3
+- Formatear y mover ~345 agentes IDEAL desde `agency-agents-main/` a packs correspondientes
+- Fusionar contenido de 59 agentes IMPROVABLE en agentes existentes
+- Eliminar 13 agentes REDUNDANT (ya cubiertos por existentes)
+- Cada agente: YAML frontmatter estándar + markdown body + bloque Composition
+**Resultado:** ~345 agentes clasificados en 8 packs + 2 obligatorios (main, writers).
+
+### FEV-19 — Permission Unification & Subagent Table Removal 🔲
+**Esfuerzo:** ~3h | **Dependencias:** FEV-18 | **Spec:** S5-PACKS §4 | **Tech Debt:** TD-V2-2, TD-V2-3, TD-V2-4
+- Unificar permisos `task:` de 4 agentes primarios → `"*": allow` + deny 5 primarios (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli)
+- Moctezuma y tezcatlipoca sin cambios (`task: "*": deny`)
+- Eliminar secciones "AVAILABLE SUBAGENTS" de quetzalcoatl, tlaloc, mictlantecuhtli
+- Actualizar CONTRIBUTING.md: eliminar paso "Update delegation tables" y "persona table updates"
+- Actualizar Wiki Agents.md: eliminar "Step 4", actualizar modelo de permisos y conteo
+**Resultado:** 4 agentes con permisos unificados, 3 archivos sin tablas redundantes, docs actualizados.
+
+### FEV-20 — Plugin VALID_SUBAGENTS Removal 🔲
+**Esfuerzo:** ~3h | **Dependencias:** FEV-19 | **Spec:** S5-PACKS §5 | **Tech Debt:** TD-V2-1, TD-V2-5
+- Eliminar `VALID_SUBAGENTS` Set de `validSubagents.ts`; conservar `PRIMARY_AGENTS`
+- Actualizar `defaults.ts` para eliminar referencias a VALID_SUBAGENTS
+- Cambiar fallback en `sdd-pipeline.ts` de `DEFAULTS.VALID_SUBAGENTS` a `new Set(PRIMARY_AGENTS)`
+- Actualizar mensajes de error: "VALID_SUBAGENTS catalog" → "agents/ directory"
+- Actualizar tests en `defaults.test.ts`
+- Actualizar auto-discovery para escanear recursivamente `packs/` subdirectorios
+- Actualizar Wiki SDD-Pipeline.md (TD-V2-5)
+**Resultado:** Plugin sin VALID_SUBAGENTS, auto-discovery recursivo en packs, tests actualizados.
+
+### FEV-21 — Installer UX: Pack Selection & Version Detection 🔲
+**Esfuerzo:** ~8h | **Dependencias:** FEV-17, FEV-18 | **Spec:** S6-UX-V2 §2, §3, §5
+- Implementar detección de versión: parseo de `.codice-version` (JSON con `version`, `installedPacks`, `installedAt`)
+- Bloquear opción Update para versiones <2.0.0 con mensajes apropiados (pre-1.2.0, 1.x, sin archivo)
+- Implementar pantalla de pack selection (checkbox multiselect, software-development pre-seleccionado)
+- Validación: mínimo 1 pack seleccionado
+- Extender formato `.codice-version` con array `installedPacks`
+- Actualizar CleanInstallUseCase y ProjectInstallUseCase con flujo de pack selection
+- Agregar pantalla de installation summary antes de ejecutar
+**Resultado:** Wizard de instalación con selección de packs, version gating, metadata persistente.
+
+### FEV-22 — Installer UX: Updater with Pack Scoping 🔲
+**Esfuerzo:** ~6h | **Dependencias:** FEV-21 | **Spec:** S6-UX-V2 §4, §7
+- Option A: actualizar solo packs instalados (leer `installedPacks` de metadata, scope update)
+- Option B: actualizar + agregar packs (packs instalados bloqueados, permitir seleccionar nuevos)
+- Actualizar `UpdateWorkspaceUseCase` para scoping basado en metadata
+- Nuevos CLI flags: `--packs <pack1,pack2>`, `--packs-all`, `--update-add-packs <pack1,pack2>`
+**Resultado:** Updater con 2 opciones, scoping por metadata, 3 nuevos CLI flags funcionales.
+
+### FEV-23 — v2.0.0 Testing & Integration 🔲
+**Esfuerzo:** ~6h | **Dependencias:** FEV-17 a FEV-22 | **Spec:** S5-PACKS §9, S6-UX-V2 §9
+- Actualizar unit tests para nueva estructura de directorios (`core/`, `packs/`)
+- Actualizar integration tests para use cases pack-aware
+- Nuevos escenarios E2E:
+  - Clean Install con pack selection (default + custom)
+  - Project Install con pack selection
+  - Update bloqueado para versión <2.0.0 (3 variantes: sin archivo, pre-1.2.0, 1.x)
+  - Update Option A (solo packs actuales)
+  - Update Option B (agregar nuevos packs)
+  - Persistencia de metadata `.codice-version` con `installedPacks`
+  - Validación: mínimo 1 pack, `--packs` flag no-interactivo
+**Resultado:** Suite completa para v2.0.0, 0 regresiones, coverage ≥95%.
+
+---
+
+## 6. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
 |------|---------|-------------|-------------------|
@@ -277,7 +363,7 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 | E2E | 6 escenarios binario compilado | bash + mock server | 6/6 pasando |
 | Coverage | Cobertura general | bun test --coverage | > 88% lines, > 89% funcs |
 
-## 5. Métricas de Progreso
+## 7. Métricas de Progreso
 
 - **Tests unit+int:** 844 tests, 0 fail, 1806 expects
 - **Tests E2E:** 20/20 pasando
@@ -296,3 +382,5 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
 - **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
+- **v2.0.0 planificado:** FEV-17 a FEV-23 — Agent Pack System + Installer UX v2 (specs: S5-PACKS, S6-UX-V2)
+- **Esfuerzo estimado v2.0.0:** ~38h (FEV-17: 4h, FEV-18: 8h, FEV-19: 3h, FEV-20: 3h, FEV-21: 8h, FEV-22: 6h, FEV-23: 6h)
