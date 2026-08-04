@@ -7,6 +7,7 @@ import { commitError, stagingError } from "../types/MergeError";
 import type { ProgressCallback, ProgressEvent } from "../types/ProgressEvent";
 import type { Result } from "../types/Result";
 import { failure, success } from "../types/Result";
+import { computeExclusions, skipReason } from "./mergeRules";
 import { computeStagePlan } from "./stagePlanner";
 
 /**
@@ -63,7 +64,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 				this.safeEmit(onProgress, {
 					type: "stage_skip",
 					filePath: rule.path,
-					reason: this.skipReason(rule, selected, isUpdateMode),
+					reason: skipReason(rule, selected, isUpdateMode),
 				});
 				continue;
 			}
@@ -73,15 +74,24 @@ export class FileMergeEngine implements IFileMergeEngine {
 			if (expanded) {
 				for (const file of expanded) {
 					current++;
-					const result = await this.stageOne(`${rule.path}/${file}`, current, total, onProgress);
+					// Expanded standard dirs never set destPath, so source == dest.
+					const fullPath = `${rule.path}/${file}`;
+					const result = await this.stageOne(fullPath, fullPath, current, total, onProgress);
 					if (!result.ok) return result;
 				}
 				continue;
 			}
 
 			current++;
-			const excludeSubDirs = this.computeExclusions(rule, optionalPaths);
-			const result = await this.stageOne(rule.path, current, total, onProgress, excludeSubDirs);
+			const excludeSubDirs = computeExclusions(rule, optionalPaths);
+			const result = await this.stageOne(
+				rule.path,
+				rule.destPath ?? rule.path,
+				current,
+				total,
+				onProgress,
+				excludeSubDirs,
+			);
 			if (!result.ok) return result;
 		}
 
@@ -121,11 +131,14 @@ export class FileMergeEngine implements IFileMergeEngine {
 
 	/**
 	 * Stage a single file with progress events.
+	 * Progress events report the destination path (what the user sees on disk),
+	 * which may differ from the template source path when a rule sets destPath.
 	 * @returns A Failure after emitting error + cleaning staging if staging fails,
 	 *   or success(undefined) on success.
 	 */
 	private async stageOne(
-		filePath: string,
+		sourcePath: string,
+		destPath: string,
 		current: number,
 		total: number,
 		onProgress: ProgressCallback | undefined,
@@ -135,67 +148,28 @@ export class FileMergeEngine implements IFileMergeEngine {
 			type: "stage_start",
 			current,
 			total,
-			filePath,
+			filePath: destPath,
 		});
 
 		try {
-			await this.fileSystem.stageFile(filePath, excludeSubDirs);
+			await this.fileSystem.stageFile(sourcePath, destPath, excludeSubDirs);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : "Unknown staging error";
 			this.safeEmit(onProgress, {
 				type: "error",
-				filePath,
+				filePath: destPath,
 				message,
 			});
 			await this.fileSystem.cleanStaging();
-			return failure(stagingError(filePath, message));
+			return failure(stagingError(destPath, message));
 		}
 
 		this.safeEmit(onProgress, {
 			type: "stage_complete",
 			current,
 			total,
-			filePath,
+			filePath: destPath,
 		});
 		return success(undefined);
-	}
-
-	private skipReason(rule: FileRule, selected: Set<string>, isUpdateMode = false): string {
-		if (rule.category === "standard") {
-			if (isUpdateMode && rule.isDirectory) {
-				return "No new files in directory";
-			}
-			return "Destination already exists";
-		}
-		if (rule.category === "optional" && !selected.has(rule.path)) {
-			return "Not selected by user";
-		}
-		if (rule.category === "optional") {
-			return "Destination already exists";
-		}
-		return "Skipped by classification rule";
-	}
-
-	/** Compute subdir exclusions when standard and optional dirs overlap. */
-	private computeExclusions(rule: FileRule, optionalPaths: string[]): Set<string> | undefined {
-		// Only standard directories get exclusions; mandatory always overwrites everything.
-		if (!rule.isDirectory || rule.category !== "standard") {
-			return undefined;
-		}
-
-		const dirPrefix = `${rule.path}/`;
-		const overlapping = optionalPaths.filter((opt) => opt.startsWith(dirPrefix));
-		if (overlapping.length === 0) {
-			return undefined;
-		}
-
-		return new Set<string>(
-			overlapping
-				.map((opt) => {
-					const rest = opt.slice(dirPrefix.length);
-					return rest.split("/")[0] ?? "";
-				})
-				.filter((name) => name !== ""),
-		);
 	}
 }

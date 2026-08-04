@@ -71,14 +71,19 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 	 * Stage a file or directory by resolving the template path and delegating
 	 * to AtomicStager for the staging write.
 	 *
-	 * @param relativePath - Path relative to template root.
+	 * @param relativePath - Path relative to template root (source).
+	 * @param destPath - Optional destination path override; defaults to relativePath.
 	 * @param excludeSubDirs - Optional set of subdirectory names to exclude
 	 *                         when staging a directory (e.g. Set("node_modules")
 	 *                         to exclude node_modules/ from a staged directory).
 	 */
-	async stageFile(relativePath: string, excludeSubDirs?: Set<string>): Promise<void> {
+	async stageFile(
+		relativePath: string,
+		destPath?: string,
+		excludeSubDirs?: Set<string>,
+	): Promise<void> {
 		const resolved = await this.templateResolver.resolvePath(relativePath);
-		await this.atomicStager.stageFile(resolved, relativePath, excludeSubDirs);
+		await this.atomicStager.stageFile(resolved, destPath ?? relativePath, excludeSubDirs);
 	}
 
 	/** Atomic rename: promote all staged files to the destination. */

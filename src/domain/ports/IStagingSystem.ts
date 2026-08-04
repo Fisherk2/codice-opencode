@@ -19,10 +19,11 @@ export interface IStagingSystem {
 	 * excludeSubDirs is provided, subdirectories matching names in the set
 	 * are excluded from staging (e.g. node_modules/ when staging a project).
 	 *
-	 * @param relativePath - Path relative to template root.
+	 * @param relativePath - Path relative to template root (source).
+	 * @param destPath - Optional destination path override; defaults to relativePath.
 	 * @param excludeSubDirs - Optional set of subdirectory names to exclude.
 	 */
-	stageFile(relativePath: string, excludeSubDirs?: Set<string>): Promise<void>;
+	stageFile(relativePath: string, destPath?: string, excludeSubDirs?: Set<string>): Promise<void>;
 
 	/**
 	 * Atomic rename: promote all staged files to the destination.

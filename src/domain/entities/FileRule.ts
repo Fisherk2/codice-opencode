@@ -28,4 +28,13 @@ export interface FileRule {
 	 * The entry exists only for user selection tracking in the UX.
 	 */
 	readonly noTemplateCopy?: boolean;
+	/**
+	 * Optional destination path override. When omitted, `path` is used as both
+	 * source and destination (v1.x behavior). When present, `path` is the
+	 * template source path and `destPath` is where the content lands in the
+	 * destination. Needed for v2.0: core/ and packs/* are source groupings but
+	 * the destination stays flat (core/* spreads to root, packs/* merge into
+	 * agents/).
+	 */
+	readonly destPath?: string;
 }

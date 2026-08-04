@@ -8,49 +8,42 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// =============================================
 	// OBLIGATORIO (Mandatory) — always copied
 	// =============================================
+	// v2.0 (FEV-17): the 7 standalone mandatory entries (opencode.json,
+	// skills-lock.json, agents, commands, .opencode, .opencode/plugins, skills)
+	// collapsed into 4 SOURCE GROUPINGS. The destination stays flat via
+	// destPath: core/* spreads to root (destPath ""), packs/* merge into
+	// agents/. Symlinks .opencode/{agents,commands,skills} are still generated
+	// post-installation (ADR-008), so they are not staged from source.
 	{
-		path: "opencode.json",
-		category: "mandatory",
-		isDirectory: false,
-		description: "Core workspace configuration; must stay in sync with installer",
-	},
-	{
-		path: "skills-lock.json",
-		category: "mandatory",
-		isDirectory: false,
-		description: "Lockfile for reproducible skill resolution; managed by installer",
-	},
-	{
-		path: "agents",
+		path: "core",
+		destPath: "",
 		category: "mandatory",
 		isDirectory: true,
-		description: "Agent definitions managed by installer",
+		description:
+			"Core workspace infrastructure — spreads to destination root (opencode.json, commands/, skills/, .opencode/, skills-lock.json)",
 	},
 	{
-		path: "commands",
+		path: "packs/main",
+		destPath: "agents",
 		category: "mandatory",
 		isDirectory: true,
-		description: "Command schemas managed by installer",
+		description:
+			"6 primary agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca)",
 	},
 	{
-		path: ".opencode",
+		path: "packs/writers",
+		destPath: "agents",
 		category: "mandatory",
 		isDirectory: true,
-		description: "Core OpenCode configuration directory",
+		description:
+			"3 writer agents (docs-writer, obsidian-vault-writer, scientific-literature-researcher)",
 	},
 	{
-		path: ".opencode/plugins",
+		path: "packs/sin-clasificar",
+		destPath: "agents",
 		category: "mandatory",
 		isDirectory: true,
-		description: "Plugin definitions managed by installer",
-	},
-	// NOTE: .opencode/{agents,commands,skills} were symlinks stripped by npm.
-	// Real dirs listed above; symlinks generated post-install (ADR-008).
-	{
-		path: "skills",
-		category: "mandatory",
-		isDirectory: true,
-		description: "Skill definitions managed by installer",
+		description: "95 unclassified agents pending FEV-18 classification (temporary pack)",
 	},
 
 	// =============================================
