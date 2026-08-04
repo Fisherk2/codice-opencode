@@ -1,245 +1,243 @@
-# FEV-16 Todo List — v1.2.0 Pre-release Tech Debt Closure
+# FEV-17 Todo List — Template Directory Restructuring (v2.0 Phase 1)
 
-**Phase:** FEV-16 (v1.2 Phase 6) — 📋 Pendiente
-**Scope:** Mega-FEV consolidado (5 items del TECH_DEBT.md sin FEV registrado)
-**Spec:** [SPEC.md](../SPEC.md), [docs/WORKFLOW.md](../docs/WORKFLOW.md) §FEV-16, [docs/TECH_DEBT.md](../docs/TECH_DEBT.md)
-**Date:** 2026-07-30
+**Phase:** FEV-17 (v2.0 Phase 1) — 🔲 Planificado
+**Scope:** Restructurar `template/obligatorio/` → `core/` + `packs/`. Actualizar `FileRuleManifestData` + `TemplateResolver`. Path sweep en tests/docs.
+**Spec:** [specs/spec-agent-packs.md §2](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [docs/WORKFLOW.md §FEV-17](../docs/WORKFLOW.md)
+**Date:** 2026-08-04
 **Full plan:** [plan.md](./plan.md)
-**Status:** 📋 Pendiente — ready to start Phase 0
-**Branch base:** `develop` (FEV-15 ✅ ya mergeado)
-**Total effort:** 24h wall-clock (3 días focused, 5-7 días calendario con review)
+**Status:** 📋 Pendiente — listo para Phase 0
+**Branch base:** `feat/new-agents` (existe con `agency-agents-main/` untracked, sin commits divergentes sobre develop)
+**Total effort:** ~7-8h wall-clock (2-3 días calendario con review) — más que las 4h estimadas en WORKFLOW.md por la cantidad de paths a actualizar.
 
 ---
 
-## Decisiones Confirmadas (vía question tool, 2026-07-30)
+## Decisiones Confirmadas (vía question tool, 2026-08-04)
 
 | # | Pregunta | Decisión |
 |---|----------|----------|
-| 1 | Agrupación de items | **1 mega FEV-16** (todo en un solo FEV, no split en 4) |
-| 2 | Orden de ejecución | **Crítico primero + paralelo donde posible** |
-| 3 | Refactor Template Method (TD-2.1) | **Sí, aplicar ahora** (no esperar al cuarto modo) |
-| 4 | Diagnosis docs | **No nuevos**; actualizar docs existentes (TECH_DEBT, WORKFLOW) para establecer el scope de FEV-16 |
+| 1 | Alcance FEV-17 | **Restructuring only** — crear core/ + packs/main/ + packs/writers/ + 95 agentes a sin-clasificar/ + 8 packs vacíos. No clasificación manual. |
+| 2 | Destino de 95 agentes no-primary/writer | **`packs/sin-clasificar/`** — explícitamente "aún no clasificado" |
+| 3 | Git workflow | **Reusar `feat/new-agents`** — agency-agents-main/ queda como recurso no rastreado para FEV-18 |
+| 4 | Tests que hardcodean rutas | **Actualizar todas** — 10+ archivos referencian `template/obligatorio/...` |
 
 ---
 
-## Items Incluidos (5 items del TECH_DEBT.md)
+## Estructura Objetivo (v2.0)
 
-| ID | Sección | Item | Esfuerzo | Tipo | Workstream |
-|----|---------|------|----------|------|------------|
-| TD-1.1 | §1.1 | `src/cli/main.ts` coverage (interactive mode) | 2h | Test infrastructure | Phase 1 + Phase 5 |
-| TD-2.1 | §2.1 | CleanInstall/ProjectInstall duplicación | 4h | Code refactor (GoF Template Method) | Phase 2 |
-| TD-5.1 | §5.1 | E2E Coverage Not Captured | 8h | Test infrastructure | Phase 5 |
-| TD-5.2 | §5.2 | No Performance Benchmarks | 4h | Test infrastructure | Phase 3 |
-| TD-6.2 | §6.2 | Standard Directory All-or-Nothing | 6h | Domain logic (Strategy extension) | Phase 4 |
-| | | **TOTAL** | **24h** | | |
+```
+template/obligatorio/
+├── core/                                  # Infraestructura no-agentes
+│   ├── .opencode/                         # Plugin, opencode.json
+│   ├── commands/                          # 13 CLI commands
+│   ├── skills/                            # 51 skills
+│   ├── skills-lock.json
+│   └── opencode.json
+└── packs/
+    ├── main/                              # 6 primary agents (MANDATORY)
+    ├── writers/                           # 3 writers (MANDATORY)
+    ├── sin-clasificar/                    # 95 unclassified (MANDATORY, FEV-18 los distribuirá)
+    ├── software-development/              # empty + .gitkeep
+    ├── creative/                          # empty + .gitkeep
+    ├── business/                          # empty + .gitkeep
+    ├── finance/                           # empty + .gitkeep
+    ├── government-legal/                  # empty + .gitkeep
+    ├── science-research/                  # empty + .gitkeep
+    ├── hardware-emerging/                 # empty + .gitkeep
+    └── operations-support/                # empty + .gitkeep
+```
 
 ---
 
 ## Dependency Order (Critical Path)
 
 ```
-Phase 0 (Prep, 30min)
+Phase 0 (Prep, 15min)
     ↓
-Phase 1 (Coverage Foundation, 2h) ← BLOCKS Phase 5
+Phase 1 (Directory Restructure, 1.5h) ← BLOQUEA Phase 2+
     ↓
-    ├── Phase 2 (Refactor, 4h) ─┐
-    ├── Phase 3 (Benchmarks, 4h) ─┼── parallel
-    └── Phase 4 (Granularity, 6h) ─┘
+Phase 2 (Manifest + Resolver, 1.5h) ← critical path
     ↓
-Phase 5 (Coverage Instrumentation, 10h) ← depends on Phase 1
+    ├── Phase 3 (Tests, 2h) ─┐
+    ├── Phase 4 (E2E, 1h)   ─┼── parallel
+    └── Phase 5 (Docs, 30min)┘
     ↓
-Phase 6 (Docs & Verify, 1h)
+Phase 6 (Verify + Commit, 30min)
 ```
 
-**Critical path:** Phase 0 → 1 → 5 → 6 (~13h, longest chain)
-**Parallel branches:** Phase 2, 3, 4 (~14h combined if solo, ~4-5h if 3 agents)
+**Critical path:** Phase 0 → 1 → 2 → 6 (~5h, longest chain)
+**Parallel branches:** Phase 3, 4, 5 (~3.5h combined if solo)
 
 ---
 
 ## Phase 0: Preparation
 
-- [ ] **Task 0.1:** Crear rama `feat/fev16-tech-debt` desde `develop` — `git checkout -b feat/fev16-tech-debt develop`
-- [ ] **Task 0.2:** Verificar baseline — `just check` + `just test` + `just test:e2e` exit 0 (810 tests, 19/19 E2E)
+- [ ] **Task 0.1:** Verificar baseline — `git -C repo status --short` solo muestra `?? agency-agents-main/`, sin modified. `just check` + `just test` + `just test:e2e` exit 0.
+- [ ] **Task 0.2:** Confirmar `template/` limpio — `git -C repo status template/` retorna vacío.
 
-**Checkpoint:** ✅ Branch clean, 810 tests passing, 19/19 E2E
-
----
-
-## Phase 1: Coverage Foundation (CRITICAL — blocks Phase 5)
-
-- [ ] **Task 1.1:** Extraer `resolveInteractiveMode()` de `main.ts` (líneas 134-145) como función exportada — `src/cli/main.ts` (refactor, similar length)
-- [ ] **Task 1.2:** Unit tests para `resolveInteractiveMode()` con mock `IUserPrompt` (9 casos) — `tests/unit/cli/main.test.ts` (nuevo, ~80 líneas)
-
-**Checkpoint:** ✅ Function extracted, 9 unit tests pass, main.ts coverage ≥90%
+**Checkpoint:** ✅ Branch clean, 910 tests passing, 20/20 E2E
 
 ---
 
-## Phase 2: Use Case Refactor [PARALLELIZABLE]
+## Phase 1: Directory Restructure (CRITICAL — blocks Phase 2+)
 
-**Pattern:** GoF Template Method
+- [ ] **Task 1.1:** Crear `core/` y mover 5 infra files (.opencode/, commands/, skills/, opencode.json, skills-lock.json) — 5 git mv operations
+- [ ] **Task 1.2:** Crear `packs/` con 11 subdirs (3 con content soon + 8 vacíos con .gitkeep)
+- [ ] **Task 1.3:** Mover 6 primary agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca) → `packs/main/`
+- [ ] **Task 1.4:** Mover 3 writers (docs-writer, obsidian-vault-writer, scientific-literature-researcher) → `packs/writers/`
+- [ ] **Task 1.5:** Mover 95 restantes → `packs/sin-clasificar/` (bulk `git mv *.md`); rmdir `agents/` si vacío
+- [ ] **Task 1.6:** Verificar estructura final — `find template/obligatorio/packs -name "*.md" | wc -l` = 104; todos los cambios como renames
 
-- [ ] **Task 2.1:** Crear `InstallUseCaseBase` abstract class con 3 hooks (`buildRules`, `selectOptionals`, `getSuccessMessage`) — `src/application/use-cases/InstallUseCaseBase.ts` (nuevo, ~90 líneas)
-- [ ] **Task 2.2:** Migrar `CleanInstallUseCase` a extender base (constructor delega, `execute()` removido) — `src/application/use-cases/CleanInstallUseCase.ts` (166 → ~60 líneas)
-- [ ] **Task 2.3:** Migrar `ProjectInstallUseCase` a extender base (constructor delega, `execute()` removido) — `src/application/use-cases/ProjectInstallUseCase.ts` (147 → ~50 líneas)
-- [ ] **Task 2.4:** Verificar duplicación eliminada — `just test` + `just test:e2e` exit 0, líneas netas saved ≥ 100
-
-**Checkpoint:** ✅ Template Method aplicado, 123 líneas eliminadas, sin regresión
-
----
-
-## Phase 3: Performance Benchmarks [PARALLELIZABLE]
-
-- [ ] **Task 3.1:** Agregar `just bench` recipe con `hyperfine` (3 commands, --warmup 1, --runs 5) — `Justfile` (+25 líneas)
-- [ ] **Task 3.2:** Crear `benchmarks/clean-install.bench.sh` (executable) — nuevo (~20 líneas)
-- [ ] **Task 3.3:** Crear `benchmarks/project-install.bench.sh` (executable) — nuevo (~20 líneas)
-- [ ] **Task 3.4:** Crear `benchmarks/update-workspace.bench.sh` (executable) — nuevo (~20 líneas)
-- [ ] **Task 3.5:** Crear `benchmarks/assert-no-regression.sh` (asserts <10% regression para SC-9/10/11) — nuevo (~50 líneas)
-
-**Checkpoint:** ✅ 3 benchmarks ejecutables, regression script funcional, baseline capturado
+**Checkpoint:** ✅ 104 agentes preservados, 8 packs vacíos, `git status` muestra solo renames
 
 ---
 
-## Phase 4: Update Granularity [PARALLELIZABLE]
+## Phase 2: FileRuleManifestData + TemplateResolver (CRITICAL — gates Phase 3+)
 
-**Pattern:** Strategy (existing pattern) — 4th strategy para Estándar-Update
+- [ ] **Task 2.1:** Update `src/domain/entities/FileRuleManifestData.ts` — 7 mandatory entries → 4 (core, packs/main, packs/writers, packs/sin-clasificar)
+- [ ] **Task 2.2:** Update `src/infrastructure/adapters/TemplateResolver.ts` — direct resolution para `core/*` y `packs/*`; legacy fallback para `estandar/*` y `opcional/*`
+- [ ] **Task 2.3:** Update `tests/unit/domain/file-rule-manifest.test.ts` + `tests/unit/file-rule-manifest.test.ts` — assertions de 7 → 4 mandatory
+- [ ] **Task 2.4:** Crear/extend `tests/unit/infrastructure/template-resolver.test.ts` — 10+ casos (v2.0 paths + legacy fallback + security)
+- [ ] **Task 2.5:** Verificar baseline Phase 2 — `just check` + `just test:unit` exit 0, sin regresiones
 
-- [ ] **Task 4.1:** Crear `diffTrees()` pure function en domain services — `src/domain/services/treeDiff.ts` (nuevo, ~40 líneas)
-- [ ] **Task 4.2:** Refactor `FileMergeEngine.shouldStage()` para usar tree-level diff en update mode — `src/domain/services/FileMergeEngine.ts` (+20 líneas)
-- [ ] **Task 4.3:** Unit tests para tree-level diff behavior (6+ casos) — `tests/unit/domain/services/file-merge-engine-update.test.ts` (nuevo, ~120 líneas)
-- [ ] **Task 4.4:** Integration tests con real temp directories (3+ casos) — `tests/integration/use-cases/update-granularity.test.ts` (nuevo, ~100 líneas)
-- [ ] **Task 4.5:** E2E test 16: update entrega new standard file (con `tests/fixtures/template/`) — `tests/e2e/16-update-granularity.sh` (nuevo, ~50 líneas) + `tests/fixtures/template/` (nuevo dir) + `tests/e2e/run-e2e.sh` (+1 línea)
-
-**Checkpoint:** ✅ Tree diff funciona, 6+3+1 tests pass, 20/20 E2E
+**Checkpoint:** ✅ Manifest + Resolver funcionan, unit tests pasan, coverage ≥95%
 
 ---
 
-## Phase 5: Coverage Instrumentation [SEQUENTIAL, depends on Phase 1]
+## Phase 3: Unit/Integration Test Path Updates [PARALLELIZABLE]
 
-- [ ] **Task 5.1:** Agregar `c8` devDep + `scripts/coverage-e2e.sh` wrapper — `package.json` (+1 dep) + `scripts/coverage-e2e.sh` (nuevo, ~10 líneas)
-- [ ] **Task 5.2:** Generar E2E coverage report (lcov format) — `bash scripts/coverage-e2e.sh` + `coverage/lcov.info` (nuevo)
-- [ ] **Task 5.3:** Agregar coverage gate a CI workflow (≥95% lines, ≥95% functions) — `.github/workflows/ci.yml` (+5 líneas)
-- [ ] **Task 5.4:** Verificar main.ts coverage 86.21% → ≥95% (con E2E instrumentation)
+- [ ] **Task 3.1:** Update `tests/unit/skill-paths.test.ts` — `SKILLS_DIR` a `core/skills`
+- [ ] **Task 3.2:** Update `tests/unit/setup/opencode-config.test.ts` — import path a `core/opencode.json`
+- [ ] **Task 3.3:** Update `tests/unit/config/destructive-patterns.test.ts` — 2 paths a `core/.opencode/plugins/...`
+- [ ] **Task 3.4:** Update `tests/unit/domain/file-merge-engine.test.ts` — 2 rule paths: `opencode.json`+`agents` → `core`+`packs/main`
+- [ ] **Task 3.5:** Update `tests/unit/domain/file-rule-manifest.test.ts` — assertions `agents` → `core`/`packs/main`/`packs/writers`, count 7 → 4
+- [ ] **Task 3.6:** Update `tests/unit/domain/services/stagePlanner.test.ts` — 2 rule paths
+- [ ] **Task 3.7:** Update `tests/unit/domain/services/file-merge-engine-update.test.ts` — 1 rule path
+- [ ] **Task 3.8:** Update `tests/integration/packaging/npm-pack.test.ts` — 6 path assertions (3 in Test A, 3 in Test D) a `core/` + `packs/main/`
+- [ ] **Task 3.9:** Audit + update `tests/integration/use-cases/` — 4 files, probable mínimos cambios
+- [ ] **Task 3.10:** Update `tests/plugin/integration/` — 4 import paths a `core/.opencode/plugins/src/...`
 
-**Checkpoint:** ✅ c8 integrado, E2E coverage captured, CI enforces ≥95%, main.ts ≥95%
-
----
-
-## Phase 6: Documentation & Verification
-
-- [ ] **Task 6.1:** Reemplazar `_No unreleased changes._` en `CHANGELOG.md` con FEV-16 entries (Added + Changed + Fixed) → `CHANGELOG.md` (+25 líneas)
-- [ ] **Task 6.2:** Marcar FEV-16 `✅ Completo` en `docs/WORKFLOW.md` + nueva sección "Fase FEV-16" con resultados (≥825 tests, 20/20 E2E, ≥95% coverage, 5 items closed) → `docs/WORKFLOW.md` (+30 líneas, <300 total)
-- [ ] **Task 6.3:** Mover 5 FEV-16 items a "Resolved" en `docs/TECH_DEBT.md` (TD-1.1, 2.1, 5.1, 5.2, 6.2 con `✅` resolution) + remover 3 del v1.2.0 summary table → `docs/TECH_DEBT.md` (+12 líneas, -3 líneas)
-- [ ] **Task 6.4:** `just check` → 0 errors
-- [ ] **Task 6.5:** `bun test` → ≥825 tests, 0 fail (810 baseline + 9 from 1.2 + 6 from 4.3 = 825; verify actual count)
-- [ ] **Task 6.6:** `just test:e2e` → 20/20 (19 baseline + 1 new: 16-update-granularity.sh)
-- [ ] **Task 6.7:** `just bench` → 3 benchmarks, no regressions >10%
-- [ ] **Task 6.8:** Commit con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer (5-7 atomic commits)
-
-**Checkpoint:** ✅ Todos DoD items satisfied, FEV-16 cerrado, v1.2.0 ready for pre-release
+**Checkpoint:** ✅ 10+ test files actualizados, `just test:unit` + `just test:integration` exit 0
 
 ---
 
-## DoD Checklist — FEV-16
+## Phase 4: E2E Test Updates [PARALLELIZABLE]
 
-### Functional
+- [ ] **Task 4.1:** Update `tests/e2e/15-update-workspace-existing-project.sh` line 133 — `template/obligatorio/opencode.json` → `core/opencode.json`
+- [ ] **Task 4.2:** Audit otros E2E scripts + `common.sh` para path references
+- [ ] **Task 4.3:** Run `just test:e2e` — 20/20 scenarios passing, no regression
 
-- [ ] **TD-1.1 resuelto** — `resolveInteractiveMode()` extracted + 9 unit tests, main.ts coverage ≥95%
-- [ ] **TD-2.1 resuelto** — Template Method pattern applied, ~123 lines duplication eliminated
-- [ ] **TD-5.1 resuelto** — `c8` integrated for E2E coverage, CI enforces ≥95% thresholds
-- [ ] **TD-5.2 resuelto** — `just bench` + 3 scripts + regression assertion, SC-9/10/11 benchmarked
-- [ ] **TD-6.2 resuelto** — Tree-level diff delivers new standard files, existing files preserved
+**Checkpoint:** ✅ 20/20 E2E passing, no path-related failures
 
-### Quality
+---
 
-- [ ] `just check`: 0 errors, 0 warnings
-- [ ] `bun test`: ≥825 tests, 0 fail
+## Phase 5: Documentation Updates [PARALLELIZABLE]
+
+- [ ] **Task 5.1:** Update `README.md` — references a `template/obligatorio/...`
+- [ ] **Task 5.2:** Update `CONTRIBUTING.md` sección "Add a New Agent" — `agents/<name>` → `packs/<pack>/<name>`
+- [ ] **Task 5.3:** Update `docs/{WORKFLOW,TECH_DEBT,TRD,ARCHITECTURE}.md` — consistencia con nueva estructura
+- [ ] **Task 5.4:** Audit `docs/diagnosis/` — decisión: dejar como histórico o actualizar
+- [ ] **Task 5.5:** Update `CHANGELOG.md` — entrada FEV-17 bajo `[Unreleased]`
+
+**Checkpoint:** ✅ Docs consistentes, CHANGELOG actualizado, no broken cross-refs
+
+---
+
+## Phase 6: Verification & Atomic Commits
+
+- [ ] **Task 6.1:** `just check` → 0 errors, 0 warnings nuevos
+- [ ] **Task 6.2:** `just test` → ≥910 tests, 0 fail, coverage ≥95%
+- [ ] **Task 6.3:** `just test:e2e` → 20/20 scenarios passing
+- [ ] **Task 6.4:** 5-6 atomic commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>`:
+  1. `refactor(template)!: restructure to core/ + packs/ directory layout (v2.0)`
+  2. `feat(domain): update FileRuleManifestData for v2.0 pack structure`
+  3. `feat(infrastructure): TemplateResolver supports core/ + packs/ direct resolution`
+  4. `test: update unit + integration tests for v2.0 template paths`
+  5. `test(e2e): update E2E tests for v2.0 template paths`
+  6. `docs: update documentation for v2.0 template structure`
+- [ ] **Task 6.5:** PR to develop (o local merge)
+
+**Checkpoint:** ✅ FEV-17 cerrado, PR listo, FEV-18 puede comenzar
+
+---
+
+## DoD Checklist — FEV-17
+
+### Funcional
+
+- [ ] `template/obligatorio/` contiene solo `core/` + `packs/`
+- [ ] 104 agentes preservados (6 main + 3 writers + 95 sin-clasificar)
+- [ ] 8 packs vacíos creados (software-development, creative, business, finance, government-legal, science-research, hardware-emerging, operations-support)
+- [ ] `FileRuleManifestData` con 4 mandatory entries (no 7)
+- [ ] `TemplateResolver` resuelve v2.0 paths + legacy fallback
+
+### Calidad
+
+- [ ] `just check`: 0 errors, 0 warnings nuevos
+- [ ] `just test`: ≥910 tests, 0 fail
 - [ ] `just test:e2e`: 20/20 scenarios passing
-- [ ] `just bench`: 3 benchmarks captured, no regressions >10%
-- [ ] Coverage: lines ≥95%, functions ≥95% (enforced in CI)
-- [ ] No `any` types introduced
-- [ ] Net code change: ~-100 lines (refactor reduces more than new code adds)
+- [ ] Coverage: lines ≥95%, functions ≥95% (enforced)
+- [ ] No `any` types introducidos
 
-### Documentation
+### Documentación
 
-- [ ] `CHANGELOG.md`: FEV-16 entry under `[Unreleased]` (Added + Changed + Fixed)
-- [ ] `docs/WORKFLOW.md`: FEV-16 marked `✅ Completo` with results section
-- [ ] `docs/TECH_DEBT.md`: 5 items moved to "Resolved" subsection
-- [ ] No new diagnosis docs (per user decision)
-- [ ] No broken internal links
+- [ ] README.md, CONTRIBUTING.md actualizados
+- [ ] docs/{WORKFLOW,TECH_DEBT,TRD,ARCHITECTURE}.md consistentes
+- [ ] CHANGELOG.md tiene entrada FEV-17
+- [ ] Diagnosis docs auditados (decisión: histórico o actualizado)
 
-### Process
+### Proceso
 
-- [ ] 5-7 atomic commits following Conventional Commits
-- [ ] All commits include `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Branch `feat/fev16-tech-debt` from `develop`
-- [ ] No version bump (v1.2.0 closes coordinated with FEV-11/12/13/14/15/16)
+- [ ] 5-6 atomic commits con Conventional Commits
+- [ ] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
+- [ ] Branch `feat/new-agents` (reusando rama existente)
+- [ ] No version bump (v2.0.0 coordina al final con FEV-18 a FEV-23)
 
 ---
 
 ## Resumen de Archivos a Modificar/Crear
 
-### Nuevos archivos (13)
+### Nuevos directorios (10)
 
-1. `src/application/use-cases/InstallUseCaseBase.ts` (~90 líneas) — Template Method base class
-2. `src/domain/services/treeDiff.ts` (~40 líneas) — Tree-level diff pure function
-3. `tests/unit/cli/main.test.ts` (~80 líneas) — Unit tests for resolveInteractiveMode
-4. `tests/unit/domain/services/file-merge-engine-update.test.ts` (~120 líneas) — Unit tests for tree-level diff
-5. `tests/integration/use-cases/update-granularity.test.ts` (~100 líneas) — Integration tests for update mode
-6. `tests/e2e/16-update-granularity.sh` (~50 líneas) — E2E scenario for new standard file delivery
-7. `tests/fixtures/template/` (directorio) — Test template for E2E
-8. `scripts/coverage-e2e.sh` (~10 líneas) — E2E coverage wrapper
-9. `benchmarks/clean-install.bench.sh` (~20 líneas) — Clean Install benchmark
-10. `benchmarks/project-install.bench.sh` (~20 líneas) — Project Install benchmark
-11. `benchmarks/update-workspace.bench.sh` (~20 líneas) — Update Workspace benchmark
-12. `benchmarks/assert-no-regression.sh` (~50 líneas) — Regression assertion
-13. `benchmarks/baseline.json` (generado) — Baseline benchmark times
+1. `template/obligatorio/core/` (con 5 infra files movidos)
+2-13. `template/obligatorio/packs/{main,writers,sin-clasificar,software-development,creative,business,finance,government-legal,science-research,hardware-emerging,operations-support}/` (3 con agents + 8 vacíos con .gitkeep)
 
-**Total:** 13 nuevos archivos, ~600 líneas
+### Directorios eliminados (1)
 
-### Archivos modificados (11)
+1. `template/obligatorio/agents/` (rmdir si queda vacío)
 
-1. `src/cli/main.ts` (refactor, similar length) — Extract `resolveInteractiveMode()`
-2. `src/application/use-cases/CleanInstallUseCase.ts` (166 → ~60 líneas) — Extend base
-3. `src/application/use-cases/ProjectInstallUseCase.ts` (147 → ~50 líneas) — Extend base
-4. `src/domain/services/FileMergeEngine.ts` (+20 líneas) — Tree-level diff integration
-5. `Justfile` (+25 líneas) — `just bench` recipe
-6. `package.json` (+1 dep) — `c8` devDependency
-7. `tests/e2e/run-e2e.sh` (+1 línea) — Include scenario 16
-8. `.github/workflows/ci.yml` (+5 líneas) — Coverage threshold gate
-9. `CHANGELOG.md` (+25 líneas) — FEV-16 entry
-10. `docs/WORKFLOW.md` (+30 líneas) — FEV-16 complete
-11. `docs/TECH_DEBT.md` (+12 líneas, -3 líneas) — 5 items to Resolved
+### Archivos modificados (16+)
 
-**Total:** 11 archivos modificados, net change ~-100 líneas
+**Code (3):**
+1. `src/domain/entities/FileRuleManifestData.ts`
+2. `src/infrastructure/adapters/TemplateResolver.ts`
+3. `tests/unit/infrastructure/template-resolver.test.ts` (nuevo o extendido)
 
-### Archivos NO tocados (intencional)
+**Tests (10):**
+4-13. 10 archivos de test en `tests/unit/`, `tests/integration/`, `tests/plugin/integration/`
 
-- `template/` — Sin cambios en el template
-- `src/domain/entities/` — Manifest sin cambios
-- `src/infrastructure/` — Sin cambios en adapters
-- `specs/` — Sin cambios en specs
-- Wiki pages — Actualizados transitivamente desde CHANGELOG/WORKFLOW/TECH_DEBT
-- `src/application/use-cases/UpdateWorkspaceUseCase.ts` — Diferentes semánticas, no es Template Method subclass
+**E2E (1-2):**
+14. `tests/e2e/15-update-workspace-existing-project.sh`
+15. `tests/e2e/common.sh` (si aplica)
+
+**Documentación (7):**
+16-22. README.md, CONTRIBUTING.md, docs/{WORKFLOW,TECH_DEBT,TRD,ARCHITECTURE}.md, CHANGELOG.md
 
 ---
 
 ## Métricas Esperadas
 
-| Métrica | Baseline (post-FEV-15) | Meta FEV-16 | Verificación |
+| Métrica | Baseline (post-FEV-16) | Meta FEV-17 | Verificación |
 |---------|------------------------|-------------|--------------|
-| Tests (pass/fail) | 810 / 0 | ≥825 / 0 | `bun test` |
-| E2E scenarios | 19 / 19 | 20 / 20 | `just test:e2e` |
+| Tests (pass/fail) | 910 / 0 | ≥910 / 0 | `just test` |
+| E2E scenarios | 20 / 20 | 20 / 20 | `just test:e2e` |
 | `just check` errors | 0 | 0 | `just check` |
-| Coverage (lines) | 96.98% | ≥95% (enforced) | `bun test --coverage` + `c8` |
-| Coverage (functions) | 100% | ≥95% (enforced) | `bun test --coverage` + `c8` |
-| Files touched | — | 24 (13 new + 11 modified) | `git diff --stat` |
-| Lines added | — | ~600 (new) + ~150 (modified) | `git diff --shortstat` |
-| Net code change | — | ~-100 líneas (refactor saves more) | `git diff --shortstat` |
-| TECH_DEBT items closed | — | 5 (TD-1.1, 2.1, 5.1, 5.2, 6.2) | `docs/TECH_DEBT.md` |
-| Performance benchmarks | 0 | 3 + 1 regression | `just bench` |
-| Use case lines (Clean+Project) | 313 | ~190 | `wc -l src/application/use-cases/CleanInstallUseCase.ts ProjectInstallUseCase.ts` |
-| Issues resolved | — | 0 (TECH_DEBT items, no GitHub issues) | TECH_DEBT.md |
-| Version bump | — | None (v1.2.0 closes coordinated) | `package.json` |
+| Coverage (lines) | 98.10% | ≥95% (enforced) | `bun test --coverage` |
+| Mandatory rules | 7 | 4 | `grep "category: \"mandatory\""` |
+| Total agents | 104 | 104 (preserved) | `find template -name "*.md" -path "*/packs/*" \| wc -l` |
+| Template dirs at root | 6 | 2 | `ls template/obligatorio/` |
+| Files touched | — | 25+ | `git diff --stat` |
+| Atomic commits | — | 5-6 | `git log --oneline develop..HEAD \| wc -l` |
+| Wall-clock | — | ~7-8h (vs 4h estimated) | Self-reported |
 
 ---
 
@@ -247,52 +245,46 @@ Phase 6 (Docs & Verify, 1h)
 
 ```mermaid
 graph TD
-    P0[Phase 0: Prep] --> P1[Phase 1: Coverage Foundation]
-    P1 --> P5[Phase 5: Coverage Instrumentation]
-    P1 --> P6[Phase 6: Docs & Verify]
-    
-    P2[Phase 2: Use Case Refactor] --> P6
-    P3[Phase 3: Performance Benchmarks] --> P6
-    P4[Phase 4: Update Granularity] --> P6
-    
+    P0[Phase 0: Prep] --> P1[Phase 1: Directory Restructure]
+    P1 --> P2[Phase 2: Manifest + Resolver]
+    P2 --> P3[Phase 3: Unit/Int Tests]
+    P2 --> P4[Phase 4: E2E Tests]
+    P2 --> P5[Phase 5: Documentation]
+    P3 --> P6[Phase 6: Verify + Commit]
+    P4 --> P6
     P5 --> P6
-    P2 -.->|parallel| P3
-    P2 -.->|parallel| P4
-    P3 -.->|parallel| P4
-    
-    P6 --> DONE[PR Ready]
-    
+    P6 --> DONE[FEV-17 Ready]
+
     classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
     classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
     classDef seq fill:#ffd43b,stroke:#f59f00,color:#000
-    
-    class P1,P5 crit
+
+    class P1,P2 crit
     class P6,DONE gate
-    class P2,P3,P4 par
+    class P3,P4,P5 par
     class P0 seq
 ```
 
-**Critical path:** Phase 0 → 1 → 5 → 6 (~13h)
-**Parallel opportunity:** Phase 2, 3, 4 — independientes entre sí, pueden dividirse entre 3 agentes (o secuencial para solo contributor)
-**Risk:** Phase 1 → Phase 5 es la única cadena secuencial real; el resto es paralelizable.
+**Critical path:** Phase 0 → 1 → 2 → 6 (~5h wall-clock)
+**Parallel branches:** Phase 3, 4, 5 (~3.5h combined if solo)
 
 ---
 
 ## Próximo Paso
 
 Una vez aprobado el plan:
-1. **Phase 0** (preparación) — crear branch, verificar baseline (~30min)
-2. **Phase 1** (coverage foundation) — 2h (bloquea Phase 5)
-3. **Phase 2-4** (refactor + benchmarks + granularity) — 14h (paralelo entre sí)
-4. **Phase 5** (coverage instrumentation) — 10h (depende de Phase 1)
-5. **Phase 6** (docs + verificación) — 1h
-6. **Total:** ~24h wall-clock, 5-7 días calendario con review cycles
+1. **Phase 0** (preparación) — verificar baseline + branch state (~15min)
+2. **Phase 1** (directory restructure) — 6 sub-tasks (~1.5h, BLOQUEA Phase 2+)
+3. **Phase 2** (manifest + resolver) — 5 sub-tasks (~1.5h, critical path)
+4. **Phase 3-5** (tests + docs en paralelo) — 15+ sub-tasks (~3.5h combined)
+5. **Phase 6** (verificación + commits) — 5 sub-tasks (~30min)
+6. **Total:** ~7-8h wall-clock, 2-3 días calendario con review cycles
 
 **Comando sugerido:** `> Run /build to start Phase 0 (preparation)`
 
 ---
 
-*Última actualización: 2026-07-30 — Moctezuma (Strategic Planner) — FEV-16 ready to build*
+*Última actualización: 2026-08-04 — Moctezuma (Strategic Planner) — FEV-17 ready to build*
 
 Co-Authored-By: Moctezuma <dev@fisherk2.com>
