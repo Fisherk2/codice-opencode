@@ -12,40 +12,40 @@
 
   "agent": {
     "huitzilopochtli": {
-      "model": "opencode-go/deepseek-v4-flash",
+      "model": "opencode/ling-3.0-flash-free",
       "color": "#d3e22b",
       "temperature": 0.5,
       "steps": 25
     },
     "quetzalcoatl": {
-      "model": "opencode-go/qwen3.7-plus",
+      "model": "opencode/big-pickle",
       "color": "#ffffff",
       "temperature": 0.3,
-      "steps": 60
+      "steps": 80
     },
     "moctezuma": {
-      "model": "opencode-go/minimax-m3",
+      "model": "opencode/nemotron-3-ultra-free",
       "color": "#8B4513",
       "temperature": 0.1,
-      "steps": 30
+      "steps": 40
     },
     "tlaloc": {
-      "model": "opencode-go/deepseek-v4-flash",
+      "model": "opencode/deepseek-v4-flash-free",
       "color": "#00ffff",
       "temperature": 0.2,
-      "steps": 100
+      "steps": 150
     },
     "mictlantecuhtli": {
-      "model": "opencode-go/mimo-v2.5",
+      "model": "opencode/laguna-s-2.1-free",
       "color": "#2d2d2d",
       "temperature": 0.2,
       "steps": 100
     },
     "tezcatlipoca": {
-      "model": "opencode-go/glm-5.2",
+      "model": "opencode/mimo-v2.5-free",
       "color": "#ff3134",
       "temperature": 0.1,
-      "steps": 50
+      "steps": 70
     },
     "build": {
       "disable": true
@@ -61,7 +61,12 @@
     }
   },
 
-  "instructions": ["CONTRIBUTING.md", "SPEC.md", "docs/ARCHITECTURE.md", "docs/CODE_STYLE.md"],
+  "instructions": [
+    "CONTRIBUTING.md",
+    "SPEC.md",
+    "docs/ARCHITECTURE.md",
+    "docs/CODE_STYLE.md"
+  ],
 
   "references": {
     "clean-code": {
