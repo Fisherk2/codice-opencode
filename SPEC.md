@@ -383,6 +383,10 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 
 - **[SDD Plugin Decoupling](specs/spec-sdd-plugin-decoupling.md)** — Specification for reducing coupling between the SDD pipeline plugin and documentation. Defines auto-discovery of commands/agents, configuration-driven behavioral data, and quality infrastructure (linting, testing). Addresses Issue #53.
 
+- **[Agent Pack System](specs/spec-agent-packs.md)** — Pack-based agent classification with 8 selectable packs and 2 mandatory directories (main, writers). Defines permission unification, subagent table removal, and plugin changes for v2.0.0.
+
+- **[Installer UX v2](specs/spec-installer-ux-v2.md)** — Installer UX with pack selection wizard, version-gated updates, metadata-driven update scoping, and `.codice-version` format extension for v2.0.0.
+
 Resolved decisions are documented in the respective ADRs (see `specs/adr/`).
 
 ## References
