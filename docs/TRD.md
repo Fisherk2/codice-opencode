@@ -1,5 +1,5 @@
-# Technical Requirements Document – Códice: Opencode Workspace Installer v1.1.3
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-07-27 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Technical Requirements Document – Códice: Opencode Workspace Installer v1.2.0
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-03 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Arquitectura de Referencia
 Se aplicará **Clean Architecture** adaptada a una aplicación de línea de comandos (CLI). Esto garantiza que la lógica de negocio (reglas de fusión, comparación de versiones) esté completamente desacoplada de los detalles de implementación (sistema de archivos, red, librería de TUI).
@@ -78,7 +78,7 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 
 | Port | Adapter | Responsabilidad | Integrado en |
 |------|---------|-----------------|--------------|
-| `ISymlinkCreator` | `BunSymlinkCreator` | Crear 10 symlinks para `.opencode/` y `.devin/` (agents, commands, skills, workflows, rules) | `CleanInstallUseCase`, `ProjectInstallUseCase` |
+| `ISymlinkCreator` | `BunSymlinkCreator` | Crear symlinks para `.opencode/` (agents, commands, skills) | `CleanInstallUseCase`, `ProjectInstallUseCase` |
 | `IGitignoreCreator` | `BunGitignoreCreator` | Generar `.gitignore` desde `template/estandar/gitignore` (renombrado para evitar exclusión de npm) | `CleanInstallUseCase`, `ProjectInstallUseCase` |
 
 **Restricciones:**
@@ -133,5 +133,8 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | **ADR-008** | Symlinks post-install | `ISymlinkCreator` port + `BunSymlinkCreator` adapter | Symlinks se generan post-instalación, evitando el strippng de npm. Idempotente. | Empaquetar symlinks en template (npm los resuelve). |
 | **ADR-009** | Gitignore post-install | `IGitignoreCreator` port + `BunGitignoreCreator` adapter | `.gitignore` se genera post-instalación, evitando la exclusión de npm. | Renombrar a `.gitignore.txt` (confuso), empaquetar como otro nombre. |
 | **ADR-010** | Entries virtuales en manifest | Flag `noTemplateCopy` para entries cuyo contenido se genera post-instalación | Entries como `.devin/` aparecen en UX de selección pero skipan resolución de template. | Eliminar del manifest (pierde visibilidad en UX). |
+| **ADR-011** | Binary Removal | npm/bunx como única distribución; compilación de binarios removida | Eliminación de 74MB binarios, simplificación CI/CD | Mantener binarios (mantenimiento alto, poco uso) |
+| **ADR-012** | References Co-location | Referencias co-locadas con skills, expuestas vía sección reference | Skills autocontenidos, configuración opcional | Referencias centralizadas en template/obligatorio/references/ |
+| **ADR-013** | SDD Plugin Auto-Discovery | Auto-descubrimiento filesystem + configuración JSON + quality infra | Plugin desacoplado de documentación, extensible | Maps hardcoded en sdd-pipeline.ts |
 
 ---
