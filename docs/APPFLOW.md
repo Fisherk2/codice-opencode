@@ -1,4 +1,4 @@
-# Flujo de Navegación (TUI) – Códice: Opencode Workspace Installer v1.1.3
+# Flujo de Navegación (TUI) – Códice: Opencode Workspace Installer v1.2.0
 **Fecha:** 2026-07-11 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Actores y Roles
@@ -116,5 +116,52 @@ Cuando se pasa `--dest <path>`, el CLI usa el path especificado como directorio 
 
 ### Flujo con `--mode <clean|project|update>`
 Cuando se pasa `--mode`, el CLI omite el menú principal y va directamente al modo especificado.
+
+## 8. Flujos Adicionales (v1.2.0)
+
+### Flujo 9: Progress Bar durante instalación
+```mermaid
+graph TD
+    A([Inicio: Merge Engine]) --> B[Pre-computar stageDecisions Map]
+    B --> C[Inicializar clack.progress con total preciso]
+    C --> D{¿Evento de archivo?}
+    D -- stage_start --> E[Avanzar barra]
+    D -- stage_complete --> E
+    D -- stage_skip --> F[Log skip, no avanzar]
+    E --> G{¿Más archivos?}
+    F --> G
+    G -- Sí --> D
+    G -- No --> H[Barra al 100%]
+    H --> I[Post-install: symlinks + gitignore]
+```
+
+### Flujo 10: Comando `/help`
+```mermaid
+graph TD
+    A([Usuario: /help]) --> B[Menú interactivo 6 opciones]
+    B --> C{Selección}
+    C -- Discover Códice --> D[Explicar qué es Códice]
+    C -- Start new project --> E[Guía de instalación]
+    C -- Update workspace --> F[Guía de actualización]
+    C -- Learn SDD cycle --> G[Explicar fases SDD]
+    C -- List commands --> H[Listar 13 comandos]
+    C -- Troubleshoot --> I[Tabla de problemas comunes]
+```
+
+### Flujo 11: Comando `/test` (v1.2.0)
+```mermaid
+graph TD
+    A([Usuario: /test]) --> B{¿Existe test/?}
+    B -- No --> C[Crear test/ con unit/, integration/, e2e/]
+    B -- Sí, separado --> D[Ejecutar tests]
+    B -- Sí, no separado --> E[Preguntar: refactorizar?]
+    E -- Sí --> F[Reorganizar en unit/integration/e2e]
+    E -- No --> D
+    C --> D
+    F --> D
+    D --> G{¿Pasaron?}
+    G -- Sí --> H[Éxito]
+    G -- No --> I[Reportar fallos]
+```
 
 ---

@@ -13,14 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-## [1.2.0-beta.2] — 2026-08-03
-
-### Added
-
-- **`/test` command:** now ensures a `test/` directory exists with `unit/`, `integration/`, and `e2e/` subdirectories; if `test/` exists but is not separated, prompts the user (via `question`) whether to refactor and standardize existing tests into those three directories (per `@skills/test-driven-development/SKILL.md` test-pyramid convention).
-- **`/ship` command:** adds a post-Phase-C incremental-fix phase that resolves all review observations one at a time using `@skills/incremental-implementation/SKILL.md`, verifies all tests pass, then creates atomic commits with descriptive messages (matching `/code-simplify` and `/test` conventions).
-
-## [1.2.0-beta.1] — 2026-08-03
+## [1.2.0] — 2026-08-03
 
 ### Added
 
@@ -52,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Performance benchmarks:** `just bench` recipe with `hyperfine` for 3 installation modes. 3 standalone benchmark scripts + `assert-no-regression.sh` for SC-9/10/11 verification.
   - **Update granularity:** Tree-level diff (`diffTrees()`) for standard directories. `FileMergeEngine` updated to stage only new files in update mode. 11 unit + 3 integration + 1 E2E test.
   - **Coverage instrumentation:** `c8` evaluated (incompatible with Bun/JSC). Native Bun coverage used with 95% CI gate. main.ts 98.90%, overall 98.10%.
+- **`/test` command:** now ensures a `test/` directory exists with `unit/`, `integration/`, and `e2e/` subdirectories; if `test/` exists but is not separated, prompts the user (via `question`) whether to refactor and standardize existing tests into those three directories (per `@skills/test-driven-development/SKILL.md` test-pyramid convention).
+- **`/ship` command:** adds a post-Phase-C incremental-fix phase that resolves all review observations one at a time using `@skills/incremental-implementation/SKILL.md`, verifies all tests pass, then creates atomic commits with descriptive messages (matching `/code-simplify` and `/test` conventions).
 
 ### Changed
 

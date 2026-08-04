@@ -63,7 +63,7 @@
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Guía de contribución, CI/CD, releases |
 | [spec-file-rules.md](specs/spec-file-rules.md) | Reglas de clasificación de archivos |
 | [spec-cli-commands.md](specs/spec-cli-commands.md) | Especificación de modos y comandos CLI |
-| [adr/](specs/adr/) | Architecture Decision Records (ADR-001 al ADR-010) |
+| [adr/](specs/adr/) | Architecture Decision Records (ADR-001 al ADR-013) |
 
 ### Codebase Memory MCP
 
