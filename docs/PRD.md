@@ -1,5 +1,5 @@
-# Product Requirements Document – Códice: Opencode Workspace Installer v1.1.3
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-07-27 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Product Requirements Document – Códice: Opencode Workspace Installer v1.2.0
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-03 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 0. Descripción General
 Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñada para instalar, configurar y actualizar plantillas de espacios de trabajo de OpenCode (`opencode`). Su objetivo es proporcionar una experiencia de instalación "a prueba de tontos", rápida, segura y con fusión inteligente de archivos, preservando las personalizaciones del usuario.
@@ -14,7 +14,6 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - Consulta de versión remota vía GitHub Releases API.
   - Orquestación de tareas y pruebas mediante `Justfile`.
   - Generación post-instalación de symlinks y `.gitignore` (compatibilidad npm/bunx).
-  - Soporte para directorios opcionales (copia recursiva de `.devin/`).
   - Menú de archivos opcionales en ambos modos de instalación (Limpia y Proyecto).
   - Flags no-interactivos: `--dest`, `--force`, `--mode`.
   - Publicación npm como método oficial de distribución (`bunx @fisherk2-dev/codice`).
@@ -61,10 +60,9 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 ## 6. Métricas de Éxito (KPIs)
 - **Métrica:** Tasa de éxito de instalación E2E. | **Valor Objetivo:** 100% en CI/CD. | **Método:** Pipeline de GitHub Actions.
 - **Métrica:** Cobertura de pruebas (Unitarias + Integración). | **Valor Objetivo:** > 80%. | **Método:** `bun test --coverage`.
-- **Métrica:** Tamaño del binario compilado. | **Valor Objetivo:** < 15 MB. | **Método:** `bun build` + análisis de tamaño.
 
 ## 7. Supuestos, Restricciones y Dependencias
-- **Supuestos:** El usuario tiene permisos de escritura en el directorio de destino. El template está empaquetado dentro del binario (no requiere red para instalar, solo para actualizar).
+- **Supuestos:** El usuario tiene permisos de escritura en el directorio de destino. El template está empaquetado dentro del paquete npm (no requiere red para instalar, solo para actualizar).
 - **Restricciones técnicas:** Desarrollado y compilado con Bun. Compatibilidad multiplataforma (Linux, macOS, Windows) debe ser considerada en las rutas de archivos (`path.join`).
 - **Dependencias externas:** API de GitHub (sujeta a rate limit de 60 req/hora para IPs no autenticadas, suficiente para uso individual).
 
@@ -73,5 +71,6 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 |---------|-------|-------|--------|--------------|
 | 0.1.0 | 2026-06-13 | Fisherk2 | Creación inicial del PRD basado en cuestionario de clarificación. | ✅ Aprobado |
 | 1.1.3 | 2026-07-27 | Fisherk2 | Sincronizado con v1.1.3: gobernanza de agentes, restricciones de comandos, 9 MCP servers, Obsidian subagent, ISP split. | ✅ Aprobado |
+| 1.2.0 | 2026-08-03 | Fisherk2 | Sincronizado con v1.2.0: binarios removidos (ADR-011), .devin removido, progress bar, /help, /test, /ship, ADR-011 a ADR-013. | ✅ Aprobado |
 
 ---
