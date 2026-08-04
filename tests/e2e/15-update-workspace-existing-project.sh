@@ -130,7 +130,7 @@ if [[ ! -f "$TEMP_DIR/opencode.json" ]]; then
     log_fail "opencode.json was NOT created — expected mandatory file to be overwritten"
     exit 1
 fi
-if diff -q "$TEMP_DIR/template/obligatorio/opencode.json" "$TEMP_DIR/opencode.json" >/dev/null 2>&1; then
+if diff -q "$TEMP_DIR/template/obligatorio/core/opencode.json" "$TEMP_DIR/opencode.json" >/dev/null 2>&1; then
     log_pass "opencode.json content matches template (obligatorio overwritten — correct behavior)"
 else
     log_fail "opencode.json content differs from template — expected exact match after overwrite"
