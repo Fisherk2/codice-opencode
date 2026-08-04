@@ -38,12 +38,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 			selected,
 			isUpdateMode,
 		);
-		// Optional path list is only consumed by computeExclusions, which runs
-		// solely for standard directory rules — skip the allocation otherwise.
-		const hasStandardDirs = rules.some((r) => r.category === "standard" && r.isDirectory);
-		const optionalPaths = hasStandardDirs
-			? rules.filter((r) => r.category === "optional").map((r) => r.path)
-			: [];
+		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
 		let current = 0;
 
 		// Phase 1: Stage all files

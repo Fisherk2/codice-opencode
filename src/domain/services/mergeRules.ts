@@ -17,11 +17,8 @@ export function skipReason(rule: FileRule, selected: Set<string>, isUpdateMode =
 		}
 		return "Destination already exists";
 	}
-	if (rule.category === "optional" && !selected.has(rule.path)) {
-		return "Not selected by user";
-	}
 	if (rule.category === "optional") {
-		return "Destination already exists";
+		return selected.has(rule.path) ? "Destination already exists" : "Not selected by user";
 	}
 	return "Skipped by classification rule";
 }
@@ -39,7 +36,6 @@ export function computeExclusions(
 	rule: FileRule,
 	optionalPaths: string[],
 ): Set<string> | undefined {
-	// Only standard directories get exclusions; mandatory always overwrites everything.
 	if (!rule.isDirectory || rule.category !== "standard") {
 		return undefined;
 	}

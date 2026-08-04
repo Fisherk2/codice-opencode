@@ -87,13 +87,13 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 	}
 
 	/** Atomic rename: promote all staged files to the destination. */
-	async commitStaging(): Promise<void> {
-		await this.atomicStager.commitStaging();
+	commitStaging(): Promise<void> {
+		return this.atomicStager.commitStaging();
 	}
 
 	/** Remove the staging directory recursively. */
-	async cleanStaging(): Promise<void> {
-		await this.atomicStager.cleanStaging();
+	cleanStaging(): Promise<void> {
+		return this.atomicStager.cleanStaging();
 	}
 
 	/**
@@ -139,11 +139,9 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		const tempPath = `${versionFilePath}${VERSION_FILE_TMP_SUFFIX}`;
 
 		try {
-			// Write to temp file first, then atomic rename
 			await Bun.write(tempPath, versionData);
 			await fs.rename(tempPath, versionFilePath);
 		} catch (error) {
-			// Clean up temp file if rename failed
 			try {
 				await fs.unlink(tempPath);
 			} catch {
