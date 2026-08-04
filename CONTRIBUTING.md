@@ -144,17 +144,17 @@ Códice installs an OpenCode workspace template organized into three file catego
 
 ### Add a New Agent
 
-1. Create `agents/<agent-name>.md` with YAML frontmatter (name, role, scope, rules, composition).
+1. Create `template/obligatorio/packs/<pack-name>/<agent-name>.md` with YAML frontmatter (name, role, scope, rules, composition). For v2.0, agents are organized into packs (source groupings) — use `packs/sin-clasificar/` for unclassified agents until FEV-18 formalizes pack assignment.
 2. Update the agent catalog at the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents).
 3. Update delegation tables of primary agents that can invoke the new agent (quetzalcoatl, tlaloc, mictlantecuhtli).
-4. Update huitzilopochtli's catalog in `agents/huitzilopochtli.md`.
+4. Update huitzilopochtli's catalog in `template/obligatorio/packs/main/huitzilopochtli.md`.
 5. Restart your OpenCode session.
 
 **Primary agents** additionally require: SDD plugin hooks, orchestration patterns, and persona table updates.
 
 ### Add a New Skill
 
-1. Create `skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description`).
+1. Create `template/obligatorio/core/skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description`).
 2. Include actionable numbered steps, verification criteria, and exit conditions.
 3. (Optional) Add extended reference material in `skills/<skill-name>/references/` — these become available to agents via the `reference` section in `opencode.json`.
 4. Add to the [GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills).
@@ -162,14 +162,14 @@ Códice installs an OpenCode workspace template organized into three file catego
 
 ### Add a New Command
 
-1. Create `commands/<command-name>.md` with YAML frontmatter (`description`, `agent` target).
+1. Create `template/obligatorio/core/commands/<command-name>.md` with YAML frontmatter (`description`, `agent` target).
 2. Write numbered steps referencing skills (`@skills/name/SKILL.md`) and using the `question` tool at decision points.
 3. Update documentation and add to the [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands).
 4. Restart your OpenCode session.
 
 ### Add a New MCP Server
 
-1. Add server configuration to `opencode.json` under the `mcp.servers` section.
+1. Add server configuration to `template/obligatorio/core/opencode.json` under the `mcp.servers` section.
 2. Add API key instructions and usage examples to the [GitHub Wiki → MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers).
 3. Restart your OpenCode session.
 

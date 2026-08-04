@@ -154,7 +154,7 @@ All resolved debt from v1.0.11 and earlier removed. For historical reference, se
 
 ### 6.1 Nested `.gitignore` files excluded by npm
 
-npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/skills/ui-ux-design-pro/cli/.gitignore` are not in the published tarball. These serve internal skill development purposes, not user-facing workspace. If a future skill needs its `.gitignore` shipped, apply the rename pattern: `file.gitignore` → `file_gitignore` with post-install generation. (REF: FEV-2-C code review S7)
+npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/core/skills/ui-ux-design-pro/cli/.gitignore` are not in the published tarball. These serve internal skill development purposes, not user-facing workspace. If a future skill needs its `.gitignore` shipped, apply the rename pattern: `file.gitignore` → `file_gitignore` with post-install generation. (REF: FEV-2-C code review S7)
 
 ### 6.2 Standard Directory Updates Are All-or-Nothing
 
@@ -212,6 +212,8 @@ not file granularity.
 | FEV-16: Pre-release Tech Debt Closure | 24h | ✅ Completo — TD-1.1, 2.1, 5.1, 5.2, 6.2 | TD-1.1, 2.1, 5.1, 5.2, 6.2 |
 
 ### v2.0.0 — Agent Pack System & Installer UX v2
+
+> **FEV-17 (Template Directory Restructuring) ✅ complete (2026-08-04):** `template/obligatorio/` restructured to `core/` + `packs/{main,writers,sin-clasificar,<8 empty>}/`. `FileRuleManifestData` collapsed 7 mandatory entries to 4 source groupings with `destPath` support (flat destination preserved). 910 tests, 16/16 E2E, `just check` clean.
 
 Specs drafted: [spec-agent-packs.md](../specs/spec-agent-packs.md), [spec-installer-ux-v2.md](../specs/spec-installer-ux-v2.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md).
 

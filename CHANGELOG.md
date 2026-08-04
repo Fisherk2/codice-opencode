@@ -9,9 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **FEV-17 — Template Directory Restructuring (v2.0 Phase 1):** `template/obligatorio/` restructured from flat (`agents/`, `commands/`, `skills/`, `opencode.json`, `skills-lock.json`, `.opencode/`) to hierarchical: `core/` (infrastructure) + `packs/{main,writers,sin-clasificar,<8 empty>}/` (agent packs). 6 primary agents moved to `packs/main/`, 3 writers to `packs/writers/`, 95 unclassified agents to `packs/sin-clasificar/` (pending FEV-18 classification). 8 empty pack directories created for FEV-18.
+
 ### Changed
 
+- **FEV-17 — FileRuleManifestData:** Collapsed 7 standalone mandatory entries into 4 source groupings (`core` → destination root, `packs/main`/`packs/writers`/`packs/sin-clasificar` → `agents/`) using the new `destPath` field on `FileRule`. Standard + optional sections unchanged.
+- **FEV-17 — destPath support:** `FileRule` gained optional `destPath`; `IStagingSystem.stageFile` / `BunFileSystem` / `FileMergeEngine` now support source ≠ destination paths, keeping the installed workspace flat (`agents/`, `commands/`, `opencode.json` at root) while the template source uses `core/` + `packs/` groupings.
+- **FEV-17 — Tests updated:** 16+ unit/integration/plugin/packaging tests + 1 E2E script updated to new template paths.
+
 ### Fixed
+
+- **FEV-17 — Template path references:** README, CONTRIBUTING, WORKFLOW, TECH_DEBT, and CHANGELOG references to `template/obligatorio/{agents,commands,skills,opencode.json}` updated to `core/` / `packs/` locations.
 
 ## [1.2.0] — 2026-08-03
 
@@ -29,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **FEV-13 — SDD Plugin Auto-Discovery (Issue #53):** 6 hardcoded maps extracted to `autoDiscovery.ts` — `COMMAND_AGENT_MAP`, `VALID_SUBAGENTS`, and `AGENT_MENTION_PATTERNS` now detected automatically from filesystem (`commands/*.md`, `agents/*.md`). New files: `autoDiscovery.ts` (182 lines), `destructivePatterns.ts`, `normalizeBash.ts`. See [ADR-013](specs/adr/adr-013-plugin-auto-discovery.md).
 - **FEV-13 — Config-Driven Plugin Behavior (Issue #53):** `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, `PHASE_SUGGESTIONS` moved to `defaults.ts` with optional `opencode.json` `sddPipeline` section override. Plugin works without config (backward compatible).
 - **FEV-14 — Progress bar during installation (Issue #47):** `ProgressEvent` discriminated union (6 variants: `stage_start`, `stage_complete`, `stage_skip`, `commit_start`, `commit_complete`, `error`) in Domain layer. `ProgressCallback` optional on `IFileMergeEngine.execute()`. `ClackPromptsAdapter` implements `clack.progress()` (heavy style) with `showProgressBar(total, label)`, `updateProgress(current, filePath)`, `completeProgress()`. `logProgressEvent(message)` dispatches by category prefix: `commit:` → success, `symlink:` → success, `gitignore:` → info, `error:` → error, `skip:` → warn. Visible in all three modes (Clean, Project, Update).
-- **FEV-14 — New `/help` slash command for onboarding (Issue #56):** Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 13 commands, troubleshoot issues. Assigned to Huitzilopochtli. Template: `template/obligatorio/commands/help.md` (63 lines).
+- **FEV-14 — New `/help` slash command for onboarding (Issue #56):** Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 13 commands, troubleshoot issues. Assigned to Huitzilopochtli. Template: `template/obligatorio/core/commands/help.md` (63 lines).
 - **FEV-14 — `/help` registered in pipeline maps:** Added to `COMMAND_AGENT_MAP`, `INTENT_PATTERNS` (15 EN/ES keywords), `COMMAND_PHASE_MAP` (`idle`), and `PHASE_SUGGESTIONS` in `defaults.ts`.
 - **FEV-14 — Spec/ADR templates with industry formats:** MADR v4.0 ADR template (`template/estandar/specs/adr/adr-template.md`) and RFC-based spec template (`template/estandar/specs/spec-template.md`) replace previous placeholders.
 - **FEV-14 — 14 new integration tests** for progress events, structured logs, and adapter methods.

@@ -34,7 +34,7 @@
 | FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | ✅ Completo |
 | FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | ✅ Completo |
 | FEV-16 | Pre-release Tech Debt Closure (v1.2 Phase 6) | TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 closure | ✅ Completo |
-| FEV-17 | Template Directory Restructuring (v2.0 Phase 1) | `core/` + `packs/` restructure, FileRuleManifestData + TemplateResolver update | 🔲 Planificado |
+| FEV-17 | Template Directory Restructuring (v2.0 Phase 1) | `core/` + `packs/` restructure, FileRuleManifestData + TemplateResolver update | ✅ Completo |
 | FEV-18 | Agent Classification & Migration (v2.0 Phase 2) | ~345 IDEAL agents → packs, 59 IMPROVABLE merged, 13 REDUNDANT removed | 🔲 Planificado |
 | FEV-19 | Permission Unification & Subagent Table Removal (v2.0 Phase 3) | TD-V2-2, TD-V2-3, TD-V2-4: unified `task:` + docs update | 🔲 Planificado |
 | FEV-20 | Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4) | TD-V2-1, TD-V2-5: plugin cleanup + auto-discovery recursive scan | 🔲 Planificado |
@@ -194,8 +194,8 @@ Spec/ADR templates actualizados a formatos industriales (MADR v4.0 + RFC-based).
 - `src/domain/services/FileMergeEngine.ts` (actualizado) — pre-computación stageDecisions + emisión eventos
 - `src/application/helpers.ts` (actualizado) — `createProgressCallback()` extraído (DRY)
 - `src/application/postInstall.ts` (actualizado) — log events emitidos después de cada operación
-- `template/obligatorio/commands/help.md` (nuevo) — /help command definition
-- `template/obligatorio/.opencode/plugins/src/defaults.ts` (actualizado) — /help en 4 maps
+- `template/obligatorio/core/commands/help.md` (nuevo) — /help command definition
+- `template/obligatorio/core/.opencode/plugins/src/defaults.ts` (actualizado) — /help en 4 maps
 - `tests/integration/use-cases/progress-flow.test.ts` (nuevo) — 9 tests de progress events
 - `tests/integration/use-cases/progress-logs.test.ts` (nuevo) — 5 tests de structured logs
 - `tests/integration/adapters/clack-prompts-progress.test.ts` (nuevo) — 7 tests de adapter
@@ -281,15 +281,16 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 > **ADRs:** [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md)
 > **Tech Debt:** [TECH_DEBT.md](./TECH_DEBT.md) — TD-V2-1 a TD-V2-5
 
-### FEV-17 — Template Directory Restructuring 🔲
-**Esfuerzo:** ~4h | **Dependencias:** ninguna | **Spec:** S5-PACKS §2
-- Restructure `template/obligatorio/` → `core/` (infra: .opencode, commands, skills) + `packs/` (agentes)
-- Mover agentes existentes a `packs/main/` (6 primarios) y `packs/writers/` (3 writers)
-- Crear directorios vacíos para los 8 packs seleccionables
-- Actualizar `FileRuleManifestData.ts` para nuevas rutas `core/` y `packs/`
-- Actualizar `TemplateResolver` para resolver desde `core/` y `packs/<pack-id>/`
-- Actualizar tests E2E para nueva estructura de directorios
-**Resultado:** Template con estructura `core/` + `packs/` funcional. 0 regresiones E2E.
+### FEV-17 — Template Directory Restructuring ✅ Completo
+**Esfuerzo:** ~7h | **Dependencias:** ninguna | **Spec:** S5-PACKS §2
+- Restructure `template/obligatorio/` → `core/` (infra: .opencode, commands, skills, opencode.json, skills-lock.json) + `packs/` (agentes)
+- Mover agentes existentes a `packs/main/` (6 primarios), `packs/writers/` (3 writers) y `packs/sin-clasificar/` (95 no clasificados)
+- Crear directorios vacíos para los 8 packs seleccionables (con `.gitkeep`)
+- Actualizar `FileRuleManifestData.ts`: 7 entries mandatory → 4 source groupings (`core`, `packs/main`, `packs/writers`, `packs/sin-clasificar`) con `destPath` para mantener destino plano
+- Actualizar `IStagingSystem`/`BunFileSystem`/`FileMergeEngine`: soporte `destPath` (source ≠ destination)
+- Actualizar 16+ tests (unit, integration, plugin, packaging) + 1 E2E script a nuevas rutas
+- Documentación actualizada (README, CONTRIBUTING, WORKFLOW, TECH_DEBT, CHANGELOG)
+**Resultado:** Template con estructura `core/` + `packs/` funcional. Destino plano preservado (agents/, commands/ en raíz). 0 regresiones: 910 tests, 16/16 E2E, `just check` 0 errores.
 
 ### FEV-18 — Agent Classification & Migration 🔲
 **Esfuerzo:** ~8h | **Dependencias:** FEV-17 | **Spec:** S5-PACKS §3
