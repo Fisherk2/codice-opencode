@@ -34,13 +34,14 @@ A production-grade workspace integrating 51 engineering skills organized in 10 S
 - **6 Main Agents + 98 Subagents** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 98 subagents specialized in frontend, backend, DevOps, testing, security, and more
 - **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
 - **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
-- **MIT License** — Free for personal and commercial projects
 
 ---
 
 ### Mexican Development Pantheon — Main Agents
 
 Six primary agents orchestrate the SDD cycle, each with a specific role and permissions inspired by Mexican mythology:
+
+> **Model configuration:** The default models below are provided by the OpenCode provider (free tier) as a reference — replace them with your own providers. Run `opencode models` to list your available LLMs, or if you have no providers configured, use the `/connect` command inside the OpenCode TUI to connect them (see [OpenCode Zen providers docs](https://opencode.ai/docs/es/providers/#opencode-zen)).
 
 ### Huitzilopochtli 🏛️ — Supreme Orchestrator
 
@@ -56,9 +57,9 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Master of orchestration and strategic delegation</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/huitzilopochtli.md"><code>template/obligatorio/agents/huitzilopochtli.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>MiMo-V2.5</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>MiMo-V2.5</code> <code>MiniMax M3</code> <code>GLM 5.2</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> MiMo-V2.5 as default for complex context analysis and strategic delegation. DeepSeek V4 Flash for speed and cost. MiniMax M3 as a lightweight alternative. GLM 5.2 as critical reasoning alternative.</td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/ling-3.0-flash-free</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>MiniMax-M3</code> <code>Hy3</code> <code>Step 3.7</code> <code>GPT-5.6 Luna</code> <code>Gemini 3.5 Flash Lite</code> <code>Claude Sonnet 4.6</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> GPT-5.6 Luna as the cost-effective default (1M context). Hy3 or Gemini 3.5 Flash Lite for extreme speed/cost. Claude Sonnet 4.6 for critical routing with the full agent catalog.</td></tr>
 </table>
 
 ### Quetzalcoatl 🌬️ — Visionary Sage
@@ -75,9 +76,9 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>System architect and specification designer</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/quetzalcoatl.md"><code>template/obligatorio/agents/quetzalcoatl.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>Qwen 3.7 Plus</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>Kimi 2.6</code> <code>Claude Sonnet 4</code> <code>GLM 5.2</code> <code>GPT-5.3 Codex</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> Qwen 3.7 Plus as default for strong reasoning and coding balance. Claude Sonnet 4 for system design and structured specifications. GLM 5.2 as maximum reasoning alternative. Kimi 2.6 for UI/UX design reasoning. GPT-5.3 Codex for API design and code architecture.</td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/big-pickle</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Pro</code> <code>Qwen 3.7 Plus</code> <code>Kimi K3</code> <code>Claude Opus 4.6</code> <code>Gemini 3.1 Pro</code> <code>GPT-5.6 Terra</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Pro for long specs/ADRs at low cost. Qwen 3.7 for high-quality specs. Claude Opus 4.6 for publication-quality architecture/ADRs.</td></tr>
 </table>
 
 ### Moctezuma ⚔️ — Strategist and Commander
@@ -94,9 +95,9 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Task planner and work breakdown specialist</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/moctezuma.md"><code>template/obligatorio/agents/moctezuma.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>MiniMax M3</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>MiniMax M3</code> <code>Claude Haiku 4.5</code> <code>Kimi K2.5</code> <code>DeepSeek V4 Flash</code> <code>GPT-5.4 Mini</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> MiniMax M3 for detailed, structured plans. Claude Haiku 4.5 when speed is needed in task breakdown. Kimi K2.5 as backup alternative. DeepSeek V4 Flash for rapid iterative planning. GPT-5.4 Mini for structured task decomposition.</td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/nemotron-3-ultra-free</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>Nemotron 3 Ultra Free</code> <code>GLM-5.2</code> <code>MiniMax-M3</code> <code>Claude Sonnet 4.6</code> <code>GPT-5.4</code> <code>Gemini 3.5 Flash</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> Nemotron 3 Ultra Free as the default (deterministic, free). GLM-5.2 for structured task lists. Claude Sonnet 4.6 for strict acceptance criteria.</td></tr>
 </table>
 
 ### Tlaloc 🌧️ — Builder and Artisan
@@ -113,9 +114,9 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Main implementer and feature builder</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/tlaloc.md"><code>template/obligatorio/agents/tlaloc.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>DeepSeek V4 Flash</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>Kimi K2.7 Code</code> <code>MiMo-V2.5</code> <code>Claude Sonnet 4</code> <code>GPT-5.3 Codex</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash for general implementation due to speed. Kimi K2.7 Code as the best option for coding-intensive tasks — excels at writing, refactoring, and implementing code. MiMo-V2.5 for tasks requiring deep reasoning. Claude Sonnet 4 for high-quality code in critical features. GPT-5.3 Codex for extensive code generation and mass writing.</td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/deepseek-v4-flash-free</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>Kimi K2.7 Code</code> <code>DeepSeek V4 Pro</code> <code>GPT-5.3 Codex</code> <code>Claude Sonnet 4.6</code> <code>Grok Build 0.1</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash as the permanent default (best cost/quality for 150 steps, 384k output). Kimi K2.7 Code for code-intensive tasks. Claude Sonnet 4.6 / GPT-5.3 Codex for strict architectural rules.</td></tr>
 </table>
 
 ### Mictlantecuhtli 💀 — Judge and Guardian
@@ -132,9 +133,9 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Quality validator and deployment guardian</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/mictlantecuhtli.md"><code>template/obligatorio/agents/mictlantecuhtli.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>MiMo-V2.5</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>MiMo-V2.5</code> <code>Kimi K2.7 Code</code> <code>DeepSeek V4 Flash</code> <code>Claude Opus 4.6</code> <code>MiniMax M3</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> MiMo-V2.5 for fast test execution with deep reasoning. Kimi K2.7 Code for coding-intensive validation — excels at writing tests, fixing code paths, and implementing patches. DeepSeek V4 Flash for general validation. Claude Opus 4.6 for most rigorous pre-deployment validation. MiniMax M3 for test generation and coverage analysis.</td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/laguna-s-2.1-free</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>MiMo V2.5</code> <code>Laguna S 2.1</code> <code>Claude Haiku 4.5</code> <code>GPT-5.4 Mini</code> <code>Gemini 3.5 Flash Lite</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash / MiMo V2.5 for cheap test+patch loops (100 steps). Claude Haiku 4.5 for the final deployment gate. Gemini 3.5 Flash Lite for huge CI/log dumps.</td></tr>
 </table>
 
 ### Tezcatlipoca 🔮 — The Smoking Mirror
@@ -151,9 +152,9 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Code critic and quality auditor</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/tezcatlipoca.md"><code>template/obligatorio/agents/tezcatlipoca.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>GLM 5.2</code></td></tr>
-  <tr><td colspan="2"><b>Recommended Models:</b> <code>GLM 5.2</code> <code>Claude Opus 4.6</code> <code>DeepSeek V4 Pro</code> <code>GPT-5.5 Pro</code> <code>Claude Sonnet 4.6</code></td></tr>
-  <tr><td colspan="2"><b>Model Guide:</b> GLM 5.2 as default for critical reasoning and code audit. Claude Opus 4.6 for most rigorous pre-merge review. DeepSeek V4 Pro for deep security analysis. GPT-5.5 Pro for maximum depth security audits. Claude Sonnet 4.6 for rapid review cycles.</td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/mimo-v2.5-free</code></td></tr>
+  <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Pro</code> <code>GLM-5.2</code> <code>Kimi K3</code> <code>Claude Opus 4.6</code> <code>GPT-5.6 Sol</code> <code>Gemini 3.1 Pro</code></td></tr>
+  <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Pro for deep 5-axis audit (384k report, <$1/M). Claude Opus 4.6 for pre-merge/security audit. Gemini 3.1 Pro for recurring full-repo audit.</td></tr>
 </table>
 
 Additionally, over **98 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
