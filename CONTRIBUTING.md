@@ -52,12 +52,12 @@ just test         # All unit + integration tests
 
 ```bash
 just test           # All unit + integration tests
-just test:unit      # Domain logic only (pure functions, entities)
-just test:integration  # Adapters + use cases with mocked externals
+just test-unit      # Domain logic only (pure functions, entities)
+just test-integration  # Adapters + use cases with mocked externals
 just test-packaging # npm tarball structure validation (5 scenarios)
-just test:e2e       # CLI against isolated directories (15 scenarios)
+just test-e2e       # CLI against isolated directories (15 scenarios)
 just test-watch     # Watch mode for development
-just test:coverage  # With coverage report
+just test-coverage  # With coverage report
 ```
 
 - **Unit tests:** > 90% coverage target. Domain layer only.

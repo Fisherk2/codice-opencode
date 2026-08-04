@@ -381,6 +381,172 @@ describe("FileMergeEngine — Error handling", () => {
 	});
 });
 
+// ---- destPath edge cases (FEV-17) ----
+
+describe("FileMergeEngine — destPath edge cases", () => {
+	test("forwards empty string destPath ('') to stageFile as-is", async () => {
+		const { fs, calls } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+
+		const rules: FileRule[] = [
+			{
+				path: "core",
+				destPath: "",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Core infrastructure (spreads to root)",
+			},
+		];
+		const result = await engine.execute(rules);
+
+		expect(result.ok).toBe(true);
+		const stageCalls = calls.filter((c) => c.method === "stageFile");
+		expect(stageCalls.length).toBe(1);
+		// destPath="" is passed as-is — not replaced with rule.path
+		expect(stageCalls[0]?.args[0]).toBe("core");
+		expect(stageCalls[0]?.args[1]).toBe("");
+	});
+
+	test("multiple rules with same destPath stage independently", async () => {
+		const { fs, calls } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+
+		const rules: FileRule[] = [
+			{
+				path: "packs/main",
+				destPath: "agents",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Primary agents",
+			},
+			{
+				path: "packs/writers",
+				destPath: "agents",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Writer agents",
+			},
+			{
+				path: "packs/sin-clasificar",
+				destPath: "agents",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Unclassified agents",
+			},
+		];
+		const result = await engine.execute(rules);
+
+		expect(result.ok).toBe(true);
+		const stageCalls = calls.filter((c) => c.method === "stageFile");
+		expect(stageCalls.length).toBe(3);
+		// All three should have source path and destPath="agents"
+		expect(stageCalls[0]?.args[0]).toBe("packs/main");
+		expect(stageCalls[0]?.args[1]).toBe("agents");
+		expect(stageCalls[1]?.args[0]).toBe("packs/writers");
+		expect(stageCalls[1]?.args[1]).toBe("agents");
+		expect(stageCalls[2]?.args[0]).toBe("packs/sin-clasificar");
+		expect(stageCalls[2]?.args[1]).toBe("agents");
+	});
+
+	test("destPath with trailing slash is forwarded as-is (no normalization)", async () => {
+		const { fs, calls } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+
+		const rules: FileRule[] = [
+			{
+				path: "packs/main",
+				destPath: "agents/",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Agents with trailing slash",
+			},
+		];
+		const result = await engine.execute(rules);
+
+		expect(result.ok).toBe(true);
+		const stageCalls = calls.filter((c) => c.method === "stageFile");
+		expect(stageCalls.length).toBe(1);
+		// Trailing slash is forwarded — AtomicStager handles normalization
+		expect(stageCalls[0]?.args[1]).toBe("agents/");
+	});
+
+	test("mixed destPath and non-destPath rules in same execute", async () => {
+		const { fs, calls } = createMockFs();
+		fs.destinationExists = async () => false;
+		const engine = new FileMergeEngine(fs);
+
+		const rules: FileRule[] = [
+			{
+				path: "core",
+				destPath: "",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Core (root spread)",
+			},
+			{
+				path: "packs/main",
+				destPath: "agents",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Agents",
+			},
+			rule("README.md", "standard"), // no destPath
+		];
+		const result = await engine.execute(rules);
+
+		expect(result.ok).toBe(true);
+		const stageCalls = calls.filter((c) => c.method === "stageFile");
+		expect(stageCalls.length).toBe(3);
+		// core → destPath=""
+		expect(stageCalls[0]?.args[0]).toBe("core");
+		expect(stageCalls[0]?.args[1]).toBe("");
+		// packs/main → destPath="agents"
+		expect(stageCalls[1]?.args[0]).toBe("packs/main");
+		expect(stageCalls[1]?.args[1]).toBe("agents");
+		// README.md → destPath=rule.path (backward compat)
+		expect(stageCalls[2]?.args[0]).toBe("README.md");
+		expect(stageCalls[2]?.args[1]).toBe("README.md");
+	});
+
+	test("progress events report destPath for each rule, not source path", async () => {
+		const { fs } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+		const events: ProgressEvent[] = [];
+		const cb = (e: ProgressEvent): void => {
+			events.push(e);
+		};
+
+		const rules: FileRule[] = [
+			{
+				path: "core",
+				destPath: "",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Core",
+			},
+			{
+				path: "packs/main",
+				destPath: "agents",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Agents",
+			},
+		];
+		await engine.execute(rules, { onProgress: cb });
+
+		const starts = events.filter((e) => e.type === "stage_start");
+		expect(starts.length).toBe(2);
+		// First event reports destPath="" (root), not source "core"
+		if (starts[0]?.type === "stage_start") {
+			expect(starts[0].filePath).toBe("");
+		}
+		// Second event reports destPath="agents", not source "packs/main"
+		if (starts[1]?.type === "stage_start") {
+			expect(starts[1].filePath).toBe("agents");
+		}
+	});
+});
+
 // ---- Exclusion logic ----
 
 describe("FileMergeEngine — Exclusion logic", () => {

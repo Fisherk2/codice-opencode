@@ -91,6 +91,35 @@ describe("Category distribution", () => {
 		expect(paths).toContain("packs/sin-clasificar");
 	});
 
+	test("mandatory core rule has destPath='' (spreads to destination root)", () => {
+		const coreRule = FILE_RULE_MANIFEST.find((r) => r.path === "core");
+		expect(coreRule).toBeDefined();
+		expect(coreRule!.destPath).toBe("");
+	});
+
+	test("mandatory pack rules have destPath='agents' (merge into flat agents/)", () => {
+		const packPaths = ["packs/main", "packs/writers", "packs/sin-clasificar"];
+		for (const packPath of packPaths) {
+			const packRule = FILE_RULE_MANIFEST.find((r) => r.path === packPath);
+			expect(packRule).toBeDefined();
+			expect(packRule!.destPath).toBe("agents");
+		}
+	});
+
+	test("standard rules have no destPath (use path as-is)", () => {
+		const standard = getStandardRules();
+		for (const r of standard) {
+			expect(r.destPath).toBeUndefined();
+		}
+	});
+
+	test("optional rules have no destPath (use path as-is)", () => {
+		const optional = getOptionalRules();
+		for (const r of optional) {
+			expect(r.destPath).toBeUndefined();
+		}
+	});
+
 	test("standard rules include documentation files", () => {
 		const standard = getStandardRules();
 		const paths = standard.map((r) => r.path);
