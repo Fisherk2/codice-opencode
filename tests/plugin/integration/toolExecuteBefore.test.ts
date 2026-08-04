@@ -13,13 +13,13 @@ import { describe, expect, test } from "bun:test";
 import {
 	DESTRUCTIVE_PATTERNS,
 	VALID_SUBAGENTS,
-} from "../../../template/obligatorio/.opencode/plugins/src/defaults";
+} from "../../../template/obligatorio/core/.opencode/plugins/src/defaults";
 
 // ---------------------------------------------------------------------------
 // Import pure functions (no longer replicated — extracted to module)
 // ---------------------------------------------------------------------------
 
-import { normalizeBash } from "../../../template/obligatorio/.opencode/plugins/src/normalizeBash";
+import { normalizeBash } from "../../../template/obligatorio/core/.opencode/plugins/src/normalizeBash";
 
 /** Returns true if the command matches any destructive pattern after normalization. */
 function isDestructive(cmd: string): boolean {

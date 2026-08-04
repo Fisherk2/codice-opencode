@@ -33,7 +33,11 @@ class FakeFileSystem implements IFileSystem {
 	async destinationExists(_path: string): Promise<boolean> {
 		return false;
 	}
-	async stageFile(_path: string, _excludeSubDirs?: Set<string>): Promise<void> {}
+	async stageFile(
+		_path: string,
+		_destPath?: string,
+		_excludeSubDirs?: Set<string>,
+	): Promise<void> {}
 	async commitStaging(): Promise<void> {}
 	async cleanStaging(): Promise<void> {}
 	async isWritable(): Promise<boolean> {

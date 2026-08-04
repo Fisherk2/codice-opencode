@@ -32,8 +32,8 @@ function createMockFs(): {
 			calls.push({ method: "destinationExists", args: [path] });
 			return true; // default: path exists
 		},
-		stageFile: async (relativePath: string, excludeSubDirs?: Set<string>) => {
-			calls.push({ method: "stageFile", args: [relativePath, excludeSubDirs] });
+		stageFile: async (relativePath: string, destPath?: string, excludeSubDirs?: Set<string>) => {
+			calls.push({ method: "stageFile", args: [relativePath, destPath, excludeSubDirs] });
 		},
 		commitStaging: async () => {
 			calls.push({ method: "commitStaging", args: [] });

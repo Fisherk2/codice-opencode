@@ -33,8 +33,8 @@ function createMockFs(): {
 			calls.push({ method: "destinationExists", args: [path] });
 			return true; // default: file already exists
 		},
-		stageFile: async (relativePath: string, excludeSubDirs?: Set<string>) => {
-			calls.push({ method: "stageFile", args: [relativePath, excludeSubDirs] });
+		stageFile: async (relativePath: string, destPath?: string, excludeSubDirs?: Set<string>) => {
+			calls.push({ method: "stageFile", args: [relativePath, destPath, excludeSubDirs] });
 		},
 		commitStaging: async () => {
 			calls.push({ method: "commitStaging", args: [] });
@@ -98,6 +98,43 @@ describe("FileMergeEngine — Mandatory rules", () => {
 		expect(result.ok).toBe(true);
 		const commitCalls = calls.filter((c) => c.method === "commitStaging");
 		expect(commitCalls.length).toBe(1);
+	});
+
+	test("forwards rule.path as source and destPath as destination (FEV-17)", async () => {
+		const { fs, calls } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+
+		const rules: FileRule[] = [
+			{
+				path: "packs/main",
+				destPath: "agents",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Primary agents pack",
+			},
+		];
+		const result = await engine.execute(rules);
+
+		expect(result.ok).toBe(true);
+		const stageCalls = calls.filter((c) => c.method === "stageFile");
+		expect(stageCalls.length).toBe(1);
+		expect(stageCalls[0]?.args[0]).toBe("packs/main");
+		expect(stageCalls[0]?.args[1]).toBe("agents");
+	});
+
+	test("defaults destPath to rule.path when destPath is omitted (backward compat)", async () => {
+		const { fs, calls } = createMockFs();
+		fs.destinationExists = async () => false;
+		const engine = new FileMergeEngine(fs);
+
+		const rules = [rule("README.md", "standard")];
+		const result = await engine.execute(rules);
+
+		expect(result.ok).toBe(true);
+		const stageCalls = calls.filter((c) => c.method === "stageFile");
+		expect(stageCalls.length).toBe(1);
+		expect(stageCalls[0]?.args[0]).toBe("README.md");
+		expect(stageCalls[0]?.args[1]).toBe("README.md");
 	});
 });
 
@@ -365,8 +402,8 @@ describe("FileMergeEngine — Exclusion logic", () => {
 		const docsStageCall = calls.find((c) => c.method === "stageFile" && c.args[0] === "docs");
 		expect(docsStageCall).toBeDefined();
 
-		// The second argument should be the exclusion set containing "guides"
-		const excludeSet = docsStageCall?.args[1] as Set<string> | undefined;
+		// The third argument (after source+dest paths) is the exclusion set
+		const excludeSet = docsStageCall?.args[2] as Set<string> | undefined;
 		expect(excludeSet).toBeDefined();
 		expect(excludeSet?.has("guides")).toBe(true);
 	});
@@ -386,7 +423,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 		// Mandatory dirs should NOT have exclusions
 		const agentsStageCall = calls.find((c) => c.method === "stageFile" && c.args[0] === "agents");
 		expect(agentsStageCall).toBeDefined();
-		expect(agentsStageCall?.args[1]).toBeUndefined();
+		expect(agentsStageCall?.args[2]).toBeUndefined();
 	});
 
 	test("does NOT compute exclusions when no overlap exists", async () => {
@@ -404,7 +441,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 
 		const docsStageCall = calls.find((c) => c.method === "stageFile" && c.args[0] === "docs");
 		expect(docsStageCall).toBeDefined();
-		expect(docsStageCall?.args[1]).toBeUndefined();
+		expect(docsStageCall?.args[2]).toBeUndefined();
 	});
 
 	test("computes exclusions for multiple overlapping optional sub-paths", async () => {
@@ -426,7 +463,7 @@ describe("FileMergeEngine — Exclusion logic", () => {
 		const specsStageCall = calls.find((c) => c.method === "stageFile" && c.args[0] === "specs");
 		expect(specsStageCall).toBeDefined();
 
-		const excludeSet = specsStageCall?.args[1] as Set<string> | undefined;
+		const excludeSet = specsStageCall?.args[2] as Set<string> | undefined;
 		expect(excludeSet).toBeDefined();
 		expect(excludeSet?.has("design")).toBe(true);
 		expect(excludeSet?.has("adr")).toBe(true);
@@ -463,6 +500,34 @@ describe("FileMergeEngine — Progress events", () => {
 		expect(completes.length).toBe(2);
 		expect(starts[0]?.filePath).toBe("opencode.json");
 		expect(starts[1]?.filePath).toBe("README.md");
+	});
+
+	test("progress filePath reports destPath when rule overrides it (FEV-17)", async () => {
+		const { fs } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+		const { cb, events } = collectEvents();
+
+		const rules: FileRule[] = [
+			{
+				path: "packs/writers",
+				destPath: "agents",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Writer agents pack",
+			},
+		];
+		const result = await engine.execute(rules, { onProgress: cb });
+
+		expect(result.ok).toBe(true);
+		const starts = events.filter((e) => e.type === "stage_start");
+		expect(starts.length).toBe(1);
+		if (starts[0]?.type === "stage_start") {
+			expect(starts[0].filePath).toBe("agents");
+		}
+		const completes = events.filter((e) => e.type === "stage_complete");
+		if (completes[0]?.type === "stage_complete") {
+			expect(completes[0].filePath).toBe("agents");
+		}
 	});
 
 	test("emits stage_skip for noTemplateCopy files", async () => {
@@ -602,9 +667,9 @@ describe("FileMergeEngine — Progress events", () => {
 
 		let spyCalled = false;
 		const originalStageFile = fs.stageFile;
-		fs.stageFile = async (path: string, excludeSubDirs?: Set<string>) => {
+		fs.stageFile = async (path: string, destPath?: string, excludeSubDirs?: Set<string>) => {
 			spyCalled = true;
-			await originalStageFile(path, excludeSubDirs);
+			await originalStageFile(path, destPath, excludeSubDirs);
 		};
 
 		const result = await engine.execute([rule("opencode.json", "mandatory")]);

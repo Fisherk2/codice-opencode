@@ -21,7 +21,8 @@ import {
 
 describe("FILE_RULE_MANIFEST completeness", () => {
 	test("manifest is a non-empty array", () => {
-		expect(FILE_RULE_MANIFEST.length).toBeGreaterThanOrEqual(27);
+		// FEV-17 collapsed mandatory from 7 to 4 source groupings (29 → 26).
+		expect(FILE_RULE_MANIFEST.length).toBeGreaterThanOrEqual(26);
 	});
 
 	test("no duplicate paths in manifest", () => {
@@ -79,14 +80,15 @@ describe("Category distribution", () => {
 		expect(mandatory.length + standard.length + optional.length).toBe(FILE_RULE_MANIFEST.length);
 	});
 
-	test("mandatory rules include core config files", () => {
+	test("mandatory rules include core and pack source groupings (FEV-17)", () => {
 		const mandatory = getMandatoryRules();
 		const paths = mandatory.map((r) => r.path);
-		expect(paths).toContain("opencode.json");
-		expect(paths).toContain("skills-lock.json");
-		expect(paths).toContain("agents");
-		expect(paths).toContain("commands");
-		expect(paths).toContain(".opencode");
+		// v2.0 collapsed 7 standalone mandatory entries into 4 source groupings.
+		// core/ spreads to destination root; packs/* merge into destination agents/.
+		expect(paths).toContain("core");
+		expect(paths).toContain("packs/main");
+		expect(paths).toContain("packs/writers");
+		expect(paths).toContain("packs/sin-clasificar");
 	});
 
 	test("standard rules include documentation files", () => {
@@ -123,7 +125,7 @@ describe("Category distribution", () => {
 
 describe("createFileRule helper", () => {
 	test("returns FileRule for known mandatory path", () => {
-		const rule = createFileRule("opencode.json");
+		const rule = createFileRule("core");
 		expect(rule).not.toBeNull();
 		expect(rule!.category).toBe("mandatory");
 	});
@@ -154,15 +156,15 @@ describe("createFileRule helper", () => {
 
 describe("Edge cases", () => {
 	test("path with leading ./ is normalized", () => {
-		const rule = createFileRule("./opencode.json");
+		const rule = createFileRule("./core");
 		expect(rule).not.toBeNull();
-		expect(rule!.path).toBe("opencode.json");
+		expect(rule!.path).toBe("core");
 	});
 
 	test("path with trailing slash is handled", () => {
-		const rule = createFileRule("agents/");
+		const rule = createFileRule("core/");
 		expect(rule).not.toBeNull();
-		expect(rule!.path).toBe("agents");
+		expect(rule!.path).toBe("core");
 	});
 });
 

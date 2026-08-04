@@ -48,7 +48,7 @@ function createMockFileSystem(): {
 		}),
 		stageFile: mockFn(async (path: string) => {
 			calls.stageFile.push(path);
-		}) as (path: string, excludeSubDirs?: Set<string>) => Promise<void>,
+		}) as (path: string, destPath?: string, excludeSubDirs?: Set<string>) => Promise<void>,
 		commitStaging: mockFn(async () => {
 			calls.commitStaging++;
 		}),

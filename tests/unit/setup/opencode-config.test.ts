@@ -14,7 +14,7 @@ import * as path from "node:path";
 
 const OPENCODE_CONFIG_PATH = path.resolve(
 	import.meta.dir,
-	"../../../template/obligatorio/opencode.json",
+	"../../../template/obligatorio/core/opencode.json",
 );
 
 interface OpenCodeConfig {
