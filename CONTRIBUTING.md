@@ -144,13 +144,11 @@ Códice installs an OpenCode workspace template organized into three file catego
 
 ### Add a New Agent
 
-1. Create `template/obligatorio/packs/<pack-name>/<agent-name>.md` with YAML frontmatter (name, role, scope, rules, composition). For v2.0, agents are organized into packs (source groupings) — use `packs/sin-clasificar/` for unclassified agents until FEV-18 formalizes pack assignment.
+1. Create `template/obligatorio/packs/<pack-name>/<agent-name>.md` with YAML frontmatter (name, role, scope, rules, composition).
 2. Update the agent catalog at the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents).
-3. Update delegation tables of primary agents that can invoke the new agent (quetzalcoatl, tlaloc, mictlantecuhtli).
-4. Update huitzilopochtli's catalog in `template/obligatorio/packs/main/huitzilopochtli.md`.
-5. Restart your OpenCode session.
+3. Restart your OpenCode session.
 
-**Primary agents** additionally require: SDD plugin hooks, orchestration patterns, and persona table updates.
+**Primary agents** additionally require: SDD plugin hooks and orchestration patterns.
 
 ### Add a New Skill
 
