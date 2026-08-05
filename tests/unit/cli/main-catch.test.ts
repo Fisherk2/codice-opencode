@@ -43,6 +43,10 @@ const mockExecute = () => {
 	throw new Error("Unexpected internal error");
 };
 
+const mockExecuteNonError = () => {
+	throw "string error value";
+};
+
 function installContainerStub(): void {
 	mock.module(CONTAINER_MODULE_PATH, () => ({
 		createDependencies: () => ({
@@ -121,5 +125,76 @@ describe("main() — catch block", () => {
 		// Verify "Fatal error" message was logged
 		expect(fatalMessages.length).toBeGreaterThanOrEqual(1);
 		expect(fatalMessages[0]).toContain("Unexpected internal error");
+	});
+
+	test("handles non-Error throw via String() conversion in catch block", async () => {
+		// Install a stub that throws a non-Error value (string) to cover
+		// the String(error) branch in the catch block (line 184 of main.ts)
+		mock.module(CONTAINER_MODULE_PATH, () => ({
+			createDependencies: () => ({
+				fileSystem: {} as Record<string, unknown>,
+				userPrompt: {
+					showIntro: () => {},
+					showWarning: () => {},
+					showInfo: () => {},
+					confirm: () => Promise.resolve(true),
+					selectOptional: () => Promise.resolve([]),
+					showProgressBar: () => {},
+					updateProgress: () => {},
+					completeProgress: () => {},
+					logProgressEvent: () => {},
+					promptForMode: () => Promise.resolve("clean" as const),
+					showSuccess: () => {},
+					showCancel: () => {},
+					showError: () => {},
+				},
+				cleanInstall: { execute: mockExecuteNonError },
+				projectInstall: { execute: mockExecuteNonError },
+				updateWorkspace: { execute: mockExecuteNonError },
+			}),
+		}));
+
+		const origArgv = process.argv;
+		const origExit = process.exit;
+		let exitCode = -1;
+
+		process.exit = ((code: number) => {
+			exitCode = code;
+		}) as unknown as typeof process.exit;
+
+		const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
+
+		process.argv = [
+			"bun",
+			"main.ts",
+			"--clean",
+			"--force",
+			"--dest",
+			"/tmp/test-main-catch-nonerror",
+		];
+
+		let fatalMessages: string[] = [];
+
+		try {
+			await main();
+		} catch {
+			// main() may or may not throw depending on how the mock resolves
+		} finally {
+			fatalMessages = consoleSpy.mock.calls
+				.map((args: unknown[]) => String(args[0] ?? ""))
+				.filter((message: string) => message.includes("Fatal error"));
+			consoleSpy.mockRestore();
+			process.exit = origExit;
+			process.argv = origArgv;
+			// Restore original stub for other tests in this suite
+			installContainerStub();
+		}
+
+		// Verify catch block handled the non-Error throw
+		expect(exitCode).toBe(EXIT_ERROR);
+
+		// Verify "Fatal error" message was logged with String()-converted value
+		expect(fatalMessages.length).toBeGreaterThanOrEqual(1);
+		expect(fatalMessages[0]).toContain("string error value");
 	});
 });
