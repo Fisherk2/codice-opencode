@@ -7,8 +7,6 @@ hidden: true
 permission:
   write: ask
   edit: ask
-  bash:
-    "*": ask
   grep: allow
   glob: allow
   lsp: allow
