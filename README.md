@@ -31,7 +31,7 @@ A production-grade workspace integrating 51 engineering skills organized in 10 S
 
 - **52 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, Obsidian vault management, and more, organized in 10 SDD phases (3 optional) + Extra
 - **13 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`
-- **6 Main Agents + 98 Subagents** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 98 subagents specialized in frontend, backend, DevOps, testing, security, and more
+- **6 Main Agents + 349 Subagents** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 349 subagents specialized in frontend, backend, DevOps, testing, security, and more
 - **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
 - **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
 

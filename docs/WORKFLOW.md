@@ -387,5 +387,5 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
 - **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
-- **v2.0.0 planificado:** FEV-17 ✅ completado, FEV-18 ✅ completado → FEV-19 a FEV-23 🔲 pendientes (Agent Pack System + Installer UX v2) (specs: S5-PACKS, S6-UX-V2)
-- **Esfuerzo estimado v2.0.0:** ~38h (FEV-17: 4h ✅, FEV-18: 8h ✅, FEV-19: 3h 🔲, FEV-20: 3h 🔲, FEV-21: 8h 🔲, FEV-22: 6h 🔲, FEV-23: 6h 🔲)
+- **v2.0.0 planificado:** FEV-17 ✅ completado, FEV-18 ✅ completado, FEV-19 ✅ completado (2026-08-05) → FEV-20 a FEV-23 🔲 pendientes (Agent Pack System + Installer UX v2) (specs: S5-PACKS, S6-UX-V2)
+- **Esfuerzo estimado v2.0.0:** ~38h (FEV-17: 4h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h 🔲, FEV-21: 8h 🔲, FEV-22: 6h 🔲, FEV-23: 6h 🔲)

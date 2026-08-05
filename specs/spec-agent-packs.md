@@ -164,7 +164,7 @@ Four primary agents (quetzalcoatl, tlaloc, mictlantecuhtli, huitzilopochtli) use
 | **moctezuma** | `task: "*": deny` | **UNCHANGED** | Non-delegating by design — task breakdown only |
 | **tezcatlipoca** | `task: "*": deny` | **UNCHANGED** | Non-delegating by design — pure analysis |
 
-**Denied primaries (5):** `huitzilopochtli`, `quetzalcoatl`, `moctezuma`, `tlaloc`, `mictlantecuhtli` — prevents infinite delegation loops.
+**Denied primaries (5 per agent, amended FEV-19 2026-08-05):** each delegating primary denies the 5 *other* primaries — e.g., huitzilopochtli denies `quetzalcoatl`, `tezcatlipoca`, `tlaloc`, `moctezuma`, `mictlantecuhtli`. Tezcatlipoca is included in every deny-list; no agent denies itself. Primary agents never delegate to each other (prevents infinite delegation loops).
 
 ### 4.3 Subagent Table Removal
 
@@ -267,7 +267,7 @@ agents/ (or template/obligatorio/packs/)
 | SC-P3 | `software-development` is selected by default in installer | E2E test |
 | SC-P4 | Minimum 1 pack must be selected | Unit test of validation logic |
 | SC-P5 | 4 primary agents have unified `task: "*": allow` permissions | Grep validation |
-| SC-P6 | No "AVAILABLE SUBAGENTS" sections in quetzalcoatl, tlaloc, mictlantecuhtli | Grep validation |
+| SC-P6 | No "AVAILABLE SUBAGENTS" sections in any of the 6 primary agents (amended FEV-19 — huitzilopochtli included) | Grep validation |
 | SC-P7 | `VALID_SUBAGENTS` Set removed from plugin code | Grep validation |
 | SC-P8 | Auto-discovery recursively scans `packs/` subdirectories | Integration test |
 | SC-P9 | CONTRIBUTING.md reflects new agent creation workflow | Manual review |

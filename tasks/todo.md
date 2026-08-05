@@ -1,9 +1,9 @@
 # FEV-19 Todo List — Permission Unification & Subagent Table Removal (v2.0 Phase 3)
 
-**Phase:** FEV-19 (v2.0 Phase 3) — 🔲 Planificado (2026-08-05)
-**Scope:** Unificar permisos `task:` de 4 agentes primarios delegadores a patrón `"*": allow` + deny 5 primarios. Eliminar secciones redundantes "AVAILABLE SUBAGENTS" de 3 agentes. Actualizar `CONTRIBUTING.md` y `docs/wiki-source/Agents.md`.
+**Phase:** FEV-19 (v2.0 Phase 3) — ✅ Completado (2026-08-05)
+**Scope:** Unificar permisos `task:` de 4 agentes primarios delegadores a patrón `"*": allow` + deny 5 primarios. **Eliminar TODOS los índices "AVAILABLE SUBAGENTS" de los 6 agentes primarios** (incluyendo el catálogo canónico de huitzilopochtli — expansión de scope). Actualizar `CONTRIBUTING.md` y `docs/wiki-source/Agents.md`.
 **Spec:** [specs/spec-agent-packs.md §4](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [docs/WORKFLOW.md §FEV-19](../docs/WORKFLOW.md)
-**Tech Debt:** TD-V2-2, TD-V2-3, TD-V2-4
+**Tech Debt:** TD-V2-2, TD-V2-3, TD-V2-4 (✅ cerrados)
 **Date:** 2026-08-05
 **Author:** Moctezuma (Strategic Planner)
 **Full plan:** [plan.md](./plan.md)
@@ -77,61 +77,62 @@ Phase 4: Docs & Commit (0.5h, gates FEV-20)
 
 ---
 
-## Phase 1: Per-Agent Updates 🔲
+## Phase 1: Per-Agent Updates ✅ COMPLETA
 
-- [ ] **Task 1.1:** Unify `quetzalcoatl.md` permissions (`"*": allow` + deny 5 otros primarios incl. tezcatlipoca) + remove "AVAILABLE SUBAGENTS" section (lines 74-83) + update RULES (line 91). Commit: `refactor(agents): unify quetzalcoatl task: permissions and remove redundant subagent catalog`
-- [ ] **Task 1.2:** Unify `tlaloc.md` permissions (73 entries → `"*": allow` + deny 5 otros primarios incl. tezcatlipoca) + remove "AVAILABLE SUBAGENTS" section (lines 108-121) + update RULES (line 128). Commit: `refactor(agents): unify tlaloc task: permissions and remove redundant subagent catalog (73 entries → 1)`
-- [ ] **Task 1.3:** Unify `mictlantecuhtli.md` permissions (12 entries → `"*": allow` + deny 5 otros primarios incl. tezcatlipoca) + remove "AVAILABLE SUBAGENTS" section (lines 47-54) + update RULES (line 62). Commit: `refactor(agents): unify mictlantecuhtli task: permissions and remove redundant subagent catalog`
+- [x] **Task 1.1:** Unify `quetzalcoatl.md` permissions (`"*": allow` + deny 5 otros primarios incl. tezcatlipoca) + remove "AVAILABLE SUBAGENTS" section (lines 74-83) + update RULES (line 91). Commit: `refactor(agents): unify quetzalcoatl task: permissions and remove redundant subagent catalog`
+- [x] **Task 1.2:** Unify `tlaloc.md` permissions (73 entries → `"*": allow` + deny 5 otros primarios incl. tezcatlipoca) + remove "AVAILABLE SUBAGENTS" section (lines 108-121) + update RULES (line 128). Commit: `refactor(agents): unify tlaloc task: permissions and remove redundant subagent catalog (73 entries → 1)`
+- [x] **Task 1.3:** Unify `mictlantecuhtli.md` permissions (12 entries → `"*": allow` + deny 5 otros primarios incl. tezcatlipoca) + remove "AVAILABLE SUBAGENTS" section (lines 47-54) + update RULES (line 62). Commit: `refactor(agents): unify mictlantecuhtli task: permissions and remove redundant subagent catalog`
+- [x] **Task 1.4 (scope+):** Remove `huitzilopochtli.md` catalog (~355 subagents) — no index in any primary agent. RULES → `agents/` directory. Commit: `refactor(agents): remove huitzilopochtli subagent catalog; reference agents/ directory`
+- [x] **Task 1.5 (user edit):** quetzalcoatl RULES wording → "use ANY subagents in `agents/`". Commit: `refactor(agents): reference agents/ directory in quetzalcoatl RULES`
 
-**Checkpoint:** 🔲
-- [ ] 3 agentes con `task: "*": allow` + 5 deny primaries
-- [ ] 3 secciones "AVAILABLE SUBAGENTS" eliminadas
-- [ ] 3 RULES actualizados (referencia a "huitzilopochtli's canonical catalog")
-- [ ] 106 explicit allow entries removidos
-- [ ] **Review con humano antes de Phase 2**
-
----
-
-## Phase 2: Documentation Updates 🔲
-
-- [ ] **Task 2.1:** Update `CONTRIBUTING.md` — "Add a New Agent" 5 → 4 steps, remove "persona table updates". Commit: `docs(contributing): remove delegation table step and persona updates requirement (FEV-19)`
-- [ ] **Task 2.2:** Update `docs/wiki-source/Agents.md` — agent count (104 → ~355), file tree (`agents/` → `packs/`), permission model, remove "Step 4: Update Delegation Tables". Commit: `docs(wiki): update Agents.md for unified permissions and pack structure (FEV-19)`
-
-**Checkpoint:** 🔲
-- [ ] `CONTRIBUTING.md` actualizado: 4 steps, sin "persona table updates"
-- [ ] `docs/wiki-source/Agents.md` actualizado: count, file tree, permission model
-- [ ] **Review con humano antes de Phase 3**
+**Checkpoint:** ✅
+- [x] 4 agentes con `task: "*": allow` + deny 5 otros primarios (incl. tezcatlipoca, sin self-deny)
+- [x] 4 secciones "AVAILABLE SUBAGENTS" eliminadas (quetzalcoatl, tlaloc, mictlantecuhtli, huitzilopochtli)
+- [x] 106 explicit allow entries removidos (21 + 73 + 12)
+- [x] moctezuma/tezcatlipoca intactos (`task: "*": deny`)
+- [x] **Review con humano** — deny-list semantics confirmadas por usuario (no self-deny, deny 5 otros)
 
 ---
 
-## Phase 3: Verification 🔲
+## Phase 2: Documentation Updates ✅ COMPLETA
 
-- [ ] **Task 3.1:** Run full verification — `just check` (0 errors) + `just test` (986+ tests pass) + `just test-e2e` (16/16 scenarios)
-- [ ] Manual validation:
-  - [ ] `head -20 quetzalcoatl.md` muestra YAML válido con `task: "*": allow`
-  - [ ] `head -20 tlaloc.md` muestra YAML válido
-  - [ ] `head -20 mictlantecuhtli.md` muestra YAML válido
-  - [ ] `grep "AVAILABLE SUBAGENTS" quetzalcoatl.md tlaloc.md mictlantecuhtli.md` returns 0
-  - [ ] `grep "AVAILABLE SUBAGENTS" huitzilopochtli.md` returns 1 (preserved)
+- [x] **Task 2.1:** Update `CONTRIBUTING.md` — "Add a New Agent" 5 → 3 steps (remove delegation tables + huitzilopochtli catalog + persona updates). Commit: `docs(contributing): remove delegation table and catalog update steps (FEV-19)`
+- [x] **Task 2.2:** Update `docs/wiki-source/Agents.md` — agent count (104 → ~355), file tree (`agents/` → `packs/`), permission model, remove "Step 4: Update Delegation Tables". Commit: `docs(wiki): update Agents.md for unified permissions and pack structure (FEV-19)`
+- [x] **Bonus:** README subagent count 98 → 349 (line 160 + features line)
 
-**Checkpoint:** 🔲
-- [ ] `just check` 0 errors
-- [ ] `just test` 986+ tests pass
-- [ ] `just test-e2e` 16/16 pass
-- [ ] Manual YAML + grep validation OK
+**Checkpoint:** ✅
+- [x] `CONTRIBUTING.md` actualizado: 3 steps, sin "persona table updates"
+- [x] `docs/wiki-source/Agents.md` actualizado: count, file tree, permission model
+- [x] **Review con humano** — docs coherentes con código
 
 ---
 
-## Phase 4: Documentation & Commit 🔲
+## Phase 3: Verification ✅ COMPLETA
 
-- [ ] **Task 4.1:** Update `CHANGELOG.md` (FEV-19 entry) + `docs/WORKFLOW.md` (FEV-19 status ✅) + `docs/TECH_DEBT.md` (close TD-V2-2/3/4). Commit: `docs: FEV-19 changelog, workflow, tech debt updates (TD-V2-2/3/4 closed)`
-- [ ] **Task 4.2:** Documentar PR description (no `git push` — single contributor, local + squash later)
+- [x] **Task 3.1:** Run full verification — `just check` (0 errors) + `just test` (991 tests pass, 0 fail) + `just test-e2e` (16/16 scenarios)
+- [x] Manual validation:
+  - [x] YAML frontmatter válido en los 4 agentes modificados (verificado por code-reviewer con parser)
+  - [x] `grep "AVAILABLE SUBAGENTS" quetzalcoatl.md tlaloc.md mictlantecuhtli.md huitzilopochtli.md` returns 0
+  - [x] `grep "catalog" template/obligatorio/packs/main/*.md` returns 0
 
-**Checkpoint:** 🔲
-- [ ] 6 atomic commits con Conventional Commits
-- [ ] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Branch `feat/new-agents` ready para PR a `develop`
-- [ ] **FEV-19 cierra; FEV-20 puede comenzar**
+**Checkpoint:** ✅
+- [x] `just check` 0 errors
+- [x] `just test` 991 tests pass
+- [x] `just test-e2e` 16/16 pass
+- [x] Code review (code-reviewer subagent): deny-lists verificados programáticamente, sin self-deny, sin missing denies
+
+---
+
+## Phase 4: Documentation & Commit ✅ COMPLETA
+
+- [x] **Task 4.1:** Update `CHANGELOG.md` (FEV-19 entry) + `docs/WORKFLOW.md` (FEV-19 status ✅) + `docs/TECH_DEBT.md` (close TD-V2-2/3/4) + ADR-014 + spec-agent-packs (amendment). Commit: `docs: FEV-19 changelog, workflow, tech debt, and ADR-014 updates`
+- [x] **Task 4.2:** Code review fixes: spec §4.2 deny-list description, README features count, WORKFLOW summary line, SC-P6 scope, SPEC.md progress line
+
+**Checkpoint:** ✅
+- [x] Commits atómicos con Conventional Commits (11 total)
+- [x] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
+- [x] Branch `feat/new-agents` ready para PR a `develop`
+- [x] **FEV-19 cierra; FEV-20 puede comenzar**
 
 ---
 
