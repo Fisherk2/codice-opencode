@@ -84,7 +84,10 @@ function parseFrontmatter(
 		if (!match) continue;
 		const [, key, rawValue = ""] = match;
 		const value = rawValue.replace(/^["']|["']$/g, "").trim();
-		const field = FRONTMATTER_FIELDS[key as string];
+		// Object.hasOwn guards against prototype keys (constructor, toString)
+		// that a plain lookup object would otherwise accept.
+		const fieldKey = key as string;
+		const field = Object.hasOwn(FRONTMATTER_FIELDS, fieldKey) ? FRONTMATTER_FIELDS[fieldKey] : undefined;
 		if (field !== undefined) {
 			frontmatter[field] = value;
 		}
