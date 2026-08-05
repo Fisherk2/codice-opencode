@@ -5,10 +5,8 @@ temperature: 0.1
 color: "#2d5a27"
 hidden: true
 permission:
-  write: allow
-  edit: allow
-  bash:
-    "*": ask
+  write: ask
+  edit: ask
   grep: allow
   glob: allow
   lsp: allow
