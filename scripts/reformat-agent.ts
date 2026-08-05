@@ -52,15 +52,22 @@ function normalizeColor(color: string | undefined): string {
 }
 
 /** Extract the frontmatter block between the leading `---` delimiters. */
-function parseFrontmatter(content: string): { frontmatter: SourceFrontmatter; body: string } | null {
+function parseFrontmatter(
+	content: string,
+): { frontmatter: SourceFrontmatter; body: string } | null {
 	const lines = content.split("\n");
 	if (lines[0]?.trim() !== FRONTMATTER_DELIMITER) return null;
 
-	const closingIdx = lines.findIndex((line, idx) => idx > 0 && line.trim() === FRONTMATTER_DELIMITER);
+	const closingIdx = lines.findIndex(
+		(line, idx) => idx > 0 && line.trim() === FRONTMATTER_DELIMITER,
+	);
 	if (closingIdx === -1) return null;
 
 	const yamlLines = lines.slice(1, closingIdx);
-	const body = lines.slice(closingIdx + 1).join("\n").trimStart();
+	const body = lines
+		.slice(closingIdx + 1)
+		.join("\n")
+		.trimStart();
 
 	const frontmatter: Partial<SourceFrontmatter> = {};
 	for (const line of yamlLines) {
@@ -91,11 +98,19 @@ function parseFrontmatter(content: string): { frontmatter: SourceFrontmatter; bo
 	return { frontmatter: frontmatter as SourceFrontmatter, body };
 }
 
-/** Strip the source "# <name> Agent" H1 so the v2.0 title is the only H1. */
-function stripDuplicatedHeading(body: string, name: string): string {
-	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	const headingPattern = new RegExp(`^#\\s+${escaped}\\s+(?:Agent|Specialist|Expert)\\s*$`, "im");
-	return body.replace(headingPattern, "").trimStart();
+/**
+ * Strip the source's decorative H1 (always the first body line) so the
+ * generated "# <name>" title is the only H1. Source H1s are redundant:
+ * they repeat the agent name plus a suffix ("Agent Personality", emoji, etc.)
+ * and would otherwise produce two sibling H1s in the converted file.
+ */
+function stripLeadingH1(body: string): string {
+	const lines = body.split("\n");
+	const firstContentIdx = lines.findIndex((line) => line.trim().length > 0);
+	if (firstContentIdx !== -1 && lines[firstContentIdx].startsWith("# ")) {
+		lines.splice(firstContentIdx, 1);
+	}
+	return lines.join("\n").trimStart();
 }
 
 /** Build the trailing ## COMPOSITION block from the agent description. */
@@ -132,7 +147,7 @@ function buildV2Content(content: string): string {
 		"",
 	].join("\n");
 
-	const cleanedBody = stripDuplicatedHeading(body, frontmatter.name);
+	const cleanedBody = stripLeadingH1(body);
 	const composition = buildCompositionBlock(frontmatter.description);
 
 	return `${yaml}# ${frontmatter.name}\n\n${cleanedBody}\n\n${composition}\n`;
@@ -164,7 +179,10 @@ export function reformatAgent(sourcePath: string, targetPath: string): ReformatR
 		mkdirSync(dirname(targetPath), { recursive: true });
 		writeFileSync(targetPath, output);
 	} catch (err) {
-		return { ok: false, error: `Failed to write ${targetPath}: ${err instanceof Error ? err.message : "unknown error"}` };
+		return {
+			ok: false,
+			error: `Failed to write ${targetPath}: ${err instanceof Error ? err.message : "unknown error"}`,
+		};
 	}
 
 	return { ok: true, content: output };
