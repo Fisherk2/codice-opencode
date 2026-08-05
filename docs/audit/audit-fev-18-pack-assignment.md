@@ -282,7 +282,7 @@
 | new | `customer-success-manager` | v2.0 |
 | new | `data-consolidation-agent` | v2.0 |
 | new | `developer-advocate` | v2.0 |
-| new | `document-generator` | v2.0 |
+| new | `document-generator` | v2.0 | ⚠️ MOVIDO a `writers/` (2026-08-05) |
 | new | `healthcare-marketing-compliance` | v2.0 |
 | new | `ma-integration-manager` | v2.0 |
 | new | `operations-manager` | v2.0 |

@@ -226,7 +226,7 @@
 | 212 | specialized | data-consolidation-agent.md | 2393 | `name: Data Consolidation Agent description: AI agent that consolidates extracted` |
 | 213 | specialized | data-privacy-officer.md | 22433 | `name: Data Privacy Officer emoji: 🔐 description: Corporate data privacy speci` |
 | 214 | specialized | developer-advocate.md | 14829 | `name: Developer Advocate description: Expert developer advocate specializing in ` |
-| 215 | specialized | document-generator.md | 2437 | `name: Document Generator description: Expert document creation specialist who ge` |
+| 215 | specialized | document-generator.md | 2437 | `name: Document Generator description: Expert document creation specialist who ge` | ⚠️ MOVIDO a `writers/` (2026-08-05) |
 | 216 | specialized | esg-sustainability-officer.md | 20839 | `name: ESG & Sustainability Officer emoji: 🌱 description: Corporate sustainabi` |
 | 217 | specialized | fedramp-rmf-compliance.md | 32568 | `name: FedRAMP & RMF Compliance Engineer emoji: 🛡️ description: Expert FedRA` |
 | 218 | specialized | government-digital-presales-consultant.md | 22759 | `name: Government Digital Presales Consultant description: Presales expert for Ch` |
