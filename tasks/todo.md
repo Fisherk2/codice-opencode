@@ -70,10 +70,10 @@ Phase 6 (Documentation & Commit, 30min)
 
 ## Phase 0: Audit & Inventory (CRITICAL — gates all) ✅ COMPLETA
 
-- [x] **Task 0.1:** Generar inventario completo de `agency-agents-main/` (267 files, 17 categorías) → `tasks/audit-fev-18-inventory.md` (311 líneas, 3,797,685 bytes)
-- [x] **Task 0.2:** Calcular overlap sin-clasificar (95) vs agency-agents-main (267) → 10 REDUNDANT identificados → `tasks/audit-fev-18-classification.md`
-- [x] **Task 0.3:** Determinar pack assignment para cada IDEAL agent (257 new) y cada sin-clasificar (95) → `tasks/audit-fev-18-pack-assignment.md` (439 líneas, 352 rows, 0 UNASSIGNED)
-- [x] **Task 0.4:** Generar audit summary report → `tasks/audit-fev-18-summary.md` (106 líneas, counts por pack)
+- [x] **Task 0.1:** Generar inventario completo de `agency-agents-main/` (267 files, 17 categorías) → `docs/audit/audit-fev-18-inventory.md` (311 líneas, 3,797,685 bytes)
+- [x] **Task 0.2:** Calcular overlap sin-clasificar (95) vs agency-agents-main (267) → 10 REDUNDANT identificados → `docs/audit/audit-fev-18-classification.md`
+- [x] **Task 0.3:** Determinar pack assignment para cada IDEAL agent (257 new) y cada sin-clasificar (95) → `docs/audit/audit-fev-18-pack-assignment.md` (439 líneas, 352 rows, 0 UNASSIGNED)
+- [x] **Task 0.4:** Generar audit summary report → `docs/audit/audit-fev-18-summary.md` (106 líneas, counts por pack)
 
 **Checkpoint:** ✅ 4 audit files generados, counts por pack confirmados (software-development 146, business 92, hardware-emerging 36, science-research 30, operations-support 18, finance 11, creative 10, government-legal 8 = 352 unique), REDUNDANT list confirmada — **Review con humano antes de Phase 1**
 
@@ -189,7 +189,7 @@ Phase 6 (Documentation & Commit, 30min)
 - [ ] `docs/AGENT-FORMAT-V2.md` creado
 - [ ] `CHANGELOG.md` con entrada FEV-18 (Added/Changed/Removed)
 - [ ] `docs/WORKFLOW.md` FEV-18 marcado ✅
-- [ ] 4 audit artifacts en `tasks/` (commiteados como histórico)
+- [ ] 4 audit artifacts en `docs/audit/` (commiteados como histórico)
 
 ### Proceso
 
@@ -207,10 +207,10 @@ Phase 6 (Documentation & Commit, 30min)
 
 **Documentación (5):**
 1. `docs/AGENT-FORMAT-V2.md` (~100 lines)
-2. `tasks/audit-fev-18-inventory.md` (~270 lines)
-3. `tasks/audit-fev-18-classification.md` (~280 lines)
-4. `tasks/audit-fev-18-pack-assignment.md` (~370 lines)
-5. `tasks/audit-fev-18-summary.md` (~150 lines)
+2. `docs/audit/audit-fev-18-inventory.md` (~270 lines)
+3. `docs/audit/audit-fev-18-classification.md` (~280 lines)
+4. `docs/audit/audit-fev-18-pack-assignment.md` (~370 lines)
+5. `docs/audit/audit-fev-18-summary.md` (~150 lines)
 
 **Scripts (1):**
 6. `scripts/reformat-agent.ts` (~80 lines)

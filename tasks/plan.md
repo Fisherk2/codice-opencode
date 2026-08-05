@@ -179,21 +179,21 @@ graph TD
 
 #### Task 0.1: Generate complete inventory of `agency-agents-main/`
 
-**Description:** Crear un inventario completo de los 267 archivos `.md` en `agency-agents-main/`. Output: `tasks/audit-fev-18-inventory.md` con tabla Markdown de cada archivo (categoría, nombre, tamaño, primeras 3 líneas del frontmatter).
+**Description:** Crear un inventario completo de los 267 archivos `.md` en `agency-agents-main/`. Output: `docs/audit/audit-fev-18-inventory.md` con tabla Markdown de cada archivo (categoría, nombre, tamaño, primeras 3 líneas del frontmatter).
 
 **Acceptance criteria:**
 - [ ] Inventory incluye los 267 archivos
 - [ ] Cada archivo tiene: categoría, nombre, tamaño (bytes), frontmatter preview (3 líneas)
 - [ ] Total bytes documentado
-- [ ] Output commiteado en `tasks/audit-fev-18-inventory.md`
+- [ ] Output commiteado en `docs/audit/audit-fev-18-inventory.md`
 
 **Verification:**
 - [ ] `find agency-agents-main -name "*.md" -type f | wc -l` returns 267
-- [ ] `cat tasks/audit-fev-18-inventory.md | wc -l` shows 270+ lines
+- [ ] `cat docs/audit/audit-fev-18-inventory.md | wc -l` shows 270+ lines
 - [ ] Manual review: no archivos faltantes o duplicados
 
 **Dependencies:** None
-**Files likely touched:** `tasks/audit-fev-18-inventory.md` (new, ~270 lines)
+**Files likely touched:** `docs/audit/audit-fev-18-inventory.md` (new, ~270 lines)
 **Estimated scope:** S (1 shell script + output file)
 
 ---
@@ -206,14 +206,14 @@ graph TD
 - [ ] 10 REDUNDANT identificados (same name)
 - [ ] 85+ IMPROVABLE potenciales (mismo dominio, diferente nombre) — heurística
 - [ ] 247+ IDEAL (unique name + new)
-- [ ] Output: `tasks/audit-fev-18-classification.md` con tabla de decisiones
+- [ ] Output: `docs/audit/audit-fev-18-classification.md` con tabla de decisiones
 
 **Verification:**
 - [ ] `comm -12 <(ls packs/sin-clasificar/ | sort) <(find agency-agents-main -name "*.md" | xargs -I {} basename {} | sort -u) | wc -l` returns 10
-- [ ] `tasks/audit-fev-18-classification.md` lista cada decisión con justificación
+- [ ] `docs/audit/audit-fev-18-classification.md` lista cada decisión con justificación
 
 **Dependencies:** Task 0.1
-**Files likely touched:** `tasks/audit-fev-18-classification.md` (new, ~280 lines)
+**Files likely touched:** `docs/audit/audit-fev-18-classification.md` (new, ~280 lines)
 **Estimated scope:** S (script + manual review for IMPROVABLE)
 
 ---
@@ -247,21 +247,21 @@ graph TD
 - [ ] Cada IDEAL agent (≥247) tiene un pack asignado
 - [ ] Cada sin-clasificar agent (95) tiene un pack asignado (o marked as keep-current)
 - [ ] `specialized/` category revisada manualmente (55 agents — puede requerir re-categorización)
-- [ ] Output: `tasks/audit-fev-18-pack-assignment.md`
+- [ ] Output: `docs/audit/audit-fev-18-pack-assignment.md`
 
 **Verification:**
-- [ ] `grep -c "^| " tasks/audit-fev-18-pack-assignment.md` ≥ 362 (todos los agentes)
+- [ ] `grep -c "^| " docs/audit/audit-fev-18-pack-assignment.md` ≥ 362 (todos los agentes)
 - [ ] Distribución por pack: software-development ~120, business ~75, science-research ~45, hardware-emerging ~50, creative ~10, finance ~15, operations-support ~25, government-legal ~10 (verificar coherencia con spec)
 
 **Dependencies:** Task 0.2
-**Files likely touched:** `tasks/audit-fev-18-pack-assignment.md` (new, ~370 lines)
+**Files likely touched:** `docs/audit/audit-fev-18-pack-assignment.md` (new, ~370 lines)
 **Estimated scope:** M (script + manual review de `specialized/`)
 
 ---
 
 #### Task 0.4: Generate audit summary report
 
-**Description:** Consolidar los 3 audit files en un summary ejecutable que drive las tasks de Phase 1+. Output: `tasks/audit-fev-18-summary.md` con counts por pack, lista de REDUNDANT, lista de IMPROVABLE merges, lista de IDEAL additions.
+**Description:** Consolidar los 3 audit files en un summary ejecutable que drive las tasks de Phase 1+. Output: `docs/audit/audit-fev-18-summary.md` con counts por pack, lista de REDUNDANT, lista de IMPROVABLE merges, lista de IDEAL additions.
 
 **Acceptance criteria:**
 - [ ] Summary contiene tabla con counts esperados por pack
@@ -271,12 +271,12 @@ graph TD
 - [ ] Tiempo estimado por pack (basado en count)
 
 **Verification:**
-- [ ] `tasks/audit-fev-18-summary.md` ≤ 150 líneas
+- [ ] `docs/audit/audit-fev-18-summary.md` ≤ 150 líneas
 - [ ] Cada pack tiene count + lista de agentes
 - [ ] Decisión ejecutable: "Phase 2.x: move N agents from A to B with format C"
 
 **Dependencies:** Tasks 0.1, 0.2, 0.3
-**Files likely touched:** `tasks/audit-fev-18-summary.md` (new, ~150 lines)
+**Files likely touched:** `docs/audit/audit-fev-18-summary.md` (new, ~150 lines)
 **Estimated scope:** S (consolidation)
 
 ---
@@ -1105,19 +1105,19 @@ done
 
 ---
 
-#### Task 6.3: Update audit artifacts in `tasks/`
+#### Task 6.3: Update audit artifacts in `docs/audit/`
 
 **Description:** Los 4 audit files (inventory, classification, pack-assignment, summary) son artefactos de Phase 0. Decidir: ¿commiteamos como histórico, o `.gitignore`-amos?
 
-**Decision:** Commitear en `tasks/audit-fev-18-*.md` como registro histórico de FEV-18. Esto ayuda a auditabilidad futura ("¿por qué este agente está en este pack?").
+**Decision:** Commitear en `docs/audit/audit-fev-18-*.md` como registro histórico de FEV-18. Esto ayuda a auditabilidad futura ("¿por qué este agente está en este pack?").
 
 **Acceptance criteria:**
-- [ ] 4 audit files en `tasks/`
+- [ ] 4 audit files en `docs/audit/`
 - [ ] `git status` los lista como untracked
 - [ ] Decisión: commitear o gitignore (default: commit)
 
 **Verification:**
-- [ ] `ls tasks/audit-fev-18-*.md | wc -l` returns 4
+- [ ] `ls docs/audit/audit-fev-18-*.md | wc -l` returns 4
 - [ ] Manual review: archivos son legibles y útiles como histórico
 
 **Dependencies:** Task 6.2
@@ -1262,7 +1262,7 @@ done
 - [ ] `docs/AGENT-FORMAT-V2.md` creado
 - [ ] `CHANGELOG.md` con entrada FEV-18
 - [ ] `docs/WORKFLOW.md` FEV-18 marcado ✅
-- [ ] 4 audit artifacts en `tasks/`
+- [ ] 4 audit artifacts en `docs/audit/`
 
 ### Proceso
 
@@ -1280,10 +1280,10 @@ done
 
 **Documentación (5):**
 1. `docs/AGENT-FORMAT-V2.md` (new, ~100 lines)
-2. `tasks/audit-fev-18-inventory.md` (new, ~270 lines)
-3. `tasks/audit-fev-18-classification.md` (new, ~280 lines)
-4. `tasks/audit-fev-18-pack-assignment.md` (new, ~370 lines)
-5. `tasks/audit-fev-18-summary.md` (new, ~150 lines)
+2. `docs/audit/audit-fev-18-inventory.md` (new, ~270 lines)
+3. `docs/audit/audit-fev-18-classification.md` (new, ~280 lines)
+4. `docs/audit/audit-fev-18-pack-assignment.md` (new, ~370 lines)
+5. `docs/audit/audit-fev-18-summary.md` (new, ~150 lines)
 
 **Scripts (1):**
 6. `scripts/reformat-agent.ts` (new, ~80 lines)
