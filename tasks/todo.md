@@ -79,9 +79,9 @@ Phase 4: Docs & Commit (0.5h, gates FEV-20)
 
 ## Phase 1: Per-Agent Updates 🔲
 
-- [ ] **Task 1.1:** Unify `quetzalcoatl.md` permissions (`"*": allow` + 5 deny) + remove "AVAILABLE SUBAGENTS" section (lines 74-83) + update RULES (line 91). Commit: `refactor(agents): unify quetzalcoatl task: permissions and remove redundant subagent catalog`
-- [ ] **Task 1.2:** Unify `tlaloc.md` permissions (73 entries → `"*": allow` + 5 deny) + remove "AVAILABLE SUBAGENTS" section (lines 108-121) + update RULES (line 128). Commit: `refactor(agents): unify tlaloc task: permissions and remove redundant subagent catalog (73 entries → 1)`
-- [ ] **Task 1.3:** Unify `mictlantecuhtli.md` permissions (12 entries → `"*": allow` + 5 deny) + remove "AVAILABLE SUBAGENTS" section (lines 47-54) + update RULES (line 62). Commit: `refactor(agents): unify mictlantecuhtli task: permissions and remove redundant subagent catalog`
+- [ ] **Task 1.1:** Unify `quetzalcoatl.md` permissions (`"*": allow` + deny 5 otros primarios incl. tezcatlipoca) + remove "AVAILABLE SUBAGENTS" section (lines 74-83) + update RULES (line 91). Commit: `refactor(agents): unify quetzalcoatl task: permissions and remove redundant subagent catalog`
+- [ ] **Task 1.2:** Unify `tlaloc.md` permissions (73 entries → `"*": allow` + deny 5 otros primarios incl. tezcatlipoca) + remove "AVAILABLE SUBAGENTS" section (lines 108-121) + update RULES (line 128). Commit: `refactor(agents): unify tlaloc task: permissions and remove redundant subagent catalog (73 entries → 1)`
+- [ ] **Task 1.3:** Unify `mictlantecuhtli.md` permissions (12 entries → `"*": allow` + deny 5 otros primarios incl. tezcatlipoca) + remove "AVAILABLE SUBAGENTS" section (lines 47-54) + update RULES (line 62). Commit: `refactor(agents): unify mictlantecuhtli task: permissions and remove redundant subagent catalog`
 
 **Checkpoint:** 🔲
 - [ ] 3 agentes con `task: "*": allow` + 5 deny primaries

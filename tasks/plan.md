@@ -175,11 +175,13 @@ task:
 task:
   "*": allow
   "huitzilopochtli": deny
-  "quetzalcoatl": deny  # self-deny (defensive)
-  "moctezuma": deny
+  "tezcatlipoca": deny
   "tlaloc": deny
+  "moctezuma": deny
   "mictlantecuhtli": deny
 ```
+
+> **Deny-list semantics (user decision 2026-08-05):** cada agente deniega a los OTROS 5 primarios (incluyendo tezcatlipoca) para que los primarios no se deleguen entre sí. NO se deniega a sí mismo. Coincide con el estado actual de huitzilopochtli.
 
 **Section removal (líneas 74-83):**
 
@@ -200,7 +202,7 @@ task:
 
 **Acceptance criteria:**
 
-- [ ] `task:` block reemplazado con `"*": allow` + 5 deny primaries (quetzalcoatl, huitzilopochtli, moctezuma, tlaloc, mictlantecuhtli)
+- [ ] `task:` block reemplazado con `"*": allow` + 5 deny primaries (huitzilopochtli, tezcatlipoca, tlaloc, moctezuma, mictlantecuhtli — los otros 5 primarios, sin self-deny)
 - [ ] Sección "## AVAILABLE SUBAGENTS" eliminada (líneas 74-83 completas)
 - [ ] RULES línea 91 actualizada: "the AVAILABLE SUBAGENTS catalog" → "huitzilopochtli's canonical catalog"
 - [ ] YAML frontmatter válido (parsea sin error)
@@ -243,8 +245,8 @@ task:
   "*": allow
   "huitzilopochtli": deny
   "quetzalcoatl": deny
+  "tezcatlipoca": deny
   "moctezuma": deny
-  "tlaloc": deny  # self-deny (defensive)
   "mictlantecuhtli": deny
 ```
 
@@ -310,9 +312,9 @@ task:
   "*": allow
   "huitzilopochtli": deny
   "quetzalcoatl": deny
-  "moctezuma": deny
+  "tezcatlipoca": deny
   "tlaloc": deny
-  "mictlantecuhtli": deny  # self-deny (defensive)
+  "moctezuma": deny
 ```
 
 **Section removal (líneas 47-54):**
