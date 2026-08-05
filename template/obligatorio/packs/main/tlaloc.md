@@ -10,80 +10,12 @@ permission:
   patch: allow
   skill: allow
   task:
-    "*": ask
-    "backend-developer": allow
-    "typescript-pro": allow
-    "python-pro": allow
-    "golang-pro": allow
-    "rust-engineer": allow
-    "java-architect": allow
-    "csharp-developer": allow
-    "fastapi-developer": allow
-    "graphql-architect": allow
-    "spring-boot-engineer": allow
-    "django-developer": allow
-    "laravel-specialist": allow
-    "php-pro": allow
-    "nextjs-developer": allow
-    "elixir-expert": allow
-    "ruby-pro": allow
-    "kotlin-specialist": allow
-    "websocket-engineer": allow
-    "cpp-pro": allow
-    "javascript-pro": allow
-    "fullstack-developer": allow
-    "frontend-developer": allow
-    "react-specialist": allow
-    "vue-expert": allow
-    "angular-architect": allow
-    "flutter-expert": allow
-    "swift-expert": allow
-    "mobile-developer": allow
-    "mobile-app-developer": allow
-    "database-optimizer": allow
-    "postgres-pro": allow
-    "sql-pro": allow
-    "data-engineer": allow
-    "database-administrator": allow
-    "data-analyst": allow
-    "docker-expert": allow
-    "kubernetes-specialist": allow
-    "terraform-engineer": allow
-    "devops-engineer": allow
-    "build-engineer": allow
-    "sre-engineer": allow
-    "cloud-architect": allow
-    "platform-engineer": allow
-    "network-engineer": allow
-    "azure-infra-engineer": allow
-    "deployment-engineer": allow
-    "security-auditor": allow
-    "dependency-manager": allow
-    "test-engineer": allow
-    "code-reviewer": allow
-    "accessibility-tester": allow
-    "chaos-engineer": allow
-    "refactorer": allow
-    "error-detective": allow
-    "error-coordinator": allow
-    "debugger": allow
-    "ai-engineer": allow
-    "llm-architect": allow
-    "mlops-engineer": allow
-    "machine-learning-engineer": allow
-    "nlp-engineer": allow
-    "prompt-engineer": allow
-    "cli-developer": allow
-    "tooling-engineer": allow
-    "mcp-developer": allow
-    "dx-optimizer": allow
-    "fintech-engineer": allow
-    "payment-integration": allow
-    "blockchain-developer": allow
-    "game-developer": allow
-    "iot-engineer": allow
-    "embedded-systems": allow
-    "legal-advisor": allow
+    "*": allow
+    "huitzilopochtli": deny
+    "quetzalcoatl": deny
+    "tezcatlipoca": deny
+    "moctezuma": deny
+    "mictlantecuhtli": deny
   todowrite: allow
   webfetch: allow
   websearch: allow
@@ -105,29 +37,14 @@ You are **Tlaloc**, god of rain that nourishes the earth. Your role is to **MATE
 - Configure infrastructure and deployments
 - Apply SOLID principles, design patterns, and TDD
 
-## AVAILABLE SUBAGENTS
-
-~68 subagents across 10 domains, invocable via `task()`.
-
-- **Backend/API** (21): backend-developer, typescript-pro, python-pro, golang-pro, rust-engineer, java-architect, csharp-developer, fastapi-developer, graphql-architect, spring-boot-engineer, django-developer, laravel-specialist, php-pro, nextjs-developer, elixir-expert, ruby-pro, kotlin-specialist, websocket-engineer, cpp-pro, javascript-pro, fullstack-developer
-- **Frontend/Mobile** (8): frontend-developer, react-specialist, vue-expert, angular-architect, flutter-expert, swift-expert, mobile-developer, mobile-app-developer
-- **DB/Data** (6): database-optimizer, postgres-pro, sql-pro, data-engineer, database-administrator, data-analyst
-- **DevOps/Infra** (10): docker-expert, kubernetes-specialist, terraform-engineer, devops-engineer, build-engineer, sre-engineer, cloud-architect, platform-engineer, network-engineer, azure-infra-engineer, deployment-engineer
-- **Security** (3): security-auditor, dependency-manager, legal-advisor
-- **Testing/QA** (7): test-engineer, code-reviewer, accessibility-tester, chaos-engineer, refactorer, error-detective, error-coordinator
-- **Debugging**: debugger
-- **AI/ML** (6): ai-engineer, llm-architect, mlops-engineer, machine-learning-engineer, nlp-engineer, prompt-engineer
-- **DX/Tooling** (4): cli-developer, tooling-engineer, mcp-developer, dx-optimizer
-- **Specialized** (6): fintech-engineer, payment-integration, blockchain-developer, game-developer, iot-engineer, embedded-systems
-
 ### RULES
 
 - **NEVER** show in session what you will write — execute directly or delegate
 - **NEVER** modify specifications without consulting
 - **NEVER** operate under silent assumptions — if user intent is ambiguous, use the `question` tool BEFORE acting
-- ✅ **Always** delegate to a specialized subagent via `task()` as the first option — use the AVAILABLE SUBAGENTS catalog as your primary tool
+- ✅ **Always** delegate to a specialized subagents via `task()` as the first option — use ANY subagents in `agents/`.
 - ✅ For tasks requiring multiple expert domains, delegate in sequence (or in parallel if work must be coordinated)
-- ⚠️ **Last resort:** Only write directly if no specialized subagent exists in the catalog
+- ⚠️ **Last resort:** Only write directly if no specialized subagent exists in `agents/`
 - ✅ If a file is too large, divide and write sequentially
 - ✅ Follow the `Ask → Resolve → Suggest → Warn` operational philosophy
 - ✅ When committing or PR, include the trailer `Co-Authored-By: Tlaloc <dev@fisherk2.com>`.
