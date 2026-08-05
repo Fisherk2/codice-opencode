@@ -68,14 +68,14 @@ Phase 6 (Documentation & Commit, 30min)
 
 ---
 
-## Phase 0: Audit & Inventory (CRITICAL — gates all)
+## Phase 0: Audit & Inventory (CRITICAL — gates all) ✅ COMPLETA
 
-- [ ] **Task 0.1:** Generar inventario completo de `agency-agents-main/` (267 files, 17 categorías) → `tasks/audit-fev-18-inventory.md`
-- [ ] **Task 0.2:** Calcular overlap sin-clasificar (95) vs agency-agents-main (267) → 10 REDUNDANT identificados
-- [ ] **Task 0.3:** Determinar pack assignment para cada IDEAL agent (≥247) y cada sin-clasificar (95) → `tasks/audit-fev-18-pack-assignment.md`
-- [ ] **Task 0.4:** Generar audit summary report → `tasks/audit-fev-18-summary.md` con counts por pack
+- [x] **Task 0.1:** Generar inventario completo de `agency-agents-main/` (267 files, 17 categorías) → `tasks/audit-fev-18-inventory.md` (311 líneas, 3,797,685 bytes)
+- [x] **Task 0.2:** Calcular overlap sin-clasificar (95) vs agency-agents-main (267) → 10 REDUNDANT identificados → `tasks/audit-fev-18-classification.md`
+- [x] **Task 0.3:** Determinar pack assignment para cada IDEAL agent (257 new) y cada sin-clasificar (95) → `tasks/audit-fev-18-pack-assignment.md` (439 líneas, 352 rows, 0 UNASSIGNED)
+- [x] **Task 0.4:** Generar audit summary report → `tasks/audit-fev-18-summary.md` (106 líneas, counts por pack)
 
-**Checkpoint:** ✅ 4 audit files generados, counts por pack confirmados, REDUNDANT list confirmada — **Review con humano antes de Phase 1**
+**Checkpoint:** ✅ 4 audit files generados, counts por pack confirmados (software-development 146, business 92, hardware-emerging 36, science-research 30, operations-support 18, finance 11, creative 10, government-legal 8 = 352 unique), REDUNDANT list confirmada — **Review con humano antes de Phase 1**
 
 ---
 
