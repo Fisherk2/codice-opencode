@@ -21,6 +21,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **FEV-17 — Template path references:** README, CONTRIBUTING, WORKFLOW, TECH_DEBT, and CHANGELOG references to `template/obligatorio/{agents,commands,skills,opencode.json}` updated to `core/` / `packs/` locations.
 
+### Added
+
+- **FEV-18 — Agent Classification & Migration (v2.0 Phase 2):** 352 unique agents distributed across 8 selectable packs + 2 mandatory (main, writers). 257 new agents from `agency-agents-main/` reformatted to the v2.0 standard (YAML `mode: subagent` + `## COMPOSITION` block); 95 legacy v1.x agents distributed in original format. Pack counts: software-development 146, business 92, hardware-emerging 36, science-research 31, operations-support 18, finance 11, creative 10, government-legal 8. 10 REDUNDANT name collisions resolved (legacy wins).
+- **FEV-18 — Agent Format v2.0 spec:** `docs/AGENT-FORMAT-V2.md` defines source→target mapping, canonical YAML template, `## COMPOSITION` block, and idempotency rules.
+- **FEV-18 — Reformat script:** `scripts/reformat-agent.ts` (idempotent conversion, `--dry-run`) + `scripts/reformat-agent-cli.ts` + `scripts/distribute-agents.ts` (batch distribution from Phase 0 audit mapping).
+- **FEV-18 — Test coverage:** 26 new tests (`all-packs-present`, `pack-agent-counts`, `reformat-agent` 10, `distribute-agents` 4) + E2E scenario 1 extended with multi-pack agent assertions.
+
+### Changed
+
+- **FEV-18 — FileRuleManifestData:** 4 → 11 mandatory entries. Added 8 selectable pack entries (`packs/software-development`, `packs/business`, `packs/hardware-emerging`, `packs/science-research`, `packs/operations-support`, `packs/finance`, `packs/creative`, `packs/government-legal`), all with `destPath: "agents"`. Writers description updated (2 writers; scientific-literature-researcher moved to science-research).
+- **FEV-18 — Huitzilopochtli catalog:** AVAILABLE SUBAGENTS expanded from ~96 to ~355 subagents, reorganized by pack.
+- **FEV-18 — scientific-literature-researcher:** moved from `packs/writers/` to `packs/science-research/` (analysis agent, not writer — user decision).
+
+### Removed
+
+- **FEV-18 — `packs/sin-clasificar/`:** temporary pack removed; 95 legacy agents distributed to their target packs.
+- **FEV-18 — 10 REDUNDANT new agents:** discarded (legacy v1.x versions retained for backward compatibility).
+
 ## [1.2.0] — 2026-08-03
 
 ### Added

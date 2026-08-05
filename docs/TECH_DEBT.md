@@ -1,9 +1,9 @@
 # Technical Debt — Códice
 
 **Last updated:** 2026-08-04
-**Status:** v2.0.0 specs drafted — agent pack system + installer UX v2
-**Current version:** v1.2.0 (844 tests, 0 fail)
-**Next version:** v2.0.0 (agent packs + installer UX overhaul)
+**Status:** FEV-17 + FEV-18 complete — agent pack system populated (v2.0)
+**Current version:** v1.2.0 (986 tests, 0 fail)
+**Next version:** v2.0.0 (permissions, plugin cleanup, installer UX)
 
 ---
 
@@ -185,6 +185,15 @@ not file granularity.
 | **Problem** | Compiled binaries are too large: `codice-linux` is **74MB** (ELF x64). macOS and Windows builds are similar. This exceeds reasonable download sizes for a CLI tool and bloats GitHub Release assets. |
 | **Resolution** | **FEV-11 (Issue #46):** Remove all binary compilation and distribution logic. The only installation method will be via package managers (npm/bunx). This eliminates the binary size problem entirely by removing binaries. See [fix04-v1.2-phase1-binary-removal.md](diagnosis/fix04-v1.2-phase1-binary-removal.md). |
 
+### 7.2 Tarball Size vs SC-15 — KNOWN DEVIATION (FEV-18)
+
+| Item | Detail |
+|------|--------|
+| **Problem** | SC-15 requires npm tarball < 5MB. FEV-18 added 355 agent files (~4MB), bringing the tarball to **8.0MB** (797 files, unpacked). |
+| **Root cause** | The pack system (ADR-014) deliberately ships all 8 selectable packs in the template. ADR-014 anticipated this: *"The npm package grows from ~2MB to an estimated ~5-8MB with all packs"*. |
+| **Decision** | **Accepted 2026-08-04 (user).** The deviation is documented as a known trade-off of the pack system. SC-15 remains the target for the core package; pack weight is expected and will be revisited if distribution size becomes a user concern (e.g., lazy-download of packs in a future release). |
+| **Mitigation options (future)** | (a) Exclude non-default packs from the tarball and download on demand (breaks offline install); (b) gzip-compress agent bodies and decompress post-install (complex, risk); (c) split packs into separate npm packages (rejected in ADR-014 §Alternatives). |
+
 ---
 
 ## Summary & Prioritization
@@ -214,6 +223,8 @@ not file granularity.
 ### v2.0.0 — Agent Pack System & Installer UX v2
 
 > **FEV-17 (Template Directory Restructuring) ✅ complete (2026-08-04):** `template/obligatorio/` restructured to `core/` + `packs/{main,writers,sin-clasificar,<8 empty>}/`. `FileRuleManifestData` collapsed 7 mandatory entries to 4 source groupings with `destPath` support (flat destination preserved). 910 tests, 16/16 E2E, `just check` clean.
+
+> **FEV-18 (Agent Classification & Migration) ✅ complete (2026-08-04):** 352 unique agents distributed across 8 selectable packs + 2 mandatory. 257 new agents reformatted to v2.0 (YAML + `## COMPOSITION`), 95 legacy distributed in v1.x format, 10 REDUNDANT resolved (legacy wins). `FileRuleManifestData` 4 → 11 mandatory entries. `packs/sin-clasificar/` removed. Huitzilopochtli catalog ~96 → ~355 subagents. 986 tests, 16/16 E2E, `just check` clean. **Known deviation:** npm tarball 8.0MB exceeds SC-15 (<5MB) — ADR-014 anticipated 5-8MB with all packs; accepted 2026-08-04 (see §7.2).
 
 Specs drafted: [spec-agent-packs.md](../specs/spec-agent-packs.md), [spec-installer-ux-v2.md](../specs/spec-installer-ux-v2.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md).
 

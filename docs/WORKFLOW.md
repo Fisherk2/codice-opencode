@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.0.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-04 (FEV-17 completado; FEV-18 listo para planeación) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-04 (FEV-18 completado; FEV-19 listo para planeación) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -35,7 +35,7 @@
 | FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | ✅ Completo |
 | FEV-16 | Pre-release Tech Debt Closure (v1.2 Phase 6) | TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 closure | ✅ Completo |
 | FEV-17 | Template Directory Restructuring (v2.0 Phase 1) | `core/` + `packs/` restructure, FileRuleManifestData + TemplateResolver update | ✅ Completo |
-| FEV-18 | Agent Classification & Migration (v2.0 Phase 2) | ~345 IDEAL agents → packs, 59 IMPROVABLE merged, 13 REDUNDANT removed | 🔲 Planificado |
+| FEV-18 | Agent Classification & Migration (v2.0 Phase 2) | 257 new agents → 8 packs (v2.0 format), 95 legacy distributed, 10 REDUNDANT resolved | ✅ Completo (2026-08-04) |
 | FEV-19 | Permission Unification & Subagent Table Removal (v2.0 Phase 3) | TD-V2-2, TD-V2-3, TD-V2-4: unified `task:` + docs update | 🔲 Planificado |
 | FEV-20 | Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4) | TD-V2-1, TD-V2-5: plugin cleanup + auto-discovery recursive scan | 🔲 Planificado |
 | FEV-21 | Installer UX — Pack Selection & Version Detection (v2.0 Phase 5) | Pack wizard, version gating, `.codice-version` metadata format | 🔲 Planificado |
@@ -292,13 +292,16 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - Documentación actualizada (README, CONTRIBUTING, WORKFLOW, TECH_DEBT, CHANGELOG)
 **Resultado:** Template con estructura `core/` + `packs/` funcional. Destino plano preservado (agents/, commands/ en raíz). 0 regresiones: 946 tests, 16/16 E2E, `just check` limpio.
 
-### FEV-18 — Agent Classification & Migration 🔲
+### FEV-18 — Agent Classification & Migration ✅ Completo (2026-08-04)
 **Esfuerzo:** ~8h | **Dependencias:** FEV-17 | **Spec:** S5-PACKS §3
-- Formatear y mover ~345 agentes IDEAL desde `agency-agents-main/` a packs correspondientes
-- Fusionar contenido de 59 agentes IMPROVABLE en agentes existentes
-- Eliminar 13 agentes REDUNDANT (ya cubiertos por existentes)
-- Cada agente: YAML frontmatter estándar + markdown body + bloque Composition
-**Resultado:** ~345 agentes clasificados en 8 packs + 2 obligatorios (main, writers).
+- Audit reconcilió spec (~345 IDEAL) vs realidad: 257 new-only + 95 legacy = 352 unique (10 REDUNDANT name collisions, legacy wins)
+- 257 new agents reformateados a v2.0 (YAML `mode: subagent` + `## COMPOSITION`) vía `scripts/reformat-agent.ts` (idempotente, `--dry-run`)
+- 95 legacy distribuidos en formato v1.x preservado; `packs/sin-clasificar/` eliminado
+- Pack distribution: software-development 146, business 92, hardware-emerging 36, science-research 31, operations-support 18, finance 11, creative 10, government-legal 8
+- `FileRuleManifestData`: 4 → 11 mandatory entries (8 selectable packs, `destPath: "agents"`)
+- Huitzilopochtli catalog: ~96 → ~355 subagents por pack
+- `scientific-literature-researcher` movido de `writers/` a `science-research/` (decisión usuario)
+**Resultado:** 355 agents en 10 packs (2 mandatory + 8 selectable). 0 regresiones: 986 tests, 16/16 E2E, `just check` limpio. Tarball 8.0MB (SC-15 deviation, ADR-014 anticipó 5-8MB).
 
 ### FEV-19 — Permission Unification & Subagent Table Removal 🔲
 **Esfuerzo:** ~3h | **Dependencias:** FEV-18 | **Spec:** S5-PACKS §4 | **Tech Debt:** TD-V2-2, TD-V2-3, TD-V2-4
@@ -383,5 +386,5 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
 - **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
-- **v2.0.0 planificado:** FEV-17 ✅ completado → FEV-18 a FEV-23 🔲 pendientes (Agent Pack System + Installer UX v2) (specs: S5-PACKS, S6-UX-V2)
-- **Esfuerzo estimado v2.0.0:** ~38h (FEV-17: 4h ✅, FEV-18: 8h 🔲, FEV-19: 3h 🔲, FEV-20: 3h 🔲, FEV-21: 8h 🔲, FEV-22: 6h 🔲, FEV-23: 6h 🔲)
+- **v2.0.0 planificado:** FEV-17 ✅ completado, FEV-18 ✅ completado → FEV-19 a FEV-23 🔲 pendientes (Agent Pack System + Installer UX v2) (specs: S5-PACKS, S6-UX-V2)
+- **Esfuerzo estimado v2.0.0:** ~38h (FEV-17: 4h ✅, FEV-18: 8h ✅, FEV-19: 3h 🔲, FEV-20: 3h 🔲, FEV-21: 8h 🔲, FEV-22: 6h 🔲, FEV-23: 6h 🔲)
