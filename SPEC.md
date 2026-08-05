@@ -6,6 +6,8 @@
 **Current Version:** v1.2.0  
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
+> **v2.0 Progress:** FEV-17 ✅ + FEV-18 ✅ (2026-08-04) → FEV-19 through FEV-23 🔲. FEV-19 (Permission Unification & Subagent Table Removal) is ready to plan.
+
 ---
 
 ## Objective

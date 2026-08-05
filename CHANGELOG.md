@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **FEV-18 — Dry-run hardening:** `scripts/reformat-agent-cli.ts` replaced the predictable `/tmp/.reformat-dry-run-target.md` path with a per-invocation `mkdtempSync` temp dir under `os.tmpdir()`, cleaned up in a `finally` block. The doc comment was corrected to accurately describe the write-then-delete behavior (previously claimed "never persisted" which was false — `reformatAgent` unconditionally writes to the target path). This closes the symlink-overwrite hazard on shared hosts.
+- **FEV-18 — Stale references:** `tasks/plan.md` updated 11 occurrences of `scripts/reformat-agent.ts` to `scripts/reformat-agent-cli.ts` to reflect the CLI rename.
+
 - **FEV-17 — Template path references:** README, CONTRIBUTING, WORKFLOW, TECH_DEBT, and CHANGELOG references to `template/obligatorio/{agents,commands,skills,opencode.json}` updated to `core/` / `packs/` locations.
 
 ### Added
