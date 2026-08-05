@@ -8,7 +8,6 @@ permission:
   write: allow
   edit: allow
   bash:
-    "*": ask
     "docker *": allow
     "npm *": allow
     "bun *": allow
