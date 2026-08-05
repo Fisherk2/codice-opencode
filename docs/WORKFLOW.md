@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.0.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-04 (v2.0.0 planning: FEV-17 a FEV-23) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-04 (FEV-17 completado; FEV-18 listo para planeación) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -290,7 +290,7 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - Actualizar `IStagingSystem`/`BunFileSystem`/`FileMergeEngine`: soporte `destPath` (source ≠ destination)
 - Actualizar 16+ tests (unit, integration, plugin, packaging) + 1 E2E script a nuevas rutas
 - Documentación actualizada (README, CONTRIBUTING, WORKFLOW, TECH_DEBT, CHANGELOG)
-**Resultado:** Template con estructura `core/` + `packs/` funcional. Destino plano preservado (agents/, commands/ en raíz). 0 regresiones: 910 tests, 16/16 E2E, `just check` 0 errores.
+**Resultado:** Template con estructura `core/` + `packs/` funcional. Destino plano preservado (agents/, commands/ en raíz). 0 regresiones: 946 tests, 16/16 E2E, `just check` limpio.
 
 ### FEV-18 — Agent Classification & Migration 🔲
 **Esfuerzo:** ~8h | **Dependencias:** FEV-17 | **Spec:** S5-PACKS §3
@@ -383,5 +383,5 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
 - **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
-- **v2.0.0 planificado:** FEV-17 a FEV-23 — Agent Pack System + Installer UX v2 (specs: S5-PACKS, S6-UX-V2)
-- **Esfuerzo estimado v2.0.0:** ~38h (FEV-17: 4h, FEV-18: 8h, FEV-19: 3h, FEV-20: 3h, FEV-21: 8h, FEV-22: 6h, FEV-23: 6h)
+- **v2.0.0 planificado:** FEV-17 ✅ completado → FEV-18 a FEV-23 🔲 pendientes (Agent Pack System + Installer UX v2) (specs: S5-PACKS, S6-UX-V2)
+- **Esfuerzo estimado v2.0.0:** ~38h (FEV-17: 4h ✅, FEV-18: 8h 🔲, FEV-19: 3h 🔲, FEV-20: 3h 🔲, FEV-21: 8h 🔲, FEV-22: 6h 🔲, FEV-23: 6h 🔲)

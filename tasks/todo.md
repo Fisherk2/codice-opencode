@@ -1,13 +1,34 @@
 # FEV-17 Todo List — Template Directory Restructuring (v2.0 Phase 1)
 
-**Phase:** FEV-17 (v2.0 Phase 1) — 🔲 Planificado
+**Phase:** FEV-17 (v2.0 Phase 1) — ✅ Completado (2026-08-04)
 **Scope:** Restructurar `template/obligatorio/` → `core/` + `packs/`. Actualizar `FileRuleManifestData` + `TemplateResolver`. Path sweep en tests/docs.
 **Spec:** [specs/spec-agent-packs.md §2](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [docs/WORKFLOW.md §FEV-17](../docs/WORKFLOW.md)
 **Date:** 2026-08-04
 **Full plan:** [plan.md](./plan.md)
-**Status:** 📋 Pendiente — listo para Phase 0
-**Branch base:** `feat/new-agents` (existe con `agency-agents-main/` untracked, sin commits divergentes sobre develop)
-**Total effort:** ~7-8h wall-clock (2-3 días calendario con review) — más que las 4h estimadas en WORKFLOW.md por la cantidad de paths a actualizar.
+**Status:** ✅ Completado — commit `5309c61` (fix: update stale paths and docs after FEV-17 restructure)
+**Branch:** `feat/new-agents` (FEV-17 commited; `agency-agents-main/` remains untracked for FEV-18)
+**Total effort:** ~7h wall-clock (2-3 días calendario con review) — más que las 4h estimadas en WORKFLOW.md por la cantidad de paths a actualizar.
+
+---
+
+## ✅ FEV-17 Complete — Ready for FEV-18 Planning
+
+FEV-17 está cerrado. Todos los commits aplicados, tests verificados (946 pass, 16/16 E2E, `just check` 0 errores).
+
+### FEV-18 — Agent Classification & Migration (v2.0 Phase 2) — 🔲 Listo para Planeación
+
+**Dependencia:** FEV-17 ✅ completado (satisfecha)
+**Spec:** [specs/spec-agent-packs.md §3](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md)
+**Fuente de agentes:** `agency-agents-main/` (untracked, existente en `feat/new-agents`)
+**Esfuerzo estimado:** ~8h
+
+**Scope:**
+- Formatear y mover ~345 agentes IDEAL desde `agency-agents-main/` a packs correspondientes
+- Fusionar contenido de 59 agentes IMPROVABLE en agentes existentes
+- Eliminar 13 agentes REDUNDANT (ya cubiertos por existentes)
+- Cada agente: YAML frontmatter estándar + markdown body + bloque Composition
+
+**Resultado esperado:** ~345 agentes clasificados en 8 packs + 2 obligatorios (main, writers).
 
 ---
 

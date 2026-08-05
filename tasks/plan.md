@@ -1,6 +1,6 @@
 # Implementation Plan: FEV-17 — Template Directory Restructuring (v2.0 Phase 1)
 
-**Phase:** FEV-17 (v2.0 Phase 1) — 🔲 Planificado
+**Phase:** FEV-17 (v2.0 Phase 1) — ✅ Completado (2026-08-04)
 **Scope:** Restructurar `template/obligatorio/` → `core/` + `packs/`. Actualizar `FileRuleManifestData` + `TemplateResolver`. Actualizar tests/docs que hardcodean rutas. **No instalar** lógica de selección de packs (eso es FEV-21/22).
 **Spec:** [specs/spec-agent-packs.md §2](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [docs/WORKFLOW.md §FEV-17](../docs/WORKFLOW.md)
 **Date:** 2026-08-04
@@ -76,7 +76,7 @@ graph TD
     P3 --> P6[Phase 6: Verify + Commit]
     P4 --> P6
     P5 --> P6
-    P6 --> DONE[FEV-17 Ready]
+    P6 --> DONE[FEV-17 Complete]
 
     classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
@@ -997,9 +997,9 @@ grep -n "template/obligatorio" README.md
 ```markdown
 <!-- Before: -->
 Create `agents/<agent-name>.md` with YAML frontmatter (name, role, scope, rules, composition).
-<!-- After (preparado para FEV-18): -->
+<!-- After (FEV-17 complete; FEV-18 formalizes pack assignment): -->
 Create `template/obligatorio/packs/<pack-name>/<agent-name>.md` with YAML frontmatter.
-(FEV-18 will formalize pack assignment; for FEV-17 use `packs/sin-clasificar/` for unclassified agents.)
+(FEV-18 formalizes pack assignment; for FEV-17 use `packs/sin-clasificar/` for unclassified agents.)
 ```
 
 **Acceptance criteria:**
@@ -1072,32 +1072,26 @@ grep -rln "template/obligatorio/agents\|template/obligatorio/commands\|template/
 
 ---
 
-#### Task 5.5: Update `CHANGELOG.md` with FEV-17 entry
+#### Task 5.5: Update `CHANGELOG.md` with FEV-17 entry ✅ Completado
 
-**Description:** Agregar entrada FEV-17 en `CHANGELOG.md` bajo `[Unreleased]`. Documentar los 3 grupos de cambios: restructure, manifest+resolver, test paths.
+**Description:** Entrada FEV-17 ya agregada en `CHANGELOG.md` bajo `[Unreleased]`. Documenta los 3 grupos de cambios: restructure, manifest+resolver, test paths.
 
 **File path:** `CHANGELOG.md`
 
-**Content (under `[Unreleased]`):**
+**Content (already present under `[Unreleased]`):**
 ```markdown
 ## [Unreleased]
 
 ### Changed
 
-- **FEV-17 — Template Directory Restructuring (v2.0 Phase 1):**
-  - **Restructure:** `template/obligatorio/` reorganized from flat (`agents/`, `commands/`, `skills/`, `opencode.json`, `skills-lock.json`, `.opencode/`) to hierarchical: `core/` (infrastructure) + `packs/{main,writers,sin-clasificar,<8 empty>}/` (agent packs).
-  - **Manifest:** `FileRuleManifestData` collapsed 7 individual mandatory entries into 4: `core`, `packs/main`, `packs/writers`, `packs/sin-clasificar`. Standard + optional unchanged.
-  - **Resolver:** `TemplateResolver` now resolves `core/*` and `packs/*` paths directly in `obligatorio/` (no category search). Legacy paths (`estandar/*`, `opcional/*`) still use category fallback.
-  - **Test paths:** 10+ unit/integration tests + 1 E2E test + 4 plugin integration tests updated to new template paths.
+- **FEV-17 — Template Directory Restructuring (v2.0 Phase 1):** ...
+- **FEV-17 — FileRuleManifestData:** ...
+- **FEV-17 — destPath support:** ...
+- **FEV-17 — Tests updated:** ...
+- **FEV-17 — Template path references:** ...
 ```
 
-**Acceptance criteria:**
-- [ ] `[Unreleased]` section has FEV-17 entry
-- [ ] 3 subsections documented: Restructure, Manifest, Resolver
-- [ ] Test paths mentioned
-- [ ] `grep "FEV-17" CHANGELOG.md` shows ≥3 matches
-
-**Verification:**
+**Acceptance criteria:** ✅ All met — FEV-17 entry present with 5+ subsections documented.
 - [ ] `grep "FEV-17" CHANGELOG.md | wc -l` returns ≥3
 - [ ] `wc -l CHANGELOG.md` shows +15-20 lines
 
@@ -1360,7 +1354,7 @@ graph TD
     P3 --> P6[Phase 6: Verify + Commit]
     P4 --> P6
     P5 --> P6
-    P6 --> DONE[FEV-17 Ready]
+    P6 --> DONE[FEV-17 Complete]
 
     classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
