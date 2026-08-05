@@ -1,34 +1,12 @@
-# FEV-17 Todo List — Template Directory Restructuring (v2.0 Phase 1)
+# FEV-18 Todo List — Agent Classification & Migration (v2.0 Phase 2)
 
-**Phase:** FEV-17 (v2.0 Phase 1) — ✅ Completado (2026-08-04)
-**Scope:** Restructurar `template/obligatorio/` → `core/` + `packs/`. Actualizar `FileRuleManifestData` + `TemplateResolver`. Path sweep en tests/docs.
-**Spec:** [specs/spec-agent-packs.md §2](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [docs/WORKFLOW.md §FEV-17](../docs/WORKFLOW.md)
+**Phase:** FEV-18 (v2.0 Phase 2) — 🔲 Planificado (2026-08-04)
+**Scope:** Clasificar y migrar agentes desde `agency-agents-main/` (267) + `packs/sin-clasificar/` (95) a los 8 packs. Formatear 267 nuevos a YAML v2.0 + COMPOSITION. Actualizar `FileRuleManifestData`. NO installer UX (FEV-21).
+**Spec:** [specs/spec-agent-packs.md §3](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [docs/WORKFLOW.md §FEV-18](../docs/WORKFLOW.md)
 **Date:** 2026-08-04
 **Full plan:** [plan.md](./plan.md)
-**Status:** ✅ Completado — commit `5309c61` (fix: update stale paths and docs after FEV-17 restructure)
-**Branch:** `feat/new-agents` (FEV-17 commited; `agency-agents-main/` remains untracked for FEV-18)
-**Total effort:** ~7h wall-clock (2-3 días calendario con review) — más que las 4h estimadas en WORKFLOW.md por la cantidad de paths a actualizar.
-
----
-
-## ✅ FEV-17 Complete — Ready for FEV-18 Planning
-
-FEV-17 está cerrado. Todos los commits aplicados, tests verificados (946 pass, 16/16 E2E, `just check` 0 errores).
-
-### FEV-18 — Agent Classification & Migration (v2.0 Phase 2) — 🔲 Listo para Planeación
-
-**Dependencia:** FEV-17 ✅ completado (satisfecha)
-**Spec:** [specs/spec-agent-packs.md §3](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md)
-**Fuente de agentes:** `agency-agents-main/` (untracked, existente en `feat/new-agents`)
-**Esfuerzo estimado:** ~8h
-
-**Scope:**
-- Formatear y mover ~345 agentes IDEAL desde `agency-agents-main/` a packs correspondientes
-- Fusionar contenido de 59 agentes IMPROVABLE en agentes existentes
-- Eliminar 13 agentes REDUNDANT (ya cubiertos por existentes)
-- Cada agente: YAML frontmatter estándar + markdown body + bloque Composition
-
-**Resultado esperado:** ~345 agentes clasificados en 8 packs + 2 obligatorios (main, writers).
+**Branch:** `feat/new-agents` (FEV-17 ✅ completado; `agency-agents-main/` untracked)
+**Total effort:** ~8–10h wall-clock (3-4 días calendario con review)
 
 ---
 
@@ -36,229 +14,257 @@ FEV-17 está cerrado. Todos los commits aplicados, tests verificados (946 pass, 
 
 | # | Pregunta | Decisión |
 |---|----------|----------|
-| 1 | Alcance FEV-17 | **Restructuring only** — crear core/ + packs/main/ + packs/writers/ + 95 agentes a sin-clasificar/ + 8 packs vacíos. No clasificación manual. |
-| 2 | Destino de 95 agentes no-primary/writer | **`packs/sin-clasificar/`** — explícitamente "aún no clasificado" |
-| 3 | Git workflow | **Reusar `feat/new-agents`** — agency-agents-main/ queda como recurso no rastreado para FEV-18 |
-| 4 | Tests que hardcodean rutas | **Actualizar todas** — 10+ archivos referencian `template/obligatorio/...` |
+| 1 | Format strategy | **Hybrid** — reformatear los 267 nuevos al estándar YAML v2.0 + `## COMPOSITION`; los 95 sin-clasificar (legacy v1.x) NO se reformatean |
+| 2 | Source discrepancy (267 vs 345) | **Audit then plan** — Phase 0 reconcilia los números reales |
+| 3 | sin-clasificar fate | **Distribute to packs** — cada uno de los 95 va a su pack correspondiente (algunos IMPROVABLE/REDUNDANT) |
+| 4 | scientific-literature-researcher location | **MOVER de `packs/writers/` a `packs/science-research/`** — es un agente de análisis científico, no de escritura. Writers queda con 2: `docs-writer`, `obsidian-vault-writer` |
 
 ---
 
-## Estructura Objetivo (v2.0)
+## Inventory Snapshot (pre-audit, 2026-08-04)
 
-```
-template/obligatorio/
-├── core/                                  # Infraestructura no-agentes
-│   ├── .opencode/                         # Plugin, opencode.json
-│   ├── commands/                          # 13 CLI commands
-│   ├── skills/                            # 51 skills
-│   ├── skills-lock.json
-│   └── opencode.json
-└── packs/
-    ├── main/                              # 6 primary agents (MANDATORY)
-    ├── writers/                           # 3 writers (MANDATORY)
-    ├── sin-clasificar/                    # 95 unclassified (MANDATORY, FEV-18 los distribuirá)
-    ├── software-development/              # empty + .gitkeep
-    ├── creative/                          # empty + .gitkeep
-    ├── business/                          # empty + .gitkeep
-    ├── finance/                           # empty + .gitkeep
-    ├── government-legal/                  # empty + .gitkeep
-    ├── science-research/                  # empty + .gitkeep
-    ├── hardware-emerging/                 # empty + .gitkeep
-    └── operations-support/                # empty + .gitkeep
-```
+| Fuente | Count | Notas |
+|--------|-------|-------|
+| `agency-agents-main/` (17 categorías) | 267 .md files | Nuevos v2.0 — fuente principal |
+| `packs/sin-clasificar/` (legacy v1.x) | 95 .md files | A distribuir entre 8 packs |
+| **REDUNDANT** (colisiones de nombre) | 10 names | Legacy wins (backward compat) |
+| **Solo en sin-clasificar** (no en agency-agents) | 85 names | Pure legacy v1.x |
+| **Solo en agency-agents** (nuevos puros) | 257 names | Pure v2.0 additions |
+| **Total final esperado** | ~302-362 unique | Depende de IMPROVABLE merges (post-audit) |
+
+**Top 10 REDUNDANT (same name in both):**
+`ai-engineer`, `data-engineer`, `database-optimizer`, `frontend-developer`, `network-engineer`, `product-manager`, `prompt-engineer`, `sales-engineer`, `sre-engineer`, `ux-researcher`
 
 ---
 
 ## Dependency Order (Critical Path)
 
 ```
-Phase 0 (Prep, 15min)
+Phase 0 (Audit, 1h, sequential, BLOQUEA todo)
     ↓
-Phase 1 (Directory Restructure, 1.5h) ← BLOQUEA Phase 2+
+Phase 1 (Format Definition, 1h, critical path)
     ↓
-Phase 2 (Manifest + Resolver, 1.5h) ← critical path
+    ├── Phase 2 (Pack Distribution, 5h) ─┐
+    │       ├── software-development (1.5h, biggest)    │
+    │       ├── business (1h)                            │
+    │       ├── science-research (45min)                 │── parallel
+    │       ├── hardware-emerging (45min)               │   possible
+    │       ├── creative (30min)                         │
+    │       ├── finance (30min)                          │
+    │       ├── operations-support (30min)               │
+    │       └── government-legal (30min)                 │
+    ↓                                                 ↓
+Phase 3 (sin-clasificar Cleanup, 1h, sequential)
     ↓
-    ├── Phase 3 (Tests, 2h) ─┐
-    ├── Phase 4 (E2E, 1h)   ─┼── parallel
-    └── Phase 5 (Docs, 30min)┘
+Phase 4 (Manifest & Catalog, 1h, sequential)
     ↓
-Phase 6 (Verify + Commit, 30min)
+Phase 5 (Tests & Verification, 1h, sequential, gates Phase 6)
+    ↓
+Phase 6 (Documentation & Commit, 30min)
 ```
 
-**Critical path:** Phase 0 → 1 → 2 → 6 (~5h, longest chain)
-**Parallel branches:** Phase 3, 4, 5 (~3.5h combined if solo)
+**Critical path:** Phase 0 → 1 → 2a → 3 → 4 → 5 → 6 (~7h)
+**Parallel branches in Phase 2:** 7 packs (~3.5h combined if parallel)
 
 ---
 
-## Phase 0: Preparation
+## Phase 0: Audit & Inventory (CRITICAL — gates all)
 
-- [ ] **Task 0.1:** Verificar baseline — `git -C repo status --short` solo muestra `?? agency-agents-main/`, sin modified. `just check` + `just test` + `just test:e2e` exit 0.
-- [ ] **Task 0.2:** Confirmar `template/` limpio — `git -C repo status template/` retorna vacío.
+- [ ] **Task 0.1:** Generar inventario completo de `agency-agents-main/` (267 files, 17 categorías) → `tasks/audit-fev-18-inventory.md`
+- [ ] **Task 0.2:** Calcular overlap sin-clasificar (95) vs agency-agents-main (267) → 10 REDUNDANT identificados
+- [ ] **Task 0.3:** Determinar pack assignment para cada IDEAL agent (≥247) y cada sin-clasificar (95) → `tasks/audit-fev-18-pack-assignment.md`
+- [ ] **Task 0.4:** Generar audit summary report → `tasks/audit-fev-18-summary.md` con counts por pack
 
-**Checkpoint:** ✅ Branch clean, 910 tests passing, 20/20 E2E
-
----
-
-## Phase 1: Directory Restructure (CRITICAL — blocks Phase 2+)
-
-- [ ] **Task 1.1:** Crear `core/` y mover 5 infra files (.opencode/, commands/, skills/, opencode.json, skills-lock.json) — 5 git mv operations
-- [ ] **Task 1.2:** Crear `packs/` con 11 subdirs (3 con content soon + 8 vacíos con .gitkeep)
-- [ ] **Task 1.3:** Mover 6 primary agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca) → `packs/main/`
-- [ ] **Task 1.4:** Mover 3 writers (docs-writer, obsidian-vault-writer, scientific-literature-researcher) → `packs/writers/`
-- [ ] **Task 1.5:** Mover 95 restantes → `packs/sin-clasificar/` (bulk `git mv *.md`); rmdir `agents/` si vacío
-- [ ] **Task 1.6:** Verificar estructura final — `find template/obligatorio/packs -name "*.md" | wc -l` = 104; todos los cambios como renames
-
-**Checkpoint:** ✅ 104 agentes preservados, 8 packs vacíos, `git status` muestra solo renames
+**Checkpoint:** ✅ 4 audit files generados, counts por pack confirmados, REDUNDANT list confirmada — **Review con humano antes de Phase 1**
 
 ---
 
-## Phase 2: FileRuleManifestData + TemplateResolver (CRITICAL — gates Phase 3+)
+## Phase 1: Format Definition (CRITICAL — gates Phase 2+)
 
-- [ ] **Task 2.1:** Update `src/domain/entities/FileRuleManifestData.ts` — 7 mandatory entries → 4 (core, packs/main, packs/writers, packs/sin-clasificar)
-- [ ] **Task 2.2:** Update `src/infrastructure/adapters/TemplateResolver.ts` — direct resolution para `core/*` y `packs/*`; legacy fallback para `estandar/*` y `opcional/*`
-- [ ] **Task 2.3:** Update `tests/unit/domain/file-rule-manifest.test.ts` + `tests/unit/file-rule-manifest.test.ts` — assertions de 7 → 4 mandatory
-- [ ] **Task 2.4:** Crear/extend `tests/unit/infrastructure/template-resolver.test.ts` — 10+ casos (v2.0 paths + legacy fallback + security)
-- [ ] **Task 2.5:** Verificar baseline Phase 2 — `just check` + `just test:unit` exit 0, sin regresiones
+- [ ] **Task 1.1:** Definir YAML frontmatter v2.0 standard (description, mode: subagent, permission) → `docs/AGENT-FORMAT-V2.md`
+- [ ] **Task 1.2:** Definir `## COMPOSITION` block format (Invoke via, Knowledge, RULES) → extender `docs/AGENT-FORMAT-V2.md`
+- [ ] **Task 1.3:** Crear `scripts/reformat-agent.ts` (idempotente, con `--dry-run` flag) — input: agency-agents file, output: pack file con v2.0 format
+- [ ] **Task 1.4:** Dry-run reformat en 5 sample agents (1 por categoría principal) → validar output
+- [ ] **Pre-Phase 2 step:** Mover `template/obligatorio/packs/writers/scientific-literature-researcher.md` a `template/obligatorio/packs/science-research/` (decisión usuario 2026-08-04)
 
-**Checkpoint:** ✅ Manifest + Resolver funcionan, unit tests pasan, coverage ≥95%
-
----
-
-## Phase 3: Unit/Integration Test Path Updates [PARALLELIZABLE]
-
-- [ ] **Task 3.1:** Update `tests/unit/skill-paths.test.ts` — `SKILLS_DIR` a `core/skills`
-- [ ] **Task 3.2:** Update `tests/unit/setup/opencode-config.test.ts` — import path a `core/opencode.json`
-- [ ] **Task 3.3:** Update `tests/unit/config/destructive-patterns.test.ts` — 2 paths a `core/.opencode/plugins/...`
-- [ ] **Task 3.4:** Update `tests/unit/domain/file-merge-engine.test.ts` — 2 rule paths: `opencode.json`+`agents` → `core`+`packs/main`
-- [ ] **Task 3.5:** Update `tests/unit/domain/file-rule-manifest.test.ts` — assertions `agents` → `core`/`packs/main`/`packs/writers`, count 7 → 4
-- [ ] **Task 3.6:** Update `tests/unit/domain/services/stagePlanner.test.ts` — 2 rule paths
-- [ ] **Task 3.7:** Update `tests/unit/domain/services/file-merge-engine-update.test.ts` — 1 rule path
-- [ ] **Task 3.8:** Update `tests/integration/packaging/npm-pack.test.ts` — 6 path assertions (3 in Test A, 3 in Test D) a `core/` + `packs/main/`
-- [ ] **Task 3.9:** Audit + update `tests/integration/use-cases/` — 4 files, probable mínimos cambios
-- [ ] **Task 3.10:** Update `tests/plugin/integration/` — 4 import paths a `core/.opencode/plugins/src/...`
-
-**Checkpoint:** ✅ 10+ test files actualizados, `just test:unit` + `just test:integration` exit 0
+**Checkpoint:** ✅ Format spec documentado, script funciona, 5 samples OK, scientific-literature-researcher movido — **Review con humano antes de Phase 2**
 
 ---
 
-## Phase 4: E2E Test Updates [PARALLELIZABLE]
+## Phase 2: Pack Distribution (CRITICAL — gates Phase 3+)
 
-- [ ] **Task 4.1:** Update `tests/e2e/15-update-workspace-existing-project.sh` line 133 — `template/obligatorio/opencode.json` → `core/opencode.json`
-- [ ] **Task 4.2:** Audit otros E2E scripts + `common.sh` para path references
-- [ ] **Task 4.3:** Run `just test:e2e` — 20/20 scenarios passing, no regression
+> **Vertical slicing per pack.** Cada task = 1 pack completo. Empezar por `software-development` (más grande, ~120 agents). Tasks 2.2-2.8 son paralelizables entre sesiones.
 
-**Checkpoint:** ✅ 20/20 E2E passing, no path-related failures
+- [ ] **Task 2.1:** `software-development` pack — engineering (subset) + security + testing + sin-clasificar subset = ~120 agents
+- [ ] **Task 2.2:** `business` pack — marketing + sales + product + project-management + paid-media + sin-clasificar subset = ~75 agents
+- [ ] **Task 2.3:** `science-research` pack — academic + gis + healthcare + specialized (subset) + sin-clasificar subset + `scientific-literature-researcher` (movido de writers/) = ~46 agents
+- [ ] **Task 2.4:** `hardware-emerging` pack — engineering (iot/embedded) + game-development + spatial-computing + specialized (subset) + sin-clasificar subset = ~50 agents
+- [ ] **Task 2.5:** `creative` pack — design + sin-clasificar subset = ~10 agents
+- [ ] **Task 2.6:** `finance` pack — finance + specialized (subset) + sin-clasificar subset = ~15 agents
+- [ ] **Task 2.7:** `operations-support` pack — support + specialized (subset) + engineering (subset) + sin-clasificar subset = ~25 agents
+- [ ] **Task 2.8:** `government-legal` pack — security (subset) + specialized (subset) + sin-clasificar subset = ~10 agents
 
----
-
-## Phase 5: Documentation Updates [PARALLELIZABLE]
-
-- [ ] **Task 5.1:** Update `README.md` — references a `template/obligatorio/...`
-- [ ] **Task 5.2:** Update `CONTRIBUTING.md` sección "Add a New Agent" — `agents/<name>` → `packs/<pack>/<name>`
-- [ ] **Task 5.3:** Update `docs/{WORKFLOW,TECH_DEBT,TRD,ARCHITECTURE}.md` — consistencia con nueva estructura
-- [ ] **Task 5.4:** Audit `docs/diagnosis/` — decisión: dejar como histórico o actualizar
-- [ ] **Task 5.5:** Update `CHANGELOG.md` — entrada FEV-17 bajo `[Unreleased]`
-
-**Checkpoint:** ✅ Docs consistentes, CHANGELOG actualizado, no broken cross-refs
+**Checkpoint:** ✅ Los 8 packs poblados, total = audit count, 267 nuevos en v2.0 format
 
 ---
 
-## Phase 6: Verification & Atomic Commits
+## Phase 3: sin-clasificar Cleanup (CRITICAL)
 
-- [ ] **Task 6.1:** `just check` → 0 errors, 0 warnings nuevos
-- [ ] **Task 6.2:** `just test` → ≥910 tests, 0 fail, coverage ≥95%
-- [ ] **Task 6.3:** `just test:e2e` → 20/20 scenarios passing
-- [ ] **Task 6.4:** 5-6 atomic commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>`:
-  1. `refactor(template)!: restructure to core/ + packs/ directory layout (v2.0)`
-  2. `feat(domain): update FileRuleManifestData for v2.0 pack structure`
-  3. `feat(infrastructure): TemplateResolver supports core/ + packs/ direct resolution`
-  4. `test: update unit + integration tests for v2.0 template paths`
-  5. `test(e2e): update E2E tests for v2.0 template paths`
-  6. `docs: update documentation for v2.0 template structure`
-- [ ] **Task 6.5:** PR to develop (o local merge)
+- [ ] **Task 3.1:** Verificar `packs/sin-clasificar/` está vacío (todos los 95 distribuidos)
+- [ ] **Task 3.2:** `rmdir template/obligatorio/packs/sin-clasificar` — eliminar directorio
+- [ ] **Task 3.3:** Remover entry `packs/sin-clasificar` de `src/domain/entities/FileRuleManifestData.ts` (líneas 42-47). Manifest: 4 mandatory → 3 mandatory
 
-**Checkpoint:** ✅ FEV-17 cerrado, PR listo, FEV-18 puede comenzar
+**Checkpoint:** ✅ sin-clasificar/ eliminado, manifest con 3 mandatory entries, tests pasan
 
 ---
 
-## DoD Checklist — FEV-17
+## Phase 4: Manifest & Catalog Updates (CRITICAL — gates tests)
+
+- [ ] **Task 4.1:** Agregar 8 entries de packs seleccionables a `FileRuleManifestData.ts` (3 → 11 mandatory entries). **Update writers/ description:** "2 writer agents (docs-writer, obsidian-vault-writer) — scientific-literature-researcher moved to science-research pack in FEV-18"
+- [ ] **Task 4.2:** Actualizar unit tests de manifest — esperar 11 mandatory entries en lugar de 4
+- [ ] **Task 4.3:** Expandir Huitzilopochtli's "AVAILABLE SUBAGENTS" catalog (~96 → ~362 subagents, agrupados por pack)
+
+**Checkpoint:** ✅ Manifest con 11 entries, tests pasan, catalog actualizado — `just check` + `just test:unit` exit 0
+
+---
+
+## Phase 5: Tests & Verification (CRITICAL — gates Phase 6)
+
+- [ ] **Task 5.1:** Crear `tests/unit/domain/all-packs-present.test.ts` — verifica 10 pack dirs existen + sin-clasificar NO existe
+- [ ] **Task 5.2:** Crear `tests/unit/domain/pack-agent-counts.test.ts` — verifica cada pack tiene el count esperado (±10% tolerance)
+- [ ] **Task 5.3:** Extender `tests/e2e/01-clean-install.sh` con assertions de agents de 3+ packs
+- [ ] **Task 5.4:** Run full verification — `just check` + `just test` + `just test:e2e` + `bun pm pack --dry-run` (< 5MB)
+
+**Checkpoint:** ✅ ~956 tests pass, 20/20 E2E, coverage ≥95%, tarball < 5MB
+
+---
+
+## Phase 6: Documentation & Commit (SEQUENTIAL, gates FEV-19)
+
+- [ ] **Task 6.1:** Update `CHANGELOG.md` con FEV-18 entry (Added/Changed/Removed)
+- [ ] **Task 6.2:** Update `docs/WORKFLOW.md` (FEV-18 status `🔲` → `✅`) + `docs/TECH_DEBT.md`
+- [ ] **Task 6.3:** Decidir destino de 4 audit artifacts (commit como histórico o gitignore)
+- [ ] **Task 6.4:** 7-11 atomic commits con Conventional Commits + `Co-Authored-By: Moctezuma <dev@fisherk2.com>`:
+  1. `chore(tasks): add FEV-18 audit artifacts`
+  2. `docs: add agent format v2.0 specification`
+  3. `feat(scripts): add reformat-agent.ts for v2.0 agent conversion`
+  4. `feat(template): distribute software-development pack (~120 agents)`
+  5. `feat(template): distribute business pack (~75 agents)`
+  6. `feat(template): distribute 6 remaining packs (science, hardware, creative, finance, ops, gov-legal) ~155 agents`
+  7. `refactor(template)!: remove sin-clasificar pack (95 agents distributed to 8 packs)`
+  8. `feat(domain): update FileRuleManifestData with 8 selectable packs (v2.0)`
+  9. `docs: update Huitzilopochtli's catalog with ~362 subagents`
+  10. `test: add pack directory and agent count smoke tests; extend E2E clean-install`
+  11. `docs: FEV-18 changelog, workflow, tech debt updates`
+- [ ] **Task 6.5:** PR a `develop` con descripción completa (scope, metrics, links a plan.md y spec)
+
+**Checkpoint:** ✅ FEV-18 cerrado, 7-11 commits, PR listo para review, FEV-19 puede comenzar
+
+---
+
+## DoD Checklist — FEV-18
 
 ### Funcional
 
-- [ ] `template/obligatorio/` contiene solo `core/` + `packs/`
-- [ ] 104 agentes preservados (6 main + 3 writers + 95 sin-clasificar)
-- [ ] 8 packs vacíos creados (software-development, creative, business, finance, government-legal, science-research, hardware-emerging, operations-support)
-- [ ] `FileRuleManifestData` con 4 mandatory entries (no 7)
-- [ ] `TemplateResolver` resuelve v2.0 paths + legacy fallback
+- [ ] Los 8 packs poblados con agents según audit
+- [ ] 267 nuevos agents en formato v2.0 (YAML + COMPOSITION)
+- [ ] 95 legacy agents distribuidos (no reformateados)
+- [ ] 10 REDUNDANT resueltos (legacy wins, new discarded)
+- [ ] IMPROVABLE merges aplicados (legacy con bloque `## Additional Context (FEV-18)`)
+- [ ] `packs/sin-clasificar/` directorio eliminado
+- [ ] `FileRuleManifestData` con 11 mandatory entries (3 + 8 packs)
+- [ ] Huitzilopochtli catalog expandido (~96 → ~362)
 
 ### Calidad
 
 - [ ] `just check`: 0 errors, 0 warnings nuevos
-- [ ] `just test`: ≥910 tests, 0 fail
-- [ ] `just test:e2e`: 20/20 scenarios passing
+- [ ] `just test`: ≥956 tests, 0 fail (~10 new tests)
+- [ ] `just test:e2e`: 20/20 scenarios (1 extended)
 - [ ] Coverage: lines ≥95%, functions ≥95% (enforced)
 - [ ] No `any` types introducidos
+- [ ] Tarball size < 5MB (SC-15)
 
 ### Documentación
 
-- [ ] README.md, CONTRIBUTING.md actualizados
-- [ ] docs/{WORKFLOW,TECH_DEBT,TRD,ARCHITECTURE}.md consistentes
-- [ ] CHANGELOG.md tiene entrada FEV-17
-- [ ] Diagnosis docs auditados (decisión: histórico o actualizado)
+- [ ] `docs/AGENT-FORMAT-V2.md` creado
+- [ ] `CHANGELOG.md` con entrada FEV-18 (Added/Changed/Removed)
+- [ ] `docs/WORKFLOW.md` FEV-18 marcado ✅
+- [ ] 4 audit artifacts en `tasks/` (commiteados como histórico)
 
 ### Proceso
 
-- [ ] 5-6 atomic commits con Conventional Commits
+- [ ] 7-11 atomic commits con Conventional Commits
 - [ ] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Branch `feat/new-agents` (reusando rama existente)
-- [ ] No version bump (v2.0.0 coordina al final con FEV-18 a FEV-23)
+- [ ] Branch `feat/new-agents` con FEV-18 commits (continúa de FEV-17)
+- [ ] PR abierto a `develop`
+- [ ] No version bump (v2.0.0 coordina al final con FEV-19 a FEV-23)
 
 ---
 
-## Resumen de Archivos a Modificar/Crear
+## Resumen de Archivos a Crear/Modificar
 
-### Nuevos directorios (10)
+### Nuevos archivos (10+)
 
-1. `template/obligatorio/core/` (con 5 infra files movidos)
-2-13. `template/obligatorio/packs/{main,writers,sin-clasificar,software-development,creative,business,finance,government-legal,science-research,hardware-emerging,operations-support}/` (3 con agents + 8 vacíos con .gitkeep)
+**Documentación (5):**
+1. `docs/AGENT-FORMAT-V2.md` (~100 lines)
+2. `tasks/audit-fev-18-inventory.md` (~270 lines)
+3. `tasks/audit-fev-18-classification.md` (~280 lines)
+4. `tasks/audit-fev-18-pack-assignment.md` (~370 lines)
+5. `tasks/audit-fev-18-summary.md` (~150 lines)
+
+**Scripts (1):**
+6. `scripts/reformat-agent.ts` (~80 lines)
+
+**Tests (2-3):**
+7. `tests/unit/domain/all-packs-present.test.ts` (~50 lines)
+8. `tests/unit/domain/pack-agent-counts.test.ts` (~60 lines)
+9. `tests/unit/infrastructure/template-resolver.test.ts` (extended, if needed)
+
+**Agents (267 reformateados + 95 movidos):**
+10-17. `template/obligatorio/packs/{software-development,business,science-research,hardware-emerging,creative,finance,operations-support,government-legal}/*.md` (~362 files)
+
+### Archivos modificados (5)
+
+**Code (1):**
+18. `src/domain/entities/FileRuleManifestData.ts` (+~50 lines net, -6 sin-clasificar)
+
+**Tests (3):**
+19. `tests/unit/domain/file-rule-manifest.test.ts` (~20 lines)
+20. `tests/unit/file-rule-manifest.test.ts` (~20 lines, if exists)
+21. `tests/e2e/01-clean-install.sh` (+~20 lines)
+
+**Agents (1):**
+22. `template/obligatorio/packs/main/huitzilopochtli.md` (+~50 lines, catalog)
 
 ### Directorios eliminados (1)
 
-1. `template/obligatorio/agents/` (rmdir si queda vacío)
+23. `template/obligatorio/packs/sin-clasificar/` (rmdir)
 
-### Archivos modificados (16+)
+### Documentación actualizada (3)
 
-**Code (3):**
-1. `src/domain/entities/FileRuleManifestData.ts`
-2. `src/infrastructure/adapters/TemplateResolver.ts`
-3. `tests/unit/infrastructure/template-resolver.test.ts` (nuevo o extendido)
-
-**Tests (10):**
-4-13. 10 archivos de test en `tests/unit/`, `tests/integration/`, `tests/plugin/integration/`
-
-**E2E (1-2):**
-14. `tests/e2e/15-update-workspace-existing-project.sh`
-15. `tests/e2e/common.sh` (si aplica)
-
-**Documentación (7):**
-16-22. README.md, CONTRIBUTING.md, docs/{WORKFLOW,TECH_DEBT,TRD,ARCHITECTURE}.md, CHANGELOG.md
+24. `CHANGELOG.md` (+~25 lines)
+25. `docs/WORKFLOW.md` (~10 lines)
+26. `docs/TECH_DEBT.md` (~5 lines, if applicable)
 
 ---
 
 ## Métricas Esperadas
 
-| Métrica | Baseline (post-FEV-16) | Meta FEV-17 | Verificación |
+| Métrica | Baseline (post-FEV-17) | Meta FEV-18 | Verificación |
 |---------|------------------------|-------------|--------------|
-| Tests (pass/fail) | 910 / 0 | ≥910 / 0 | `just test` |
-| E2E scenarios | 20 / 20 | 20 / 20 | `just test:e2e` |
+| Tests (pass/fail) | 946 / 0 | ≥956 / 0 (+~10 new) | `just test` |
+| E2E scenarios | 20 / 20 | 20 / 20 (1 extended) | `just test:e2e` |
 | `just check` errors | 0 | 0 | `just check` |
 | Coverage (lines) | 98.10% | ≥95% (enforced) | `bun test --coverage` |
-| Mandatory rules | 7 | 4 | `grep "category: \"mandatory\""` |
-| Total agents | 104 | 104 (preserved) | `find template -name "*.md" -path "*/packs/*" \| wc -l` |
-| Template dirs at root | 6 | 2 | `ls template/obligatorio/` |
-| Files touched | — | 25+ | `git diff --stat` |
-| Atomic commits | — | 5-6 | `git log --oneline develop..HEAD \| wc -l` |
-| Wall-clock | — | ~7-8h (vs 4h estimated) | Self-reported |
+| Mandatory rules | 4 | 11 (3 + 8 packs) | `grep "category: \"mandatory\""` |
+| Total agents | 104 (in 4 dirs) | ~361 (in 10 dirs) | `find template -name "*.md" -path "*/packs/*" \| wc -l` |
+| Writers agents | 3 | 2 (scientific-literature-researcher → science-research) | `ls packs/writers/ \| wc -l` |
+| Packs populated | 4 (2 mandatory + 1 tmp + 8 empty) | 10 (2 mandatory + 8 selectable) | `ls packs/ \| wc -l` |
+| `packs/sin-clasificar/` exists | yes | no | `ls packs/sin-clasificar` |
+| Files touched | — | ~380 (267 reformatted + 95 moved + 18 new/modified) | `git diff --stat` |
+| Atomic commits | — | 7-11 | `git log --oneline develop..HEAD \| wc -l` |
+| Wall-clock | — | ~8-10h (vs 8h estimated) | Self-reported |
+| Tarball size | < 5MB | < 5MB (verificar) | `bun pm pack --dry-run` |
 
 ---
 
@@ -266,46 +272,67 @@ Phase 6 (Verify + Commit, 30min)
 
 ```mermaid
 graph TD
-    P0[Phase 0: Prep] --> P1[Phase 1: Directory Restructure]
-    P1 --> P2[Phase 2: Manifest + Resolver]
-    P2 --> P3[Phase 3: Unit/Int Tests]
-    P2 --> P4[Phase 4: E2E Tests]
-    P2 --> P5[Phase 5: Documentation]
-    P3 --> P6[Phase 6: Verify + Commit]
-    P4 --> P6
-    P5 --> P6
-    P6 --> DONE[FEV-17 Ready]
+    P0[Phase 0: Audit<br/>~1h] --> P1[Phase 1: Format Def<br/>~1h]
+    P1 --> P2A[Phase 2a: software-dev<br/>~1.5h]
+    P1 --> P2B[Phase 2b: business<br/>~1h]
+    P1 --> P2C[Phase 2c: science-research<br/>~45min]
+    P1 --> P2D[Phase 2d: hardware-emerging<br/>~45min]
+    P1 --> P2E[Phase 2e: creative<br/>~30min]
+    P1 --> P2F[Phase 2f: finance<br/>~30min]
+    P1 --> P2G[Phase 2g: operations-support<br/>~30min]
+    P1 --> P2H[Phase 2h: government-legal<br/>~30min]
+    P2A --> P3[Phase 3: Cleanup<br/>~1h]
+    P2B --> P3
+    P2C --> P3
+    P2D --> P3
+    P2E --> P3
+    P2F --> P3
+    P2G --> P3
+    P2H --> P3
+    P3 --> P4[Phase 4: Manifest<br/>~1h]
+    P4 --> P5[Phase 5: Tests<br/>~1h]
+    P5 --> P6[Phase 6: Docs & Commit<br/>~30min]
+    P6 --> DONE[FEV-18 Ready]
 
     classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
     classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
     classDef seq fill:#ffd43b,stroke:#f59f00,color:#000
 
-    class P1,P2 crit
-    class P6,DONE gate
-    class P3,P4,P5 par
-    class P0 seq
+    class P0,P1,P3,P4 crit
+    class P5,P6,DONE gate
+    class P2A,P2B,P2C,P2D,P2E,P2F,P2G,P2H par
 ```
 
-**Critical path:** Phase 0 → 1 → 2 → 6 (~5h wall-clock)
-**Parallel branches:** Phase 3, 4, 5 (~3.5h combined if solo)
+**Critical path:** Phase 0 → 1 → 2a → 3 → 4 → 5 → 6 (~7h)
+**Parallel branches in Phase 2:** 7 packs after software-development (~3.5h combined)
+
+---
+
+## Open Questions (requieren decisión humana)
+
+1. **`agency-agents-main/` post-FEV-18:** ¿Mantenemos untracked, commitear como `_archive/agency-agents-source/`, o eliminar? Default propuesto: commitear en `template/_archive/` con `.gitignore` para distribución.
+2. **Source commit SHA:** El bloque `Knowledge` en COMPOSITION debería referenciar el SHA del commit original. Si no se tiene, usar fecha de FEV-18.
+3. **Pack boundaries post-FEV-21:** Single-pack-per-agent puede sentirse restrictivo si usuarios quieren mezclar (e.g., fintech-engineer en finance + software-development). Defer a feedback post-v2.0.0.
 
 ---
 
 ## Próximo Paso
 
 Una vez aprobado el plan:
-1. **Phase 0** (preparación) — verificar baseline + branch state (~15min)
-2. **Phase 1** (directory restructure) — 6 sub-tasks (~1.5h, BLOQUEA Phase 2+)
-3. **Phase 2** (manifest + resolver) — 5 sub-tasks (~1.5h, critical path)
-4. **Phase 3-5** (tests + docs en paralelo) — 15+ sub-tasks (~3.5h combined)
-5. **Phase 6** (verificación + commits) — 5 sub-tasks (~30min)
-6. **Total:** ~7-8h wall-clock, 2-3 días calendario con review cycles
+1. **Phase 0** (audit) — 4 tasks (~1h, BLOQUEA todo)
+2. **Phase 1** (format) — 4 tasks (~1h, critical path)
+3. **Phase 2** (pack distribution) — 8 tasks (~5h, biggest first)
+4. **Phase 3** (cleanup) — 3 tasks (~1h)
+5. **Phase 4** (manifest) — 3 tasks (~1h)
+6. **Phase 5** (tests) — 4 tasks (~1h, gates commits)
+7. **Phase 6** (commit + PR) — 5 tasks (~30min)
+8. **Total:** ~10h wall-clock, 3-4 días calendario con review cycles
 
-**Comando sugerido:** `> Run /build to start Phase 0 (preparation)`
+**Comando sugerido:** `> Run /build to start Phase 0 (audit & inventory)`
 
 ---
 
-*Última actualización: 2026-08-04 — Moctezuma (Strategic Planner) — FEV-17 ready to build*
+*Última actualización: 2026-08-04 — Moctezuma (Strategic Planner) — FEV-18 plan ready for human review*
 
 Co-Authored-By: Moctezuma <dev@fisherk2.com>

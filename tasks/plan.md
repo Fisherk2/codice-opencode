@@ -1,27 +1,33 @@
-# Implementation Plan: FEV-17 — Template Directory Restructuring (v2.0 Phase 1)
+# Implementation Plan: FEV-18 — Agent Classification & Migration (v2.0 Phase 2)
 
-**Phase:** FEV-17 (v2.0 Phase 1) — ✅ Completado (2026-08-04)
-**Scope:** Restructurar `template/obligatorio/` → `core/` + `packs/`. Actualizar `FileRuleManifestData` + `TemplateResolver`. Actualizar tests/docs que hardcodean rutas. **No instalar** lógica de selección de packs (eso es FEV-21/22).
-**Spec:** [specs/spec-agent-packs.md §2](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [docs/WORKFLOW.md §FEV-17](../docs/WORKFLOW.md)
+**Phase:** FEV-18 (v2.0 Phase 2) — 🔲 Planificado
+**Scope:** Clasificar y migrar agentes desde `agency-agents-main/` (267 archivos) + `packs/sin-clasificar/` (95 legacy v1.x) a los 8 packs seleccionables. Resolver colisiones REDUNDANT (10) e IMPROVABLE (≥10). Actualizar `FileRuleManifestData` con descripciones reales. NO instalar lógica de selección de packs (eso es FEV-21/22).
+**Spec:** [specs/spec-agent-packs.md §3](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [docs/WORKFLOW.md §FEV-18](../docs/WORKFLOW.md)
 **Date:** 2026-08-04
 **Author:** Moctezuma (Strategic Planner)
-**Branch base:** `feat/new-agents` (existe con `agency-agents-main/` untracked, sin commits divergentes sobre develop)
-**Methodology:** Vertical slicing + Foundation first (Phase 1) → Code adaptation (Phase 2) → Path sweep (Phases 3-5) → Verification (Phase 6). Dependency-aware parallel where possible.
+**Branch base:** `feat/new-agents` (FEV-17 ✅ completado; `agency-agents-main/` untracked)
+**Methodology:** Audit-first (Phase 0) → Format definition (Phase 1) → Per-pack distribution (Phase 2) → sin-clasificar cleanup (Phase 3) → Manifest (Phase 4) → Tests (Phase 5) → Commit (Phase 6). Vertical slicing con un pack completo por tarea.
 
 ---
 
 ## Overview
 
-Reorganizar el template de workspace de Códice de una estructura plana `obligatorio/{agents,commands,skills,...}` a una estructura jerárquica `obligatorio/{core,packs}/<subdir>`. Esta es la fundación sobre la que FEV-18 (clasificación de agentes en packs), FEV-19-20 (permisos + plugin), y FEV-21/22 (installer UX) construirán.
+FEV-18 toma los 267 nuevos agentes de `agency-agents-main/` (17 categorías crudas) y los 95 legacy de `template/obligatorio/packs/sin-clasificar/`, los clasifica en 8 packs seleccionables (`software-development`, `creative`, `business`, `finance`, `government-legal`, `science-research`, `hardware-emerging`, `operations-support`), y los formatea al estándar YAML v2.0 + bloque `## COMPOSITION`. El resultado esperado es ~302–362 agentes distribuidos en 10 directorios (2 mandatory + 8 selectable), todos con formato consistente, sin duplicados.
 
-**Por qué importa:** v2.0 introduce ~345 nuevos agentes organizados en 8 packs temáticos. Mantener una estructura plana con 450+ archivos `.md` en `agents/` saturaría a usuarios no-desarrolladores. La segregación `core/` (infraestructura) vs `packs/` (agentes) es prerrequisito para todo lo demás en v2.0.
+**Decisiones del usuario (2026-08-04 vía `question` tool):**
+1. **Formato:** Hybrid — reformatear los 267 nuevos; los 95 sin-clasificar NO se reformatean.
+2. **Discrepancia spec vs realidad:** Audit-then-plan — Phase 0 reconcilia números.
+3. **Destino de sin-clasificar:** Distribute — cada uno de los 95 va a su pack correspondiente (o se mergea/elimina según clasificación).
+4. **scientific-literature-researcher:** **MOVER de `packs/writers/` a `packs/science-research/`** — es un agente de análisis científico, no de escritura. Writers queda con 2 agentes: `docs-writer`, `obsidian-vault-writer`. Science-research gana 1 agente adicional.
 
-**Lo que FEV-17 NO hace** (delimitado a FEV-18+):
-- ❌ Clasificar manualmente los 95 agentes en sus 8 packs (FEV-18)
+**Por qué importa:** v2.0 introduce el pack system para resolver el problema "business user recibe 90+ software agents irrelevantes". FEV-18 sienta la base de contenido sobre la que FEV-19-20 (permisos + plugin) y FEV-21/22 (installer UX) construirán. Sin FEV-18, los 8 packs están vacíos y la selección del installer no tiene sentido.
+
+**Lo que FEV-18 NO hace** (delimitado a FEV-19+):
 - ❌ Cambiar permisos de agentes primarios (FEV-19)
 - ❌ Eliminar `VALID_SUBAGENTS` (FEV-20)
 - ❌ UI de selección de packs en installer (FEV-21)
 - ❌ Updater con pack scoping (FEV-22)
+- ❌ Auto-discovery recursivo (FEV-20; aquí solo verificamos que funcione)
 
 ---
 
@@ -29,38 +35,101 @@ Reorganizar el template de workspace de Códice de una estructura plana `obligat
 
 | Decision | Rationale |
 |----------|-----------|
-| **`sin-clasificar/` como pack temporal** | Los 95 agentes que NO son primary ni writer esperan clasificación manual. Un solo pack evita explosionar el árbol y comunica explícitamente "aún no clasificado". FEV-18 los distribuirá. |
-| **`core/` para infra (no agents)** | `.opencode/`, `commands/`, `skills/`, `opencode.json`, `skills-lock.json` no son agentes. Agruparlos bajo `core/` refleja la separación conceptual y reduce la búsqueda de TemplateResolver. |
-| **8 packs vacíos creados** | El spec §2.2 lista 8 packs. Crear los directorios (vacíos) ahora evita Fase 6+ con errores de "pack not found". Reduce diff futuro. |
-| **Template resolution: `obligatorio/<rule.path>`** | Las nuevas rutas (`core/`, `packs/<name>/`) codifican su ubicación exacta. TemplateResolver simplifica: buscar primero en `obligatorio/<path>`, fallback a búsqueda por categoría (legacy). |
-| **FileRuleManifestData se reescribe, no se extiende** | Las 7 entradas obligatorias individuales (`opencode.json`, `skills-lock.json`, `agents`, `commands`, `.opencode`, `.opencode/plugins`, `skills`) colapsan en 4 entradas (`core`, `packs/main`, `packs/writers`, `packs/sin-clasificar`). |
-| **Reusar rama `feat/new-agents`** | La rama ya existe con `agency-agents-main/` untracked. FEV-17 commitea sobre ella; `agency-agents-main/` queda como recurso no rastreado para FEV-18. |
-| **Actualizar todos los tests que hardcodean rutas** | User decisión: 16+ archivos referencian `template/obligatorio/...`. Actualizar ahora evita un FEV dedicado a path migration. |
-| **Sin bump de versión** | FEV-17 sienta las bases; v2.0.0 se publica coordinadamente al cerrar FEV-17 a FEV-23. |
-| **Total: ~7-8h wall-clock (1 día focused, 2-3 días calendario con review)** | Más que las 4h estimadas en WORKFLOW.md por la cantidad de paths a actualizar (no anticipada en el spec). |
+| **Audit-first approach** | El spec dice ~345 IDEAL pero la realidad tiene 267. Phase 0 reconcilia antes de planificar tasks. |
+| **Format hybrid (nuevos reformateados, legacy no)** | Reduce riesgo de regresión en agentes v1.x. Los 95 legacy ya están en producción con sus permisos. |
+| **Per-pack vertical slicing (8 tasks en Phase 2)** | Cada pack es una unidad independiente; permite trabajo paralelo entre sesiones. Empezamos por `software-development` (más grande, ~57 engineering + sin-clasificar subset). |
+| **REDUNDANT strategy: keep legacy, discard new** | Los 10 nombres duplicados (ai-engineer, data-engineer, etc.) ya tienen versión legacy más estable; mantener legacy = backward compat. |
+| **IMPROVABLE strategy: merge new content into legacy** | El spec dice "content merged into existing". Se agrega un bloque `## Additional Context (FEV-18)` al final del legacy. |
+| **YAML frontmatter v2.0 standard** | `description`, `mode: subagent`, `permission: { task: { "*": allow, "<primary>": deny } }` — replicable desde `BunFileSystem`. |
+| **Composition block format** | `## COMPOSITION` con subsecciones `Invoke via`, `Knowledge`, `RULES` (alineado con spec §3.1). |
+| **Reformat via script, not manual** | 267 archivos manuales = error-prone. Script idempotente que se puede re-ejecutar. |
+| **Catalog update deferred to FEV-19** | Huitzilopochtli.md "AVAILABLE SUBAGENTS" requiere conocimiento de los nuevos nombres; FEV-19 unifica permisos y elimina las 3 subagent tables duplicadas. FEV-18 solo agrega nombres al catálogo. |
+| **No new file rule for individual agents** | Los packs siguen siendo 8 reglas en manifest, no 200+ reglas individuales. El pack es la unidad de instalación. |
+| **Total: ~8–10h wall-clock (3–4 días calendario con review)** | Más que las 8h estimadas en WORKFLOW.md por el audit (descubierto) + format conversion script. |
+
+---
+
+## Inventory Snapshot (pre-audit, 2026-08-04)
+
+```
+Source data:
+├── agency-agents-main/             (untracked, 267 .md files in 17 categories)
+│   ├── academic/      6      → science-research
+│   ├── design/       10      → creative
+│   ├── engineering/  57      → software-development + hardware-emerging
+│   ├── finance/       5      → finance
+│   ├── game-development/ 21   → hardware-emerging
+│   ├── gis/          13      → science-research
+│   ├── healthcare/    3      → science-research
+│   ├── marketing/    36      → business
+│   ├── paid-media/    7      → business
+│   ├── product/       5      → business
+│   ├── project-management/ 7  → business
+│   ├── sales/         9      → business
+│   ├── security/     12      → software-development
+│   ├── spatial-computing/ 6   → hardware-emerging
+│   ├── specialized/  55      → SPLIT (multiple packs)
+│   ├── support/       6      → operations-support
+│   └── testing/       9      → software-development
+│
+├── template/obligatorio/packs/
+│   ├── main/         6 primary  (MANDATORY, unchanged)
+│   ├── writers/      2 writers  (MANDATORY, unchanged: docs-writer, obsidian-vault-writer)
+│   ├── sin-clasificar/ 95       (legacy v1.x, to distribute)
+│   ├── software-development/    (empty, 0 agents)
+│   ├── creative/                (empty, 0 agents)
+│   ├── business/                (empty, 0 agents)
+│   ├── finance/                 (empty, 0 agents)
+│   ├── government-legal/        (empty, 0 agents)
+│   ├── science-research/        (empty, 0 agents)
+│   ├── hardware-emerging/       (empty, 0 agents)
+│   └── operations-support/      (empty, 0 agents)
+```
+
+**Name overlap audit (preliminary):**
+- 10 REDUNDANT (same name in both sin-clasificar and agency-agents-main): `ai-engineer`, `data-engineer`, `database-optimizer`, `frontend-developer`, `network-engineer`, `product-manager`, `prompt-engineer`, `sales-engineer`, `sre-engineer`, `ux-researcher`
+- 85 legacy-only (NOT in agency-agents-main) — these are pure v1.x
+- 257 new-only (NOT in sin-clasificar) — these are pure v2.0 additions
+
+**Total agents after FEV-18 (estimate):** ~302–362 unique agents
+- Best case: 6 + 3 + 95 (legacy distributed) + 257 (new) = 361
+- Realistic: 6 + 3 + 95 (legacy) + 247 (new minus 10 REDUNDANT) = 351
+- Pessimistic (if some legacy are IMPROVABLE-merged with new): 6 + 3 + ~80 (legacy kept) + ~210 (new) = 299
+
+Final count confirmed in Phase 0.
 
 ---
 
 ## Dependency Graph
 
 ```
-Phase 0: Preparation (15 min, sequential)
+Phase 0: Audit (1h, sequential, gates all)
     ↓
-Phase 1: Directory Restructure (~1.5h, sequential, blocks all)
+Phase 1: Format Definition (1h, critical path)
     ↓
-Phase 2: FileRuleManifestData + TemplateResolver (~1.5h, critical path)
+    ├── Phase 2: Pack Distribution — 8 packs (5h combined) ─┐
+    │       ├── software-development (biggest, 1.5h)        │
+    │       ├── business (1h)                                │
+    │       ├── science-research (45min)                     │
+    │       ├── hardware-emerging (45min)                   │
+    │       ├── creative (30min)                             │
+    │       ├── finance (30min)                             │
+    │       ├── operations-support (30min)                  │
+    │       └── government-legal (30min)                    │
+    ↓                                                        ↓
+Phase 3: sin-clasificar Cleanup (1h, sequential after Phase 2)
     ↓
-    ├── Phase 3: Unit/Integration test paths (~2h) ─┐
-    ├── Phase 4: E2E + plugin test paths (~1h)    ─┼── parallel
-    └── Phase 5: Documentation + cross-refs (~30min)┘
+Phase 4: Manifest & Catalog (1h, sequential)
     ↓
-Phase 6: Verification + Atomic commits (~30min, gates all)
+Phase 5: Tests & Verification (1h, sequential, gates Phase 6)
+    ↓
+Phase 6: Documentation & Commit (30min, gates FEV-19)
 ```
 
-**Critical path:** Phase 0 → 1 → 2 → 6 (~4h)
-**Parallel branches:** Phase 3, 4, 5 (after Phase 2, ~3.5h combined if solo, ~2h with focused work)
-**Solo execution time:** ~7h sequential, 2-3 calendar days with review
-**Risk mitigation:** Phase 1 → Phase 2 is the only true blocker. Phase 3/4/5 can be reordered.
+**Critical path:** Phase 0 → 1 → 2 (software-development) → 3 → 4 → 5 → 6 (~7h)
+**Parallel branches in Phase 2:** 7 packs after software-development (~3.5h combined)
+**Solo execution time:** ~10h sequential, 3–4 días calendario con review
+**Risk mitigation:** Phase 0 es el único "fail-fast" — si el audit revela algo problemático, parar y re-planificar.
 
 ---
 
@@ -68,1177 +137,1078 @@ Phase 6: Verification + Atomic commits (~30min, gates all)
 
 ```mermaid
 graph TD
-    P0[Phase 0: Preparation] --> P1[Phase 1: Directory Restructure]
-    P1 --> P2[Phase 2: Manifest + Resolver]
-    P2 --> P3[Phase 3: Unit/Int Tests]
-    P2 --> P4[Phase 4: E2E + Plugin Tests]
-    P2 --> P5[Phase 5: Documentation]
-    P3 --> P6[Phase 6: Verify + Commit]
-    P4 --> P6
-    P5 --> P6
-    P6 --> DONE[FEV-17 Complete]
+    P0[Phase 0: Audit & Inventory] --> P1[Phase 1: Format Definition]
+    P1 --> P2A[Phase 2a: software-development]
+    P1 --> P2B[Phase 2b: business]
+    P1 --> P2C[Phase 2c: science-research]
+    P1 --> P2D[Phase 2d: hardware-emerging]
+    P1 --> P2E[Phase 2e: creative]
+    P1 --> P2F[Phase 2f: finance]
+    P1 --> P2G[Phase 2g: operations-support]
+    P1 --> P2H[Phase 2h: government-legal]
+    P2A --> P3[Phase 3: sin-clasificar Cleanup]
+    P2B --> P3
+    P2C --> P3
+    P2D --> P3
+    P2E --> P3
+    P2F --> P3
+    P2G --> P3
+    P2H --> P3
+    P3 --> P4[Phase 4: Manifest & Catalog]
+    P4 --> P5[Phase 5: Tests & Verification]
+    P5 --> P6[Phase 6: Docs & Commit]
+    P6 --> DONE[FEV-18 Complete]
 
     classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
     classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
     classDef seq fill:#ffd43b,stroke:#f59f00,color:#000
 
-    class P1,P2 crit
-    class P6,DONE gate
-    class P3,P4,P5 par
-    class P0 seq
+    class P0,P1,P3,P4 crit
+    class P5,P6,DONE gate
+    class P2A,P2B,P2C,P2D,P2E,P2F,P2G,P2H par
 ```
 
 ---
 
 ## Task List
 
-### Phase 0: Preparation
+### Phase 0: Audit & Inventory (CRITICAL — gates all)
 
-#### Task 0.1: Verify baseline (current branch state)
+> **Why first:** El spec dice ~345 IDEAL pero la realidad tiene 267. Sin audit, planificamos sobre números falsos. Esta fase reconcilia en 1h antes de invertir 8h en tasks.
 
-**Description:** Confirmar que `feat/new-agents` está limpio antes de empezar. La rama tiene `agency-agents-main/` untracked, pero ningún commit divergente de develop. Validar que `just check` + `bun test` pasan en el baseline.
+#### Task 0.1: Generate complete inventory of `agency-agents-main/`
+
+**Description:** Crear un inventario completo de los 267 archivos `.md` en `agency-agents-main/`. Output: `tasks/audit-fev-18-inventory.md` con tabla Markdown de cada archivo (categoría, nombre, tamaño, primeras 3 líneas del frontmatter).
 
 **Acceptance criteria:**
-- [ ] `git -C repo status` muestra solo `agency-agents-main/` untracked, sin modified files
-- [ ] `git log develop..feat/new-agents --oneline` retorna 0 commits (clean base)
-- [ ] `just check` exit 0
-- [ ] `just test` exit 0 (910+ tests passing per FEV-16 baseline)
-- [ ] `just test:e2e` exit 0 (20/20 scenarios)
+- [ ] Inventory incluye los 267 archivos
+- [ ] Cada archivo tiene: categoría, nombre, tamaño (bytes), frontmatter preview (3 líneas)
+- [ ] Total bytes documentado
+- [ ] Output commiteado en `tasks/audit-fev-18-inventory.md`
 
 **Verification:**
-- [ ] `git -C repo branch --show-current` muestra `feat/new-agents`
-- [ ] `git -C repo status --short` solo lista `?? agency-agents-main/`
-- [ ] Output de `just check` 0 errors, 0 warnings nuevos
+- [ ] `find agency-agents-main -name "*.md" -type f | wc -l` returns 267
+- [ ] `cat tasks/audit-fev-18-inventory.md | wc -l` shows 270+ lines
+- [ ] Manual review: no archivos faltantes o duplicados
 
 **Dependencies:** None
-**Files likely touched:** None (verification)
-**Estimated scope:** XS (3 commands)
+**Files likely touched:** `tasks/audit-fev-18-inventory.md` (new, ~270 lines)
+**Estimated scope:** S (1 shell script + output file)
 
 ---
 
-#### Task 0.2: Confirm no uncommitted work in template/
+#### Task 0.2: Compute name overlap and collisions
 
-**Description:** Verificar que no hay trabajo no commiteado dentro de `template/` que se perdería con el refactor. Esto es importante porque `git mv` preserva el historial, pero archivos nuevos sin commit se perderían.
+**Description:** Calcular la intersección entre los 95 nombres en `sin-clasificar` y los 267 nombres en `agency-agents-main`. Clasificar cada archivo en una de 3 categorías: REDUNDANT, IMPROVABLE, IDEAL.
 
 **Acceptance criteria:**
-- [ ] `git -C repo status template/` limpio
-- [ ] `ls template/obligatorio/` muestra solo los 6 items actuales (no extra untracked)
+- [ ] 10 REDUNDANT identificados (same name)
+- [ ] 85+ IMPROVABLE potenciales (mismo dominio, diferente nombre) — heurística
+- [ ] 247+ IDEAL (unique name + new)
+- [ ] Output: `tasks/audit-fev-18-classification.md` con tabla de decisiones
 
 **Verification:**
-- [ ] `git -C repo status template/` retorna vacío
-- [ ] `find template/obligatorio -type f -newer template/obligatorio/.opencode 2>/dev/null | head` muestra solo archivos esperados
+- [ ] `comm -12 <(ls packs/sin-clasificar/ | sort) <(find agency-agents-main -name "*.md" | xargs -I {} basename {} | sort -u) | wc -l` returns 10
+- [ ] `tasks/audit-fev-18-classification.md` lista cada decisión con justificación
 
 **Dependencies:** Task 0.1
-**Files likely touched:** None
-**Estimated scope:** XS (verification)
+**Files likely touched:** `tasks/audit-fev-18-classification.md` (new, ~280 lines)
+**Estimated scope:** S (script + manual review for IMPROVABLE)
 
 ---
 
-### Phase 1: Directory Restructure (CRITICAL — blocks Phase 2+)
+#### Task 0.3: Determine pack assignment per agent
 
-#### Task 1.1: Create `core/` directory and move infrastructure files
+**Description:** Para cada agente IDEAL (≥247), determinar a qué pack pertenece. Decisión basada en: (a) categoría del `agency-agents-main/` parent dir, (b) contenido del `description:` del YAML, (c) dominios couverts.
 
-**Description:** Crear `template/obligatorio/core/` y mover los archivos de infraestructura (no-agentes) desde `template/obligatorio/`. Usar `git mv` para preservar historial.
+**Decision matrix (initial proposal):**
 
-**File path:** `template/obligatorio/`
-
-**Change:**
-```bash
-# Source dir: template/obligatorio/
-# Target: template/obligatorio/core/
-
-mkdir -p template/obligatorio/core
-git mv template/obligatorio/.opencode    template/obligatorio/core/
-git mv template/obligatorio/commands     template/obligatorio/core/
-git mv template/obligatorio/skills       template/obligatorio/core/
-git mv template/obligatorio/opencode.json    template/obligatorio/core/
-git mv template/obligatorio/skills-lock.json template/obligatorio/core/
-```
+| Source category | Pack target | Notes |
+|-----------------|-------------|-------|
+| academic | science-research | direct |
+| design | creative | direct |
+| engineering (backend/frontend/db/devops/ai/security/testing) | software-development | direct |
+| engineering (iot/embedded/firmware) | hardware-emerging | by content |
+| finance | finance | direct |
+| game-development | hardware-emerging | direct |
+| gis | science-research | direct |
+| healthcare | science-research | direct |
+| marketing/paid-media | business | direct |
+| product/project-management/sales | business | direct |
+| security | software-development | by content (some go to gov-legal) |
+| spatial-computing | hardware-emerging | direct |
+| specialized | SPLIT | per-agent decision (review needed) |
+| support | operations-support | direct |
+| testing | software-development | direct |
+| sin-clasificar (95) | SPLIT | per-agent decision based on existing role |
 
 **Acceptance criteria:**
-- [ ] `template/obligatorio/core/` contiene: `.opencode/`, `commands/`, `skills/`, `opencode.json`, `skills-lock.json`
-- [ ] `template/obligatorio/` raíz contiene solo: `core/`, `packs/`, `agents/` (temporal)
-- [ ] `git status` muestra 5 renames (no deletes + adds)
-- [ ] No se perdió ningún archivo (verificar con `find`)
+- [ ] Cada IDEAL agent (≥247) tiene un pack asignado
+- [ ] Cada sin-clasificar agent (95) tiene un pack asignado (o marked as keep-current)
+- [ ] `specialized/` category revisada manualmente (55 agents — puede requerir re-categorización)
+- [ ] Output: `tasks/audit-fev-18-pack-assignment.md`
 
 **Verification:**
-- [ ] `ls template/obligatorio/core/` lista 5 items
-- [ ] `git -C repo status --short | wc -l` muestra 5 líneas (los renames)
-- [ ] `find template/obligatorio/core -type f | wc -l` > 0 (archivos preservados)
+- [ ] `grep -c "^| " tasks/audit-fev-18-pack-assignment.md` ≥ 362 (todos los agentes)
+- [ ] Distribución por pack: software-development ~120, business ~75, science-research ~45, hardware-emerging ~50, creative ~10, finance ~15, operations-support ~25, government-legal ~10 (verificar coherencia con spec)
 
 **Dependencies:** Task 0.2
-**Files likely touched:** 5 paths moved (git renames)
-**Estimated scope:** S (5 mv operations)
+**Files likely touched:** `tasks/audit-fev-18-pack-assignment.md` (new, ~370 lines)
+**Estimated scope:** M (script + manual review de `specialized/`)
 
 ---
 
-#### Task 1.2: Create `packs/` directory structure (11 subdirs)
+#### Task 0.4: Generate audit summary report
 
-**Description:** Crear `template/obligatorio/packs/` con 11 subdirectorios: 2 obligatorios (main, writers), 1 temporal (sin-clasificar), 8 vacíos para FEV-18.
+**Description:** Consolidar los 3 audit files en un summary ejecutable que drive las tasks de Phase 1+. Output: `tasks/audit-fev-18-summary.md` con counts por pack, lista de REDUNDANT, lista de IMPROVABLE merges, lista de IDEAL additions.
 
-**File path:** `template/obligatorio/packs/`
+**Acceptance criteria:**
+- [ ] Summary contiene tabla con counts esperados por pack
+- [ ] Lista de 10 REDUNDANT con decisión (keep legacy)
+- [ ] Lista de IMPROVABLE merges (legacy target + new content source)
+- [ ] Total final de agentes esperado
+- [ ] Tiempo estimado por pack (basado en count)
 
-**Change:**
-```bash
-mkdir -p template/obligatorio/packs/{main,writers,sin-clasificar}
-mkdir -p template/obligatorio/packs/{software-development,creative,business,finance,government-legal,science-research,hardware-emerging,operations-support}
+**Verification:**
+- [ ] `tasks/audit-fev-18-summary.md` ≤ 150 líneas
+- [ ] Cada pack tiene count + lista de agentes
+- [ ] Decisión ejecutable: "Phase 2.x: move N agents from A to B with format C"
+
+**Dependencies:** Tasks 0.1, 0.2, 0.3
+**Files likely touched:** `tasks/audit-fev-18-summary.md` (new, ~150 lines)
+**Estimated scope:** S (consolidation)
+
+---
+
+#### Checkpoint: Audit Complete (Phase 0)
+
+- [ ] 4 audit files generados (`inventory`, `classification`, `pack-assignment`, `summary`)
+- [ ] Counts por pack confirmados y documentados
+- [ ] REDUNDANT list confirmada (legacy wins)
+- [ ] IMPROVABLE merges listados con source→target
+- [ ] **Review con humano antes de Phase 1** — los números pueden invalidar assumptions del plan
+
+---
+
+### Phase 1: Format Definition (CRITICAL — gates Phase 2+)
+
+#### Task 1.1: Define YAML frontmatter v2.0 standard
+
+**Description:** Definir el YAML frontmatter estándar para los 267 nuevos agentes. Basado en el formato de los primary agents existentes (`huitzilopochtli.md` como referencia), pero simplificado para subagents.
+
+**Target YAML format:**
+
+```yaml
+---
+description: "AI Engineer — Expert ML engineer specializing in production AI integration, model deployment, and intelligent systems architecture"
+mode: subagent
+permission:
+  edit: allow
+  bash:
+    "*": ask
+    "rm *": deny
+    "chmod *": deny
+---
+```
+
+**Rationale:**
+- `description` — Usado por OpenCode para mostrar al usuario. Extraído del frontmatter original o primera línea del body.
+- `mode: subagent` — Distingue de `mode: primary`.
+- `permission.edit: allow` — Subagent puede escribir (vs primary que suele denegar).
+- `permission.bash.* : ask` — Bash commands requieren confirmación.
+- `permission.bash.rm *: deny` — Protección contra borrado accidental.
+- `permission.bash.chmod *: deny` — Sin cambios de permisos.
+- NO `task:` permission (subagents no delegan, solo son delegados).
+
+**Acceptance criteria:**
+- [ ] Formato documentado en `docs/AGENT-FORMAT-V2.md` (new)
+- [ ] Ejemplo canónico: `template/obligatorio/packs/main/huitzilopochtli.md` (referencia)
+- [ ] Anti-ejemplo: `agency-agents-main/engineering/ai-engineer.md` (formato agency, NO usar)
+
+**Verification:**
+- [ ] `docs/AGENT-FORMAT-V2.md` ≤ 100 líneas
+- [ ] Manual review: formato es replicable a 267 archivos por script
+
+**Dependencies:** Task 0.4
+**Files likely touched:** `docs/AGENT-FORMAT-V2.md` (new, ~100 lines)
+**Estimated scope:** S (spec document)
+
+---
+
+#### Task 1.2: Define `## COMPOSITION` block format
+
+**Description:** Definir el bloque `## COMPOSITION` que se agrega al final de cada agente reformatado. Spec §3.1 dice "markdown body + bloque Composition". Estructura propuesta:
+
+```markdown
+## COMPOSITION
+
+### Invoke via
+
+- **Primary agent:** `huitzilopochtli` (orchestrator)
+- **Direct call:** `/task ai-engineer "description of work"`
+- **When to use:** [extracted from body content]
+
+### Knowledge
+
+- **Source repository:** agency-agents-main (commit SHA at FEV-18)
+- **Original file:** `agency-agents-main/engineering/ai-engineer.md`
+- **Last reformatted:** 2026-08-04 (FEV-18)
+
+### RULES
+
+- Follow the agent's role-specific rules from the body content
+- Delegate to specialists when domain expertise needed
+- Never execute destructive bash commands without confirmation
 ```
 
 **Acceptance criteria:**
-- [ ] `template/obligatorio/packs/` existe con 11 subdirs
-- [ ] Cada subdir está vacío (excepto los que reciben agents en 1.3-1.5)
-- [ ] `.gitkeep` en cada subdir empty para que git los trackee (los packs vacíos se borran si no se trackean)
+- [ ] Formato documentado en `docs/AGENT-FORMAT-V2.md` (extender Task 1.1)
+- [ ] Ejemplo: `template/obligatorio/packs/engineering-prototype/ai-engineer.md` (test case)
+- [ ] 3 subsecciones mínimas: `Invoke via`, `Knowledge`, `RULES`
 
 **Verification:**
-- [ ] `ls template/obligatorio/packs/` lista 11 items
-- [ ] `ls template/obligatorio/packs/software-development/` está vacío (excepto `.gitkeep`)
+- [ ] `grep "## COMPOSITION" template/obligatorio/packs/engineering-prototype/ai-engineer.md` returns 1 match
+- [ ] Manual review: bloque es conciso, ≤30 líneas
 
 **Dependencies:** Task 1.1
-**Files likely touched:** 11 new directories (3 with content soon, 8 empty with `.gitkeep`)
-**Estimated scope:** XS (mkdir + 8 `.gitkeep` files)
+**Files likely touched:** `docs/AGENT-FORMAT-V2.md` (extended, +30 lines)
+**Estimated scope:** XS (template definition)
 
 ---
 
-#### Task 1.3: Move 6 primary agents to `packs/main/`
+#### Task 1.3: Create reformat script (`scripts/reformat-agent.ts`)
 
-**Description:** Mover los 6 agentes primary (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca) a `template/obligatorio/packs/main/`.
+**Description:** Crear un script idempotente que convierte un archivo `.md` del formato agency-agents al formato v2.0. Input: `agency-agents-main/<category>/<name>.md`. Output: `template/obligatorio/packs/<target-pack>/<name>.md` con YAML + body + COMPOSITION block.
 
-**File path:** `template/obligatorio/agents/` → `template/obligatorio/packs/main/`
+**Script design:**
 
-**Change:**
-```bash
-cd template/obligatorio/agents
-for agent in huitzilopochtli quetzalcoatl moctezuma tlaloc mictlantecuhtli tezcatlipoca; do
-    git mv "${agent}.md" "../packs/main/"
-done
+```typescript
+// scripts/reformat-agent.ts
+// Usage: bun scripts/reformat-agent.ts <source-path> <target-pack> [--dry-run]
+
+import { readFileSync, writeFileSync } from "node:fs";
+import { basename, join } from "node:path";
+
+interface AgencyFrontmatter {
+  name: string;
+  description: string;
+  color?: string;
+  emoji?: string;
+  vibe?: string;
+}
+
+// 1. Parse source YAML (frontmatter delimiters ---)
+// 2. Generate v2.0 YAML (description, mode: subagent, permission)
+// 3. Keep body content (after YAML)
+// 4. Append ## COMPOSITION block
+// 5. Write to target
+
+// Idempotent: re-running produces same output (no duplicate COMPOSITION)
 ```
 
 **Acceptance criteria:**
-- [ ] `template/obligatorio/packs/main/` contiene 6 archivos `.md`
-- [ ] `template/obligatorio/agents/` ya no contiene los 6 primary
-- [ ] `git status` muestra 6 renames
+- [ ] Script compila con `bun build` o ejecuta con `bun run`
+- [ ] Maneja archivos sin frontmatter (error claro)
+- [ ] Idempotente: re-run no duplica COMPOSITION
+- [ ] `--dry-run` flag para preview
+- [ ] Smoke test: 3 archivos (1 engineering, 1 design, 1 specialized) producen output válido
 
 **Verification:**
-- [ ] `ls template/obligatorio/packs/main/ | wc -l` returns 6
-- [ ] `ls template/obligatorio/agents/ | grep -E "^(huitzilopochtli|quetzalcoatl|moctezuma|tlaloc|mictlantecuhtli|tezcatlipoca)$"` retorna vacío
-- [ ] `ls template/obligatorio/packs/main/` lista los 6 nombres exactos
+- [ ] `bun scripts/reformat-agent.ts agency-agents-main/engineering/ai-engineer.md software-development --dry-run` muestra output esperado
+- [ ] `bun scripts/reformat-agent.ts agency-agents-main/engineering/ai-engineer.md software-development` genera `template/obligatorio/packs/software-development/ai-engineer.md` con YAML + body + COMPOSITION
+- [ ] `grep "## COMPOSITION" template/obligatorio/packs/software-development/ai-engineer.md` returns 1 match
 
 **Dependencies:** Task 1.2
-**Files likely touched:** 6 files renamed
-**Estimated scope:** XS (6 mv operations via loop)
+**Files likely touched:** `scripts/reformat-agent.ts` (new, ~80 lines)
+**Estimated scope:** M (script + tests + idempotency)
 
 ---
 
-#### Task 1.4: Move 3 writer agents to `packs/writers/`
+#### Task 1.4: Dry-run reformat on 5 sample agents (1 per major category)
 
-**Description:** Mover los 3 agentes writers (docs-writer, obsidian-vault-writer, scientific-literature-researcher) a `template/obligatorio/packs/writers/`.
+**Description:** Aplicar el reformat script a 5 agentes de muestra (uno por cada categoría principal) y validar manualmente el output antes de processar los 267.
 
-**File path:** `template/obligatorio/agents/` → `template/obligatorio/packs/writers/`
+**Sample agents:**
+1. `agency-agents-main/engineering/ai-engineer.md` → `software-development`
+2. `agency-agents-main/design/ui-designer.md` → `creative`
+3. `agency-agents-main/finance/financial-analyst.md` → `finance`
+4. `agency-agents-main/marketing/marketing-strategist.md` → `business`
+5. `agency-agents-main/game-development/unity-developer.md` → `hardware-emerging`
 
-**Change:**
+**Acceptance criteria:**
+- [ ] 5 agentes reformatados existen en `template/obligatorio/packs/<pack>/`
+- [ ] Cada uno tiene YAML válido + body + COMPOSITION
+- [ ] Validación manual: descripción, permisos, bloques coherentes
+
+**Verification:**
+- [ ] `ls template/obligatorio/packs/{software-development,creative,finance,business,hardware-emerging}/` muestra los 5 archivos
+- [ ] `bun run scripts/reformat-agent.ts <source> <pack> --dry-run` es idempotente (no cambios en 2nd run)
+- [ ] Manual review: 5 archivos OK con la fuente
+- [ ] **Pre-Phase 2 step:** Mover `template/obligatorio/packs/writers/scientific-literature-researcher.md` a `template/obligatorio/packs/science-research/` (decisión usuario 2026-08-04)
+
+**Dependencies:** Task 1.3
+**Files likely touched:** 5 new files in packs
+**Estimated scope:** S (5 invocations del script + manual review)
+
+---
+
+#### Checkpoint: Format Definition Complete (Phase 1)
+
+- [ ] `docs/AGENT-FORMAT-V2.md` documenta YAML + COMPOSITION
+- [ ] `scripts/reformat-agent.ts` compila y es idempotente
+- [ ] 5 sample agents reformatados con éxito
+- [ ] **Review con humano antes de Phase 2** — formato confirmado
+
+---
+
+### Phase 2: Pack Distribution (CRITICAL — gates Phase 3+)
+
+> **Vertical slicing per pack.** Cada task mueve/agentes a un pack completo, los reformatea, y valida. Empezamos por el más grande (`software-development`) y seguimos en orden de tamaño descendente. Tasks 2.2–2.8 son potencialmente paralelizables entre sesiones/agentes.
+
+#### Task 2.1: software-development pack (largest, ~120 agents)
+
+**Description:** Mover y formatear los agentes de `software-development` pack. Fuentes:
+- `agency-agents-main/engineering/` (subset: backend/frontend/db/devops/ai/security/testing) — ~80 agents
+- `agency-agents-main/security/` — 12 agents
+- `agency-agents-main/testing/` — 9 agents
+- `packs/sin-clasificar/` (subset: backend-developer, frontend-developer, etc.) — ~25 legacy agents
+- **Excluir:** engineering/iot, engineering/embedded, engineering/firmware (van a hardware-emerging en T2.4)
+
+**Acceptance criteria:**
+- [ ] `template/obligatorio/packs/software-development/` contiene todos los agentes del audit (Phase 0)
+- [ ] Todos los 267 nuevos están en formato v2.0 (YAML + COMPOSITION)
+- [ ] Los legacy están sin reformatear (formato original)
+- [ ] Total agents en pack = audit count (esperado ~120)
+
+**Verification:**
+- [ ] `ls template/obligatorio/packs/software-development/ | wc -l` matches audit
+- [ ] `grep -l "mode: subagent" template/obligatorio/packs/software-development/*.md | wc -l` = count of new agents
+- [ ] `grep -L "mode: subagent" template/obligatorio/packs/software-development/*.md | wc -l` = count of legacy agents
+- [ ] `git status` muestra: ~80 adds (new) + ~25 renames (sin-clasificar → pack)
+
+**Dependencies:** Task 1.4
+**Files likely touched:** ~120 files in `template/obligatorio/packs/software-development/`
+**Estimated scope:** L (~1.5h wall-clock)
+
+---
+
+#### Task 2.2: business pack (~75 agents)
+
+**Description:** Mover y formatear agentes de `business` pack. Fuentes:
+- `agency-agents-main/marketing/` — 36 agents
+- `agency-agents-main/sales/` — 9 agents
+- `agency-agents-main/product/` — 5 agents
+- `agency-agents-main/project-management/` — 7 agents
+- `agency-agents-main/paid-media/` — 7 agents
+- `packs/sin-clasificar/` (subset: business-analyst, product-manager, etc.) — ~11 legacy agents
+
+**Acceptance criteria:**
+- [ ] `template/obligatorio/packs/business/` contiene todos los agentes del audit
+- [ ] Total agents en pack = audit count (esperado ~75)
+
+**Verification:**
+- [ ] `ls template/obligatorio/packs/business/ | wc -l` matches audit
+- [ ] Smoke test: 1 marketing + 1 sales + 1 product agent reformatados correctamente
+
+**Dependencies:** Task 1.4 (can run parallel to T2.1)
+**Files likely touched:** ~75 files
+**Estimated scope:** L (~1h)
+
+---
+
+#### Task 2.3: science-research pack (~45 agents)
+
+**Description:** Mover y formatear agentes de `science-research` pack. Fuentes:
+- `agency-agents-main/academic/` — 6 agents
+- `agency-agents-main/gis/` — 13 agents
+- `agency-agents-main/healthcare/` — 3 agents
+- `agency-agents-main/specialized/` (subset: research-scientist, etc.) — ~12 agents
+- `packs/sin-clasificar/` (subset: research-related) — ~10 legacy agents
+
+**Note:** `scientific-literature-researcher.md` se MUEVE de `packs/writers/` a `packs/science-research/` (decisión del usuario, 2026-08-04). Total esperado: 2 writers + 1 en science-research.
+
+**Acceptance criteria:**
+- [ ] `template/obligatorio/packs/science-research/` contiene todos los agentes del audit + `scientific-literature-researcher.md` (movido de writers/)
+- [ ] Total agents en pack = audit count + 1 (esperado ~46)
+
+**Verification:**
+- [ ] `ls template/obligatorio/packs/science-research/ | wc -l` matches audit + 1
+- [ ] `ls template/obligatorio/packs/science-research/ | grep scientific-literature-researcher` returns 1 match
+- [ ] Smoke test: 1 academic + 1 gis + 1 healthcare reformatados
+
+**Dependencies:** Task 1.4 (parallel)
+**Files likely touched:** ~45 files
+**Estimated scope:** M (~45min)
+
+---
+
+#### Task 2.4: hardware-emerging pack (~50 agents)
+
+**Description:** Mover y formatear agentes de `hardware-emerging` pack. Fuentes:
+- `agency-agents-main/engineering/` (subset: iot-fleet-engineer, embedded-firmware-engineer, etc.) — ~10 agents
+- `agency-agents-main/game-development/` — 21 agents
+- `agency-agents-main/spatial-computing/` — 6 agents
+- `agency-agents-main/specialized/` (subset: blockchain, xr, etc.) — ~13 agents
+- `packs/sin-clasificar/` (subset: iot-engineer, embedded-systems, game-developer, blockchain-developer) — ~4 legacy agents
+
+**Acceptance criteria:**
+- [ ] `template/obligatorio/packs/hardware-emerging/` contiene todos los agentes del audit
+- [ ] Total agents en pack = audit count (esperado ~50)
+
+**Verification:**
+- [ ] `ls template/obligatorio/packs/hardware-emerging/ | wc -l` matches audit
+- [ ] Smoke test: 1 game-dev + 1 iot + 1 blockchain reformatados
+
+**Dependencies:** Task 1.4 (parallel)
+**Files likely touched:** ~50 files
+**Estimated scope:** M (~45min)
+
+---
+
+#### Task 2.5: creative pack (~10 agents)
+
+**Description:** Mover y formatear agentes de `creative` pack. Fuentes:
+- `agency-agents-main/design/` — 10 agents (UX, UI, brand, motion, etc.)
+
+**Acceptance criteria:**
+- [ ] `template/obligatorio/packs/creative/` contiene todos los agentes del audit
+- [ ] Total agents en pack = audit count (esperado ~10)
+
+**Verification:**
+- [ ] `ls template/obligatorio/packs/creative/ | wc -l` matches audit
+- [ ] Smoke test: 1 ui-designer + 1 ux-researcher reformatados
+
+**Dependencies:** Task 1.4 (parallel)
+**Files likely touched:** ~10 files
+**Estimated scope:** S (~30min)
+
+---
+
+#### Task 2.6: finance pack (~15 agents)
+
+**Description:** Mover y formatear agentes de `finance` pack. Fuentes:
+- `agency-agents-main/finance/` — 5 agents
+- `agency-agents-main/specialized/` (subset: fintech, payment, etc.) — ~8 agents
+- `packs/sin-clasificar/` (subset: financial-related) — ~2 legacy agents
+
+**Acceptance criteria:**
+- [ ] `template/obligatorio/packs/finance/` contiene todos los agentes del audit
+- [ ] Total agents en pack = audit count (esperado ~15)
+
+**Verification:**
+- [ ] `ls template/obligatorio/packs/finance/ | wc -l` matches audit
+
+**Dependencies:** Task 1.4 (parallel)
+**Files likely touched:** ~15 files
+**Estimated scope:** S (~30min)
+
+---
+
+#### Task 2.7: operations-support pack (~25 agents)
+
+**Description:** Mover y formatear agentes de `operations-support` pack. Fuentes:
+- `agency-agents-main/support/` — 6 agents
+- `agency-agents-main/specialized/` (subset: hr, customer, etc.) — ~13 agents
+- `agency-agents-main/engineering/` (subset: it-service-manager, etc.) — ~3 agents
+- `packs/sin-clasificar/` (subset: customer-support, etc.) — ~3 legacy agents
+
+**Acceptance criteria:**
+- [ ] `template/obligatorio/packs/operations-support/` contiene todos los agentes del audit
+- [ ] Total agents en pack = audit count (esperado ~25)
+
+**Verification:**
+- [ ] `ls template/obligatorio/packs/operations-support/ | wc -l` matches audit
+
+**Dependencies:** Task 1.4 (parallel)
+**Files likely touched:** ~25 files
+**Estimated scope:** S (~30min)
+
+---
+
+#### Task 2.8: government-legal pack (~10 agents)
+
+**Description:** Mover y formatear agentes de `government-legal` pack. Fuentes:
+- `agency-agents-main/security/` (subset: privacy-engineer, compliance) — ~3 agents
+- `agency-agents-main/specialized/` (subset: legal, compliance, regulatory) — ~7 agents
+- `packs/sin-clasificar/` (subset: legal-advisor, etc.) — ~1 legacy agent (legal-advisor legacy)
+
+**Wait:** Spec §3.6 lists `legal-advisor-legal` (new) but legacy has `legal-advisor` (sin name collision). Verificar en Phase 0 audit.
+
+**Acceptance criteria:**
+- [ ] `template/obligatorio/packs/government-legal/` contiene todos los agentes del audit
+- [ ] Total agents en pack = audit count (esperado ~10)
+
+**Verification:**
+- [ ] `ls template/obligatorio/packs/government-legal/ | wc -l` matches audit
+
+**Dependencies:** Task 1.4 (parallel)
+**Files likely touched:** ~10 files
+**Estimated scope:** S (~30min)
+
+---
+
+#### Checkpoint: Pack Distribution Complete (Phase 2)
+
+- [ ] Los 8 packs poblados con los agentes esperados
+- [ ] Total agents coincide con audit summary
+- [ ] Todos los 267 nuevos en formato v2.0
+- [ ] Los 95 legacy distribuidos (no duplicados con nuevos)
+- [ ] 10 REDUNDANT resueltos (legacy wins, new discarded)
+- [ ] IMPROVABLE merges aplicados (legacy con bloque `## Additional Context (FEV-18)`)
+
+---
+
+### Phase 3: sin-clasificar Cleanup (CRITICAL)
+
+#### Task 3.1: Verify sin-clasificar distribution is complete
+
+**Description:** Confirmar que todos los 95 agentes en `packs/sin-clasificar/` han sido movidos a sus packs correspondientes durante Phase 2. No debe haber agentes restantes en `sin-clasificar/`.
+
+**Acceptance criteria:**
+- [ ] `ls template/obligatorio/packs/sin-clasificar/` returns empty (or 0 files)
+- [ ] `find template/obligatorio/packs/sin-clasificar/ -name "*.md" | wc -l` returns 0
+
+**Verification:**
+- [ ] Si quedan archivos, listarlos e identificar por qué no se movieron
+
+**Dependencies:** Tasks 2.1–2.8
+**Files likely touched:** None (verification)
+**Estimated scope:** XS
+
+---
+
+#### Task 3.2: Remove sin-clasificar directory
+
+**Description:** Si `packs/sin-clasificar/` está vacío, eliminar el directorio. Si quedan `.gitkeep` files, removerlos.
+
+**Acceptance criteria:**
+- [ ] `rmdir template/obligatorio/packs/sin-clasificar` exitoso
+- [ ] `git status` muestra el directorio como deleted
+
+**Verification:**
+- [ ] `ls template/obligatorio/packs/ | grep sin-clasificar` returns 0
+- [ ] `find template/obligatorio -name "sin-clasificar" -type d` returns 0
+
+**Dependencies:** Task 3.1
+**Files likely touched:** `template/obligatorio/packs/sin-clasificar/` (deleted)
+**Estimated scope:** XS
+
+---
+
+#### Task 3.3: Remove `packs/sin-clasificar` entry from FileRuleManifestData
+
+**Description:** Remover la entrada `packs/sin-clasificar` de `src/domain/entities/FileRuleManifestData.ts` (líneas 42-47). Esta entrada es temporal post-FEV-17 y debe desaparecer en FEV-18.
+
+**Acceptance criteria:**
+- [ ] 4 mandatory entries (post-removal): `core`, `packs/main`, `packs/writers`, + los 8 packs seleccionables (total 11 cuando se agreguen en Phase 4)
+
+**Wait:** Phase 3 no agrega los 8 packs al manifest — eso es Phase 4 (T4.1). Aquí solo se remueve `sin-clasificar`.
+
+**Acceptance criteria (Phase 3):**
+- [ ] `packs/sin-clasificar` entry removida
+- [ ] Manifest ahora tiene 3 mandatory entries: `core`, `packs/main`, `packs/writers`
+- [ ] Tests existentes actualizados (esperan 4 mandatory → ahora 3)
+
+**Verification:**
+- [ ] `grep "sin-clasificar" src/domain/entities/FileRuleManifestData.ts` returns 0
+- [ ] `grep "category: \"mandatory\"" src/domain/entities/FileRuleManifestData.ts | wc -l` returns 3
+- [ ] Tests pasan: `bun test tests/unit/domain/file-rule-manifest.test.ts`
+
+**Dependencies:** Task 3.2
+**Files likely touched:** `src/domain/entities/FileRuleManifestData.ts` (-6 lines)
+**Estimated scope:** XS
+
+---
+
+#### Checkpoint: sin-clasificar Cleanup Complete (Phase 3)
+
+- [ ] `packs/sin-clasificar/` directorio eliminado
+- [ ] `FileRuleManifestData` tiene 3 mandatory entries (sin sin-clasificar)
+- [ ] Tests existentes pasan
+
+---
+
+### Phase 4: Manifest & Catalog Updates (CRITICAL — gates tests)
+
+#### Task 4.1: Add 8 selectable pack entries to FileRuleManifestData
+
+**Description:** Agregar las 8 entradas de packs seleccionables al manifest. Cada una con `category: "mandatory"` (porque están en `template/obligatorio/`), `destPath: "agents"`, descripción + count de Phase 0 audit.
+
+**Target additions:**
+
+```typescript
+{
+    path: "packs/science-research",
+    destPath: "agents",
+    category: "mandatory",
+    isDirectory: true,
+    description: "Science-research pack (~46 agents: academic, research, GIS, healthcare, scientific-literature-researcher)",
+},
+{
+    path: "packs/creative",
+    destPath: "agents",
+    category: "mandatory",
+    isDirectory: true,
+    description: "Creative pack (~10 agents: UI/UX, design, brand, motion)",
+},
+	{
+		path: "packs/writers",
+		destPath: "agents",
+		category: "mandatory",
+		isDirectory: true,
+		description:
+			"2 writer agents (docs-writer, obsidian-vault-writer) — scientific-literature-researcher moved to science-research pack in FEV-18",
+	},
+{
+    path: "packs/finance",
+    destPath: "agents",
+    category: "mandatory",
+    isDirectory: true,
+    description: "Finance pack (~15 agents: financial analysis, fintech, accounting)",
+},
+{
+    path: "packs/government-legal",
+    destPath: "agents",
+    category: "mandatory",
+    isDirectory: true,
+    description: "Government-legal pack (~10 agents: legal, compliance, regulatory)",
+},
+{
+    path: "packs/science-research",
+    destPath: "agents",
+    category: "mandatory",
+    isDirectory: true,
+    description: "Science-research pack (~45 agents: academic, research, GIS, healthcare)",
+},
+{
+    path: "packs/hardware-emerging",
+    destPath: "agents",
+    category: "mandatory",
+    isDirectory: true,
+    description: "Hardware-emerging pack (~50 agents: IoT, embedded, blockchain, XR, game dev)",
+},
+{
+    path: "packs/operations-support",
+    destPath: "agents",
+    category: "mandatory",
+    isDirectory: true,
+    description: "Operations-support pack (~25 agents: customer support, IT ops, HR, translation)",
+},
+```
+
+**Note on `category: "mandatory"`:** Aunque los packs son SELECTABLE en el installer (FEV-21), el manifest los trata como mandatory para garantizar que el `TemplateResolver` los encuentre en `template/obligatorio/`. La selección real ocurre en FEV-21 (installer UX), no aquí.
+
+**Acceptance criteria:**
+- [ ] 8 nuevas entradas agregadas al manifest en la sección "OBLIGATORIO"
+- [ ] Cada entrada tiene `path`, `destPath: "agents"`, `category: "mandatory"`, `isDirectory: true`, `description` con count
+- [ ] `grep "category: \"mandatory\"" src/domain/entities/FileRuleManifestData.ts | wc -l` returns 11 (3 existing + 8 new)
+- [ ] Tests de manifest actualizados para esperar 11
+
+**Verification:**
+- [ ] `just test tests/unit/domain/file-rule-manifest.test.ts` passes
+- [ ] `grep "packs/" src/domain/entities/FileRuleManifestData.ts | wc -l` returns 10 (2 existing + 8 new)
+
+**Dependencies:** Task 3.3
+**Files likely touched:** `src/domain/entities/FileRuleManifestData.ts` (+~50 lines)
+**Estimated scope:** M (manifest + test updates)
+
+---
+
+#### Task 4.2: Update unit tests for new pack entries
+
+**Description:** Actualizar `tests/unit/domain/file-rule-manifest.test.ts` y `tests/unit/file-rule-manifest.test.ts` para esperar 11 mandatory entries (3 existing + 8 new) en lugar de 4 (post-FEV-17).
+
+**Test scenarios:**
+1. `FILE_RULE_MANIFEST.filter(r => r.category === "mandatory")` has exactly 11 entries
+2. The 11 mandatory paths include: `core`, `packs/main`, `packs/writers`, `packs/software-development`, `packs/creative`, `packs/business`, `packs/finance`, `packs/government-legal`, `packs/science-research`, `packs/hardware-emerging`, `packs/operations-support`
+3. `packs/sin-clasificar` is NOT in the manifest
+4. Each selectable pack has `isDirectory: true` and `destPath: "agents"`
+5. Description of each pack includes the agent count
+
+**Acceptance criteria:**
+- [ ] All tests pass with new expected counts
+- [ ] Coverage ≥95% lines maintained
+
+**Verification:**
+- [ ] `just test tests/unit/domain/file-rule-manifest.test.ts` passes
+- [ ] `just test tests/unit/file-rule-manifest.test.ts` passes (if exists)
+- [ ] Coverage report: no regressions
+
+**Dependencies:** Task 4.1
+**Files likely touched:** 2 test files modified (~20 lines each)
+**Estimated scope:** S (test updates)
+
+---
+
+#### Task 4.3: Update Huitzilopochtli's AVAILABLE SUBAGENTS catalog (FEV-19 prep)
+
+**Description:** Actualizar la sección "AVAILABLE SUBAGENTS" en `template/obligatorio/packs/main/huitzilopochtli.md` para reflejar los ~362 agentes disponibles. Esto es PRE-work para FEV-19 (que elimina las 3 subagent tables duplicadas). FEV-18 solo AGREGA los nuevos nombres al catálogo de Huitzilopochtli.
+
+**Note:** FEV-19 eliminará las tablas de quetzalcoatl/tlaloc/mictlantecuhtli y consolidará permisos. Aquí solo expandimos el catálogo canónico.
+
+**Acceptance criteria:**
+- [ ] Huitzilopochtli.md "AVAILABLE SUBAGENTS" lista los nuevos agentes agrupados por pack
+- [ ] Total subagent count actualizado (~362 vs ~96 actuales)
+- [ ] Quetzalcoatl, tlaloc, mictlantecuhtli NO modificados (sus tablas se eliminan en FEV-19)
+
+**Verification:**
+- [ ] `grep -c "^- \*\*" template/obligatorio/packs/main/huitzilopochtli.md` ≥ 100 (entradas de catálogo)
+- [ ] Manual review: catálogo bien organizado por dominio
+
+**Dependencies:** Task 4.2
+**Files likely touched:** `template/obligatorio/packs/main/huitzilopochtli.md` (+~50 lines)
+**Estimated scope:** M (manual catalog update)
+
+---
+
+#### Checkpoint: Manifest & Catalog Complete (Phase 4)
+
+- [ ] FileRuleManifestData con 11 mandatory entries (3 + 8 packs)
+- [ ] Tests pasan
+- [ ] Huitzilopochtli catalog actualizado
+- [ ] `just check` exit 0
+- [ ] `just test:unit` exit 0
+
+---
+
+### Phase 5: Tests & Verification (CRITICAL — gates Phase 6)
+
+#### Task 5.1: Add smoke test: all 10 pack directories exist
+
+**Description:** Crear un test unitario que verifica que los 10 directorios de packs existen (2 mandatory + 8 selectable) y que el manifest tiene entradas para cada uno.
+
+**File path:** `tests/unit/domain/all-packs-present.test.ts` (new)
+
+**Test scenarios:**
+1. `existsSync("template/obligatorio/packs/main")` is true
+2. `existsSync("template/obligatorio/packs/writers")` is true
+3. `existsSync("template/obligatorio/packs/software-development")` is true
+4. `existsSync("template/obligatorio/packs/creative")` is true
+5. `existsSync("template/obligatorio/packs/business")` is true
+6. `existsSync("template/obligatorio/packs/finance")` is true
+7. `existsSync("template/obligatorio/packs/government-legal")` is true
+8. `existsSync("template/obligatorio/packs/science-research")` is true
+9. `existsSync("template/obligatorio/packs/hardware-emerging")` is true
+10. `existsSync("template/obligatorio/packs/operations-support")` is true
+11. `existsSync("template/obligatorio/packs/sin-clasificar")` is FALSE (cleanup verified)
+12. Manifest has 11 mandatory entries matching all 10 packs + `core`
+
+**Acceptance criteria:**
+- [ ] New test file with 12+ test cases
+- [ ] All pack directories verified to exist on disk
+- [ ] `just test tests/unit/domain/all-packs-present.test.ts` passes
+
+**Verification:**
+- [ ] Test runs and passes
+- [ ] No false positives (test fails if any pack missing)
+
+**Dependencies:** Tasks 4.1, 4.2, 4.3
+**Files likely touched:** `tests/unit/domain/all-packs-present.test.ts` (new, ~50 lines)
+**Estimated scope:** S (new test file)
+
+---
+
+#### Task 5.2: Add smoke test: each pack has expected agent count
+
+**Description:** Crear un test que verifica que cada pack tiene al menos 1 agente (i.e., los 8 packs poblados). Más estricto: verificar que el count coincide con el audit summary (T0.4).
+
+**File path:** `tests/unit/domain/pack-agent-counts.test.ts` (new)
+
+**Test scenarios:**
+1. `packs/software-development` has ~120 agents (from audit)
+2. `packs/business` has ~75 agents
+3. `packs/science-research` has ~45 agents
+4. `packs/hardware-emerging` has ~50 agents
+5. `packs/creative` has ~10 agents
+6. `packs/finance` has ~15 agents
+7. `packs/operations-support` has ~25 agents
+8. `packs/government-legal` has ~10 agents
+9. `packs/main` has 6 agents (unchanged)
+10. `packs/writers` has 3 agents (unchanged)
+11. Total agents across all packs = audit total
+
+**Tolerance:** ±10% per pack (some agents may be merged/deleted in Phase 0–3 that the audit didn't catch).
+
+**Acceptance criteria:**
+- [ ] New test file with 11+ test cases
+- [ ] All counts verified within tolerance
+- [ ] `just test tests/unit/domain/pack-agent-counts.test.ts` passes
+
+**Verification:**
+- [ ] Test runs and passes
+- [ ] If test fails, lists which pack has unexpected count
+
+**Dependencies:** Task 5.1
+**Files likely touched:** `tests/unit/domain/pack-agent-counts.test.ts` (new, ~60 lines)
+**Estimated scope:** S (new test file)
+
+---
+
+#### Task 5.3: Update E2E tests for new pack structure
+
+**Description:** Los E2E tests existentes (20 escenarios) instalan Códice en un directorio temp. Después de FEV-18, `agents/` (destino) debe contener los 6 primary + 2 writers (`docs-writer`, `obsidian-vault-writer`) + `scientific-literature-researcher` (en science-research pack) + todos los agents de los packs instalados. Actualizar el scenario 1 (Clean Install) para verificar la presencia de agents de al menos 3 packs.
+
+**File path:** `tests/e2e/01-clean-install.sh` (modify)
+
+**Change (add new assertions):**
 ```bash
-cd template/obligatorio/agents
-for writer in docs-writer obsidian-vault-writer scientific-literature-researcher; do
-    git mv "${writer}.md" "../packs/writers/"
+# After existing Clean Install assertions, add:
+echo "Asserting primary agents present..."
+for agent in huitzilopochtli quetzalcoatl moctezuma tlaloc mictlantecuhtli tezcatlipoca; do
+    if [ ! -f "$TEMP_DIR/agents/${agent}.md" ]; then
+        echo "FAIL: primary agent $agent not installed"
+        exit 1
+    fi
+done
+
+echo "Asserting writer agents present..."
+for writer in docs-writer obsidian-vault-writer; do
+    if [ ! -f "$TEMP_DIR/agents/${writer}.md" ]; then
+        echo "FAIL: writer agent $writer not installed"
+        exit 1
+    fi
+done
+
+echo "Asserting scientific-literature-researcher in science-research pack..."
+if [ ! -f "$TEMP_DIR/agents/scientific-literature-researcher.md" ]; then
+    echo "FAIL: scientific-literature-researcher not installed"
+    exit 1
+fi
+
+echo "Asserting software-development pack agents present (sample 5)..."
+for agent in backend-developer frontend-developer docker-expert ai-engineer test-engineer; do
+    if [ ! -f "$TEMP_DIR/agents/${agent}.md" ]; then
+        echo "FAIL: software-development agent $agent not installed"
+        exit 1
+    fi
 done
 ```
 
 **Acceptance criteria:**
-- [ ] `template/obligatorio/packs/writers/` contiene 3 archivos `.md`
-- [ ] `template/obligatorio/agents/` ya no contiene los 3 writers
-- [ ] `git status` muestra 3 renames
+- [ ] E2E scenario 1 actualizado con nuevas assertions
+- [ ] `bash tests/e2e/01-clean-install.sh` exits 0
+- [ ] Manual review: agents correctamente listados
 
 **Verification:**
-- [ ] `ls template/obligatorio/packs/writers/ | wc -l` returns 3
-- [ ] `ls template/obligatorio/agents/ | grep -E "(docs-writer|obsidian-vault-writer|scientific-literature)"` retorna vacío
+- [ ] `just test:e2e` exit 0 (20/20 scenarios, scenario 1 extended)
+- [ ] `bash tests/e2e/01-clean-install.sh` runs successfully
 
-**Dependencies:** Task 1.3
-**Files likely touched:** 3 files renamed
-**Estimated scope:** XS (3 mv operations)
-
----
-
-#### Task 1.5: Move 95 unclassified agents to `packs/sin-clasificar/`
-
-**Description:** Mover los 95 agentes restantes (no primary, no writers) a `template/obligatorio/packs/sin-clasificar/`. Estos esperan clasificación en FEV-18.
-
-**File path:** `template/obligatorio/agents/` → `template/obligatorio/packs/sin-clasificar/`
-
-**Change:**
-```bash
-cd template/obligatorio/agents
-git mv *.md ../packs/sin-clasificar/
-```
-
-**Acceptance criteria:**
-- [ ] `template/obligatorio/packs/sin-clasificar/` contiene 95 archivos `.md`
-- [ ] `template/obligatorio/agents/` está vacío (o no existe)
-- [ ] `git status` muestra 95 renames
-- [ ] Si `agents/` queda vacío, eliminarlo con `rmdir agents/`
-
-**Verification:**
-- [ ] `ls template/obligatorio/packs/sin-clasificar/ | wc -l` returns 95
-- [ ] `ls template/obligatorio/agents/` retorna "No such file or directory" (rmdir ejecutado)
-- [ ] `find template/obligatorio/packs/sin-clasificar/ -name "*.md" | wc -l` returns 95
-- [ ] Total agents preservados: 6 + 3 + 95 = 104 (matches baseline)
-
-**Dependencies:** Task 1.4
-**Files likely touched:** 95 files renamed + 1 dir removed
-**Estimated scope:** S (1 bulk mv + 1 rmdir)
+**Dependencies:** Task 5.2
+**Files likely touched:** `tests/e2e/01-clean-install.sh` (+~20 lines)
+**Estimated scope:** S (E2E extension)
 
 ---
 
-#### Task 1.6: Verify final template structure
+#### Task 5.4: Run full verification suite
 
-**Description:** Validar que la estructura final es la esperada. Generar tree listing para documentación.
-
-**File path:** `template/obligatorio/`
-
-**Acceptance criteria:**
-- [ ] Tree structure matches spec §2 (core/ + packs/{main,writers,sin-clasificar,<8 empty>})
-- [ ] Total agent count: 104 (6 + 3 + 95)
-- [ ] All non-agent infra files in `core/`
-- [ ] `git status` muestra todos los cambios como renames (no deletes+adds)
-
-**Verification:**
-- [ ] `tree template/obligatorio/ -L 3` (if available) or `find template/obligatorio -maxdepth 3 -type d | sort` matches expected structure
-- [ ] `find template/obligatorio -name "*.md" -path "*/packs/*" | wc -l` returns 104
-- [ ] `git -C repo diff --cached --stat | tail -5` muestra ~104 files changed (renames)
-- [ ] `git -C repo status --short | grep "^.D\|^??" | wc -l` returns 0 (no deletes, no untracked)
-
-**Dependencies:** Task 1.5
-**Files likely touched:** None (verification)
-**Estimated scope:** XS (1-2 commands)
-
----
-
-### Checkpoint: Directory Restructure Complete (Phase 1)
-
-- [ ] `template/obligatorio/` contains only `core/` and `packs/`
-- [ ] `core/` has 5 infrastructure files/dirs
-- [ ] `packs/main/` has 6 primary agents
-- [ ] `packs/writers/` has 3 writer agents
-- [ ] `packs/sin-clasificar/` has 95 unclassified agents
-- [ ] 8 empty pack directories created
-- [ ] All changes recorded as git renames
-- [ ] Total agent count preserved: 104
-- [ ] **Review with human before proceeding to Phase 2**
-
----
-
-### Phase 2: FileRuleManifestData + TemplateResolver (CRITICAL — gates Phase 3+)
-
-#### Task 2.1: Update `FileRuleManifestData.ts` with new entries
-
-**Description:** Reescribir las entradas obligatorias del manifest. Las 7 entradas individuales (`opencode.json`, `skills-lock.json`, `agents`, `commands`, `.opencode`, `.opencode/plugins`, `skills`) colapsan en 4 entradas (`core`, `packs/main`, `packs/writers`, `packs/sin-clasificar`).
-
-**File path:** `src/domain/entities/FileRuleManifestData.ts`
-
-**Change:** Replace mandatory section:
-
-```typescript
-// =============================================
-// OBLIGATORIO (Mandatory) — always copied (v2.0 restructured)
-// =============================================
-{
-    path: "core",
-    category: "mandatory",
-    isDirectory: true,
-    description: "Core workspace infrastructure (.opencode/, commands/, skills/, opencode.json, skills-lock.json)",
-},
-{
-    path: "packs/main",
-    category: "mandatory",
-    isDirectory: true,
-    description: "6 primary agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca)",
-},
-{
-    path: "packs/writers",
-    category: "mandatory",
-    isDirectory: true,
-    description: "3 writer agents (docs-writer, obsidian-vault-writer, scientific-literature-researcher)",
-},
-{
-    path: "packs/sin-clasificar",
-    category: "mandatory",
-    isDirectory: true,
-    description: "95 unclassified agents pending FEV-18 classification (temporary pack)",
-},
-// NOTE: v1.x had 7 individual mandatory entries (opencode.json, skills-lock.json,
-// agents, commands, .opencode, .opencode/plugins, skills). v2.0 collapses them
-// into 4 directory entries aligned with the new core/packs structure.
-// Symlinks (.opencode/{agents,commands,skills}) still generated post-install (ADR-008).
-```
-
-**Acceptance criteria:**
-- [ ] Mandatory section has exactly 4 entries: `core`, `packs/main`, `packs/writers`, `packs/sin-clasificar`
-- [ ] Each entry has `category: "mandatory"`, `isDirectory: true`, descriptive `description`
-- [ ] Standard section unchanged (AGENTS.md, CHANGELOG.md, etc.)
-- [ ] Optional section unchanged (Justfile, Makefile, etc.)
-- [ ] JSDoc comment explains the v1.x → v2.0 collapse
-
-**Verification:**
-- [ ] `grep "path: \"" src/domain/entities/FileRuleManifestData.ts | head -10` muestra las 4 nuevas entradas
-- [ ] `grep -c "category: \"mandatory\"" src/domain/entities/FileRuleManifestData.ts` returns 4
-- [ ] `bun run tsc --noEmit` passes (no type errors)
-
-**Dependencies:** Task 1.6
-**Files likely touched:** `src/domain/entities/FileRuleManifestData.ts` (modified, ~30 lines net change)
-**Estimated scope:** S (1 file, ~30 lines)
-
----
-
-#### Task 2.2: Update `TemplateResolver.ts` for new path structure
-
-**Description:** Modificar `TemplateResolver.resolvePath()` para que las nuevas rutas (`core/...`, `packs/main/...`, etc.) busquen primero en `template/obligatorio/<path>`, con fallback a búsqueda por categoría para legacy paths.
-
-**File path:** `src/infrastructure/adapters/TemplateResolver.ts`
-
-**Change strategy:** Add a "preferred location" check before the category loop. If the path starts with `core/`, `packs/`, or any other known v2.0 prefix, resolve it directly in `obligatorio/`. Otherwise, fall back to the 3-category search (preserves backward compat for `template/estandar/*` and `template/opcional/*`).
-
-**Implementation sketch:**
-```typescript
-async resolvePath(relativePath: string): Promise<string> {
-    // ... existing validation ...
-    
-    // v2.0: Direct location for core/, packs/, and other mandatory paths
-    const v2Prefixes = ["core/", "packs/"];
-    if (v2Prefixes.some(prefix => relativePath.startsWith(prefix))) {
-        const directPath = path.join(this.templateRoot, "obligatorio", relativePath);
-        const resolved = path.resolve(directPath);
-        if (!isPathWithin(this.templateRoot, resolved)) {
-            throw new Error(`Template path escapes template directory: ${relativePath}.`);
-        }
-        if (fs.existsSync(resolved)) {
-            this.templateCache.set(relativePath, resolved);
-            return resolved;
-        }
-        throw new Error(`Template file not found: ${relativePath}.`);
-    }
-    
-    // Legacy: 3-category search for estandar/ and opcional/ paths
-    const categories = TEMPLATE_CATEGORIES; // ["obligatorio", "estandar", "opcional"]
-    for (const category of categories) {
-        // ... existing search logic ...
-    }
-}
-```
-
-**Acceptance criteria:**
-- [ ] `core/*` paths resolve to `template/obligatorio/core/*` (no fallback)
-- [ ] `packs/*` paths resolve to `template/obligatorio/packs/*` (no fallback)
-- [ ] `opencode.json` (legacy mandatory, now in `core/`) resolves to `template/obligatorio/core/opencode.json` if `core/opencode.json` matches
-- [ ] `README.md` (standard) still resolves to `template/estandar/README.md` (backward compat)
-- [ ] `Justfile` (optional) still resolves to `template/opcional/Justfile` (backward compat)
-- [ ] Path traversal still rejected
-- [ ] Cache still works
-
-**Verification:**
-- [ ] `bun run tsc --noEmit` passes
-- [ ] `bun test tests/integration/adapters/bun-file-system.test.ts` passes (uses resolver)
-- [ ] Unit test in `tests/unit/infrastructure/template-resolver.test.ts` (if exists) passes
-
-**Dependencies:** Task 2.1
-**Files likely touched:** `src/infrastructure/adapters/TemplateResolver.ts` (modified, +20 lines)
-**Estimated scope:** M (refactor + new branch logic)
-
----
-
-#### Task 2.3: Update unit tests for `FileRuleManifestData`
-
-**Description:** Actualizar los tests que asumen las 7 entradas obligatorias v1.x. Las nuevas aserciones verifican 4 entradas (`core`, `packs/main`, `packs/writers`, `packs/sin-clasificar`).
-
-**File path:** `tests/unit/domain/file-rule-manifest.test.ts` + `tests/unit/file-rule-manifest.test.ts`
-
-**Test scenarios:**
-1. `FILE_RULE_MANIFEST.filter(r => r.category === "mandatory")` has exactly 4 entries
-2. The 4 mandatory paths are exactly: `core`, `packs/main`, `packs/writers`, `packs/sin-clasificar`
-3. Each mandatory rule has `isDirectory: true`
-4. Standard rules (AGENTS.md, README.md, etc.) unchanged
-5. Optional rules (Justfile, Makefile, etc.) unchanged
-6. `getMandatoryRules()` returns 4 rules
-7. `getRulesByCategory("mandatory").length === 4`
-
-**Acceptance criteria:**
-- [ ] All existing manifest tests pass with updated expected counts
-- [ ] New assertions verify the 4 mandatory entries explicitly
-- [ ] No `agents` (singular) entry expected in manifest anymore
-- [ ] No `opencode.json`, `skills-lock.json`, `.opencode`, `.opencode/plugins` as standalone entries
-- [ ] `just test tests/unit/file-rule-manifest.test.ts` passes
-
-**Verification:**
-- [ ] `bun test tests/unit/file-rule-manifest.test.ts` passes
-- [ ] `bun test tests/unit/domain/file-rule-manifest.test.ts` passes
-- [ ] `grep -c "mandatory.*length\|mandatory.*count" tests/unit/file-rule-manifest.test.ts` shows updated expectations
-
-**Dependencies:** Task 2.1
-**Files likely touched:** 2 test files modified (~10 lines each)
-**Estimated scope:** S (update assertions)
-
----
-
-#### Task 2.4: Add unit tests for `TemplateResolver` v2.0 paths
-
-**Description:** Crear nuevos tests que verifiquen la resolución de rutas v2.0. Si ya existe `tests/unit/infrastructure/template-resolver.test.ts`, extender; si no, crear.
-
-**File path:** `tests/unit/infrastructure/template-resolver.test.ts` (new or extended)
-
-**Test scenarios:**
-1. `resolvePath("core")` → `<templateRoot>/obligatorio/core`
-2. `resolvePath("core/opencode.json")` → `<templateRoot>/obligatorio/core/opencode.json`
-3. `resolvePath("core/.opencode")` → `<templateRoot>/obligatorio/core/.opencode`
-4. `resolvePath("packs/main")` → `<templateRoot>/obligatorio/packs/main`
-5. `resolvePath("packs/main/huitzilopochtli.md")` → `<templateRoot>/obligatorio/packs/main/huitzilopochtli.md`
-6. `resolvePath("packs/sin-clasificar")` → `<templateRoot>/obligatorio/packs/sin-clasificar`
-7. `resolvePath("README.md")` → `<templateRoot>/estandar/README.md` (legacy fallback)
-8. `resolvePath("Justfile")` → `<templateRoot>/opcional/Justfile` (legacy fallback)
-9. `resolvePath("core/../../../etc/passwd")` throws (path traversal)
-10. `resolvePath("/abs/path")` throws (absolute path)
-
-**Acceptance criteria:**
-- [ ] New test file (or extension) with 10+ test cases
-- [ ] All v2.0 path resolutions verified
-- [ ] Legacy fallback verified for standard + optional
-- [ ] Security validations (path traversal) still work
-- [ ] `just test tests/unit/infrastructure/template-resolver.test.ts` passes
-
-**Verification:**
-- [ ] `bun test tests/unit/infrastructure/template-resolver.test.ts` passes (10/10)
-- [ ] `grep "packs/main" tests/unit/infrastructure/template-resolver.test.ts` shows the new assertions
-- [ ] Coverage of `TemplateResolver.ts` ≥90% lines
-
-**Dependencies:** Task 2.2
-**Files likely touched:** `tests/unit/infrastructure/template-resolver.test.ts` (new or extended, ~100 lines)
-**Estimated scope:** M (new test file)
-
----
-
-#### Task 2.5: Verify Phase 2 baseline (just check + just test:unit)
-
-**Description:** Correr la suite completa de unit tests + typecheck para confirmar que la integración manifest + resolver funciona antes de empezar las updates de paths paralelas.
+**Description:** Ejecutar la suite completa de tests + quality checks para verificar FEV-18.
 
 **Acceptance criteria:**
 - [ ] `just check` exit 0
-- [ ] `just test:unit` exit 0 (910+ tests, 0 fail)
-- [ ] No regresiones en tests existentes
-- [ ] `bun test --coverage` muestra ≥95% lines (coverage threshold enforced per FEV-16)
+- [ ] `just test:unit` exit 0 (910+ tests + ~10 new = ~920 tests, 0 fail)
+- [ ] `just test:integration` exit 0
+- [ ] `just test:e2e` exit 0 (20/20 scenarios)
+- [ ] Coverage lines ≥95% (FEV-16 gate)
+- [ ] `bun pm pack --dry-run` produces tarball < 5MB (SC-15)
 
 **Verification:**
 - [ ] Output of `just check` 0 errors
-- [ ] Output of `just test:unit` shows all tests passing
-- [ ] `git -C repo diff --stat` shows manifest + resolver + 2 test files modified
+- [ ] Output of `just test` shows all tests passing
+- [ ] Coverage report: ≥95% lines, ≥95% functions
+- [ ] Tarball size < 5MB
 
-**Dependencies:** Tasks 2.1, 2.2, 2.3, 2.4
-**Files likely touched:** None (verification)
-**Estimated scope:** XS (3 commands)
-
----
-
-### Checkpoint: Manifest + Resolver Complete (Phase 2)
-
-- [ ] `FileRuleManifestData` has 4 mandatory entries (`core`, `packs/main`, `packs/writers`, `packs/sin-clasificar`)
-- [ ] `TemplateResolver` resolves v2.0 paths directly + legacy fallback works
-- [ ] New unit tests for resolver pass (10+ cases)
-- [ ] Updated manifest tests pass
-- [ ] `just check` exit 0
-- [ ] `just test:unit` exit 0
-- [ ] **Review with human before proceeding to Phase 3+**
+**Dependencies:** Tasks 5.1, 5.2, 5.3
+**Files likely touched:** None
+**Estimated scope:** S (~5min total)
 
 ---
 
-### Phase 3: Unit + Integration Test Path Updates (PARALLELIZABLE)
+#### Checkpoint: Tests & Verification Complete (Phase 5)
 
-> These tasks update hardcoded `template/obligatorio/...` references in unit and integration tests. They are independent of each other and can be done in any order. Recommend grouping by file cluster.
-
-#### Task 3.1: Update `tests/unit/skill-paths.test.ts`
-
-**Description:** Update `SKILLS_DIR` constant from `template/obligatorio/skills` to `template/obligatorio/core/skills`.
-
-**File path:** `tests/unit/skill-paths.test.ts`
-
-**Change:**
-```typescript
-// Before:
-const SKILLS_DIR = path.resolve(import.meta.dir, "../../template/obligatorio/skills");
-// After:
-const SKILLS_DIR = path.resolve(import.meta.dir, "../../template/obligatorio/core/skills");
-```
-
-**Acceptance criteria:**
-- [ ] `SKILLS_DIR` points to `template/obligatorio/core/skills`
-- [ ] `bun test tests/unit/skill-paths.test.ts` passes
-- [ ] No other references to `template/obligatorio/skills` in this file
-
-**Verification:**
-- [ ] `grep "SKILLS_DIR" tests/unit/skill-paths.test.ts` shows updated path
-- [ ] `just test tests/unit/skill-paths.test.ts` passes
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 1 file, 1 line
-**Estimated scope:** XS (1 line)
+- [ ] 2 new test files (all-packs-present, pack-agent-counts)
+- [ ] E2E scenario 1 extended
+- [ ] All test suites pass
+- [ ] Coverage ≥95%
+- [ ] Tarball < 5MB
+- [ ] `just check` clean
 
 ---
 
-#### Task 3.2: Update `tests/unit/setup/opencode-config.test.ts`
+### Phase 6: Documentation & Commit (SEQUENTIAL, gates FEV-19)
 
-**Description:** Update import path for `opencode.json` from `template/obligatorio/opencode.json` to `template/obligatorio/core/opencode.json`.
+#### Task 6.1: Update CHANGELOG.md with FEV-18 entry
 
-**File path:** `tests/unit/setup/opencode-config.test.ts`
-
-**Change:**
-```typescript
-// Line 17:
-// Before: "../../../template/obligatorio/opencode.json",
-// After:  "../../../template/obligatorio/core/opencode.json",
-```
-
-**Acceptance criteria:**
-- [ ] Import path points to `template/obligatorio/core/opencode.json`
-- [ ] `bun test tests/unit/setup/opencode-config.test.ts` passes
-- [ ] No other references to old `opencode.json` path in this file
-
-**Verification:**
-- [ ] `grep "opencode.json" tests/unit/setup/opencode-config.test.ts` shows updated path
-- [ ] `just test tests/unit/setup/opencode-config.test.ts` passes
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 1 file, 1 line
-**Estimated scope:** XS (1 line)
-
----
-
-#### Task 3.3: Update `tests/unit/config/destructive-patterns.test.ts`
-
-**Description:** Update 2 path references from `template/obligatorio/.opencode/plugins/...` to `template/obligatorio/core/.opencode/plugins/...`.
-
-**File path:** `tests/unit/config/destructive-patterns.test.ts`
-
-**Change:**
-```typescript
-// Lines 17 and 24:
-// Before: "template/obligatorio/.opencode/plugins/sdd-pipeline.ts",
-// After:  "template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts",
-
-// Before: "template/obligatorio/.opencode/plugins/src/destructivePatterns.ts",
-// After:  "template/obligatorio/core/.opencode/plugins/src/destructivePatterns.ts",
-```
-
-**Acceptance criteria:**
-- [ ] Both references updated to `core/.opencode/...`
-- [ ] `bun test tests/unit/config/destructive-patterns.test.ts` passes
-- [ ] No other references to old `obligatorio/.opencode/...` path in this file
-
-**Verification:**
-- [ ] `grep "obligatorio/.opencode" tests/unit/config/destructive-patterns.test.ts` shows `core/.opencode`
-- [ ] `just test tests/unit/config/destructive-patterns.test.ts` passes
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 1 file, 2 lines
-**Estimated scope:** XS (2 lines)
-
----
-
-#### Task 3.4: Update `tests/unit/domain/file-merge-engine.test.ts`
-
-**Description:** Update 2 rule definitions that use `agents` as a path. New rules use `packs/main` (a real directory in v2.0). The test creates a temp dir + rules — update path names to match new structure.
-
-**File path:** `tests/unit/domain/file-merge-engine.test.ts`
-
-**Change:**
-```typescript
-// Line 85:
-// Before: const rules = [rule("opencode.json", "mandatory"), rule("agents", "mandatory", true)];
-// After:  const rules = [rule("core", "mandatory", true), rule("packs/main", "mandatory", true)];
-
-// Line 379:
-// Before: rule("agents", "mandatory", true), // mandatory directory
-// After:  rule("packs/main", "mandatory", true), // mandatory directory
-```
-
-**Note:** These tests use temp dirs, so the actual paths in the rules don't need to exist on disk — they just need to be valid rule paths.
-
-**Acceptance criteria:**
-- [ ] All 2 references updated to `packs/main`
-- [ ] `bun test tests/unit/domain/file-merge-engine.test.ts` passes
-- [ ] No regression in coverage (≥95% lines)
-
-**Verification:**
-- [ ] `grep '"agents"' tests/unit/domain/file-merge-engine.test.ts` retorna 0 matches (or only in comments)
-- [ ] `just test tests/unit/domain/file-merge-engine.test.ts` passes
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 1 file, 2 lines
-**Estimated scope:** XS (2 lines)
-
----
-
-#### Task 3.5: Update `tests/unit/domain/file-rule-manifest.test.ts`
-
-**Description:** Update assertions for the 7 mandatory rules → 4 mandatory rules. Tests at lines 87, 125, 128, 132, 163, 172, 197 reference `agents` as a mandatory path.
-
-**File path:** `tests/unit/domain/file-rule-manifest.test.ts`
-
-**Changes (summary):**
-- Line 87: `expect(paths).toContain("agents")` → `expect(paths).toContain("core")` (and add assertion for `packs/main`)
-- Line 125-128: `createFileRule("agents/")` → `createFileRule("packs/main/")` (test that known path is in manifest)
-- Line 132: `["mandatory", 7]` → `["mandatory", 4]`
-- Line 163-165: `createFileRule("agents/")` → `createFileRule("packs/writers/")` (test strip trailing slash)
-- Line 172-174: `const mandatory = { path: "agents", ... }` → `const mandatory = { path: "packs/main", ... }`
-
-**Acceptance criteria:**
-- [ ] All 5+ references to `agents` as mandatory path updated
-- [ ] `["mandatory", 7]` → `["mandatory", 4]`
-- [ ] `bun test tests/unit/domain/file-rule-manifest.test.ts` passes
-- [ ] No broken assertions
-
-**Verification:**
-- [ ] `grep '"agents"' tests/unit/domain/file-rule-manifest.test.ts` muestra 0 matches (or only comments)
-- [ ] `grep '"mandatory", [0-9]' tests/unit/domain/file-rule-manifest.test.ts` muestra `"mandatory", 4`
-- [ ] `just test tests/unit/domain/file-rule-manifest.test.ts` passes
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 1 file, ~10 lines
-**Estimated scope:** S (multiple updates)
-
----
-
-#### Task 3.6: Update `tests/unit/domain/services/stagePlanner.test.ts`
-
-**Description:** Update 2 rule definitions (lines 103, 467) that use `agents` and `opencode.json` as paths. Replace with `packs/main` and `core`.
-
-**File path:** `tests/unit/domain/services/stagePlanner.test.ts`
-
-**Change:**
-```typescript
-// Line 103:
-// Before: const rules = [rule("opencode.json", "mandatory"), rule("agents", "mandatory", true)];
-// After:  const rules = [rule("core", "mandatory", true), rule("packs/main", "mandatory", true)];
-
-// Line 467:
-// Before: const rules = [rule("agents", "mandatory", true)];
-// After:  const rules = [rule("packs/main", "mandatory", true)];
-```
-
-**Acceptance criteria:**
-- [ ] Both references updated
-- [ ] `bun test tests/unit/domain/services/stagePlanner.test.ts` passes
-- [ ] No regression
-
-**Verification:**
-- [ ] `grep '"agents"' tests/unit/domain/services/stagePlanner.test.ts` retorna 0 matches
-- [ ] `just test tests/unit/domain/services/stagePlanner.test.ts` passes
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 1 file, 2 lines
-**Estimated scope:** XS (2 lines)
-
----
-
-#### Task 3.7: Update `tests/unit/domain/services/file-merge-engine-update.test.ts`
-
-**Description:** Update 1 rule definition (line 194) that uses `agents` as a path.
-
-**File path:** `tests/unit/domain/services/file-merge-engine-update.test.ts`
-
-**Change:**
-```typescript
-// Line 194:
-// Before: const rules = [rule("agents", "mandatory", true)];
-// After:  const rules = [rule("packs/main", "mandatory", true)];
-```
-
-**Acceptance criteria:**
-- [ ] Reference updated
-- [ ] `bun test tests/unit/domain/services/file-merge-engine-update.test.ts` passes
-
-**Verification:**
-- [ ] `grep '"agents"' tests/unit/domain/services/file-merge-engine-update.test.ts` retorna 0 matches
-- [ ] `just test tests/unit/domain/services/file-merge-engine-update.test.ts` passes
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 1 file, 1 line
-**Estimated scope:** XS (1 line)
-
----
-
-#### Task 3.8: Update `tests/integration/packaging/npm-pack.test.ts`
-
-**Description:** Update 3 path assertions in Test A + 3 path assertions in Test D for the new template structure.
-
-**File path:** `tests/integration/packaging/npm-pack.test.ts`
-
-**Changes (lines 59-61, 81-83):**
-```typescript
-// Test A — Expected files (lines 59-61):
-// Before:
-//   expect(allPaths).toContain("package/template/obligatorio/opencode.json");
-//   expect(allPaths).toContain("package/template/obligatorio/agents/huitzilopochtli.md");
-//   expect(allPaths).toContain("package/template/obligatorio/commands/build.md");
-// After:
-expect(allPaths).toContain("package/template/obligatorio/core/opencode.json");
-expect(allPaths).toContain("package/template/obligatorio/packs/main/huitzilopochtli.md");
-expect(allPaths).toContain("package/template/obligatorio/core/commands/build.md");
-
-// Test D — Symlinks excluded (lines 81-83):
-// Before:
-//   expect(allPaths).not.toContain("package/template/obligatorio/.opencode/agents");
-//   ...
-// After:
-expect(allPaths).not.toContain("package/template/obligatorio/core/.opencode/agents");
-expect(allPaths).not.toContain("package/template/obligatorio/core/.opencode/commands");
-expect(allPaths).not.toContain("package/template/obligatorio/core/.opencode/skills");
-```
-
-**Acceptance criteria:**
-- [ ] All 6 path assertions updated to use `core/` and `packs/main/`
-- [ ] `bun test tests/integration/packaging/npm-pack.test.ts` passes (Tests A, D, E)
-- [ ] Test C (extracted install) also passes (uses real files)
-
-**Verification:**
-- [ ] `grep "template/obligatorio" tests/integration/packaging/npm-pack.test.ts` muestra solo paths con `core/` o `packs/main/`
-- [ ] `just test tests/integration/packaging/npm-pack.test.ts` passes
-- [ ] Tarball actually contains the new paths (test A green)
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 1 file, ~6 lines
-**Estimated scope:** S (integration test, may need actual npm pack)
-
----
-
-#### Task 3.9: Update integration use case tests
-
-**Description:** Update 4 integration test files that may reference old paths via shared helpers or fixtures.
-
-**File paths:**
-- `tests/integration/use-cases/clean-install.test.ts`
-- `tests/integration/use-cases/project-install.test.ts`
-- `tests/integration/use-cases/update-workspace.test.ts`
-- `tests/integration/use-cases/progress-logs.test.ts`
-
-**Action:** `grep` for `template/obligatorio/...` paths in each file. Update as needed. Most likely use temp dirs (relative paths), so changes may be minimal. If helpers reference hardcoded paths, update helpers too.
-
-**Acceptance criteria:**
-- [ ] All 4 files audited for old path references
-- [ ] Any hardcoded path updated
-- [ ] `just test tests/integration/use-cases/` passes (4 files)
-
-**Verification:**
-- [ ] `grep -rln "template/obligatorio" tests/integration/use-cases/` retorna 0 files (or only the ones that need it for testing purposes)
-- [ ] `just test tests/integration/use-cases/` passes all 4 files
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 0-4 files (~0-10 lines total)
-**Estimated scope:** S (audit + update)
-
----
-
-#### Task 3.10: Update plugin integration test imports
-
-**Description:** Update 4 test files that import from `template/obligatorio/.opencode/plugins/src/...` to use `template/obligatorio/core/.opencode/plugins/src/...`.
-
-**File paths:**
-- `tests/plugin/integration/chatMessage.test.ts`
-- `tests/plugin/integration/help-command-discovery.test.ts`
-- `tests/plugin/integration/systemTransform.test.ts`
-- `tests/plugin/integration/toolExecuteBefore.test.ts`
-
-**Change (each file):**
-```typescript
-// Before: import { ... } from "../../../template/obligatorio/.opencode/plugins/src/...";
-// After:  import { ... } from "../../../template/obligatorio/core/.opencode/plugins/src/...";
-```
-
-**Acceptance criteria:**
-- [ ] All 4 import paths updated
-- [ ] `just test tests/plugin/integration/` passes (4 files)
-- [ ] No broken imports
-
-**Verification:**
-- [ ] `grep "template/obligatorio/.opencode" tests/plugin/integration/` retorna 0 files
-- [ ] `grep "template/obligatorio/core/.opencode" tests/plugin/integration/` muestra 4 files
-- [ ] `just test tests/plugin/integration/` passes
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 4 files, ~4 lines
-**Estimated scope:** S (4 import updates)
-
----
-
-### Checkpoint: Unit/Integration Test Paths Complete (Phase 3)
-
-- [ ] All 10+ unit/integration test files updated to use new paths
-- [ ] `just test:unit` exit 0 (910+ tests, 0 fail)
-- [ ] `just test:integration` exit 0
-- [ ] No broken tests
-- [ ] `git diff --stat` shows expected file modifications
-
----
-
-### Phase 4: E2E Test Updates (PARALLELIZABLE)
-
-#### Task 4.1: Update `tests/e2e/15-update-workspace-existing-project.sh`
-
-**Description:** Update the hardcoded `template/obligatorio/opencode.json` reference (line 133) to `template/obligatorio/core/opencode.json`.
-
-**File path:** `tests/e2e/15-update-workspace-existing-project.sh`
-
-**Change:**
-```bash
-# Line 133:
-# Before: if diff -q "$TEMP_DIR/template/obligatorio/opencode.json" "$TEMP_DIR/opencode.json" >/dev/null 2>&1; then
-# After:  if diff -q "$TEMP_DIR/template/obligatorio/core/opencode.json" "$TEMP_DIR/opencode.json" >/dev/null 2>&1; then
-```
-
-**Acceptance criteria:**
-- [ ] Path updated to `core/opencode.json`
-- [ ] `bash tests/e2e/15-update-workspace-existing-project.sh` exits 0
-- [ ] E2E scenario 15 passes
-
-**Verification:**
-- [ ] `grep "template/obligatorio/opencode" tests/e2e/15-update-workspace-existing-project.sh` retorna 0 matches
-- [ ] `bash tests/e2e/15-update-workspace-existing-project.sh` exits 0
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 1 file, 1 line
-**Estimated scope:** XS (1 line)
-
----
-
-#### Task 4.2: Audit other E2E tests for path references
-
-**Description:** Buscar en los 20 E2E scripts otras referencias hardcoded a `template/obligatorio/...`. Las E2E tests usan la CLI directamente con `--dest`, así que probablemente no tienen paths hardcoded, pero `common.sh` puede tener fixtures.
-
-**File path:** `tests/e2e/` (all 20+ scripts + common.sh)
-
-**Action:**
-```bash
-grep -rln "template/obligatorio" tests/e2e/ 2>/dev/null
-```
-
-**Acceptance criteria:**
-- [ ] All 20 E2E scripts audited
-- [ ] Any hardcoded path updated
-- [ ] `common.sh` audited and updated if needed
-
-**Verification:**
-- [ ] `grep -rln "template/obligatorio" tests/e2e/` muestra solo los archivos que se modificaron en 4.1
-- [ ] Si hay otros, están actualizados correctamente
-
-**Dependencies:** Task 4.1
-**Files likely touched:** 0-1 file (~0-5 lines)
-**Estimated scope:** XS (audit + minimal updates)
-
----
-
-#### Task 4.3: Run full E2E suite
-
-**Description:** Ejecutar `just test:e2e` y verificar que los 20 escenarios pasan. Si alguno falla, debuggear + fix (puede revelar paths adicionales que se pasaron por alto en 4.1-4.2).
-
-**Acceptance criteria:**
-- [ ] `just test:e2e` exit 0
-- [ ] 20/20 scenarios passing (no regression)
-- [ ] No new artifacts in `tests/fixtures/workspace/`
-
-**Verification:**
-- [ ] Output of `just test:e2e` shows 20/20 passing
-- [ ] `git -C repo status tests/fixtures/` shows no uncommitted test artifacts
-
-**Dependencies:** Tasks 4.1, 4.2
-**Files likely touched:** None (verification, or 0-2 unexpected fixes)
-**Estimated scope:** S (full E2E run, ~5min)
-
----
-
-### Checkpoint: E2E Test Paths Complete (Phase 4)
-
-- [ ] `tests/e2e/15-update-workspace-existing-project.sh` updated
-- [ ] All 20 E2E scenarios pass
-- [ ] No new path-related failures
-- [ ] `just test:e2e` exit 0
-
----
-
-### Phase 5: Documentation Updates (PARALLELIZABLE)
-
-#### Task 5.1: Update `README.md`
-
-**Description:** Buscar referencias a `template/obligatorio/...` en el README y actualizar a la nueva estructura.
-
-**File path:** `README.md`
-
-**Action:**
-```bash
-grep -n "template/obligatorio" README.md
-```
-
-**Acceptance criteria:**
-- [ ] All references in README updated
-- [ ] Links still functional
-- [ ] No broken anchors
-
-**Verification:**
-- [ ] `grep "template/obligatorio" README.md` muestra solo paths nuevos (`core/`, `packs/`)
-- [ ] Manual review: no stale references
-
-**Dependencies:** Task 2.5
-**Files likely touched:** README.md (~0-5 lines)
-**Estimated scope:** XS (audit + update)
-
----
-
-#### Task 5.2: Update `CONTRIBUTING.md`
-
-**Description:** Actualizar la sección "Add a New Agent" en CONTRIBUTING.md para reflejar la nueva estructura. Aunque el spec §6.1 indica que el step final (liberar de update tables) ocurre en FEV-19, el path del agente ya cambia ahora.
-
-**File path:** `CONTRIBUTING.md`
-
-**Change (section "Add a New Agent"):**
-```markdown
-<!-- Before: -->
-Create `agents/<agent-name>.md` with YAML frontmatter (name, role, scope, rules, composition).
-<!-- After (FEV-17 complete; FEV-18 formalizes pack assignment): -->
-Create `template/obligatorio/packs/<pack-name>/<agent-name>.md` with YAML frontmatter.
-(FEV-18 formalizes pack assignment; for FEV-17 use `packs/sin-clasificar/` for unclassified agents.)
-```
-
-**Acceptance criteria:**
-- [ ] Section "Add a New Agent" updated to reference `packs/<pack-name>/`
-- [ ] `grep "agents/<agent-name>" CONTRIBUTING.md` retorna 0 matches
-- [ ] Note about FEV-18 added
-
-**Verification:**
-- [ ] `grep "packs/" CONTRIBUTING.md` muestra la nueva estructura
-- [ ] `grep "agents/<" CONTRIBUTING.md` retorna 0 matches
-
-**Dependencies:** Task 2.5
-**Files likely touched:** CONTRIBUTING.md (~5-10 lines)
-**Estimated scope:** S (documentation update)
-
----
-
-#### Task 5.3: Update docs/WORKFLOW.md, TECH_DEBT.md, TRD.md, ARCHITECTURE.md
-
-**Description:** Actualizar menciones de la estructura de template en los documentos técnicos principales.
-
-**File paths:**
-- `docs/WORKFLOW.md`
-- `docs/TECH_DEBT.md`
-- `docs/TRD.md`
-- `docs/ARCHITECTURE.md`
-
-**Action:** `grep` cada archivo para referencias a `template/obligatorio/...` o `agents/`, `commands/`, `skills/` como paths de template. Actualizar a `template/obligatorio/core/...` o `packs/...` según corresponda.
-
-**Acceptance criteria:**
-- [ ] All 4 docs audited
-- [ ] Path references updated
-- [ ] No stale references to flat structure
-
-**Verification:**
-- [ ] `grep -l "template/obligatorio/agents\|template/obligatorio/commands\|template/obligatorio/skills\|template/obligatorio/opencode.json" docs/` retorna solo archivos con la nueva estructura
-- [ ] Manual review: 4 docs consistent
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 0-4 docs (~0-20 lines total)
-**Estimated scope:** M (audit + update 4 docs)
-
----
-
-#### Task 5.4: Update `docs/diagnosis/` cross-references
-
-**Description:** Actualizar menciones en los diagnosis docs. Estos son históricos (FEV-1, FEV-2, etc.) y referencian paths v1.x. Estrategia: **NO reescribir** diagnosis docs (son registro histórico). Solo actualizar si la referencia es a un path que ya no existe.
-
-**File path:** `docs/diagnosis/` (10+ files)
-
-**Action:**
-```bash
-grep -rln "template/obligatorio/agents\|template/obligatorio/commands\|template/obligatorio/skills\|template/obligatorio/opencode.json" docs/diagnosis/
-```
-
-**Decisión:** Si las referencias son narrativas ("agregamos `template/obligatorio/.opencode/plugins/...`"), DEJAR como está (histórico). Si son instrucciones operativas que aún se usan, ACTUALIZAR.
-
-**Acceptance criteria:**
-- [ ] Diagnosis docs auditados
-- [ ] Decisión documentada (qué se actualizó, qué se dejó)
-- [ ] No regresiones en info histórica
-
-**Verification:**
-- [ ] `git -C repo diff docs/diagnosis/` muestra solo cambios intencionales
-- [ ] Si no se cambió nada, documentar "diagnosis docs preserved as historical record"
-
-**Dependencies:** Task 2.5
-**Files likely touched:** 0 diagnosis docs (probablemente ninguno necesita cambio)
-**Estimated scope:** XS (audit only)
-
----
-
-#### Task 5.5: Update `CHANGELOG.md` with FEV-17 entry ✅ Completado
-
-**Description:** Entrada FEV-17 ya agregada en `CHANGELOG.md` bajo `[Unreleased]`. Documenta los 3 grupos de cambios: restructure, manifest+resolver, test paths.
+**Description:** Agregar entrada FEV-18 bajo `[Unreleased]` documentando: scope, pack distribution, format standardization, manifest updates.
 
 **File path:** `CHANGELOG.md`
 
-**Content (already present under `[Unreleased]`):**
+**Content (proposed):**
+
 ```markdown
 ## [Unreleased]
 
+### Added
+
+- **FEV-18 — Agent Classification & Migration (v2.0 Phase 2):**
+  - 8 selectable packs populated: software-development (~120), business (~75), science-research (~45), hardware-emerging (~50), creative (~10), finance (~15), operations-support (~25), government-legal (~10)
+  - YAML frontmatter v2.0 standard + `## COMPOSITION` block applied to 267 new agents
+  - `docs/AGENT-FORMAT-V2.md` — Agent format specification
+  - `scripts/reformat-agent.ts` — Idempotent reformat script
+  - `tests/unit/domain/all-packs-present.test.ts` — Pack directory validation
+  - `tests/unit/domain/pack-agent-counts.test.ts` — Agent count validation
+
 ### Changed
 
-- **FEV-17 — Template Directory Restructuring (v2.0 Phase 1):** ...
-- **FEV-17 — FileRuleManifestData:** ...
-- **FEV-17 — destPath support:** ...
-- **FEV-17 — Tests updated:** ...
-- **FEV-17 — Template path references:** ...
+- **FEV-18 — FileRuleManifestData:** 4 mandatory → 11 mandatory (3 existing + 8 selectable packs)
+- **FEV-18 — Huitzilopochtli catalog:** ~96 → ~362 subagents (canonical reference expanded)
+- **FEV-18 — Format strategy:** Hybrid (267 new reformatted, 95 legacy unchanged)
+
+### Removed
+
+- **FEV-18 — `packs/sin-clasificar/` directory:** 95 legacy agents distributed to 8 packs
+- **FEV-18 — 10 REDUNDANT agents:** New versions discarded, legacy versions retained for backward compat
 ```
 
-**Acceptance criteria:** ✅ All met — FEV-17 entry present with 5+ subsections documented.
-- [ ] `grep "FEV-17" CHANGELOG.md | wc -l` returns ≥3
-- [ ] `wc -l CHANGELOG.md` shows +15-20 lines
-
-**Dependencies:** Tasks 5.1, 5.2, 5.3, 5.4
-**Files likely touched:** CHANGELOG.md (+15-20 lines)
-**Estimated scope:** XS (1 section, ~15 lines)
-
----
-
-### Checkpoint: Documentation Complete (Phase 5)
-
-- [ ] README.md updated
-- [ ] CONTRIBUTING.md updated (new agent workflow)
-- [ ] docs/WORKFLOW.md, TECH_DEBT.md, TRD.md, ARCHITECTURE.md consistent
-- [ ] Diagnosis docs audited (decision documented)
-- [ ] CHANGELOG.md has FEV-17 entry
-- [ ] No broken cross-references
-
----
-
-### Phase 6: Verification & Atomic Commits (SEQUENTIAL, gates all)
-
-#### Task 6.1: Final quality check (just check)
-
-**Description:** Run `just check` to verify Biome linting + TypeScript strict mode pass with all changes.
-
 **Acceptance criteria:**
-- [ ] `just check` exit 0
-- [ ] 0 errors, 0 warnings (or only pre-existing warnings documented)
-- [ ] `biome ci` clean
-- [ ] `tsc --noEmit` clean
+- [ ] CHANGELOG.md tiene entrada FEV-18 con 3 subsecciones (Added, Changed, Removed)
+- [ ] Metrics: ~362 agents en 10 packs, 267 reformateados
 
 **Verification:**
-- [ ] Output of `just check` shows 0 errors
-- [ ] `git -C repo diff --stat` shows expected files modified
+- [ ] `grep "FEV-18" CHANGELOG.md | wc -l` ≥ 5
+- [ ] Manual review: entry es claro y completo
 
-**Dependencies:** All Phase 1-5 tasks
-**Files likely touched:** None
-**Estimated scope:** XS (1 command)
+**Dependencies:** Task 5.4
+**Files likely touched:** `CHANGELOG.md` (+~25 lines)
+**Estimated scope:** XS
 
 ---
 
-#### Task 6.2: Run full test suite (just test)
+#### Task 6.2: Update WORKFLOW.md and TECH_DEBT.md
 
-**Description:** Run `just test` to verify all unit + integration tests pass. Coverage threshold ≥95% enforced (per FEV-16).
+**Description:** Marcar FEV-18 como completado en `docs/WORKFLOW.md` (cambiar `🔲` a `✅`). Actualizar `docs/TECH_DEBT.md` si algún item relacionado se cerró (TD-V2-*).
+
+**File path:** `docs/WORKFLOW.md`, `docs/TECH_DEBT.md`
 
 **Acceptance criteria:**
-- [ ] `just test` exit 0
-- [ ] ≥910 tests, 0 fail (no regression from baseline)
-- [ ] Coverage lines ≥95%, functions ≥95%
+- [ ] WORKFLOW.md FEV-18 status: `🔲 Planificado` → `✅ Completo (2026-08-04)`
+- [ ] Sección 3 de WORKFLOW.md (desglose) actualizada con FEV-18 resultados
+- [ ] TECH_DEBT.md actualizado si aplica
 
 **Verification:**
-- [ ] Output of `just test` shows all tests passing
-- [ ] Coverage report shows ≥95% lines
+- [ ] `grep "FEV-18" docs/WORKFLOW.md` muestra estado ✅
+- [ ] `git diff docs/WORKFLOW.md docs/TECH_DEBT.md` muestra solo cambios intencionales
 
 **Dependencies:** Task 6.1
-**Files likely touched:** None
-**Estimated scope:** S (~2min runtime)
+**Files likely touched:** `docs/WORKFLOW.md` (~10 lines), `docs/TECH_DEBT.md` (~5 lines)
+**Estimated scope:** XS
 
 ---
 
-#### Task 6.3: Run E2E suite (just test:e2e)
+#### Task 6.3: Update audit artifacts in `tasks/`
 
-**Description:** Run `just test:e2e` to verify all 20 E2E scenarios pass.
+**Description:** Los 4 audit files (inventory, classification, pack-assignment, summary) son artefactos de Phase 0. Decidir: ¿commiteamos como histórico, o `.gitignore`-amos?
+
+**Decision:** Commitear en `tasks/audit-fev-18-*.md` como registro histórico de FEV-18. Esto ayuda a auditabilidad futura ("¿por qué este agente está en este pack?").
 
 **Acceptance criteria:**
-- [ ] `just test:e2e` exit 0
-- [ ] 20/20 scenarios passing (no regression)
+- [ ] 4 audit files en `tasks/`
+- [ ] `git status` los lista como untracked
+- [ ] Decisión: commitear o gitignore (default: commit)
 
 **Verification:**
-- [ ] Output of `just test:e2e` shows 20/20 passing
-- [ ] `git -C repo status tests/fixtures/` shows no uncommitted artifacts
+- [ ] `ls tasks/audit-fev-18-*.md | wc -l` returns 4
+- [ ] Manual review: archivos son legibles y útiles como histórico
 
 **Dependencies:** Task 6.2
-**Files likely touched:** None
-**Estimated scope:** S (~5min runtime)
+**Files likely touched:** 4 files (already created in Phase 0, decision on whether to commit)
+**Estimated scope:** XS
 
 ---
 
-#### Task 6.4: Atomic commits (5-7 commits)
+#### Task 6.4: Atomic commits (7-9 commits)
 
-**Description:** Crear commits atómicos siguiendo Conventional Commits. Cada commit debe representar un cambio lógico coherente.
+**Description:** Crear commits atómicos siguiendo Conventional Commits. Cada commit representa un cambio lógico coherente.
 
 **Suggested commit breakdown:**
-1. `refactor(template)!: restructure to core/ + packs/ directory layout (v2.0)`
-   - Phase 1: directory restructure (6 tasks)
-2. `feat(domain): update FileRuleManifestData for v2.0 pack structure`
-   - Task 2.1
-3. `feat(infrastructure): TemplateResolver supports core/ + packs/ direct resolution`
-   - Tasks 2.2, 2.4
-4. `test: update unit + integration tests for v2.0 template paths`
-   - Phase 3: tasks 3.1-3.10
-5. `test(e2e): update E2E tests for v2.0 template paths`
-   - Phase 4: tasks 4.1-4.3
-6. `docs: update documentation for v2.0 template structure`
-   - Phase 5: tasks 5.1-5.5
 
-All commits include `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer.
+1. `chore(tasks): add FEV-18 audit artifacts (inventory, classification, pack-assignment, summary)`
+   - Phase 0 output (4 audit files)
+2. `docs: add agent format v2.0 specification`
+   - Task 1.1, 1.2
+3. `feat(scripts): add reformat-agent.ts for v2.0 agent conversion`
+   - Task 1.3, 1.4
+4. `feat(template): distribute software-development pack (~120 agents)`
+   - Task 2.1
+5. `feat(template): distribute business pack (~75 agents)`
+   - Task 2.2
+6. `feat(template): distribute science-research, hardware-emerging, creative, finance, operations-support, government-legal packs (~155 agents total)`
+   - Tasks 2.3–2.8
+7. `refactor(template)!: remove sin-clasificar pack (95 agents distributed to 8 packs)`
+   - Tasks 3.1–3.3
+8. `feat(domain): update FileRuleManifestData with 8 selectable packs (v2.0)`
+   - Tasks 4.1, 4.2
+9. `docs: update Huitzilopochtli's catalog with ~362 subagents`
+   - Task 4.3
+10. `test: add pack directory and agent count smoke tests; extend E2E clean-install`
+    - Tasks 5.1–5.3
+11. `docs: FEV-18 changelog, workflow, tech debt updates`
+    - Tasks 6.1, 6.2, 6.3
+
+**All commits include `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer.**
 
 **Acceptance criteria:**
-- [ ] 5-6 atomic commits, each with logical scope
+- [ ] 7-11 atomic commits, each with logical scope
 - [ ] Conventional Commits format: `type(scope): description`
 - [ ] All commits include `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Each commit passes `just check` independently (if tested)
 - [ ] No "fix typo" or "wip" commits
+- [ ] `just check` passes after each commit (if tested locally)
 
 **Verification:**
-- [ ] `git -C repo log develop..HEAD --oneline` shows 5-6 commits
-- [ ] `git -C repo log -1 --format="%B" | grep "Co-Authored-By"` shows trailer on last commit
-- [ ] `git -C repo log --grep="wip\|fix typo" --oneline` returns 0 commits
+- [ ] `git -C repo log develop..HEAD --oneline` shows 7-11 commits
+- [ ] `git -C repo log -1 --format="%B" | grep "Co-Authored-By"` shows trailer
+- [ ] `git -C repo log --grep="wip\|fix typo" --oneline` returns 0
 
 **Dependencies:** Task 6.3
 **Files likely touched:** N/A (git operation)
-**Estimated scope:** M (6 commits, careful staging)
+**Estimated scope:** M (~11 commits)
 
 ---
 
 #### Task 6.5: PR to develop (or direct merge if local)
 
-**Description:** Push branch and open PR to `develop` (per CONTRIBUTING.md workflow). Or merge locally if contributor.
+**Description:** Push branch and open PR to `develop` (per CONTRIBUTING.md workflow). PR description debe incluir: FEV-18 scope, metrics, link a SPEC.md y plan.md.
 
 **Acceptance criteria:**
-- [ ] Branch `feat/new-agents` has all FEV-17 commits
-- [ ] PR opened against `develop` (or local merge ready)
-- [ ] PR description includes: FEV-17 scope, metrics, link to SPEC.md §2
-- [ ] Review requested
+- [ ] Branch `feat/new-agents` tiene todos los FEV-18 commits
+- [ ] PR abierto contra `develop`
+- [ ] PR description incluye:
+  - FEV-18 scope (distribute 362 agents, format 267, update manifest)
+  - Métricas: 910+ tests, 20/20 E2E, coverage ≥95%
+  - Link a `tasks/plan.md` y `specs/spec-agent-packs.md §3`
+- [ ] Review solicitado (auto-merge si contributor único)
 
 **Verification:**
-- [ ] `git -C repo log --oneline develop..feat/new-agents` shows FEV-17 commits
-- [ ] `gh pr create --base develop --head feat/new-agents` succeeds (or local merge)
+- [ ] `git -C repo log --oneline develop..feat/new-agents` muestra FEV-18 commits
+- [ ] `gh pr create --base develop --head feat/new-agents` exitoso (o local merge)
+- [ ] PR URL guardado
 
 **Dependencies:** Task 6.4
 **Files likely touched:** N/A (git/PR operation)
-**Estimated scope:** XS (PR creation)
+**Estimated scope:** XS
 
 ---
 
-### Checkpoint: FEV-17 Complete ✅
+#### Checkpoint: FEV-18 Complete ✅
 
 - [ ] All 6 phases complete
-- [ ] 5-6 atomic commits
+- [ ] 7-11 atomic commits
 - [ ] `just check` exit 0
-- [ ] `just test` exit 0 (910+ tests)
+- [ ] `just test` exit 0 (~920 tests)
 - [ ] `just test:e2e` exit 0 (20/20 scenarios)
-- [ ] CHANGELOG.md updated
-- [ ] PR ready for review
-- [ ] **FEV-17 closes; FEV-18 (agent classification) can begin**
+- [ ] CHANGELOG.md actualizado
+- [ ] PR listo para review
+- [ ] **FEV-18 cierra; FEV-19 (permission unification) puede comenzar**
 
 ---
 
@@ -1246,147 +1216,195 @@ All commits include `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer.
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| **Path resolution breaks for nested files** (e.g., `core/.opencode/plugins/src/defaults.ts`) | High — installer fails | Task 2.2 explicit test for nested paths; Task 2.4 unit tests cover deep paths. |
-| **E2E tests have hidden path references** not caught in 4.1-4.2 | Medium — E2E fails | Task 4.3 runs full E2E suite; debug any failures. |
-| **Plugin imports break** because plugin source is in `core/.opencode/plugins/...` | High — plugin won't load | Task 3.10 updates 4 plugin test imports; verify plugin loads via `just check`. |
-| **Diagnosis docs reference old paths** in historical narrative | Low — informational | Decision documented in 5.4: leave as-is, not blocking. |
-| **npm tarball structure changes** affect downstream consumers | Medium — packaging breaks | Task 3.8 updates npm-pack test; new paths verified in tarball. |
-| **Coverage drops** below 95% threshold | Low — coverage artifacts | Tasks 3.1-3.10 add new tests; net coverage should increase. |
-| **Git renames lost** (commits treated as delete+add) | Medium — history loss | Task 1.6 verifies `git status` shows renames, not deletes. |
-| **`agency-agents-main/` untracked dir interferes** | Low — unrelated to FEV-17 | Verify in Task 0.1 it's still untracked and ignored. |
-| **9h instead of 7h due to unexpected path issues** | Low — schedule slip | Parallelizable phases absorb extra time; checkpoint reviews catch early. |
+| **Phase 0 audit revela conteos muy diferentes** (~200 vs 362) | High — plan podría ser muy ambicioso | T0.4 produce summary; si gap >50%, re-planificar con humano antes de Phase 1 |
+| **Reformat script no idempotente** duplica COMPOSITION blocks | Medium — 267 archivos rotos | T1.3 tests idempotency; T1.4 valida con 5 samples antes de T2.1 |
+| **Pack boundary ambiguity** (specialized/55 agents) | Medium — agents en pack incorrecto | T0.3 manual review de `specialized/` con justificación por agente |
+| **E2E tests fallan por agents faltantes** | Medium — regression | T5.3 extiende scenario 1 con assertions específicas |
+| **Huitzilopochtli catalog se vuelve muy grande** (>500 lines) | Low — file bloat | T4.3 mantiene catalog conciso con cross-references a packs |
+| **`agency-agents-main/` queda como untracked** post-FEV-18 | Low — disk space | Decisión: mantener untracked o commitear como `template/_archive/` |
+| **Tarball > 5MB (SC-15)** con 362 agents | Medium — violates spec | T5.4 verifica size; si > 5MB, considerar `.npmignore` o compression |
+| **Plugin auto-discovery no encuentra nuevos agents** (FEV-20 lo arregla) | Low — agents no son invocables | T5.4 smoke test verifica discovery; FEV-20 lo arregla recursivamente |
 
 ---
 
 ## Open Questions
 
-1. **Empty pack directories:** ¿Se crean los 8 packs vacíos con `.gitkeep` (recomendado) o se crean solo cuando FEV-18 los necesite? Decisión del usuario: incluirlos ahora para que la estructura esté completa.
-2. **`sin-clasificar/` name:** ¿Es el nombre correcto o prefieres `unclassified/` o `pending/`? Decisión del usuario: `sin-clasificar/` (consistente con naming en español del proyecto).
-3. **Version bump:** FEV-17 NO bump versión. ¿Confirmas? Decisión del usuario: no bump, v2.0.0 coordina al final.
-4. **Plugin renames:** ¿El plugin debe renombrar `autoDiscovery.ts` para entender `packs/`? FEV-20 lo hace, pero ¿algo previo? Decisión: FEV-20 maneja auto-discovery, FEV-17 solo reestructura.
+1. **`agency-agents-main/` post-FEV-18:** ¿Mantenemos untracked, commitear como `_archive/`, o eliminar? Decisión: commitear en `template/_archive/agency-agents-source/` con `.gitignore` para distribución.
+2. **Source commit SHA:** El bloque `Knowledge` en COMPOSITION debería referenciar el SHA del commit original. ¿Tenemos el SHA de donde se descargaron los 267? Si no, usar fecha de FEV-18.
+3. **Pack boundaries post-FEV-21:** Cuando el installer presente pack selection, ¿algunos usuarios querrán agents de 2-3 packs mezclados? La decisión single-pack per agent puede sentirse restrictiva. Defer a feedback post-v2.0.0.
 
 ---
 
-## Resumen de Archivos a Modificar/Crear
+## Definition of Done — FEV-18
 
-### Nuevos directorios (10)
+### Funcional
 
-1. `template/obligatorio/core/` (contiene .opencode/, commands/, skills/, opencode.json, skills-lock.json — moved)
-2. `template/obligatorio/packs/` (nuevo)
-3. `template/obligatorio/packs/main/` (6 primary agents — moved)
-4. `template/obligatorio/packs/writers/` (3 writers — moved)
-5. `template/obligatorio/packs/sin-clasificar/` (95 unclassified — moved)
-6. `template/obligatorio/packs/software-development/` (empty + .gitkeep)
-7. `template/obligatorio/packs/creative/` (empty + .gitkeep)
-8. `template/obligatorio/packs/business/` (empty + .gitkeep)
-9. `template/obligatorio/packs/finance/` (empty + .gitkeep)
-10. `template/obligatorio/packs/government-legal/` (empty + .gitkeep)
-11. `template/obligatorio/packs/science-research/` (empty + .gitkeep)
-12. `template/obligatorio/packs/hardware-emerging/` (empty + .gitkeep)
-13. `template/obligatorio/packs/operations-support/` (empty + .gitkeep)
+- [ ] Los 8 packs poblados con agents según audit
+- [ ] 267 nuevos agents en formato v2.0 (YAML + COMPOSITION)
+- [ ] 95 legacy agents distribuidos (no reformateados)
+- [ ] 10 REDUNDANT resueltos (legacy wins)
+- [ ] IMPROVABLE merges aplicados
+- [ ] `packs/sin-clasificar/` directorio eliminado
+- [ ] `FileRuleManifestData` con 11 mandatory entries
+- [ ] Huitzilopochtli catalog expandido
 
-### Archivos eliminados (1)
+### Calidad
 
-1. `template/obligatorio/agents/` (vacío después de mv, rmdir)
+- [ ] `just check`: 0 errors, 0 warnings nuevos
+- [ ] `just test`: ≥920 tests, 0 fail
+- [ ] `just test:e2e`: 20/20 scenarios
+- [ ] Coverage: lines ≥95%, functions ≥95%
+- [ ] No `any` types introducidos
+- [ ] Tarball size < 5MB
 
-### Archivos modificados (16+)
+### Documentación
 
-**Code (3):**
-1. `src/domain/entities/FileRuleManifestData.ts` — 7 → 4 mandatory entries
-2. `src/infrastructure/adapters/TemplateResolver.ts` — direct path resolution for v2.0
-3. `tests/unit/infrastructure/template-resolver.test.ts` (new or extended)
+- [ ] `docs/AGENT-FORMAT-V2.md` creado
+- [ ] `CHANGELOG.md` con entrada FEV-18
+- [ ] `docs/WORKFLOW.md` FEV-18 marcado ✅
+- [ ] 4 audit artifacts en `tasks/`
 
-**Tests (10):**
-4. `tests/unit/skill-paths.test.ts`
-5. `tests/unit/setup/opencode-config.test.ts`
-6. `tests/unit/config/destructive-patterns.test.ts`
-7. `tests/unit/domain/file-merge-engine.test.ts`
-8. `tests/unit/domain/file-rule-manifest.test.ts`
-9. `tests/unit/domain/services/stagePlanner.test.ts`
-10. `tests/unit/domain/services/file-merge-engine-update.test.ts`
-11. `tests/integration/packaging/npm-pack.test.ts`
-12. `tests/integration/use-cases/{clean,project,update}-install.test.ts` + `progress-logs.test.ts`
-13. `tests/plugin/integration/{chatMessage,help-command-discovery,systemTransform,toolExecuteBefore}.test.ts`
+### Proceso
 
-**E2E (1-2):**
-14. `tests/e2e/15-update-workspace-existing-project.sh`
-15. `tests/e2e/common.sh` (if applicable)
+- [ ] 7-11 atomic commits con Conventional Commits
+- [ ] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
+- [ ] Branch `feat/new-agents` con FEV-18 commits
+- [ ] PR abierto a `develop`
+- [ ] No version bump (v2.0.0 coordina al final con FEV-19 a FEV-23)
 
-**Documentation (5+):**
-16. `README.md`
-17. `CONTRIBUTING.md`
-18. `docs/WORKFLOW.md`
-19. `docs/TECH_DEBT.md`
-20. `docs/TRD.md`
-21. `docs/ARCHITECTURE.md`
-22. `CHANGELOG.md`
+---
+
+## Resumen de Archivos a Crear/Modificar
+
+### Nuevos archivos (10+)
+
+**Documentación (5):**
+1. `docs/AGENT-FORMAT-V2.md` (new, ~100 lines)
+2. `tasks/audit-fev-18-inventory.md` (new, ~270 lines)
+3. `tasks/audit-fev-18-classification.md` (new, ~280 lines)
+4. `tasks/audit-fev-18-pack-assignment.md` (new, ~370 lines)
+5. `tasks/audit-fev-18-summary.md` (new, ~150 lines)
+
+**Scripts (1):**
+6. `scripts/reformat-agent.ts` (new, ~80 lines)
+
+**Tests (3):**
+7. `tests/unit/domain/all-packs-present.test.ts` (new, ~50 lines)
+8. `tests/unit/domain/pack-agent-counts.test.ts` (new, ~60 lines)
+9. `tests/unit/infrastructure/template-resolver.test.ts` (new or extended, if needed for pack coverage)
+
+**Agents (267 reformateados + 95 movidos):**
+10. `template/obligatorio/packs/software-development/*.md` (~120 files)
+11. `template/obligatorio/packs/business/*.md` (~75 files)
+12. `template/obligatorio/packs/science-research/*.md` (~45 files)
+13. `template/obligatorio/packs/hardware-emerging/*.md` (~50 files)
+14. `template/obligatorio/packs/creative/*.md` (~10 files)
+15. `template/obligatorio/packs/finance/*.md` (~15 files)
+16. `template/obligatorio/packs/operations-support/*.md` (~25 files)
+17. `template/obligatorio/packs/government-legal/*.md` (~10 files)
+
+### Archivos modificados (5)
+
+**Code (1):**
+18. `src/domain/entities/FileRuleManifestData.ts` (+~50 lines net, -6 sin-clasificar)
+
+**Tests (3):**
+19. `tests/unit/domain/file-rule-manifest.test.ts` (~20 lines modified)
+20. `tests/unit/file-rule-manifest.test.ts` (~20 lines modified, if exists)
+21. `tests/e2e/01-clean-install.sh` (+~20 lines)
+
+**Agents (1):**
+22. `template/obligatorio/packs/main/huitzilopochtli.md` (+~50 lines, catalog expansion)
+
+### Directorios eliminados (1)
+
+23. `template/obligatorio/packs/sin-clasificar/` (rmdir)
+
+### Documentación actualizada (3)
+
+24. `CHANGELOG.md` (+~25 lines)
+25. `docs/WORKFLOW.md` (~10 lines modified)
+26. `docs/TECH_DEBT.md` (~5 lines, if applicable)
 
 ---
 
 ## Métricas Esperadas
 
-| Métrica | Baseline (post-FEV-16) | Meta FEV-17 | Verificación |
+| Métrica | Baseline (post-FEV-17) | Meta FEV-18 | Verificación |
 |---------|------------------------|-------------|--------------|
-| Tests (pass/fail) | 910 / 0 | ≥910 / 0 | `just test` |
-| E2E scenarios | 20 / 20 | 20 / 20 | `just test:e2e` |
+| Tests (pass/fail) | 946 / 0 | ≥946 / 0 + ~10 new = ~956 | `just test` |
+| E2E scenarios | 20 / 20 | 20 / 20 (scenario 1 extended) | `just test:e2e` |
 | `just check` errors | 0 | 0 | `just check` |
 | Coverage (lines) | 98.10% | ≥95% (enforced) | `bun test --coverage` |
-| Mandatory rules (count) | 7 | 4 | `grep "category: \"mandatory\""` |
-| Files in `template/obligatorio/agents/` | 104 | 0 (rmdir) | `ls template/obligatorio/agents/` |
-| Files in `template/obligatorio/packs/` | 0 | 104 | `find template/obligatorio/packs -name "*.md" \| wc -l` |
-| Template dirs at root | 6 | 2 (`core/`, `packs/`) | `ls template/obligatorio/` |
-| Total agents | 104 | 104 (preserved) | `find template -name "*.md" -path "*/packs/*" \| wc -l` |
-| Files touched | — | 25+ (16 modified + 10 dirs) | `git diff --stat` |
-| Atomic commits | — | 5-6 | `git log --oneline develop..HEAD \| wc -l` |
-| Wall-clock effort | — | ~7-8h (vs 4h estimated) | Self-reported |
+| Mandatory rules | 4 | 11 (3 + 8 packs) | `grep "category: \"mandatory\""` |
+| Total agents | 104 (in 4 packs) | ~361 (in 10 packs) | `find template -name "*.md" -path "*/packs/*" \| wc -l` |
+| Writers agents | 3 | 2 (scientific-literature-researcher → science-research) | `ls packs/writers/ \| wc -l` |
+| Packs populated | 4 (2 mandatory + sin-clasificar + 8 empty) | 10 (2 mandatory + 8 selectable) | `ls packs/ \| wc -l` |
+| `packs/sin-clasificar/` exists | yes | no | `ls packs/sin-clasificar` |
+| Files touched | — | ~380 (267 reformatted + 95 moved + 18 new/modified) | `git diff --stat` |
+| Atomic commits | — | 7-11 | `git log --oneline develop..HEAD \| wc -l` |
+| Wall-clock | — | ~8–10h (vs 8h estimated) | Self-reported |
+| Tarball size | < 5MB | < 5MB (verificar) | `bun pm pack --dry-run` |
 
 ---
 
-## Dependency Graph (Mermaid)
+## Dependency Graph (Mermaid — High-Level)
 
 ```mermaid
 graph TD
-    P0[Phase 0: Preparation] --> P1[Phase 1: Directory Restructure]
-    P1 --> P2[Phase 2: Manifest + Resolver]
-    P2 --> P3[Phase 3: Unit/Int Tests]
-    P2 --> P4[Phase 4: E2E Tests]
-    P2 --> P5[Phase 5: Documentation]
-    P3 --> P6[Phase 6: Verify + Commit]
-    P4 --> P6
-    P5 --> P6
-    P6 --> DONE[FEV-17 Complete]
+    P0[Phase 0: Audit & Inventory<br/>~1h] --> P1[Phase 1: Format Definition<br/>~1h]
+    P1 --> P2A[Phase 2a: software-development<br/>~1.5h]
+    P1 --> P2B[Phase 2b: business<br/>~1h]
+    P1 --> P2C[Phase 2c: science-research<br/>~45min]
+    P1 --> P2D[Phase 2d: hardware-emerging<br/>~45min]
+    P1 --> P2E[Phase 2e: creative<br/>~30min]
+    P1 --> P2F[Phase 2f: finance<br/>~30min]
+    P1 --> P2G[Phase 2g: operations-support<br/>~30min]
+    P1 --> P2H[Phase 2h: government-legal<br/>~30min]
+    P2A --> P3[Phase 3: sin-clasificar Cleanup<br/>~1h]
+    P2B --> P3
+    P2C --> P3
+    P2D --> P3
+    P2E --> P3
+    P2F --> P3
+    P2G --> P3
+    P2H --> P3
+    P3 --> P4[Phase 4: Manifest & Catalog<br/>~1h]
+    P4 --> P5[Phase 5: Tests & Verification<br/>~1h]
+    P5 --> P6[Phase 6: Docs & Commit<br/>~30min]
+    P6 --> DONE[FEV-18 Ready]
 
     classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
     classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
     classDef seq fill:#ffd43b,stroke:#f59f00,color:#000
 
-    class P1,P2 crit
-    class P6,DONE gate
-    class P3,P4,P5 par
-    class P0 seq
+    class P0,P1,P3,P4 crit
+    class P5,P6,DONE gate
+    class P2A,P2B,P2C,P2D,P2E,P2F,P2G,P2H par
 ```
 
-**Critical path:** Phase 0 → 1 → 2 → 6 (~5h wall-clock)
-**Parallel opportunity:** Phase 3, 4, 5 — independientes entre sí, ~3.5h combined (Phase 3 ~2h, Phase 4 ~1h, Phase 5 ~30min)
-**Risk:** Phase 1 → Phase 2 is the only true sequential blocker; el resto es paralelizable.
+**Critical path:** Phase 0 → 1 → 2a (software-development) → 3 → 4 → 5 → 6 (~7h)
+**Parallel branches in Phase 2:** 7 packs after software-development (~3.5h combined if solo)
 
 ---
 
 ## Próximo Paso
 
 Una vez aprobado el plan:
-1. **Phase 0** (preparación) — verificar baseline + branch state (~15min)
-2. **Phase 1** (directory restructure) — 6 sub-tasks (~1.5h, BLOQUEA Phase 2+)
-3. **Phase 2** (manifest + resolver) — 5 sub-tasks (~1.5h, critical path)
-4. **Phase 3-5** (tests + docs en paralelo) — 15+ sub-tasks (~3.5h combined)
-5. **Phase 6** (verificación + commits) — 5 sub-tasks (~30min)
-6. **Total:** ~7-8h wall-clock, 2-3 días calendario con review cycles
+1. **Phase 0** (audit) — 4 tasks (~1h, BLOQUEA todo)
+2. **Phase 1** (format) — 4 tasks (~1h, critical path)
+3. **Phase 2** (pack distribution) — 8 tasks (~5h, biggest first)
+4. **Phase 3** (cleanup) — 3 tasks (~1h, gates tests)
+5. **Phase 4** (manifest) — 3 tasks (~1h, gates tests)
+6. **Phase 5** (tests) — 4 tasks (~1h, gates commits)
+7. **Phase 6** (commit) — 5 tasks (~30min)
+8. **Total:** ~10h wall-clock, 3-4 días calendario con review cycles
 
-**Comando sugerido:** `> Run /build to start Phase 0 (preparation)`
+**Comando sugerido:** `> Run /build to start Phase 0 (audit & inventory)`
 
 ---
 
-*Plan creado: 2026-08-04 — Moctezuma (Strategic Planner) — FEV-17 ready to build*
+*Última actualización: 2026-08-04 — Moctezuma (Strategic Planner) — FEV-18 plan ready for human review*
 
 Co-Authored-By: Moctezuma <dev@fisherk2.com>
