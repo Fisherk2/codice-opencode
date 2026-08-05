@@ -1,14 +1,23 @@
 ---
 description: "Anthropologist — Expert in cultural systems, rituals, kinship, belief systems, and ethnographic method — builds culturally coherent societies that feel lived-in rather than invented"
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#D97706"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: deny
+  edit: deny
   bash:
-    "*": ask
+    "* > *": deny
+    "* >> *": deny
+    "touch *": deny
+    "mkdir *": deny
+    "cp *": deny
+    "mv *": deny
+    "rm *": deny
+    "chmod *": deny
+    "chown *": deny
+    "ln *": deny
   grep: allow
   glob: allow
   lsp: allow

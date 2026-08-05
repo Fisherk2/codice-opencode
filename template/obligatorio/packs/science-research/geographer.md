@@ -1,14 +1,23 @@
 ---
 description: "Geographer — Expert in physical and human geography, climate systems, cartography, and spatial analysis — builds geographically coherent worlds where terrain, climate, resources, and settlement patterns make scientific sense"
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#059669"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: deny
+  edit: deny
   bash:
-    "*": ask
+    "* > *": deny
+    "* >> *": deny
+    "touch *": deny
+    "mkdir *": deny
+    "cp *": deny
+    "mv *": deny
+    "rm *": deny
+    "chmod *": deny
+    "chown *": deny
+    "ln *": deny
   grep: allow
   glob: allow
   lsp: allow

@@ -5,8 +5,19 @@ temperature: 0.1
 color: "#dcb03b"
 hidden: true
 permission:
-  write: ask
-  edit: ask
+  write: deny
+  edit: deny
+  bash:
+    "* > *": deny
+    "* >> *": deny
+    "touch *": deny
+    "mkdir *": deny
+    "cp *": deny
+    "mv *": deny
+    "rm *": deny
+    "chmod *": deny
+    "chown *": deny
+    "ln *": deny
   grep: allow
   glob: allow
   lsp: allow
