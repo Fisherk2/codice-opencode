@@ -8,7 +8,16 @@ permission:
   write: deny
   edit: deny
   bash:
-    "*": deny
+    "* > *": deny
+    "* >> *": deny
+    "touch *": deny
+    "mkdir *": deny
+    "cp *": deny
+    "mv *": deny
+    "rm *": deny
+    "chmod *": deny
+    "chown *": deny
+    "ln *": deny
   grep: allow
   glob: allow
   lsp: allow

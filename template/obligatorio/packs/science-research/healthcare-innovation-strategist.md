@@ -1,14 +1,12 @@
 ---
 description: "Healthcare Innovation Strategist — Strategic narrative architect for healthcare founders operating at"
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#1B4F72"
 hidden: true
 permission:
-  write: allow
-  edit: allow
-  bash:
-    "*": ask
+  write: ask
+  edit: ask
   grep: allow
   glob: allow
   lsp: allow
