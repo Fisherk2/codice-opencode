@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **FEV-19 — Permission Unification & Subagent Table Removal (v2.0 Phase 3):**
+  - Unified `task:` permissions for 4 primary delegators (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli) to `"*": allow` + deny 5 other primaries pattern. Moctezuma and tezcatlipoca unchanged (`task: "*": deny`). 106 explicit allow-list entries removed (quetzalcoatl 21, tlaloc 73, mictlantecuhtli 12).
+  - **Removed ALL subagent index/catalog sections from the 6 primary agents** (user decision 2026-08-05): huitzilopochtli's ~355-subagent AVAILABLE SUBAGENTS catalog included. RULES now reference the `agents/` directory: "use ANY subagents in `agents/`". Primary agents never delegate to each other.
+- **FEV-19 — CONTRIBUTING.md:** "Add a New Agent" reduced from 5 steps to 3 (removed delegation-table step and huitzilopochtli catalog step). Removed "persona table updates" from primary agent requirements.
+- **FEV-19 — Wiki Agents.md:** agent count 104 → ~355 in 10 packs, file tree `agents/` → `packs/`, permission model updated to unified pattern, "Step 4: Update Delegation Tables" removed. README subagent count 98 → 349.
+
 ### Added
 
 - **FEV-17 — Template Directory Restructuring (v2.0 Phase 1):** `template/obligatorio/` restructured from flat (`agents/`, `commands/`, `skills/`, `opencode.json`, `skills-lock.json`, `.opencode/`) to hierarchical: `core/` (infrastructure) + `packs/{main,writers,sin-clasificar,<8 empty>}/` (agent packs). 6 primary agents moved to `packs/main/`, 3 writers to `packs/writers/`, 95 unclassified agents to `packs/sin-clasificar/` (pending FEV-18 classification). 8 empty pack directories created for FEV-18.

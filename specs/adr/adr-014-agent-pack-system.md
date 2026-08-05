@@ -61,7 +61,7 @@ task:
 
 ### Subagent Table Removal
 
-"AVAILABLE SUBAGENTS" sections are removed from quetzalcoatl, tlaloc, and mictlantecuhtli. huitzilopochtli retains its catalog as the single canonical reference.
+"AVAILABLE SUBAGENTS" sections are removed from all 6 primary agents — quetzalcoatl, tlaloc, mictlantecuhtli, and **huitzilopochtli** (including its catalog). **No primary agent maintains a subagent index** (amended 2026-08-05, user decision — the original ADR kept huitzilopochtli's catalog as the single canonical reference; FEV-19 removed it). Agents reference the `agents/` directory instead: "use ANY subagents in `agents/`".
 
 ### Plugin Changes
 
@@ -77,7 +77,7 @@ task:
 - **Domain-focused workspaces.** A business user installs only the business pack + mandatory agents. Their workspace has ~56 agents instead of ~354.
 - **Default works for developers.** `software-development` is pre-selected, so developers get everything they need with zero configuration.
 - **Permission maintenance eliminated.** Unified `task: "*": allow` means adding a new agent never requires editing primary agent files.
-- **Single source of truth.** huitzilopochtli's catalog is the only canonical agent reference. No more tripled maintenance.
+- **Single source of truth.** No primary agent maintains a subagent index (FEV-19, amended 2026-08-05). The `agents/` directory itself is the canonical reference — auto-discovered at session start. No tripled maintenance, no index to keep in sync.
 - **Auto-discovery compatible.** The filesystem scan (ADR-013) extends naturally to `packs/*/` subdirectories.
 
 ### Negative

@@ -1,7 +1,7 @@
 # Implementation Plan: FEV-19 — Permission Unification & Subagent Table Removal (v2.0 Phase 3)
 
 **Phase:** FEV-19 (v2.0 Phase 3) — 🔲 Planificado
-**Scope:** Unificar permisos `task:` de 4 agentes primarios delegadores a patrón `"*": allow` + deny 5 primarios. Eliminar secciones redundantes "AVAILABLE SUBAGENTS" de 3 agentes. Actualizar `CONTRIBUTING.md` y `docs/wiki-source/Agents.md` para reflejar el nuevo modelo.
+**Scope:** Unificar permisos `task:` de 4 agentes primarios delegadores a patrón `"*": allow` + deny 5 primarios. **Eliminar TODOS los índices "AVAILABLE SUBAGENTS" de los 6 agentes primarios** (incluyendo el catálogo canónico de huitzilopochtli — expansión de scope 2026-08-05). Actualizar `CONTRIBUTING.md` y `docs/wiki-source/Agents.md` para reflejar el nuevo modelo (referencia al directorio `agents/`, sin catálogos).
 **Spec:** [specs/spec-agent-packs.md §4](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [docs/WORKFLOW.md §FEV-19](../docs/WORKFLOW.md)
 **Tech Debt:** TD-V2-2, TD-V2-3, TD-V2-4
 **Date:** 2026-08-05
@@ -17,11 +17,13 @@ FEV-19 cierra la simplificación de gobernanza de agentes introducida por el pac
 
 Adicionalmente, 3 agentes mantienen secciones "AVAILABLE SUBAGENTS" redundantes que duplican el catálogo canónico de `huitzilopochtli` (expandido en FEV-18 a ~355 subagentes).
 
-**Decisiones del usuario (2026-08-05 vía `question` tool):**
+**Decisiones del usuario (2026-08-05 vía `question` tool + feedback directo):**
 1. **Scope:** Proceder como planeado — 3 tech debt items, ~3h.
 2. **Branch:** Usar `feat/new-agents` actual (no crear nueva).
 3. **Slicing:** Per-agent vertical (1 commit por agent = mejor para revert individual).
 4. **Tests grep:** NO incluir tests automatizados para SC-P5/SC-P6; validación manual vía code review + `just check`.
+5. **Deny-list semantics:** Cada agente deniega a los OTROS 5 primarios (incluyendo tezcatlipoca) — primarios nunca se delegan entre sí. **NO self-deny.**
+6. **CATALOGO ELIMINADO DE TODOS (expansión post-question):** Eliminar el índice "AVAILABLE SUBAGENTS" también de `huitzilopochtli.md`. Ninguno de los 6 agentes primarios mantiene índice de subagentes. El RULES referencia el directorio `agents/` (wording: "use ANY subagents in `agents/`"), no un catálogo.
 
 **Por qué importa:** FEV-19 es el último paso para que añadir un nuevo subagente sea **zero-touch** en los archivos de agentes primarios. Sin FEV-19, el pack system de FEV-18 pierde su mayor beneficio (mantenimiento simplificado). FEV-20 (plugin cleanup) y FEV-21 (installer UX) dependen de este modelo unificado.
 
@@ -70,10 +72,10 @@ Adicionalmente, 3 agentes mantienen secciones "AVAILABLE SUBAGENTS" redundantes 
 
 | Agent | Section exists | Lines | Action |
 |-------|----------------|-------|--------|
-| `huitzilopochtli.md` | ✅ Yes (canonical) | 52-65 | **KEEP** — single source of truth (FEV-18 expansion) |
-| `quetzalcoatl.md` | ✅ Yes (redundant) | 74-83 | **REMOVE** |
-| `tlaloc.md` | ✅ Yes (redundant) | 108-121 | **REMOVE** |
-| `mictlantecuhtli.md` | ✅ Yes (redundant) | 47-54 | **REMOVE** |
+| `huitzilopochtli.md` | ✅ Yes (canonical, FEV-18) | 52-65 | **REMOVE** (scope+ 2026-08-05: no index in any primary agent) |
+| `quetzalcoatl.md` | ✅ Yes (redundant) | 74-83 | **REMOVE** ✅ |
+| `tlaloc.md` | ✅ Yes (redundant) | 108-121 | **REMOVE** ✅ |
+| `mictlantecuhtli.md` | ✅ Yes (redundant) | 47-54 | **REMOVE** ✅ |
 | `moctezuma.md` | ❌ No | N/A | N/A |
 | `tezcatlipoca.md` | ❌ No | N/A | N/A |
 
@@ -99,13 +101,14 @@ task:
 FEV-18 ✅ (feat/new-agents branch base)
     ↓
 Phase 1: Per-Agent Updates (1.5h, sequential by file)
-    ├── T1.1 quetzalcoatl (perm + table + RULES) → 1 commit
-    ├── T1.2 tlaloc (perm + table + RULES) → 1 commit
-    └── T1.3 mictlantecuhtli (perm + table + RULES) → 1 commit
+    ├── T1.1 quetzalcoatl (perm + table + RULES) → 1 commit ✅
+    ├── T1.2 tlaloc (perm + table + RULES) → 1 commit ✅
+    ├── T1.3 mictlantecuhtli (perm + table + RULES) → 1 commit ✅
+    └── T1.4 huitzilopochtli (catalog removal + agents/ wording — scope+) → 1 commit ✅
     ↓
 Phase 2: Documentation Updates (0.5h, sequential)
-    ├── T2.1 CONTRIBUTING.md (remove step 3 + persona updates) → 1 commit
-    └── T2.2 Wiki Agents.md (remove step 4, count, perm model) → 1 commit
+    ├── T2.1 CONTRIBUTING.md (remove steps 3+4, persona updates) → 1 commit
+    └── T2.2 Wiki Agents.md (remove step 4, count, perm model, catalog refs) → 1 commit
     ↓
 Phase 3: Verification (0.5h, gates Phase 4)
     └── T3.1 just check + just test + just test:e2e

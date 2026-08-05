@@ -170,12 +170,14 @@ Four primary agents (quetzalcoatl, tlaloc, mictlantecuhtli, huitzilopochtli) use
 
 | Agent File | Section to Remove | Reason |
 |------------|-------------------|--------|
-| `quetzalcoatl.md` | "AVAILABLE SUBAGENTS" | Redundant with huitzilopochtli's canonical catalog |
-| `tlaloc.md` | "AVAILABLE SUBAGENTS" | Redundant with huitzilopochtli's canonical catalog |
-| `mictlantecuhtli.md` | "AVAILABLE SUBAGENTS" | Redundant with huitzilopochtli's canonical catalog |
-| `huitzilopochtli.md` | **KEEP** | Single canonical reference catalog for all agents |
+| `quetzalcoatl.md` | "AVAILABLE SUBAGENTS" | Redundant with `agents/` directory (auto-discovered) |
+| `tlaloc.md` | "AVAILABLE SUBAGENTS" | Redundant with `agents/` directory (auto-discovered) |
+| `mictlantecuhtli.md` | "AVAILABLE SUBAGENTS" | Redundant with `agents/` directory (auto-discovered) |
+| `huitzilopochtli.md` | "AVAILABLE SUBAGENTS" | **REMOVED in FEV-19 (amended 2026-08-05)** — no primary agent keeps a subagent index |
 | `moctezuma.md` | N/A (no such section) | No change needed |
 | `tezcatlipoca.md` | N/A (no such section) | No change needed |
+
+> **Amendment (FEV-19, 2026-08-05):** the original spec kept huitzilopochtli's catalog as the single canonical reference. Per user decision, no subagent index exists in any of the 6 primary agents — all reference the `agents/` directory instead.
 
 ---
 
@@ -214,8 +216,10 @@ agents/ (or template/obligatorio/packs/)
 | 1 | Create `agents/<agent-name>.md` | Create `template/obligatorio/packs/<pack>/<agent-name>.md` |
 | 2 | Update Wiki Agents page | Update Wiki Agents page (unchanged) |
 | 3 | Update delegation tables of primary agents | **REMOVE** — unified `task: "*": allow` makes this unnecessary |
-| 4 | Update huitzilopochtli's catalog | **KEEP** — remains canonical reference |
+| 4 | Update huitzilopochtli's catalog | **REMOVE** — no primary agent keeps a subagent index (amended FEV-19, 2026-08-05) |
 | 5 | Restart OpenCode session | Restart OpenCode session (unchanged) |
+
+> **Result (FEV-19):** "Add a New Agent" is now 3 steps (create file → update Wiki → restart). No delegation tables, no catalog updates.
 
 **Primary agent requirements:** Remove "persona table updates" — no longer needed with unified permissions.
 
@@ -228,7 +232,7 @@ agents/ (or template/obligatorio/packs/)
 | "Step 4: Update Delegation Tables" | **REMOVE** — unified permissions make this unnecessary |
 | Permission model examples | Update to show `task: "*": allow` + deny-list pattern |
 | Primary agent table | Update permission model column |
-| Agent count | Update from "104 agents" to "~354 agents in 8 packs + 2 mandatory" |
+| Agent count | Update from "104 agents" to "~355 agents in 10 packs" (implemented in FEV-19) |
 
 ---
 

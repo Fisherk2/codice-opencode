@@ -36,7 +36,7 @@
 | FEV-16 | Pre-release Tech Debt Closure (v1.2 Phase 6) | TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 closure | ✅ Completo |
 | FEV-17 | Template Directory Restructuring (v2.0 Phase 1) | `core/` + `packs/` restructure, FileRuleManifestData + TemplateResolver update | ✅ Completo |
 | FEV-18 | Agent Classification & Migration (v2.0 Phase 2) | 257 new agents → 8 packs (v2.0 format), 95 legacy distributed, 10 REDUNDANT resolved | ✅ Completo (2026-08-04) |
-| FEV-19 | Permission Unification & Subagent Table Removal (v2.0 Phase 3) | TD-V2-2, TD-V2-3, TD-V2-4: unified `task:` + docs update | 🔲 Planificado |
+| FEV-19 | Permission Unification & Subagent Table Removal (v2.0 Phase 3) | TD-V2-2, TD-V2-3, TD-V2-4: unified `task:` + docs update | ✅ Completo (2026-08-05) |
 | FEV-20 | Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4) | TD-V2-1, TD-V2-5: plugin cleanup + auto-discovery recursive scan | 🔲 Planificado |
 | FEV-21 | Installer UX — Pack Selection & Version Detection (v2.0 Phase 5) | Pack wizard, version gating, `.codice-version` metadata format | 🔲 Planificado |
 | FEV-22 | Installer UX — Updater with Pack Scoping (v2.0 Phase 6) | Option A (current packs) + Option B (add packs), CLI flags | 🔲 Planificado |
@@ -303,14 +303,15 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - `scientific-literature-researcher` movido de `writers/` a `science-research/` (decisión usuario)
 **Resultado:** 355 agents en 10 packs (2 mandatory + 8 selectable). 0 regresiones: 986 tests, 16/16 E2E, `just check` limpio. Tarball 8.0MB (SC-15 deviation, ADR-014 anticipó 5-8MB).
 
-### FEV-19 — Permission Unification & Subagent Table Removal 🔲
+### FEV-19 — Permission Unification & Subagent Table Removal ✅ Completo (2026-08-05)
 **Esfuerzo:** ~3h | **Dependencias:** FEV-18 | **Spec:** S5-PACKS §4 | **Tech Debt:** TD-V2-2, TD-V2-3, TD-V2-4
-- Unificar permisos `task:` de 4 agentes primarios → `"*": allow` + deny 5 primarios (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli)
-- Moctezuma y tezcatlipoca sin cambios (`task: "*": deny`)
-- Eliminar secciones "AVAILABLE SUBAGENTS" de quetzalcoatl, tlaloc, mictlantecuhtli
-- Actualizar CONTRIBUTING.md: eliminar paso "Update delegation tables" y "persona table updates"
-- Actualizar Wiki Agents.md: eliminar "Step 4", actualizar modelo de permisos y conteo
-**Resultado:** 4 agentes con permisos unificados, 3 archivos sin tablas redundantes, docs actualizados.
+- Unificados permisos `task:` de 4 agentes primarios → `"*": allow` + deny 5 primarios (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli). Moctezuma y tezcatlipoca sin cambios (`task: "*": deny`).
+- Eliminados TODOS los índices "AVAILABLE SUBAGENTS" de los 6 agentes primarios — incluyendo el catálogo canónico de huitzilopochtli (~355 subagentes). Ningún agente primario mantiene índice de subagentes (decisión usuario 2026-08-05).
+- RULES actualizados: referencia al directorio `agents/` ("use ANY subagents in `agents/`").
+- 106 explicit allow-list entries removidos (21 + 73 + 12).
+- CONTRIBUTING.md: "Add a New Agent" 5 → 3 steps (removidos delegation tables + huitzilopochtli catalog), removido "persona table updates".
+- Wiki Agents.md: count 104 → ~355 en 10 packs, file tree `agents/` → `packs/`, permission model unificado, removido "Step 4: Update Delegation Tables".
+**Resultado:** 4 agentes con permisos unificados, 6 agentes sin índices de subagentes, docs actualizados, 991 tests 0 fail, 16/16 E2E.
 
 ### FEV-20 — Plugin VALID_SUBAGENTS Removal 🔲
 **Esfuerzo:** ~3h | **Dependencias:** FEV-19 | **Spec:** S5-PACKS §5 | **Tech Debt:** TD-V2-1, TD-V2-5
