@@ -2,12 +2,15 @@ import { reformatAgent } from "./reformat-agent";
 
 /**
  * FEV-18 CLI entry for single-agent v2.0 conversion.
- * Usage: bun run scripts/reformat-agent.ts <source-file> <target-path> [--dry-run]
+ * Usage: bun run scripts/reformat-agent-cli.ts <source-file> <target-path> [--dry-run]
  * Exit codes: 0 = success, 1 = invalid arguments or conversion error.
  */
 
+/** Destination used for --dry-run; content is printed to stdout, never persisted. */
+const DRY_RUN_TARGET = "/tmp/.reformat-dry-run-target.md";
+
 function printUsage(): void {
-	console.error("Usage: bun run scripts/reformat-agent.ts <source-file> <target-path> [--dry-run]");
+	console.error("Usage: bun run scripts/reformat-agent-cli.ts <source-file> <target-path> [--dry-run]");
 	console.error("  Converts an agency-agents-main file to the v2.0 project format.");
 }
 
@@ -22,24 +25,18 @@ function main(): number {
 	}
 
 	const [sourcePath, targetPath] = positional;
+	const result = reformatAgent(sourcePath, dryRun ? DRY_RUN_TARGET : targetPath);
 
-	if (dryRun) {
-		// --dry-run prints generated content to stdout without writing.
-		const result = reformatAgent(sourcePath, "/tmp/.reformat-dry-run-target.md");
-		if (!result.ok) {
-			console.error(`Error: ${result.error}`);
-			return 1;
-		}
-		console.log(result.content);
-		return 0;
-	}
-
-	const result = reformatAgent(sourcePath, targetPath);
 	if (!result.ok) {
 		console.error(`Error: ${result.error}`);
 		return 1;
 	}
-	console.log(`Reformatted: ${sourcePath} -> ${targetPath}`);
+
+	if (dryRun) {
+		console.log(result.content);
+	} else {
+		console.log(`Reformatted: ${sourcePath} -> ${targetPath}`);
+	}
 	return 0;
 }
 

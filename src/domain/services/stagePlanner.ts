@@ -32,10 +32,11 @@ export async function computeStagePlan(
 			// adds destPath to a standard rule, this call must be updated to walk the
 			// destination directory at rule.destPath instead of rule.path.
 			const newFiles = await diffTrees(fileSystem, rule.path, rule.path);
-			if (newFiles.length > 0) {
+			const hasNewFiles = newFiles.length > 0;
+			if (hasNewFiles) {
 				expandedDirs.set(rule.path, newFiles);
 			}
-			stageDecisions.set(rule.path, newFiles.length > 0);
+			stageDecisions.set(rule.path, hasNewFiles);
 			// Expanded directories contribute per-file count to the total.
 			total += newFiles.length;
 		} else {

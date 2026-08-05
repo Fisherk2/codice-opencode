@@ -25,6 +25,15 @@ interface SourceFrontmatter {
 
 const FRONTMATTER_DELIMITER = "---";
 
+/** Map of supported YAML frontmatter keys to their SourceFrontmatter fields. */
+const FRONTMATTER_FIELDS: Record<string, keyof SourceFrontmatter> = {
+	name: "name",
+	description: "description",
+	color: "color",
+	emoji: "emoji",
+	vibe: "vibe",
+};
+
 /** Standard subagent permission block (matches legacy convention). */
 const SUBAGENT_PERMISSION = `permission:
   write: allow
@@ -75,22 +84,9 @@ function parseFrontmatter(
 		if (!match) continue;
 		const [, key, rawValue = ""] = match;
 		const value = rawValue.replace(/^["']|["']$/g, "").trim();
-		switch (key) {
-			case "name":
-				frontmatter.name = value;
-				break;
-			case "description":
-				frontmatter.description = value;
-				break;
-			case "color":
-				frontmatter.color = value;
-				break;
-			case "emoji":
-				frontmatter.emoji = value;
-				break;
-			case "vibe":
-				frontmatter.vibe = value;
-				break;
+		const field = FRONTMATTER_FIELDS[key as string];
+		if (field !== undefined) {
+			frontmatter[field] = value;
 		}
 	}
 

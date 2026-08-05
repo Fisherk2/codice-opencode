@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { reformatAgent } from "./reformat-agent";
 
@@ -54,16 +54,11 @@ export function parseMapping(mappingPath: string): DistributionEntry[] {
 }
 
 /** Locate the source file for a new agent across agency-agents-main categories. */
-function findNewSource(agentRoot: string, agent: string): string | null {
+export function findNewSource(agentRoot: string, agent: string): string | null {
 	for (const category of readdirSync(agentRoot, { withFileTypes: true })) {
 		if (!category.isDirectory()) continue;
 		const candidate = join(agentRoot, category.name, `${agent}.md`);
-		try {
-			readFileSync(candidate);
-			return candidate;
-		} catch {
-			// Not in this category — keep searching.
-		}
+		if (existsSync(candidate)) return candidate;
 	}
 	return null;
 }

@@ -91,26 +91,40 @@ export class FileMergeEngine implements IFileMergeEngine {
 		}
 
 		// Phase 2: Commit staging (atomic rename). Skip when nothing was staged.
-		if (total > 0) {
-			this.safeEmit(onProgress, { type: "commit_start", total });
+		return await this.commitPhase(onProgress, total);
+	}
 
-			try {
-				await this.fileSystem.commitStaging();
-			} catch (err) {
-				const message = err instanceof Error ? err.message : "Unknown commit error";
-				this.safeEmit(onProgress, { type: "error", filePath: "", message });
-				await this.fileSystem.cleanStaging();
-				return failure(commitError(message));
-			}
+	/** Normalize an unknown thrown value to a message string with a fallback. */
+	private errorMessage(err: unknown, fallback: string): string {
+		return err instanceof Error ? err.message : fallback;
+	}
 
-			this.safeEmit(onProgress, { type: "commit_complete", total });
-		} else {
-			// Nothing staged this run, but a staging directory could remain from
-			// an earlier interrupted operation — remove it so the destination
-			// never accumulates .codice-staging artifacts.
+	/**
+	 * Commit the staged files atomically, or clean up residual staging
+	 * when nothing was staged this run. A staging directory could remain
+	 * from an earlier interrupted operation — removing it keeps the
+	 * destination free of .codice-staging artifacts.
+	 */
+	private async commitPhase(
+		onProgress: ProgressCallback | undefined,
+		total: number,
+	): Promise<Result<void, MergeError>> {
+		if (total === 0) {
 			await this.fileSystem.cleanStaging();
+			return success(undefined);
 		}
 
+		this.safeEmit(onProgress, { type: "commit_start", total });
+		try {
+			await this.fileSystem.commitStaging();
+		} catch (err) {
+			const message = this.errorMessage(err, "Unknown commit error");
+			this.safeEmit(onProgress, { type: "error", filePath: "", message });
+			await this.fileSystem.cleanStaging();
+			return failure(commitError(message));
+		}
+
+		this.safeEmit(onProgress, { type: "commit_complete", total });
 		return success(undefined);
 	}
 
@@ -149,7 +163,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 		try {
 			await this.fileSystem.stageFile(sourcePath, destPath, excludeSubDirs);
 		} catch (err) {
-			const message = err instanceof Error ? err.message : "Unknown staging error";
+			const message = this.errorMessage(err, "Unknown staging error");
 			this.safeEmit(onProgress, {
 				type: "error",
 				filePath: destPath,
