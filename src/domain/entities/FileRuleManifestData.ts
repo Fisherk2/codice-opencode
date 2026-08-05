@@ -36,7 +36,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		category: "mandatory",
 		isDirectory: true,
 		description:
-			"3 writer agents (docs-writer, obsidian-vault-writer, scientific-literature-researcher)",
+			"2 writer agents (docs-writer, obsidian-vault-writer) — scientific-literature-researcher moved to science-research pack in FEV-18",
 	},
 	{
 		path: "packs/sin-clasificar",

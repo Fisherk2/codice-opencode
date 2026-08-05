@@ -79,15 +79,15 @@ Phase 6 (Documentation & Commit, 30min)
 
 ---
 
-## Phase 1: Format Definition (CRITICAL — gates Phase 2+)
+## Phase 1: Format Definition (CRITICAL — gates Phase 2+) ✅ COMPLETA
 
-- [ ] **Task 1.1:** Definir YAML frontmatter v2.0 standard (description, mode: subagent, permission) → `docs/AGENT-FORMAT-V2.md`
-- [ ] **Task 1.2:** Definir `## COMPOSITION` block format (Invoke via, Knowledge, RULES) → extender `docs/AGENT-FORMAT-V2.md`
-- [ ] **Task 1.3:** Crear `scripts/reformat-agent.ts` (idempotente, con `--dry-run` flag) — input: agency-agents file, output: pack file con v2.0 format
-- [ ] **Task 1.4:** Dry-run reformat en 5 sample agents (1 por categoría principal) → validar output
-- [ ] **Pre-Phase 2 step:** Mover `template/obligatorio/packs/writers/scientific-literature-researcher.md` a `template/obligatorio/packs/science-research/` (decisión usuario 2026-08-04)
+- [x] **Task 1.1:** Definir YAML frontmatter v2.0 standard (description, mode: subagent, permission) → `docs/AGENT-FORMAT-V2.md`
+- [x] **Task 1.2:** Definir `## COMPOSITION` block format (Invoke via, Knowledge, RULES) → `docs/AGENT-FORMAT-V2.md` (§4)
+- [x] **Task 1.3:** Crear `scripts/reformat-agent.ts` + `scripts/reformat-agent-cli.ts` (idempotente, con `--dry-run` flag) + `tests/unit/scripts/reformat-agent.test.ts` (10 tests TDD)
+- [x] **Task 1.4:** Dry-run reformat en 5 sample agents (1 por categoría principal) → validar output (5/5 OK)
+- [x] **Pre-Phase 2 step:** Mover `template/obligatorio/packs/writers/scientific-literature-researcher.md` a `template/obligatorio/packs/science-research/` (decisión usuario 2026-08-04) + actualizar descripción writers en FileRuleManifestData
 
-**Checkpoint:** ✅ Format spec documentado, script funciona, 5 samples OK, scientific-literature-researcher movido — **Review con humano antes de Phase 2**
+**Checkpoint:** ✅ Format spec documentado, script funciona (10/10 tests, idempotente), 5 samples OK, scientific-literature-researcher movido — 647 unit + 309 int/plugin tests pass, `just check` limpio — **Review con humano antes de Phase 2**
 
 ---
 
