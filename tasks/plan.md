@@ -322,16 +322,16 @@ permission:
 - NO `task:` permission (subagents no delegan, solo son delegados).
 
 **Acceptance criteria:**
-- [ ] Formato documentado en `docs/AGENT-FORMAT-V2.md` (new)
+- [ ] Formato documentado en `specs/spec-agent-format-v2.md` (new)
 - [ ] Ejemplo canónico: `template/obligatorio/packs/main/huitzilopochtli.md` (referencia)
 - [ ] Anti-ejemplo: `agency-agents-main/engineering/ai-engineer.md` (formato agency, NO usar)
 
 **Verification:**
-- [ ] `docs/AGENT-FORMAT-V2.md` ≤ 100 líneas
+- [ ] `specs/spec-agent-format-v2.md` ≤ 100 líneas
 - [ ] Manual review: formato es replicable a 267 archivos por script
 
 **Dependencies:** Task 0.4
-**Files likely touched:** `docs/AGENT-FORMAT-V2.md` (new, ~100 lines)
+**Files likely touched:** `specs/spec-agent-format-v2.md` (new, ~100 lines)
 **Estimated scope:** S (spec document)
 
 ---
@@ -363,7 +363,7 @@ permission:
 ```
 
 **Acceptance criteria:**
-- [ ] Formato documentado en `docs/AGENT-FORMAT-V2.md` (extender Task 1.1)
+- [ ] Formato documentado en `specs/spec-agent-format-v2.md` (extender Task 1.1)
 - [ ] Ejemplo: `template/obligatorio/packs/engineering-prototype/ai-engineer.md` (test case)
 - [ ] 3 subsecciones mínimas: `Invoke via`, `Knowledge`, `RULES`
 
@@ -372,7 +372,7 @@ permission:
 - [ ] Manual review: bloque es conciso, ≤30 líneas
 
 **Dependencies:** Task 1.1
-**Files likely touched:** `docs/AGENT-FORMAT-V2.md` (extended, +30 lines)
+**Files likely touched:** `specs/spec-agent-format-v2.md` (extended, +30 lines)
 **Estimated scope:** XS (template definition)
 
 ---
@@ -455,7 +455,7 @@ interface AgencyFrontmatter {
 
 #### Checkpoint: Format Definition Complete (Phase 1)
 
-- [ ] `docs/AGENT-FORMAT-V2.md` documenta YAML + COMPOSITION
+- [ ] `specs/spec-agent-format-v2.md` documenta YAML + COMPOSITION
 - [ ] `scripts/reformat-agent-cli.ts` compila y es idempotente
 - [ ] 5 sample agents reformatados con éxito
 - [ ] **Review con humano antes de Phase 2** — formato confirmado
@@ -1053,7 +1053,7 @@ done
 - **FEV-18 — Agent Classification & Migration (v2.0 Phase 2):**
   - 8 selectable packs populated: software-development (~120), business (~75), science-research (~45), hardware-emerging (~50), creative (~10), finance (~15), operations-support (~25), government-legal (~10)
   - YAML frontmatter v2.0 standard + `## COMPOSITION` block applied to 267 new agents
-  - `docs/AGENT-FORMAT-V2.md` — Agent format specification
+  - `specs/spec-agent-format-v2.md` — Agent format specification
   - `scripts/reformat-agent-cli.ts` — Idempotent reformat script
   - `tests/unit/domain/all-packs-present.test.ts` — Pack directory validation
   - `tests/unit/domain/pack-agent-counts.test.ts` — Agent count validation
@@ -1259,7 +1259,7 @@ done
 
 ### Documentación
 
-- [ ] `docs/AGENT-FORMAT-V2.md` creado
+- [ ] `specs/spec-agent-format-v2.md` creado
 - [ ] `CHANGELOG.md` con entrada FEV-18
 - [ ] `docs/WORKFLOW.md` FEV-18 marcado ✅
 - [ ] 4 audit artifacts en `docs/audit/`
@@ -1279,7 +1279,7 @@ done
 ### Nuevos archivos (10+)
 
 **Documentación (5):**
-1. `docs/AGENT-FORMAT-V2.md` (new, ~100 lines)
+1. `specs/spec-agent-format-v2.md` (new, ~100 lines)
 2. `docs/audit/audit-fev-18-inventory.md` (new, ~270 lines)
 3. `docs/audit/audit-fev-18-classification.md` (new, ~280 lines)
 4. `docs/audit/audit-fev-18-pack-assignment.md` (new, ~370 lines)

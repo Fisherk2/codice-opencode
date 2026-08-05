@@ -55,101 +55,7 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 
 ### Agent File Pattern
 
-Every agent file follows the same structure:
-
-1. **YAML frontmatter** — Agent metadata and permissions.
-2. **Markdown body** — Role definition, domain knowledge, rules, and behavioral constraints.
-3. **`## Composition` block** — Explicit invocation rules at the end of the file.
-
-Here is the frontmatter structure for a primary agent:
-
-```yaml
----
-description: "Agent Name - Role Title"
-mode: primary
-permission:
-  write: deny
-  edit: allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  task:
-    "*": deny
-    "specific-subagent": allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
-  bash:
-    "* > *": deny
-    "* >> *": deny
-    "touch *": deny
-    "mkdir *": deny
-    "cp *": deny
-    "mv *": deny
-    "rm *": deny
-    "chmod *": deny
-    "chown *": deny
-    "ln *": deny
----
-```
-
-And for a subagent:
-
-```yaml
----
-description: Clear, one-line description of what this agent does
-mode: subagent
-temperature: 0.1
-color: "#hexcolor"
-hidden: true
-permission:
-  write: allow
-  edit: allow
-  bash:
-    "go *": allow
-    "npm *": allow
-    ...
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  task:
-    "*": deny
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
----
-```
-
-The `## Composition` block at the end of every agent file follows a standard format:
-
-```markdown
-## COMPOSITION
-
-- **Invoke directly when:** [Circumstances where a user would call this agent directly.]
-- **Invoke via:** [Primary agents (via task delegation)] or specific commands.
-- **Do not invoke from:** [What not to use this agent for.]
-```
-
-### Permission Model
-
-The permission system controls what tools each agent can use. There are three key axes:
-
-| Axis | Values | Description |
-|------|--------|-------------|
-| **write** | `allow` / `deny` | Controls file creation |
-| **edit** | `allow` / `deny` | Controls file modification |
-| **bash** | `allow` / `deny` + patterns | Controls shell command execution. Patterns like `"* > *": deny` block redirect operators. |
-
-The `task` section controls which subagents a primary agent can delegate to:
-
-```yaml
-task:
-  "*": deny            # Block all subagents by default
-  "docs-writer": allow # Except docs-writer
-```
+Every agent file follows the same structure: YAML frontmatter, markdown body, and a `## COMPOSITION` block at the end. The complete specification — including field mapping, canonical permission blocks, and transformation rules — is documented in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md).
 
 ## Subagents
 
@@ -253,13 +159,7 @@ Restart your OpenCode session so it recognizes the new agent. Without a restart,
 
 ## Composition Block Reference
 
-Every agent file ends with a `## Composition` block that defines its invocation rules. The format is:
-
-| Directive | Purpose | Example |
-|-----------|---------|---------|
-| **Invoke directly when** | When a user would call this agent directly | "Invoke directly when building CLI tools, MCP servers, or refactoring legacy code." |
-| **Invoke via** | How primary agents delegate to this subagent | "Invoke via: Primary agents (via task delegation)" |
-| **Do not invoke from** | Restrictions on who can call this agent | "Do not invoke from: Another persona without a specific task requiring this specialization." |
+The `## COMPOSITION` block format and invocation rules are defined in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md).
 
 ## Links
 

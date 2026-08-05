@@ -81,8 +81,8 @@ Phase 6 (Documentation & Commit, 30min)
 
 ## Phase 1: Format Definition (CRITICAL — gates Phase 2+) ✅ COMPLETA
 
-- [x] **Task 1.1:** Definir YAML frontmatter v2.0 standard (description, mode: subagent, permission) → `docs/AGENT-FORMAT-V2.md`
-- [x] **Task 1.2:** Definir `## COMPOSITION` block format (Invoke via, Knowledge, RULES) → `docs/AGENT-FORMAT-V2.md` (§4)
+- [x] **Task 1.1:** Definir YAML frontmatter v2.0 standard (description, mode: subagent, permission) → `specs/spec-agent-format-v2.md`
+- [x] **Task 1.2:** Definir `## COMPOSITION` block format (Invoke via, Knowledge, RULES) → `specs/spec-agent-format-v2.md` (§4)
 - [x] **Task 1.3:** Crear `scripts/reformat-agent.ts` + `scripts/reformat-agent-cli.ts` (idempotente, con `--dry-run` flag) + `tests/unit/scripts/reformat-agent.test.ts` (10 tests TDD)
 - [x] **Task 1.4:** Dry-run reformat en 5 sample agents (1 por categoría principal) → validar output (5/5 OK)
 - [x] **Pre-Phase 2 step:** Mover `template/obligatorio/packs/writers/scientific-literature-researcher.md` a `template/obligatorio/packs/science-research/` (decisión usuario 2026-08-04) + actualizar descripción writers en FileRuleManifestData
@@ -176,7 +176,7 @@ Phase 6 (Documentation & Commit, 30min)
 
 ### Documentación
 
-- [x] `docs/AGENT-FORMAT-V2.md` creado
+- [x] `specs/spec-agent-format-v2.md` creado
 - [x] `CHANGELOG.md` con entrada FEV-18 (Added/Changed/Removed)
 - [x] `docs/WORKFLOW.md` FEV-18 marcado ✅
 - [x] 4 audit artifacts en `docs/audit/` (commiteados como histórico)
@@ -196,7 +196,7 @@ Phase 6 (Documentation & Commit, 30min)
 ### Nuevos archivos (10+)
 
 **Documentación (5):**
-1. `docs/AGENT-FORMAT-V2.md` (~100 lines)
+1. `specs/spec-agent-format-v2.md` (~100 lines)
 2. `docs/audit/audit-fev-18-inventory.md` (~270 lines)
 3. `docs/audit/audit-fev-18-classification.md` (~280 lines)
 4. `docs/audit/audit-fev-18-pack-assignment.md` (~370 lines)
