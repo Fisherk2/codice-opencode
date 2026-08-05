@@ -19,7 +19,7 @@ format-check:
 check:
     bunx @biomejs/biome ci src/ tests/ && bun run tsc --noEmit
 
-# Exclude template/obligatorio/skills/ and skills/ — external code with own test deps
+# Exclude template/obligatorio/core/skills/ and skills/ — external code with own test deps
 IGNORE_PATTERNS := "--path-ignore-patterns=template/obligatorio/core/skills/**,skills/**"
 
 test:

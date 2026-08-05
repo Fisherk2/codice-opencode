@@ -161,6 +161,8 @@ codice-opencode/
 │   └── fixtures/                  # Predefined directory trees for merge scenarios
 ├── template/                      # The actual OpenCode workspace template files
 │   ├── obligatorio/               # Files always copied/overwritten
+│   │   ├── core/                  # Workspace infrastructure (opencode.json, commands/, skills/, .opencode/)
+│   │   └── packs/                 # Agent packs (main, writers, sin-clasificar, +8 selectable empty)
 │   ├── estandar/                  # Files copied only if missing in destination
 │   └── opcional/                  # Files presented as checklist; copied only if selected and missing
 ├── docs/                          # Architecture decisions, workflow, PRD, TRD
