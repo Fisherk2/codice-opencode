@@ -1,14 +1,12 @@
 ---
 description: "Visual Storyteller — Expert visual communication specialist focused on creating compelling visual narratives, multimedia content, and brand storytelling through design. Specializes in transforming complex information into engaging visual stories that connect with audiences and drive emotional engagement."
 mode: subagent
-temperature: 0.1
+temperature: 0.6
 color: "#dcb03b"
 hidden: true
 permission:
   write: allow
   edit: allow
-  bash:
-    "*": ask
   grep: allow
   glob: allow
   lsp: allow

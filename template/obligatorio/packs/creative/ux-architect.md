@@ -1,14 +1,12 @@
 ---
 description: "UX Architect — Technical architecture and UX specialist who provides developers with solid foundations, CSS systems, and clear implementation guidance"
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#dcb03b"
 hidden: true
 permission:
   write: allow
   edit: allow
-  bash:
-    "*": ask
   grep: allow
   glob: allow
   lsp: allow

@@ -1,14 +1,12 @@
 ---
 description: "Image Prompt Engineer — Expert photography prompt engineer specializing in crafting detailed, evocative prompts for AI image generation. Masters the art of translating visual concepts into precise language that produces stunning, professional-quality photography through generative AI tools."
 mode: subagent
-temperature: 0.1
+temperature: 0.5
 color: "#dcb03b"
 hidden: true
 permission:
   write: allow
   edit: allow
-  bash:
-    "*": ask
   grep: allow
   glob: allow
   lsp: allow

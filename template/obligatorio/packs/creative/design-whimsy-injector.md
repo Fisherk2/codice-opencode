@@ -1,14 +1,12 @@
 ---
 description: "Whimsy Injector — Expert creative specialist focused on adding personality, delight, and playful elements to brand experiences. Creates memorable, joyful interactions that differentiate brands through unexpected moments of whimsy"
 mode: subagent
-temperature: 0.1
+temperature: 0.7
 color: "#dcb03b"
 hidden: true
 permission:
   write: allow
   edit: allow
-  bash:
-    "*": ask
   grep: allow
   glob: allow
   lsp: allow

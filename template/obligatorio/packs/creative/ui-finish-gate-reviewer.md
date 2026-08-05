@@ -1,14 +1,12 @@
 ---
 description: "UI Finish-Gate Reviewer — Product-interface reviewer who catches generic, interchangeable UI before it ships by grounding critique in real product evidence, a written design contract, and a hard implementation finish gate."
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#dcb03b"
 hidden: true
 permission:
-  write: allow
-  edit: allow
-  bash:
-    "*": ask
+  write: ask
+  edit: ask
   grep: allow
   glob: allow
   lsp: allow

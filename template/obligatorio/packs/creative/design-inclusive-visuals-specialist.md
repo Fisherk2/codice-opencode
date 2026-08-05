@@ -1,14 +1,23 @@
 ---
 description: "Inclusive Visuals Specialist — Representation expert who defeats systemic AI biases to generate culturally accurate, affirming, and non-stereotypical images and video."
 mode: subagent
-temperature: 0.1
+temperature: 0.3
 color: "#4DB6AC"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: deny
+  edit: deny
   bash:
-    "*": ask
+    "* > *": deny
+    "* >> *": deny
+    "touch *": deny
+    "mkdir *": deny
+    "cp *": deny
+    "mv *": deny
+    "rm *": deny
+    "chmod *": deny
+    "chown *": deny
+    "ln *": deny
   grep: allow
   glob: allow
   lsp: allow

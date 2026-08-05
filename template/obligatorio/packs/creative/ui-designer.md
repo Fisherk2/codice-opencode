@@ -1,14 +1,12 @@
 ---
 description: "UI Designer — Expert UI designer specializing in visual design systems, component libraries, and pixel-perfect interface creation. Creates beautiful, consistent, accessible user interfaces that enhance UX and reflect brand identity"
 mode: subagent
-temperature: 0.1
+temperature: 0.4
 color: "#dcb03b"
 hidden: true
 permission:
   write: allow
   edit: allow
-  bash:
-    "*": ask
   grep: allow
   glob: allow
   lsp: allow

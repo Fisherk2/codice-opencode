@@ -1,14 +1,12 @@
 ---
 description: "Brand Guardian — Expert brand strategist and guardian specializing in brand identity development, consistency maintenance, and strategic brand positioning"
 mode: subagent
-temperature: 0.1
+temperature: 0.5
 color: "#dcb03b"
 hidden: true
 permission:
-  write: allow
-  edit: allow
-  bash:
-    "*": ask
+  write: ask
+  edit: ask
   grep: allow
   glob: allow
   lsp: allow
