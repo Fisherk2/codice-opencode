@@ -91,20 +91,21 @@ Phase 6 (Documentation & Commit, 30min)
 
 ---
 
-## Phase 2: Pack Distribution (CRITICAL — gates Phase 3+)
+## Phase 2: Pack Distribution (CRITICAL — gates Phase 3+) ✅ COMPLETA
 
-> **Vertical slicing per pack.** Cada task = 1 pack completo. Empezar por `software-development` (más grande, ~120 agents). Tasks 2.2-2.8 son paralelizables entre sesiones.
+> **Vertical slicing per pack.** 7 commits atómicos (6 packs + technical-writer). 352 agents distribuidos: 95 legacy v1.x + 257 new v2.0. Cross-check audit vs filesystem: 0 missing, 0 extra.
 
-- [ ] **Task 2.1:** `software-development` pack — engineering (subset) + security + testing + sin-clasificar subset = ~120 agents
-- [ ] **Task 2.2:** `business` pack — marketing + sales + product + project-management + paid-media + sin-clasificar subset = ~75 agents
-- [ ] **Task 2.3:** `science-research` pack — academic + gis + healthcare + specialized (subset) + sin-clasificar subset + `scientific-literature-researcher` (movido de writers/) = ~46 agents
-- [ ] **Task 2.4:** `hardware-emerging` pack — engineering (iot/embedded) + game-development + spatial-computing + specialized (subset) + sin-clasificar subset = ~50 agents
-- [ ] **Task 2.5:** `creative` pack — design + sin-clasificar subset = ~10 agents
-- [ ] **Task 2.6:** `finance` pack — finance + specialized (subset) + sin-clasificar subset = ~15 agents
-- [ ] **Task 2.7:** `operations-support` pack — support + specialized (subset) + engineering (subset) + sin-clasificar subset = ~25 agents
-- [ ] **Task 2.8:** `government-legal` pack — security (subset) + specialized (subset) + sin-clasificar subset = ~10 agents
+- [x] **Task 2.1:** `software-development` pack — 146 agents (73 new + 73 legacy) ✅ `96145ab`
+- [x] **Task 2.2:** `business` pack — 92 agents (82 new + 10 legacy) ✅ `7913092`
+- [x] **Task 2.3:** `science-research` pack — 31 agents (26 new + 4 legacy + scientific-literature-researcher) ✅ `2776598`
+- [x] **Task 2.4:** `hardware-emerging` pack — 36 agents (32 new + 4 legacy) ✅ `87c8817`
+- [x] **Task 2.5:** `creative` pack — 10 agents (9 new + 1 legacy) ✅ `2776598`
+- [x] **Task 2.6:** `finance` pack — 11 agents (9 new + 2 legacy) ✅ `c3e9237`
+- [x] **Task 2.7:** `operations-support` pack — 18 agents (18 new) ✅ `c3e9237`
+- [x] **Task 2.8:** `government-legal` pack — 8 agents (7 new + 1 legacy) ✅ `c3e9237`
+- [x] **Bonus:** `technical-writer` → writers pack (new v2.0) ✅ commit aparte
 
-**Checkpoint:** ✅ Los 8 packs poblados, total = audit count, 267 nuevos en v2.0 format
+**Checkpoint:** ✅ 355 agents en 10 packs (352 distribuidos + scientific-literature-researcher + 2 writers preexistentes), `just test` 960/0, `just test-e2e` 16/16, H1 dedup fix aplicado
 
 ---
 
