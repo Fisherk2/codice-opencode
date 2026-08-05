@@ -1,14 +1,15 @@
 ---
 description: "Proposal Strategist — Strategic proposal architect who transforms RFPs and sales opportunities into compelling win narratives. Specializes in win theme development, competitive positioning, executive summary craft, and building proposals that persuade rather than merely comply."
 mode: subagent
-temperature: 0.1
+temperature: 0.3
 color: "#2563EB"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

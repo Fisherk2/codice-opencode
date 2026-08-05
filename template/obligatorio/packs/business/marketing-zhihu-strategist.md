@@ -1,14 +1,15 @@
 ---
 description: "Zhihu Strategist — Expert Zhihu marketing specialist focused on thought leadership, community credibility, and knowledge-driven engagement. Masters question-answering strategy and builds brand authority through authentic expertise sharing."
 mode: subagent
-temperature: 0.1
+temperature: 0.5
 color: "#0084FF"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

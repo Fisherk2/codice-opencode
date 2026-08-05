@@ -5,10 +5,11 @@ temperature: 0.1
 color: "#dc6d3b"
 hidden: true
 permission:
-  write: deny
-  edit: deny
+  write: allow
+  edit: allow
   bash:
-    "*": deny
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

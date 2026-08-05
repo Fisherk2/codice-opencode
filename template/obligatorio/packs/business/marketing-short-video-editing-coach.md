@@ -1,14 +1,15 @@
 ---
 description: "Short-Video Editing Coach — Hands-on short-video editing coach covering the full post-production pipeline, with mastery of CapCut Pro, Premiere Pro, DaVinci Resolve, and Final Cut Pro across composition and camera language, color grading, audio engineering, motion graphics and VFX, subtitle design, multi-platform export optimization, editing workflow efficiency, and AI-assisted editing."
 mode: subagent
-temperature: 0.1
+temperature: 0.3
 color: "#7B2D8E"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

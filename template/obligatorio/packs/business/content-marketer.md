@@ -1,14 +1,15 @@
 ---
 description: Creates content strategy, SEO-optimized technical writing, and developer marketing materials
 mode: subagent
-temperature: 0.1
+temperature: 0.3
 color: "#3bbbdc"
 hidden: true
 permission:
-  write: ask
-  edit: ask
+  write: allow
+  edit: allow
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

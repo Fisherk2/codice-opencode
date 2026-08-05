@@ -1,14 +1,15 @@
 ---
 description: "Social Media Strategist — Expert social media strategist for LinkedIn, Twitter, and professional platforms. Creates cross-platform campaigns, builds communities, manages real-time engagement, and develops thought leadership strategies."
 mode: subagent
-temperature: 0.1
+temperature: 0.5
 color: "#dcb03b"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

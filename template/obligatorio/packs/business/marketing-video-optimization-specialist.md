@@ -1,14 +1,15 @@
 ---
 description: "Video Optimization Specialist — Video marketing strategist specializing in YouTube algorithm optimization, audience retention, chaptering, thumbnail concepts, and cross-platform video syndication."
 mode: subagent
-temperature: 0.1
+temperature: 0.3
 color: "#dcb03b"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

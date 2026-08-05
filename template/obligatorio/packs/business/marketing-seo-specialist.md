@@ -1,14 +1,15 @@
 ---
 description: "SEO Specialist — Expert search engine optimization strategist specializing in technical SEO, content optimization, link authority building, and organic search growth. Drives sustainable traffic through data-driven search strategies."
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#4285F4"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

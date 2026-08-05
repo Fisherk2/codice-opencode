@@ -1,14 +1,15 @@
 ---
 description: "Strategy Duel Agent — Conducts live strategy duels using game theory and the 36 Chinese stratagems"
 mode: subagent
-temperature: 0.1
+temperature: 0.3
 color: "#1e90ff"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

@@ -1,14 +1,15 @@
 ---
 description: "Behavioral Nudge Engine — Behavioral psychology specialist that adapts software interaction cadences and styles to maximize user motivation and success."
 mode: subagent
-temperature: 0.1
+temperature: 0.3
 color: "#FF8A65"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

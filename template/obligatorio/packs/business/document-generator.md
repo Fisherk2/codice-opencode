@@ -8,7 +8,8 @@ permission:
   write: allow
   edit: allow
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

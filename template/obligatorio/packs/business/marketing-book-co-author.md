@@ -1,14 +1,15 @@
 ---
 description: "Book Co-Author — Strategic thought-leadership book collaborator for founders, experts, and operators turning voice notes, fragments, and positioning into structured first-person chapters."
 mode: subagent
-temperature: 0.1
+temperature: 0.3
 color: "#8B5E3C"
 hidden: true
 permission:
   write: allow
   edit: allow
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

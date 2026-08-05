@@ -1,14 +1,15 @@
 ---
 description: "Instagram Curator — Expert Instagram marketing specialist focused on visual storytelling, community building, and multi-format content optimization. Masters aesthetic development and drives meaningful engagement."
 mode: subagent
-temperature: 0.1
+temperature: 0.4
 color: "#E4405F"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

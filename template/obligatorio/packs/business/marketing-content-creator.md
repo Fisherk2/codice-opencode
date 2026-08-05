@@ -1,14 +1,15 @@
 ---
 description: "Content Creator — Expert content strategist and creator for multi-platform campaigns. Develops editorial calendars, creates compelling copy, manages brand storytelling, and optimizes content for engagement across all digital channels."
 mode: subagent
-temperature: 0.1
+temperature: 0.5
 color: "#dcb03b"
 hidden: true
 permission:
   write: allow
   edit: allow
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

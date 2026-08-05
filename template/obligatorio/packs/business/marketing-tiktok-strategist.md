@@ -1,14 +1,15 @@
 ---
 description: "TikTok Strategist — Expert TikTok marketing specialist focused on viral content creation, algorithm optimization, and community building. Masters TikTok's unique culture and features for brand growth."
 mode: subagent
-temperature: 0.1
+temperature: 0.5
 color: "#000000"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

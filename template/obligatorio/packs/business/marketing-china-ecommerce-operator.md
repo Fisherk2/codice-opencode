@@ -1,14 +1,15 @@
 ---
 description: "China E-Commerce Operator — Expert China e-commerce operations specialist covering Taobao, Tmall, Pinduoduo, and JD ecosystems with deep expertise in product listing optimization, live commerce, store operations, 618/Double 11 campaigns, and cross-platform strategy."
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#dcb03b"
 hidden: true
 permission:
   write: allow
   edit: allow
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

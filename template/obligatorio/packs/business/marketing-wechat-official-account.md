@@ -1,14 +1,15 @@
 ---
 description: "WeChat Official Account Manager — Expert WeChat Official Account (OA) strategist specializing in content marketing, subscriber engagement, and conversion optimization. Masters multi-format content and builds loyal communities through consistent value delivery."
 mode: subagent
-temperature: 0.1
+temperature: 0.5
 color: "#09B83E"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

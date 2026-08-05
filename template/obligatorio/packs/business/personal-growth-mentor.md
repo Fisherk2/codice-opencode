@@ -1,14 +1,15 @@
 ---
 description: "Personal Growth Mentor — Cross-domain personal development mentor for goal clarity, habit design, strategic decisions, and accountability without motivational fluff."
 mode: subagent
-temperature: 0.1
+temperature: 0.6
 color: "#dcb03b"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

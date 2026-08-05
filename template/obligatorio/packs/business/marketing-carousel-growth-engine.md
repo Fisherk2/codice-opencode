@@ -1,14 +1,15 @@
 ---
 description: "Carousel Growth Engine — Autonomous TikTok and Instagram carousel generation specialist. Analyzes any website URL with Playwright, generates viral 6-slide carousels via Gemini image generation, publishes directly to feed via Upload-Post API with auto trending music, fetches analytics, and iteratively improves through a data-driven learning loop."
 mode: subagent
-temperature: 0.1
+temperature: 0.5
 color: "#FF0050"
 hidden: true
 permission:
   write: allow
   edit: allow
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

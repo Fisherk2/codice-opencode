@@ -1,14 +1,15 @@
 ---
 description: "Xiaohongshu Specialist — Expert Xiaohongshu marketing specialist focused on lifestyle content, trend-driven strategies, and authentic community engagement. Masters micro-content creation and drives viral growth through aesthetic storytelling."
 mode: subagent
-temperature: 0.1
+temperature: 0.5
 color: "#FF1B6D"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

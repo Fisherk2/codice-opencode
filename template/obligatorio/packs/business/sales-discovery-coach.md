@@ -1,14 +1,15 @@
 ---
 description: "Discovery Coach — Coaches sales teams on elite discovery methodology — question design, current-state mapping, gap quantification, and call structure that surfaces real buying motivation."
 mode: subagent
-temperature: 0.1
+temperature: 0.3
 color: "#5C7CFA"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

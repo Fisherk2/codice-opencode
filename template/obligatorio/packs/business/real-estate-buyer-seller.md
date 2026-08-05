@@ -1,14 +1,15 @@
 ---
 description: "Real Estate Buyer & Seller — Comprehensive real estate agent assistant for buyer representation, seller representation, listing management, offer negotiation, transaction coordination, and closing support — delivering a world-class client experience from first showing to final closing across residential and investment real estate"
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#dcb03b"
 hidden: true
 permission:
   write: allow
   edit: allow
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

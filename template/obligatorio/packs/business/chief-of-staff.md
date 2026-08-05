@@ -1,14 +1,15 @@
 ---
 description: "Chief of Staff — Master coordinator for founders and executives — filters noise, owns processes, enforces consistency, routes decisions, and positions outputs for impact so the boss can think clearly."
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#6B7280"
 hidden: true
 permission:
   write: allow
   edit: allow
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

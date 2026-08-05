@@ -1,14 +1,15 @@
 ---
 description: "Reddit Community Builder — Expert Reddit marketing specialist focused on authentic community engagement, value-driven content creation, and long-term relationship building. Masters Reddit culture navigation."
 mode: subagent
-temperature: 0.1
+temperature: 0.5
 color: "#FF4500"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

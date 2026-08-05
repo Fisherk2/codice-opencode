@@ -1,14 +1,15 @@
 ---
 description: "Developer Advocate — Expert developer advocate specializing in building developer communities, creating compelling technical content, optimizing developer experience (DX), and driving platform adoption through authentic engineering engagement. Bridges product and engineering teams with external developers."
 mode: subagent
-temperature: 0.1
+temperature: 0.3
 color: "#dcb03b"
 hidden: true
 permission:
   write: allow
   edit: allow
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow

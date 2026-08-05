@@ -1,14 +1,15 @@
 ---
 description: "Outbound Strategist — Signal-based outbound specialist who designs multi-channel prospecting sequences, defines ICPs, and builds pipeline through research-driven personalization — not volume."
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#E8590C"
 hidden: true
 permission:
-  write: allow
-  edit: allow
+  write: ask
+  edit: ask
   bash:
-    "*": ask
+    "less *": allow
+    "more *": allow
   grep: allow
   glob: allow
   lsp: allow
