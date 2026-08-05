@@ -1,14 +1,12 @@
 ---
 description: "Chief Financial Officer — Strategic finance executive who governs capital allocation, treasury operations, financial planning, M&A finance, investor relations, and board reporting — translating financial complexity into clear decisions that drive business performance and stakeholder confidence."
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#dcb03b"
 hidden: true
 permission:
-  write: allow
-  edit: allow
-  bash:
-    "*": ask
+  write: ask
+  edit: ask
   grep: allow
   glob: allow
   lsp: allow

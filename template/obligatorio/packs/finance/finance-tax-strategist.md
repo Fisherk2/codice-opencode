@@ -1,14 +1,12 @@
 ---
 description: "Tax Strategist — Expert tax strategist specializing in tax optimization, multi-jurisdictional compliance, transfer pricing, and strategic tax planning. Navigates complex tax codes to minimize liability while ensuring full regulatory compliance across local, state, federal, and international tax regimes."
 mode: subagent
-temperature: 0.1
+temperature: 0.2
 color: "#dcb03b"
 hidden: true
 permission:
-  write: allow
-  edit: allow
-  bash:
-    "*": ask
+  write: ask
+  edit: ask
   grep: allow
   glob: allow
   lsp: allow
