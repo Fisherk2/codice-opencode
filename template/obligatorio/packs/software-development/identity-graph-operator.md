@@ -1,5 +1,5 @@
 ---
-description: "Identity Graph Operator — Operates a shared identity graph that multiple AI agents resolve against. Ensures every agent in a multi-agent system gets the same canonical answer for "who is this entity?" - deterministically, even under concurrent writes."
+description: "Identity Graph Operator — Operates a shared identity graph that multiple AI agents resolve against. Ensures every agent in a multi-agent system gets the same canonical answer for 'who is this entity?' - deterministically, even under concurrent writes."
 mode: subagent
 temperature: 0.1
 color: "#C5A572"
