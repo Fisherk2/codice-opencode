@@ -157,7 +157,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Pro for deep 5-axis audit (384k report, <$1/M). Claude Opus 4.6 for pre-merge/security audit. Gemini 3.1 Pro for recurring full-repo audit.</td></tr>
 </table>
 
-Additionally, over **98 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
+Additionally, over **349 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
 
 ---
 

@@ -4,12 +4,12 @@ The Códice workspace defines a two-tier agent hierarchy that governs how AI ass
 
 ## Architecture Overview
 
-The workspace ships with **104 agents** organized into two levels:
+The workspace ships with **~355 agents in 10 packs** organized into two levels:
 
 | Level | Count | Role | How They're Invoked |
 |-------|-------|------|---------------------|
 | **Primary Agents** | 6 | Entry points for slash commands | Via `/command` from the user |
-| **Subagents** | ~98 | Domain specialists | Via `task()` from a primary agent |
+| **Subagents** | ~349 | Domain specialists in 8 selectable + 2 mandatory packs | Via `task()` from a primary agent |
 
 ### Two-Tier Model
 
@@ -25,20 +25,23 @@ The division exists because no single AI context window can hold expertise acros
 
 ### File Count and Distribution
 
-Agents are organized by domain in the `agents/` directory:
+Agents are organized by domain in the `template/obligatorio/packs/` directory:
 
 ```
-agents/
-├── huitzilopochtli.md, quetzalcoatl.md, moctezuma.md
-├── tlaloc.md, mictlantecuhtli.md, tezcatlipoca.md
-├── backend-developer.md, typescript-pro.md, python-pro.md
-├── golang-pro.md, rust-engineer.md, java-architect.md
-├── docker-expert.md, kubernetes-specialist.md
-├── security-auditor.md, test-engineer.md, debugger.md
-├── ...
+packs/
+├── main/                  (6 primary agents — MANDATORY)
+├── writers/               (3 writer agents — MANDATORY)
+├── software-development/  (146 agents — DEFAULT selected)
+├── business/              (92 agents)
+├── science-research/      (31 agents)
+├── hardware-emerging/     (36 agents)
+├── operations-support/    (18 agents)
+├── finance/               (11 agents)
+├── creative/              (10 agents)
+└── government-legal/      (8 agents)
 ```
 
-Each agent file follows the same structure (see [Agent File Pattern](#agent-file-pattern) below).
+At install time, agents are copied to the flat `agents/` directory (pack is an installer concept; at runtime all agents are peers). Each agent file follows the same structure (see [Agent File Pattern](#agent-file-pattern) below).
 
 ## Primary Agents
 
@@ -46,12 +49,12 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 
 | Agent | Role | Domain | Permission Model | Key Commands |
 |-------|------|--------|-----------------|--------------|
-| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Read-only (writes denied). Delegates everything via `task()`. | `/ship` |
-| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis` |
-| **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. | `/plan` |
-| **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions across all files. Can delegate to any subagent. | `/build`, `/code-simplify` |
-| **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates to quality-focused subagents (code-reviewer, security-auditor, test-engineer, etc.). | `/test`, `/ship`, `/webperf` |
-| **tezcatlipoca** | Mirror of Truth | Reflection & analysis | Purely read-only + analysis tools. Cannot write or edit any file. Cannot delegate to subagents. | `/review` |
+| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Read-only (writes denied). Delegates via `task()` with unified `"*": allow` + deny 5 other primaries. | `/ship` |
+| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. Delegates via unified `task()` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis` |
+| **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. Does not delegate (`task: "*": deny`). | `/plan` |
+| **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via unified `task()` pattern. | `/build`, `/code-simplify` |
+| **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates via unified `task()` pattern. | `/test`, `/ship`, `/webperf` |
+| **tezcatlipoca** | Mirror of Truth | Reflection & analysis | Purely read-only + analysis tools. Cannot write or edit any file. Does not delegate (`task: "*": deny`). | `/review` |
 
 ### Agent File Pattern
 
@@ -142,20 +145,11 @@ to the development process. When invoked, you:
 
 Previous versions of Códice required registering agents in a hardcoded `VALID_SUBAGENTS` set inside the SDD plugin. This is no longer necessary — the plugin auto-discovers agents by scanning the `agents/` directory at session start. Simply creating `agents/joke-teller.md` is sufficient.
 
-### Step 4: Update Delegation Tables
-
-If the new subagent should be delegatable by primary agents, update the `task:` permission section in those primary agent files. For example, to allow tlaloc to delegate to joke-teller:
-
-```yaml
-# In agents/tlaloc.md
-task:
-  "*": ask
-  "joke-teller": allow
-```
-
-### Step 5: Restart OpenCode
+### Step 4: Restart OpenCode
 
 Restart your OpenCode session so it recognizes the new agent. Without a restart, `task("joke-teller")` will fail because OpenCode only loads agent files at startup.
+
+No delegation-table updates are needed: primary agents use a unified `task: "*": allow` permission (with a deny-list of other primaries), so any new subagent in `agents/` is automatically delegatable.
 
 ## Composition Block Reference
 
