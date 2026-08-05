@@ -149,10 +149,10 @@ describe("TemplateResolver — FEV-17 core/packs source grouping resolution", ()
 		expect(resolved.replace(/\\/g, "/")).toContain("obligatorio/packs/main/huitzilopochtli.md");
 	});
 
-	test('resolvePath("packs/sin-clasificar") resolves to obligatorio/packs/sin-clasificar', async () => {
+	test('resolvePath("packs/software-development") resolves to obligatorio/packs/software-development', async () => {
 		const resolver = new TemplateResolver(templateRoot);
-		const resolved = await resolver.resolvePath("packs/sin-clasificar");
-		expect(resolved.replace(/\\/g, "/")).toContain("obligatorio/packs/sin-clasificar");
+		const resolved = await resolver.resolvePath("packs/software-development");
+		expect(resolved.replace(/\\/g, "/")).toContain("obligatorio/packs/software-development");
 		expect(fs.existsSync(resolved)).toBe(true);
 	});
 

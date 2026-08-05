@@ -80,15 +80,24 @@ describe("Category distribution", () => {
 		expect(mandatory.length + standard.length + optional.length).toBe(FILE_RULE_MANIFEST.length);
 	});
 
-	test("mandatory rules include core and pack source groupings (FEV-17)", () => {
+	test("mandatory rules include core and all pack source groupings (FEV-18)", () => {
 		const mandatory = getMandatoryRules();
 		const paths = mandatory.map((r) => r.path);
-		// v2.0 collapsed 7 standalone mandatory entries into 4 source groupings.
+		// v2.0 collapsed 7 standalone mandatory entries into source groupings.
 		// core/ spreads to destination root; packs/* merge into destination agents/.
+		// FEV-18 added 8 selectable packs (sin-clasificar removed).
 		expect(paths).toContain("core");
 		expect(paths).toContain("packs/main");
 		expect(paths).toContain("packs/writers");
-		expect(paths).toContain("packs/sin-clasificar");
+		expect(paths).toContain("packs/software-development");
+		expect(paths).toContain("packs/business");
+		expect(paths).toContain("packs/hardware-emerging");
+		expect(paths).toContain("packs/science-research");
+		expect(paths).toContain("packs/operations-support");
+		expect(paths).toContain("packs/finance");
+		expect(paths).toContain("packs/creative");
+		expect(paths).toContain("packs/government-legal");
+		expect(paths).not.toContain("packs/sin-clasificar");
 	});
 
 	test("mandatory core rule has destPath='' (spreads to destination root)", () => {
@@ -98,7 +107,18 @@ describe("Category distribution", () => {
 	});
 
 	test("mandatory pack rules have destPath='agents' (merge into flat agents/)", () => {
-		const packPaths = ["packs/main", "packs/writers", "packs/sin-clasificar"];
+		const packPaths = [
+			"packs/main",
+			"packs/writers",
+			"packs/software-development",
+			"packs/business",
+			"packs/hardware-emerging",
+			"packs/science-research",
+			"packs/operations-support",
+			"packs/finance",
+			"packs/creative",
+			"packs/government-legal",
+		];
 		for (const packPath of packPaths) {
 			const packRule = FILE_RULE_MANIFEST.find((r) => r.path === packPath);
 			expect(packRule).toBeDefined();

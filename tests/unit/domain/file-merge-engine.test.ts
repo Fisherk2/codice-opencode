@@ -427,11 +427,11 @@ describe("FileMergeEngine — destPath edge cases", () => {
 				description: "Writer agents",
 			},
 			{
-				path: "packs/sin-clasificar",
+				path: "packs/software-development",
 				destPath: "agents",
 				category: "mandatory",
 				isDirectory: true,
-				description: "Unclassified agents",
+				description: "Software development agents",
 			},
 		];
 		const result = await engine.execute(rules);
@@ -444,7 +444,7 @@ describe("FileMergeEngine — destPath edge cases", () => {
 		expect(stageCalls[0]?.args[1]).toBe("agents");
 		expect(stageCalls[1]?.args[0]).toBe("packs/writers");
 		expect(stageCalls[1]?.args[1]).toBe("agents");
-		expect(stageCalls[2]?.args[0]).toBe("packs/sin-clasificar");
+		expect(stageCalls[2]?.args[0]).toBe("packs/software-development");
 		expect(stageCalls[2]?.args[1]).toBe("agents");
 	});
 

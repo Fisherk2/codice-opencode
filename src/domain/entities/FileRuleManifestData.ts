@@ -38,12 +38,68 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		description:
 			"2 writer agents (docs-writer, obsidian-vault-writer) — scientific-literature-researcher moved to science-research pack in FEV-18",
 	},
+	// v2.0 (FEV-18): 8 selectable agent packs. All live under obligatorio/ so
+	// the manifest treats them as mandatory for TemplateResolver discovery;
+	// actual pack selection happens in the installer UX (FEV-21).
 	{
-		path: "packs/sin-clasificar",
+		path: "packs/software-development",
 		destPath: "agents",
 		category: "mandatory",
 		isDirectory: true,
-		description: "95 unclassified agents pending FEV-18 classification (temporary pack)",
+		description:
+			"Software development pack (default ON, 146 agents: backend, frontend, mobile, DevOps, databases, AI/ML, security, testing)",
+	},
+	{
+		path: "packs/business",
+		destPath: "agents",
+		category: "mandatory",
+		isDirectory: true,
+		description:
+			"Business pack (92 agents: marketing, sales, product, project management, operations)",
+	},
+	{
+		path: "packs/hardware-emerging",
+		destPath: "agents",
+		category: "mandatory",
+		isDirectory: true,
+		description:
+			"Hardware-emerging pack (36 agents: IoT, embedded, blockchain, XR/spatial, game development)",
+	},
+	{
+		path: "packs/science-research",
+		destPath: "agents",
+		category: "mandatory",
+		isDirectory: true,
+		description:
+			"Science-research pack (31 agents: academic, GIS, healthcare, research, scientific-literature-researcher)",
+	},
+	{
+		path: "packs/operations-support",
+		destPath: "agents",
+		category: "mandatory",
+		isDirectory: true,
+		description: "Operations-support pack (18 agents: customer support, IT ops, HR, translation)",
+	},
+	{
+		path: "packs/finance",
+		destPath: "agents",
+		category: "mandatory",
+		isDirectory: true,
+		description: "Finance pack (11 agents: financial analysis, fintech, payments, accounting)",
+	},
+	{
+		path: "packs/creative",
+		destPath: "agents",
+		category: "mandatory",
+		isDirectory: true,
+		description: "Creative pack (10 agents: design, UI/UX, brand, motion)",
+	},
+	{
+		path: "packs/government-legal",
+		destPath: "agents",
+		category: "mandatory",
+		isDirectory: true,
+		description: "Government-legal pack (8 agents: legal, compliance, privacy, regulatory)",
 	},
 
 	// =============================================

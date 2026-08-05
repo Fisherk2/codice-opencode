@@ -107,7 +107,8 @@ function parseFrontmatter(
 function stripLeadingH1(body: string): string {
 	const lines = body.split("\n");
 	const firstContentIdx = lines.findIndex((line) => line.trim().length > 0);
-	if (firstContentIdx !== -1 && lines[firstContentIdx].startsWith("# ")) {
+	const firstLine = firstContentIdx !== -1 ? lines[firstContentIdx] : undefined;
+	if (firstLine !== undefined && firstLine.startsWith("# ")) {
 		lines.splice(firstContentIdx, 1);
 	}
 	return lines.join("\n").trimStart();

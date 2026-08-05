@@ -358,7 +358,7 @@ describe("BunFileSystem — FEV-17 destPath (core/packs → flat destination)", 
 		await fs.mkdir(destDir, { recursive: true });
 
 		// v2.0 source grouping: core/ holds workspace infrastructure,
-		// packs/{main,writers,sin-clasificar} hold agents.
+		// packs/{main,writers,software-development} hold agents.
 		const coreDir = path.join(templateDir, "obligatorio", "core");
 		const packsDir = path.join(templateDir, "obligatorio", "packs");
 		await fs.mkdir(path.join(coreDir, "commands"), { recursive: true });
@@ -366,7 +366,7 @@ describe("BunFileSystem — FEV-17 destPath (core/packs → flat destination)", 
 		await fs.mkdir(path.join(coreDir, "skills"), { recursive: true });
 		await fs.mkdir(path.join(packsDir, "main"), { recursive: true });
 		await fs.mkdir(path.join(packsDir, "writers"), { recursive: true });
-		await fs.mkdir(path.join(packsDir, "sin-clasificar"), { recursive: true });
+		await fs.mkdir(path.join(packsDir, "software-development"), { recursive: true });
 
 		await Bun.write(path.join(coreDir, "opencode.json"), '{"version": "v2"}');
 		await Bun.write(path.join(coreDir, "skills-lock.json"), "{}");
@@ -376,7 +376,7 @@ describe("BunFileSystem — FEV-17 destPath (core/packs → flat destination)", 
 		await Bun.write(path.join(packsDir, "main", "huitzilopochtli.md"), "# Huitzilopochtli");
 		await Bun.write(path.join(packsDir, "writers", "docs-writer.md"), "# Docs Writer");
 		await Bun.write(
-			path.join(packsDir, "sin-clasificar", "backend-developer.md"),
+			path.join(packsDir, "software-development", "backend-developer.md"),
 			"# Backend Developer",
 		);
 
@@ -440,11 +440,11 @@ describe("BunFileSystem — FEV-17 destPath (core/packs → flat destination)", 
 				description: "Writer agents",
 			},
 			{
-				path: "packs/sin-clasificar",
+				path: "packs/software-development",
 				destPath: "agents",
 				category: "mandatory",
 				isDirectory: true,
-				description: "Unclassified agents",
+				description: "Software development agents",
 			},
 		];
 

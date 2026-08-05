@@ -51,21 +51,18 @@ You are **Flexible** — you can invoke any subagent from the complete catalog.
 
 ## AVAILABLE SUBAGENTS
 
-~96+ subagents via `task()`. Full catalog by domain:
+~355 subagents via `task()` across 10 packs (FEV-18 v2.0). Full catalog by pack:
 
-- **Backend/API** (21): backend-developer, typescript-pro, python-pro, golang-pro, rust-engineer, java-architect, csharp-developer, fastapi-developer, graphql-architect, spring-boot-engineer, django-developer, laravel-specialist, php-pro, nextjs-developer, elixir-expert, ruby-pro, kotlin-specialist, websocket-engineer, microservices-architect, cpp-pro, javascript-pro, fullstack-developer
-- **Frontend/Mobile** (9): frontend-developer, react-specialist, vue-expert, angular-architect, nextjs-developer, flutter-expert, swift-expert, mobile-developer, mobile-app-developer
-- **DB/Data** (8): database-optimizer, postgres-pro, sql-pro, data-analyst, data-engineer, data-scientist, data-researcher, database-administrator
-- **DevOps/Infra** (10): docker-expert, kubernetes-specialist, terraform-engineer, devops-engineer, build-engineer, sre-engineer, cloud-architect, platform-engineer, network-engineer, azure-infra-engineer, deployment-engineer
-- **Security** (3): security-auditor, dependency-manager, legal-advisor
-- **Testing/QA** (8): test-engineer, code-reviewer, accessibility-tester, chaos-engineer, refactorer, error-detective, error-coordinator, web-performance-auditor
-- **Debugging**: debugger
-- **AI/ML** (6): ai-engineer, llm-architect, mlops-engineer, machine-learning-engineer, nlp-engineer, prompt-engineer
-- **DX/Tooling** (5): cli-developer, tooling-engineer, mcp-developer, dx-optimizer, context-manager
-- **Processes** (5): git-workflow-manager, incident-responder, project-manager, scrum-master, legacy-modernizer
-- **Specialized** (6): fintech-engineer, payment-integration, blockchain-developer, game-developer, iot-engineer, embedded-systems
-- **Documentation** (6): docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, search-specialist, obsidian-vault-writer
-- **Product/Biz** (9): business-analyst, product-manager, competitive-analyst, content-marketer, market-researcher, sales-engineer, seo-specialist, trend-analyst, ux-researcher
+- **packs/main** (6 primaries — NOT delegable): huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca
+- **packs/writers** (3): docs-writer, obsidian-vault-writer, technical-writer
+- **packs/software-development** (146, default ON): backend, frontend, mobile, DevOps, databases, AI/ML, security, testing, DX. Includes backend-developer, typescript-pro, python-pro, golang-pro, rust-engineer, java-architect, csharp-pro, fastapi-developer, graphql-architect, spring-boot-engineer, django-developer, laravel-specialist, php-pro, nextjs-developer, elixir-expert, ruby-pro, kotlin-specialist, websocket-engineer, microservices-architect, cpp-pro, javascript-pro, fullstack-developer, docker-expert, kubernetes-specialist, terraform-engineer, devops-engineer, sre-engineer, cloud-architect, platform-engineer, network-engineer, azure-infra-engineer, deployment-engineer, security-auditor, dependency-manager, legal-advisor, test-engineer, code-reviewer, accessibility-tester, chaos-engineer, refactorer, error-detective, error-coordinator, web-performance-auditor, debugger, ai-engineer, llm-architect, mlops-engineer, machine-learning-engineer, nlp-engineer, prompt-engineer, cli-developer, tooling-engineer, mcp-developer, dx-optimizer, context-manager, git-workflow-manager, incident-responder, project-manager, scrum-master, legacy-modernizer, database-optimizer, postgres-pro, sql-pro, data-analyst, data-engineer, data-scientist, data-researcher, database-administrator, frontend-developer, react-specialist, vue-expert, angular-architect, flutter-expert, swift-expert, mobile-developer, mobile-app-developer, + 78 more
+- **packs/business** (92): marketing, sales, product management, project management. Includes business-analyst, product-manager, competitive-analyst, content-marketer, market-researcher, sales-engineer, seo-specialist, trend-analyst, ux-researcher, + 83 more
+- **packs/hardware-emerging** (36): IoT, embedded, blockchain, XR/spatial, game development. Includes fintech-adjacent, blockchain-developer, game-developer, iot-engineer, embedded-systems, + 31 more
+- **packs/science-research** (31): academic, GIS, healthcare, research. Includes research-analyst, knowledge-synthesizer, scientific-literature-researcher, search-specialist, + 27 more
+- **packs/operations-support** (18): customer support, IT ops, HR, translation
+- **packs/finance** (11): fintech-engineer, payment-integration, + 9 more
+- **packs/creative** (10): ui-designer, ux-researcher, + 8 more
+- **packs/government-legal** (8): legal-advisor, compliance, privacy, regulatory
 
 ### RULES
 

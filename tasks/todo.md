@@ -109,23 +109,23 @@ Phase 6 (Documentation & Commit, 30min)
 
 ---
 
-## Phase 3: sin-clasificar Cleanup (CRITICAL)
+## Phase 3: sin-clasificar Cleanup (CRITICAL) ✅ COMPLETA
 
-- [ ] **Task 3.1:** Verificar `packs/sin-clasificar/` está vacío (todos los 95 distribuidos)
-- [ ] **Task 3.2:** `rmdir template/obligatorio/packs/sin-clasificar` — eliminar directorio
-- [ ] **Task 3.3:** Remover entry `packs/sin-clasificar` de `src/domain/entities/FileRuleManifestData.ts` (líneas 42-47). Manifest: 4 mandatory → 3 mandatory
+- [x] **Task 3.1:** Verificar `packs/sin-clasificar/` distribuido (95 copiados a packs en Phase 2)
+- [x] **Task 3.2:** `git rm -r packs/sin-clasificar/` — directorio eliminado (95 archivos)
+- [x] **Task 3.3:** Remover entry `packs/sin-clasificar` de `src/domain/entities/FileRuleManifestData.ts`
 
-**Checkpoint:** ✅ sin-clasificar/ eliminado, manifest con 3 mandatory entries, tests pasan
+**Checkpoint:** ✅ sin-clasificar/ eliminado (10 packs restantes), manifest sin la entry
 
 ---
 
-## Phase 4: Manifest & Catalog Updates (CRITICAL — gates tests)
+## Phase 4: Manifest & Catalog Updates (CRITICAL — gates tests) ✅ COMPLETA
 
-- [ ] **Task 4.1:** Agregar 8 entries de packs seleccionables a `FileRuleManifestData.ts` (3 → 11 mandatory entries). **Update writers/ description:** "2 writer agents (docs-writer, obsidian-vault-writer) — scientific-literature-researcher moved to science-research pack in FEV-18"
-- [ ] **Task 4.2:** Actualizar unit tests de manifest — esperar 11 mandatory entries en lugar de 4
-- [ ] **Task 4.3:** Expandir Huitzilopochtli's "AVAILABLE SUBAGENTS" catalog (~96 → ~362 subagents, agrupados por pack)
+- [x] **Task 4.1:** Agregar 8 entries de packs seleccionables a `FileRuleManifestData.ts` (3 → 11 mandatory entries). Writers description: "2 writer agents (docs-writer, obsidian-vault-writer) — scientific-literature-researcher moved to science-research pack in FEV-18"
+- [x] **Task 4.2:** Actualizar unit tests de manifest — 11 mandatory entries (file-rule-manifest ×2, template-resolver, file-merge-engine, bun-file-system)
+- [x] **Task 4.3:** Expandir Huitzilopochtli's "AVAILABLE SUBAGENTS" catalog (~96 → ~355 subagents, agrupados por pack)
 
-**Checkpoint:** ✅ Manifest con 11 entries, tests pasan, catalog actualizado — `just check` + `just test:unit` exit 0
+**Checkpoint:** ✅ Manifest con 11 entries, tests pasan (960/960), catalog actualizado — `just check` limpio
 
 ---
 
