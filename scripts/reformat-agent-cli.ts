@@ -1,4 +1,7 @@
 import { reformatAgent } from "./reformat-agent";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 /**
  * FEV-18 CLI entry for single-agent v2.0 conversion.
@@ -6,11 +9,13 @@ import { reformatAgent } from "./reformat-agent";
  * Exit codes: 0 = success, 1 = invalid arguments or conversion error.
  */
 
-/** Destination used for --dry-run; content is printed to stdout, never persisted. */
-const DRY_RUN_TARGET = "/tmp/.reformat-dry-run-target.md";
+/** Prefix for the per-invocation temp dir --dry-run writes to before deleting it. */
+const DRY_RUN_DIR_PREFIX = "reformat-dry-run-";
 
 function printUsage(): void {
-	console.error("Usage: bun run scripts/reformat-agent-cli.ts <source-file> <target-path> [--dry-run]");
+	console.error(
+		"Usage: bun run scripts/reformat-agent-cli.ts <source-file> <target-path> [--dry-run]",
+	);
 	console.error("  Converts an agency-agents-main file to the v2.0 project format.");
 }
 
@@ -25,19 +30,26 @@ function main(): number {
 	}
 
 	const [sourcePath, targetPath] = positional;
-	const result = reformatAgent(sourcePath, dryRun ? DRY_RUN_TARGET : targetPath);
+	// Dry-run writes into a unique temp dir (no predictable path for a
+	// symlink-overwrite attack) and removes it before exiting.
+	const dryRunDir = dryRun ? mkdtempSync(join(tmpdir(), DRY_RUN_DIR_PREFIX)) : undefined;
+	const dryRunTarget = dryRunDir ? join(dryRunDir, "output.md") : targetPath;
 
-	if (!result.ok) {
-		console.error(`Error: ${result.error}`);
-		return 1;
+	try {
+		const result = reformatAgent(sourcePath, dryRunTarget);
+		if (!result.ok) {
+			console.error(`Error: ${result.error}`);
+			return 1;
+		}
+		if (dryRun) {
+			console.log(result.content);
+		} else {
+			console.log(`Reformatted: ${sourcePath} -> ${targetPath}`);
+		}
+		return 0;
+	} finally {
+		if (dryRunDir) rmSync(dryRunDir, { recursive: true, force: true });
 	}
-
-	if (dryRun) {
-		console.log(result.content);
-	} else {
-		console.log(`Reformatted: ${sourcePath} -> ${targetPath}`);
-	}
-	return 0;
 }
 
 process.exit(main());

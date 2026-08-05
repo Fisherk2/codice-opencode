@@ -377,15 +377,15 @@ permission:
 
 ---
 
-#### Task 1.3: Create reformat script (`scripts/reformat-agent.ts`)
+#### Task 1.3: Create reformat script (`scripts/reformat-agent-cli.ts`)
 
 **Description:** Crear un script idempotente que convierte un archivo `.md` del formato agency-agents al formato v2.0. Input: `agency-agents-main/<category>/<name>.md`. Output: `template/obligatorio/packs/<target-pack>/<name>.md` con YAML + body + COMPOSITION block.
 
 **Script design:**
 
 ```typescript
-// scripts/reformat-agent.ts
-// Usage: bun scripts/reformat-agent.ts <source-path> <target-pack> [--dry-run]
+// scripts/reformat-agent-cli.ts
+// Usage: bun scripts/reformat-agent-cli.ts <source-path> <target-pack> [--dry-run]
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -415,12 +415,12 @@ interface AgencyFrontmatter {
 - [ ] Smoke test: 3 archivos (1 engineering, 1 design, 1 specialized) producen output válido
 
 **Verification:**
-- [ ] `bun scripts/reformat-agent.ts agency-agents-main/engineering/ai-engineer.md software-development --dry-run` muestra output esperado
-- [ ] `bun scripts/reformat-agent.ts agency-agents-main/engineering/ai-engineer.md software-development` genera `template/obligatorio/packs/software-development/ai-engineer.md` con YAML + body + COMPOSITION
+- [ ] `bun scripts/reformat-agent-cli.ts agency-agents-main/engineering/ai-engineer.md software-development --dry-run` muestra output esperado
+- [ ] `bun scripts/reformat-agent-cli.ts agency-agents-main/engineering/ai-engineer.md software-development` genera `template/obligatorio/packs/software-development/ai-engineer.md` con YAML + body + COMPOSITION
 - [ ] `grep "## COMPOSITION" template/obligatorio/packs/software-development/ai-engineer.md` returns 1 match
 
 **Dependencies:** Task 1.2
-**Files likely touched:** `scripts/reformat-agent.ts` (new, ~80 lines)
+**Files likely touched:** `scripts/reformat-agent-cli.ts` (new, ~80 lines)
 **Estimated scope:** M (script + tests + idempotency)
 
 ---
@@ -443,7 +443,7 @@ interface AgencyFrontmatter {
 
 **Verification:**
 - [ ] `ls template/obligatorio/packs/{software-development,creative,finance,business,hardware-emerging}/` muestra los 5 archivos
-- [ ] `bun run scripts/reformat-agent.ts <source> <pack> --dry-run` es idempotente (no cambios en 2nd run)
+- [ ] `bun run scripts/reformat-agent-cli.ts <source> <pack> --dry-run` es idempotente (no cambios en 2nd run)
 - [ ] Manual review: 5 archivos OK con la fuente
 - [ ] **Pre-Phase 2 step:** Mover `template/obligatorio/packs/writers/scientific-literature-researcher.md` a `template/obligatorio/packs/science-research/` (decisión usuario 2026-08-04)
 
@@ -456,7 +456,7 @@ interface AgencyFrontmatter {
 #### Checkpoint: Format Definition Complete (Phase 1)
 
 - [ ] `docs/AGENT-FORMAT-V2.md` documenta YAML + COMPOSITION
-- [ ] `scripts/reformat-agent.ts` compila y es idempotente
+- [ ] `scripts/reformat-agent-cli.ts` compila y es idempotente
 - [ ] 5 sample agents reformatados con éxito
 - [ ] **Review con humano antes de Phase 2** — formato confirmado
 
@@ -1054,7 +1054,7 @@ done
   - 8 selectable packs populated: software-development (~120), business (~75), science-research (~45), hardware-emerging (~50), creative (~10), finance (~15), operations-support (~25), government-legal (~10)
   - YAML frontmatter v2.0 standard + `## COMPOSITION` block applied to 267 new agents
   - `docs/AGENT-FORMAT-V2.md` — Agent format specification
-  - `scripts/reformat-agent.ts` — Idempotent reformat script
+  - `scripts/reformat-agent-cli.ts` — Idempotent reformat script
   - `tests/unit/domain/all-packs-present.test.ts` — Pack directory validation
   - `tests/unit/domain/pack-agent-counts.test.ts` — Agent count validation
 
@@ -1136,7 +1136,7 @@ done
    - Phase 0 output (4 audit files)
 2. `docs: add agent format v2.0 specification`
    - Task 1.1, 1.2
-3. `feat(scripts): add reformat-agent.ts for v2.0 agent conversion`
+3. `feat(scripts): add reformat-agent-cli.ts for v2.0 agent conversion`
    - Task 1.3, 1.4
 4. `feat(template): distribute software-development pack (~120 agents)`
    - Task 2.1
@@ -1286,7 +1286,7 @@ done
 5. `docs/audit/audit-fev-18-summary.md` (new, ~150 lines)
 
 **Scripts (1):**
-6. `scripts/reformat-agent.ts` (new, ~80 lines)
+6. `scripts/reformat-agent-cli.ts` (new, ~80 lines)
 
 **Tests (3):**
 7. `tests/unit/domain/all-packs-present.test.ts` (new, ~50 lines)
