@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { distribute, parseMapping } from "../../../scripts/distribute-agents";
+import { distribute, findNewSource, parseMapping } from "../../../scripts/distribute-agents";
 
 /**
  * Unit tests for the FEV-18 Phase 2 batch distribution logic.
@@ -120,6 +120,26 @@ describe("distributeAgents", () => {
 
 		expect(result.ok).toBe(false);
 		expect(result.errors.join(" ")).toContain("missing-agent");
+	});
+
+	it("locates a new agent source across category directories", () => {
+		const root = join(tmpDir, "agency-root");
+		mkdirSync(join(root, "academic"), { recursive: true });
+		writeFileSync(join(root, "academic", "historian.md"), "---\nsource\n---\n");
+
+		const found = findNewSource(root, "historian");
+
+		expect(found).toBe(join(root, "academic", "historian.md"));
+	});
+
+	it("returns null when the agent source does not exist in any category", () => {
+		const root = join(tmpDir, "agency-root-empty");
+		mkdirSync(join(root, "academic"), { recursive: true });
+		writeFileSync(join(root, "academic", "historian.md"), "---\nsource\n---\n");
+
+		const found = findNewSource(root, "geographer");
+
+		expect(found).toBeNull();
 	});
 });
 
