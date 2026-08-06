@@ -77,14 +77,18 @@ export function discoverCommandAgentMap(commandsDir: string): Record<string, str
  * falls back to `new Set(PRIMARY_AGENTS)` (see sdd-pipeline.ts).
  *
  * @param agentsDir - Path to the user's `agents/` directory.
- * @returns Set of `*.md` basenames plus the 6 primary agents; empty when the directory is absent.
+ * @returns Set of lowercased `*.md` basenames plus the 6 primary agents;
+ *          empty when the directory is absent.
  */
 export function discoverValidSubagents(agentsDir: string): Set<string> {
 	if (!existsSync(agentsDir)) {
 		return new Set(); // Caller falls back to new Set(PRIMARY_AGENTS) — see sdd-pipeline.ts
 	}
 	const discovered = scanMarkdownFilesRecursive(agentsDir);
-	return new Set([...discovered, ...PRIMARY_AGENTS]);
+	// Lowercase both sides so sdd-pipeline.ts can match case-insensitively
+	// (agent files are lowercase by convention, but discovery must tolerate
+	// any casing in the filesystem).
+	return new Set([...discovered, ...PRIMARY_AGENTS].map((name) => name.toLowerCase()));
 }
 
 /**
@@ -140,8 +144,9 @@ function scanMarkdownFiles(dir: string): string[] {
 /**
  * Recursively scans a directory tree for `.md` files, returning base names
  * without the extension. Recursion keeps discovery forward-compatible with a
- * future `packs/<name>/` layout; hidden directories (`.git`, `.opencode`)
- * are skipped so tooling-internal state never registers as a subagent name.
+ * future `packs/<name>/` layout; hidden entries (`.git`, `.opencode`, and
+ * dot-files like `.agent.md`) are skipped so tooling-internal state never
+ * registers as a subagent name.
  *
  * @param dir - Path to the directory to scan.
  * @returns Flat array of base names (e.g., `["spec", "build"]`).
@@ -152,8 +157,10 @@ function scanMarkdownFilesRecursive(dir: string): string[] {
 	}
 	const names: string[] = [];
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		// Skip ALL hidden entries (dirs and files) — dot-files like `.gitkeep`
+		// or `.agent.md` are tooling state, not agent registrations.
+		if (entry.name.startsWith(".")) continue;
 		if (entry.isDirectory()) {
-			if (entry.name.startsWith(".")) continue;
 			names.push(...scanMarkdownFilesRecursive(join(dir, entry.name)));
 		} else if (entry.isFile() && extname(entry.name).toLowerCase() === ".md") {
 			names.push(basename(entry.name, ".md"));

@@ -285,6 +285,36 @@ describe("discoverValidSubagents()", () => {
 			expect(result.has(name)).toBe(true);
 		}
 	});
+
+	test("13. Hidden dot-files are skipped", () => {
+		createTestFixture(agentsDir);
+		writeAgentFile(agentsDir, "visible-agent.md");
+		// Dot-files like .gitkeep or .agent.md are tooling state, not agents
+		writeAgentFile(agentsDir, ".agent.md");
+		writeFileSync(join(agentsDir, ".gitkeep"), "", "utf-8");
+
+		const result = discoverValidSubagents(agentsDir);
+
+		expect(result.size).toBe(1 + PRIMARY.length);
+		expect(result.has("visible-agent")).toBe(true);
+		expect(result.has(".agent")).toBe(false);
+	});
+
+	test("14. Discovered names are lowercased (case-insensitive matching)", () => {
+		createTestFixture(agentsDir);
+		// A capitalized filename must resolve to its lowercase agent name so
+		// sdd-pipeline.ts can match task() calls case-insensitively.
+		writeFileSync(
+			join(agentsDir, "My-Agent.md"),
+			"---\nname: My-Agent\nrole: agent\n---\n",
+			"utf-8",
+		);
+
+		const result = discoverValidSubagents(agentsDir);
+
+		expect(result.has("my-agent")).toBe(true);
+		expect(result.has("My-Agent")).toBe(false);
+	});
 });
 
 describe("discoverAgentMentionPatterns()", () => {

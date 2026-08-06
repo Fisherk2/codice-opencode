@@ -72,7 +72,7 @@ Both layers must be updated together when adding new restrictions. The plugin ca
 
 ### 2. Subagent Name Validation
 
-The plugin validates that subagent names in `task()` exist in the catalog (**~355 agents**: ~349 subagents (from the `agents/` directory) + 6 primary). If the LLM invents a name, it receives an error:
+The plugin validates that subagent names in `task()` exist in the catalog (**~361 agents**: ~355 subagents (from the `agents/` directory) + 6 primary). If the LLM invents a name, it receives an error:
 
 ```
 Unknown subagent: "python-wizard". Create an .md file in the agents/ directory or use a primary agent.
