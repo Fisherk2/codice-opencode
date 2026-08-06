@@ -3,7 +3,7 @@
  */
 
 import type { IUserPrompt, VersionDisplayInfo } from "../application/ports/IUserPrompt";
-import { getPackRules, packIdFromPath } from "../domain/entities/FileRuleManifest";
+import { getAllPackIds } from "../domain/entities/FileRuleManifest";
 import type { Result } from "../domain/types/Result";
 import { createDependencies, type Dependencies } from "./container";
 import {
@@ -131,7 +131,7 @@ export async function runMode(
  * so the use case falls back to its own wizard (selectPacks).
  */
 function resolvePacks(options: CliOptions): readonly string[] | undefined {
-	if (options.packsAll) return getPackRules().map((r) => packIdFromPath(r.path));
+	if (options.packsAll) return getAllPackIds();
 	if (options.packs && options.packs.length > 0) return options.packs;
 	return undefined;
 }

@@ -19,11 +19,12 @@ import type { FileRule } from "../../domain/entities/FileRule";
 import {
 	FILE_RULE_MANIFEST,
 	filterByPacks,
+	getAllPackIds,
 	getPackRules,
 	getRulesByCategory,
 	isRuleSelected,
 } from "../../domain/entities/FileRuleManifest";
-import { DEFAULT_PACKS, packIdFromPath, toPackOptions } from "../packOptions";
+import { DEFAULT_PACKS, toPackOptions } from "../packOptions";
 import { InstallUseCaseBase } from "./InstallUseCaseBase";
 
 export type { BaseInstallOptions } from "./InstallUseCaseBase";
@@ -39,7 +40,7 @@ export class CleanInstallUseCase extends InstallUseCaseBase {
 	 */
 	protected async selectPacks(force: boolean): Promise<readonly string[]> {
 		if (force) {
-			return getPackRules().map((r) => packIdFromPath(r.path));
+			return getAllPackIds();
 		}
 		return await this.userPrompt.selectPacks(toPackOptions(getPackRules()), [...DEFAULT_PACKS]);
 	}

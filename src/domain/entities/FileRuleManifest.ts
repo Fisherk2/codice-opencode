@@ -65,6 +65,15 @@ export function getPackRules(): readonly FileRule[] {
 }
 
 /**
+ * All selectable pack IDs (e.g. "software-development", "business", ...).
+ * Centralizes the derivation shared by the CLI (--packs-all), the Clean
+ * Install force path, and pack-list validation so it stays in one place (DRY).
+ */
+export function getAllPackIds(): readonly string[] {
+	return getPackRules().map((r) => packIdFromPath(r.path));
+}
+
+/**
  * Derive the pack id from a manifest path ("packs/<packId>").
  * "packs/business" → "business". Shared by filterByPacks and the
  * application-layer pack option mappers so pack identity derivation

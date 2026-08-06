@@ -7,12 +7,10 @@
  * the manifest at parse time — the same protection the wizard gets for free.
  */
 
-import { getPackRules, packIdFromPath } from "../domain/entities/FileRuleManifest";
+import { getAllPackIds } from "../domain/entities/FileRuleManifest";
 
 /** All valid pack IDs (e.g. "software-development", "business"). */
-const VALID_PACK_IDS: ReadonlySet<string> = new Set(
-	getPackRules().map((rule) => packIdFromPath(rule.path)),
-);
+const VALID_PACK_IDS: ReadonlySet<string> = new Set(getAllPackIds());
 
 /**
  * Validate a raw comma-separated pack list.
