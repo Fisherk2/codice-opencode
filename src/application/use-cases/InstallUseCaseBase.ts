@@ -33,6 +33,8 @@ export interface BaseInstallOptions {
 	readonly force?: boolean;
 	/** Version tag to write into the version file (e.g. "1.0.0") */
 	readonly version?: string;
+	/** Packs to install; skips the wizard when provided via CLI (--packs/--packs-all) */
+	readonly packs?: readonly string[];
 }
 
 /**
@@ -82,10 +84,9 @@ export abstract class InstallUseCaseBase {
 		);
 		if (!confirmed) return success(undefined);
 
-		// Phase 2.5: Select agent packs (subclass decides default vs interactive).
-		// A cancel returns an empty selection — aborting here prevents a silent
-		// partial install (filterByPacks([]) would skip all 8 selectable packs).
-		const selectedPacks = await this.selectPacks(options.force ?? false);
+		// Phase 2.5: Select agent packs. CLI-provided packs skip the wizard;
+		// a cancel returns an empty selection — aborting prevents a partial install.
+		const selectedPacks = options.packs ?? (await this.selectPacks(options.force ?? false));
 		if (selectedPacks.length === 0) return success(undefined);
 
 		// Phase 3: Select optional files (subclass decides behavior)
@@ -145,10 +146,7 @@ export abstract class InstallUseCaseBase {
 
 	// ---- Overridable defaults (small differences between modes) ----
 
-	/**
-	 * Confirmation message shown when the destination directory is not empty.
-	 * Clean warns "All existing files may be overwritten"; Project warns "Some".
-	 */
+	/** Confirmation message for a non-empty destination directory. */
 	protected getConfirmMessage(destinationPath: string): string {
 		return `The destination directory "${destinationPath}" is not empty. Existing files may be overwritten. Continue?`;
 	}
@@ -163,10 +161,7 @@ export abstract class InstallUseCaseBase {
 		return "Installing...";
 	}
 
-	/**
-	 * Whether to include a "Re-run the installer" hint in symlink warnings.
-	 * Clean Install sets true (re-run retries symlinks); Project keeps false.
-	 */
+	/** Whether symlink warnings include a "Re-run the installer" hint. */
 	protected getRetryHint(): boolean {
 		return false;
 	}

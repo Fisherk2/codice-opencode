@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, mock as mockFn } from "bun:test";
 import * as fs from "node:fs/promises";
 import type { Dependencies } from "../../../src/cli/main";
-import { createDependencies, main, promptForMode, runMode, VERSION } from "../../../src/cli/main";
+import {
+	createDependencies,
+	detectVersionContext,
+	main,
+	promptForMode,
+	runMode,
+	VERSION,
+} from "../../../src/cli/main";
 import { EXIT_ERROR, EXIT_INTERRUPT, EXIT_SUCCESS, EXIT_USAGE } from "../../../src/cli/output";
 import { failure, success } from "../../../src/domain/types/Result";
 
@@ -94,6 +101,50 @@ describe("runMode", () => {
 		expect(callArgs[1]).toEqual({ force: true, version: VERSION });
 	});
 
+	it("should pass --packs list to clean install execute options", async () => {
+		const deps = createMockDeps();
+		await runMode("clean", deps, "/tmp/project", {
+			force: false,
+			verbose: false,
+			packs: ["software-development", "business"],
+		});
+		const callArgs = (deps.cleanInstall.execute as ReturnType<typeof mockFn>).mock
+			.calls[0] as unknown[];
+		expect(callArgs[1]).toEqual({
+			force: false,
+			version: VERSION,
+			packs: ["software-development", "business"],
+		});
+	});
+
+	it("should pass --packs-all resolution to project install execute options", async () => {
+		const deps = createMockDeps();
+		await runMode("project", deps, "/tmp/project", {
+			force: true,
+			verbose: false,
+			packsAll: true,
+		});
+		const callArgs = (deps.projectInstall.execute as ReturnType<typeof mockFn>).mock
+			.calls[0] as unknown[];
+		const options = callArgs[1] as { packs: readonly string[] };
+		// resolvePacks(--packs-all) yields all 8 pack IDs
+		expect(options.packs).toHaveLength(8);
+		expect(options.packs).toContain("software-development");
+		expect(options.packs).toContain("business");
+	});
+
+	it("should pass --update-add-packs to update execute options", async () => {
+		const deps = createMockDeps();
+		await runMode("update", deps, "/tmp/project", {
+			force: true,
+			verbose: false,
+			updateAddPacks: ["creative"],
+		});
+		const callArgs = (deps.updateWorkspace.execute as ReturnType<typeof mockFn>).mock
+			.calls[0] as unknown[];
+		expect(callArgs[1]).toEqual({ force: true, version: VERSION, addPacks: ["creative"] });
+	});
+
 	it("should return error when use case fails", async () => {
 		const deps = createMockDeps();
 		(deps.cleanInstall.execute as ReturnType<typeof mockFn>).mockResolvedValue(
@@ -134,6 +185,80 @@ describe("createDependencies", () => {
 		expect(typeof deps.fileSystem.stageFile).toBe("function");
 		expect(typeof deps.userPrompt.showIntro).toBe("function");
 		expect(typeof deps.userPrompt.confirm).toBe("function");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// detectVersionContext
+// ---------------------------------------------------------------------------
+
+describe("detectVersionContext", () => {
+	it("detects a v2.0+ installation from .codice-version", async () => {
+		const deps = createMockDeps();
+		(deps.fileSystem.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+			JSON.stringify({
+				version: "2.0.0",
+				installedAt: "2026-08-01T00:00:00.000Z",
+				installedPacks: ["software-development"],
+			}),
+		);
+
+		const info = await detectVersionContext(deps.fileSystem);
+
+		expect(info.status).toBe("v2.0+");
+		expect(info.version).toBe("2.0.0");
+		expect(info.installedPacks).toEqual(["software-development"]);
+	});
+
+	it("reports 'missing' when .codice-version is absent", async () => {
+		const deps = createMockDeps();
+
+		const info = await detectVersionContext(deps.fileSystem);
+
+		expect(info.status).toBe("missing");
+		expect(info.version).toBeNull();
+		expect(info.installedPacks).toEqual([]);
+	});
+
+	it("reports 'pre-2.0.0' for a v1.2+ installation", async () => {
+		const deps = createMockDeps();
+		(deps.fileSystem.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+			JSON.stringify({
+				version: "1.4.0",
+				installedAt: "2026-08-01T00:00:00.000Z",
+			}),
+		);
+
+		const info = await detectVersionContext(deps.fileSystem);
+
+		expect(info.status).toBe("pre-2.0.0");
+		expect(info.version).toBe("1.4.0");
+	});
+
+	it("reports 'pre-1.2.0' for a v1.0-1.1 installation", async () => {
+		const deps = createMockDeps();
+		(deps.fileSystem.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+			JSON.stringify({
+				version: "1.1.0",
+				installedAt: "2026-08-01T00:00:00.000Z",
+			}),
+		);
+
+		const info = await detectVersionContext(deps.fileSystem);
+
+		expect(info.status).toBe("pre-1.2.0");
+	});
+
+	it("degrades to 'missing' when .codice-version is malformed", async () => {
+		const deps = createMockDeps();
+		(deps.fileSystem.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+			"{ not valid json",
+		);
+
+		const info = await detectVersionContext(deps.fileSystem);
+
+		expect(info.status).toBe("missing");
+		expect(info.version).toBeNull();
 	});
 });
 

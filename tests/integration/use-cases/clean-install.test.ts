@@ -702,6 +702,32 @@ describe("CleanInstallUseCase", () => {
 			expect(versionData.installedPacks).toEqual(["software-development", "business"]);
 		});
 
+		it("should skip the pack selection wizard when packs are provided via options", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkMock = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project", {
+				packs: ["software-development", "business"],
+			});
+
+			expect(result.ok).toBe(true);
+			// CLI-provided packs take precedence — the wizard is never shown
+			expect(prompt.selectPacks).not.toHaveBeenCalled();
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual(["software-development", "business"]);
+		});
+
 		it("should abort when user cancels the pack selection wizard (no partial install)", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const engine = new FileMergeEngine(fs);

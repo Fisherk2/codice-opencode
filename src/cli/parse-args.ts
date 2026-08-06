@@ -6,6 +6,7 @@
  */
 
 import * as path from "node:path";
+import { validatePackList } from "./validatePackList";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -14,18 +15,19 @@ import * as path from "node:path";
 /** Installation modes supported by the CLI */
 export type Mode = "clean" | "project" | "update" | "interactive";
 
-/** Parsed CLI options */
+/** Parsed CLI options: packs/packsAll select packs; updateAddPacks adds packs. */
 export interface CliOptions {
 	readonly force: boolean;
 	readonly verbose: boolean;
+	readonly packs?: readonly string[];
+	readonly packsAll?: boolean;
+	readonly updateAddPacks?: readonly string[];
 }
 
 /**
  * Well-known system directories that are never valid project destinations.
- * Selected once at module load since process.platform is stable.
- * Uses prefix matching — catches both exact matches (e.g. /etc) and
- * sub-paths within guarded directories (e.g. /etc/cron.d).
- * /tmp intentionally omitted — users commonly install to /tmp for testing.
+ * Prefix matching catches sub-paths (e.g. /etc/cron.d). /tmp is intentionally
+ * omitted — users commonly install to /tmp for testing.
  */
 const SYSTEM_DIRS: readonly string[] =
 	process.platform === "win32"
@@ -44,12 +46,9 @@ const SYSTEM_DIRS: readonly string[] =
 const DRIVE_ROOT_RE = /^[A-Z]:\\?$/i;
 
 /**
- * Validate a destination path at parse time.
- *
- * Checks for obvious path traversal attempts and empty values
- * so the user gets immediate feedback instead of a confusing downstream error.
- * Full path containment validation is handled by pathResolver.ts at
- * installation time — this is an early-fail convenience guard.
+ * Validate a destination path at parse time — early-fail convenience guard
+ * for traversal attempts and empty values. Full containment validation is
+ * handled by pathResolver.ts at installation time.
  */
 export function validateDestPath(dest: string): string | null {
 	const trimmed = dest.trim();
@@ -70,10 +69,7 @@ export function validateDestPath(dest: string): string | null {
 	return null; // valid
 }
 
-/**
- * Reject absolute paths targeting the filesystem root or a well-known
- * system directory. These are never valid project workspace destinations.
- */
+/** Reject absolute paths targeting the root or a well-known system directory. */
 function absolutePathViolation(normalized: string, trimmed: string): string | null {
 	if (normalized === path.sep) {
 		return `Invalid destination path: "${trimmed}" is the filesystem root`;
@@ -104,10 +100,8 @@ export interface ParsedArgs {
 // Constants
 // ---------------------------------------------------------------------------
 
-/**
- * Flags that take a value argument (e.g. --dest <path>).
- */
-const VALUE_FLAGS = new Set(["--dest"]);
+/** Flags that take a value argument (e.g. --dest <path>). */
+const VALUE_FLAGS = new Set(["--dest", "--packs", "--update-add-packs"]);
 
 /** Set of all recognized flags (mode, option, terminal, and value flags) */
 const ALLOWED_FLAGS = new Set([
@@ -120,48 +114,60 @@ const ALLOWED_FLAGS = new Set([
 	"-V",
 	"--help",
 	"-h",
+	"--packs-all",
 	...VALUE_FLAGS,
 ]);
 
-// ---------------------------------------------------------------------------
-// Parser
-// ---------------------------------------------------------------------------
+// --- Parser ---
 
 /**
  * Read and validate the value token following a value-flag.
- * Prints the CLI-facing error when the value is missing or invalid.
- *
- * @param args - Raw argv slice.
- * @param valueIndex - Index of the value token within args.
- * @returns The validated raw destination, or null if missing/invalid.
+ * Returns null when missing or invalid (prints CLI error for --dest).
  */
-function readFlagValue(args: readonly string[], valueIndex: number): string | null {
-	if (valueIndex >= args.length) {
-		return null; // --dest (and future value flags) require a value
+function readFlagValue(
+	args: readonly string[],
+	valueIndex: number,
+	isDest: boolean,
+): string | null {
+	if (valueIndex >= args.length) return null;
+	const raw = args[valueIndex] as string;
+	if (isDest) {
+		const error = validateDestPath(raw);
+		if (error) {
+			// biome-ignore lint/suspicious/noConsole: CLI user-facing error
+			console.error(`[error] ${error}`);
+			return null;
+		}
+		return raw;
 	}
-	const rawDest = args[valueIndex] as string;
-	const error = validateDestPath(rawDest);
-	if (error) {
+	// Pack lists must be non-empty and contain only known pack IDs.
+	// An unknown ID would silently install zero packs (filterByPacks drops
+	// unmatched rules), so reject it here with a usage error.
+	if (validatePackList(raw) === null) {
 		// biome-ignore lint/suspicious/noConsole: CLI user-facing error
-		console.error(`[error] ${error}`);
+		console.error(`[error] Invalid pack list: "${raw}". Use --help to list valid pack IDs.`);
 		return null;
 	}
-	return rawDest;
+	return raw;
+}
+
+/** Split a raw comma-separated list into trimmed, non-empty pack IDs. */
+function splitPackList(value: string | undefined): readonly string[] | undefined {
+	if (value === undefined) return undefined;
+	return value
+		.split(",")
+		.map((p) => p.trim())
+		.filter(Boolean);
 }
 
 /**
  * Parse CLI arguments into a mode and options.
- * Returns null if arguments are unrecognized.
- *
- * Supports simple flags (--verbose) and value flags (--dest <path>).
- * Positional arguments are rejected.
- *
- * @param args - Raw argv slice (excluding "node" and script path).
- * @returns ParsedArgs on success, null on unrecognized arguments.
+ * Returns null on unrecognized or invalid input.
  */
 export function parseArgs(args: readonly string[]): ParsedArgs | null {
 	let destination: string | undefined;
 	const flags = new Set<string>();
+	const values: Record<string, string> = {};
 
 	let i = 0;
 	while (i < args.length) {
@@ -169,10 +175,11 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 		i++; // Consume the flag token
 
 		if (VALUE_FLAGS.has(arg)) {
-			// Consume the value token following the flag
-			const value = readFlagValue(args, i);
+			const isDest = arg === "--dest";
+			const value = readFlagValue(args, i, isDest);
 			if (value === null) return null;
-			destination = value;
+			if (isDest) destination = value;
+			else values[arg] = value;
 			i++; // Consume the value token
 		} else if (ALLOWED_FLAGS.has(arg)) {
 			flags.add(arg);
@@ -185,6 +192,9 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 	const options: CliOptions = {
 		force: flags.has("--force"),
 		verbose: flags.has("--verbose"),
+		packs: splitPackList(values["--packs"]),
+		packsAll: flags.has("--packs-all"),
+		updateAddPacks: splitPackList(values["--update-add-packs"]),
 	};
 
 	if (flags.has("--clean")) return { mode: "clean", options, destination };

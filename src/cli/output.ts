@@ -52,9 +52,12 @@ Usage:
   codice --help              Show this help and exit
 
 Flags:
-  --dest <path>  Target directory (default: current directory)
-  --force        Skip all confirmations
-  --verbose      Enable structured JSON logging to stderr
+  --dest <path>               Target directory (default: current directory)
+  --force                     Skip all confirmations
+  --verbose                   Enable structured JSON logging to stderr
+  --packs <list>              Comma-separated packs to install (e.g. --packs software-development,business)
+  --packs-all                 Install all 8 agent packs
+  --update-add-packs <list>   Comma-separated packs to add during update
 
 Exit codes:
   0   Success
