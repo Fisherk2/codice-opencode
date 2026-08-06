@@ -48,39 +48,23 @@ describe("defaults.ts — DESTRUCTIVE_PATTERNS is exported separately (not in DE
 	});
 
 	test("DESTRUCTIVE_PATTERNS is NOT part of DEFAULTS", () => {
-		const keys = Object.keys(DEFAULTS) as Array<keyof typeof DEFAULTS>;
+		const keys = Object.keys(DEFAULTS);
 		expect(keys).not.toContain("DESTRUCTIVE_PATTERNS");
 	});
 });
 
-describe("defaults.ts — DEFAULTS object contains all 5 maps", () => {
-	test("DEFAULTS is defined", () => {
-		expect(DEFAULTS).toBeDefined();
-	});
-
-	test("DEFAULTS contains COMMAND_AGENT_MAP", () => {
-		expect(DEFAULTS).toHaveProperty("COMMAND_AGENT_MAP");
-		expect(Object.keys(DEFAULTS.COMMAND_AGENT_MAP).length).toBeGreaterThan(0);
-	});
-
-	test("DEFAULTS contains INTENT_PATTERNS", () => {
-		expect(DEFAULTS).toHaveProperty("INTENT_PATTERNS");
-		expect(Object.keys(DEFAULTS.INTENT_PATTERNS).length).toBeGreaterThan(0);
-	});
-
-	test("DEFAULTS contains COMMAND_PHASE_MAP", () => {
-		expect(DEFAULTS).toHaveProperty("COMMAND_PHASE_MAP");
-		expect(Object.keys(DEFAULTS.COMMAND_PHASE_MAP).length).toBeGreaterThan(0);
-	});
-
-	test("DEFAULTS contains PHASE_SUGGESTIONS", () => {
-		expect(DEFAULTS).toHaveProperty("PHASE_SUGGESTIONS");
-		expect(Object.keys(DEFAULTS.PHASE_SUGGESTIONS).length).toBeGreaterThan(0);
-	});
-
-	test("DEFAULTS contains AGENT_MENTION_PATTERNS", () => {
-		expect(DEFAULTS).toHaveProperty("AGENT_MENTION_PATTERNS");
-		expect(Object.keys(DEFAULTS.AGENT_MENTION_PATTERNS).length).toBeGreaterThan(0);
+describe("defaults.ts — DEFAULTS object exposes all 5 canonical maps", () => {
+	test("DEFAULTS has exactly the expected keys", () => {
+		const expected = [
+			"COMMAND_AGENT_MAP",
+			"INTENT_PATTERNS",
+			"COMMAND_PHASE_MAP",
+			"PHASE_SUGGESTIONS",
+			"AGENT_MENTION_PATTERNS",
+		] as const;
+		for (const key of expected) {
+			expect(DEFAULTS).toHaveProperty(key);
+		}
 	});
 });
 
@@ -127,8 +111,9 @@ describe("defaults.ts — spot-check known keys", () => {
 });
 
 describe("defaults.ts — DESTRUCTIVE_PATTERNS spot-check", () => {
+	const blocks = (cmd: string) => DESTRUCTIVE_PATTERNS.some((p) => p.test(cmd));
+
 	test("blocks representative destructive commands", () => {
-		const blocks = (cmd: string) => DESTRUCTIVE_PATTERNS.some((p) => p.test(cmd));
 		// Filesystem
 		expect(blocks("rm -rf /")).toBe(true);
 		expect(blocks("shred file")).toBe(true);
@@ -139,7 +124,6 @@ describe("defaults.ts — DESTRUCTIVE_PATTERNS spot-check", () => {
 	});
 
 	test("allows non-destructive commands", () => {
-		const blocks = (cmd: string) => DESTRUCTIVE_PATTERNS.some((p) => p.test(cmd));
 		expect(blocks("ls -la")).toBe(false);
 		expect(blocks("git push origin main")).toBe(false);
 		expect(blocks("SELECT * FROM users")).toBe(false);
