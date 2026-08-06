@@ -11,7 +11,7 @@
 // ---------------------------------------------------------------------------
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { basename, extname } from "node:path";
+import { basename, extname, join } from "node:path";
 import { escapeRegExp } from "./escapeRegExp";
 import { PRIMARY_AGENTS } from "./validSubagents";
 
@@ -67,26 +67,23 @@ export function discoverCommandAgentMap(commandsDir: string): Record<string, str
 }
 
 /**
- * Scans the user's agents directory and returns the set of valid subagent names.
+ * Scans the user's agents directory tree and returns the set of valid subagent names.
  *
- * Reads each `*.md` file in the given directory and derives the agent name
- * from the filename (without the `.md` extension). The file contents are not
- * inspected — presence alone constitutes registration.
+ * Reads each `*.md` file under the given directory (recursively) and derives
+ * the agent name from the filename (without the `.md` extension). File
+ * contents are not inspected — presence alone constitutes registration.
  *
- * When the directory exists (even if empty), the 6 primary agents are always
- * included in the result. When the directory does not exist, returns an empty
- * Set so the caller can fall back to {@link DEFAULTS.VALID_SUBAGENTS}.
+ * When the directory does not exist, returns an empty `Set` so the caller
+ * falls back to `new Set(PRIMARY_AGENTS)` (see sdd-pipeline.ts).
  *
  * @param agentsDir - Path to the user's `agents/` directory.
- * @returns A set of agent names derived from `*.md` filenames plus the 6
- *          primary agents if the directory exists. Returns an empty `Set`
- *          if the directory does not exist.
+ * @returns Set of `*.md` basenames plus the 6 primary agents; empty when the directory is absent.
  */
 export function discoverValidSubagents(agentsDir: string): Set<string> {
 	if (!existsSync(agentsDir)) {
-		return new Set(); // Caller falls back to DEFAULTS.VALID_SUBAGENTS
+		return new Set(); // Caller falls back to new Set(PRIMARY_AGENTS) — see sdd-pipeline.ts
 	}
-	const discovered = scanMarkdownFiles(agentsDir);
+	const discovered = scanMarkdownFilesRecursive(agentsDir);
 	return new Set([...discovered, ...PRIMARY_AGENTS]);
 }
 
@@ -125,8 +122,7 @@ export function discoverAgentMentionPatterns(agents: Set<string>): Record<string
 /**
  * Scans a directory for markdown files and returns their base names (without `.md`).
  *
- * Skips non-existent directories, non-files, and non-`.md` extensions.
- * Shared by {@link discoverCommandAgentMap} and {@link discoverValidSubagents}.
+ * Top-level only — commands are flat. Subagent discovery uses the recursive variant.
  *
  * @param dir - Path to the directory to scan.
  * @returns Array of base names (e.g., `["spec", "build"]` for `spec.md`, `build.md`).
@@ -139,6 +135,31 @@ function scanMarkdownFiles(dir: string): string[] {
 	return readdirSync(dir, { withFileTypes: true })
 		.filter((entry) => entry.isFile() && extname(entry.name).toLowerCase() === ".md")
 		.map((entry) => basename(entry.name, ".md"));
+}
+
+/**
+ * Recursively scans a directory tree for `.md` files, returning base names
+ * without the extension. Recursion keeps discovery forward-compatible with a
+ * future `packs/<name>/` layout; hidden directories (`.git`, `.opencode`)
+ * are skipped so tooling-internal state never registers as a subagent name.
+ *
+ * @param dir - Path to the directory to scan.
+ * @returns Flat array of base names (e.g., `["spec", "build"]`).
+ */
+function scanMarkdownFilesRecursive(dir: string): string[] {
+	if (!existsSync(dir)) {
+		return [];
+	}
+	const names: string[] = [];
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		if (entry.isDirectory()) {
+			if (entry.name.startsWith(".")) continue;
+			names.push(...scanMarkdownFilesRecursive(join(dir, entry.name)));
+		} else if (entry.isFile() && extname(entry.name).toLowerCase() === ".md") {
+			names.push(basename(entry.name, ".md"));
+		}
+	}
+	return names;
 }
 
 /**

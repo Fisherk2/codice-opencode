@@ -242,6 +242,49 @@ describe("discoverValidSubagents()", () => {
 			expect(result.has(name)).toBe(true);
 		}
 	});
+
+	test("11. Nested subdirectories are scanned recursively", () => {
+		createTestFixture(agentsDir);
+		writeAgentFile(agentsDir, "top-level-agent.md");
+		// One level deep: agents/packs/software-development/backend-developer.md
+		mkdirSync(join(agentsDir, "packs", "software-development"), { recursive: true });
+		writeAgentFile(join(agentsDir, "packs", "software-development"), "backend-developer.md");
+		// Doubly nested: agents/legacy/deprecated/old-tool.md
+		mkdirSync(join(agentsDir, "legacy", "deprecated"), { recursive: true });
+		writeAgentFile(join(agentsDir, "legacy", "deprecated"), "old-tool.md");
+
+		const result = discoverValidSubagents(agentsDir);
+
+		expect(result).toBeInstanceOf(Set);
+		expect(result.size).toBe(3 + PRIMARY.length);
+		expect(result.has("top-level-agent")).toBe(true);
+		expect(result.has("backend-developer")).toBe(true);
+		expect(result.has("old-tool")).toBe(true);
+		for (const name of PRIMARY) {
+			expect(result.has(name)).toBe(true);
+		}
+	});
+
+	test("12. Hidden directories are skipped", () => {
+		createTestFixture(agentsDir);
+		writeAgentFile(agentsDir, "visible-agent.md");
+		// Hidden dirs like .git and .opencode must not contribute subagent names
+		mkdirSync(join(agentsDir, ".git"), { recursive: true });
+		writeAgentFile(join(agentsDir, ".git"), "should-be-ignored.md");
+		mkdirSync(join(agentsDir, ".opencode"), { recursive: true });
+		writeAgentFile(join(agentsDir, ".opencode"), "internal-agent.md");
+
+		const result = discoverValidSubagents(agentsDir);
+
+		expect(result).toBeInstanceOf(Set);
+		expect(result.size).toBe(1 + PRIMARY.length);
+		expect(result.has("visible-agent")).toBe(true);
+		expect(result.has("should-be-ignored")).toBe(false);
+		expect(result.has("internal-agent")).toBe(false);
+		for (const name of PRIMARY) {
+			expect(result.has(name)).toBe(true);
+		}
+	});
 });
 
 describe("discoverAgentMentionPatterns()", () => {
