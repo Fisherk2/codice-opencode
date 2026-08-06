@@ -10,6 +10,7 @@ import { loadSddConfig } from "./src/configLoader";
 import { DEFAULTS, DESTRUCTIVE_PATTERNS } from "./src/defaults";
 import { escapeRegExp } from "./src/escapeRegExp";
 import { normalizeBash } from "./src/normalizeBash";
+import { PRIMARY_AGENTS } from "./src/validSubagents";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,8 +57,11 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 		Object.keys(discoveredCommandAgentMap).length > 0
 			? discoveredCommandAgentMap
 			: DEFAULTS.COMMAND_AGENT_MAP;
+	// Fall back to PRIMARY_AGENTS (the 6 built-in agents) when no `agents/`
+	// directory exists — subagent names can only be registered via filesystem
+	// auto-discovery (ADR-013), so without it only primary agents are valid.
 	const validSubagents =
-		discoveredValidSubagents.size > 0 ? discoveredValidSubagents : DEFAULTS.VALID_SUBAGENTS;
+		discoveredValidSubagents.size > 0 ? discoveredValidSubagents : new Set(PRIMARY_AGENTS);
 	const agentMentionPatterns = discoverAgentMentionPatterns(validSubagents);
 
 	// ── Configuration loading (Pillar 2) — merge user config with defaults ──
@@ -331,7 +335,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 					if (subagentName && !validSubagents.has(subagentName)) {
 						audit("tool.before", `BLOCKED task: unknown subagent "${subagentName}"`);
 						throw new SddError(
-							`Unknown subagent: "${subagentName}". Use an agent from the VALID_SUBAGENTS catalog.`,
+							`Unknown subagent: "${subagentName}". Create an .md file in the agents/ directory or use a primary agent.`,
 						);
 					}
 				}

@@ -7,18 +7,13 @@ import {
 	DESTRUCTIVE_PATTERNS,
 	INTENT_PATTERNS,
 	PHASE_SUGGESTIONS,
-	VALID_SUBAGENTS,
+	PRIMARY_AGENTS,
 } from "../defaults";
 
-describe("defaults.ts — all 6 named exports exist and are non-empty", () => {
+describe("defaults.ts — all 5 named exports exist and are non-empty", () => {
 	test("COMMAND_AGENT_MAP is a non-empty Record<string, string>", () => {
 		expect(COMMAND_AGENT_MAP).toBeDefined();
 		expect(Object.keys(COMMAND_AGENT_MAP).length).toBeGreaterThan(0);
-	});
-
-	test("VALID_SUBAGENTS is a non-empty Set<string>", () => {
-		expect(VALID_SUBAGENTS).toBeDefined();
-		expect(VALID_SUBAGENTS.size).toBeGreaterThan(0);
 	});
 
 	test("INTENT_PATTERNS is a non-empty Record<string, string[]>", () => {
@@ -58,7 +53,7 @@ describe("defaults.ts — DESTRUCTIVE_PATTERNS is exported separately (not in DE
 	});
 });
 
-describe("defaults.ts — DEFAULTS object contains all 6 maps", () => {
+describe("defaults.ts — DEFAULTS object contains all 5 maps", () => {
 	test("DEFAULTS is defined", () => {
 		expect(DEFAULTS).toBeDefined();
 	});
@@ -66,11 +61,6 @@ describe("defaults.ts — DEFAULTS object contains all 6 maps", () => {
 	test("DEFAULTS contains COMMAND_AGENT_MAP", () => {
 		expect(DEFAULTS).toHaveProperty("COMMAND_AGENT_MAP");
 		expect(Object.keys(DEFAULTS.COMMAND_AGENT_MAP).length).toBeGreaterThan(0);
-	});
-
-	test("DEFAULTS contains VALID_SUBAGENTS", () => {
-		expect(DEFAULTS).toHaveProperty("VALID_SUBAGENTS");
-		expect(DEFAULTS.VALID_SUBAGENTS.size).toBeGreaterThan(0);
 	});
 
 	test("DEFAULTS contains INTENT_PATTERNS", () => {
@@ -107,10 +97,13 @@ describe("defaults.ts — spot-check known keys", () => {
 		expect(COMMAND_PHASE_MAP["/ship"]).toBe("ship");
 	});
 
-	test("VALID_SUBAGENTS contains primary agents", () => {
-		expect(VALID_SUBAGENTS.has("huitzilopochtli")).toBe(true);
-		expect(VALID_SUBAGENTS.has("quetzalcoatl")).toBe(true);
-		expect(VALID_SUBAGENTS.has("tlaloc")).toBe(true);
+	test("PRIMARY_AGENTS contains the canonical primary agents", () => {
+		// Guards the only remaining hardcoded list — the 6 built-in agents
+		// that stay valid even when no agents/ directory exists.
+		expect(PRIMARY_AGENTS).toHaveLength(6);
+		expect(PRIMARY_AGENTS).toContain("huitzilopochtli");
+		expect(PRIMARY_AGENTS).toContain("quetzalcoatl");
+		expect(PRIMARY_AGENTS).toContain("tlaloc");
 	});
 
 	test("INTENT_PATTERNS contains expected commands", () => {

@@ -5,18 +5,18 @@
 // plugin. These are the canonical defaults that the plugin falls back to when
 // no overrides are provided in the opencode.json config.
 //
-// Data-heavy tables live in dedicated modules (validSubagents.ts,
-// intentPatterns.ts) to keep every file under the 200-line convention.
+// Data-heavy tables live in dedicated modules (intentPatterns.ts,
+// destructivePatterns.ts) to keep every file under the 200-line convention.
 // All exports are deeply readonly to prevent accidental mutation at runtime.
 // ---------------------------------------------------------------------------
 
 import { escapeRegExp } from "./escapeRegExp";
 import { INTENT_PATTERNS } from "./intentPatterns";
-import { PRIMARY_AGENTS, VALID_SUBAGENTS } from "./validSubagents";
+import { PRIMARY_AGENTS } from "./validSubagents";
 
 export { DESTRUCTIVE_PATTERNS } from "./destructivePatterns";
 export { INTENT_PATTERNS } from "./intentPatterns";
-export { PRIMARY_AGENTS, VALID_SUBAGENTS } from "./validSubagents";
+export { PRIMARY_AGENTS } from "./validSubagents";
 
 /**
  * Maps slash commands to their primary agent.
@@ -133,7 +133,7 @@ export const AGENT_MENTION_PATTERNS: Readonly<Record<string, readonly RegExp[]>>
 	) as Readonly<Record<string, readonly RegExp[]>>;
 
 /**
- * Aggregated DEFAULTS object containing all 6 configuration maps.
+ * Aggregated DEFAULTS object containing all 5 configuration maps.
  *
  * This is the canonical defaults object used by the SDD pipeline plugin.
  * Consumers can import individual named exports or the entire DEFAULTS object.
@@ -143,14 +143,12 @@ export const AGENT_MENTION_PATTERNS: Readonly<Record<string, readonly RegExp[]>>
  */
 export const DEFAULTS: Readonly<{
 	COMMAND_AGENT_MAP: typeof COMMAND_AGENT_MAP;
-	VALID_SUBAGENTS: typeof VALID_SUBAGENTS;
 	INTENT_PATTERNS: typeof INTENT_PATTERNS;
 	COMMAND_PHASE_MAP: typeof COMMAND_PHASE_MAP;
 	PHASE_SUGGESTIONS: typeof PHASE_SUGGESTIONS;
 	AGENT_MENTION_PATTERNS: typeof AGENT_MENTION_PATTERNS;
 }> = {
 	COMMAND_AGENT_MAP,
-	VALID_SUBAGENTS,
 	INTENT_PATTERNS,
 	COMMAND_PHASE_MAP,
 	PHASE_SUGGESTIONS,
