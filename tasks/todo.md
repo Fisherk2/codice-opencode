@@ -1,268 +1,377 @@
-# FEV-20 Todo List — Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4)
+# FEV-21 Todo List — Installer UX: Pack Selection & Version Detection (v2.0 Phase 5)
 
-**Phase:** FEV-20 (v2.0 Phase 4) — 🔲 Planificado
-**Scope:** Eliminar `VALID_SUBAGENTS` Set hardcoded (~110 entries) de `validSubagents.ts`; mantener `PRIMARY_AGENTS` (6 primarios) como única fuente de verdad hardcoded. Cambiar el fallback en `sdd-pipeline.ts` de `DEFAULTS.VALID_SUBAGENTS` a `new Set(PRIMARY_AGENTS)`. Actualizar mensajes de error. Hacer que `discoverValidSubagents()` escanee recursivamente subdirectorios del `agents/` del usuario (forward-compatible con estructura `packs/`). Actualizar tests + Wiki.
-**Spec:** [specs/spec-agent-packs.md §5](../specs/spec-agent-packs.md), [ADR-014](../specs/adr/adr-014-agent-pack-system.md)
-**Tech Debt:** TD-V2-1, TD-V2-5
-**Date:** 2026-08-05
+**Phase:** FEV-21 (v2.0 Phase 5) — 🔲 Planificado
+**Scope:** Implementar wizard de selección de packs (8 packs, `software-development` pre-seleccionado, min 1), detección de versión (parseo JSON de `.codice-version` con `version`/`installedPacks`/`installedAt`), version-gated updates (bloquear Update para versiones < 2.0.0 con mensajes específicos por caso), extender `.codice-version` con `installedPacks[]`. Actualizar CleanInstallUseCase, ProjectInstallUseCase, UpdateWorkspaceUseCase (Option A vs Option B), IUserPrompt port (3 nuevos métodos), parse-args (3 nuevos flags), main.ts (version detection antes del mode menu), y 7 nuevos E2E tests.
+**Spec:** [specs/spec-installer-ux-v2.md §2-§7](../specs/spec-installer-ux-v2.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md)
+**Tech Debt:** TD-V2-6 (new — No pack removal mechanism)
+**Date:** 2026-08-06
 **Author:** Moctezuma (Strategic Planner)
-**Full plan:** [plan-fev-20.md](./plan-fev-20.md)
-**Branch:** `feat/new-agents` (continúa de FEV-19 ✅; usuario confirmó no crear branch nueva)
-**Total effort:** ~3h wall-clock (1 día calendario con review)
+**Full plan:** [plan.md](./plan.md)
+**Branch:** `feat/new-agents` (continúa de FEV-20 ✅; usuario confirmó mantener rama)
+**Total effort:** ~8h wall-clock (2 días calendario con review)
 
 ---
 
-## Decisiones Confirmadas (vía question tool, 2026-08-05)
+## Decisiones Confirmadas (vía question tool, 2026-08-06)
 
 | # | Pregunta | Decisión |
 |---|----------|----------|
-| 1 | Recursive scan scope | **Recursivo en subdirectorios** (forward-compatible, satisfies SC-P8) |
-| 2 | Commit slicing | **Per-file vertical** (consistente con FEV-19, mejor rollback) |
+| 1 | Pack category strategy | **Nueva categoría `"pack"` en `RuleCategory`** (type-safe, explícito) |
+| 2 | Branch strategy | **Continuar en `feat/new-agents`** (consistente con FEV-19/20) |
+| 3 | Commit slicing | **Per-file vertical (6-7 commits, FEV-20 style)** — 7 commits atómicos |
+| 4 | E2E test scope | **Subset: 7 nuevos E2E (core SCs)** — SC-UX1..SC-UX7; resto a FEV-23 |
 
 ---
 
-## Pre-Audit Snapshot (2026-08-05)
+## Pre-Audit Snapshot (2026-08-06)
 
-### `VALID_SUBAGENTS` references (11 total, all to be removed)
+### Current `.codice-version` format (v1.x — to be extended)
 
-| File | Line(s) | Action |
-|------|:-------:|--------|
-| `validSubagents.ts` | 30-143 | Delete entire Set (~114 entries) |
-| `defaults.ts` | 15, 19, 146, 153 | Remove import, re-export, type field, object field |
-| `sdd-pipeline.ts` | 60, 334 | Change fallback + error message |
-| `defaults.test.ts` | 10, 19-22, 71-74, 110-114 | Remove/update 2 tests + 1 reformulation |
+```json
+{
+  "installedVersion": "2.0.0",
+  "installedAt": "2026-08-05T12:00:00.000Z",
+  "optionalSelections": ["scripts/build.sh"]
+}
+```
 
-### Hardcoded catalog size
+### Target `.codice-version` format (v2.0)
 
-| State | Count |
-|-------|:-----:|
-| **Current (post-FEV-19)** | 114 (6 primary + 108 subagents) |
-| **Target (post-FEV-20)** | 6 (only PRIMARY_AGENTS) |
-| **Reduction** | **-108 entries (94.7% reduction)** |
+```json
+{
+  "version": "2.0.0",
+  "installedPacks": ["software-development", "business"],
+  "installedAt": "2026-08-06T12:00:00.000Z",
+  "optionalSelections": ["scripts/build.sh"]
+}
+```
 
-### Auto-discovery: flat vs recursive
+### Files requiring modification (25) + new (7) = 32 total
 
-| State | Behavior |
-|-------|----------|
-| **Current** | Flat scan: only top-level `*.md` files in `agents/` |
-| **Target** | Recursive: walks subdirs, skips hidden dirs (`.git`, `.opencode`, etc.) |
+| Layer | Files | Action |
+|-------|-------|--------|
+| **Domain** | 4 | `WorkspaceVersion` + `FileRule` + `FileRuleManifestData` + `FileRuleManifest` |
+| **Application** | 6 | `IUserPrompt` + `InstallUseCaseBase` + `Clean`/`Project` + `UpdateWorkspace` + `postInstall` |
+| **Infrastructure** | 1 | `ClackPromptsAdapter` (3 new methods) |
+| **CLI** | 3 | `parse-args` + `main` + `output` |
+| **Tests unit** | 2 | `workspace-version.test` + `file-rule-manifest.test` |
+| **Tests integration** | 6 | `clack-prompts-adapter` + 3 use case tests + 2 CLI tests |
+| **Tests E2E** | 7 new | Scripts 17-23 |
+| **Docs** | 3 | `CHANGELOG` + `WORKFLOW` + `TECH_DEBT` |
+
+### Baseline metrics (post-FEV-20)
+
+| Metric | Value |
+|--------|------:|
+| Tests (pass/fail) | 1747 / 0 |
+| E2E scenarios | 16 / 16 |
+| `just check` errors | 0 |
+| `.codice-version` fields | 3 (`installedVersion`, `installedAt`, `optionalSelections`) |
+| FileRule `RuleCategory` values | 3 (`mandatory`, `standard`, `optional`) |
+| `IUserPrompt` methods | 12 |
+| CLI flags | 7 |
 
 ---
 
 ## Dependency Order (Critical Path)
 
 ```
-FEV-19 ✅ (feat/new-agents base)
+FEV-20 ✅ (feat/new-agents base)
     ↓
-Phase 1: Plugin Source (1h, sequential by file)
-    ├── T1.1 validSubagents.ts (delete Set) → 1 commit
-    ├── T1.2 defaults.ts (remove references) → 1 commit
-    └── T1.3 sdd-pipeline.ts (fallback + error msg) → 1 commit
+Phase 1: Domain Foundation (1.5h, 1 commit)
+    ├── T1.1 WorkspaceVersion.ts (add installedPacks, rename, backward compat) → bundled
+    ├── T1.2 FileRule.ts + FileRuleManifestData.ts + FileRuleManifest.ts (pack category + helpers) → bundled
+    └── T1.3 Unit tests for WorkspaceVersion + FileRuleManifest → bundled
     ↓
-Phase 2: Auto-Discovery Recursive (0.5h)
-    └── T2.1 autoDiscovery.ts (recursive helper) + tests → 1 commit
+Phase 2: IUserPrompt Port Extension (1.5h, 1 commit)
+    ├── T2.1 IUserPrompt.ts (3 new methods) + ClackPromptsAdapter.ts (implementation) → bundled
+    └── T2.2 Integration tests for new methods → bundled
     ↓
-Phase 3: Test Updates (0.5h)
-    └── T3.1 defaults.test.ts (remove assertions) → 1 commit
+Phase 3: Install Use Cases (1.5h, 1 commit)
+    ├── T3.1 InstallUseCaseBase.ts (add selectPacks phase) → bundled
+    ├── T3.2 CleanInstallUseCase.ts + ProjectInstallUseCase.ts (default software-development) → bundled
+    ├── T3.3 postInstall.ts (add installedPacks to version file) → bundled
+    └── T3.4 Integration tests for clean-install + project-install with packs → bundled
     ↓
-Phase 4: Documentation (0.5h, gates Phase 5)
-    └── T4.1 SDD-Pipeline.md (count, error, size) + T4.2 Agents.md audit → 1 commit
+Phase 4: Update Mode Rewrite (1.5h, 1 commit)
+    ├── T4.1 UpdateWorkspaceUseCase.ts (version gate + Option A/B state machine) → bundled
+    └── T4.2 Integration tests for update-workspace with pack scoping → bundled
     ↓
-Phase 5: Verification (0.25h, gates Phase 6)
-    └── T5.1 just check + just test + just test-e2e
+Phase 5: CLI Integration (0.5h, 1 commit)
+    ├── T5.1 parse-args.ts (3 new flags) + main.ts (version detection) + output.ts (help text) → bundled
+    └── T5.2 Integration tests for parse-args + main → bundled
     ↓
-Phase 6: Final Docs (0.25h, gates FEV-21)
-    └── T6.1 CHANGELOG + WORKFLOW + TECH_DEBT → 1 commit
+Phase 6: E2E Tests (1h, 1 commit)
+    └── T6.1 7 new E2E scripts (17-23) → 1 commit
     ↓
-FEV-20 Complete → FEV-21 ready
+Phase 7: Final Documentation (0.5h, 1 commit)
+    └── T7.1 CHANGELOG.md + WORKFLOW.md + TECH_DEBT.md → 1 commit
+    ↓
+Phase 8: Verification (0.25h, gates FEV-22)
+    └── T8.1 just check + just test + just test-e2e
+    ↓
+FEV-21 Complete → FEV-22 ready
 ```
 
-**Critical path:** T1.1 → T1.2 → T1.3 → T2.1 → T3.1 → T4.1 → T5.1 → T6.1 (~3h total)
+**Critical path:** T1.1+T1.2+T1.3 → T2.1+T2.2 → T3.1+T3.2+T3.3+T3.4 → T4.1+T4.2 → T5.1+T5.2 → T6.1 → T7.1 → T8.1 (~8h total)
+**Atomic commits:** 7 (1 per phase) + 1 verification (no commit)
 
 ---
 
-## Phase 1: Plugin Source Code Changes
+## Phase 1: Domain Foundation
 
-- [ ] **Task 1.1:** Delete `VALID_SUBAGENTS` Set from `validSubagents.ts` (líneas 23-143). Keep `PRIMARY_AGENTS` (líneas 9-21). Update header comment to reference autoDiscovery + ADRs. File: 143 → ~25 lines. Commit: `refactor(plugin): delete VALID_SUBAGENTS hardcoded catalog; rely on filesystem auto-discovery`
-- [ ] **Task 1.2:** Remove `VALID_SUBAGENTS` from `defaults.ts` (líneas 15, 19, 146, 153). Keep `PRIMARY_AGENTS` in all those locations. Commit: `refactor(plugin): remove VALID_SUBAGENTS from defaults.ts imports and DEFAULTS object`
-- [ ] **Task 1.3:** Update `sdd-pipeline.ts` (3 changes): (1) import `PRIMARY_AGENTS` from `./src/validSubagents`; (2) fallback `DEFAULTS.VALID_SUBAGENTS` → `new Set(PRIMARY_AGENTS)` with comment; (3) error message "Use an agent from the VALID_SUBAGENTS catalog" → "Create an .md file in the agents/ directory or use a primary agent". Commit: `refactor(plugin): use PRIMARY_AGENTS as fallback and update error message`
+- [ ] **Task 1.1:** Extend `WorkspaceVersion` entity. Add `installedPacks: readonly string[]` field (4th param, default `[]`). Rename JSON field `installedVersion` → `version`. `fromJSON` accepts both `version` (new) and `installedVersion` (legacy) for backward compat. `toJSON` emits v2.0 format. Commit: `feat(domain): extend WorkspaceVersion with installedPacks and v2.0 format`
+- [ ] **Task 1.2:** Add `"pack"` to `RuleCategory` union in `FileRule.ts`. Change 8 entries in `FileRuleManifestData.ts` from `category: "mandatory"` to `category: "pack"`. Add 2 helpers in `FileRuleManifest.ts`: `getPackRules()` returns 8 pack rules; `filterByPacks(rules, selectedPacks)` excludes unselected packs. Commit (bundled): `feat(domain): add pack RuleCategory and filter helpers`
+- [ ] **Task 1.3:** Update `tests/unit/domain/workspace-version.test.ts` with 5 new tests (v2.0 format, backward compat, installedPacks validation, toJSON, non-string filtering). Update `tests/unit/file-rule-manifest.test.ts` with 3 new tests (getPackRules returns 8, filterByPacks with selected, filterByPacks with empty). Commit (bundled): `test(domain): cover WorkspaceVersion v2.0 format and pack helpers`
 
 **Checkpoint:** ✅
-- [ ] 3 archivos del plugin modificados (validSubagents, defaults, sdd-pipeline)
-- [ ] 0 referencias a `VALID_SUBAGENTS` en código del plugin
-- [ ] `PRIMARY_AGENTS` preservado en los 3 archivos
-- [ ] **Review con humano** — verificar que el cambio no rompe tests existentes
+- [ ] `WorkspaceVersion` accepts 4 params, backward compat works
+- [ ] `RuleCategory` includes `"pack"`, 8 manifest entries updated
+- [ ] 8 new unit tests pass (5 + 3)
+- [ ] `just test-unit` shows 1755+ tests pass
+- [ ] **Review con humano antes de Phase 2**
 
 ---
 
-## Phase 2: Auto-Discovery Recursive Scan
+## Phase 2: IUserPrompt Port Extension
 
-- [ ] **Task 2.1:** Add `scanMarkdownFilesRecursive(dir)` helper in `autoDiscovery.ts` (~25 lines, recursive + skips hidden dirs). Update import to add `join` from `node:path`. Modify `discoverValidSubagents()` to use the recursive helper. Add 2 tests to `autoDiscovery.test.ts`: (11) nested subdirs, (12) hidden dirs skip. Commit: `feat(plugin): recursive scan of agents/ directory for subagent discovery`
+- [ ] **Task 2.1:** Add 3 type exports to `IUserPrompt.ts`: `PackOption`, `VersionDisplayInfo`, `UpdateOption`/`UpdateOptionChoice`. Add 3 new method signatures: `selectPacks(options, preSelected)`, `showVersionInfo(info)`, `selectUpdateOption(options)`. Implement in `ClackPromptsAdapter.ts`: `selectPacks` uses `clack.multiselect({ required: true })` with locked pack labels; `showVersionInfo` uses `clack.note()` with status-specific message; `selectUpdateOption` uses `clack.select()`. Commit: `feat(adapter): extend IUserPrompt with pack selection, version info, and update options`
+- [ ] **Task 2.2:** Add 7 new tests in `clack-prompts-adapter.test.ts`: 3 for `selectPacks` (default selection, cancel, locked label), 2 for `showVersionInfo` (v2.0+ status, missing status), 2 for `selectUpdateOption` (Option A selection, cancel). Commit (bundled): `test(adapter): cover IUserPrompt pack/version/update methods`
 
 **Checkpoint:** ✅
-- [ ] `scanMarkdownFilesRecursive` añadido y usado por `discoverValidSubagents`
-- [ ] `scanMarkdownFiles` preservado (non-recursive, usado por `discoverCommandAgentMap`)
-- [ ] 2 nuevos tests pasan (12/12 total en autoDiscovery.test.ts)
-- [ ] **Review con humano** — validar que la recursión no introduce ciclos infinitos
+- [ ] `IUserPrompt` extended with 3 new methods + types
+- [ ] `ClackPromptsAdapter` implements all 3 methods
+- [ ] 7 new adapter tests pass
+- [ ] `just test-integration` shows 100% pass
+- [ ] **Review con humano antes de Phase 3**
 
 ---
 
-## Phase 3: Test Updates
+## Phase 3: Install Use Cases
 
-- [ ] **Task 3.1:** Update `defaults.test.ts` (4 changes): (1) remove `VALID_SUBAGENTS` from import; (2) delete test "VALID_SUBAGENTS is a non-empty Set<string>"; (3) delete test "DEFAULTS contains VALID_SUBAGENTS"; (4) reformulate test "VALID_SUBAGENTS contains primary agents" to use `PRIMARY_AGENTS`. Commit: `test(plugin): remove VALID_SUBAGENTS assertions from defaults tests`
+- [ ] **Task 3.1:** Update `InstallUseCaseBase.ts`. Add new abstract hook `selectPacks(force: boolean): Promise<readonly string[]>`. Update `execute()` to insert `selectPacks` phase between `confirmOverwrite` and `selectOptionals`. Update `buildRules(selectedPacks, selectedOptionals)` signature (add packs param). Update `runPostInstall` to pass `selectedPacks` to `runPostInstallSteps`. Commit: `feat(usecase): add selectPacks phase to InstallUseCaseBase`
+- [ ] **Task 3.2:** Update `CleanInstallUseCase.ts` and `ProjectInstallUseCase.ts`. Override `selectPacks(force)`: `force=true` returns all 8 packs (Clean) or default `[software-development]` (Project); `force=false` shows interactive menu via `userPrompt.selectPacks()`. Override `buildRules(selectedPacks, selectedOptionals)`: apply `filterByPacks` first, then `isRuleSelected` (optionals), then category="mandatory" (Clean only). Commit (bundled): `feat(usecase): CleanInstall and ProjectInstall use pack selection with software-development default`
+- [ ] **Task 3.3:** Update `postInstall.ts`. Add `selectedPacks: readonly string[]` to `PostInstallOptions`. Pass `installedPacks: [...selectedPacks]` to `writeVersionFileSafe` (v2.0 format). Commit (bundled): `feat(postinstall): persist installedPacks in .codice-version`
+- [ ] **Task 3.4:** Update `tests/integration/use-cases/clean-install.test.ts` and `project-install.test.ts`. Add `selectPacks`, `showVersionInfo`, `selectUpdateOption` to `createMockPrompt`. Add 2 new tests per file: (1) default pack installed when force=true, (2) custom pack selection persisted to version file. Commit (bundled): `test(usecase): cover pack selection in Clean and Project install flows`
 
 **Checkpoint:** ✅
-- [ ] `defaults.test.ts` sin referencias a `VALID_SUBAGENTS`
-- [ ] Tests restantes pasan (0 fail)
-- [ ] Cobertura de `defaults.ts` ≥ 95% line
-- [ ] **Review con humano** — validar que ningún test crítico fue eliminado
+- [ ] `InstallUseCaseBase` has new `selectPacks` phase
+- [ ] `Clean`/`Project` use cases override correctly
+- [ ] `postInstall.ts` writes `installedPacks` to version file
+- [ ] 4+ new integration tests pass
+- [ ] **Review con humano antes de Phase 4**
 
 ---
 
-## Phase 4: Documentation Updates
+## Phase 4: Update Mode Rewrite
 
-- [ ] **Task 4.1:** Update `docs/wiki-source/SDD-Pipeline.md` (4 cambios + 1 nota): (1) línea 5: "1508 lines total" → recálculo; (2) línea 52: "104 agents: 98 subagents + 6 primary" → "~355 agents: ~349 subagents from packs/ + 6 primary"; (3) líneas 55-56: error message example; (4) línea 156: `defaults.ts` 529 → ~155; (5) post-línea 137: nota sobre recursive scan + hidden dirs skip
-- [ ] **Task 4.2:** Audit `docs/wiki-source/Agents.md` (esperado: 0 cambios). Si hay referencias a "VALID_SUBAGENTS catalog" o "104 agents", corregir inline. Commit: `docs(wiki): update SDD-Pipeline.md and Agents.md for FEV-20`
+- [ ] **Task 4.1:** Refactor `UpdateWorkspaceUseCase.ts`. Add **version gate pre-check**: read `.codice-version` via `WorkspaceVersion.fromJSON`, block if missing or `version < 2.0.0` (show specific warning). Add **Option A vs Option B menu** via `selectUpdateOption`. Add **pack scoping**: Option A merges only `installedPacks`; Option B shows `selectPacks` with installed LOCKED, requires >0 new packs. Add **non-interactive `--update-add-packs`** support via `options.addPacks` param. Persist updated `installedPacks` to version file. Commit: `feat(usecase): UpdateWorkspaceUseCase version gate and Option A/B flow`
+- [ ] **Task 4.2:** Update `tests/integration/use-cases/update-workspace.test.ts`. Add `selectPacks`, `showVersionInfo`, `selectUpdateOption` to `createMockPrompt`. Add 6 new tests: (1) blocked when `.codice-version` missing, (2) blocked when version < 2.0.0, (3) allowed when version >= 2.0.0, (4) Option A merges only installedPacks, (5) Option B adds new packs with installed LOCKED, (6) non-interactive `--update-add-packs` works. Commit (bundled): `test(usecase): cover UpdateWorkspaceUseCase version gate and Option A/B`
 
 **Checkpoint:** ✅
-- [ ] `SDD-Pipeline.md` actualizado: count, error message, module size, recursive scan note
-- [ ] `Agents.md` auditado (sin cambios esperados)
-- [ ] 0 referencias a "VALID_SUBAGENTS catalog" en `docs/wiki-source/`
-- [ ] **Review con humano** — validar coherencia docs ↔ código
+- [ ] `UpdateWorkspaceUseCase` reads `.codice-version` via `WorkspaceVersion.fromJSON`
+- [ ] Version gate blocks missing and < 2.0.0 with appropriate messages
+- [ ] Option A (current packs) and Option B (add packs) work correctly
+- [ ] Non-interactive `--update-add-packs` works
+- [ ] 6+ new integration tests pass
+- [ ] **Review con humano antes de Phase 5**
 
 ---
 
-## Phase 5: Verification (CRITICAL — gates Phase 6)
+## Phase 5: CLI Integration
 
-- [ ] **Task 5.1:** Run full verification — `just check` (0 errors) + `just test` (988+ tests pass, 0 fail — net 0 change) + `just test-e2e` (16/16 scenarios)
+- [ ] **Task 5.1:** Update `parse-args.ts`. Add 3 new flags: `--packs <list>` (VALUE_FLAG), `--packs-all` (ALLOWED_FLAG), `--update-add-packs <list>` (VALUE_FLAG). Add `packs`, `packsAll`, `updateAddPacks` to `CliOptions` interface. Update `main.ts`: add `detectVersionContext(fileSystem)` helper, call `userPrompt.showVersionInfo()` before mode menu, add `resolvePacks(options)` helper (--packs-all → all 8, --packs → user list, else default `[software-development]`), pass `packs`/`addPacks` to use cases in `runMode()`. Update `output.ts`: `printHelp()` documents 3 new flags. Commit: `feat(cli): add --packs/--packs-all/--update-add-packs flags and version detection`
+- [ ] **Task 5.2:** Update `tests/integration/cli/parse-args.test.ts` with 3 new tests (parses `--packs`, `--packs-all`, `--update-add-packs`). Update `tests/integration/cli/main.test.ts` with 2 new tests (detects v2.0+ installation, detects missing `.codice-version`). Commit (bundled): `test(cli): cover pack flags and version detection`
+
+**Checkpoint:** ✅
+- [ ] `parse-args.ts` supports 3 new flags
+- [ ] `main.ts` runs version detection before mode menu
+- [ ] `runMode()` passes packs/addPacks to use cases
+- [ ] `output.ts` help text updated
+- [ ] 5+ new CLI tests pass
+- [ ] **Review con humano antes de Phase 6**
+
+---
+
+## Phase 6: E2E Tests
+
+- [ ] **Task 6.1:** Create 7 new E2E bash scripts in `tests/e2e/`:
+  - `17-pack-selection-default.sh` — Verify `--packs software-development` installs default pack, agents present, `.codice-version` has `installedPacks`
+  - `18-pack-selection-custom.sh` — Verify `--packs software-development,business` installs both, no agents from unselected packs
+  - `19-pack-validation-min1.sh` — Verify `--packs ""` (empty) fails with exit 2
+  - `20-codice-version-installedPacks.sh` — Verify `.codice-version` has v2.0 format `{ version, installedPacks, installedAt, optionalSelections? }`
+  - `21-update-blocked-missing.sh` — Verify Update blocked when `.codice-version` missing (warning shown, success exit)
+  - `22-update-blocked-v1x.sh` — Verify Update blocked when version < 2.0.0 (warning "pre-2.0.0", success exit)
+  - `23-update-option-a.sh` — Verify Update Option A (default) merges only `installedPacks`, no new packs added
+  
+  Each script uses `common.sh` helpers (`assert_file_exists`, `assert_dir_missing`, `log_pass`, `log_fail`). Commit: `test(e2e): cover pack selection, version detection, and Option A/B for FEV-21`
+
+**Checkpoint:** ✅
+- [ ] 7 new E2E scripts created
+- [ ] All scripts pass (`just test-e2e` shows 23/23)
+- [ ] SC-UX1..SC-UX7 covered
+- [ ] SC-UX8..SC-UX12 deferred to FEV-23
+- [ ] **Review con humano antes de Phase 7**
+
+---
+
+## Phase 7: Final Documentation
+
+- [ ] **Task 7.1:** Update 3 files: (1) `CHANGELOG.md` — add FEV-21 entry with subsecciones (Added, Tech Debt) and summary; (2) `docs/WORKFLOW.md` — FEV-21 status `🔲 Planificado` → `✅ Completo (2026-08-06)` + expand section with detailed bullets; (3) `docs/TECH_DEBT.md` — add TD-V2-6 (No pack removal mechanism) to v2.0.0 open table. Commit: `docs: FEV-21 changelog, workflow, and tech debt updates (TD-V2-6 added)`
+
+**Checkpoint:** ✅
+- [ ] Commits atómicos con Conventional Commits (7 total)
+- [ ] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
+- [ ] Branch `feat/new-agents` ready para PR a `develop`
+- [ ] **FEV-21 cierra; FEV-22 (Updater Pack Scoping) puede comenzar**
+
+---
+
+## Phase 8: Verification (CRITICAL — gates FEV-22)
+
+- [ ] **Task 8.1:** Run full verification — `just check` (0 errors) + `just test` (1755+ tests pass, 0 fail) + `just test-e2e` (23/23 scenarios)
 - [ ] Manual validation:
-  - [ ] `head -25 template/obligatorio/core/.opencode/plugins/src/validSubagents.ts` muestra solo `PRIMARY_AGENTS`
-  - [ ] `grep "VALID_SUBAGENTS" template/obligatorio/core/.opencode/plugins/` returns 0
-  - [ ] `grep "scanMarkdownFilesRecursive" template/obligatorio/core/.opencode/plugins/src/autoDiscovery.ts` returns ≥ 2
+  - [ ] `bun run src/cli/main.ts --help` muestra 3 nuevos flags
+  - [ ] `bun run src/cli/main.ts --clean --force --packs software-development` ejecuta correctamente
+  - [ ] `cat tests/fixtures/workspace/.codice-version` muestra `installedPacks: ["software-development"]`
+  - [ ] `grep "category: \"pack\"" src/domain/entities/FileRuleManifestData.ts | wc -l` = 8
 
 **Checkpoint:** ✅
 - [ ] `just check` 0 errors
-- [ ] `just test` 988+ tests pass
-- [ ] `just test-e2e` 16/16 pass
-- [ ] Cobertura plugin ≥ 95% line
+- [ ] `just test` 1755+ tests pass
+- [ ] `just test-e2e` 23/23 pass
+- [ ] Coverage overall ≥ 95% line
+- [ ] **Si algo falla, NO proceder a FEV-22, identificar root cause**
 
 ---
 
-## Phase 6: Final Documentation
-
-- [ ] **Task 6.1:** Update 3 files: (1) `CHANGELOG.md` — add FEV-20 entry with 2 subsecciones (Changed, Docs); (2) `docs/WORKFLOW.md` — FEV-20 status `🔲 Planificado` → `✅ Completo (2026-08-05)` + expand section; (3) `docs/TECH_DEBT.md` — close TD-V2-1, TD-V2-5 in v2.0.0 Resolved section. Commit: `docs: FEV-20 changelog, workflow, and tech debt updates (TD-V2-1/5 closed)`
-
-**Checkpoint:** ✅
-- [ ] Commits atómicos con Conventional Commits (6 total)
-- [ ] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Branch `feat/new-agents` ready para PR a `develop`
-- [ ] **FEV-20 cierra; FEV-21 puede comenzar**
-
----
-
-## DoD Checklist — FEV-20
+## DoD Checklist — FEV-21
 
 ### Funcional
 
-- [ ] `validSubagents.ts` contiene solo `PRIMARY_AGENTS` (~25 lines, sin `VALID_SUBAGENTS`)
-- [ ] `defaults.ts` no importa ni re-exporta `VALID_SUBAGENTS`
-- [ ] `defaults.ts` `DEFAULTS` object no tiene campo `VALID_SUBAGENTS`
-- [ ] `sdd-pipeline.ts` importa `PRIMARY_AGENTS` desde `./src/validSubagents`
-- [ ] `sdd-pipeline.ts` fallback es `new Set(PRIMARY_AGENTS)`
-- [ ] `sdd-pipeline.ts` error message: "agents/ directory" (no "VALID_SUBAGENTS catalog")
-- [ ] `autoDiscovery.ts` tiene `scanMarkdownFilesRecursive` helper
-- [ ] `discoverValidSubagents()` usa la versión recursiva
-- [ ] Hidden directories se saltan
+- [ ] `WorkspaceVersion` constructor accepts 4 params; `fromJSON` accepts both `version` and `installedVersion` (backward compat)
+- [ ] `RuleCategory` includes `"pack"`; 8 pack entries in `FileRuleManifestData` use it
+- [ ] `getPackRules()` returns 8 pack rules; `filterByPacks(rules, selectedPacks)` correctly filters
+- [ ] `IUserPrompt` extended with `selectPacks`, `showVersionInfo`, `selectUpdateOption`
+- [ ] `ClackPromptsAdapter` implements all 3 new methods
+- [ ] `InstallUseCaseBase` has `selectPacks` phase; `Clean`/`Project` use cases override with default
+- [ ] `UpdateWorkspaceUseCase` has version gate + Option A/B + pack scoping
+- [ ] `parse-args.ts` supports `--packs`, `--packs-all`, `--update-add-packs`
+- [ ] `main.ts` runs version detection before mode menu
+- [ ] `output.ts` help text documents new flags
 
 ### Tests
 
-- [ ] `autoDiscovery.test.ts` tiene 2 nuevos tests (nested + hidden)
-- [ ] `defaults.test.ts` no tiene referencias a `VALID_SUBAGENTS`
-- [ ] 988+ tests pass, 0 fail (net 0 from baseline)
+- [ ] 8 new unit tests in workspace-version.test.ts (v2.0 format + backward compat)
+- [ ] 3 new unit tests in file-rule-manifest.test.ts (getPackRules + filterByPacks)
+- [ ] 7 new adapter tests in clack-prompts-adapter.test.ts (3 methods)
+- [ ] 4+ new use case tests in clean-install + project-install + update-workspace tests
+- [ ] 5+ new CLI tests in parse-args + main tests
+- [ ] 7 new E2E scripts (17-23) covering SC-UX1..SC-UX7
+- [ ] 1755+ tests pass, 0 fail (1747 baseline + 8+ new)
 
 ### Docs
 
-- [ ] `SDD-Pipeline.md` actualizado: count, error, size, recursive note
-- [ ] `Agents.md` auditado (sin cambios)
-- [ ] `CHANGELOG.md` entrada FEV-20
-- [ ] `docs/WORKFLOW.md` FEV-20 ✅
-- [ ] `docs/TECH_DEBT.md` TD-V2-1, TD-V2-5 cerradas
+- [ ] `CHANGELOG.md` entrada FEV-21 con subsecciones (Added, Tech Debt)
+- [ ] `docs/WORKFLOW.md` FEV-21 marcado ✅ + sección expandida
+- [ ] `docs/TECH_DEBT.md` TD-V2-6 añadido
+- [ ] Wiki público: NO sincronizado (deferred a FEV-23)
 
 ### Calidad
 
 - [ ] `just check`: 0 errors, 0 warnings nuevos
-- [ ] `just test`: 988+ tests, 0 fail
-- [ ] `just test-e2e`: 16/16 scenarios
-- [ ] Cobertura plugin ≥ 95% line
+- [ ] `just test`: 1755+ tests, 0 fail
+- [ ] `just test-e2e`: 23/23 scenarios
+- [ ] Coverage overall ≥ 95% line (unchanged or +)
 - [ ] No `any` types introducidos
 - [ ] No nuevos dependencies
 
 ### Proceso
 
-- [ ] 6 atomic commits con Conventional Commits
+- [ ] 7 atomic commits con Conventional Commits format
 - [ ] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Branch `feat/new-agents` (continúa de FEV-19)
+- [ ] Branch `feat/new-agents` (continúa de FEV-17/18/19/20)
 - [ ] PR description documentado
-- [ ] No version bump (v2.0.0 coordina al final)
+- [ ] No version bump (v2.0.0 coordina al final con FEV-22, FEV-23)
 
 ---
 
 ## Resumen de Archivos a Crear/Modificar
 
-### Archivos modificados (10)
+### Archivos modificados (25)
 
-**Plugin source (3):**
-1. `template/obligatorio/core/.opencode/plugins/src/validSubagents.ts` (-118 lines)
-2. `template/obligatorio/core/.opencode/plugins/src/defaults.ts` (-4 lines)
-3. `template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts` (±0 net)
+**Domain (4):**
+1. `src/domain/entities/WorkspaceVersion.ts` (+30 / -15)
+2. `src/domain/entities/FileRule.ts` (+1)
+3. `src/domain/entities/FileRuleManifestData.ts` (8 replacements, ~0 net)
+4. `src/domain/entities/FileRuleManifest.ts` (+25)
 
-**Plugin auto-discovery (1):**
-4. `template/obligatorio/core/.opencode/plugins/src/autoDiscovery.ts` (+25 lines)
+**Application (6):**
+5. `src/application/ports/IUserPrompt.ts` (+50)
+6. `src/application/use-cases/InstallUseCaseBase.ts` (+25 / -5)
+7. `src/application/use-cases/CleanInstallUseCase.ts` (+15)
+8. `src/application/use-cases/ProjectInstallUseCase.ts` (+15)
+9. `src/application/postInstall.ts` (+5)
+10. `src/application/use-cases/UpdateWorkspaceUseCase.ts` (+100 / -30)
 
-**Plugin tests (2):**
-5. `template/obligatorio/core/.opencode/plugins/src/__tests__/defaults.test.ts` (-12 lines)
-6. `template/obligatorio/core/.opencode/plugins/src/__tests__/autoDiscovery.test.ts` (+40 lines)
+**Infrastructure (1):**
+11. `src/infrastructure/adapters/ClackPromptsAdapter.ts` (+80)
 
-**Docs (4):**
-7. `docs/wiki-source/SDD-Pipeline.md` (~5 lines)
-8. `CHANGELOG.md` (+~20 lines)
-9. `docs/WORKFLOW.md` (~10 lines)
-10. `docs/TECH_DEBT.md` (+~10 lines)
+**CLI (3):**
+12. `src/cli/parse-args.ts` (+40)
+13. `src/cli/main.ts` (+40 / -5)
+14. `src/cli/output.ts` (+20)
 
-### Archivos NO modificados (verificados)
+**Tests (8):**
+15. `tests/unit/domain/workspace-version.test.ts` (+60 / -20)
+16. `tests/unit/file-rule-manifest.test.ts` (+30)
+17. `tests/integration/adapters/clack-prompts-adapter.test.ts` (+60)
+18. `tests/integration/use-cases/clean-install.test.ts` (+40)
+19. `tests/integration/use-cases/project-install.test.ts` (+40)
+20. `tests/integration/use-cases/update-workspace.test.ts` (+80 / -10)
+21. `tests/integration/cli/parse-args.test.ts` (+40)
+22. `tests/integration/cli/main.test.ts` (+30)
 
-- `configLoader.ts`, `destructivePatterns.ts`, `intentPatterns.ts`, `normalizeBash.ts`, `types.ts`, `escapeRegExp.ts` (no usan `VALID_SUBAGENTS`)
-- `template/obligatorio/packs/**` (agents intactos)
-- `docs/wiki-source/Agents.md` (auditado, sin cambios)
+**Docs (3):**
+23. `CHANGELOG.md` (+30)
+24. `docs/WORKFLOW.md` (+15)
+25. `docs/TECH_DEBT.md` (+10)
 
-### Nuevos archivos (0)
+### Archivos NUEVOS (7)
 
-- 0 scripts nuevos
-- 0 specs nuevos
-- 0 archivos de tests nuevos (2 tests añadidos a archivo existente)
+26. `tests/e2e/17-pack-selection-default.sh` (+80)
+27. `tests/e2e/18-pack-selection-custom.sh` (+80)
+28. `tests/e2e/19-pack-validation-min1.sh` (+60)
+29. `tests/e2e/20-codice-version-installedPacks.sh` (+70)
+30. `tests/e2e/21-update-blocked-missing.sh` (+50)
+31. `tests/e2e/22-update-blocked-v1x.sh` (+60)
+32. `tests/e2e/23-update-option-a.sh` (+90)
 
 ### Total changes
 
-- 10 files modified
-- +115 lines, -148 lines = **-33 lines net**
-- 6 atomic commits
-- 2 new tests (autoDiscovery), 2 tests removed (defaults)
+- **25 files modified + 7 new = 32 total files**
+- **+1,182 lines, -85 lines = +1,097 lines net**
+- **7 atomic commits + 1 verification** (no commit)
 
 ---
 
 ## Métricas Esperadas
 
-| Métrica | Baseline (post-FEV-19) | Meta FEV-20 | Verificación |
+| Métrica | Baseline (post-FEV-20) | Meta FEV-21 | Verificación |
 |---------|------------------------|-------------|--------------|
-| Tests (pass/fail) | 991 / 0 | 991 / 0 (net 0) | `just test` |
-| E2E scenarios | 16 / 16 | 16 / 16 | `just test-e2e` |
+| Tests (pass/fail) | 1747 / 0 | 1755+ / 0 (net +8 unit +7 adapter +4+ use case +5+ CLI = +24+ tests) | `just test` |
+| E2E scenarios | 16 / 16 | 23 / 23 (16 baseline + 7 new) | `just test-e2e` |
 | `just check` errors | 0 | 0 | `just check` |
-| Coverage (plugin) | ≥95% | ≥95% | `bun test --coverage` |
-| Hardcoded agents in plugin | 114 (6+108) | 6 (solo PRIMARY_AGENTS) | `grep "VALID_SUBAGENTS" plugin` |
-| `VALID_SUBAGENTS` references | 11 | 0 | `grep "VALID_SUBAGENTS" plugin/` |
-| Files touched | — | 10 | `git diff --stat` |
-| Atomic commits | — | 6 | `git log --oneline develop..HEAD \| wc -l` |
-| Wall-clock | — | ~3h | Self-reported |
+| `just check-plugin` errors | 0 | 0 | `just check-plugin` |
+| Coverage (lines) | ≥95% | ≥95% | `bun test --coverage` |
+| `.codice-version` fields | 3 | 4 (`version`, `installedPacks`, `installedAt`, `optionalSelections?`) | `grep` schema |
+| `RuleCategory` values | 3 | 4 (`mandatory`, `standard`, `optional`, `pack`) | `grep "RuleCategory"` |
+| `IUserPrompt` methods | 12 | 15 (+3: selectPacks, showVersionInfo, selectUpdateOption) | `grep` interface |
+| CLI flags | 7 | 10 (+3: --packs, --packs-all, --update-add-packs) | `--help` |
+| FileRule `category: "pack"` entries | 0 | 8 | `grep` manifest |
+| Files touched | — | 25 modified + 7 new = 32 total | `git diff --stat` |
+| Atomic commits | — | 7 | `git log --oneline` |
+| Wall-clock | — | ~8h | Self-reported |
 
 ---
 
@@ -270,21 +379,23 @@ FEV-20 Complete → FEV-21 ready
 
 ```mermaid
 graph TD
-    F19[FEV-19 ✅] --> T11
-    T11[T1.1 validSubagents]:::seq --> T12
-    T12[T1.2 defaults]:::seq --> T13
-    T13[T1.3 sdd-pipeline]:::seq --> CP1
-    CP1{Phase 1}:::gate --> T21
-    T21[T2.1 autoDiscovery]:::seq --> CP2
-    CP2{Phase 2}:::gate --> T31
-    T31[T3.1 defaults.test]:::seq --> CP3
-    CP3{Phase 3}:::gate --> T41
-    T41[T4.1 SDD-Pipeline + T4.2 Agents audit]:::seq --> CP4
-    CP4{Phase 4}:::gate --> T51
-    T51[T5.1 just check + test + e2e]:::seq --> CP5
-    CP5{Phase 5}:::gate --> T61
-    T61[T6.1 Changelogs]:::seq --> DONE
-    DONE[FEV-20 ✅]:::done
+    F20[FEV-20 ✅] --> P1
+    P1[Phase 1: Domain<br/>~1.5h<br/>1 commit]:::seq --> CP1
+    CP1{Phase 1}:::gate --> P2
+    P2[Phase 2: IUserPrompt<br/>~1.5h<br/>1 commit]:::seq --> CP2
+    CP2{Phase 2}:::gate --> P3
+    P3[Phase 3: Use Cases<br/>~1.5h<br/>1 commit]:::seq --> CP3
+    CP3{Phase 3}:::gate --> P4
+    P4[Phase 4: Update Mode<br/>~1.5h<br/>1 commit]:::seq --> CP4
+    CP4{Phase 4}:::gate --> P5
+    P5[Phase 5: CLI<br/>~0.5h<br/>1 commit]:::seq --> CP5
+    CP5{Phase 5}:::gate --> P6
+    P6[Phase 6: E2E<br/>~1h<br/>1 commit]:::seq --> CP6
+    CP6{Phase 6}:::gate --> P7
+    P7[Phase 7: Docs<br/>~0.5h<br/>1 commit]:::seq --> CP7
+    CP7{Phase 7}:::gate --> V
+    V[Phase 8: Verify<br/>~0.25h<br/>no commit]:::seq --> DONE
+    DONE[FEV-21 ✅]:::done
 
     classDef done fill:#51cf66,stroke:#2f9e44,color:#fff
     classDef gate fill:#ffd43b,stroke:#f59f00,color:#000
@@ -295,27 +406,31 @@ graph TD
 
 ## Open Questions (decidir durante ejecución)
 
-1. **¿Mantener `PRIMARY_AGENTS` re-exportado desde `defaults.ts`?** → **SÍ** (consumidores no cambian).
-2. **¿Mover test de `PRIMARY_AGENTS` a `validSubagents.test.ts`?** → **NO** (dejar en `defaults.test.ts`, no crear archivo nuevo).
-3. **¿Sincronizar Wiki público en FEV-20 o esperar a FEV-23?** → **ESPERAR** (consistente con FEV-19).
+1. **¿Migración in-place de v1.x `.codice-version` (add `installedPacks: ["software-development"]`)?** → **NO** (ADR-015 línea 116-122: rejected). User must reinstall.
+2. **¿Validar pack IDs en `parse-args` (--packs invalid → exit 2)?** → **SÍ** (R4 mitigation). Add validation in `runMode()` or `parseArgs()`.
+3. **¿Default selection en Update Option B? (¿pre-select installed packs?)** → **SÍ** (spec §4.3 línea 181). `selectPacks(installedPacks, locked: installed)` → pre-selected.
+4. **¿Persistir `optionalSelections` en Update? (¿preservar selecciones del install original?)** → **NO** (Update mode spec §6.1: "Skip opcional entirely"). Update no toca opcionales; limpia el array.
+5. **¿Helper para contar agents por pack (PackOption.agentCount)?** → **DEFER** to FEV-22. Por ahora `agentCount: 0` en PackOption. Approximate count is sufficient (spec §10 Q4).
 
 ---
 
 ## Próximo Paso
 
 Una vez aprobado el plan:
-1. **Phase 1** (3 commits, ~1h) — Plugin source: `validSubagents.ts` + `defaults.ts` + `sdd-pipeline.ts`
-2. **Phase 2** (1 commit, ~0.5h) — Auto-discovery recursive scan + 2 tests
-3. **Phase 3** (1 commit, ~0.5h) — `defaults.test.ts` cleanup
-4. **Phase 4** (1 commit, ~0.5h) — Wiki updates
-5. **Phase 5** (verification, ~0.25h) — Quality gates
-6. **Phase 6** (1 commit, ~0.25h) — Changelog + workflow + tech debt
-7. **Total:** ~3h wall-clock, 1 día calendario con review cycles
+1. **Phase 1** (1 commit, ~1.5h) — Domain Foundation: `WorkspaceVersion` + `FileRule` + `FileRuleManifestData` + 2 unit tests
+2. **Phase 2** (1 commit, ~1.5h) — IUserPrompt Port: 3 new methods + adapter implementation + 7 tests
+3. **Phase 3** (1 commit, ~1.5h) — Install Use Cases: `InstallUseCaseBase` + `Clean`/`Project` + `postInstall` + 4+ tests
+4. **Phase 4** (1 commit, ~1.5h) — Update Mode: `UpdateWorkspaceUseCase` rewrite (version gate + A/B) + 6+ tests
+5. **Phase 5** (1 commit, ~0.5h) — CLI Integration: `parse-args` + `main` + `output` + 5+ tests
+6. **Phase 6** (1 commit, ~1h) — E2E Tests: 7 new bash scripts
+7. **Phase 7** (1 commit, ~0.5h) — Changelog + workflow + tech debt
+8. **Phase 8** (verification, ~0.25h) — `just check` + `just test` + `just test-e2e`
+9. **Total:** ~8.25h wall-clock, 2 días calendario con review cycles
 
-**Comando sugerido:** `> Run /build to start Phase 1 Task 1.1 (delete VALID_SUBAGENTS Set from validSubagents.ts)`
+**Comando sugerido:** `> Run /build to start Phase 1 Task 1.1 (extend WorkspaceVersion with installedPacks and v2.0 format)`
 
 ---
 
-*Última actualización: 2026-08-05 — Moctezuma (Strategic Planner) — FEV-20 plan ready for human review*
+*Última actualización: 2026-08-06 — Moctezuma (Strategic Planner) — FEV-21 plan ready for human review*
 
 Co-Authored-By: Moctezuma <dev@fisherk2.com>
