@@ -142,9 +142,13 @@ function mergePhaseSuggestions(
 
 		if (isRecord(agentMap)) {
 			// merged is seeded from DEFAULTS.PHASE_SUGGESTIONS, which covers
-			// every phase accepted by isValidPhase — the entry always exists.
-			for (const [agent, suggestion] of Object.entries(agentMap)) {
-				merged[phase][agent] = String(suggestion);
+			// every phase accepted by isValidPhase, so the entry always
+			// exists — but noUncheckedIndexedAccess requires the guard.
+			const phaseMap = merged[phase];
+			if (phaseMap) {
+				for (const [agent, suggestion] of Object.entries(agentMap)) {
+					phaseMap[agent] = String(suggestion);
+				}
 			}
 		}
 	}

@@ -337,7 +337,7 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 					if (subagentName && !validSubagents.has(subagentName.toLowerCase())) {
 						audit("tool.before", `BLOCKED task: unknown subagent "${subagentName}"`);
 						throw new SddError(
-							`Unknown subagent: "${subagentName}". Create an .md file in the agents/ directory or use a primary agent.`,
+							`Unknown subagent: "${subagentName}". Create an .md file in ${join(projectDir, "agents")}/ or use a primary agent.`,
 						);
 					}
 				}

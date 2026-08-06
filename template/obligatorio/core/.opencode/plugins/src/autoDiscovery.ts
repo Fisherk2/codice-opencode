@@ -87,8 +87,12 @@ export function discoverValidSubagents(agentsDir: string): Set<string> {
 	const discovered = scanMarkdownFilesRecursive(agentsDir);
 	// Lowercase both sides so sdd-pipeline.ts can match case-insensitively
 	// (agent files are lowercase by convention, but discovery must tolerate
-	// any casing in the filesystem).
-	return new Set([...discovered, ...PRIMARY_AGENTS].map((name) => name.toLowerCase()));
+	// any casing in the filesystem). PRIMARY_AGENTS are already lowercase.
+	const names = new Set<string>(PRIMARY_AGENTS);
+	for (const name of discovered) {
+		names.add(name.toLowerCase());
+	}
+	return names;
 }
 
 /**
@@ -148,8 +152,9 @@ function parseAgentFromFrontmatter(content: string): string | null {
 		return null;
 	}
 
-	// noUncheckedIndexedAccess types regex groups as `string | undefined`,
-	// so the guard is required even though `(.+)` always captures ≥1 char.
+	// noUncheckedIndexedAccess (enabled in both the root and plugin tsconfigs)
+	// types regex groups as `string | undefined`, so the guard is required
+	// even though `(.+)` always captures ≥1 char.
 	const rawValue = agentMatch[1];
 	if (!rawValue) {
 		return null;
