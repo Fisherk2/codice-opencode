@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -315,6 +315,29 @@ describe("discoverValidSubagents()", () => {
 		expect(result.has("my-agent")).toBe(true);
 		expect(result.has("My-Agent")).toBe(false);
 	});
+
+	test("15. Duplicate basenames across subdirectories are deduped with a warning", () => {
+		createTestFixture(agentsDir);
+		// Two packs that both define the same agent basename — the caller's
+		// Set dedupes, and the scanner warns so the ambiguity isn't silent.
+		mkdirSync(join(agentsDir, "pack-a"), { recursive: true });
+		writeAgentFile(join(agentsDir, "pack-a"), "shared-agent.md");
+		mkdirSync(join(agentsDir, "pack-b"), { recursive: true });
+		writeAgentFile(join(agentsDir, "pack-b"), "shared-agent.md");
+		writeAgentFile(agentsDir, "unique-agent.md");
+
+		const debugSpy = spyOn(console, "debug");
+		try {
+			const result = discoverValidSubagents(agentsDir);
+
+			expect(result.has("shared-agent")).toBe(true);
+			expect(result.size).toBe(2 + PRIMARY.length);
+			const debugCalls = debugSpy.mock.calls.flat().map((c: unknown) => String(c));
+			expect(debugCalls.some((c) => c.includes("Duplicate agent basename"))).toBe(true);
+		} finally {
+			debugSpy.mockRestore();
+		}
+	});
 });
 
 describe("discoverAgentMentionPatterns()", () => {
@@ -329,22 +352,32 @@ describe("discoverAgentMentionPatterns()", () => {
 
 		// Check huitzilopochtli patterns
 		const huitziPatterns = result.huitzilopochtli;
-		expect(huitziPatterns).toHaveLength(2);
-		expect(huitziPatterns[0]).toBeInstanceOf(RegExp);
-		expect(huitziPatterns[1]).toBeInstanceOf(RegExp);
+		expect(huitziPatterns?.length).toBe(2);
+		expect(huitziPatterns?.[0]).toBeInstanceOf(RegExp);
+		expect(huitziPatterns?.[1]).toBeInstanceOf(RegExp);
 
 		// Verify patterns match correctly
-		expect(huitziPatterns[0].test("@huitzilopochtli")).toBe(true);
-		expect(huitziPatterns[0].test("@huitzilopochtli ")).toBe(true);
-		expect(huitziPatterns[0].test("@huitzilopochtli!")).toBe(true);
-		expect(huitziPatterns[0].test("@huitzilopochtliX")).toBe(false); // word boundary
-		expect(huitziPatterns[1].test("agente huitzilopochtli")).toBe(true);
-		expect(huitziPatterns[1].test("agente tlaloc")).toBe(false);
+		expect(huitziPatterns?.[0]?.test("@huitzilopochtli")).toBe(true);
+		expect(huitziPatterns?.[0]?.test("@huitzilopochtli ")).toBe(true);
+		expect(huitziPatterns?.[0]?.test("@huitzilopochtli!")).toBe(true);
+		expect(huitziPatterns?.[0]?.test("@huitzilopochtliX")).toBe(false); // word boundary
+		expect(huitziPatterns?.[1]?.test("agente huitzilopochtli")).toBe(true);
+		expect(huitziPatterns?.[1]?.test("agente tlaloc")).toBe(false);
 	});
 
 	test("10. Works with empty set", () => {
 		const result = discoverAgentMentionPatterns(new Set());
 
 		expect(result).toEqual({});
+	});
+
+	test("11. Non-primary agents are excluded from mention patterns", () => {
+		const agents = new Set(["tlaloc", "backend-developer", "docs-writer"]);
+
+		const result = discoverAgentMentionPatterns(agents);
+
+		expect(result).toHaveProperty("tlaloc");
+		expect(result).not.toHaveProperty("backend-developer");
+		expect(result).not.toHaveProperty("docs-writer");
 	});
 });

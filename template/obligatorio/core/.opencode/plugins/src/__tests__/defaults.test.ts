@@ -92,10 +92,10 @@ describe("defaults.ts — spot-check known keys", () => {
 	});
 
 	test("INTENT_PATTERNS contains expected commands", () => {
-		expect(INTENT_PATTERNS["/build"]).toBeDefined();
-		expect(INTENT_PATTERNS["/build"].length).toBeGreaterThan(0);
-		expect(INTENT_PATTERNS["/build"].includes("build")).toBe(true);
-		expect(INTENT_PATTERNS["/test"].includes("test")).toBe(true);
+		const buildKeywords = INTENT_PATTERNS["/build"];
+		expect(buildKeywords?.length).toBeGreaterThan(0);
+		expect(buildKeywords?.includes("build")).toBe(true);
+		expect(INTENT_PATTERNS["/test"]?.includes("test")).toBe(true);
 	});
 
 	test("AGENT_MENTION_PATTERNS contains expected agent keys", () => {
