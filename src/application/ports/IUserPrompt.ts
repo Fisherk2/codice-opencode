@@ -1,6 +1,46 @@
 import type { FileRule } from "../../domain/entities/FileRule";
 
 /**
+ * Pack metadata for the pack selection screen.
+ */
+export interface PackOption {
+	/** Pack identifier (e.g., "software-development") */
+	readonly id: string;
+	/** Human-readable name (e.g., "Software Development") */
+	readonly name: string;
+	/** Short description of pack contents */
+	readonly description: string;
+	/** Approximate agent count in this pack */
+	readonly agentCount: number;
+	/** Whether this pack is locked (already installed, can't be deselected in Update Option B) */
+	readonly locked?: boolean;
+}
+
+/**
+ * Display metadata for the local installation state.
+ * Used to show "Current installation: v2.0.0, Packs: software-development" in the TUI.
+ */
+export interface VersionDisplayInfo {
+	/** Detected local version (e.g., "2.0.0"), or null if not detected */
+	readonly version: string | null;
+	/** Packs installed locally (empty if pre-v2.0) */
+	readonly installedPacks: readonly string[];
+	/** Installation status for messaging */
+	readonly status: "missing" | "pre-1.2.0" | "pre-2.0.0" | "v2.0+";
+}
+
+/**
+ * Update sub-option choice.
+ */
+export type UpdateOption = "current" | "add" | "cancel";
+
+export interface UpdateOptionChoice {
+	readonly value: UpdateOption;
+	readonly label: string;
+	readonly hint?: string;
+}
+
+/**
  * Abstract TUI interactions for prompts, confirmations,
  * and file selection checklists.
  */
@@ -84,4 +124,31 @@ export interface IUserPrompt {
 	 * @returns Selected mode ("clean" | "project" | "update"), or null if cancelled.
 	 */
 	promptForMode(): Promise<"clean" | "project" | "update" | null>;
+
+	/**
+	 * selectPacks — present a multiselect checklist for agent packs.
+	 * Used in Clean Install, Project Install, and Update Option B flows.
+	 *
+	 * @param options - List of pack options to present.
+	 * @param preSelected - Pack IDs to pre-select (e.g., ["software-development"] for default).
+	 * @returns Selected pack IDs. Empty array on cancel.
+	 */
+	selectPacks(
+		options: readonly PackOption[],
+		preSelected: readonly string[],
+	): Promise<readonly string[]>;
+
+	/**
+	 * showVersionInfo — display detected local installation info to the user.
+	 * Shown before the mode menu when version is detected.
+	 */
+	showVersionInfo(info: VersionDisplayInfo): void;
+
+	/**
+	 * selectUpdateOption — prompt user to choose between Update Option A (current packs) or Option B (add packs).
+	 *
+	 * @param options - Available update choices.
+	 * @returns Selected option or null on cancel.
+	 */
+	selectUpdateOption(options: readonly UpdateOptionChoice[]): Promise<UpdateOption | null>;
 }

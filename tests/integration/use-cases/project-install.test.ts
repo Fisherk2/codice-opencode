@@ -86,6 +86,11 @@ function createMockPrompt(): IUserPrompt {
 		showCancel: mockFn(() => {}),
 		showError: mockFn(() => {}),
 		promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
+		selectPacks: mockFn(() => Promise.resolve(["software-development"] as const)),
+		showVersionInfo: mockFn(() => {}),
+		selectUpdateOption: mockFn(() =>
+			Promise.resolve<"current" | "add" | "cancel" | null>("current"),
+		),
 	};
 }
 

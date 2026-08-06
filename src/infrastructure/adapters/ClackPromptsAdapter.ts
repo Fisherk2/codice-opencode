@@ -1,6 +1,14 @@
 import * as clack from "@clack/prompts";
-import type { IUserPrompt } from "../../application/ports/IUserPrompt";
+import type {
+	IUserPrompt,
+	PackOption,
+	UpdateOption,
+	UpdateOptionChoice,
+	VersionDisplayInfo,
+} from "../../application/ports/IUserPrompt";
 import type { FileRule } from "../../domain/entities/FileRule";
+import { toPackPromptOption } from "./packPromptOptions";
+import { buildVersionInfoMessages } from "./versionInfoMessages";
 
 /** @clack/prompts adapter implementing IUserPrompt. */
 
@@ -57,15 +65,8 @@ export class ClackPromptsAdapter implements IUserPrompt {
 	 * @returns true if user confirmed.
 	 */
 	async confirm(message: string, defaultYes?: boolean): Promise<boolean> {
-		const result = await clack.confirm({
-			message,
-			initialValue: defaultYes ?? true,
-		});
-
-		if (clack.isCancel(result)) {
-			return false;
-		}
-
+		const result = await clack.confirm({ message, initialValue: defaultYes ?? true });
+		if (clack.isCancel(result)) return false;
 		return result as boolean;
 	}
 
@@ -75,29 +76,18 @@ export class ClackPromptsAdapter implements IUserPrompt {
 	 * @returns Selected paths (the `path` property of each selected FileRule).
 	 */
 	async selectOptional(options: readonly FileRule[]): Promise<string[]> {
-		if (options.length === 0) {
-			return [];
-		}
-
-		// Build options for the multiselect prompt
-		const promptOptions: { value: string; label: string; hint?: string }[] = options.map(
-			(rule) => ({
-				value: rule.path,
-				label: rule.path,
-				hint: rule.description || undefined,
-			}),
-		);
-
+		if (options.length === 0) return [];
+		const promptOptions = options.map((rule) => ({
+			value: rule.path,
+			label: rule.path,
+			hint: rule.description || undefined,
+		}));
 		const result = await clack.multiselect({
 			message: "Select optional files to install:",
 			options: promptOptions,
 			required: false,
 		});
-
-		if (clack.isCancel(result)) {
-			return [];
-		}
-
+		if (clack.isCancel(result)) return [];
 		return result;
 	}
 
@@ -169,5 +159,39 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		});
 		if (clack.isCancel(result)) return null;
 		return result as "clean" | "project" | "update";
+	}
+
+	/** Present the agent pack selection checklist. Returns selected IDs, [] on cancel. */
+	async selectPacks(
+		options: readonly PackOption[],
+		preSelected: readonly string[],
+	): Promise<readonly string[]> {
+		if (options.length === 0) return [];
+		const promptOptions = options.map(toPackPromptOption);
+		const initialValues = preSelected.filter((id) => options.some((opt) => opt.id === id));
+		const result = await clack.multiselect({
+			message: "Select agent packs to install:",
+			options: promptOptions,
+			initialValues,
+			required: true,
+		});
+		if (clack.isCancel(result)) return [];
+		return result as readonly string[];
+	}
+
+	/** Display detected local installation info before the mode menu. */
+	showVersionInfo(info: VersionDisplayInfo): void {
+		const { title, message } = buildVersionInfoMessages(info);
+		clack.note(message, title);
+	}
+
+	/** Prompt for Update Option A or Option B. Returns null on cancel. */
+	async selectUpdateOption(options: readonly UpdateOptionChoice[]): Promise<UpdateOption | null> {
+		const result = await clack.select({
+			message: "Select update option:",
+			options: options.map((opt) => ({ value: opt.value, label: opt.label, hint: opt.hint })),
+		});
+		if (clack.isCancel(result)) return null;
+		return result as UpdateOption;
 	}
 }

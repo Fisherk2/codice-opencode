@@ -38,6 +38,11 @@ function createMockUserPrompt(
 		logProgressEvent: mockFn(() => {}),
 		showSuccess: mockFn(() => {}),
 		showError: mockFn(() => {}),
+		selectPacks: mockFn(() => Promise.resolve(["software-development"] as const)),
+		showVersionInfo: mockFn(() => {}),
+		selectUpdateOption: mockFn(() =>
+			Promise.resolve<"current" | "add" | "cancel" | null>("current"),
+		),
 	};
 }
 

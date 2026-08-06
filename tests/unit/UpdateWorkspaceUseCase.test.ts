@@ -108,6 +108,20 @@ class FakeUserPrompt implements IUserPrompt {
 	async promptForMode(): Promise<"clean" | "project" | "update" | null> {
 		return null;
 	}
+	async selectPacks(
+		_options: readonly import("../../src/application/ports/IUserPrompt").PackOption[],
+		_preSelected: readonly string[],
+	): Promise<readonly string[]> {
+		return ["software-development"];
+	}
+	showVersionInfo(
+		_info: import("../../src/application/ports/IUserPrompt").VersionDisplayInfo,
+	): void {}
+	async selectUpdateOption(
+		_options: readonly import("../../src/application/ports/IUserPrompt").UpdateOptionChoice[],
+	): Promise<"current" | "add" | "cancel" | null> {
+		return "current";
+	}
 }
 
 class FakeVersionComparator implements IVersionComparator {
