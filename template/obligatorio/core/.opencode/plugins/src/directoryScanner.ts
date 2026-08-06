@@ -8,9 +8,11 @@
 //   with a future packs/<name>/ layout per ADR-014). Used by
 //   discoverValidSubagents().
 //
-// Hidden entries (dot-files and dot-directories) are skipped in BOTH variants
-// so tooling-internal state (.git, .opencode, .gitkeep) never registers as an
-// agent or command name.
+// Hidden entries are skipped by the recursive variant (dot-files and
+// dot-directories) so tooling-internal state (.git, .opencode, .gitkeep)
+// never registers as an agent name. The flat variant only filters by the
+// `.md` extension — command files are user-authored and expected to be
+// visible at the top level of commands/.
 // ---------------------------------------------------------------------------
 
 import { existsSync, readdirSync } from "node:fs";

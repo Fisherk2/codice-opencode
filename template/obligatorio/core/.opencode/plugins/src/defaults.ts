@@ -10,8 +10,8 @@
 // All exports are deeply readonly to prevent accidental mutation at runtime.
 // ---------------------------------------------------------------------------
 
-import { escapeRegExp } from "./escapeRegExp";
 import { INTENT_PATTERNS } from "./intentPatterns";
+import { mentionPatternsFor } from "./mentionPatterns";
 import { PRIMARY_AGENTS } from "./validSubagents";
 
 export { DESTRUCTIVE_PATTERNS } from "./destructivePatterns";
@@ -125,12 +125,7 @@ export const PHASE_SUGGESTIONS: Readonly<Record<string, Readonly<Record<string, 
  * switch in the pipeline.
  */
 export const AGENT_MENTION_PATTERNS: Readonly<Record<string, readonly RegExp[]>> =
-	Object.fromEntries(
-		PRIMARY_AGENTS.map((agent) => {
-			const escaped = escapeRegExp(agent);
-			return [agent, [new RegExp(`@${escaped}\\b`, "i"), new RegExp(`agente\\s+${escaped}`, "i")]];
-		}),
-	) as Readonly<Record<string, readonly RegExp[]>>;
+	Object.fromEntries(PRIMARY_AGENTS.map((agent) => [agent, mentionPatternsFor(agent)]));
 
 /**
  * Aggregated DEFAULTS object containing all 5 configuration maps.

@@ -12,7 +12,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { scanMarkdownFiles, scanMarkdownFilesRecursive } from "./directoryScanner";
-import { escapeRegExp } from "./escapeRegExp";
+import { mentionPatternsFor } from "./mentionPatterns";
 import { PRIMARY_AGENTS } from "./validSubagents";
 
 // ---------------------------------------------------------------------------
@@ -112,8 +112,7 @@ export function discoverAgentMentionPatterns(agents: Set<string>): Record<string
 
 	for (const agent of agents) {
 		if (!primary.has(agent)) continue; // Only primary agents get mention patterns
-		const escaped = escapeRegExp(agent);
-		patterns[agent] = [new RegExp(`@${escaped}\\b`, "i"), new RegExp(`agente\\s+${escaped}`, "i")];
+		patterns[agent] = mentionPatternsFor(agent);
 	}
 
 	return patterns;
@@ -149,6 +148,8 @@ function parseAgentFromFrontmatter(content: string): string | null {
 		return null;
 	}
 
+	// noUncheckedIndexedAccess types regex groups as `string | undefined`,
+	// so the guard is required even though `(.+)` always captures ≥1 char.
 	const rawValue = agentMatch[1];
 	if (!rawValue) {
 		return null;
