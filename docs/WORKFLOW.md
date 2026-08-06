@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.0.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-04 (FEV-18 completado; FEV-19 listo para planeación) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-05 (FEV-19 completado; FEV-20 listo para planeación) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
