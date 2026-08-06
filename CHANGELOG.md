@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tests: removed 2 `VALID_SUBAGENTS` assertions in `defaults.test.ts`; added 4 auto-discovery tests (nested subdirs, hidden dirs, hidden dot-files, lowercase normalization); `toolExecuteBefore.test.ts` rewritten to model filesystem discovery.
   - Wiki `SDD-Pipeline.md` updated: agent count 104 → ~361, error message example, recursive-scan note, module table.
 
+- **FEV-20 — Post-review hardening (5-axis code review fixes):**
+  - `directoryScanner.ts`: `scanMarkdownFilesRecursive` now takes `maxDepth = 10` to guard against stack overflow on pathological trees; a shared `seen`-set across recursion levels emits a `console.debug` warning when the same agent basename appears in two subtrees (previously silent dedup via the caller's `Set`). Extracted internal `scanTree` helper to share accumulators while keeping the public `(dir, maxDepth?)` signature.
+  - `autoDiscovery.ts`: `discoverValidSubagents` seeds the `Set` from `PRIMARY_AGENTS` (already lowercase) and lowercases only discovered names — avoids the intermediate spread+map array. Guard comment on `parseAgentFromFrontmatter` clarified (noUncheckedIndexedAccess enabled in both root and plugin tsconfigs).
+  - `mergeConfig.ts`: added lookup guard on `merged[phase]` required by noUncheckedIndexedAccess.
+  - `sdd-pipeline.ts`: unknown-subagent error now includes the absolute `agents/` path (`${join(projectDir, "agents")}/`) per CODE_STYLE actionable-message guidance.
+  - Plugin `tsconfig.json`: enabled `noUncheckedIndexedAccess: true` so the plugin's own compiler enforces the guard (previously only the root tsconfig enforced it, and it excludes `template/`).
+  - Tests: added test 15 (duplicate basenames dedupe + warning emitted via `spyOn(console, "debug")`) and test 11 (non-primary agents excluded from `discoverAgentMentionPatterns`) in `autoDiscovery.test.ts`; `defaults.test.ts` and `autoDiscovery.test.ts` updated for noUncheckedIndexedAccess (optional chaining on record lookups).
+  - `just check-plugin` now runs `tsc` against the plugin tsconfig (previously Biome only).
+
 - **FEV-19 — Permission Unification & Subagent Table Removal (v2.0 Phase 3):**
   - Unified `task:` permissions for 4 primary delegators (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli) to `"*": allow` + deny 5 other primaries pattern. Moctezuma and tezcatlipoca unchanged (`task: "*": deny`). 106 explicit allow-list entries removed (quetzalcoatl 21, tlaloc 73, mictlantecuhtli 12).
   - **Removed ALL subagent index/catalog sections from the 6 primary agents** (user decision 2026-08-05): huitzilopochtli's ~355-subagent AVAILABLE SUBAGENTS catalog included. RULES now reference the `agents/` directory: "use ANY subagents in `agents/`". Primary agents never delegate to each other.

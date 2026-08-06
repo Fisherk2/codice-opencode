@@ -319,10 +319,14 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - `defaults.ts`: removidas referencias a `VALID_SUBAGENTS` (imports, re-exports, DEFAULTS object — ahora 5 maps)
 - `sdd-pipeline.ts`: fallback `DEFAULTS.VALID_SUBAGENTS` → `new Set(PRIMARY_AGENTS)`; mensaje de error → "agents/ directory"; validación case-insensitive (lowercase en match + discovery)
 - `discoverValidSubagents()` ahora escanea recursivamente subdirectorios (forward-compatible con `packs/<name>/`); salta entries ocultos (`.git`, `.opencode`, dot-files)
-- `directoryScanner.ts` extraído (scanMarkdownFiles flat + scanMarkdownFilesRecursive) para mantener `autoDiscovery.ts` ≤ 200 líneas
-- Tests: -2 assertions en `defaults.test.ts`, +4 tests en `autoDiscovery.test.ts` (nested, hidden dirs, dot-files, lowercase), `toolExecuteBefore.test.ts` reescrito para modelar auto-discovery
-- Docs: Wiki `SDD-Pipeline.md` actualizado (count 104 → ~361, error msg, recursive note), plugin README actualizado, `Agents.md` auditado sin cambios
-**Resultado:** Plugin sin catálogo hardcoded, auto-discovery recursivo, 175 plugin tests + 1747 suite + 16/16 E2E + 3/3 plugin E2E, `just check` limpio.
+- `directoryScanner.ts` extraído (scanMarkdownFiles flat + scanMarkdownFilesRecursive con maxDepth=10 y warning de basenames duplicados) para mantener `autoDiscovery.ts` ≤ 200 líneas
+- `discoverValidSubagents()` optimizado: siembra el Set desde `PRIMARY_AGENTS` (ya lowercase), evita array intermedio
+- `sdd-pipeline.ts`: mensaje de error ahora incluye ruta absoluta (`${join(projectDir, "agents")}/`)
+- Plugin `tsconfig.json`: `noUncheckedIndexedAccess: true` habilitado (type safety consistente con root)
+- Tests: -2 assertions en `defaults.test.ts`, +6 tests en `autoDiscovery.test.ts` (nested, hidden dirs, dot-files, lowercase, duplicate-basename warning, non-primary exclusion), `toolExecuteBefore.test.ts` reescrito para modelar auto-discovery, tests actualizados para noUncheckedIndexedAccess
+- `just check-plugin`: ahora incluye `tsc` (typecheck del plugin, antes solo Biome)
+- Docs: Wiki `SDD-Pipeline.md` actualizado (count 104 → ~361, error msg con ruta absoluta, recursive note, module table con directoryScanner 99 líneas), plugin README actualizado, `Agents.md` auditado sin cambios
+**Resultado:** Plugin sin catálogo hardcoded, auto-discovery recursivo con maxDepth=10 y warning de duplicados, error messages con ruta absoluta, noUncheckedIndexedAccess en plugin tsconfig, 51 plugin tests + 1747 suite + 16/16 E2E + 3/3 plugin E2E, `just check` + `just check-plugin` limpios.
 
 ### FEV-21 — Installer UX: Pack Selection & Version Detection 🔲
 **Esfuerzo:** ~8h | **Dependencias:** FEV-17, FEV-18 | **Spec:** S6-UX-V2 §2, §3, §5
