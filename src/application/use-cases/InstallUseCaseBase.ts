@@ -2,12 +2,9 @@
  * Base class for installation use cases implementing the Template Method pattern.
  *
  * CleanInstallUseCase and ProjectInstallUseCase share an identical flow
- * (check writable → confirm overwrite → select optionals → merge → post-install)
- * but differ in three hooks:
- *
- * - buildRules(): How manifest rules are transformed before merging.
- * - selectOptionals(): How optional files are chosen (auto-select vs. menu).
- * - getSuccessMessage(): Displayed on completion.
+ * (check writable → confirm overwrite → select packs → select optionals →
+ * merge → post-install) but differ in four hooks: selectPacks, buildRules,
+ * selectOptionals, and getSuccessMessage (each documented below).
  *
  * Reference: GoF Template Method
  */
@@ -40,9 +37,7 @@ export interface BaseInstallOptions {
 
 /**
  * Abstract base for Clean Install and Project Install use cases.
- *
  * Template method: execute() defines the invariant installation flow.
- * Subclass hooks supply the variant behavior.
  */
 export abstract class InstallUseCaseBase {
 	/**
@@ -63,9 +58,7 @@ export abstract class InstallUseCaseBase {
 	) {}
 
 	/**
-	 * Template method: execute the installation flow.
-	 *
-	 * Subclasses override the three abstract hooks to specialize behavior.
+	 * Template method: run the installation flow with subclass hooks.
 	 *
 	 * @param destinationPath - Target directory for installation.
 	 * @param options - Optional flags (force, version).
@@ -89,11 +82,17 @@ export abstract class InstallUseCaseBase {
 		);
 		if (!confirmed) return success(undefined);
 
+		// Phase 2.5: Select agent packs (subclass decides default vs interactive).
+		// A cancel returns an empty selection — aborting here prevents a silent
+		// partial install (filterByPacks([]) would skip all 8 selectable packs).
+		const selectedPacks = await this.selectPacks(options.force ?? false);
+		if (selectedPacks.length === 0) return success(undefined);
+
 		// Phase 3: Select optional files (subclass decides behavior)
 		const selectedOptionals = await this.selectOptionals(options.force ?? false);
 
 		// Phase 4: Build merge rules (subclass-specific transformation)
-		const rules = this.buildRules(selectedOptionals);
+		const rules = this.buildRules(selectedPacks, selectedOptionals);
 
 		// Phase 5: Execute merge with progress callback
 		const onProgress = createProgressCallback(this.userPrompt, this.getProgressLabel());
@@ -104,72 +103,75 @@ export abstract class InstallUseCaseBase {
 		}
 
 		// Phase 6: Post-install steps (gitignore, symlinks, version file)
-		return await this.runPostInstall(destinationPath, selectedOptionals, options.version);
+		return await this.runPostInstall(
+			destinationPath,
+			selectedPacks,
+			selectedOptionals,
+			options.version,
+		);
 	}
 
-	// ---------------------------------------------------------------------------
-	// Abstract hooks (required overrides — the Template Method variants)
-	// ---------------------------------------------------------------------------
+	// ---- Abstract hooks: selectPacks, buildRules, selectOptionals, getSuccessMessage ----
 
 	/**
-	 * Transform the manifest rules and selected optionals into the final rule set.
-	 * Called after the user has selected optional files.
-	 * Both subclasses filter the manifest to include only selected optionals.
+	 * Determine which agent packs to install. Behavior varies by mode:
+	 * - Clean: force=true auto-selects all packs; else shows interactive menu.
+	 * - Project: force=true selects default; else shows interactive menu.
+	 *
+	 * @param force - If true, use default selection (no interactive menu).
+	 * @returns Array of pack IDs to install.
+	 */
+	protected abstract selectPacks(force: boolean): Promise<readonly string[]>;
+
+	/**
+	 * Transform manifest rules, selected packs, and selected optionals into the
+	 * final rule set. Both subclasses apply filterByPacks() before merging.
 	 * CleanInstall additionally converts all categories to mandatory (overwrite).
 	 */
-	protected abstract buildRules(selectedOptionals: readonly string[]): readonly FileRule[];
+	protected abstract buildRules(
+		selectedPacks: readonly string[],
+		selectedOptionals: readonly string[],
+	): readonly FileRule[];
 
 	/**
 	 * Determine which optional files to include. Behavior varies by mode:
 	 * - Clean: force=true auto-selects all, else shows interactive menu.
-	 * - Project: always shows interactive menu (force skips overwrite, not optionals).
+	 * - Project: force=true returns empty (no opt-in), else shows interactive menu.
 	 */
 	protected abstract selectOptionals(force: boolean): Promise<readonly string[]>;
 
-	/**
-	 * Success message displayed after a successful installation.
-	 */
+	/** Success message displayed after a successful installation. */
 	protected abstract getSuccessMessage(): string;
 
-	// ---------------------------------------------------------------------------
-	// Overridable defaults (small differences between modes)
-	// ---------------------------------------------------------------------------
+	// ---- Overridable defaults (small differences between modes) ----
 
 	/**
 	 * Confirmation message shown when the destination directory is not empty.
-	 * Clean Install warns that "All existing files may be overwritten."
-	 * Project Install warns that "Some existing files may be overwritten."
+	 * Clean warns "All existing files may be overwritten"; Project warns "Some".
 	 */
 	protected getConfirmMessage(destinationPath: string): string {
 		return `The destination directory "${destinationPath}" is not empty. Existing files may be overwritten. Continue?`;
 	}
 
-	/**
-	 * Message shown when the user cancels the installation.
-	 */
+	/** Message shown when the user cancels the installation. */
 	protected getCancelMessage(): string {
 		return "Installation cancelled by user.";
 	}
 
-	/**
-	 * Label for the progress bar during file merge.
-	 */
+	/** Label for the progress bar during file merge. */
 	protected getProgressLabel(): string {
 		return "Installing...";
 	}
 
 	/**
 	 * Whether to include a "Re-run the installer" hint in symlink warnings.
-	 * Clean Install sets this to true (users can re-run to retry symlinks).
-	 * Project Install keeps false (re-run might overwrite customizations).
+	 * Clean Install sets true (re-run retries symlinks); Project keeps false.
 	 */
 	protected getRetryHint(): boolean {
 		return false;
 	}
 
-	// ---------------------------------------------------------------------------
-	// Private helpers
-	// ---------------------------------------------------------------------------
+	// ---- Private helpers ----
 
 	/**
 	 * Post-installation orchestration: gitignore, symlinks, version file.
@@ -177,6 +179,7 @@ export abstract class InstallUseCaseBase {
 	 */
 	private async runPostInstall(
 		destinationPath: string,
+		selectedPacks: readonly string[],
 		selectedOptionals: readonly string[],
 		version?: string,
 	): Promise<Result<void, Error>> {
@@ -187,6 +190,7 @@ export abstract class InstallUseCaseBase {
 			userPrompt: this.userPrompt,
 			opencodeSymlinks: this.opencodeSymlinks,
 			destinationPath,
+			selectedPacks,
 			selectedOptionals,
 			version,
 			operationLabel: "Installation",

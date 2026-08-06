@@ -65,6 +65,16 @@ export function getPackRules(): readonly FileRule[] {
 }
 
 /**
+ * Derive the pack id from a manifest path ("packs/<packId>").
+ * "packs/business" → "business". Shared by filterByPacks and the
+ * application-layer pack option mappers so pack identity derivation
+ * stays in one place (DRY).
+ */
+export function packIdFromPath(path: string): string {
+	return path.replace(/^packs\//, "");
+}
+
+/**
  * Filter rules down to the selected packs while always keeping non-pack rules.
  * Pack identity is derived from the rule path ("packs/<packId>").
  * Uses a Set for O(1) membership lookups during filtering.
@@ -79,8 +89,7 @@ export function filterByPacks(
 	const selected = new Set(selectedPacks);
 	return rules.filter((rule) => {
 		if (rule.category !== "pack") return true;
-		const packId = rule.path.replace(/^packs\//, "");
-		return selected.has(packId);
+		return selected.has(packIdFromPath(rule.path));
 	});
 }
 

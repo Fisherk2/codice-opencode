@@ -1,4 +1,5 @@
 import { describe, expect, it, mock as mockFn } from "bun:test";
+import { DEFAULT_PACKS } from "../../../src/application/packOptions";
 import type { IGitignoreCreator } from "../../../src/application/ports/IGitignoreCreator";
 import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
@@ -6,6 +7,7 @@ import { ProjectInstallUseCase } from "../../../src/application/use-cases/Projec
 import type { FileRule } from "../../../src/domain/entities/FileRule";
 import {
 	FILE_RULE_MANIFEST,
+	filterByPacks,
 	getRulesByCategory,
 } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
@@ -16,8 +18,10 @@ import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
 import { OPENCODE_SYMLINKS } from "../../../src/infrastructure/config/symlinks";
 
-/** Entries that require actual template file staging (excludes noTemplateCopy) */
-const STAGEABLE_RULES = FILE_RULE_MANIFEST.filter((r) => !r.noTemplateCopy);
+/** Stageable rules after default pack filtering (software-development only) */
+const STAGEABLE_DEFAULT_PACK_RULES = filterByPacks(FILE_RULE_MANIFEST, DEFAULT_PACKS).filter(
+	(r) => !r.noTemplateCopy,
+);
 
 /**
  * Create a mock IFileSystem with configurable default behaviors.
@@ -166,8 +170,8 @@ describe("ProjectInstallUseCase", () => {
 			const result = await useCase.execute("/tmp/project");
 
 			expect(result.ok).toBe(true);
-			// All manifest files should be staged (category rules handle filtering)
-			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
+			// Default pack selection stages manifest minus unselected packs (8 packs, only 1 selected)
+			expect(calls.stageFile.length).toBe(STAGEABLE_DEFAULT_PACK_RULES.length);
 			// Commit should have been called
 			expect(calls.commitStaging).toBe(1);
 			// Version file should be written
@@ -195,7 +199,7 @@ describe("ProjectInstallUseCase", () => {
 			// Should NOT have asked for confirmation (isEmpty short-circuits)
 			expect(prompt.confirm).not.toHaveBeenCalled();
 			// Operation proceeds normally
-			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
+			expect(calls.stageFile.length).toBe(STAGEABLE_DEFAULT_PACK_RULES.length);
 			expect(calls.commitStaging).toBe(1);
 		});
 
@@ -243,7 +247,7 @@ describe("ProjectInstallUseCase", () => {
 
 			expect(result.ok).toBe(true);
 			expect(prompt.confirm).toHaveBeenCalledTimes(1);
-			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
+			expect(calls.stageFile.length).toBe(STAGEABLE_DEFAULT_PACK_RULES.length);
 		});
 
 		it("should skip installation when user rejects the confirmation", async () => {
@@ -289,8 +293,10 @@ describe("ProjectInstallUseCase", () => {
 			expect(result.ok).toBe(true);
 			expect(prompt.confirm).not.toHaveBeenCalled();
 			expect(prompt.selectOptional).not.toHaveBeenCalled();
-			// Only non-optional files should be staged (mandatory + standard)
-			const nonOptionalCount = FILE_RULE_MANIFEST.length - optionalRules.length;
+			// Only non-optional files should be staged (default pack, mandatory + standard)
+			const nonOptionalCount = STAGEABLE_DEFAULT_PACK_RULES.filter(
+				(r) => r.category !== "optional",
+			).length;
 			expect(calls.stageFile.length).toBe(nonOptionalCount);
 		});
 
@@ -321,8 +327,10 @@ describe("ProjectInstallUseCase", () => {
 			const selectArgs = (prompt.selectOptional as ReturnType<typeof mockFn>).mock.calls[0]!;
 			expect(selectArgs[0].length).toBe(optionalRules.length);
 			// Only one optional file was selected, so non-selected optional files are skipped
-			// Mandatory + standard + 1 selected stageable optional
-			const stageableNonOptional = STAGEABLE_RULES.filter((r) => r.category !== "optional").length;
+			// Default pack + mandatory + standard + 1 selected stageable optional
+			const stageableNonOptional = STAGEABLE_DEFAULT_PACK_RULES.filter(
+				(r) => r.category !== "optional",
+			).length;
 			expect(calls.stageFile.length).toBe(stageableNonOptional + 1);
 		});
 
@@ -344,8 +352,10 @@ describe("ProjectInstallUseCase", () => {
 			const result = await useCase.execute("/tmp/project");
 
 			expect(result.ok).toBe(true);
-			// Only mandatory + standard files should be staged
-			const nonOptionalCount = FILE_RULE_MANIFEST.length - optionalRules.length;
+			// Only mandatory + standard files should be staged (default pack, no optionals)
+			const nonOptionalCount = STAGEABLE_DEFAULT_PACK_RULES.filter(
+				(r) => r.category !== "optional",
+			).length;
 			expect(calls.stageFile.length).toBe(nonOptionalCount);
 		});
 
@@ -430,7 +440,9 @@ describe("ProjectInstallUseCase", () => {
 			// But mandatory + standard + pack files (minus existing standard) should still be staged
 			// Since destinationExists returns true for the optional path only, standard files
 			// that don't exist should still be staged
-			const nonOptionalCount = FILE_RULE_MANIFEST.filter((r) => r.category !== "optional").length;
+			const nonOptionalCount = STAGEABLE_DEFAULT_PACK_RULES.filter(
+				(r) => r.category !== "optional",
+			).length;
 			expect(calls.stageFile.length).toBe(nonOptionalCount);
 		});
 
@@ -657,6 +669,81 @@ describe("ProjectInstallUseCase", () => {
 			expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/commands");
 			expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/skills");
 			expect(prompt.logProgressEvent).toHaveBeenCalledWith("gitignore: Generated .gitignore");
+		});
+
+		it("should persist default pack to version file when force=true", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			// Project force=true uses ONLY the default pack — no interactive pack menu
+			expect(prompt.selectPacks).not.toHaveBeenCalled();
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual([...DEFAULT_PACKS]);
+			// v2.0 writer emits "version" (not legacy "installedVersion")
+			expect(versionData.version).toBeDefined();
+			expect(versionData.installedVersion).toBeUndefined();
+		});
+
+		it("should persist custom pack selection to version file", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			(prompt.selectPacks as ReturnType<typeof mockFn>).mockResolvedValueOnce([
+				"software-development",
+				"business",
+			]);
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual(["software-development", "business"]);
+		});
+
+		it("should abort when user cancels the pack selection wizard (no partial install)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			(prompt.selectPacks as ReturnType<typeof mockFn>).mockResolvedValueOnce([]);
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Cancel aborts before merging — nothing staged, no version file written
+			expect(calls.stageFile.length).toBe(0);
+			expect(calls.writeVersionFile.length).toBe(0);
+			expect(calls.commitStaging).toBe(0);
 		});
 	});
 });

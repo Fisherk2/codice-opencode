@@ -27,7 +27,14 @@ class MinimalInstallUseCase extends InstallUseCaseBase {
 		super({} as any, {} as any, {} as any, {} as any, [], {} as any);
 	}
 
-	protected buildRules(_selectedOptionals: readonly string[]): readonly FileRule[] {
+	protected buildRules(
+		_selectedPacks: readonly string[],
+		_selectedOptionals: readonly string[],
+	): readonly FileRule[] {
+		return [];
+	}
+
+	protected async selectPacks(_force: boolean): Promise<readonly string[]> {
 		return [];
 	}
 

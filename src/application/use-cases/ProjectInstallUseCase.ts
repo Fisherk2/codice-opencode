@@ -7,22 +7,26 @@
  *   - Optional copies only if user selected AND missing.
  *
  * Extends InstallUseCaseBase via the Template Method pattern.
- * The three abstract hooks specialize the shared flow:
- * 1. buildRules: Include all non-optional + selected optionals (keep original categories).
- * 2. selectOptionals: force=true returns empty (no opt-in); else shows interactive menu.
- * 3. getSuccessMessage: "Project installation complete."
+ * The four abstract hooks specialize the shared flow:
+ * 1. selectPacks: force=true uses default pack; else shows interactive menu.
+ * 2. buildRules: Include selected packs + optionals (keep original categories).
+ * 3. selectOptionals: force=true returns empty (no opt-in); else shows interactive menu.
+ * 4. getSuccessMessage: "Project installation complete."
  *
  * Flow (inherited from base):
- * checkWritable → confirmOverwrite → selectOptionals → buildRules →
- * mergeEngine.execute → runPostInstallSteps
+ * checkWritable → confirmOverwrite → selectPacks → selectOptionals →
+ * buildRules → mergeEngine.execute → runPostInstallSteps
  */
 
 import type { FileRule } from "../../domain/entities/FileRule";
 import {
 	FILE_RULE_MANIFEST,
+	filterByPacks,
+	getPackRules,
 	getRulesByCategory,
 	isRuleSelected,
 } from "../../domain/entities/FileRuleManifest";
+import { DEFAULT_PACKS, toPackOptions } from "../packOptions";
 import { InstallUseCaseBase } from "./InstallUseCaseBase";
 
 export type { BaseInstallOptions } from "./InstallUseCaseBase";
@@ -33,15 +37,31 @@ export type { BaseInstallOptions } from "./InstallUseCaseBase";
  */
 export class ProjectInstallUseCase extends InstallUseCaseBase {
 	/**
-	 * Include all non-optional rules plus selected optionals,
-	 * preserving their original categories so the merge engine
-	 * applies the correct behavior (mandatory=overwrite,
-	 * standard=if-missing, optional=if-selected-and-missing).
-	 *
-	 * Unselected optional files are excluded from the rule set.
+	 * Pack selection: force=true uses ONLY the default pack (no opt-in for
+	 * additional packs); otherwise shows the interactive menu with the
+	 * default pack pre-selected.
 	 */
-	protected buildRules(selectedOptionals: readonly string[]): readonly FileRule[] {
-		return FILE_RULE_MANIFEST.filter((r) => isRuleSelected(r, selectedOptionals));
+	protected async selectPacks(force: boolean): Promise<readonly string[]> {
+		if (force) {
+			return [...DEFAULT_PACKS];
+		}
+		return await this.userPrompt.selectPacks(toPackOptions(getPackRules()), [...DEFAULT_PACKS]);
+	}
+
+	/**
+	 * Include selected packs + non-optional rules + selected optionals,
+	 * preserving their original categories so the merge engine applies the
+	 * correct behavior (mandatory=overwrite, pack=always, standard=if-missing,
+	 * optional=if-selected-and-missing). Unselected packs are excluded via
+	 * filterByPacks(); unselected optionals via isRuleSelected().
+	 */
+	protected buildRules(
+		selectedPacks: readonly string[],
+		selectedOptionals: readonly string[],
+	): readonly FileRule[] {
+		return filterByPacks(FILE_RULE_MANIFEST, selectedPacks).filter((r) =>
+			isRuleSelected(r, selectedOptionals),
+		);
 	}
 
 	/**

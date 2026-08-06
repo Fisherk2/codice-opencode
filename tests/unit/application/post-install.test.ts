@@ -12,6 +12,7 @@
  * 8. runPostInstallSteps — version file failure → returns Failure, no success
  * 9. runPostInstallSteps — gitignore fails → continues to symlinks + version file
  * 10. runPostInstallSteps — retryHint=true → re-run hint in opencode warning
+ * 11. runPostInstallSteps — writes installedPacks from selectedPacks (v2.0 format)
  */
 
 import { describe, expect, mock as mockFn, test } from "bun:test";
@@ -146,6 +147,7 @@ function createDefaultPostInstallOptions(
 		userPrompt: prompt.stub,
 		opencodeSymlinks: MOCK_OPENCODE_SYMLINKS,
 		destinationPath: "/tmp/project",
+		selectedPacks: [],
 		selectedOptionals: [],
 		version: "1.0.0",
 		operationLabel: "Installation",
@@ -234,7 +236,8 @@ describe("runPostInstallSteps", () => {
 
 		expect(writeVersionFile).toHaveBeenCalledTimes(1);
 		const writtenData = JSON.parse(writeVersionFile.mock.calls[0]?.[0] ?? "{}");
-		expect(writtenData.installedVersion).toBe("0.0.0");
+		expect(writtenData.version).toBe("0.0.0");
+		expect(writtenData.installedPacks).toEqual([]);
 	});
 
 	test("calls showSuccess when version file write succeeds", async () => {
@@ -306,5 +309,25 @@ describe("runPostInstallSteps", () => {
 		// Warning shown with re-run hint
 		expect(prompt.warnings).toHaveLength(1);
 		expect(prompt.warnings[0]).toContain("Re-run the installer to retry symlink creation");
+	});
+
+	test("writes installedPacks from selectedPacks in v2.0 format", async () => {
+		const fs = createMockFileSystem(false);
+		const writeVersionFile = fs.writeVersionFile as ReturnType<typeof mockFn>;
+		const options = createDefaultPostInstallOptions({
+			fileSystem: fs,
+			selectedPacks: ["software-development", "business"],
+		});
+
+		const result = await runPostInstallSteps(options);
+
+		expect(result.ok).toBe(true);
+		expect(writeVersionFile).toHaveBeenCalledTimes(1);
+		const writtenData = JSON.parse(writeVersionFile.mock.calls[0]?.[0] ?? "{}");
+		// v2.0 writer emits "version" (not legacy "installedVersion") plus installedPacks
+		expect(writtenData.version).toBe("1.0.0");
+		expect(writtenData.installedVersion).toBeUndefined();
+		expect(writtenData.installedPacks).toEqual(["software-development", "business"]);
+		expect(writtenData.optionalSelections).toEqual([]);
 	});
 });

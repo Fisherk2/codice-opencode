@@ -1,9 +1,10 @@
 import { describe, expect, it, mock as mockFn } from "bun:test";
+import { DEFAULT_PACKS } from "../../../src/application/packOptions";
 import type { IGitignoreCreator } from "../../../src/application/ports/IGitignoreCreator";
 import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { CleanInstallUseCase } from "../../../src/application/use-cases/CleanInstallUseCase";
-import { FILE_RULE_MANIFEST } from "../../../src/domain/entities/FileRuleManifest";
+import { FILE_RULE_MANIFEST, filterByPacks } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
@@ -12,8 +13,10 @@ import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
 import { OPENCODE_SYMLINKS } from "../../../src/infrastructure/config/symlinks";
 
-/** Entries that require actual template file staging (excludes noTemplateCopy) */
-const STAGEABLE_COUNT = FILE_RULE_MANIFEST.filter((r) => !r.noTemplateCopy).length;
+/** Stageable rules after default pack filtering (software-development only) */
+const STAGEABLE_COUNT = filterByPacks(FILE_RULE_MANIFEST, DEFAULT_PACKS).filter(
+	(r) => !r.noTemplateCopy,
+).length;
 
 // ---------------------------------------------------------------------------
 // Helper factories (mirroring patterns from clean-install.test.ts)
