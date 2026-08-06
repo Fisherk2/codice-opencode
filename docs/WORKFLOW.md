@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.0.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-05 (FEV-20 completado; FEV-21 listo para planeación) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-06 (FEV-21 completado; FEV-22 listo para planeación) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -38,7 +38,7 @@
 | FEV-18 | Agent Classification & Migration (v2.0 Phase 2) | 257 new agents → 8 packs (v2.0 format), 95 legacy distributed, 10 REDUNDANT resolved | ✅ Completo (2026-08-04) |
 | FEV-19 | Permission Unification & Subagent Table Removal (v2.0 Phase 3) | TD-V2-2, TD-V2-3, TD-V2-4: unified `task:` + docs update | ✅ Completo (2026-08-05) |
 | FEV-20 | Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4) | TD-V2-1, TD-V2-5: plugin cleanup + auto-discovery recursive scan | ✅ Completo (2026-08-05) |
-| FEV-21 | Installer UX — Pack Selection & Version Detection (v2.0 Phase 5) | Pack wizard, version gating, `.codice-version` metadata format | 🔲 Planificado |
+| FEV-21 | Installer UX — Pack Selection & Version Detection (v2.0 Phase 5) | Pack wizard, version gating, `.codice-version` metadata format | ✅ Completo (2026-08-06) |
 | FEV-22 | Installer UX — Updater with Pack Scoping (v2.0 Phase 6) | Option A (current packs) + Option B (add packs), CLI flags | 🔲 Planificado |
 | FEV-23 | v2.0.0 Testing & Integration | Unit/integration/E2E updates for pack-aware installer | 🔲 Planificado |
 
@@ -328,16 +328,21 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - Docs: Wiki `SDD-Pipeline.md` actualizado (count 104 → ~361, error msg con ruta absoluta, recursive note, module table con directoryScanner 99 líneas), plugin README actualizado, `Agents.md` auditado sin cambios
 **Resultado:** Plugin sin catálogo hardcoded, auto-discovery recursivo con maxDepth=10 y warning de duplicados, error messages con ruta absoluta, noUncheckedIndexedAccess en plugin tsconfig, 51 plugin tests + 1747 suite + 16/16 E2E + 3/3 plugin E2E, `just check` + `just check-plugin` limpios.
 
-### FEV-21 — Installer UX: Pack Selection & Version Detection 🔲
-**Esfuerzo:** ~8h | **Dependencias:** FEV-17, FEV-18 | **Spec:** S6-UX-V2 §2, §3, §5
-- Implementar detección de versión: parseo de `.codice-version` (JSON con `version`, `installedPacks`, `installedAt`)
-- Bloquear opción Update para versiones <2.0.0 con mensajes apropiados (pre-1.2.0, 1.x, sin archivo)
-- Implementar pantalla de pack selection (checkbox multiselect, software-development pre-seleccionado)
-- Validación: mínimo 1 pack seleccionado
-- Extender formato `.codice-version` con array `installedPacks`
-- Actualizar CleanInstallUseCase y ProjectInstallUseCase con flujo de pack selection
-- Agregar pantalla de installation summary antes de ejecutar
-**Resultado:** Wizard de instalación con selección de packs, version gating, metadata persistente.
+### FEV-21 — Installer UX: Pack Selection & Version Detection ✅
+**Estado:** ✅ Completo (2026-08-06) | **Esfuerzo:** ~8h | **Dependencias:** FEV-17, FEV-18 | **Spec:** S6-UX-V2 §2, §3, §5 | **Tech Debt:** TD-V2-6 (añadido)
+- Detección de versión al arranque: parseo de `.codice-version` con formato v2.0 `{ version, installedPacks, installedAt, optionalSelections? }`; backward-compatible con legacy `installedVersion`
+- Update bloqueado para instalaciones sin archivo o < 2.0.0 (3 variantes: sin archivo, pre-1.2.0, 1.x) con guidance específica
+- Wizard de pack selection: checkbox multiselect con `software-development` pre-seleccionado; mínimo 1 pack; cancelar aborta antes de cualquier write
+- `RuleCategory` ampliado con `"pack"` — 8 packs seleccionables migrados de `"mandatory"` (FileRuleManifestData)
+- Helpers nuevos: `getPackRules()`, `filterByPacks()`, `packIdFromPath()`, `toPackOptions()`, `DEFAULT_PACKS`
+- Update mode: Option A (solo packs actuales) vs Option B (agregar packs, instalados LOCKED); flag no-interactivo `--update-add-packs`
+- 3 nuevos CLI flags: `--packs <list>`, `--packs-all`, `--update-add-packs <list>` (IDs validados contra el manifest); detección de versión antes del menú de modos
+- 3 nuevos métodos en `IUserPrompt`: `selectPacks()`, `showVersionInfo()`, `selectUpdateOption()` (implementados en `ClackPromptsAdapter`)
+- `CleanInstallUseCase` y `ProjectInstallUseCase`: flujo de pack selection + installation summary
+- Tests: 1747 → 1822 unit+integration (~75 nuevos); E2E 16 → 23 scripts (7 nuevos, 4 update re-seeded v2.0)
+- Tech debt: TD-V2-6 añadido (No pack removal — diferido a v2.2.0)
+- Nota transicional: el merge de Update es inerte mientras `package.json` sea v1.2.0 (bundled < 2.0.0 → "already up to date"); E2E 04/15/16/23 lo documentan. Update se activa al publicar ≥ 2.0.0. Comportamiento de merge cubierto por integration tests con `BUNDLED_TEST_VERSION=2.1.0`.
+**Resultado:** Wizard de instalación con selección de packs, version gating y metadata persistente `.codice-version` v2.0. 7 commits atómicos en `feat/new-agents`. 1822 tests unit+integration 0 fail, 23/23 E2E, `just check` limpio.
 
 ### FEV-22 — Installer UX: Updater with Pack Scoping 🔲
 **Esfuerzo:** ~6h | **Dependencias:** FEV-21 | **Spec:** S6-UX-V2 §4, §7
@@ -391,5 +396,5 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
 - **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
-- **v2.0.0 planificado:** FEV-17 ✅ completado, FEV-18 ✅ completado, FEV-19 ✅ completado (2026-08-05), FEV-20 ✅ completado (2026-08-05) → FEV-21 a FEV-23 🔲 pendientes (Installer UX v2) (specs: S5-PACKS, S6-UX-V2)
-- **Esfuerzo estimado v2.0.0:** ~38h (FEV-17: 4h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h ✅, FEV-21: 8h 🔲, FEV-22: 6h 🔲, FEV-23: 6h 🔲)
+- **v2.0.0 planificado:** FEV-17 ✅ completado, FEV-18 ✅ completado, FEV-19 ✅ completado (2026-08-05), FEV-20 ✅ completado (2026-08-05), FEV-21 ✅ completado (2026-08-06) → FEV-22 a FEV-23 🔲 pendientes (Installer UX v2) (specs: S5-PACKS, S6-UX-V2)
+- **Esfuerzo estimado v2.0.0:** ~44h (FEV-17: 4h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h ✅, FEV-21: 8h ✅, FEV-22: 6h 🔲, FEV-23: 6h 🔲)

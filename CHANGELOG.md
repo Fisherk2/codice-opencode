@@ -36,6 +36,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **FEV-21 — Installer UX: Pack Selection & Version Detection (v2.0 Phase 5):**
+  - Pack selection wizard: 8 selectable packs with `software-development` pre-selected; minimum 1 enforced; cancelling aborts before any file writes
+  - Version detection: `.codice-version` read on startup; Update blocked for missing or < 2.0.0 installations with specific guidance
+  - `.codice-version` v2.0 format: `{ version, installedPacks, installedAt, optionalSelections? }` (backward-compatible with legacy `installedVersion`)
+  - Update mode: Option A (current packs only) and Option B (add packs with installed packs LOCKED); non-interactive `--update-add-packs`
+  - 3 new CLI flags: `--packs <list>`, `--packs-all`, `--update-add-packs <list>` (pack IDs validated against the manifest)
+  - 3 new IUserPrompt methods: `selectPacks()`, `showVersionInfo()`, `selectUpdateOption()`
+  - New `RuleCategory`: `"pack"` (8 entries migrated from `"mandatory"`)
+  - New helpers: `getPackRules()`, `filterByPacks()`, `packIdFromPath()`
+  - 7 new E2E scripts (17-23); 4 update E2E scripts re-seeded for v2.0 format
+  - ~75 new tests (unit + integration)
+  - Tech debt: TD-V2-6 added in FEV-21 (No pack removal — deferred to v2.2.0)
+  - Transitional note: Update merge is inert until the package is published at ≥ 2.0.0 (bundled version < 2.0.0 → "already up to date"); merge behavior covered by integration tests with `BUNDLED_TEST_VERSION=2.1.0`
+
 - **FEV-17 — Template Directory Restructuring (v2.0 Phase 1):** `template/obligatorio/` restructured from flat (`agents/`, `commands/`, `skills/`, `opencode.json`, `skills-lock.json`, `.opencode/`) to hierarchical: `core/` (infrastructure) + `packs/{main,writers,sin-clasificar,<8 empty>}/` (agent packs). 6 primary agents moved to `packs/main/`, 3 writers to `packs/writers/`, 95 unclassified agents to `packs/sin-clasificar/` (pending FEV-18 classification). 8 empty pack directories created for FEV-18.
 
 ### Changed

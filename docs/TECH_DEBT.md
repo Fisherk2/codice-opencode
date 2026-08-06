@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-08-05
-**Status:** FEV-20 complete — plugin VALID_SUBAGENTS removed, auto-discovery recursive (v2.0)
-**Current version:** v1.2.0 (1747 tests, 0 fail)
+**Last updated:** 2026-08-06
+**Status:** FEV-21 complete — installer UX pack selection + version detection (v2.0)
+**Current version:** v1.2.0 (1822 tests, 0 fail)
 **Next version:** v2.0.0 (installer UX, pack selection)
 
 ---
@@ -232,6 +232,8 @@ Specs drafted: [spec-agent-packs.md](../specs/spec-agent-packs.md), [spec-instal
 
 > **FEV-20 (Plugin VALID_SUBAGENTS Removal) ✅ complete (2026-08-05):** TD-V2-1, TD-V2-5 closed. `VALID_SUBAGENTS` Set (~110 entries) deleted from `validSubagents.ts`; `PRIMARY_AGENTS` (6) is the only hardcoded list. `defaults.ts` cleaned (5 maps). `sdd-pipeline.ts` fallback → `new Set(PRIMARY_AGENTS)`; error message → "agents/ directory"; validation case-insensitive. `discoverValidSubagents()` recursive (skips hidden entries, lowercases names); `directoryScanner.ts` extracted. Tests: -2 assertions, +4 auto-discovery tests, `toolExecuteBefore.test.ts` rewritten. Wiki `SDD-Pipeline.md` + plugin README updated. 51 plugin tests + 1747 suite + 16/16 E2E + 3/3 plugin E2E, `just check` + `just check-plugin` clean. Post-review hardening: maxDepth=10 + duplicate-basename warning in scanner, absolute-path error messages, noUncheckedIndexedAccess in plugin tsconfig, `tsc` added to `just check-plugin`.
 
+> **FEV-21 (Installer UX: Pack Selection & Version Detection) ✅ complete (2026-08-06):** Pack selection wizard (8 selectable packs, `software-development` default, min 1, cancel aborts). Version gate in Update (blocks missing / < 2.0.0). `.codice-version` v2.0 format `{ version, installedPacks, installedAt, optionalSelections? }` (backward-compatible with `installedVersion`). Update Option A (current packs) / Option B (add packs, installed LOCKED) + `--update-add-packs`. 3 new CLI flags, 3 new `IUserPrompt` methods, `RuleCategory "pack"` (8 entries migrated from `"mandatory"`). 1822 unit+integration tests, 23 E2E scripts, 7 atomic commits on `feat/new-agents`. **Transitional note:** update merge inert while `package.json` is v1.2.0 (bundled < 2.0.0 → "already up to date"); becomes functional at publication ≥ 2.0.0. **Opened:** [TD-V2-6](#td-v2-6-no-pack-removal-mechanism) (no pack removal — deferred to v2.2.0).
+
 | ID | Item | Effort | Risk | Description |
 |----|------|--------|------|-------------|
 | ~~**TD-V2-1**~~ | ~~Remove hardcoded `VALID_SUBAGENTS`~~ | ~~2h~~ | Low | ✅ **Resolved FEV-20 (2026-08-05):** deleted `VALID_SUBAGENTS` Set from `validSubagents.ts` (~110 entries); kept `PRIMARY_AGENTS` (6) as single hardcoded source. `defaults.ts` imports/re-exports/DEFAULTS cleaned (5 maps). `sdd-pipeline.ts` fallback → `new Set(PRIMARY_AGENTS)`; error message → "agents/ directory". `discoverValidSubagents()` recursive + case-insensitive. Post-review: `directoryScanner` hardened (maxDepth=10, duplicate-basename warning); plugin tsconfig `noUncheckedIndexedAccess: true`; `just check-plugin` runs `tsc`. |
@@ -239,6 +241,7 @@ Specs drafted: [spec-agent-packs.md](../specs/spec-agent-packs.md), [spec-instal
 | ~~**TD-V2-3**~~ | ~~Remove AVAILABLE SUBAGENTS sections~~ | ~~1h~~ | Low | ✅ **Resolved FEV-19 (2026-08-05):** sections removed from quetzalcoatl, tlaloc, mictlantecuhtli **AND huitzilopochtli** (scope expansion — no subagent index in any of the 6 primary agents; RULES reference `agents/`). |
 | ~~**TD-V2-4**~~ | ~~Update CONTRIBUTING.md and Wiki Agents.md~~ | ~~1h~~ | Low | ✅ **Resolved FEV-19 (2026-08-05):** CONTRIBUTING "Add a New Agent" 5→3 steps (removed delegation tables + huitzilopochtli catalog + persona updates). Wiki Agents.md: count 104→~355, file tree `agents/`→`packs/`, permission model examples, "Step 4: Update Delegation Tables" removed. README count 98→355. |
 | ~~**TD-V2-5**~~ | ~~Update SDD-Pipeline.md wiki and error messages~~ | ~~0.5h~~ | Low | ✅ **Resolved FEV-20 (2026-08-05):** Wiki `SDD-Pipeline.md` updated — agent count 104→~361, error message example ("VALID_SUBAGENTS catalog" → "agents/ directory"), recursive-scan note in Pillar 1, module table (defaults.ts 529→156, +directoryScanner.ts 63). `Agents.md` audited (no changes needed — FEV-19 already current). Plugin README updated with auto-discovery model. Post-review: error message now shows absolute path; README wording corrected (hidden entries, not just directories); wiki module table updated (directoryScanner 99 lines). |
+| **TD-V2-6** | No pack removal mechanism | 4-6h | Medium | **OPEN (added FEV-21, 2026-08-06):** Once installed, agents from a pack persist in destination. Users cannot remove a pack without reinstalling Códice from scratch. Requires new installer mode or `--remove-pack <id>` flag. **Deferred to v2.2.0** (see §v2.2.0 Package Deletion Mechanism below). |
 
 ### v2.2.0
 
@@ -264,7 +267,7 @@ The following items are planned for v2.2.0 and beyond. No specs have been create
 | **Target** | v2.2.0 |
 | **Effort** | 6-10h (including translation infrastructure and 5 language translations) |
 
-#### Package Deletion Mechanism
+#### Package Deletion Mechanism — tracked as [TD-V2-6](#td-v2-6-no-pack-removal-mechanism)
 
 | Item | Detail |
 |------|--------|
