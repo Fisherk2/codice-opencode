@@ -92,6 +92,13 @@ TESTS=(
     "$SCRIPT_DIR/14-project-install-optional-selection.sh"
     "$SCRIPT_DIR/15-update-workspace-existing-project.sh"
     "$SCRIPT_DIR/16-update-granularity.sh"
+    "$SCRIPT_DIR/17-pack-selection-default.sh"
+    "$SCRIPT_DIR/18-pack-selection-custom.sh"
+    "$SCRIPT_DIR/19-pack-validation-min1.sh"
+    "$SCRIPT_DIR/20-codice-version-installedPacks.sh"
+    "$SCRIPT_DIR/21-update-blocked-missing.sh"
+    "$SCRIPT_DIR/22-update-blocked-v1x.sh"
+    "$SCRIPT_DIR/23-update-option-a.sh"
 )
 
 for test_script in "${TESTS[@]}"; do

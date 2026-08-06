@@ -1,17 +1,24 @@
 #!/bin/bash
 #===============================================================================
-# FEV4-T1: Update Granularity — Tree-Level Diff E2E
+# FEV4-T1: Update Granularity — Tree-Level Diff E2E (FEV-21 transitional behavior)
 #
-# Scenario: Pre-populate destination with some files in a standard directory
-#           but NOT all files. Run --update --force.
-# Expected: Existing standard files are PRESERVED (not overwritten)
-#           New standard files (in source but missing in dest) ARE created
-#           Mandatory files are UPDATED
-#           Optional files are PRESERVED
-#           Files outside the partially-populated directory remain unchanged
+# Scenario: Pre-populate destination with SOME files in a standard directory
+#           but NOT all files, plus a v2.0.0 .codice-version. Run --update.
 #
-# This tests the tree-level diff feature: instead of skipping an entire
-# standard directory because it exists, only truly missing files are staged.
+# Expected (TRANSITIONAL NO-OP): the bundled template is v1.2.0, so the
+# bundled comparison (installed >= bundled) reports "Workspace is already up
+# to date" and NO merge happens:
+#   - exit code 0
+#   - docs/README.md + docs/ARCHITECTURE.md + specs/README.md PRESERVED
+#   - opencode.json (mandatory) NOT overwritten (nothing merges)
+#   - scripts/build.sh (opcional) PRESERVED
+#   - NO new files created in docs/ (no merge → NEW_FILES_FOUND == 0)
+#   - no security warnings in stderr
+#   - stdout/stderr contains "already up to date"
+#
+# NOTE: Update mode only becomes functional once the package is published
+# at >= 2.0.0 (FEV-21 plan). Until then this E2E verifies the real observable
+# no-op behavior instead of the tree-level diff merge.
 #===============================================================================
 
 set -Eeuo pipefail
@@ -41,15 +48,16 @@ echo "# Custom Architecture" > "$TEMP_DIR/docs/ARCHITECTURE.md"
 mkdir -p "$TEMP_DIR/specs"
 echo "# Custom Specs" > "$TEMP_DIR/specs/README.md"
 
-# Pre-populate an obligatorio file with custom content (will be overwritten)
+# Pre-populate an obligatorio file with custom content (must NOT be overwritten)
 echo '{"custom": true, "version": "0.9.0"}' > "$TEMP_DIR/opencode.json"
 
 # Pre-populate an opcional file (should be preserved)
 mkdir -p "$TEMP_DIR/scripts"
 echo "# Custom Script — Preserved" > "$TEMP_DIR/scripts/build.sh"
 
-# Write version file older than bundled so update proceeds
-echo '{"installedVersion":"0.9.0","installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":["scripts/build.sh"]}' > "$TEMP_DIR/.codice-version"
+# Write version file in the v2.0 format with a version NEWER than the
+# bundled template (1.2.0) so the bundled comparison reports "up to date".
+echo '{"version":"2.0.0","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":["scripts/build.sh"]}' > "$TEMP_DIR/.codice-version"
 
 log_info "Pre-populated project with partial standard directory content"
 
@@ -80,6 +88,9 @@ log_pass "CLI exited with code 0"
 # Assertions
 # ---------------------------------------------------------------------------
 
+# Combined output for message assertions (TUI messages emit on stdout via clack)
+COMBINED_OUTPUT=$(cat "$STDOUT_FILE" "$STDERR_FILE" 2>/dev/null || echo "")
+
 # 1. Existing standard files should be PRESERVED
 log_info "Checking that existing files in standard dirs are PRESERVED..."
 
@@ -99,33 +110,33 @@ if [[ "$PRESERVED_DOCS_ARCH" != "# Custom Architecture" ]]; then
 fi
 log_pass "docs/ARCHITECTURE.md preserved (existing file in standard dir)"
 
-# 2. New template files in docs/ should be CREATED
-log_info "Checking that new template files in standard dirs ARE created..."
+# 2. NO new template files in docs/ should be created (no merge happened)
+log_info "Checking that NO new template files were created in docs/ (no merge)..."
 
-# Check that some template docs files that didn't exist in dest are now present
-# (e.g., CODE_STYLE.md, PRD.md, SECURITY.md, TECH_DEBT.md, TRD.md, WORKFLOW.md, APPFLOW.md)
-# These are all files in template/estandar/docs/ that were NOT pre-populated
+# These are all files in template/estandar/docs/ that were NOT pre-populated.
+# With the bundled comparison reporting "already up to date", none may appear.
 NEW_FILES_FOUND=0
 for f in CODE_STYLE.md PRD.md SECURITY.md TECH_DEBT.md TRD.md WORKFLOW.md APPFLOW.md; do
 	if [[ -f "$TEMP_DIR/docs/$f" ]]; then
 		NEW_FILES_FOUND=$((NEW_FILES_FOUND + 1))
 	fi
 done
-if [[ "$NEW_FILES_FOUND" -eq 0 ]]; then
-	log_fail "No new documentation files were created in docs/ — expected tree-level diff to deliver them"
+if [[ "$NEW_FILES_FOUND" -ne 0 ]]; then
+	log_fail "$NEW_FILES_FOUND new files created in docs/ — expected NO merge (transitional no-op)"
 	exit 1
 fi
-log_pass "$NEW_FILES_FOUND new files created in docs/ (tree-level diff working)"
+log_pass "No new files created in docs/ (NEW_FILES_FOUND=0 — transitional no-op confirmed)"
 
-# 3. Obligatorio files should be UPDATED
-log_info "Checking that obligatorio files were UPDATED..."
+# 3. Obligatorio files should NOT be overwritten (no merge)
+log_info "Checking that obligatorio file was NOT overwritten..."
 
-UPDATED_OPENCODE=$(head -1 "$TEMP_DIR/opencode.json" 2>/dev/null || echo "")
-if [[ "$UPDATED_OPENCODE" == '{"custom": true, "version": "0.9.0"}' ]]; then
-	log_fail "opencode.json was NOT updated (expected obligatorio to be overwritten)"
+PRESERVED_OPENCODE=$(head -1 "$TEMP_DIR/opencode.json" 2>/dev/null || echo "")
+if [[ "$PRESERVED_OPENCODE" != '{"custom": true, "version": "0.9.0"}' ]]; then
+	log_fail "opencode.json was modified! Expected it to stay untouched (no merge)."
+	echo "    Actual first line: $PRESERVED_OPENCODE" >&2
 	exit 1
 fi
-log_pass "opencode.json was updated (obligatorio overwritten)"
+log_pass "opencode.json untouched (transitional no-op confirmed)"
 
 # 4. Opcional file should be PRESERVED
 log_info "Checking that opcional file was PRESERVED..."
@@ -159,6 +170,10 @@ if [[ -f "$STDERR_FILE" ]]; then
 	fi
 fi
 log_pass "No security warnings in stderr"
+
+# 7. CLI reports the workspace is already up to date
+log_info "Checking output for 'already up to date' message..."
+assert_contains "$COMBINED_OUTPUT" "already up to date"
 
 # ---------------------------------------------------------------------------
 # Done

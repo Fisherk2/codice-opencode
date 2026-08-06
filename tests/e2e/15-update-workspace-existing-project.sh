@@ -1,20 +1,25 @@
 #!/bin/bash
 #===============================================================================
-# FEV3-T6: Update Workspace Existing Project E2E
+# FEV3-T6: Update Workspace Existing Project E2E (FEV-21 transitional behavior)
 #
-# Scenario: Pre-populate directory with existing standard files and directories
-#           Run --update --force
-# Expected: Standard files (README.md, AGENTS.md) PRESERVED (not overwritten)
-#           Standard directories (docs/, specs/) PRESERVED (not overwritten)
-#           Mandatory files (opencode.json, etc.) UPDATED (overwritten)
-#           New standard files (tasks/) COPIED (since they don't exist yet)
-#           .codice-version file updated
-#           Optional files preserved (not touched)
+# Scenario: Pre-populate directory with an existing project (custom standard
+#           files and directories, custom mandatory files, custom optional
+#           files) and a v2.0.0 .codice-version, then run --update --force.
 #
-# This tests the FEV-3 fix for the regression of FEV-1 Issue #2.
-# The root cause was BunFileSystem.destinationExists() using Bun.file()
-# which doesn't detect directories, causing standard directories to be
-# overwritten during update.
+# Expected (TRANSITIONAL NO-OP): the bundled template is v1.2.0, so the
+# bundled comparison (installed >= bundled) reports "Workspace is already up
+# to date" and NO merge happens:
+#   - exit code 0
+#   - README.md, docs/README.md, specs/README.md, .env.example all PRESERVED
+#   - scripts/build.sh (opcional) PRESERVED
+#   - opencode.json (mandatory) NOT overwritten (nothing merges)
+#   - stderr has no traversal/EPERM warnings
+#   - stdout/stderr contains "already up to date"
+#   - .codice-version still exists in the v2.0 format ("version" key)
+#
+# NOTE: Update mode only becomes functional once the package is published
+# at >= 2.0.0 (FEV-21 plan). Until then this E2E verifies the real observable
+# no-op behavior instead of the merge.
 #===============================================================================
 
 set -Eeuo pipefail
@@ -25,7 +30,6 @@ source "$(dirname "$0")/common.sh"
 # ---------------------------------------------------------------------------
 
 log_step "FEV3-T6: Update Workspace Existing Project E2E"
-
 
 # Create temp directory with template
 TEMP_DIR="$(create_temp_dir)"
@@ -48,16 +52,20 @@ mkdir -p "$TEMP_DIR/specs"
 echo "# Custom Specs" > "$TEMP_DIR/specs/README.md"
 echo "API spec content" > "$TEMP_DIR/specs/api.md"
 
+# Obligatorio file with custom content (must NOT be overwritten — no merge)
+echo '{"custom": true, "version": "0.9.0"}' > "$TEMP_DIR/opencode.json"
+
 # Opcional file that already exists (should be preserved)
 mkdir -p "$TEMP_DIR/scripts"
 echo "# CUSTOM SCRIPT — My Custom Build" > "$TEMP_DIR/scripts/build.sh"
 
-# Write version file (older than mock server's default v1.0.0 so update proceeds)
-echo '{"installedVersion":"0.9.0","installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":["scripts/build.sh"]}' > "$TEMP_DIR/.codice-version"
+# Write version file in the v2.0 format with a version NEWER than the
+# bundled template (1.2.0) so the bundled comparison reports "up to date".
+echo '{"version":"2.0.0","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":["scripts/build.sh"]}' > "$TEMP_DIR/.codice-version"
 
 log_info "Pre-populated project with existing standard files and directories"
 
-# Start mock server (returns tag that is newer than local)
+# Start mock server (returns tag_name: "v1.0.0" by default)
 start_mock_server
 log_info "Mock GitHub API pointing to $CODICE_GITHUB_API_URL"
 
@@ -83,6 +91,9 @@ log_pass "CLI exited with code 0"
 # ---------------------------------------------------------------------------
 # Assertions
 # ---------------------------------------------------------------------------
+
+# Combined output for message assertions (TUI messages emit on stdout via clack)
+COMBINED_OUTPUT=$(cat "$STDOUT_FILE" "$STDERR_FILE" 2>/dev/null || echo "")
 
 # 1. Standard file preserved
 log_info "Checking that standard file README.md was PRESERVED..."
@@ -124,36 +135,17 @@ if [[ "$PRESERVED_ENV" != "# CUSTOM ENV EXAMPLE — My Environment Config" ]]; t
 fi
 log_pass ".env.example preserved (standard file not overwritten)"
 
-# 5. Mandatory files SHOULD be updated (opencode.json must match template content)
-log_info "Checking that obligatorio files were UPDATED..."
-if [[ ! -f "$TEMP_DIR/opencode.json" ]]; then
-    log_fail "opencode.json was NOT created — expected mandatory file to be overwritten"
+# 5. Obligatorio file NOT overwritten (no merge happens)
+log_info "Checking that obligatorio file opencode.json was NOT overwritten..."
+PRESERVED_OPENCODE=$(head -1 "$TEMP_DIR/opencode.json" 2>/dev/null || echo "")
+if [[ "$PRESERVED_OPENCODE" != '{"custom": true, "version": "0.9.0"}' ]]; then
+    log_fail "opencode.json was modified! Expected it to stay untouched (no merge)."
+    echo "    Actual first line: $PRESERVED_OPENCODE" >&2
     exit 1
 fi
-if diff -q "$TEMP_DIR/template/obligatorio/core/opencode.json" "$TEMP_DIR/opencode.json" >/dev/null 2>&1; then
-    log_pass "opencode.json content matches template (obligatorio overwritten — correct behavior)"
-else
-    log_fail "opencode.json content differs from template — expected exact match after overwrite"
-    exit 1
-fi
+log_pass "opencode.json untouched (transitional no-op confirmed)"
 
-# 6. New standard file (tasks/) should be COPIED since it doesn't exist
-log_info "Checking that new standard directory tasks/ was COPIED..."
-if [[ ! -d "$TEMP_DIR/tasks" ]]; then
-    log_fail "tasks/ directory was NOT created — expected new standard directory to appear"
-    exit 1
-fi
-if [[ ! -f "$TEMP_DIR/tasks/todo.md" ]] && [[ ! -f "$TEMP_DIR/tasks/plan.md" ]]; then
-    # tasks may have different files — just check the directory exists with content
-    TASKS_CONTENT=$(ls "$TEMP_DIR/tasks/" 2>/dev/null || echo "")
-    if [[ -z "$TASKS_CONTENT" ]]; then
-        log_fail "tasks/ directory exists but is empty"
-        exit 1
-    fi
-fi
-log_pass "tasks/ directory was copied (new standard files appear)"
-
-# 7. Optional file preserved
+# 6. Optional file preserved
 log_info "Checking that opcional file was PRESERVED..."
 PRESERVED_SCRIPT=$(head -1 "$TEMP_DIR/scripts/build.sh" 2>/dev/null || echo "")
 if [[ "$PRESERVED_SCRIPT" != "# CUSTOM SCRIPT — My Custom Build" ]]; then
@@ -163,7 +155,7 @@ if [[ "$PRESERVED_SCRIPT" != "# CUSTOM SCRIPT — My Custom Build" ]]; then
 fi
 log_pass "scripts/build.sh preserved (opcional not updated)"
 
-# 8. No security warnings in stderr
+# 7. No security warnings in stderr
 log_info "Checking stderr for security warnings..."
 if [[ -f "$STDERR_FILE" ]]; then
     STDERR_CONTENT=$(cat "$STDERR_FILE" 2>/dev/null || echo "")
@@ -174,32 +166,26 @@ if [[ -f "$STDERR_FILE" ]]; then
 fi
 log_pass "No security warnings in stderr"
 
-# 9. Success message in stdout
-log_info "Checking stdout for success message..."
-if [[ -f "$STDOUT_FILE" ]]; then
-    if grep -q "Workspace update complete" "$STDOUT_FILE" 2>/dev/null; then
-        log_pass "Success message found in stdout"
-    else
-        log_fail "Expected 'Workspace update complete' in stdout"
-        echo "    Full stdout: $(cat "$STDOUT_FILE")" >&2
-        exit 1
-    fi
-fi
+# 8. CLI reports the workspace is already up to date
+log_info "Checking output for 'already up to date' message..."
+assert_contains "$COMBINED_OUTPUT" "already up to date"
 
-# 10. Version file updated
-log_info "Checking version file was updated..."
-if [[ ! -f "$TEMP_DIR/.codice-version" ]]; then
-    log_fail ".codice-version file is missing!"
-    exit 1
-fi
+# 9. Version file in v2.0 format ('version' key, not 'installedVersion')
+log_info "Checking version file format (v2.0 — 'version' key)..."
+assert_file_exists "$TEMP_DIR/.codice-version"
 
 VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
-if ! echo "$VERSION_DATA" | grep -q '"optionalSelections"'; then
-    log_fail "Version file is missing optionalSelections"
+if ! echo "$VERSION_DATA" | grep -q '"version"'; then
+    log_fail "Version file is missing the v2.0 'version' key"
     echo "    Version data: $VERSION_DATA" >&2
     exit 1
 fi
-log_pass "Version file updated with optional selections preserved"
+if echo "$VERSION_DATA" | grep -q '"installedVersion"'; then
+    log_fail "Version file uses the legacy 'installedVersion' key instead of v2.0 'version'"
+    echo "    Version data: $VERSION_DATA" >&2
+    exit 1
+fi
+log_pass "Version file uses the v2.0 'version' key (not 'installedVersion')"
 
 # ---------------------------------------------------------------------------
 # Done
