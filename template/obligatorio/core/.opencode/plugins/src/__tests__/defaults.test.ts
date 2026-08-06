@@ -65,6 +65,7 @@ describe("defaults.ts — DEFAULTS object exposes all 5 canonical maps", () => {
 		for (const key of expected) {
 			expect(DEFAULTS).toHaveProperty(key);
 		}
+		expect(Object.keys(DEFAULTS)).toHaveLength(expected.length);
 	});
 });
 
