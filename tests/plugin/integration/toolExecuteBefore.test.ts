@@ -2,8 +2,13 @@
 // Integration tests for tool.execute.before hook behavior
 //
 // Tests the destructive command blocking (normalizeBash + DESTRUCTIVE_PATTERNS)
-// and subagent name validation (VALID_SUBAGENTS Set) that power the
-// tool.execute.before hook.
+// and subagent name validation that power the tool.execute.before hook.
+//
+// Subagent validation no longer uses a hardcoded VALID_SUBAGENTS set — since
+// FEV-20, names are derived at runtime by discoverValidSubagents() scanning
+// the user's `agents/` directory (ADR-013: Auto-Discovery). The 6 primary
+// agents (PRIMARY_AGENTS) are always valid. This test mimics the discovered
+// set with DISCOVERED_SUBAGENTS below.
 //
 // The hook itself lives inside SddPipelinePlugin (requires @opencode-ai/plugin),
 // so we test the pure functions and maps independently.
@@ -12,7 +17,7 @@
 import { describe, expect, test } from "bun:test";
 import {
 	DESTRUCTIVE_PATTERNS,
-	VALID_SUBAGENTS,
+	PRIMARY_AGENTS,
 } from "../../../template/obligatorio/core/.opencode/plugins/src/defaults";
 
 // ---------------------------------------------------------------------------
@@ -27,9 +32,25 @@ function isDestructive(cmd: string): boolean {
 	return DESTRUCTIVE_PATTERNS.some((p) => p.test(normalized));
 }
 
-/** Returns true if the subagent name is in the valid set (case-insensitive check). */
+/** Mimics auto-discovery: PRIMARY_AGENTS + a representative sample of subagents from agents/. */
+const DISCOVERED_SUBAGENTS = new Set([
+	"test-engineer",
+	"docs-writer",
+	"code-reviewer",
+	"backend-developer",
+	"typescript-pro",
+]);
+
+/**
+ * Returns true if the subagent name is valid (case-insensitive check).
+ *
+ * Mirrors sdd-pipeline.ts: the discovered set (from discoverValidSubagents)
+ * is used when non-empty, falling back to the 6 PRIMARY_AGENTS. Primary
+ * agents are always valid even without a corresponding `agents/` file.
+ */
 function isValidSubagent(name: string): boolean {
-	return VALID_SUBAGENTS.has(name.toLowerCase());
+	const normalized = name.toLowerCase();
+	return PRIMARY_AGENTS.includes(normalized) || DISCOVERED_SUBAGENTS.has(normalized);
 }
 
 // ---------------------------------------------------------------------------
