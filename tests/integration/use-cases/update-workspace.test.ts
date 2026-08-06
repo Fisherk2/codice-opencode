@@ -96,6 +96,17 @@ function createMockGitHubClient(tagName: string | null = "v1.0.0"): IGitHubClien
 
 const nonOptionalCount = FILE_RULE_MANIFEST.length - getRulesByCategory("optional").length;
 
+/**
+ * Paths always staged in update mode regardless of destination state:
+ * mandatory (always overwrite) + pack (installed once selected by the wizard).
+ * Standard rules are skipped when they already exist in the destination,
+ * so they are excluded from this always-staged set.
+ */
+const alwaysStagedPaths = [
+	...getRulesByCategory("mandatory").map((r) => r.path),
+	...getRulesByCategory("pack").map((r) => r.path),
+];
+
 describe("UpdateWorkspaceUseCase", () => {
 	describe("constructor", () => {
 		it("should create an instance when given valid dependencies", () => {
@@ -255,7 +266,6 @@ describe("UpdateWorkspaceUseCase", () => {
 
 		it("should NOT overwrite standard files that already exist (REGRESSION: FEV-1 #2)", async () => {
 			const standardPaths = getRulesByCategory("standard").map((r) => r.path);
-			const mandatoryPaths = getRulesByCategory("mandatory").map((r) => r.path);
 
 			const { stub: fs, calls } = createMockFileSystem();
 			// Simulate existing standard files — destinationExists returns true for standard paths
@@ -281,11 +291,11 @@ describe("UpdateWorkspaceUseCase", () => {
 			const result = await useCase.execute("/tmp/project", { force: true });
 
 			expect(result.ok).toBe(true);
-			// Only mandatory files should be staged (standard files already exist)
-			expect(calls.stageFile.length).toBe(mandatoryPaths.length);
-			// Each staged file should be mandatory
+			// Only mandatory + pack files should be staged (standard files already exist)
+			expect(calls.stageFile.length).toBe(alwaysStagedPaths.length);
+			// Each staged file should be mandatory or pack
 			for (const staged of calls.stageFile) {
-				expect(mandatoryPaths).toContain(staged);
+				expect(alwaysStagedPaths).toContain(staged);
 			}
 			// Standard files should NOT be staged
 			const stagedStandard = calls.stageFile.filter((p) => standardPaths.includes(p));
@@ -293,8 +303,11 @@ describe("UpdateWorkspaceUseCase", () => {
 		});
 
 		it("should overwrite mandatory files even when they already exist (REGRESSION: FEV-1 #2)", async () => {
-			const mandatoryPaths = getRulesByCategory("mandatory").map((r) => r.path);
-			const allPaths = [...mandatoryPaths, ...getRulesByCategory("standard").map((r) => r.path)];
+			// Everything non-optional is simulated as existing; mandatory + pack
+			// must still be staged (standard is skipped because it exists).
+			const allPaths = FILE_RULE_MANIFEST.filter((r) => r.category !== "optional").map(
+				(r) => r.path,
+			);
 
 			const { stub: fs, calls } = createMockFileSystem();
 			// Simulate ALL files existing — mandatory should still be staged
@@ -320,11 +333,11 @@ describe("UpdateWorkspaceUseCase", () => {
 			const result = await useCase.execute("/tmp/project", { force: true });
 
 			expect(result.ok).toBe(true);
-			// Mandatory files are always staged regardless of existence
-			expect(calls.stageFile.length).toBe(mandatoryPaths.length);
-			// Each staged file should be mandatory
+			// Mandatory + pack files are always staged regardless of existence
+			expect(calls.stageFile.length).toBe(alwaysStagedPaths.length);
+			// Each staged file should be mandatory or pack
 			for (const staged of calls.stageFile) {
-				expect(mandatoryPaths).toContain(staged);
+				expect(alwaysStagedPaths).toContain(staged);
 			}
 		});
 

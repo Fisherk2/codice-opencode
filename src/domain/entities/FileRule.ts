@@ -5,8 +5,11 @@
  *   obligatorio/ → mandatory  — Always copied, overwrites destination.
  *   estandar/    → standard    — Copied only if destination does not exist.
  *   opcional/    → optional    — Copied only if user explicitly opts in.
+ *   packs/*      → pack        — Selectable agent packs chosen via the
+ *                                installer wizard; only selected packs are
+ *                                staged, non-pack rules always pass through.
  */
-export type RuleCategory = "mandatory" | "standard" | "optional";
+export type RuleCategory = "mandatory" | "standard" | "optional" | "pack";
 
 /**
  * Classification rule for a single path in the template directory.

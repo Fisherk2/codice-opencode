@@ -9,6 +9,7 @@
 import { describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { filterByPacks, getPackRules } from "../../src/domain/entities/FileRuleManifest";
 import { FILE_RULE_MANIFEST } from "../../src/domain/entities/FileRuleManifestData";
 
 const PROJECT_ROOT = path.resolve(import.meta.dir, "../..");
@@ -129,15 +130,54 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 	test.each([
 		["optional", 11],
 		["standard", 11],
-		["mandatory", 11],
+		["mandatory", 3],
+		["pack", 8],
 	])("category '%s' has %i entries", (category, expectedCount) => {
 		const count = FILE_RULE_MANIFEST.filter((r) => r.category === category).length;
 		if (category === "optional") {
 			// Optional entries may grow as new files are added, check minimum
 			expect(count).toBeGreaterThanOrEqual(expectedCount);
 		} else {
-			// Standard and mandatory counts are stable
+			// Standard, mandatory, and pack counts are stable
 			expect(count).toBe(expectedCount);
 		}
+	});
+});
+
+describe("FileRuleManifest pack helpers", () => {
+	test("getPackRules returns 8 pack rules (excludes main/writers)", () => {
+		const packRules = getPackRules();
+		expect(packRules.length).toBe(8);
+		for (const rule of packRules) {
+			expect(rule.category).toBe("pack");
+			expect(rule.path.startsWith("packs/")).toBe(true);
+		}
+	});
+
+	test("filterByPacks includes only selected packs plus non-pack rules", () => {
+		const filtered = filterByPacks(FILE_RULE_MANIFEST, ["software-development", "business"]);
+		const packIds = filtered
+			.filter((r) => r.category === "pack")
+			.map((r) => r.path.replace(/^packs\//, ""));
+		expect(packIds).toEqual(["software-development", "business"]);
+		// Non-pack rules are always kept
+		const nonPackCounts = {
+			mandatory: filtered.filter((r) => r.category === "mandatory").length,
+			standard: filtered.filter((r) => r.category === "standard").length,
+			optional: filtered.filter((r) => r.category === "optional").length,
+		};
+		expect(nonPackCounts.mandatory).toBeGreaterThan(0);
+		expect(nonPackCounts.standard).toBeGreaterThan(0);
+		expect(nonPackCounts.optional).toBeGreaterThan(0);
+	});
+
+	test("filterByPacks with empty selection excludes all packs but keeps non-pack rules", () => {
+		const filtered = filterByPacks(FILE_RULE_MANIFEST, []);
+		const packRules = filtered.filter((r) => r.category === "pack");
+		expect(packRules.length).toBe(0);
+		const standard = filtered.filter((r) => r.category === "standard");
+		const optional = filtered.filter((r) => r.category === "optional");
+		expect(standard.length).toBeGreaterThan(0);
+		expect(optional.length).toBeGreaterThan(0);
 	});
 });

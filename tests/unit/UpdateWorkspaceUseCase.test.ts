@@ -194,9 +194,11 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 
 		await useCase.execute("/tmp/fake-dest", { force: true });
 
-		// All rules should be either 'mandatory' or 'standard', never 'optional'
+		// All rules should be either 'mandatory', 'standard' or 'pack', never 'optional'
 		const allCategories = mergeEngine.capturedRules.map((r) => r.category);
-		expect(allCategories.every((c) => c === "mandatory" || c === "standard")).toBe(true);
+		expect(allCategories.every((c) => c === "mandatory" || c === "standard" || c === "pack")).toBe(
+			true,
+		);
 
 		// There should be at least one 'standard' rule (not converted to mandatory)
 		const standardCount = allCategories.filter((c) => c === "standard").length;

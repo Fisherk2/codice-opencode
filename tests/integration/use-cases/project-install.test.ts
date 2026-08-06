@@ -422,12 +422,11 @@ describe("ProjectInstallUseCase", () => {
 			// The selected optional file should NOT be staged because it already exists
 			const stagedOptional = calls.stageFile.filter((p) => p === firstOptional.path);
 			expect(stagedOptional.length).toBe(0);
-			// But mandatory + standard files (minus existing standard) should still be staged
+			// But mandatory + standard + pack files (minus existing standard) should still be staged
 			// Since destinationExists returns true for the optional path only, standard files
 			// that don't exist should still be staged
-			const mandatoryCount = getRulesByCategory("mandatory").length;
-			const standardCount = getRulesByCategory("standard").length;
-			expect(calls.stageFile.length).toBe(mandatoryCount + standardCount);
+			const nonOptionalCount = FILE_RULE_MANIFEST.filter((r) => r.category !== "optional").length;
+			expect(calls.stageFile.length).toBe(nonOptionalCount);
 		});
 
 		it("should return error and clean staging when merge engine fails", async () => {

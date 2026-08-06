@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { getMandatoryRules } from "../../../src/domain/entities/FileRuleManifest";
+import { getMandatoryRules, getPackRules } from "../../../src/domain/entities/FileRuleManifest";
 import { FILE_RULE_MANIFEST } from "../../../src/domain/entities/FileRuleManifestData";
 
 /**
@@ -37,15 +37,17 @@ describe("pack directories (FEV-18)", () => {
 	});
 
 	it("manifest has an entry for every pack directory", () => {
-		const mandatoryPaths = getMandatoryRules().map((r) => r.path);
+		const packPaths = [...getMandatoryRules(), ...getPackRules()].map((r) => r.path);
 		for (const pack of EXPECTED_PACKS) {
-			expect(mandatoryPaths).toContain(`packs/${pack}`);
+			expect(packPaths).toContain(`packs/${pack}`);
 		}
 	});
 
-	it("manifest has exactly 11 mandatory entries (core + 2 mandatory + 8 selectable)", () => {
-		const mandatory = getMandatoryRules();
-		expect(mandatory.length).toBe(11);
+	it("manifest has exactly 3 mandatory + 8 pack entries (FEV-21)", () => {
+		// FEV-21 moved the 8 selectable packs from mandatory to the "pack"
+		// category; mandatory now holds only core + the 2 fixed pack groups.
+		expect(getMandatoryRules().length).toBe(3);
+		expect(getPackRules().length).toBe(8);
 	});
 
 	it("all pack manifest entries use destPath='agents'", () => {

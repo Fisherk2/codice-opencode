@@ -57,6 +57,11 @@ async function shouldStage(
 ): Promise<boolean> {
 	if (rule.category === "mandatory") return true;
 
+	// Pack rules behave like mandatory inside the merge engine: pack selection
+	// happens earlier in the installer wizard (filterByPacks), so any pack rule
+	// that reaches the engine must be staged regardless of destination state.
+	if (rule.category === "pack") return true;
+
 	if (rule.category === "standard") {
 		const exists = await fileSystem.destinationExists(rule.path);
 		return !exists;

@@ -58,6 +58,33 @@ export function getOptionalRules(): readonly FileRule[] {
 }
 
 /**
+ * Get all selectable pack rules (category "pack").
+ */
+export function getPackRules(): readonly FileRule[] {
+	return getRulesByCategory("pack");
+}
+
+/**
+ * Filter rules down to the selected packs while always keeping non-pack rules.
+ * Pack identity is derived from the rule path ("packs/<packId>").
+ * Uses a Set for O(1) membership lookups during filtering.
+ *
+ * @param rules - The rule set to filter (typically FILE_RULE_MANIFEST).
+ * @param selectedPacks - Pack IDs chosen via the installer wizard.
+ */
+export function filterByPacks(
+	rules: readonly FileRule[],
+	selectedPacks: readonly string[],
+): readonly FileRule[] {
+	const selected = new Set(selectedPacks);
+	return rules.filter((rule) => {
+		if (rule.category !== "pack") return true;
+		const packId = rule.path.replace(/^packs\//, "");
+		return selected.has(packId);
+	});
+}
+
+/**
  * Decide whether a rule belongs in the effective rule set: keep it when it is
  * not optional, or when it is an optional rule the user explicitly selected.
  * Centralizes the optional-inclusion predicate shared by install use cases.
