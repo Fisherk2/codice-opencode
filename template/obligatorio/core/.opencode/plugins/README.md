@@ -14,7 +14,7 @@ OpenCode already manages permissions, agent configs, skills, and commands via YA
 | Agent model, temperature, steps | Slash command → agent mapping |
 | Skill loading and discovery | Intent detection from free text |
 | Command definitions | Destructive command blocking (safety net) |
-| Bash permission rules | Subagent name validation (catalog integrity) |
+| Bash permission rules | Subagent name validation (filesystem auto-discovery) |
 | Subagent delegation rules | Phase suggestions (advisory) |
 
 ## Implemented Hooks
@@ -72,30 +72,15 @@ Both layers must be updated together when adding new restrictions. The plugin ca
 
 ### 2. Subagent Name Validation
 
-The plugin validates that subagent names in `task()` exist in the catalog (**104 agents**: 98 subagents + 6 primary). If the LLM invents a name, it receives an error:
+The plugin validates that subagent names in `task()` exist in the catalog (**~355 agents**: ~349 subagents (from the `agents/` directory) + 6 primary). If the LLM invents a name, it receives an error:
 
 ```
-Unknown subagent: "python-wizard". Use an agent from the VALID_SUBAGENTS catalog.
+Unknown subagent: "python-wizard". Create an .md file in the agents/ directory or use a primary agent.
 ```
 
-The `VALID_SUBAGENTS` Set contains all valid agent names organized by domain:
+Subagent names are **auto-discovered from the filesystem** — there is no hardcoded catalog of subagents. At session start, the plugin recursively scans the user's `agents/` directory (including subdirectories, skipping hidden directories) and treats every `*.md` file as a registered subagent. Adding a new agent requires only creating `agents/<name>.md`; no plugin changes are needed.
 
-| Domain | Count | Agents |
-|--------|:-----:|--------|
-| Primary | 6 | huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca |
-| Backend & APIs | 22 | backend-developer, typescript-pro, python-pro, golang-pro, rust-engineer, java-architect, csharp-developer, fastapi-developer, graphql-architect, spring-boot-engineer, django-developer, laravel-specialist, php-pro, nextjs-developer, elixir-expert, ruby-pro, kotlin-specialist, websocket-engineer, microservices-architect, cpp-pro, javascript-pro, fullstack-developer |
-| Frontend & Mobile | 8 | angular-architect, flutter-expert, frontend-developer, mobile-app-developer, mobile-developer, react-specialist, swift-expert, vue-expert |
-| Database & Data | 8 | database-optimizer, postgres-pro, sql-pro, data-analyst, data-engineer, data-scientist, data-researcher, database-administrator |
-| DevOps & Infra | 11 | docker-expert, kubernetes-specialist, terraform-engineer, devops-engineer, build-engineer, sre-engineer, cloud-architect, platform-engineer, network-engineer, azure-infra-engineer, deployment-engineer |
-| Security | 3 | security-auditor, dependency-manager, legal-advisor |
-| Testing & QA | 8 | test-engineer, code-reviewer, accessibility-tester, chaos-engineer, refactorer, error-detective, error-coordinator, web-performance-auditor |
-| Debugging | 1 | debugger |
-| AI / ML | 6 | ai-engineer, llm-architect, mlops-engineer, machine-learning-engineer, nlp-engineer, prompt-engineer |
-| DX & Tooling | 5 | cli-developer, tooling-engineer, mcp-developer, dx-optimizer, context-manager |
-| Processes | 5 | git-workflow-manager, incident-responder, project-manager, scrum-master, legacy-modernizer |
-| Specialized Domains | 6 | fintech-engineer, payment-integration, blockchain-developer, game-developer, iot-engineer, embedded-systems |
-| Documentation & Research | 6 | docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, search-specialist, obsidian-vault-writer |
-| Product & Business | 9 | business-analyst, product-manager, competitive-analyst, content-marketer, market-researcher, sales-engineer, seo-specialist, trend-analyst, ux-researcher |
+The 6 primary agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca) are the only hardcoded names — they are the plugin's identity (ADR-014: Agent Pack System) and stay valid even when no `agents/` directory exists. When the directory is absent, validation falls back to just those 6 primary agents. Per ADR-013 (Auto-Discovery), subagent names are derived at runtime rather than maintained as a static catalog.
 
 Validation checks `args.subagent_type`, `args.agent`, `args.name`, `args.type`, or `args.subagent` for the name.
 
@@ -162,7 +147,7 @@ Mapping of slash commands to their primary agent:
 
 ## Subagent Delegation
 
-Primary agents can delegate to subagents via `task()`. Each subagent operates in an isolated subcontext with its **own permissions**, not the parent's. Delegation rules are configured in each agent file's YAML frontmatter — the plugin only validates the subagent name exists in the catalog, it does not enforce which agents can delegate to which subagents.
+Primary agents can delegate to subagents via `task()`. Each subagent operates in an isolated subcontext with its **own permissions**, not the parent's. Delegation rules are configured in each agent file's YAML frontmatter — the plugin only validates the subagent name exists among the auto-discovered agents, it does not enforce which agents can delegate to which subagents.
 
 | Primary agent | Can delegate? | Config source |
 |----------------|:---:|---|
