@@ -26,17 +26,13 @@ export async function detectVersionContext(fileSystem: IFileSystem): Promise<Ver
 		const data = await fileSystem.readVersionFile();
 		if (data === null) return { version: null, installedPacks: [], status: "missing" };
 		const version = WorkspaceVersion.fromJSON(JSON.parse(data) as unknown);
-		const [majorStr, minorStr] = version.version.replace(/^v/, "").split(".");
+		const { version: rawVersion, installedPacks } = version;
+		const [majorStr, minorStr] = rawVersion.replace(/^v/, "").split(".");
 		const major = parseInt(majorStr ?? "0", 10);
 		const minor = parseInt(minorStr ?? "0", 10);
-		if (major >= 2) {
-			return { version: version.version, installedPacks: version.installedPacks, status: "v2.0+" };
-		}
-		return {
-			version: version.version,
-			installedPacks: version.installedPacks,
-			status: major === 1 && minor >= 2 ? "pre-2.0.0" : "pre-1.2.0",
-		};
+		const status: VersionDisplayInfo["status"] =
+			major >= 2 ? "v2.0+" : major === 1 && minor >= 2 ? "pre-2.0.0" : "pre-1.2.0";
+		return { version: rawVersion, installedPacks, status };
 	} catch {
 		return { version: null, installedPacks: [], status: "missing" };
 	}
