@@ -113,4 +113,25 @@ describe("confirmOverwrite", () => {
 		expect(prompt.cancelCalls).toHaveLength(1);
 		expect(prompt.cancelCalls[0]).toBe("Update cancelled by user.");
 	});
+
+	test("passes defaultYes=true to confirm when requested (update mode default)", async () => {
+		const fs = createMockFileSystem({ isEmpty: false });
+		const prompt = createMockPrompt();
+
+		const result = await confirmOverwrite(
+			fs,
+			prompt.stub,
+			'Update workspace in "/tmp/project"? Continue?',
+			"Update cancelled by user.",
+			undefined,
+			true,
+		);
+
+		expect(result).toBe(true);
+		expect(prompt.stub.confirm).toHaveBeenCalledTimes(1);
+		expect(prompt.stub.confirm).toHaveBeenCalledWith(
+			'Update workspace in "/tmp/project"? Continue?',
+			true,
+		);
+	});
 });

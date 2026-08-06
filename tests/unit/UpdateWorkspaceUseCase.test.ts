@@ -15,7 +15,6 @@ import { compare as semverCompare, valid } from "semver";
 import type { IGitHubClient } from "../../src/application/ports/IGitHubClient";
 import type { IUserPrompt } from "../../src/application/ports/IUserPrompt";
 import { UpdateWorkspaceUseCase } from "../../src/application/use-cases/UpdateWorkspaceUseCase";
-import { VERSION } from "../../src/cli/output";
 import type { FileRule } from "../../src/domain/entities/FileRule";
 import type { IFileMergeEngine } from "../../src/domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../src/domain/ports/IFileSystem";
@@ -24,6 +23,13 @@ import type { MergeError } from "../../src/domain/types/MergeError";
 import type { ProgressCallback } from "../../src/domain/types/ProgressEvent";
 import { type Result, success } from "../../src/domain/types/Result";
 import type { ComparisonResult } from "../../src/domain/types/version";
+
+/**
+ * Bundled template version used in the tests. Must be NEWER than the seeded
+ * v2.0.0 install so the update proceeds past the installed >= bundled check
+ * (the real package VERSION is 1.2.0, which would short-circuit every merge).
+ */
+const BUNDLED_TEST_VERSION = "2.1.0";
 
 // ---------------------------------------------------------------------------
 // Minimal test doubles
@@ -50,8 +56,14 @@ class FakeFileSystem implements IFileSystem {
 	async writeVersionFile(content: string): Promise<void> {
 		this.lastWrittenVersion = content;
 	}
+	/** Configurable .codice-version payload; defaults to a v2.0 install. */
+	versionFileContent: string | null = JSON.stringify({
+		version: "2.0.0",
+		installedPacks: ["software-development"],
+		installedAt: "2026-01-01T00:00:00.000Z",
+	});
 	async readVersionFile(): Promise<string | null> {
-		return null;
+		return this.versionFileContent;
 	}
 	async walkTemplateDirectory(_path: string): Promise<readonly string[]> {
 		return [];
@@ -89,7 +101,10 @@ class FakeGitHubClientBadTag implements IGitHubClient {
 }
 
 class FakeUserPrompt implements IUserPrompt {
-	showWarning(_message: string): void {}
+	warnings: string[] = [];
+	showWarning(message: string): void {
+		this.warnings.push(message);
+	}
 	showInfo(_message: string): void {}
 	async confirm(_message: string, _default?: boolean): Promise<boolean> {
 		return true;
@@ -152,7 +167,7 @@ function makeUseCase(
 	gitHub?: FakeGitHubClient,
 	versionComparator?: FakeVersionComparator,
 	fileSystem?: FakeFileSystem,
-	bundledVersion = VERSION,
+	bundledVersion = BUNDLED_TEST_VERSION,
 ): UpdateWorkspaceUseCase {
 	return new UpdateWorkspaceUseCase(
 		fileSystem ?? new FakeFileSystem(),
@@ -229,6 +244,51 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 
 		expect(fs.lastWrittenVersion).not.toBeNull();
 		const versionData = JSON.parse(fs.lastWrittenVersion!);
-		expect(versionData.installedVersion).toBe(VERSION);
+		expect(versionData.version).toBe(BUNDLED_TEST_VERSION);
+	});
+
+	test("should block update when .codice-version is missing", async () => {
+		const mergeEngine = new CaptureMergeEngine();
+		const fs = new FakeFileSystem();
+		fs.versionFileContent = null;
+		const prompt = new FakeUserPrompt();
+		const useCase = new UpdateWorkspaceUseCase(
+			fs,
+			mergeEngine,
+			prompt,
+			new FakeGitHubClient(),
+			new FakeVersionComparator(),
+			BUNDLED_TEST_VERSION,
+		);
+
+		const result = await useCase.execute("/tmp/fake-dest", { force: true });
+
+		expect(result.ok).toBe(true);
+		expect(prompt.warnings.join(" ")).toContain("No previous Códice installation found");
+		expect(mergeEngine.capturedRules.length).toBe(0);
+	});
+
+	test("should block update when installed version is 1.x", async () => {
+		const mergeEngine = new CaptureMergeEngine();
+		const fs = new FakeFileSystem();
+		fs.versionFileContent = JSON.stringify({
+			version: "1.8.0",
+			installedAt: "2026-01-01T00:00:00.000Z",
+		});
+		const prompt = new FakeUserPrompt();
+		const useCase = new UpdateWorkspaceUseCase(
+			fs,
+			mergeEngine,
+			prompt,
+			new FakeGitHubClient(),
+			new FakeVersionComparator(),
+			BUNDLED_TEST_VERSION,
+		);
+
+		const result = await useCase.execute("/tmp/fake-dest", { force: true });
+
+		expect(result.ok).toBe(true);
+		expect(prompt.warnings.join(" ")).toContain("update system has changed");
+		expect(mergeEngine.capturedRules.length).toBe(0);
 	});
 });

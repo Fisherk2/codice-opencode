@@ -2,10 +2,10 @@ import { describe, expect, it, mock as mockFn } from "bun:test";
 import type { IGitHubClient } from "../../../src/application/ports/IGitHubClient";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import { UpdateWorkspaceUseCase } from "../../../src/application/use-cases/UpdateWorkspaceUseCase";
-import { VERSION } from "../../../src/cli/output";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
 import {
 	FILE_RULE_MANIFEST,
+	filterByPacks,
 	getRulesByCategory,
 } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
@@ -48,7 +48,8 @@ function createMockFileSystem(): {
 		readVersionFile: mockFn(() =>
 			Promise.resolve(
 				JSON.stringify({
-					installedVersion: "0.9.0",
+					version: "2.0.0",
+					installedPacks: ["software-development"],
 					installedAt: "2026-01-01T00:00:00.000Z",
 					optionalSelections: ["Justfile"],
 				}),
@@ -99,17 +100,36 @@ function createMockGitHubClient(tagName: string | null = "v1.0.0"): IGitHubClien
 	};
 }
 
-const nonOptionalCount = FILE_RULE_MANIFEST.length - getRulesByCategory("optional").length;
+/** Packs seeded in the mock `.codice-version` (v2.0 format). */
+const INSTALLED_PACKS_SEED = ["software-development"] as const;
+
+/**
+ * Bundled template version used in the tests. Must be NEWER than the seeded
+ * v2.0.0 install so the update proceeds (installed >= bundled short-circuits).
+ * The real package VERSION (1.2.0) would block every merge assertion, so the
+ * tests model the post-v2.0.0 release state here.
+ */
+const BUNDLED_TEST_VERSION = "2.1.0";
+
+/**
+ * Non-optional rules that the update merges when scoped to the seeded packs.
+ * The update now applies filterByPacks(manifest minus optional, installedPacks),
+ * so pack rules outside the installed set are excluded from staging counts.
+ */
+const nonOptionalCount = filterByPacks(
+	FILE_RULE_MANIFEST.filter((r) => r.category !== "optional"),
+	INSTALLED_PACKS_SEED,
+).length;
 
 /**
  * Paths always staged in update mode regardless of destination state:
- * mandatory (always overwrite) + pack (installed once selected by the wizard).
+ * mandatory (always overwrite) + pack rules scoped to the seeded packs.
  * Standard rules are skipped when they already exist in the destination,
  * so they are excluded from this always-staged set.
  */
 const alwaysStagedPaths = [
 	...getRulesByCategory("mandatory").map((r) => r.path),
-	...getRulesByCategory("pack").map((r) => r.path),
+	...filterByPacks(getRulesByCategory("pack"), INSTALLED_PACKS_SEED).map((r) => r.path),
 ];
 
 describe("UpdateWorkspaceUseCase", () => {
@@ -120,7 +140,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient();
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 			expect(useCase).toBeInstanceOf(UpdateWorkspaceUseCase);
 		});
 	});
@@ -133,7 +160,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient();
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -150,12 +184,24 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient();
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
 			expect(result.ok).toBe(true);
 			expect(prompt.confirm).toHaveBeenCalledTimes(1);
+			// Confirmation mentions the installed packs and defaults to Yes
+			expect(prompt.confirm).toHaveBeenCalledWith(
+				expect.stringContaining("Packs: software-development"),
+				true,
+			);
 			expect(calls.stageFile.length).toBe(nonOptionalCount);
 		});
 
@@ -167,7 +213,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -186,7 +239,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient();
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -201,7 +261,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient();
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -214,7 +281,8 @@ describe("UpdateWorkspaceUseCase", () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
 				JSON.stringify({
-					installedVersion: VERSION,
+					version: BUNDLED_TEST_VERSION,
+					installedPacks: ["software-development"],
 					installedAt: "2026-01-01T00:00:00.000Z",
 					optionalSelections: [],
 				}),
@@ -223,7 +291,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -239,7 +314,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient(null);
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -256,7 +338,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -291,7 +380,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -333,7 +429,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -363,7 +466,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -375,20 +485,29 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(stagedDocs.length).toBe(0);
 		});
 
-		it("should write updated version file with preserved optionalSelections", async () => {
+		it("should write v2.0 version file with installed packs (opcional skipped)", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project", { version: "1.0.0" });
 
 			expect(result.ok).toBe(true);
 			const versionData = JSON.parse(calls.writeVersionFile[0]!);
-			expect(versionData.installedVersion).toBe("1.0.0");
-			expect(versionData.optionalSelections).toEqual(["Justfile"]);
+			expect(versionData.version).toBe("1.0.0");
+			expect(versionData.installedPacks).toEqual(["software-development"]);
+			// Update skips opcional entirely (spec §6.1), so selections reset
+			expect(versionData.optionalSelections).toEqual([]);
 		});
 
 		it("should return error and clean staging when merge engine fails", async () => {
@@ -401,7 +520,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const prompt = createMockPrompt();
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -418,7 +544,8 @@ describe("UpdateWorkspaceUseCase", () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
 				JSON.stringify({
-					installedVersion: "99.99.99",
+					version: "99.99.99",
+					installedPacks: ["software-development"],
 					installedAt: "2026-01-01T00:00:00.000Z",
 					optionalSelections: [],
 				}),
@@ -427,7 +554,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient("v0.5.0");
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -438,11 +572,11 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(calls.stageFile.length).toBe(0);
 		});
 
-		it("should proceed with update when local version is invalid semver", async () => {
+		it("should block update when local version is invalid semver (treated as missing)", async () => {
 			const { stub: fs, calls } = createMockFileSystem();
 			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
 				JSON.stringify({
-					installedVersion: "not-a-version",
+					version: "not-a-version",
 					installedAt: "2026-01-01T00:00:00.000Z",
 					optionalSelections: [],
 				}),
@@ -451,14 +585,23 @@ describe("UpdateWorkspaceUseCase", () => {
 			const engine = new FileMergeEngine(fs);
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
-			// When comparison fails (invalid semver), code falls through to update
+			// WorkspaceVersion.fromJSON throws on invalid semver → version gate blocks
 			expect(result.ok).toBe(true);
-			// Files should still be staged (update proceeds despite invalid local version)
-			expect(calls.stageFile.length).toBe(nonOptionalCount);
+			expect(prompt.showWarning).toHaveBeenCalledWith(
+				expect.stringContaining("No previous Códice installation found"),
+			);
+			expect(calls.stageFile.length).toBe(0);
 		});
 
 		it("should NOT generate or warn about .gitignore (update mode preserves user customization)", async () => {
@@ -470,7 +613,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -505,7 +655,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(result.ok).toBe(true);
 			// Version file should contain the fallback "0.0.0"
 			const versionData = JSON.parse(calls.writeVersionFile[0]!);
-			expect(versionData.installedVersion).toBe("0.0.0");
+			expect(versionData.version).toBe("0.0.0");
 		});
 
 		it("should handle version file write failure gracefully", async () => {
@@ -515,7 +665,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -531,7 +688,14 @@ describe("UpdateWorkspaceUseCase", () => {
 			const gitHub = createMockGitHubClient("v1.0.0");
 			const engine = new FileMergeEngine(fs);
 			const comparator = new VersionComparator();
-			const useCase = new UpdateWorkspaceUseCase(fs, engine, prompt, gitHub, comparator, VERSION);
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -548,6 +712,218 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(prompt.logProgressEvent).toHaveBeenCalledWith(expect.stringContaining("commit:"));
 			// Progress should have been completed
 			expect(prompt.completeProgress).toHaveBeenCalled();
+		});
+
+		it("should block update when .codice-version is missing", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(null);
+			const prompt = createMockPrompt();
+			const engine = new FileMergeEngine(fs);
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			expect(prompt.showWarning).toHaveBeenCalledWith(
+				expect.stringContaining("No previous Códice installation found"),
+			);
+			expect(calls.stageFile.length).toBe(0);
+			expect(calls.writeVersionFile.length).toBe(0);
+		});
+
+		it("should block update when version < 2.0.0", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+				JSON.stringify({ version: "1.2.0", installedAt: "2026-01-01T00:00:00.000Z" }),
+			);
+			const prompt = createMockPrompt();
+			const engine = new FileMergeEngine(fs);
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			expect(prompt.showWarning).toHaveBeenCalledWith(
+				expect.stringContaining("update system has changed"),
+			);
+			expect(calls.stageFile.length).toBe(0);
+			expect(calls.writeVersionFile.length).toBe(0);
+		});
+
+		it("should allow update when version >= 2.0.0", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			const engine = new FileMergeEngine(fs);
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			expect(calls.writeVersionFile.length).toBe(1);
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.version).toBe(BUNDLED_TEST_VERSION);
+			expect(versionData.installedPacks).toEqual(["software-development"]);
+		});
+
+		it("should update only installed packs on Option A", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+				JSON.stringify({
+					version: "2.0.0",
+					installedPacks: ["software-development", "business"],
+					installedAt: "2026-01-01T00:00:00.000Z",
+				}),
+			);
+			const prompt = createMockPrompt();
+			const engine = new FileMergeEngine(fs);
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
+
+			// Interactive path: default selectUpdateOption resolves "current" → Option A
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual(["software-development", "business"]);
+		});
+
+		it("should add new packs on Option B with installed packs locked", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+				JSON.stringify({
+					version: "2.0.0",
+					installedPacks: ["software-development", "business"],
+					installedAt: "2026-01-01T00:00:00.000Z",
+				}),
+			);
+			const prompt = createMockPrompt();
+			(prompt.selectUpdateOption as ReturnType<typeof mockFn>).mockResolvedValue("add");
+			(prompt.selectPacks as ReturnType<typeof mockFn>).mockResolvedValue([
+				"software-development",
+				"business",
+				"creative",
+			]);
+			const engine = new FileMergeEngine(fs);
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual(["software-development", "business", "creative"]);
+
+			// Installed packs are locked so they cannot be deselected in Option B
+			const packOptions = (prompt.selectPacks as ReturnType<typeof mockFn>).mock
+				.calls[0]![0] as readonly {
+				id: string;
+				locked?: boolean;
+			}[];
+			const lockedIds = packOptions.filter((option) => option.locked).map((option) => option.id);
+			expect(lockedIds).toEqual(["software-development", "business"]);
+		});
+
+		it("should keep installed packs even when user deselects them in Option B (hard lock)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			(fs.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+				JSON.stringify({
+					version: "2.0.0",
+					installedPacks: ["software-development", "business"],
+					installedAt: "2026-01-01T00:00:00.000Z",
+				}),
+			);
+			const prompt = createMockPrompt();
+			(prompt.selectUpdateOption as ReturnType<typeof mockFn>).mockResolvedValue("add");
+			// User toggles OFF the installed packs — only creative stays selected
+			(prompt.selectPacks as ReturnType<typeof mockFn>).mockResolvedValue(["creative"]);
+			const engine = new FileMergeEngine(fs);
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Lock is a hard guarantee: installed packs survive deselection
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual(["software-development", "business", "creative"]);
+		});
+
+		it("should add packs non-interactively via addPacks option", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const prompt = createMockPrompt();
+			const engine = new FileMergeEngine(fs);
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
+
+			const result = await useCase.execute("/tmp/project", {
+				force: true,
+				addPacks: ["creative"],
+			});
+
+			expect(result.ok).toBe(true);
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual(["software-development", "creative"]);
+			// Non-interactive add must not show the Option A/B menu
+			expect(prompt.selectUpdateOption).not.toHaveBeenCalled();
 		});
 	});
 });

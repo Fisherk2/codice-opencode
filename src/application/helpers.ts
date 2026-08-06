@@ -59,6 +59,8 @@ export async function checkWritable(
  * @param message - Confirmation message shown to the user.
  * @param cancelMessage - Message shown if the user cancels.
  * @param force - If true, skip the prompt. If false or undefined, check isEmpty and prompt.
+ * @param defaultYes - Default answer for the confirm prompt. Update mode defaults to
+ *   Yes so a single keystroke accepts the update (plan Phase 4); install modes keep No.
  * @returns true if the operation should proceed, false if cancelled.
  */
 export async function confirmOverwrite(
@@ -67,13 +69,14 @@ export async function confirmOverwrite(
 	message: string,
 	cancelMessage: string,
 	force?: boolean,
+	defaultYes = false,
 ): Promise<boolean> {
 	if (force) return true;
 
 	const isEmpty = await fileSystem.isEmpty();
 	if (isEmpty) return true;
 
-	const confirmed = await userPrompt.confirm(message, false);
+	const confirmed = await userPrompt.confirm(message, defaultYes);
 	if (!confirmed) {
 		await userPrompt.showCancel(cancelMessage);
 	}
