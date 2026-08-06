@@ -59,9 +59,9 @@ clean:
 
 # ─── Plugin Quality ──────────────────────────────────────────────────────────
 
-# Lint all plugin files with Biome
+# Lint and typecheck all plugin files
 check-plugin:
-    bunx @biomejs/biome check template/obligatorio/core/.opencode/plugins/ template/opcional/.opencode/plugins/
+    bunx @biomejs/biome check template/obligatorio/core/.opencode/plugins/ template/opcional/.opencode/plugins/ && bunx tsc -p template/obligatorio/core/.opencode/plugins/tsconfig.json
 
 # Run plugin unit tests
 test-plugin-unit:

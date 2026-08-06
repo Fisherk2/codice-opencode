@@ -75,10 +75,10 @@ Both layers must be updated together when adding new restrictions. The plugin ca
 The plugin validates that subagent names in `task()` exist in the catalog (**~361 agents**: ~355 subagents (from the `agents/` directory) + 6 primary). If the LLM invents a name, it receives an error:
 
 ```
-Unknown subagent: "python-wizard". Create an .md file in the agents/ directory or use a primary agent.
+Unknown subagent: "python-wizard". Create an .md file in /path/to/project/agents/ or use a primary agent.
 ```
 
-Subagent names are **auto-discovered from the filesystem** — there is no hardcoded catalog of subagents. At session start, the plugin recursively scans the user's `agents/` directory (including subdirectories, skipping hidden directories) and treats every `*.md` file as a registered subagent. Adding a new agent requires only creating `agents/<name>.md`; no plugin changes are needed.
+Subagent names are **auto-discovered from the filesystem** — there is no hardcoded catalog of subagents. At session start, the plugin recursively scans the user's `agents/` directory (including subdirectories, skipping hidden entries — dot-directories like `.git` and dot-files like `.gitkeep`) and treats every `*.md` file as a registered subagent. Adding a new agent requires only creating `agents/<name>.md`; no plugin changes are needed.
 
 The 6 primary agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca) are the only hardcoded names — they are the plugin's identity (ADR-014: Agent Pack System) and stay valid even when no `agents/` directory exists. When the directory is absent, validation falls back to just those 6 primary agents. Per ADR-013 (Auto-Discovery), subagent names are derived at runtime rather than maintained as a static catalog.
 

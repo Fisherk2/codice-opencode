@@ -52,7 +52,7 @@ Commands are normalized before pattern matching: comments are stripped and white
 When an agent uses `task()` to delegate to a subagent, the plugin validates that the subagent name exists in the catalog (**~361 agents**: ~355 subagents discovered from the `agents/` directory + 6 primary). If the LLM invents a name, it receives an error:
 
 ```
-Unknown subagent: "python-wizard". Create an .md file in the agents/ directory or use a primary agent.
+Unknown subagent: "python-wizard". Create an .md file in /path/to/project/agents/ or use a primary agent.
 ```
 
 Subagent names are **auto-discovered from the filesystem** — there is no hardcoded subagent catalog. At session start, the plugin recursively scans the `agents/` directory (including subdirectories, skipping hidden entries) and treats every `*.md` file as a registered subagent. Adding a new agent requires only creating `agents/<name>.md`; no plugin changes are needed. Names match case-insensitively.
@@ -159,7 +159,7 @@ Biome linting/formatting, unit + integration tests, strict TypeScript with no `a
 | `src/configLoader.ts` | 228 | opencode.json config loading with defaults merge |
 | `src/defaults.ts` | 156 | All hardcoded configuration maps (VALID_SUBAGENTS removed in FEV-20) |
 | `src/destructivePatterns.ts` | 95 | Blocked command patterns (safety boundary) |
-| `src/directoryScanner.ts` | 63 | Flat + recursive markdown file scanners (extracted in FEV-20) |
+| `src/directoryScanner.ts` | 99 | Flat + recursive markdown file scanners with maxDepth guard and duplicate-basename warning (extracted in FEV-20) |
 | `src/normalizeBash.ts` | 40 | Bash command normalization for pattern matching |
 | `src/types.ts` | 60 | TypeScript type definitions |
 
