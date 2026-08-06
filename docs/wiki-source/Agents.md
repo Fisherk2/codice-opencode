@@ -9,7 +9,7 @@ The workspace ships with **~355 agents in 10 packs** organized into two levels:
 | Level | Count | Role | How They're Invoked |
 |-------|-------|------|---------------------|
 | **Primary Agents** | 6 | Entry points for slash commands | Via `/command` from the user |
-| **Subagents** | ~349 | Domain specialists in 8 selectable + 2 mandatory packs | Via `task()` from a primary agent |
+| **Subagents** | ~355 | Domain specialists in 8 selectable + 2 mandatory packs | Via `task()` from a primary agent |
 
 ### Two-Tier Model
 
@@ -30,9 +30,9 @@ Agents are organized by domain in the `template/obligatorio/packs/` directory:
 ```
 packs/
 ├── main/                  (6 primary agents — MANDATORY)
-├── writers/               (3 writer agents — MANDATORY)
+├── writers/               (4 writer agents — MANDATORY)
 ├── software-development/  (146 agents — DEFAULT selected)
-├── business/              (92 agents)
+├── business/              (91 agents)
 ├── science-research/      (31 agents)
 ├── hardware-emerging/     (36 agents)
 ├── operations-support/    (18 agents)
