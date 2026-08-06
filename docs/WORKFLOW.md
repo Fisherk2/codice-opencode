@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.0.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-05 (FEV-19 completado; FEV-20 listo para planeación) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-05 (FEV-20 completado; FEV-21 listo para planeación) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -37,7 +37,7 @@
 | FEV-17 | Template Directory Restructuring (v2.0 Phase 1) | `core/` + `packs/` restructure, FileRuleManifestData + TemplateResolver update | ✅ Completo |
 | FEV-18 | Agent Classification & Migration (v2.0 Phase 2) | 257 new agents → 8 packs (v2.0 format), 95 legacy distributed, 10 REDUNDANT resolved | ✅ Completo (2026-08-04) |
 | FEV-19 | Permission Unification & Subagent Table Removal (v2.0 Phase 3) | TD-V2-2, TD-V2-3, TD-V2-4: unified `task:` + docs update | ✅ Completo (2026-08-05) |
-| FEV-20 | Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4) | TD-V2-1, TD-V2-5: plugin cleanup + auto-discovery recursive scan | 🔲 Planificado |
+| FEV-20 | Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4) | TD-V2-1, TD-V2-5: plugin cleanup + auto-discovery recursive scan | ✅ Completo (2026-08-05) |
 | FEV-21 | Installer UX — Pack Selection & Version Detection (v2.0 Phase 5) | Pack wizard, version gating, `.codice-version` metadata format | 🔲 Planificado |
 | FEV-22 | Installer UX — Updater with Pack Scoping (v2.0 Phase 6) | Option A (current packs) + Option B (add packs), CLI flags | 🔲 Planificado |
 | FEV-23 | v2.0.0 Testing & Integration | Unit/integration/E2E updates for pack-aware installer | 🔲 Planificado |
@@ -313,16 +313,16 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - Wiki Agents.md: count 104 → ~355 en 10 packs, file tree `agents/` → `packs/`, permission model unificado, removido "Step 4: Update Delegation Tables".
 **Resultado:** 4 agentes con permisos unificados, 6 agentes sin índices de subagentes, docs actualizados, 991 tests 0 fail, 16/16 E2E.
 
-### FEV-20 — Plugin VALID_SUBAGENTS Removal 🔲
+### FEV-20 — Plugin VALID_SUBAGENTS Removal ✅ Completo (2026-08-05)
 **Esfuerzo:** ~3h | **Dependencias:** FEV-19 | **Spec:** S5-PACKS §5 | **Tech Debt:** TD-V2-1, TD-V2-5
-- Eliminar `VALID_SUBAGENTS` Set de `validSubagents.ts`; conservar `PRIMARY_AGENTS`
-- Actualizar `defaults.ts` para eliminar referencias a VALID_SUBAGENTS
-- Cambiar fallback en `sdd-pipeline.ts` de `DEFAULTS.VALID_SUBAGENTS` a `new Set(PRIMARY_AGENTS)`
-- Actualizar mensajes de error: "VALID_SUBAGENTS catalog" → "agents/ directory"
-- Actualizar tests en `defaults.test.ts`
-- Actualizar auto-discovery para escanear recursivamente `packs/` subdirectorios
-- Actualizar Wiki SDD-Pipeline.md (TD-V2-5)
-**Resultado:** Plugin sin VALID_SUBAGENTS, auto-discovery recursivo en packs, tests actualizados.
+- Eliminado `VALID_SUBAGENTS` Set (~110 entries) de `validSubagents.ts`; conservado `PRIMARY_AGENTS` (6 primarios) como única lista hardcoded
+- `defaults.ts`: removidas referencias a `VALID_SUBAGENTS` (imports, re-exports, DEFAULTS object — ahora 5 maps)
+- `sdd-pipeline.ts`: fallback `DEFAULTS.VALID_SUBAGENTS` → `new Set(PRIMARY_AGENTS)`; mensaje de error → "agents/ directory"; validación case-insensitive (lowercase en match + discovery)
+- `discoverValidSubagents()` ahora escanea recursivamente subdirectorios (forward-compatible con `packs/<name>/`); salta entries ocultos (`.git`, `.opencode`, dot-files)
+- `directoryScanner.ts` extraído (scanMarkdownFiles flat + scanMarkdownFilesRecursive) para mantener `autoDiscovery.ts` ≤ 200 líneas
+- Tests: -2 assertions en `defaults.test.ts`, +4 tests en `autoDiscovery.test.ts` (nested, hidden dirs, dot-files, lowercase), `toolExecuteBefore.test.ts` reescrito para modelar auto-discovery
+- Docs: Wiki `SDD-Pipeline.md` actualizado (count 104 → ~361, error msg, recursive note), plugin README actualizado, `Agents.md` auditado sin cambios
+**Resultado:** Plugin sin catálogo hardcoded, auto-discovery recursivo, 175 plugin tests + 1747 suite + 16/16 E2E + 3/3 plugin E2E, `just check` limpio.
 
 ### FEV-21 — Installer UX: Pack Selection & Version Detection 🔲
 **Esfuerzo:** ~8h | **Dependencias:** FEV-17, FEV-18 | **Spec:** S6-UX-V2 §2, §3, §5
@@ -387,5 +387,5 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
 - **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
-- **v2.0.0 planificado:** FEV-17 ✅ completado, FEV-18 ✅ completado, FEV-19 ✅ completado (2026-08-05) → FEV-20 a FEV-23 🔲 pendientes (Agent Pack System + Installer UX v2) (specs: S5-PACKS, S6-UX-V2)
-- **Esfuerzo estimado v2.0.0:** ~38h (FEV-17: 4h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h 🔲, FEV-21: 8h 🔲, FEV-22: 6h 🔲, FEV-23: 6h 🔲)
+- **v2.0.0 planificado:** FEV-17 ✅ completado, FEV-18 ✅ completado, FEV-19 ✅ completado (2026-08-05), FEV-20 ✅ completado (2026-08-05) → FEV-21 a FEV-23 🔲 pendientes (Installer UX v2) (specs: S5-PACKS, S6-UX-V2)
+- **Esfuerzo estimado v2.0.0:** ~38h (FEV-17: 4h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h ✅, FEV-21: 8h 🔲, FEV-22: 6h 🔲, FEV-23: 6h 🔲)

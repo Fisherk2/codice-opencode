@@ -1,9 +1,9 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-08-04
-**Status:** FEV-17 + FEV-18 complete — agent pack system populated (v2.0)
-**Current version:** v1.2.0 (986 tests, 0 fail)
-**Next version:** v2.0.0 (permissions, plugin cleanup, installer UX)
+**Last updated:** 2026-08-05
+**Status:** FEV-20 complete — plugin VALID_SUBAGENTS removed, auto-discovery recursive (v2.0)
+**Current version:** v1.2.0 (1747 tests, 0 fail)
+**Next version:** v2.0.0 (installer UX, pack selection)
 
 ---
 
@@ -230,13 +230,15 @@ Specs drafted: [spec-agent-packs.md](../specs/spec-agent-packs.md), [spec-instal
 
 > **FEV-19 (Permission Unification & Subagent Table Removal) ✅ complete (2026-08-05):** TD-V2-2, TD-V2-3, TD-V2-4 closed. 106 explicit allow-list entries removed (quetzalcoatl 21, tlaloc 73, mictlantecuhtli 12); 4 primary delegators now use `"*": allow` + deny 5 other primaries. **Scope expansion (user decision): ALL 6 primary agents lost their subagent index** — huitzilopochtli's ~355-subagent catalog included; RULES reference `agents/` ("use ANY subagents in `agents/`"). CONTRIBUTING "Add a New Agent" 5→3 steps; Wiki Agents.md count 104→~355, file tree `agents/`→`packs/`, "Step 4: Update Delegation Tables" removed. 991 tests, 16/16 E2E, `just check` clean. **Note:** this amends ADR-014 §Subagent Table Removal — huitzilopochtli no longer retains the catalog.
 
+> **FEV-20 (Plugin VALID_SUBAGENTS Removal) ✅ complete (2026-08-05):** TD-V2-1, TD-V2-5 closed. `VALID_SUBAGENTS` Set (~110 entries) deleted from `validSubagents.ts`; `PRIMARY_AGENTS` (6) is the only hardcoded list. `defaults.ts` cleaned (5 maps). `sdd-pipeline.ts` fallback → `new Set(PRIMARY_AGENTS)`; error message → "agents/ directory"; validation case-insensitive. `discoverValidSubagents()` recursive (skips hidden entries, lowercases names); `directoryScanner.ts` extracted. Tests: -2 assertions, +4 auto-discovery tests, `toolExecuteBefore.test.ts` rewritten. Wiki `SDD-Pipeline.md` + plugin README updated. 175 plugin tests + 1747 suite + 16/16 E2E + 3/3 plugin E2E, `just check` clean.
+
 | ID | Item | Effort | Risk | Description |
 |----|------|--------|------|-------------|
-| **TD-V2-1** | Remove hardcoded `VALID_SUBAGENTS` | 2h | Low | Delete `VALID_SUBAGENTS` Set from `validSubagents.ts`; keep `PRIMARY_AGENTS` constant. Update `defaults.ts` to remove references. Update `sdd-pipeline.ts` fallback from `DEFAULTS.VALID_SUBAGENTS` to `new Set(PRIMARY_AGENTS)`. Update error message from "VALID_SUBAGENTS catalog" to "agents/ directory". Update tests in `defaults.test.ts`. **→ FEV-20** |
+| ~~**TD-V2-1**~~ | ~~Remove hardcoded `VALID_SUBAGENTS`~~ | ~~2h~~ | Low | ✅ **Resolved FEV-20 (2026-08-05):** deleted `VALID_SUBAGENTS` Set from `validSubagents.ts` (~110 entries); kept `PRIMARY_AGENTS` (6) as single hardcoded source. `defaults.ts` imports/re-exports/DEFAULTS cleaned (5 maps). `sdd-pipeline.ts` fallback → `new Set(PRIMARY_AGENTS)`; error message → "agents/ directory". `discoverValidSubagents()` recursive + case-insensitive. |
 | ~~**TD-V2-2**~~ | ~~Unify `task:` permissions for 4 primary agents~~ | ~~1h~~ | Medium | ✅ **Resolved FEV-19 (2026-08-05):** quetzalcoatl, tlaloc, mictlantecuhtli unified to `"*": allow` + deny 5 primaries. Huitzilopochtli already unified in FEV-18. 106 explicit allow entries removed. Moctezuma and tezcatlipoca unchanged. |
 | ~~**TD-V2-3**~~ | ~~Remove AVAILABLE SUBAGENTS sections~~ | ~~1h~~ | Low | ✅ **Resolved FEV-19 (2026-08-05):** sections removed from quetzalcoatl, tlaloc, mictlantecuhtli **AND huitzilopochtli** (scope expansion — no subagent index in any of the 6 primary agents; RULES reference `agents/`). |
 | ~~**TD-V2-4**~~ | ~~Update CONTRIBUTING.md and Wiki Agents.md~~ | ~~1h~~ | Low | ✅ **Resolved FEV-19 (2026-08-05):** CONTRIBUTING "Add a New Agent" 5→3 steps (removed delegation tables + huitzilopochtli catalog + persona updates). Wiki Agents.md: count 104→~355, file tree `agents/`→`packs/`, permission model examples, "Step 4: Update Delegation Tables" removed. README count 98→355. |
-| **TD-V2-5** | Update SDD-Pipeline.md wiki and error messages | 0.5h | Low | Update wiki documentation to reflect auto-discovery of packs (recursive scan of `packs/` subdirectories). Update error messages referencing "VALID_SUBAGENTS catalog" to "agents/ directory". **→ FEV-20** |
+| ~~**TD-V2-5**~~ | ~~Update SDD-Pipeline.md wiki and error messages~~ | ~~0.5h~~ | Low | ✅ **Resolved FEV-20 (2026-08-05):** Wiki `SDD-Pipeline.md` updated — agent count 104→~361, error message example ("VALID_SUBAGENTS catalog" → "agents/ directory"), recursive-scan note in Pillar 1, module table (defaults.ts 529→156, +directoryScanner.ts 63). `Agents.md` audited (no changes needed — FEV-19 already current). Plugin README updated with auto-discovery model. |
 
 ### v2.2.0
 

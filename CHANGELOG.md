@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **FEV-20 — Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4):**
+  - Removed the hardcoded `VALID_SUBAGENTS` Set (~110 entries) from the SDD plugin's `validSubagents.ts`; `PRIMARY_AGENTS` (6 built-in agents) is now the only hardcoded list.
+  - `defaults.ts` no longer imports/re-exports `VALID_SUBAGENTS`; `DEFAULTS` holds 5 maps (was 6).
+  - `sdd-pipeline.ts` fallback changed from `DEFAULTS.VALID_SUBAGENTS` to `new Set(PRIMARY_AGENTS)` — when no `agents/` directory exists, only the 6 primary agents are valid.
+  - Error message updated: "Use an agent from the VALID_SUBAGENTS catalog" → "Create an .md file in the agents/ directory or use a primary agent".
+  - `discoverValidSubagents()` now scans the `agents/` directory **recursively** (forward-compatible with `packs/<name>/` layouts) and skips hidden entries (`.git`, `.opencode`, dot-files). Names are lowercased so `task()` validation is case-insensitive.
+  - Markdown scanners extracted to a new `directoryScanner.ts` module (keeps `autoDiscovery.ts` under the 200-line convention).
+  - Tests: removed 2 `VALID_SUBAGENTS` assertions in `defaults.test.ts`; added 4 auto-discovery tests (nested subdirs, hidden dirs, hidden dot-files, lowercase normalization); `toolExecuteBefore.test.ts` rewritten to model filesystem discovery.
+  - Wiki `SDD-Pipeline.md` updated: agent count 104 → ~361, error message example, recursive-scan note, module table.
+
 - **FEV-19 — Permission Unification & Subagent Table Removal (v2.0 Phase 3):**
   - Unified `task:` permissions for 4 primary delegators (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli) to `"*": allow` + deny 5 other primaries pattern. Moctezuma and tezcatlipoca unchanged (`task: "*": deny`). 106 explicit allow-list entries removed (quetzalcoatl 21, tlaloc 73, mictlantecuhtli 12).
   - **Removed ALL subagent index/catalog sections from the 6 primary agents** (user decision 2026-08-05): huitzilopochtli's ~355-subagent AVAILABLE SUBAGENTS catalog included. RULES now reference the `agents/` directory: "use ANY subagents in `agents/`". Primary agents never delegate to each other.
