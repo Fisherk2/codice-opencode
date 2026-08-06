@@ -20,11 +20,11 @@ import {
 	FILE_RULE_MANIFEST,
 	filterByPacks,
 	getAllPackIds,
-	getPackRules,
 	getRulesByCategory,
 	isRuleSelected,
 } from "../../domain/entities/FileRuleManifest";
-import { DEFAULT_PACKS, toPackOptions } from "../packOptions";
+import { promptForOptionals } from "../helpers";
+import { promptForPackSelection } from "../packOptions";
 import { InstallUseCaseBase } from "./InstallUseCaseBase";
 
 export type { BaseInstallOptions } from "./InstallUseCaseBase";
@@ -42,7 +42,7 @@ export class CleanInstallUseCase extends InstallUseCaseBase {
 		if (force) {
 			return getAllPackIds();
 		}
-		return await this.userPrompt.selectPacks(toPackOptions(getPackRules()), [...DEFAULT_PACKS]);
+		return await promptForPackSelection(this.userPrompt);
 	}
 
 	/**
@@ -68,7 +68,7 @@ export class CleanInstallUseCase extends InstallUseCaseBase {
 		if (force) {
 			return getRulesByCategory("optional").map((r) => r.path);
 		}
-		return await this.userPrompt.selectOptional(getRulesByCategory("optional"));
+		return await promptForOptionals(this.userPrompt);
 	}
 
 	protected getSuccessMessage(): string {

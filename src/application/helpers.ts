@@ -14,6 +14,7 @@
  * @module
  */
 
+import { getOptionalRules } from "../domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../domain/ports/IStagingSystem";
 import type { MergeError } from "../domain/types/MergeError";
@@ -177,4 +178,13 @@ export function createProgressCallback(userPrompt: IUserPrompt, label: string): 
 export function wrapMergeError(err: MergeError): Error {
 	const context = err.path ? ` during ${err.phase} of ${err.path}` : ` during ${err.phase}`;
 	return new Error(`${err.message}${context}`);
+}
+
+/**
+ * Show the optional-file checklist via the TUI.
+ * Shared by Clean and Project install so the interactive branch (and the
+ * "optional" category lookup) stays in one place.
+ */
+export async function promptForOptionals(userPrompt: IUserPrompt): Promise<readonly string[]> {
+	return await userPrompt.selectOptional(getOptionalRules());
 }
