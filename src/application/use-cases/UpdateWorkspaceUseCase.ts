@@ -120,13 +120,16 @@ export class UpdateWorkspaceUseCase {
 			);
 		}
 
-		// Compare installed version against bundled template version
+		// Compare installed version against bundled template version.
+		// Comparator reports "newer" when bundled > local (update available).
+		// Skip only when the comparison SUCCEEDED and bundled is not newer
+		// (local equal or ahead). A failed comparison (invalid bundled semver)
+		// must fall through so resolveNewVersion can write the "0.0.0" fallback.
 		const bundledComparison = this.versionComparator.compare(
 			localVersion.version,
 			this.bundledVersion,
 		);
 		if (bundledComparison.ok && bundledComparison.value !== "newer") {
-			// Installed >= bundled — workspace is already up to date
 			await this.userPrompt.showInfo(
 				`Workspace is already up to date at version ${localVersion.version}. No update needed.`,
 			);
