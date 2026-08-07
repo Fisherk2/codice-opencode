@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock as mockFn } from "bun:test";
 import * as fs from "node:fs/promises";
+import * as os from "node:os";
+import * as path from "node:path";
 import type { Dependencies } from "../../../src/cli/main";
 import {
 	createDependencies,
@@ -307,7 +309,7 @@ describe("main() — SIGINT handling", () => {
 	let origExit2: typeof process.exit;
 	let capturedHandlers: Array<() => void>;
 	let sigintExitMock: ReturnType<typeof mockFn>;
-	const testDir = "/tmp/test-codice-sigint";
+	let testDir: string;
 
 	beforeEach(async () => {
 		origOn = process.on;
@@ -329,8 +331,10 @@ describe("main() — SIGINT handling", () => {
 		process.off = mockFn(() => process) as unknown as typeof process.off;
 		process.exit = sigintExitMock as unknown as typeof process.exit;
 
-		// Ensure clean test directory
-		await fs.mkdir(testDir, { recursive: true });
+		// Unique per-run directory: a fixed /tmp path would accumulate staging
+		// artifacts from a previously interrupted run, making this test flaky
+		// (SIGINT can leave .codice-staging/.codice-backup behind).
+		testDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-sigint-"));
 	});
 
 	afterEach(async () => {
@@ -441,7 +445,7 @@ describe("main() — execution path", () => {
 	});
 
 	it("exits with EXIT_SUCCESS on clean install with --clean --force", async () => {
-		const testDir = "/tmp/test-main-success";
+		const testDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-success-"));
 
 		try {
 			await fs.mkdir(testDir, { recursive: true });
@@ -463,7 +467,7 @@ describe("main() — execution path", () => {
 	});
 
 	it("triggers EXIT_ERROR when installation fails (read-only destination)", async () => {
-		const readonlyDir = "/tmp/test-main-readonly";
+		const readonlyDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-readonly-"));
 
 		try {
 			await fs.mkdir(readonlyDir, { recursive: true });
@@ -486,7 +490,7 @@ describe("main() — execution path", () => {
 	});
 
 	it("exits with EXIT_ERROR on update with --update when version is missing", async () => {
-		const testDir = "/tmp/test-main-update";
+		const testDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-update-"));
 		const prevApiUrl = process.env.CODICE_GITHUB_API_URL;
 		const prevBypass = process.env.CODICE_BYPASS_URL_VALIDATION;
 		const prevNodeEnv = process.env.NODE_ENV;
@@ -518,7 +522,7 @@ describe("main() — execution path", () => {
 	});
 
 	it("cleans up SIGINT listener in finally block after completion", async () => {
-		const testDir = "/tmp/test-main-finally";
+		const testDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-finally-"));
 		await fs.mkdir(testDir, { recursive: true });
 
 		const offMock = mockFn(() => process);

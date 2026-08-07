@@ -19,11 +19,12 @@
  * there returned the stub — `fileSystem` was `{}` (no isWritable) and every
  * use case threw "Unexpected internal error" (exit 1 instead of EXIT_SUCCESS).
  *
- * The mock is therefore installed in beforeAll and undone in afterAll, so the
- * suite stays order-independent across platforms.
+ * The mock is therefore installed in beforeEach and undone in afterEach, so
+ * the real module is restored immediately after each test — eliminating the
+ * leak window entirely instead of relying on afterAll of the whole file.
  */
 
-import { afterAll, beforeAll, describe, expect, mock, spyOn, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
 
 // Imported (and captured) BEFORE any mock.module call so the genuine
 // implementation can be put back once this file's tests are done.
@@ -85,8 +86,8 @@ function restoreContainerModule(): void {
 // -----------------------------------------------------------------------
 
 describe("main() — catch block", () => {
-	beforeAll(installContainerStub);
-	afterAll(restoreContainerModule);
+	beforeEach(installContainerStub);
+	afterEach(restoreContainerModule);
 
 	test("handles unexpected throw from use case with Fatal error and EXIT_ERROR", async () => {
 		const origArgv = process.argv;
@@ -188,8 +189,6 @@ describe("main() — catch block", () => {
 			consoleSpy.mockRestore();
 			process.exit = origExit;
 			process.argv = origArgv;
-			// Restore original stub for other tests in this suite
-			installContainerStub();
 		}
 
 		// Verify catch block handled the non-Error throw
