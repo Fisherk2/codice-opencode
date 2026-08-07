@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
+import type { FileRule } from "../../../src/domain/entities/FileRule";
+import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import { BunFileSystem } from "../../../src/infrastructure/adapters/BunFileSystem";
 import { STAGING_DIR_NAME, VERSION_FILE_NAME } from "../../../src/infrastructure/config/constants";
 
@@ -333,5 +335,134 @@ describe("BunFileSystem", () => {
 			const empty = await nonExistentFs.isEmpty();
 			expect(empty).toBe(false);
 		});
+	});
+});
+
+// -----------------------------------------------------------------------
+// FEV-17 (v2.0 template restructuring): destPath override in stageFile.
+// The template source is grouped (core/, packs/*) but the destination stays
+// flat — core/* spreads to root, packs/* merge into agents/. These tests
+// exercise BunFileSystem.stageFile(sourcePath, destPath) end-to-end.
+// -----------------------------------------------------------------------
+
+describe("BunFileSystem — FEV-17 destPath (core/packs → flat destination)", () => {
+	let tmpDir: string;
+	let templateDir: string;
+	let destDir: string;
+	let fsAdapter: BunFileSystem;
+
+	beforeAll(async () => {
+		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-fev17-"));
+		templateDir = path.join(tmpDir, "template");
+		destDir = path.join(tmpDir, "dest");
+		await fs.mkdir(destDir, { recursive: true });
+
+		// v2.0 source grouping: core/ holds workspace infrastructure,
+		// packs/{main,writers,software-development} hold agents.
+		const coreDir = path.join(templateDir, "obligatorio", "core");
+		const packsDir = path.join(templateDir, "obligatorio", "packs");
+		await fs.mkdir(path.join(coreDir, "commands"), { recursive: true });
+		await fs.mkdir(path.join(coreDir, ".opencode", "plugins"), { recursive: true });
+		await fs.mkdir(path.join(coreDir, "skills"), { recursive: true });
+		await fs.mkdir(path.join(packsDir, "main"), { recursive: true });
+		await fs.mkdir(path.join(packsDir, "writers"), { recursive: true });
+		await fs.mkdir(path.join(packsDir, "software-development"), { recursive: true });
+
+		await Bun.write(path.join(coreDir, "opencode.json"), '{"version": "v2"}');
+		await Bun.write(path.join(coreDir, "skills-lock.json"), "{}");
+		await Bun.write(path.join(coreDir, "commands", "build.md"), "# build");
+		await Bun.write(path.join(coreDir, ".opencode", "plugins", "plugin.ts"), "export {}");
+		await Bun.write(path.join(coreDir, "skills", "review.md"), "# review");
+		await Bun.write(path.join(packsDir, "main", "huitzilopochtli.md"), "# Huitzilopochtli");
+		await Bun.write(path.join(packsDir, "writers", "docs-writer.md"), "# Docs Writer");
+		await Bun.write(
+			path.join(packsDir, "software-development", "backend-developer.md"),
+			"# Backend Developer",
+		);
+
+		fsAdapter = new BunFileSystem(templateDir, destDir);
+	});
+
+	afterAll(async () => {
+		await fs.rm(tmpDir, { recursive: true, force: true });
+	});
+
+	it("stages core/ content to staging root when destPath is empty string", async () => {
+		await fsAdapter.stageFile("core", "");
+
+		const stagingRoot = path.join(destDir, STAGING_DIR_NAME);
+		expect(await Bun.file(path.join(stagingRoot, "opencode.json")).exists()).toBe(true);
+		expect(await Bun.file(path.join(stagingRoot, "skills-lock.json")).exists()).toBe(true);
+		expect(await Bun.file(path.join(stagingRoot, "commands", "build.md")).exists()).toBe(true);
+		expect(
+			await Bun.file(path.join(stagingRoot, ".opencode", "plugins", "plugin.ts")).exists(),
+		).toBe(true);
+		// core/ must not appear as a directory in the staging root
+		expect(await dirExists(path.join(stagingRoot, "core"))).toBe(false);
+
+		await fsAdapter.cleanStaging();
+	});
+
+	it("stages packs/main to staging agents/ when destPath is 'agents'", async () => {
+		await fsAdapter.stageFile("packs/main", "agents");
+
+		const stagingRoot = path.join(destDir, STAGING_DIR_NAME);
+		expect(await Bun.file(path.join(stagingRoot, "agents", "huitzilopochtli.md")).exists()).toBe(
+			true,
+		);
+		// packs/ must not appear as a directory in the staging root
+		expect(await dirExists(path.join(stagingRoot, "packs"))).toBe(false);
+
+		await fsAdapter.cleanStaging();
+	});
+
+	it("clean install of the 4 mandatory rules produces a flat destination", async () => {
+		const mandatoryRules: readonly FileRule[] = [
+			{
+				path: "core",
+				destPath: "",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Core workspace infrastructure",
+			},
+			{
+				path: "packs/main",
+				destPath: "agents",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Primary agents",
+			},
+			{
+				path: "packs/writers",
+				destPath: "agents",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Writer agents",
+			},
+			{
+				path: "packs/software-development",
+				destPath: "agents",
+				category: "mandatory",
+				isDirectory: true,
+				description: "Software development agents",
+			},
+		];
+
+		const engine = new FileMergeEngine(fsAdapter);
+		const result = await engine.execute(mandatoryRules);
+		expect(result.ok).toBe(true);
+
+		// Destination root is flat: opencode.json, commands/, agents/, .opencode/
+		expect(await Bun.file(path.join(destDir, "opencode.json")).exists()).toBe(true);
+		expect(await Bun.file(path.join(destDir, "commands", "build.md")).exists()).toBe(true);
+		expect(await Bun.file(path.join(destDir, "agents", "huitzilopochtli.md")).exists()).toBe(true);
+		expect(await Bun.file(path.join(destDir, "agents", "docs-writer.md")).exists()).toBe(true);
+		expect(await Bun.file(path.join(destDir, "agents", "backend-developer.md")).exists()).toBe(
+			true,
+		);
+
+		// Source grouping directories must NOT leak into the destination
+		expect(await dirExists(path.join(destDir, "core"))).toBe(false);
+		expect(await dirExists(path.join(destDir, "packs"))).toBe(false);
 	});
 });

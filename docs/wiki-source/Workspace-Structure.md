@@ -18,9 +18,9 @@ workspace/
 ├── LICENSE               # Open-source license
 ├── opencode.json         # OpenCode configuration
 ├── .env.example          # Environment template
-├── agents/               # AI agent definitions (~104 files)
+├── agents/               # AI agent definitions (~360 across 10 packs)
 ├── commands/             # Slash command workflows (12 files)
-├── skills/               # Specialized knowledge domains (~46 dirs)
+├── skills/               # Specialized knowledge domains (52 dirs)
 ├── docs/                 # Project documentation
 ├── specs/                # Modular specifications + ADRs
 ├── tasks/                # Execution tasks (SDD pipeline)
@@ -34,7 +34,7 @@ workspace/
 
 ### `agents/` — AI Agent Definitions
 
-This is the largest directory, containing **104 agent files** that define AI personas. Each file is a Markdown document with YAML frontmatter describing an agent's role, permissions, and behavior.
+This is the largest directory, containing **~360 agent files across 10 packs** that define AI personas. Each file is a Markdown document with YAML frontmatter describing an agent's role, permissions, and behavior.
 
 **Six primary agents** serve as the main entry points:
 
@@ -47,7 +47,9 @@ This is the largest directory, containing **104 agent files** that define AI per
 | `mictlantecuhtli.md` | Guardian of the Underworld | Reviews code, runs audits, enforces quality gates |
 | `tezcatlipoca.md` | Mirror of Truth | Provides adversarial review and critical analysis |
 
-The remaining **~98 subagents** are domain specialists — frontend developers, database administrators, security auditors, Rust engineers, and so on. Each subagent is an expert in one area and is invoked from primary agents via `task()` delegation.
+The remaining **~352 subagents (8 selectable packs)** are domain specialists — frontend developers, database administrators, security auditors, Rust engineers, and so on. Each subagent is an expert in one area and is invoked from primary agents via `task()` delegation.
+
+The template keeps pack source under `template/obligatorio/packs/` (10 packs: 2 mandatory — main + writers — and 8 selectable); the installer copies selected packs into the flat `agents/` directory. The install wizard lets you choose packs and shows a summary with per-pack agent counts.
 
 Agent files use a consistent frontmatter format:
 
@@ -205,13 +207,13 @@ The workspace is designed around a **cycle** that repeats as your project evolve
 
 | Directory | Files | Purpose |
 |-----------|-------|---------|
-| `agents/` | ~104 | AI agent persona definitions |
+| `agents/` | ~360 | AI agent persona definitions |
 | `commands/` | 12 | Slash command workflows |
 | `skills/` | 52 + 59 refs | Specialized knowledge domains with co-located reference material |
 | `docs/` | 5+ | Project documentation |
 | `specs/` | 3+ | Modular specs and ADRs |
 
-Total template footprint: ~230+ files providing a complete AI-assisted development environment.
+Total template footprint: ~500+ files providing a complete AI-assisted development environment.
 
 ---
 

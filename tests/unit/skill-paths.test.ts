@@ -2,7 +2,7 @@
  * skill-paths.test.ts -- Cross-skill reference path validation
  *
  * Ensures that all ../<other-skill>/references/<file> references
- * found in the SKILL.md files under template/obligatorio/skills/
+ * found in the SKILL.md files under template/obligatorio/core/skills/
  * point to files that actually exist. Without this test, renaming
  * a skill would silently break cross-skill reference paths.
  */
@@ -11,7 +11,7 @@ import { describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-const SKILLS_DIR = path.resolve(import.meta.dir, "../../template/obligatorio/skills");
+const SKILLS_DIR = path.resolve(import.meta.dir, "../../template/obligatorio/core/skills");
 
 describe("cross-skill reference paths (FEV-12, A-2)", () => {
 	// Find all SKILL.md files

@@ -20,7 +20,7 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
-IGNORE_PATTERNS="--path-ignore-patterns=template/obligatorio/skills/**,skills/**"
+IGNORE_PATTERNS="--path-ignore-patterns=template/obligatorio/core/skills/**,skills/**"
 
 log_info() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $*" >&2

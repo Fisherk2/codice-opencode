@@ -4,12 +4,12 @@ The Códice workspace defines a two-tier agent hierarchy that governs how AI ass
 
 ## Architecture Overview
 
-The workspace ships with **104 agents** organized into two levels:
+The workspace ships with **~360 agents in 10 packs** organized into two levels:
 
 | Level | Count | Role | How They're Invoked |
 |-------|-------|------|---------------------|
 | **Primary Agents** | 6 | Entry points for slash commands | Via `/command` from the user |
-| **Subagents** | ~98 | Domain specialists | Via `task()` from a primary agent |
+| **Subagents** | ~352 | Domain specialists in 8 selectable packs | Via `task()` from a primary agent |
 
 ### Two-Tier Model
 
@@ -21,24 +21,29 @@ The workspace ships with **104 agents** organized into two levels:
 
 **Subagents** are domain experts with deep knowledge of a specific area: a programming language, an architectural pattern, a tool, or a process. They are invoked via the `task()` mechanism when a primary agent needs specialized work done. Each subagent runs in its own context window and returns its output to the calling primary agent.
 
-The division exists because no single AI context window can hold expertise across 97 domains. A Python developer doesn't need Kubernetes configs in its context; a security auditor doesn't need React component patterns. The two-tier model keeps each agent focused and its context clean.
+The division exists because no single AI context window can hold expertise across 100+ domains. A Python developer doesn't need Kubernetes configs in its context; a security auditor doesn't need React component patterns. The two-tier model keeps each agent focused and its context clean.
 
 ### File Count and Distribution
 
-Agents are organized by domain in the `agents/` directory:
+Agents are organized by domain in the `template/obligatorio/packs/` directory:
 
 ```
-agents/
-├── huitzilopochtli.md, quetzalcoatl.md, moctezuma.md
-├── tlaloc.md, mictlantecuhtli.md, tezcatlipoca.md
-├── backend-developer.md, typescript-pro.md, python-pro.md
-├── golang-pro.md, rust-engineer.md, java-architect.md
-├── docker-expert.md, kubernetes-specialist.md
-├── security-auditor.md, test-engineer.md, debugger.md
-├── ...
+packs/
+├── main/                  (6 primary agents — MANDATORY)
+├── writers/               (4 writer agents — MANDATORY)
+├── software-development/  (146 agents — DEFAULT selected)
+├── business/              (92 agents)
+├── science-research/      (31 agents)
+├── hardware-emerging/     (36 agents)
+├── operations-support/    (18 agents)
+├── finance/               (11 agents)
+├── creative/              (10 agents)
+└── government-legal/      (8 agents)
 ```
 
-Each agent file follows the same structure (see [Agent File Pattern](#agent-file-pattern) below).
+8 selectable packs = 352 agents; +6 primary + 4 writers = ~360 total.
+
+At install time, agents are copied to the flat `agents/` directory (pack is an installer concept — selected packs are chosen via the installer wizard; at runtime all agents are peers). Each agent file follows the same structure (see [Agent File Pattern](#agent-file-pattern) below).
 
 ## Primary Agents
 
@@ -46,114 +51,20 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 
 | Agent | Role | Domain | Permission Model | Key Commands |
 |-------|------|--------|-----------------|--------------|
-| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Read-only (writes denied). Delegates everything via `task()`. | `/ship` |
-| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis` |
-| **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. | `/plan` |
-| **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions across all files. Can delegate to any subagent. | `/build`, `/code-simplify` |
-| **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates to quality-focused subagents (code-reviewer, security-auditor, test-engineer, etc.). | `/test`, `/ship`, `/webperf` |
-| **tezcatlipoca** | Mirror of Truth | Reflection & analysis | Purely read-only + analysis tools. Cannot write or edit any file. Cannot delegate to subagents. | `/review` |
+| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Read-only (writes denied). Delegates via `task()` with unified `"*": allow` + deny 5 other primaries. | `/ship` |
+| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. Delegates via unified `task()` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis` |
+| **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. Does not delegate (`task: "*": deny`). | `/plan` |
+| **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via unified `task()` pattern. | `/build`, `/code-simplify` |
+| **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates via unified `task()` pattern. | `/test`, `/ship`, `/webperf` |
+| **tezcatlipoca** | Mirror of Truth | Reflection & analysis | Purely read-only + analysis tools. Cannot write or edit any file. Does not delegate (`task: "*": deny`). | `/review` |
 
 ### Agent File Pattern
 
-Every agent file follows the same structure:
-
-1. **YAML frontmatter** — Agent metadata and permissions.
-2. **Markdown body** — Role definition, domain knowledge, rules, and behavioral constraints.
-3. **`## Composition` block** — Explicit invocation rules at the end of the file.
-
-Here is the frontmatter structure for a primary agent:
-
-```yaml
----
-description: "Agent Name - Role Title"
-mode: primary
-permission:
-  write: deny
-  edit: allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  task:
-    "*": deny
-    "specific-subagent": allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
-  bash:
-    "* > *": deny
-    "* >> *": deny
-    "touch *": deny
-    "mkdir *": deny
-    "cp *": deny
-    "mv *": deny
-    "rm *": deny
-    "chmod *": deny
-    "chown *": deny
-    "ln *": deny
----
-```
-
-And for a subagent:
-
-```yaml
----
-description: Clear, one-line description of what this agent does
-mode: subagent
-temperature: 0.1
-color: "#hexcolor"
-hidden: true
-permission:
-  write: allow
-  edit: allow
-  bash:
-    "go *": allow
-    "npm *": allow
-    ...
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  task:
-    "*": deny
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
----
-```
-
-The `## Composition` block at the end of every agent file follows a standard format:
-
-```markdown
-## COMPOSITION
-
-- **Invoke directly when:** [Circumstances where a user would call this agent directly.]
-- **Invoke via:** [Primary agents (via task delegation)] or specific commands.
-- **Do not invoke from:** [What not to use this agent for.]
-```
-
-### Permission Model
-
-The permission system controls what tools each agent can use. There are three key axes:
-
-| Axis | Values | Description |
-|------|--------|-------------|
-| **write** | `allow` / `deny` | Controls file creation |
-| **edit** | `allow` / `deny` | Controls file modification |
-| **bash** | `allow` / `deny` + patterns | Controls shell command execution. Patterns like `"* > *": deny` block redirect operators. |
-
-The `task` section controls which subagents a primary agent can delegate to:
-
-```yaml
-task:
-  "*": deny            # Block all subagents by default
-  "docs-writer": allow # Except docs-writer
-```
+Every agent file follows the same structure: YAML frontmatter, markdown body, and a `## COMPOSITION` block at the end. The complete specification — including field mapping, canonical permission blocks, and transformation rules — is documented in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md).
 
 ## Subagents
 
-Subagents cover 98+ domain specialties organized into categories:
+Subagents cover 100+ domain specialties organized into categories:
 
 | Category | Example Agents | Count |
 |----------|---------------|-------|
@@ -236,30 +147,15 @@ to the development process. When invoked, you:
 
 Previous versions of Códice required registering agents in a hardcoded `VALID_SUBAGENTS` set inside the SDD plugin. This is no longer necessary — the plugin auto-discovers agents by scanning the `agents/` directory at session start. Simply creating `agents/joke-teller.md` is sufficient.
 
-### Step 4: Update Delegation Tables
-
-If the new subagent should be delegatable by primary agents, update the `task:` permission section in those primary agent files. For example, to allow tlaloc to delegate to joke-teller:
-
-```yaml
-# In agents/tlaloc.md
-task:
-  "*": ask
-  "joke-teller": allow
-```
-
-### Step 5: Restart OpenCode
+### Step 4: Restart OpenCode
 
 Restart your OpenCode session so it recognizes the new agent. Without a restart, `task("joke-teller")` will fail because OpenCode only loads agent files at startup.
 
+No delegation-table updates are needed: primary agents use a unified `task: "*": allow` permission (with a deny-list of other primaries), so any new subagent in `agents/` is automatically delegatable.
+
 ## Composition Block Reference
 
-Every agent file ends with a `## Composition` block that defines its invocation rules. The format is:
-
-| Directive | Purpose | Example |
-|-----------|---------|---------|
-| **Invoke directly when** | When a user would call this agent directly | "Invoke directly when building CLI tools, MCP servers, or refactoring legacy code." |
-| **Invoke via** | How primary agents delegate to this subagent | "Invoke via: Primary agents (via task delegation)" |
-| **Do not invoke from** | Restrictions on who can call this agent | "Do not invoke from: Another persona without a specific task requiring this specialization." |
+The `## COMPOSITION` block format and invocation rules are defined in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md).
 
 ## Links
 

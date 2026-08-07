@@ -10,7 +10,7 @@ import { diffTrees } from "./treeDiff";
 export async function computeStagePlan(
 	fileSystem: IFileSystem,
 	rules: readonly FileRule[],
-	selected: Set<string>,
+	selected: ReadonlySet<string>,
 	isUpdateMode: boolean,
 ): Promise<{
 	stageDecisions: Map<string, boolean>;
@@ -25,12 +25,22 @@ export async function computeStagePlan(
 		if (rule.noTemplateCopy) continue;
 
 		if (isUpdateMode && rule.isDirectory && rule.category === "standard") {
-			// Tree-level diff: stage only files new in template but missing in dest
+			// Tree-level diff: stage only files new in template but missing in dest.
+			// Standard rules never set destPath — only mandatory rules use it for
+			// core/→root and packs/*→agents/ mappings. Assert that invariant so a
+			// future change adding destPath to a standard rule fails fast instead
+			// of silently diffing the wrong destination directory.
+			if (rule.destPath !== undefined) {
+				throw new Error(
+					`Standard rule "${rule.path}" must not set destPath (update diff walks rule.path)`,
+				);
+			}
 			const newFiles = await diffTrees(fileSystem, rule.path, rule.path);
-			if (newFiles.length > 0) {
+			const hasNewFiles = newFiles.length > 0;
+			if (hasNewFiles) {
 				expandedDirs.set(rule.path, newFiles);
 			}
-			stageDecisions.set(rule.path, newFiles.length > 0);
+			stageDecisions.set(rule.path, hasNewFiles);
 			// Expanded directories contribute per-file count to the total.
 			total += newFiles.length;
 		} else {
@@ -47,9 +57,14 @@ export async function computeStagePlan(
 async function shouldStage(
 	rule: FileRule,
 	fileSystem: IFileSystem,
-	selected: Set<string>,
+	selected: ReadonlySet<string>,
 ): Promise<boolean> {
 	if (rule.category === "mandatory") return true;
+
+	// Pack rules behave like mandatory inside the merge engine: pack selection
+	// happens earlier in the installer wizard (filterByPacks), so any pack rule
+	// that reaches the engine must be staged regardless of destination state.
+	if (rule.category === "pack") return true;
 
 	if (rule.category === "standard") {
 		const exists = await fileSystem.destinationExists(rule.path);

@@ -58,6 +58,51 @@ export function getOptionalRules(): readonly FileRule[] {
 }
 
 /**
+ * Get all selectable pack rules (category "pack").
+ */
+export function getPackRules(): readonly FileRule[] {
+	return getRulesByCategory("pack");
+}
+
+/**
+ * All selectable pack IDs (e.g. "software-development", "business", ...).
+ * Centralizes the derivation shared by the CLI (--packs-all), the Clean
+ * Install force path, and pack-list validation so it stays in one place (DRY).
+ */
+export function getAllPackIds(): readonly string[] {
+	return getPackRules().map((r) => packIdFromPath(r.path));
+}
+
+/**
+ * Derive the pack id from a manifest path ("packs/<packId>").
+ * "packs/business" → "business". Shared by filterByPacks and the
+ * application-layer pack option mappers so pack identity derivation
+ * stays in one place (DRY).
+ */
+export function packIdFromPath(path: string): string {
+	return path.replace(/^packs\//, "");
+}
+
+/**
+ * Filter rules down to the selected packs while always keeping non-pack rules.
+ * Pack identity is derived from the rule path ("packs/<packId>").
+ * Uses a Set for O(1) membership lookups during filtering.
+ *
+ * @param rules - The rule set to filter (typically FILE_RULE_MANIFEST).
+ * @param selectedPacks - Pack IDs chosen via the installer wizard.
+ */
+export function filterByPacks(
+	rules: readonly FileRule[],
+	selectedPacks: readonly string[],
+): readonly FileRule[] {
+	const selected = new Set(selectedPacks);
+	return rules.filter((rule) => {
+		if (rule.category !== "pack") return true;
+		return selected.has(packIdFromPath(rule.path));
+	});
+}
+
+/**
  * Decide whether a rule belongs in the effective rule set: keep it when it is
  * not optional, or when it is an optional rule the user explicitly selected.
  * Centralizes the optional-inclusion predicate shared by install use cases.

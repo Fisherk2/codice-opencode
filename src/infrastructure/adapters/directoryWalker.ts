@@ -19,7 +19,7 @@ import * as path from "node:path";
 export async function walkDirectory(
 	dirPath: string,
 	verbose = false,
-	excludeNames?: Set<string>,
+	excludeNames?: ReadonlySet<string>,
 ): Promise<string[]> {
 	const files: string[] = [];
 	const entries = await fs.readdir(dirPath, { withFileTypes: true });

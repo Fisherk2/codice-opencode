@@ -90,19 +90,19 @@ describe("validateVersions", () => {
 });
 
 describe("VersionComparator.compare", () => {
-	test("returns 'newer' when remote is greater than local", () => {
+	test("returns 'ahead' when remote is greater than local", () => {
 		const result = comparator.compare("1.0.0", "1.1.0");
 		expect(result.ok).toBe(true);
 		if (result.ok) {
-			expect(result.value).toBe("newer");
+			expect(result.value).toBe("ahead");
 		}
 	});
 
-	test("returns 'older' when remote is lesser than local", () => {
+	test("returns 'behind' when remote is lesser than local", () => {
 		const result = comparator.compare("1.1.0", "1.0.0");
 		expect(result.ok).toBe(true);
 		if (result.ok) {
-			expect(result.value).toBe("older");
+			expect(result.value).toBe("behind");
 		}
 	});
 
@@ -141,7 +141,7 @@ describe("VersionComparator.compare", () => {
 		const result = comparator.compare("v1.0.0", "v1.1.0");
 		expect(result.ok).toBe(true);
 		if (result.ok) {
-			expect(result.value).toBe("newer");
+			expect(result.value).toBe("ahead");
 		}
 	});
 });

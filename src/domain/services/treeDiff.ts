@@ -27,11 +27,5 @@ export async function diffTrees(
 	const sourceFiles = new Set(await fileSystem.walkTemplateDirectory(sourceDir));
 	const destFiles = new Set(await fileSystem.walkDestinationDirectory(destDir));
 
-	const missing: string[] = [];
-	for (const file of sourceFiles) {
-		if (!destFiles.has(file)) {
-			missing.push(file);
-		}
-	}
-	return missing.sort();
+	return [...sourceFiles].filter((file) => !destFiles.has(file)).sort();
 }

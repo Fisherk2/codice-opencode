@@ -130,11 +130,14 @@ if [[ -f "$TEMP_DIR/README.md" ]]; then
     fi
 fi
 
-# Note: .codice-staging/ may exist after SIGINT because the handler exits
-# immediately without cleaning up. This is acceptable — the temp directory
-# is cleaned up by the test harness trap handler.
+# The SIGINT handler now performs a best-effort cleanStaging() before exit,
+# so .codice-staging/ should normally be gone. It may briefly linger if the
+# interrupt lands mid-rename (async cleanup race) — the temp directory is
+# cleaned up by the test harness trap handler either way.
 if [[ -d "$TEMP_DIR/.codice-staging" ]]; then
-    log_info "Staging directory .codice-staging/ exists (expected — SIGINT exits immediately)"
+    log_warn "Staging directory .codice-staging/ still present after SIGINT (cleanup race — acceptable)"
+else
+    log_pass "Staging directory cleaned up after SIGINT"
 fi
 
 # ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 import { compare, valid } from "semver";
 import type { IVersionComparator } from "../ports/IVersionComparator";
 import { failure, type Result, success } from "../types/Result";
-import type { ComparisonResult } from "../types/version";
+import type { RemoteVersionStatus } from "../types/version";
 
 /**
  * Validate a single version string and return its normalized form.
@@ -53,22 +53,22 @@ export class VersionComparator implements IVersionComparator {
 	 *
 	 * @param local - Installed version string (e.g. "1.0.0")
 	 * @param remote - Latest remote version string (e.g. "1.1.0")
-	 * @returns Result with ComparisonResult or an Error if either version
-	 *          string is not a valid semver format.
+	 * @returns Result with RemoteVersionStatus (from the remote's perspective)
+	 *          or an Error if either version string is not a valid semver format.
 	 *
-	 * Comparison semantics (from local's perspective):
-	 * - "newer"  → remote > local  (update available)
-	 * - "older"  → remote < local  (local is ahead)
+	 * Comparison semantics (from the remote's perspective):
+	 * - "ahead"  → remote > local  (update available)
+	 * - "behind" → remote < local  (local is ahead)
 	 * - "equal"  → remote === local
 	 * - Failure  → invalid version format
 	 */
-	compare(local: string, remote: string): Result<ComparisonResult, Error> {
+	compare(local: string, remote: string): Result<RemoteVersionStatus, Error> {
 		const validated = validateVersions(local, remote);
 		if (!validated.ok) return validated;
 
 		const result = compare(validated.value.localValid, validated.value.remoteValid);
-		if (result < 0) return success("newer");
-		if (result > 0) return success("older");
+		if (result < 0) return success("ahead");
+		if (result > 0) return success("behind");
 		return success("equal");
 	}
 }

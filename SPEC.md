@@ -1,10 +1,12 @@
-# Spec: Códice — Opencode Workspace Installer v1.2.0
+# Spec: Códice — Opencode Workspace Installer v2.0.0
 
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v1.2.0  
+**Current Version:** v2.0.0  
 **Repository:** `https://github.com/fisherk2/codice-opencode`
+
+> **v2.0 Progress:** FEV-17 ✅ + FEV-18 ✅ (2026-08-04) + FEV-19 ✅ + FEV-20 ✅ (2026-08-05) + FEV-21 ✅ (2026-08-06) + FEV-22 ✅ (2026-08-06) + FEV-23 ✅ (2026-08-07) → **v2.0.0 pre-release ready**. FEV-23 (v2.0.0 Testing & Integration) is complete: 1920 tests, 30/30 E2E, coverage 95.68% overall / 99.12% production `src/`. Pre-release ready for review.
 
 ---
 
@@ -161,6 +163,8 @@ codice-opencode/
 │   └── fixtures/                  # Predefined directory trees for merge scenarios
 ├── template/                      # The actual OpenCode workspace template files
 │   ├── obligatorio/               # Files always copied/overwritten
+│   │   ├── core/                  # Workspace infrastructure (opencode.json, commands/, skills/, .opencode/)
+│   │   └── packs/                 # Agent packs (main, writers, sin-clasificar, +8 selectable empty)
 │   ├── estandar/                  # Files copied only if missing in destination
 │   └── opcional/                  # Files presented as checklist; copied only if selected and missing
 ├── docs/                          # Architecture decisions, workflow, PRD, TRD
@@ -382,6 +386,10 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 - **[CLI Commands and Modes](specs/spec-cli-commands.md)** — Exhaustive specification of the three installation modes. Includes flow diagrams for each mode, decision trees for user prompts, error handling paths, and the exact TUI text and options presented at each step.
 
 - **[SDD Plugin Decoupling](specs/spec-sdd-plugin-decoupling.md)** — Specification for reducing coupling between the SDD pipeline plugin and documentation. Defines auto-discovery of commands/agents, configuration-driven behavioral data, and quality infrastructure (linting, testing). Addresses Issue #53.
+
+- **[Agent Pack System](specs/spec-agent-packs.md)** — Pack-based agent classification with 8 selectable packs and 2 mandatory directories (main, writers). Defines permission unification, subagent table removal, and plugin changes for v2.0.0.
+
+- **[Installer UX v2](specs/spec-installer-ux-v2.md)** — Installer UX with pack selection wizard, version-gated updates, metadata-driven update scoping, and `.codice-version` format extension for v2.0.0.
 
 Resolved decisions are documented in the respective ADRs (see `specs/adr/`).
 

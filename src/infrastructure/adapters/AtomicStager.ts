@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { STAGING_DIR_NAME } from "../config/constants";
 import { walkDirectory } from "./directoryWalker";
 import { resolveWithinRoot } from "./pathResolver";
+import { VerboseLogger } from "./VerboseLogger";
 
 /**
  * Performs atomic file staging, commit, and rollback operations.
@@ -18,13 +19,16 @@ import { resolveWithinRoot } from "./pathResolver";
 export class AtomicStager {
 	private readonly destinationRoot: string;
 	private readonly stagingRoot: string;
+	private readonly logger: VerboseLogger;
 
 	/**
 	 * @param destinationRoot - Absolute path to the destination directory.
+	 * @param logger - Optional verbose logger; disabled when omitted.
 	 */
-	constructor(destinationRoot: string) {
+	constructor(destinationRoot: string, logger?: VerboseLogger) {
 		this.destinationRoot = destinationRoot;
 		this.stagingRoot = path.join(destinationRoot, STAGING_DIR_NAME);
+		this.logger = logger ?? new VerboseLogger(false);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -63,8 +67,9 @@ export class AtomicStager {
 	async stageFile(
 		resolvedTemplatePath: string,
 		relativeDestPath: string,
-		excludeSubDirs?: Set<string>,
+		excludeSubDirs?: ReadonlySet<string>,
 	): Promise<void> {
+		this.logger.log("stage", `${resolvedTemplatePath} → ${relativeDestPath}`);
 		const stat = await fs.stat(resolvedTemplatePath);
 
 		if (stat.isDirectory()) {
@@ -100,6 +105,7 @@ export class AtomicStager {
 
 			// Walk and rename each staged file atomically
 			const stagedFiles = await walkDirectory(stagingDir);
+			this.logger.log("commit", `promoting ${stagedFiles.length} staged file(s)`);
 			for (const stagingFilePath of stagedFiles) {
 				await this.renameStagedFile(stagingFilePath, stagingDir, backups);
 			}
@@ -116,6 +122,7 @@ export class AtomicStager {
 				}
 			}
 		} catch (error) {
+			this.logger.log("rollback", `restoring ${backups.size} backup(s) after failed commit`);
 			await this.restoreBackups(backups);
 			await this.cleanStaging();
 
@@ -128,6 +135,7 @@ export class AtomicStager {
 	 * Remove the staging directory recursively.
 	 */
 	async cleanStaging(): Promise<void> {
+		this.logger.log("clean", `removing ${this.stagingRoot}`);
 		try {
 			await fs.rm(this.stagingRoot, { recursive: true, force: true });
 		} catch {
@@ -149,6 +157,7 @@ export class AtomicStager {
 		// Use copyFile for cross-device-safe copy (avoids loading entire file into RAM).
 		// Bun.write() would also work but loads the full content into memory.
 		await fs.copyFile(sourcePath, stagingPath);
+		this.logger.log("stage_file", `${sourcePath} → ${stagingPath}`);
 	}
 
 	/**
@@ -163,6 +172,7 @@ export class AtomicStager {
 	): Promise<void> {
 		const relativePath = path.relative(stagingDir, stagingFilePath);
 		const destPath = this.resolveDestinationPath(relativePath);
+		this.logger.log("commit_file", `${relativePath} → ${destPath}`);
 
 		// Ensure destination parent directory exists
 		await fs.mkdir(path.dirname(destPath), { recursive: true });
@@ -184,15 +194,32 @@ export class AtomicStager {
 	/**
 	 * Restore backed-up destination files and clean up backup files.
 	 * On any individual failure, continues with the remaining backups.
+	 *
+	 * A final sweep removes backup files whose unlink failed during the
+	 * restore loop (e.g. transient EBUSY on Windows), so interrupted or
+	 * failed commits never leave `.codice-backup` orphans behind. Only
+	 * backups whose destination was successfully restored are swept —
+	 * a backup whose copyFile failed may be the only copy of the
+	 * original content and must be preserved.
 	 */
 	private async restoreBackups(backups: Map<string, string>): Promise<void> {
+		const restored = new Set<string>();
 		for (const [destPath, backupPath] of backups) {
 			try {
 				await fs.access(backupPath);
 				await fs.copyFile(backupPath, destPath);
-				await fs.unlink(backupPath);
+				restored.add(backupPath);
 			} catch {
 				// If rollback fails for a specific file, continue with others
+			}
+		}
+		// Final sweep: remove backups whose restore succeeded but whose unlink
+		// was skipped (the loop above never reached it) or failed transiently.
+		for (const backupPath of restored) {
+			try {
+				await fs.unlink(backupPath);
+			} catch {
+				// Ignore cleanup errors for backup files
 			}
 		}
 	}

@@ -1,6 +1,49 @@
 import type { FileRule } from "../../domain/entities/FileRule";
 
 /**
+ * Pack metadata for the pack selection screen.
+ */
+export interface PackOption {
+	/** Pack identifier (e.g., "software-development") */
+	readonly id: string;
+	/** Human-readable name (e.g., "Software Development") */
+	readonly name: string;
+	/** Short description of pack contents */
+	readonly description: string;
+	/** Approximate agent count in this pack */
+	readonly agentCount: number;
+	/** Whether this pack is locked (already installed, can't be deselected in Update Option B) */
+	readonly locked?: boolean;
+}
+
+/**
+ * Display metadata for the local installation state.
+ * Used to show "Current installation: v2.0.0, Packs: software-development" in the TUI.
+ */
+export interface VersionDisplayInfo {
+	/** Detected local version (e.g., "2.0.0"), or null if not detected */
+	readonly version: string | null;
+	/** Packs installed locally (empty if pre-v2.0) */
+	readonly installedPacks: readonly string[];
+	/** Installation status for messaging */
+	readonly status: "missing" | "pre-1.2.0" | "pre-2.0.0" | "v2.0+";
+}
+
+/**
+ * Update sub-option choice.
+ */
+export type UpdateOption = "current" | "add" | "cancel";
+
+/** Installation modes selectable from the TUI or CLI flags. */
+export type InstallMode = "clean" | "project" | "update";
+
+export interface UpdateOptionChoice {
+	readonly value: UpdateOption;
+	readonly label: string;
+	readonly hint?: string;
+}
+
+/**
  * Abstract TUI interactions for prompts, confirmations,
  * and file selection checklists.
  */
@@ -81,7 +124,61 @@ export interface IUserPrompt {
 
 	/**
 	 * Prompt the user to select an installation mode.
-	 * @returns Selected mode ("clean" | "project" | "update"), or null if cancelled.
+	 * @returns Selected mode, or null if cancelled.
 	 */
-	promptForMode(): Promise<"clean" | "project" | "update" | null>;
+	promptForMode(): Promise<InstallMode | null>;
+
+	/**
+	 * selectPacks — present a multiselect checklist for agent packs.
+	 * Used in Clean Install, Project Install, and Update Option B flows.
+	 *
+	 * @param options - List of pack options to present.
+	 * @param preSelected - Pack IDs to pre-select (e.g., ["software-development"] for default).
+	 * @returns Selected pack IDs. Empty array on cancel.
+	 */
+	selectPacks(
+		options: readonly PackOption[],
+		preSelected: readonly string[],
+	): Promise<readonly string[]>;
+
+	/**
+	 * showVersionInfo — display detected local installation info to the user.
+	 * Shown before the mode menu when version is detected.
+	 */
+	showVersionInfo(info: VersionDisplayInfo): void;
+
+	/**
+	 * selectUpdateOption — prompt user to choose between Update Option A (current packs) or Option B (add packs).
+	 *
+	 * @param options - Available update choices.
+	 * @returns Selected option or null on cancel.
+	 */
+	selectUpdateOption(options: readonly UpdateOptionChoice[]): Promise<UpdateOption | null>;
+
+	/**
+	 * showInstallSummary — display a pre-install summary of what will be
+	 * installed. Called by InstallUseCaseBase between buildRules and merge.
+	 * Informational only; no confirmation step.
+	 *
+	 * @param info - Summary data (packs, optionals, totals).
+	 */
+	showInstallSummary(info: InstallSummaryInfo): void;
+}
+
+/**
+ * Pre-install summary data displayed before the merge step.
+ * The user has already confirmed overwrite + packs + optionals; this is
+ * informational only (no confirmation step per FEV-22 decision #5).
+ */
+export interface InstallSummaryInfo {
+	/** Packs to install with their agent counts */
+	readonly packs: readonly { readonly id: string; readonly agentCount: number }[];
+	/** Mandatory directories always included in the install */
+	readonly mandatoryDirs: readonly string[];
+	/** Optional files the user selected (empty if none) */
+	readonly optionalFiles: readonly string[];
+	/** Total estimated agents (sum of pack agentCount) */
+	readonly totalAgents: number;
+	/** Total estimated files (packs + mandatory + optionals) */
+	readonly totalFiles: number;
 }

@@ -2,8 +2,7 @@
 /**
  * analyze-references.ts — FEV-12 Task 1.1
  *
- * Auto-mapping script that assigns each of the 59 reference files
- * in template/obligatorio/references/ to a skill directory.
+ * Auto-mapping script that assigns each reference file to a skill directory.
  *
  * Three detection levels:
  *   Level 1 (HIGH):   Direct mention of the filename in SKILL.md
@@ -18,10 +17,11 @@
  *   - Writes docs/diagnosis/fix05-mapping-table.md
  *   - Prints summary to stdout
  *
- * NOTE: This is a one-time analysis tool. After Phase 2 (file relocation),
- * the `template/obligatorio/references/` directory no longer exists, so
- * re-running this script will crash with ENOENT. To re-use, point
- * `REFERENCES_DIR` to the new location.
+ * NOTE: FEV-12 (ADR-012) co-located reference files with their owning skill
+ * under `template/obligatorio/core/skills/<skill>/references/`, so the legacy
+ * single `template/obligatorio/references/` directory no longer exists. The
+ * scanner below walks each skill's `references/` subdirectory. Running this
+ * script again produces the mapping for the current co-located layout.
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -30,8 +30,9 @@ import { generateMarkdown, printSummary } from "./output-format";
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
 const PROJECT_ROOT = resolve(import.meta.dirname, "..");
-const SKILLS_DIR = join(PROJECT_ROOT, "template", "obligatorio", "skills");
-const REFERENCES_DIR = join(PROJECT_ROOT, "template", "obligatorio", "references");
+// FEV-17 (v2.0): skills moved from template/obligatorio/skills to
+// template/obligatorio/core/skills. References are co-located per skill.
+const SKILLS_DIR = join(PROJECT_ROOT, "template", "obligatorio", "core", "skills");
 const OUTPUT_FILE = join(PROJECT_ROOT, "docs", "diagnosis", "fix05-mapping-table.md");
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -91,19 +92,30 @@ const MULTI_MATCH_PRIORITY: Record<string, string> = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
- * Get the list of all files in the references directory (any extension).
+ * Get the list of all files in the reference directories (any extension).
+ * References are co-located under each skill's `references/` subdirectory
+ * (ADR-012), so every skill directory is scanned for one.
  * Returns entries with original filename and basename (without extension).
  */
-function getReferenceFiles(refsDir: string): Array<{ filename: string; basename: string }> {
-	return readdirSync(refsDir)
-		.filter((f) => f !== "." && f !== ".." && !f.startsWith(".gitkeep"))
-		.map((f) => {
+function getReferenceFiles(skillsDir: string): Array<{ filename: string; basename: string }> {
+	const files: Array<{ filename: string; basename: string }> = [];
+	const skillDirs = readdirSync(skillsDir, { withFileTypes: true });
+
+	for (const dirent of skillDirs) {
+		if (!dirent.isDirectory()) continue;
+		const refsDir = join(skillsDir, dirent.name, "references");
+		if (!existsSync(refsDir)) continue;
+
+		for (const f of readdirSync(refsDir)) {
+			if (f === "." || f === ".." || f.startsWith(".gitkeep")) continue;
 			// Strip the last extension for basename
 			const dotIdx = f.lastIndexOf(".");
 			const basename = dotIdx > 0 ? f.slice(0, dotIdx) : f;
-			return { filename: f, basename };
-		})
-		.sort((a, b) => a.basename.localeCompare(b.basename));
+			files.push({ filename: f, basename });
+		}
+	}
+
+	return files.sort((a, b) => a.basename.localeCompare(b.basename));
 }
 
 /** Read all SKILL.md files and index references to known filenames. */
@@ -136,14 +148,29 @@ function indexSkillMentions(
 /** Find which reference files mention each reference filename (cross-references
  *  among .md files only, since non-.md files cannot be linked in markdown). */
 function indexCrossReferences(
-	refsDir: string,
+	skillsDir: string,
 	refFiles: Array<{ filename: string; basename: string }>,
 ): Map<string, string[]> {
 	const index = new Map<string, string[]>();
 	const mdFiles = refFiles.filter((f) => f.filename.endsWith(".md"));
 
+	// Build filename → full path so reads work across the co-located
+	// references/ subdirectories (ADR-012); first occurrence wins.
+	const refPaths = new Map<string, string>();
+	const skillDirs = readdirSync(skillsDir, { withFileTypes: true });
+	for (const dirent of skillDirs) {
+		if (!dirent.isDirectory()) continue;
+		const refsDir = join(skillsDir, dirent.name, "references");
+		if (!existsSync(refsDir)) continue;
+		for (const f of readdirSync(refsDir)) {
+			if (!refPaths.has(f)) refPaths.set(f, join(refsDir, f));
+		}
+	}
+
 	for (const file of mdFiles) {
-		const content = readFileSync(join(refsDir, file.filename), "utf-8");
+		const filePath = refPaths.get(file.filename);
+		if (!filePath) continue;
+		const content = readFileSync(filePath, "utf-8");
 
 		for (const other of mdFiles) {
 			if (other.filename === file.filename) continue;
@@ -311,9 +338,9 @@ function resolveFileMapping(
 // one-time analysis script.
 
 function analyze(): ReferenceMapping[] {
-	const refFiles = getReferenceFiles(REFERENCES_DIR);
+	const refFiles = getReferenceFiles(SKILLS_DIR);
 	const skillMentions = indexSkillMentions(SKILLS_DIR, refFiles);
-	const crossRefs = indexCrossReferences(REFERENCES_DIR, refFiles);
+	const crossRefs = indexCrossReferences(SKILLS_DIR, refFiles);
 	const tempMapping = new Map<string, ReferenceMapping>();
 
 	for (const { filename, basename } of refFiles) {

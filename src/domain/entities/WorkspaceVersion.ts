@@ -13,6 +13,8 @@ export class WorkspaceVersion {
 		 * ISO 8601 timestamp of installation (e.g. "2026-06-13T12:00:00.000Z")
 		 */
 		public readonly installedAt: string,
+		/** Pack IDs selected via the installer wizard (v2.0), e.g. ["software-development"] */
+		public readonly installedPacks: readonly string[] = [],
 		/** Optional list of paths the user selected during install */
 		public readonly optionalSelections: readonly string[] = [],
 	) {}
@@ -51,6 +53,8 @@ export class WorkspaceVersion {
 
 	/**
 	 * Create a WorkspaceVersion from a raw JSON object.
+	 * Accepts both the v2.0 "version" field and the legacy v1.x
+	 * "installedVersion" field for backward compatibility.
 	 * Throws if the object is malformed.
 	 */
 	static fromJSON(data: unknown): WorkspaceVersion {
@@ -61,15 +65,16 @@ export class WorkspaceVersion {
 		}
 
 		const obj = data as Record<string, unknown>;
+		const versionField = obj.version ?? obj.installedVersion;
 
-		if (typeof obj.installedVersion !== "string") {
+		if (typeof versionField !== "string") {
 			throw new Error(
-				`Invalid .codice-version file: field 'installedVersion' must be a version string (e.g. "1.0.0"), received ${typeof obj.installedVersion}`,
+				`Invalid .codice-version file: field 'version' must be a version string (e.g. "1.0.0"), received ${typeof versionField}`,
 			);
 		}
-		if (!valid(obj.installedVersion)) {
+		if (!valid(versionField)) {
 			throw new Error(
-				`Invalid .codice-version file: field 'installedVersion' is not a valid semver version (e.g. "1.0.0"), received "${obj.installedVersion}"`,
+				`Invalid .codice-version file: field 'version' is not a valid semver version (e.g. "1.0.0"), received "${versionField}"`,
 			);
 		}
 		if (typeof obj.installedAt !== "string") {
@@ -85,19 +90,34 @@ export class WorkspaceVersion {
 			);
 		}
 
+		// installedPacks is a v2.0 field: missing → none, present-but-malformed → fail fast.
+		let installedPacks: readonly string[] = [];
+		if (obj.installedPacks !== undefined) {
+			if (!Array.isArray(obj.installedPacks)) {
+				throw new Error(
+					`Invalid .codice-version file: field 'installedPacks' must be an array of pack IDs (e.g. ["software-development"]), received ${typeof obj.installedPacks}`,
+				);
+			}
+			installedPacks = obj.installedPacks.filter(
+				(entry): entry is string => typeof entry === "string",
+			);
+		}
+
 		return new WorkspaceVersion(
-			obj.installedVersion,
+			versionField,
 			obj.installedAt,
+			installedPacks,
 			Array.isArray(obj.optionalSelections)
 				? obj.optionalSelections.filter((s): s is string => typeof s === "string")
 				: [],
 		);
 	}
 
-	/** Serialize to JSON for disk persistence. */
+	/** Serialize to JSON (v2.0 format) for disk persistence. */
 	toJSON(): Record<string, unknown> {
 		return {
-			installedVersion: this.version,
+			version: this.version,
+			installedPacks: [...this.installedPacks],
 			installedAt: this.installedAt,
 			optionalSelections: [...this.optionalSelections],
 		};

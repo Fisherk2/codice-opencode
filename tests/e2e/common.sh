@@ -229,6 +229,70 @@ assert_exit_code() {
     log_pass "Exit code $expected_code: $*"
 }
 
+# Run the CLI in TEMP_DIR, capturing combined stdout+stderr, and assert exit 0.
+# Sets EXIT_CODE and CLI_OUTPUT. Fails with output dump on non-zero.
+# Usage: run_cli_capture [fail-note] -- <cli args...>
+run_cli_capture() {
+    local fail_note="${1:-}"
+    shift
+    [[ "$1" == "--" ]] && shift
+
+    EXIT_CODE=0
+    CLI_OUTPUT=$(cd "$TEMP_DIR" && $CODICE_CLI "$@" 2>&1) || EXIT_CODE=$?
+
+    if [[ "$EXIT_CODE" -ne 0 ]]; then
+        log_fail "CLI exited with code $EXIT_CODE (expected 0$fail_note)"
+        echo "$CLI_OUTPUT" >&2
+        return 1
+    fi
+    log_pass "CLI exited with code 0"
+}
+
+# Run the CLI in TEMP_DIR with mock-server env, splitting stdout/stderr to files.
+# Sets EXIT_CODE, STDOUT_FILE, STDERR_FILE, COMBINED_OUTPUT. Fails on non-zero.
+# Usage: run_cli_capture_split [fail-note] -- <cli args...>
+run_cli_capture_split() {
+    local fail_note="${1:-}"
+    shift
+    [[ "$1" == "--" ]] && shift
+
+    EXIT_CODE=0
+    STDERR_FILE="$TEMP_DIR/stderr.log"
+    STDOUT_FILE="$TEMP_DIR/stdout.log"
+    (cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI "$@") >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
+    COMBINED_OUTPUT=$(cat "$STDOUT_FILE" "$STDERR_FILE" 2>/dev/null || echo "")
+
+    if [[ "$EXIT_CODE" -ne 0 ]]; then
+        log_fail "CLI exited with code $EXIT_CODE (expected 0$fail_note)"
+        echo "$COMBINED_OUTPUT" >&2
+        return 1
+    fi
+    log_pass "CLI exited with code 0"
+}
+
+# Assert the version file records a specific pack in installedPacks.
+# Usage: assert_version_has_pack "/path/to/.codice-version" "pack-id"
+assert_version_has_pack() {
+    local version_file="$1"
+    local pack_id="$2"
+    local version_data
+    version_data=$(cat "$version_file" 2>/dev/null || echo "")
+
+    if ! echo "$version_data" | grep -qF '"installedPacks"'; then
+        log_fail "Version file is missing 'installedPacks'"
+        echo "    Version data: $version_data" >&2
+        return 1
+    fi
+    # -F treats the pack id as a literal string, so ids with regex
+    # metacharacters (e.g. '+') can never break the pattern.
+    if ! echo "$version_data" | grep -qF "\"$pack_id\""; then
+        log_fail "Version file does not list '$pack_id' in installedPacks"
+        echo "    Version data: $version_data" >&2
+        return 1
+    fi
+    log_pass "Version file lists '$pack_id'"
+}
+
 # ---------------------------------------------------------------------------
 # Mock server lifecycle
 # ---------------------------------------------------------------------------

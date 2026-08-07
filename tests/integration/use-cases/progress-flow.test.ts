@@ -1,9 +1,8 @@
-import { describe, expect, it, mock as mockFn } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
-import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import type { ProgressEvent } from "../../../src/domain/types/ProgressEvent";
+import { createMockFileSystem } from "./test-doubles";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -19,46 +18,6 @@ function createMandatoryRules(count: number): FileRule[] {
 		isDirectory: false,
 		description: `Test file ${i}`,
 	}));
-}
-
-/**
- * Create a mock IFileSystem + IStagingSystem with successful defaults.
- * Tracks calls made to stageFile and commitStaging for verification.
- */
-function createMockFileSystem(): {
-	stub: IFileSystem & IStagingSystem;
-	calls: {
-		stageFile: string[];
-		commitStaging: number;
-		cleanStaging: number;
-	};
-} {
-	const calls = {
-		stageFile: [] as string[],
-		commitStaging: 0,
-		cleanStaging: 0,
-	};
-
-	const stub: IFileSystem & IStagingSystem = {
-		destinationExists: mockFn(() => Promise.resolve(false)),
-		stageFile: mockFn(async (path: string) => {
-			calls.stageFile.push(path);
-		}) as (path: string, excludeSubDirs?: Set<string>) => Promise<void>,
-		commitStaging: mockFn(async () => {
-			calls.commitStaging++;
-		}),
-		cleanStaging: mockFn(async () => {
-			calls.cleanStaging++;
-		}),
-		isWritable: mockFn(() => Promise.resolve(true)),
-		isEmpty: mockFn(() => Promise.resolve(true)),
-		writeVersionFile: mockFn(() => Promise.resolve()),
-		readVersionFile: mockFn(() => Promise.resolve(null)),
-		walkTemplateDirectory: mockFn(() => Promise.resolve([])),
-		walkDestinationDirectory: mockFn(() => Promise.resolve([])),
-	};
-
-	return { stub, calls };
 }
 
 // ---------------------------------------------------------------------------
@@ -148,10 +107,16 @@ describe("FileMergeEngine progress events", () => {
 
 		expect(result.ok).toBe(true);
 
+		// Stage events carry filePath; commit/error events do not. Narrow
+		// the union with a type predicate so TS proves filePath is present
+		// without an unsafe cast.
+		const isFileStageEvent = (
+			event: ProgressEvent,
+		): event is Extract<ProgressEvent, { filePath: string }> =>
+			event.type === "stage_start" || event.type === "stage_complete";
+
 		// Extract the file paths from stage events in order
-		const stageOrder = events
-			.filter((e) => e.type === "stage_start" || e.type === "stage_complete")
-			.map((e) => (e as Extract<ProgressEvent, { filePath: string }>).filePath);
+		const stageOrder = events.filter(isFileStageEvent).map((e) => e.filePath);
 
 		// Should follow rule order: file-0.ts, file-1.ts, ..., file-9.ts
 		const expectedOrder = rules.map((r) => r.path);
@@ -180,9 +145,7 @@ describe("FileMergeEngine progress events", () => {
 		];
 		const { stub: fs } = createMockFileSystem();
 		// Make exists.txt look like it exists in destination
-		(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(
-			async (path: string) => path === "exists.txt",
-		);
+		fs.destinationExists.mockImplementation(async (path: string) => path === "exists.txt");
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 
@@ -216,7 +179,7 @@ describe("FileMergeEngine progress events", () => {
 		const rules = createMandatoryRules(3);
 		const { stub: fs, calls } = createMockFileSystem();
 		// Make the second file fail during staging
-		(fs.stageFile as ReturnType<typeof mockFn>).mockImplementation(async (path: string) => {
+		fs.stageFile.mockImplementation(async (path: string) => {
 			if (path === "file-1.ts") {
 				throw new Error("Disk full");
 			}
@@ -254,7 +217,7 @@ describe("FileMergeEngine progress events", () => {
 		const rules = createMandatoryRules(3);
 		const { stub: fs, calls } = createMockFileSystem();
 		// Make commitStaging throw
-		(fs.commitStaging as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Rename failed"));
+		fs.commitStaging.mockRejectedValue(new Error("Rename failed"));
 		const engine = new FileMergeEngine(fs);
 		const events: ProgressEvent[] = [];
 

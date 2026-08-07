@@ -2,10 +2,12 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
+import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import { VERSION_FILE_NAME } from "../config/constants";
 import { AtomicStager } from "./AtomicStager";
 import { walkDirectory } from "./directoryWalker";
 import { TemplateResolver } from "./TemplateResolver";
+import { VerboseLogger } from "./VerboseLogger";
 
 /** Temporary file used to probe destination writability (removed after check). */
 const WRITE_TEST_FILE_NAME = ".codice-write-test";
@@ -19,7 +21,7 @@ const VERSION_FILE_TMP_SUFFIX = ".tmp";
  * Any other code is treated as absent — staging will surface a clearer error.
  */
 function classifyAccessError(err: unknown): boolean {
-	const code = (err as NodeJS.ErrnoException).code;
+	const code = isErrnoException(err) ? err.code : undefined;
 	if (code === "ENOENT") return false;
 	if (code === "EACCES" || code === "EPERM") return true; // exists but unreadable
 	return false; // conservative: staging will fail with clearer message if unwritable
@@ -42,16 +44,20 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 	private readonly templateResolver: TemplateResolver;
 	private readonly atomicStager: AtomicStager;
 	private readonly destinationRoot: string;
+	private readonly logger: VerboseLogger;
 
 	/**
 	 * @param templateRoot - Path to the template directory.
 	 *                       Auto-detected by TemplateResolver when not provided.
 	 * @param destinationRoot - Path to the destination directory (default: cwd).
+	 * @param logger - Optional verbose logger; disabled when omitted.
 	 */
-	constructor(templateRoot?: string, destinationRoot?: string) {
+	constructor(templateRoot?: string, destinationRoot?: string, logger?: VerboseLogger) {
 		const resolvedDest = destinationRoot ?? process.cwd();
-		this.templateResolver = new TemplateResolver(templateRoot);
-		this.atomicStager = new AtomicStager(resolvedDest);
+		const verboseLogger = logger ?? new VerboseLogger(false);
+		this.logger = verboseLogger;
+		this.templateResolver = new TemplateResolver(templateRoot, verboseLogger);
+		this.atomicStager = new AtomicStager(resolvedDest, verboseLogger);
 		this.destinationRoot = resolvedDest;
 	}
 
@@ -71,24 +77,29 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 	 * Stage a file or directory by resolving the template path and delegating
 	 * to AtomicStager for the staging write.
 	 *
-	 * @param relativePath - Path relative to template root.
+	 * @param relativePath - Path relative to template root (source).
+	 * @param destPath - Optional destination path override; defaults to relativePath.
 	 * @param excludeSubDirs - Optional set of subdirectory names to exclude
 	 *                         when staging a directory (e.g. Set("node_modules")
 	 *                         to exclude node_modules/ from a staged directory).
 	 */
-	async stageFile(relativePath: string, excludeSubDirs?: Set<string>): Promise<void> {
+	async stageFile(
+		relativePath: string,
+		destPath?: string,
+		excludeSubDirs?: ReadonlySet<string>,
+	): Promise<void> {
 		const resolved = await this.templateResolver.resolvePath(relativePath);
-		await this.atomicStager.stageFile(resolved, relativePath, excludeSubDirs);
+		await this.atomicStager.stageFile(resolved, destPath ?? relativePath, excludeSubDirs);
 	}
 
 	/** Atomic rename: promote all staged files to the destination. */
-	async commitStaging(): Promise<void> {
-		await this.atomicStager.commitStaging();
+	commitStaging(): Promise<void> {
+		return this.atomicStager.commitStaging();
 	}
 
 	/** Remove the staging directory recursively. */
-	async cleanStaging(): Promise<void> {
-		await this.atomicStager.cleanStaging();
+	cleanStaging(): Promise<void> {
+		return this.atomicStager.cleanStaging();
 	}
 
 	/**
@@ -134,11 +145,10 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		const tempPath = `${versionFilePath}${VERSION_FILE_TMP_SUFFIX}`;
 
 		try {
-			// Write to temp file first, then atomic rename
 			await Bun.write(tempPath, versionData);
 			await fs.rename(tempPath, versionFilePath);
+			this.logger.log("version_write", `${versionFilePath} (${versionData.length} bytes)`);
 		} catch (error) {
-			// Clean up temp file if rename failed
 			try {
 				await fs.unlink(tempPath);
 			} catch {
@@ -156,9 +166,12 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 			const file = Bun.file(versionFilePath);
 			const exists = await file.exists();
 			if (!exists) {
+				this.logger.log("version_read", "not found (missing install)");
 				return null;
 			}
-			return file.text();
+			const content = await file.text();
+			this.logger.log("version_read", `${versionFilePath} (${content.length} bytes)`);
+			return content;
 		} catch {
 			return null;
 		}

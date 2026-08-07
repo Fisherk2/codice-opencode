@@ -4,7 +4,7 @@
  * Validates recursive traversal, symlink skipping (security),
  * and handling of mixed directory entries.
  */
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -161,6 +161,50 @@ describe("walkDirectory", () => {
 		const files = await walkDirectory(dir, false, undefined);
 		const names = files.map((f) => path.basename(f)).sort();
 		expect(names).toEqual(["child.txt", "root.txt"]);
+	});
+
+	// ---------------------------------------------------------------------------
+	// Verbose logging: symlink audit trail
+	// ---------------------------------------------------------------------------
+
+	test("logs skipped symlinks to stderr when verbose=true", async () => {
+		const dir = path.join(tmpDir, "verbose-symlink");
+		await fs.mkdir(dir);
+		await fs.writeFile(path.join(dir, "real.txt"), "content");
+		await fs.symlink(path.join(dir, "real.txt"), path.join(dir, "link.txt"));
+
+		const consoleSpy = spyOn(console, "warn").mockImplementation(() => {});
+
+		try {
+			const files = await walkDirectory(dir, true);
+			const names = files.map((f) => path.basename(f));
+			expect(names).toContain("real.txt");
+			expect(names).not.toContain("link.txt");
+
+			// Should have logged the skipped symlink
+			expect(consoleSpy).toHaveBeenCalledTimes(1);
+			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Skipping symbolic link"));
+			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("link.txt"));
+		} finally {
+			consoleSpy.mockRestore();
+		}
+	});
+
+	test("does not log when verbose=false (default)", async () => {
+		const dir = path.join(tmpDir, "quiet-symlink");
+		await fs.mkdir(dir);
+		await fs.writeFile(path.join(dir, "real.txt"), "content");
+		await fs.symlink(path.join(dir, "real.txt"), path.join(dir, "link.txt"));
+
+		const consoleSpy = spyOn(console, "warn").mockImplementation(() => {});
+
+		try {
+			await walkDirectory(dir, false);
+			// Should NOT have logged anything
+			expect(consoleSpy).not.toHaveBeenCalled();
+		} finally {
+			consoleSpy.mockRestore();
+		}
 	});
 
 	test("exclusion does not affect top-level files with similar names", async () => {

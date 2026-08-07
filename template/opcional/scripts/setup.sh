@@ -1,1 +1,1 @@
-# Script de configuración inicial
+# Setup script

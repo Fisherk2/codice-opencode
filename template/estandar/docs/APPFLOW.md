@@ -1,26 +1,27 @@
-# Flujo de Navegación – [Producto] v[MVP]
-**Fecha:** [YYYY-MM-DD] | **Autor:** [Nombre]
+# Navigation Flow – [Product] v[MVP]
+**Date:** [YYYY-MM-DD] | **Author:** [Name]
 
-## 1. Actores y Roles
-| Rol | Permisos | Pantallas Iniciales |
-|-----|----------|---------------------|
+## 1. Actors and Roles
+| Role | Permissions | Initial Screens |
+|------|-------------|-----------------|
 
-## 2. Diagramas de Flujo por Caso de Uso
-- Enlace a diagramas (Mermaid/Draw.io/Figma)
-- Notación: Inicio → Pantalla → Decisión → Acción → Fin
+## 2. Flow Diagrams per Use Case
+- Diagram link (Mermaid/Draw.io/Figma)
+- Notation: Start → Screen → Decision → Action → End
 
-## 3. Matriz de Navegación
-| Origen | Destino | Trigger | Condición | Estado Global Requerido | Rollback/Cancel |
-|--------|---------|---------|-----------|--------------------------|-----------------|
+## 3. Navigation Matrix
+| Origin | Destination | Trigger | Condition | Required Global State | Rollback/Cancel |
+|--------|-------------|---------|-----------|-----------------------|-----------------|
 
-## 4. Flujos Alternativos y Errores
-- Auth fallido, red inestable, permisos denegados, datos inválidos:
-- Estrategia de recuperación:
+## 4. Alternative Flows and Errors
+- Auth failed, unstable network, denied permissions, invalid data:
+- Recovery strategy:
 
-## 5. Gestión de Estado de Navegación
-- Estado local vs. global:
-- Persistencia (sessionStorage, tokens, cache):
-- Deep linking / rutas protegidas:
+## 5. Navigation State Management
+- Local vs. global state:
+- Persistence (sessionStorage, tokens, cache):
+- Deep linking / protected routes:
 
-## 6. Trazabilidad
-| Flow-ID | PRD REQ-ID | Pantalla UI | Componente Técnico |
+## 6. Traceability
+| Flow-ID | PRD REQ-ID | UI Screen | Technical Component |
+|---------|------------|-----------|---------------------|

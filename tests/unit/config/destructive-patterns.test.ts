@@ -14,14 +14,14 @@ import * as path from "node:path";
 const PLUGIN_PATH = path.resolve(
 	import.meta.dir,
 	"../../..",
-	"template/obligatorio/.opencode/plugins/sdd-pipeline.ts",
+	"template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts",
 );
 
 /** Source of truth: DESTRUCTIVE_PATTERNS is now imported from ./src/destructivePatterns */
 const DESTRUCTIVE_PATH = path.resolve(
 	import.meta.dir,
 	"../../..",
-	"template/obligatorio/.opencode/plugins/src/destructivePatterns.ts",
+	"template/obligatorio/core/.opencode/plugins/src/destructivePatterns.ts",
 );
 
 // ─── Structural helpers ───────────────────────────────────────────────────

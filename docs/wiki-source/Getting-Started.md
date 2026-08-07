@@ -31,6 +31,8 @@ The installer launches an interactive menu with three options:
 2. **Project Install** — Merges the template into an existing project. Mandatory files overwrite existing ones. Standard files are copied only if they do not already exist. Optional files are presented as a checklist.
 3. **Update Workspace** — Updates an existing Códice workspace to the latest version. Only mandatory files are overwritten. Standard files are preserved if they exist. Optional files are never touched.
 
+Clean and Project installs first show a **pack selection wizard**: choose which of the 8 agent packs to include (software-development is pre-selected by default; at least one pack is required). After confirming packs and optional files, the installer shows a **summary** — the selected packs with their agent counts, the always-included mandatory directories, and an estimate of total agents and files — before copying anything.
+
 After you select a mode, the installer copies files, generates symlinks, and creates a `.gitignore` tailored for OpenCode development. No existing project files are modified without your consent.
 
 ### Command-Line Flags
@@ -41,6 +43,9 @@ For non-interactive use (scripts, CI), the installer supports these flags:
 |------|-------------|
 | `--dest <path>` | Target directory (default: current directory) |
 | `--mode <mode>` | Skip the menu — `clean`, `project`, or `update` |
+| `--packs <ids>` | Comma-separated pack ids; skips the pack selection wizard |
+| `--packs-all` | Select all 8 agent packs non-interactively |
+| `--update-add-packs <ids>` | Update mode: add new packs to an existing installation |
 | `--force` | Skip confirmations and include all optional files |
 | `--verbose` | Show detailed logs of every operation |
 | `--version` | Print the installed version and exit |
@@ -69,7 +74,7 @@ your-project/
 ├── .opencode/
 │   ├── plugins/               # SDD pipeline and orchestrator plugins
 │   └── agents/ → agents/      # Symlink to agents directory
-├── agents/                    # 6 primary agents + 98 subagents
+├── agents/                    # 6 primary + 4 writer agents + your selected pack subagents (~352 across 8 packs)
 ├── commands/                  # 12 SDD slash commands
 └── skills/                    # 52 engineering skills
 ```

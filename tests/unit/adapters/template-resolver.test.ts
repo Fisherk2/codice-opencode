@@ -5,6 +5,7 @@
  * compatibility with explicit templateRoot.
  */
 import { describe, expect, test } from "bun:test";
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { TemplateResolver } from "../../../src/infrastructure/adapters/TemplateResolver";
 
@@ -100,5 +101,84 @@ describe("TemplateResolver — Constructor", () => {
 		const result = await resolver.resolvePath("AGENTS.md");
 		expect(result).toBeTruthy();
 		expect(result).toContain("template");
+	});
+});
+
+// -----------------------------------------------------------------------
+// FEV-17 (v2.0 template restructuring): the manifest now uses source
+// groupings (core/, packs/*) as rule paths. The destination stays flat
+// (core/* spreads to root, packs/* merge into agents/), so TemplateResolver
+// must resolve these source-grouping paths against template/obligatorio/.
+// No resolver code changed — these tests lock in the resolution contract
+// the new manifest relies on.
+// -----------------------------------------------------------------------
+
+describe("TemplateResolver — FEV-17 core/packs source grouping resolution", () => {
+	const templateRoot = path.join(PROJECT_ROOT, "template");
+
+	test('resolvePath("core") resolves to obligatorio/core', async () => {
+		const resolver = new TemplateResolver(templateRoot);
+		const resolved = await resolver.resolvePath("core");
+		expect(resolved.replace(/\\/g, "/")).toContain("obligatorio/core");
+		expect(fs.existsSync(resolved)).toBe(true);
+	});
+
+	test('resolvePath("core/opencode.json") resolves to obligatorio/core/opencode.json', async () => {
+		const resolver = new TemplateResolver(templateRoot);
+		const resolved = await resolver.resolvePath("core/opencode.json");
+		expect(resolved.replace(/\\/g, "/")).toContain("obligatorio/core/opencode.json");
+	});
+
+	test('resolvePath("core/.opencode") resolves to obligatorio/core/.opencode', async () => {
+		const resolver = new TemplateResolver(templateRoot);
+		const resolved = await resolver.resolvePath("core/.opencode");
+		expect(resolved.replace(/\\/g, "/")).toContain("obligatorio/core/.opencode");
+		expect(fs.existsSync(resolved)).toBe(true);
+	});
+
+	test('resolvePath("packs/main") resolves to obligatorio/packs/main', async () => {
+		const resolver = new TemplateResolver(templateRoot);
+		const resolved = await resolver.resolvePath("packs/main");
+		expect(resolved.replace(/\\/g, "/")).toContain("obligatorio/packs/main");
+		expect(fs.existsSync(resolved)).toBe(true);
+	});
+
+	test('resolvePath("packs/main/huitzilopochtli.md") resolves to obligatorio/packs/main/huitzilopochtli.md', async () => {
+		const resolver = new TemplateResolver(templateRoot);
+		const resolved = await resolver.resolvePath("packs/main/huitzilopochtli.md");
+		expect(resolved.replace(/\\/g, "/")).toContain("obligatorio/packs/main/huitzilopochtli.md");
+	});
+
+	test('resolvePath("packs/software-development") resolves to obligatorio/packs/software-development', async () => {
+		const resolver = new TemplateResolver(templateRoot);
+		const resolved = await resolver.resolvePath("packs/software-development");
+		expect(resolved.replace(/\\/g, "/")).toContain("obligatorio/packs/software-development");
+		expect(fs.existsSync(resolved)).toBe(true);
+	});
+
+	test('resolvePath("README.md") falls back to estandar/README.md (legacy)', async () => {
+		const resolver = new TemplateResolver(templateRoot);
+		const resolved = await resolver.resolvePath("README.md");
+		expect(resolved.replace(/\\/g, "/")).toContain("estandar/README.md");
+	});
+
+	test('resolvePath("Justfile") falls back to opcional/Justfile (legacy)', async () => {
+		const resolver = new TemplateResolver(templateRoot);
+		const resolved = await resolver.resolvePath("Justfile");
+		expect(resolved.replace(/\\/g, "/")).toContain("opcional/Justfile");
+	});
+
+	test('resolvePath("core/../../../etc/passwd") rejects traversal', async () => {
+		const resolver = new TemplateResolver(templateRoot);
+		await expect(resolver.resolvePath("core/../../../etc/passwd")).rejects.toThrow(
+			"Invalid template path",
+		);
+	});
+
+	test("resolvePath rejects absolute paths", async () => {
+		const resolver = new TemplateResolver(templateRoot);
+		await expect(
+			resolver.resolvePath(path.join(templateRoot, "obligatorio", "core", "opencode.json")),
+		).rejects.toThrow("Invalid template path");
 	});
 });

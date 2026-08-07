@@ -20,6 +20,8 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 | [ADR-011](../specs/adr/adr-011-binary-removal.md) | Binary Removal | Accepted | npm/bunx as sole distribution; binary compilation removed |
 | [ADR-012](../specs/adr/adr-012-references-co-location.md) | References Co-location | Accepted | References co-located with skills, exposed via `reference` section |
 | [ADR-013](../specs/adr/adr-013-plugin-auto-discovery.md) | SDD Plugin Auto-Discovery & Configuration | Accepted | Three-pillar approach: filesystem auto-discovery + JSON config + quality infra |
+| [ADR-014](../specs/adr/adr-014-agent-pack-system.md) | Agent Pack System | Accepted | Pack-based agent classification with 8 selectable packs + 2 mandatory |
+| [ADR-015](../specs/adr/adr-015-installer-ux-v2.md) | Installer UX v2 | Accepted | Metadata-driven installer with pack selection and version-gated updates |
 
 > **Note:** `TemplateResolver` and `AtomicStager` are extracted classes (not full ADRs). They are SRP-based refactorings of `BunFileSystem` that follow the existing ADR-003 (atomic staging) pattern.
 

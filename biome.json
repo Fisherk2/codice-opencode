@@ -11,7 +11,7 @@
       "**",
       "!!**/dist",
       "!!**/node_modules",
-      "!!**/template/obligatorio/skills",
+      "!!**/template/obligatorio/core/skills",
       "!!**/template/opcional/skills",
       "!!**/skills"
     ]

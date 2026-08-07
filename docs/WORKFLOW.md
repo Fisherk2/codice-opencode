@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v1.2.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-07-30 (FEV-13 ✅, FEV-14 ✅, FEV-15 ✅, FEV-16 ✅) | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v2.0.0
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-07 (FEV-23 completado; v2.0.0 release-ready) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -34,6 +34,13 @@
 | FEV-14 | UX Enhancements (v1.2 Phase 4) | Issues #47, #56: progress bar + comando /help | ✅ Completo |
 | FEV-15 | Community Standards (v1.2 Phase 5) | Issue #55: CODE_OF_CONDUCT.md proyecto + template | ✅ Completo |
 | FEV-16 | Pre-release Tech Debt Closure (v1.2 Phase 6) | TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 closure | ✅ Completo |
+| FEV-17 | Template Directory Restructuring (v2.0 Phase 1) | `core/` + `packs/` restructure, FileRuleManifestData + TemplateResolver update | ✅ Completo |
+| FEV-18 | Agent Classification & Migration (v2.0 Phase 2) | 257 new agents → 8 packs (v2.0 format), 95 legacy distributed, 10 REDUNDANT resolved | ✅ Completo (2026-08-04) |
+| FEV-19 | Permission Unification & Subagent Table Removal (v2.0 Phase 3) | TD-V2-2, TD-V2-3, TD-V2-4: unified `task:` + docs update | ✅ Completo (2026-08-05) |
+| FEV-20 | Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4) | TD-V2-1, TD-V2-5: plugin cleanup + auto-discovery recursive scan | ✅ Completo (2026-08-05) |
+| FEV-21 | Installer UX — Pack Selection & Version Detection (v2.0 Phase 5) | Pack wizard, version gating, `.codice-version` metadata format | ✅ Completo (2026-08-06) |
+| FEV-22 | Installer UX Enhancements (v2.0 Phase 6) | agentCount metadata, install summary screen, wiki sync | ✅ Completo (2026-08-06) |
+| FEV-23 | v2.0.0 Testing & Integration | Unit/integration/E2E updates for pack-aware installer | ✅ Completo (2026-08-07) |
 
 ## 2. Desglose por Fase (Completadas)
 
@@ -187,8 +194,8 @@ Spec/ADR templates actualizados a formatos industriales (MADR v4.0 + RFC-based).
 - `src/domain/services/FileMergeEngine.ts` (actualizado) — pre-computación stageDecisions + emisión eventos
 - `src/application/helpers.ts` (actualizado) — `createProgressCallback()` extraído (DRY)
 - `src/application/postInstall.ts` (actualizado) — log events emitidos después de cada operación
-- `template/obligatorio/commands/help.md` (nuevo) — /help command definition
-- `template/obligatorio/.opencode/plugins/src/defaults.ts` (actualizado) — /help en 4 maps
+- `template/obligatorio/core/commands/help.md` (nuevo) — /help command definition
+- `template/obligatorio/core/.opencode/plugins/src/defaults.ts` (actualizado) — /help en 4 maps
 - `tests/integration/use-cases/progress-flow.test.ts` (nuevo) — 9 tests de progress events
 - `tests/integration/use-cases/progress-logs.test.ts` (nuevo) — 5 tests de structured logs
 - `tests/integration/adapters/clack-prompts-progress.test.ts` (nuevo) — 7 tests de adapter
@@ -268,7 +275,107 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 
 ---
 
-## 4. Estrategia de Pruebas por Fase
+## 5. Desglose por Fase evolutiva — v2.0.0 ✅ Completo
+
+> **Specs:** [spec-agent-packs.md](../specs/spec-agent-packs.md), [spec-installer-ux-v2.md](../specs/spec-installer-ux-v2.md)
+> **ADRs:** [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md)
+> **Tech Debt:** [TECH_DEBT.md](./TECH_DEBT.md) — TD-V2-1 a TD-V2-5
+
+### FEV-17 — Template Directory Restructuring ✅ Completo
+**Esfuerzo:** ~7h | **Dependencias:** ninguna | **Spec:** S5-PACKS §2
+- Restructure `template/obligatorio/` → `core/` (infra: .opencode, commands, skills, opencode.json, skills-lock.json) + `packs/` (agentes)
+- Mover agentes existentes a `packs/main/` (6 primarios), `packs/writers/` (3 writers) y `packs/sin-clasificar/` (95 no clasificados)
+- Crear directorios vacíos para los 8 packs seleccionables (con `.gitkeep`)
+- Actualizar `FileRuleManifestData.ts`: 7 entries mandatory → 4 source groupings (`core`, `packs/main`, `packs/writers`, `packs/sin-clasificar`) con `destPath` para mantener destino plano
+- Actualizar `IStagingSystem`/`BunFileSystem`/`FileMergeEngine`: soporte `destPath` (source ≠ destination)
+- Actualizar 16+ tests (unit, integration, plugin, packaging) + 1 E2E script a nuevas rutas
+- Documentación actualizada (README, CONTRIBUTING, WORKFLOW, TECH_DEBT, CHANGELOG)
+**Resultado:** Template con estructura `core/` + `packs/` funcional. Destino plano preservado (agents/, commands/ en raíz). 0 regresiones: 946 tests, 16/16 E2E, `just check` limpio.
+
+### FEV-18 — Agent Classification & Migration ✅ Completo (2026-08-04)
+**Esfuerzo:** ~8h | **Dependencias:** FEV-17 | **Spec:** S5-PACKS §3
+- Audit reconcilió spec (~345 IDEAL) vs realidad: 257 new-only + 95 legacy = 352 unique (10 REDUNDANT name collisions, legacy wins)
+- 257 new agents reformateados a v2.0 (YAML `mode: subagent` + `## COMPOSITION`) vía `scripts/reformat-agent.ts` (idempotente, `--dry-run`)
+- 95 legacy distribuidos en formato v1.x preservado; `packs/sin-clasificar/` eliminado
+- Pack distribution: software-development 146, business 92, hardware-emerging 36, science-research 31, operations-support 18, finance 11, creative 10, government-legal 8
+- `FileRuleManifestData`: 4 → 11 mandatory entries (8 selectable packs, `destPath: "agents"`)
+- Huitzilopochtli catalog: ~96 → ~355 subagents por pack
+- `scientific-literature-researcher` movido de `writers/` a `science-research/` (decisión usuario)
+**Resultado:** 355 agents en 10 packs (2 mandatory + 8 selectable). 0 regresiones: 986 tests, 16/16 E2E, `just check` limpio. Tarball 8.0MB (SC-15 deviation, ADR-014 anticipó 5-8MB).
+
+### FEV-19 — Permission Unification & Subagent Table Removal ✅ Completo (2026-08-05)
+**Esfuerzo:** ~3h | **Dependencias:** FEV-18 | **Spec:** S5-PACKS §4 | **Tech Debt:** TD-V2-2, TD-V2-3, TD-V2-4
+- Unificados permisos `task:` de 4 agentes primarios → `"*": allow` + deny 5 primarios (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli). Moctezuma y tezcatlipoca sin cambios (`task: "*": deny`).
+- Eliminados TODOS los índices "AVAILABLE SUBAGENTS" de los 6 agentes primarios — incluyendo el catálogo canónico de huitzilopochtli (~355 subagentes). Ningún agente primario mantiene índice de subagentes (decisión usuario 2026-08-05).
+- RULES actualizados: referencia al directorio `agents/` ("use ANY subagents in `agents/`").
+- 106 explicit allow-list entries removidos (21 + 73 + 12).
+- CONTRIBUTING.md: "Add a New Agent" 5 → 3 steps (removidos delegation tables + huitzilopochtli catalog), removido "persona table updates".
+- Wiki Agents.md: count 104 → ~355 en 10 packs, file tree `agents/` → `packs/`, permission model unificado, removido "Step 4: Update Delegation Tables".
+**Resultado:** 4 agentes con permisos unificados, 6 agentes sin índices de subagentes, docs actualizados, 991 tests 0 fail, 16/16 E2E.
+
+### FEV-20 — Plugin VALID_SUBAGENTS Removal ✅ Completo (2026-08-05)
+**Esfuerzo:** ~3h | **Dependencias:** FEV-19 | **Spec:** S5-PACKS §5 | **Tech Debt:** TD-V2-1, TD-V2-5
+- Eliminado `VALID_SUBAGENTS` Set (~110 entries) de `validSubagents.ts`; conservado `PRIMARY_AGENTS` (6 primarios) como única lista hardcoded
+- `defaults.ts`: removidas referencias a `VALID_SUBAGENTS` (imports, re-exports, DEFAULTS object — ahora 5 maps)
+- `sdd-pipeline.ts`: fallback `DEFAULTS.VALID_SUBAGENTS` → `new Set(PRIMARY_AGENTS)`; mensaje de error → "agents/ directory"; validación case-insensitive (lowercase en match + discovery)
+- `discoverValidSubagents()` ahora escanea recursivamente subdirectorios (forward-compatible con `packs/<name>/`); salta entries ocultos (`.git`, `.opencode`, dot-files)
+- `directoryScanner.ts` extraído (scanMarkdownFiles flat + scanMarkdownFilesRecursive con maxDepth=10 y warning de basenames duplicados) para mantener `autoDiscovery.ts` ≤ 200 líneas
+- `discoverValidSubagents()` optimizado: siembra el Set desde `PRIMARY_AGENTS` (ya lowercase), evita array intermedio
+- `sdd-pipeline.ts`: mensaje de error ahora incluye ruta absoluta (`${join(projectDir, "agents")}/`)
+- Plugin `tsconfig.json`: `noUncheckedIndexedAccess: true` habilitado (type safety consistente con root)
+- Tests: -2 assertions en `defaults.test.ts`, +6 tests en `autoDiscovery.test.ts` (nested, hidden dirs, dot-files, lowercase, duplicate-basename warning, non-primary exclusion), `toolExecuteBefore.test.ts` reescrito para modelar auto-discovery, tests actualizados para noUncheckedIndexedAccess
+- `just check-plugin`: ahora incluye `tsc` (typecheck del plugin, antes solo Biome)
+- Docs: Wiki `SDD-Pipeline.md` actualizado (count 104 → ~361, error msg con ruta absoluta, recursive note, module table con directoryScanner 99 líneas), plugin README actualizado, `Agents.md` auditado sin cambios
+**Resultado:** Plugin sin catálogo hardcoded, auto-discovery recursivo con maxDepth=10 y warning de duplicados, error messages con ruta absoluta, noUncheckedIndexedAccess en plugin tsconfig, 51 plugin tests + 1747 suite + 16/16 E2E + 3/3 plugin E2E, `just check` + `just check-plugin` limpios.
+
+### FEV-21 — Installer UX: Pack Selection & Version Detection ✅
+**Estado:** ✅ Completo (2026-08-06) | **Esfuerzo:** ~8h | **Dependencias:** FEV-17, FEV-18 | **Spec:** S6-UX-V2 §2, §3, §5 | **Tech Debt:** TD-V2-6 (añadido)
+- Detección de versión al arranque: parseo de `.codice-version` con formato v2.0 `{ version, installedPacks, installedAt, optionalSelections? }`; backward-compatible con legacy `installedVersion`
+- Update bloqueado para instalaciones sin archivo o < 2.0.0 (3 variantes: sin archivo, pre-1.2.0, 1.x) con guidance específica
+- Wizard de pack selection: checkbox multiselect con `software-development` pre-seleccionado; mínimo 1 pack; cancelar aborta antes de cualquier write
+- `RuleCategory` ampliado con `"pack"` — 8 packs seleccionables migrados de `"mandatory"` (FileRuleManifestData)
+- Helpers nuevos: `getPackRules()`, `filterByPacks()`, `packIdFromPath()`, `toPackOptions()`, `DEFAULT_PACKS`
+- Update mode: Option A (solo packs actuales) vs Option B (agregar packs, instalados LOCKED); flag no-interactivo `--update-add-packs`
+- 3 nuevos CLI flags: `--packs <list>`, `--packs-all`, `--update-add-packs <list>` (IDs validados contra el manifest); detección de versión antes del menú de modos
+- 3 nuevos métodos en `IUserPrompt`: `selectPacks()`, `showVersionInfo()`, `selectUpdateOption()` (implementados en `ClackPromptsAdapter`)
+- `CleanInstallUseCase` y `ProjectInstallUseCase`: flujo de pack selection + installation summary
+- Tests: 1747 → 1822 unit+integration (~75 nuevos); E2E 16 → 23 scripts (7 nuevos, 4 update re-seeded v2.0)
+- Tech debt: TD-V2-6 añadido (No pack removal — diferido a v2.2.0)
+- Nota transicional: el merge de Update era inerte mientras `package.json` fuera v1.2.0 (bundled < 2.0.0 → "already up to date"); E2E 04/15/16/23 lo documentaban. **Resuelto en FEV-23** — el bundled ahora es 2.0.0 y el merge de Update es funcional (E2E 23 reescrito como merge real, no-op eliminado). Comportamiento de merge cubierto por integration tests con `BUNDLED_TEST_VERSION=2.1.0`.
+**Resultado:** Wizard de instalación con selección de packs, version gating y metadata persistente `.codice-version` v2.0. 7 commits atómicos en `feat/new-agents`. 1822 tests unit+integration 0 fail, 23/23 E2E, `just check` limpio.
+
+### FEV-22 — Installer UX Enhancements ✅
+**Estado:** ✅ Completo (2026-08-06) | **Esfuerzo:** ~6h | **Dependencias:** FEV-21 | **Spec:** S6-UX-V2 §3.3, §10 Q4 | **Tech Debt:** ninguno nuevo (TD-V2-6 sigue abierto)
+- `FileRule.agentCount?: number` — metadata per-pack en el manifest (146, 92, 36, 31, 18, 11, 10, 8); `toPackOptions()` lee `agentCount ?? 0` (backward compat, spec §10 Q4: counts aproximados son SSOT)
+- Install summary screen (spec §3.3): se muestra entre pack selection y merge en Clean/Project install — packs con counts, dirs obligatorios (core, packs/main, packs/writers), optionals seleccionados, total estimado de agents + files; informativo (sin confirmation, decisión FEV-22 #5)
+- `IUserPrompt.showInstallSummary()` + tipo `InstallSummaryInfo` (método 16); helper puro `installSummary.ts` (`buildInstallSummary` + `formatInstallSummary`, dedupe de pack ids); `ClackPromptsAdapter` vía `clack.note()` con título "📋 Installation Summary"
+- Wiki sync: Home, Getting-Started, Agents, Workspace-Structure (+SDD-Pipeline count) → v2.0 (~360 agents en 10 packs, 352 subagents); repo wiki sincronizado y pusheado (602ba26)
+- Tests: +13 unit, +4 integration, +2 E2E (full suite 1822 → 1872 tests, 0 fail); E2E 23 → 25 scripts (24-install-summary-clean, 25-install-summary-packs)
+- Code simplification: flatMap restructure, hoisted `options.force ?? false`, dropped async wrapper, extracted `ESTIMATED_FILES_PER_MANDATORY_DIR`, removed dead re-export
+- 5-axis code review: APPROVE (correctness, readability, architecture, security, performance) — 3 nits fixed
+- Sin version bump (v2.0.0 coordina con FEV-23); sin deuda técnica nueva
+**Resultado:** Installer UX production-grade para v2.0.0: counts reales por pack, summary pre-merge con impacto visible, wiki alineada. 11 commits atómicos en `feat/new-agents` (5 FEV-22 core + 3 QA + 3 simplification).
+
+### FEV-23 — v2.0.0 Testing & Integration ✅ Completo (2026-08-07)
+**Estado:** ✅ Completo (2026-08-07) | **Esfuerzo:** ~6h | **Dependencias:** FEV-17 a FEV-22 | **Spec:** S5-PACKS §9, S6-UX-V2 §9
+- ✅ Unit tests actualizados para nueva estructura de directorios (`core/`, `packs/`)
+- ✅ Integration tests actualizados para use cases pack-aware: +8 nuevos (Option B cancel path sin invocar merge engine, project-install con `options.packs` bypassing wizard + estandar preservado, clean-install summary passthrough con mandatoryDirs, version-context con v-prefix y clasificación pre-1.2.0)
+- ✅ Nuevos escenarios E2E (5 scripts: 26-30) — suite completa 30/30:
+  - ✅ Clean Install con pack selection (default + custom) — E2E 17/18 (FEV-21), 24/25 (FEV-22)
+  - ✅ Project Install con pack selection — E2E 30 (respetando estandar, p.ej. README.md)
+  - ✅ Update bloqueado para versión <2.0.0 (3 variantes: sin archivo, pre-1.2.0, 1.x) — E2E 21/22/26
+  - ✅ Update Option A (solo packs actuales) — E2E 23 **reescrito como merge real** (no-op transicional eliminado; semilla 2.0.0-rc.1)
+  - ✅ Update Option B (agregar nuevos packs, instalados LOCKED) — E2E 27 (`--update-add-packs creative,business`)
+  - ✅ Persistencia de metadata `.codice-version` con `installedPacks` — E2E 20
+  - ✅ Validación: mínimo 1 pack, `--packs` flag no-interactivo — E2E 19/29
+  - ✅ Destino plano `agents/` sin subdirectorios de packs — E2E 28
+- ✅ Version bump 1.2.0 → 2.0.0 (T3.1): `VERSION` auto-derivado de `package.json` (sin cambio de código); activa el merge real de Update
+- ✅ E2E 04/15/16 comment-only cleanup + E2E 10 fixed: short-circuit "already up to date" ahora comportamiento permanente, no workaround transicional
+**Resultado:** Suite completa para v2.0.0 — **1920 tests unit+integration 0 fail**, **30/30 E2E**, `just check` limpio, coverage overall 95.68% (producción `src/` 99.12% — gap pre-existente de FEV-17→22 en test-helpers/plugins/scripts/Windows-only branches, ver TECH_DEBT TD-V2-7). No-op transicional eliminado — update merge funcional con template bundled v2.0.0. **v2.0.0 PRE-RELEASE READY** (la coordinación del release — merge a main, tag, publicación npm — es un proceso separado).
+
+---
+
+## 6. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
 |------|---------|-------------|-------------------|
@@ -277,7 +384,7 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 | E2E | 6 escenarios binario compilado | bash + mock server | 6/6 pasando |
 | Coverage | Cobertura general | bun test --coverage | > 88% lines, > 89% funcs |
 
-## 5. Métricas de Progreso
+## 7. Métricas de Progreso
 
 - **Tests unit+int:** 844 tests, 0 fail, 1806 expects
 - **Tests E2E:** 20/20 pasando
@@ -296,3 +403,5 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
 - **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
+- **v2.0.0 completo:** FEV-17 ✅, FEV-18 ✅, FEV-19 ✅ (2026-08-05), FEV-20 ✅ (2026-08-05), FEV-21 ✅ (2026-08-06), FEV-22 ✅ (2026-08-06), FEV-23 ✅ (2026-08-07) — **v2.0.0 PRE-RELEASE READY** (1920 tests, 30/30 E2E, coverage 95.68% — coordinación del release separada: PR develop→main, tag v2.0.0, publicación npm)
+- **Esfuerzo estimado v2.0.0:** ~50h (FEV-17: 7h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h ✅, FEV-21: 8h ✅, FEV-22: 6h ✅, FEV-23: 6h ✅ = 41h de implementación + ~9h de overhead: code reviews 5-axis, wiki sync, release coordination)

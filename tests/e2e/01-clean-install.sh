@@ -74,6 +74,26 @@ assert_file_exists "$TEMP_DIR/skills/architecture-diagrams/references/architectu
 assert_dir_missing "$TEMP_DIR/references/"
 assert_file_exists "$TEMP_DIR/skills-lock.json"
 
+log_info "Verifying FEV-18 pack agents (v2.0 distribution)..."
+# Primary agents (packs/main, mandatory)
+for agent in huitzilopochtli quetzalcoatl moctezuma tlaloc mictlantecuhtli tezcatlipoca; do
+    assert_file_exists "$TEMP_DIR/agents/$agent.md"
+done
+# Writer agents (packs/writers, mandatory)
+for agent in docs-writer obsidian-vault-writer technical-writer; do
+    assert_file_exists "$TEMP_DIR/agents/$agent.md"
+done
+# Software-development pack (default ON) — sample 5
+for agent in backend-developer frontend-developer docker-expert ai-engineer test-engineer; do
+    assert_file_exists "$TEMP_DIR/agents/$agent.md"
+done
+# Cross-pack samples: business, science-research, hardware-emerging, finance
+assert_file_exists "$TEMP_DIR/agents/marketing-seo-specialist.md"
+assert_file_exists "$TEMP_DIR/agents/scientific-literature-researcher.md"
+assert_file_exists "$TEMP_DIR/agents/iot-fleet-engineer.md"
+assert_file_exists "$TEMP_DIR/agents/financial-analyst.md"
+log_pass "FEV-18 pack agents present (main, writers, software-development, business, science-research, hardware-emerging, finance)"
+
 log_info "Verifying estandar files..."
 
 assert_file_exists "$TEMP_DIR/README.md"

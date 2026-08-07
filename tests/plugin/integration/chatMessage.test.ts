@@ -16,7 +16,7 @@ import {
 	AGENT_MENTION_PATTERNS,
 	COMMAND_AGENT_MAP,
 	INTENT_PATTERNS,
-} from "../../../template/obligatorio/.opencode/plugins/src/defaults";
+} from "../../../template/obligatorio/core/.opencode/plugins/src/defaults";
 
 // ---------------------------------------------------------------------------
 // Replicated logic from the chat.message hook

@@ -1,33 +1,34 @@
-# UI/UX Design System – [Producto] v[MVP]
-**Fecha:** [YYYY-MM-DD] | **Autor:** [Nombre] | **Herramienta:** [Figma/Sketch/etc.]
+# UI/UX Design System – [Product] v[MVP]
+**Date:** [YYYY-MM-DD] | **Author:** [Name] | **Tool:** [Figma/Sketch/etc.]
 
-## 1. Tokens de Diseño
-- Colores (primarios, secundarios, estados, contraste WCAG):
-- Tipografía (familia, escalas, pesos):
-- Espaciado y Grid (base, breakpoints, columnas):
-- Sombras/Bordes/Radios:
+## 1. Design Tokens
+- Colors (primary, secondary, states, WCAG contrast):
+- Typography (family, scales, weights):
+- Spacing & Grid (base, breakpoints, columns):
+- Shadows/Borders/Radii:
 
-## 2. Biblioteca de Componentes
-| Componente | Propósito | Variantes/Estados | Props/Parámetros | Reglas de Uso |
-|------------|-----------|-------------------|------------------|---------------|
+## 2. Component Library
+| Component | Purpose | Variants/States | Props/Parameters | Usage Rules |
+|-----------|---------|-----------------|------------------|-------------|
 
 ## 3. Layouts & Wireframes
-- Pantallas clave (enlace a prototipo):
-- Sistema de navegación global:
-- Zonas de contenido vs. controles:
+- Key screens (prototype link):
+- Global navigation system:
+- Content vs. control zones:
 
-## 4. Microinteracciones & Feedback
-- Loading, empty states, errores, confirmaciones:
-- Transiciones y duración:
+## 4. Microinteractions & Feedback
+- Loading, empty states, errors, confirmations:
+- Transitions & duration:
 
-## 5. Accesibilidad & Estándares
+## 5. Accessibility & Standards
 - WCAG 2.1 AA:
-- Navegación por teclado/lectores de pantalla:
-- Internacionalización (i18n):
+- Keyboard/screen reader navigation:
+- Internationalization (i18n):
 
-## 6. Gestión de Assets & Nomenclatura
-- Convención de nombres: `[categoria]-[componente]-[estado]-[tamaño]`
-- Formatos y optimización:
+## 6. Asset Management & Naming
+- Naming convention: `[category]-[component]-[state]-[size]`
+- Formats & optimization:
 
-## 7. Trazabilidad
-| Pantalla/Componente | PRD REQ-ID | AppFlow ID | Estado |
+## 7. Traceability
+| Screen/Component | PRD REQ-ID | AppFlow ID | Status |
+|------------------|------------|------------|--------|

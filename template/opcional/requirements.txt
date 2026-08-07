@@ -1,1 +1,1 @@
-# Dependencias (Python)
+# Python dependencies

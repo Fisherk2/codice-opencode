@@ -4,22 +4,27 @@
  * (overwrite destination regardless of existing state).
  *
  * Extends InstallUseCaseBase via the Template Method pattern.
- * The three abstract hooks specialize the shared flow:
- * 1. buildRules: All manifest rules → mandatory (selected optionals included).
- * 2. selectOptionals: force=true auto-selects all; else shows interactive menu.
- * 3. getSuccessMessage: "Clean installation complete."
+ * The four abstract hooks specialize the shared flow:
+ * 1. selectPacks: force=true auto-selects all packs; else shows interactive menu.
+ * 2. buildRules: All manifest rules → mandatory (selected packs + optionals included).
+ * 3. selectOptionals: force=true auto-selects all; else shows interactive menu.
+ * 4. getSuccessMessage: "Clean installation complete."
  *
  * Flow (inherited from base):
- * checkWritable → confirmOverwrite → selectOptionals → buildRules →
- * mergeEngine.execute → runPostInstallSteps
+ * checkWritable → confirmOverwrite → selectPacks → selectOptionals →
+ * buildRules → mergeEngine.execute → runPostInstallSteps
  */
 
 import type { FileRule } from "../../domain/entities/FileRule";
 import {
 	FILE_RULE_MANIFEST,
+	filterByPacks,
+	getAllPackIds,
 	getRulesByCategory,
 	isRuleSelected,
 } from "../../domain/entities/FileRuleManifest";
+import { promptForOptionals } from "../helpers";
+import { promptForPackSelection } from "../packOptions";
 import { InstallUseCaseBase } from "./InstallUseCaseBase";
 
 export type { BaseInstallOptions } from "./InstallUseCaseBase";
@@ -30,16 +35,28 @@ export type { BaseInstallOptions } from "./InstallUseCaseBase";
  */
 export class CleanInstallUseCase extends InstallUseCaseBase {
 	/**
-	 * Transform the manifest: include all non-optional rules plus selected
-	 * optionals, then mark every rule as mandatory (overwrite).
-	 *
-	 * Unselected optional files are excluded from the rule set entirely.
+	 * Pack selection: force=true auto-selects all packs (no interaction);
+	 * otherwise shows the interactive menu with the default pack pre-selected.
 	 */
-	protected buildRules(selectedOptionals: readonly string[]): readonly FileRule[] {
-		return FILE_RULE_MANIFEST.filter((r) => isRuleSelected(r, selectedOptionals)).map((r) => ({
-			...r,
-			category: "mandatory" as const,
-		}));
+	protected async selectPacks(force: boolean): Promise<readonly string[]> {
+		if (force) {
+			return getAllPackIds();
+		}
+		return await promptForPackSelection(this.userPrompt);
+	}
+
+	/**
+	 * Transform the manifest: include selected packs + selected optionals,
+	 * then mark every rule as mandatory (overwrite). Unselected packs are
+	 * excluded via filterByPacks(); unselected optionals via isRuleSelected().
+	 */
+	protected buildRules(
+		selectedPacks: readonly string[],
+		selectedOptionals: readonly string[],
+	): readonly FileRule[] {
+		return filterByPacks(FILE_RULE_MANIFEST, selectedPacks)
+			.filter((r) => isRuleSelected(r, selectedOptionals))
+			.map((r) => ({ ...r, category: "mandatory" }));
 	}
 
 	/**
@@ -51,7 +68,7 @@ export class CleanInstallUseCase extends InstallUseCaseBase {
 		if (force) {
 			return getRulesByCategory("optional").map((r) => r.path);
 		}
-		return await this.userPrompt.selectOptional(getRulesByCategory("optional"));
+		return await promptForOptionals(this.userPrompt);
 	}
 
 	protected getSuccessMessage(): string {
