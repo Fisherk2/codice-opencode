@@ -11,6 +11,12 @@ function pack(path: string, description: string, agentCount: number): FileRule {
 /**
  * The complete manifest of classification rules.
  * Ordered: mandatory → standard → optional for readability.
+ *
+ * Note: FileRule.noTemplateCopy (ADR-010) is intentionally NOT used by the
+ * current manifest — it is reserved for future virtual entries (e.g. .devin/
+ * symlinks) whose content is generated post-installation. The merge engine
+ * and stage planner already handle the flag; a manifest entry will activate
+ * it when such an entry is added.
  */
 export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// =============================================

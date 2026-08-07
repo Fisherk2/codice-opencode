@@ -23,7 +23,11 @@ export interface IStagingSystem {
 	 * @param destPath - Optional destination path override; defaults to relativePath.
 	 * @param excludeSubDirs - Optional set of subdirectory names to exclude.
 	 */
-	stageFile(relativePath: string, destPath?: string, excludeSubDirs?: Set<string>): Promise<void>;
+	stageFile(
+		relativePath: string,
+		destPath?: string,
+		excludeSubDirs?: ReadonlySet<string>,
+	): Promise<void>;
 
 	/**
 	 * Atomic rename: promote all staged files to the destination.

@@ -151,7 +151,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 		current: number,
 		total: number,
 		onProgress: ProgressCallback | undefined,
-		excludeSubDirs?: Set<string>,
+		excludeSubDirs?: ReadonlySet<string>,
 	): Promise<Result<void, MergeError>> {
 		this.safeEmit(onProgress, {
 			type: "stage_start",

@@ -11,6 +11,5 @@
  * The source-mode path is now the only resolution method.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 import { version as pkgVersion } from "../../package.json";
 export const VERSION: string = pkgVersion;

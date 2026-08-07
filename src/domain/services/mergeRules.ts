@@ -39,7 +39,7 @@ export function skipReason(
 export function computeExclusions(
 	rule: FileRule,
 	optionalPaths: string[],
-): Set<string> | undefined {
+): ReadonlySet<string> | undefined {
 	if (!rule.isDirectory || rule.category !== "standard") {
 		return undefined;
 	}

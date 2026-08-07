@@ -20,6 +20,7 @@ import { BunSymlinkCreator } from "../infrastructure/adapters/BunSymlinkCreator"
 import { ClackPromptsAdapter } from "../infrastructure/adapters/ClackPromptsAdapter";
 import { GitHubRestClient } from "../infrastructure/adapters/GitHubRestClient";
 import { TemplateResolver } from "../infrastructure/adapters/TemplateResolver";
+import { VerboseLogger } from "../infrastructure/adapters/VerboseLogger";
 import { OPENCODE_SYMLINKS } from "../infrastructure/config/symlinks";
 import { VERSION } from "./version";
 
@@ -55,21 +56,22 @@ export interface Dependencies {
  * @returns Wired Dependencies container.
  */
 export function createDependencies(destinationPath?: string, verbose?: boolean): Dependencies {
-	const fileSystem = new BunFileSystem(undefined, destinationPath);
-	const gitHubClient = new GitHubRestClient();
+	const logger = new VerboseLogger(verbose ?? false);
+	const fileSystem = new BunFileSystem(undefined, destinationPath, logger);
+	const gitHubClient = new GitHubRestClient(undefined, undefined, logger);
 	const userPrompt = new ClackPromptsAdapter();
 	const mergeEngine = new FileMergeEngine(fileSystem);
 	const versionComparator = new VersionComparator();
 	// Clean install: .opencode/ symlinks always created
 	const destRoot = destinationPath ?? process.cwd();
-	const symlinkCreator = new BunSymlinkCreator(destRoot, verbose);
+	const symlinkCreator = new BunSymlinkCreator(destRoot, logger);
 
 	// Gitignore is generated post-installation because npm excludes .gitignore
 	// from packages (Issue #11). Template path resolves to template/estandar/
 	// where the renamed 'gitignore' file lives (no dot prefix).
 	const templateRoot = TemplateResolver.detectTemplateRoot();
 	const templateEstandarDir = path.join(templateRoot, "estandar");
-	const gitignoreCreator = new BunGitignoreCreator(destRoot, templateEstandarDir, verbose);
+	const gitignoreCreator = new BunGitignoreCreator(destRoot, templateEstandarDir, logger);
 
 	const cleanInstall = new CleanInstallUseCase(
 		fileSystem,

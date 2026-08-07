@@ -6,6 +6,7 @@ import { failure, success } from "../../domain/types/Result";
 import { type SymlinkError, symlinkError } from "../../domain/types/SymlinkError";
 import { isErrnoException } from "./errorTypeGuards";
 import { isPathWithin } from "./pathResolver";
+import { VerboseLogger } from "./VerboseLogger";
 
 const fsPromises = fs.promises;
 
@@ -21,17 +22,16 @@ const fsPromises = fs.promises;
  */
 export class BunSymlinkCreator implements ISymlinkCreator {
 	private readonly workspaceRoot: string;
-
-	private readonly verbose: boolean;
+	private readonly logger: VerboseLogger;
 
 	/**
 	 * @param workspaceRoot - Absolute path to the workspace root directory.
 	 *                        Symlinks are created relative to this path.
-	 * @param verbose - Enable verbose logging to stderr.
+	 * @param verbose - Verbose logger or legacy boolean flag (backward compat).
 	 */
-	constructor(workspaceRoot: string, verbose?: boolean) {
+	constructor(workspaceRoot: string, verbose?: VerboseLogger | boolean) {
 		this.workspaceRoot = path.resolve(workspaceRoot);
-		this.verbose = verbose ?? false;
+		this.logger = verbose instanceof VerboseLogger ? verbose : new VerboseLogger(verbose ?? false);
 
 		// Verify the workspace root exists — fail early with a clear message
 		if (!fs.existsSync(this.workspaceRoot)) {
@@ -179,10 +179,7 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 			// Use relative target path for the symlink (portable across machines)
 			await fsPromises.symlink(target, resolvedLinkPath, symlinkType);
 
-			if (this.verbose) {
-				// biome-ignore lint/suspicious/noConsole: verbose diagnostic output
-				console.warn(`[info] Created symlink: ${resolvedLinkPath} → ${target}`);
-			}
+			this.logger.log("symlink", `created ${resolvedLinkPath} → ${target}`);
 
 			return success(undefined);
 		} catch (error) {

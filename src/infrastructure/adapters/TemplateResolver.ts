@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { TEMPLATE_DIR_NAME } from "../config/constants";
 import { isPathWithin } from "./pathResolver";
+import { VerboseLogger } from "./VerboseLogger";
 
 /**
  * Template category subdirectories, searched in priority order.
@@ -25,13 +26,16 @@ const TEMPLATE_CATEGORIES = ["obligatorio", "estandar", "opcional"];
 export class TemplateResolver {
 	private readonly templateRoot: string;
 	private readonly templateCache = new Map<string, string>();
+	private readonly logger: VerboseLogger;
 
 	/**
 	 * @param templateRoot - Absolute path to the template directory root.
 	 *                       Auto-detected when not provided (see detectTemplateRoot).
+	 * @param logger - Optional verbose logger; disabled when omitted.
 	 */
-	constructor(templateRoot?: string) {
+	constructor(templateRoot?: string, logger?: VerboseLogger) {
 		this.templateRoot = templateRoot ?? TemplateResolver.detectTemplateRoot();
+		this.logger = logger ?? new VerboseLogger(false);
 	}
 
 	/**
@@ -88,6 +92,7 @@ export class TemplateResolver {
 	async resolvePath(relativePath: string): Promise<string> {
 		const cached = this.templateCache.get(relativePath);
 		if (cached !== undefined) {
+			this.logger.log("template_resolve", `${relativePath} (cached: ${cached})`);
 			return cached;
 		}
 
@@ -113,6 +118,7 @@ export class TemplateResolver {
 			// Check existence — Bun.file().exists() returns false for
 			// directories, so we use fs.existsSync() for directory entries.
 			if (fs.existsSync(resolved)) {
+				this.logger.log("template_resolve", `${relativePath} → ${resolved}`);
 				this.templateCache.set(relativePath, resolved);
 				return resolved;
 			}

@@ -11,6 +11,7 @@ import type { Result } from "../../domain/types/Result";
 import { failure, success } from "../../domain/types/Result";
 import { isErrnoException } from "./errorTypeGuards";
 import { isPathWithin } from "./pathResolver";
+import { VerboseLogger } from "./VerboseLogger";
 
 const fsPromises = fs.promises;
 
@@ -31,7 +32,7 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 
 	private readonly templatePath: string;
 
-	private readonly verbose: boolean;
+	private readonly logger: VerboseLogger;
 
 	/**
 	 * @param workspaceRoot - Absolute path to the workspace root directory.
@@ -39,12 +40,12 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 	 *                        this root for path containment (defense-in-depth).
 	 * @param templatePath - Absolute path to the template estandar directory
 	 *                       containing the `gitignore` file.
-	 * @param verbose - Enable verbose logging to stderr.
+	 * @param verbose - Verbose logger or legacy boolean flag (backward compat).
 	 */
-	constructor(workspaceRoot: string, templatePath: string, verbose?: boolean) {
+	constructor(workspaceRoot: string, templatePath: string, verbose?: VerboseLogger | boolean) {
 		this.workspaceRoot = path.resolve(workspaceRoot);
 		this.templatePath = templatePath;
-		this.verbose = verbose ?? false;
+		this.logger = verbose instanceof VerboseLogger ? verbose : new VerboseLogger(verbose ?? false);
 	}
 
 	/**
@@ -132,10 +133,7 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 			);
 		}
 
-		if (this.verbose) {
-			// biome-ignore lint/suspicious/noConsole: verbose diagnostic output
-			console.warn(`[info] Created .gitignore (${content.length} bytes) from template.`);
-		}
+		this.logger.log("gitignore", `Created .gitignore (${content.length} bytes) from template.`);
 
 		return success(undefined);
 	}

@@ -3,6 +3,7 @@ import semver from "semver";
 import { version as pkgVersion } from "../../../package.json";
 import type { IGitHubClient } from "../../application/ports/IGitHubClient";
 import { GITHUB_API_TIMEOUT_MS, getGitHubApiUrl } from "../config/constants";
+import { VerboseLogger } from "./VerboseLogger";
 
 /** Maximum allowed response body size (1 MB) to prevent OOM from malicious responses */
 const MAX_RESPONSE_BYTES = 1024 * 1024;
@@ -18,14 +19,17 @@ const MAX_RESPONSE_BYTES = 1024 * 1024;
 export class GitHubRestClient implements IGitHubClient {
 	private readonly apiUrl: string;
 	private readonly timeoutMs: number;
+	private readonly logger: VerboseLogger;
 
 	/**
 	 * @param apiUrl - GitHub API URL for latest release (default: from constants)
 	 * @param timeoutMs - Request timeout in milliseconds (default: from constants)
+	 * @param logger - Optional verbose logger; disabled when omitted.
 	 */
-	constructor(apiUrl?: string, timeoutMs?: number) {
+	constructor(apiUrl?: string, timeoutMs?: number, logger?: VerboseLogger) {
 		this.apiUrl = apiUrl ?? getGitHubApiUrl();
 		this.timeoutMs = timeoutMs ?? GITHUB_API_TIMEOUT_MS;
+		this.logger = logger ?? new VerboseLogger(false);
 	}
 
 	/**
@@ -60,6 +64,7 @@ export class GitHubRestClient implements IGitHubClient {
 	private async fetchLatestRelease(): Promise<Record<string, unknown> | null> {
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+		this.logger.log("github", `GET ${this.apiUrl} (timeout ${this.timeoutMs}ms)`);
 
 		try {
 			const response = await fetch(this.apiUrl, {
@@ -69,6 +74,7 @@ export class GitHubRestClient implements IGitHubClient {
 					"User-Agent": `codice-installer/${pkgVersion}`,
 				},
 			});
+			this.logger.log("github_response", `status ${response.status}`);
 
 			// Any HTTP error (404, 403, 5xx, etc.) → null.
 			// All error codes are treated identically: the installer falls back
@@ -100,9 +106,10 @@ export class GitHubRestClient implements IGitHubClient {
 				// Malformed JSON response
 				return null;
 			}
-		} catch {
+		} catch (error) {
 			// Covers: AbortError (timeout), DNS failure, connection refused,
 			// and any other unexpected error.
+			this.logger.log("github_error", error instanceof Error ? error.message : String(error));
 			return null;
 		} finally {
 			clearTimeout(timeoutId);
