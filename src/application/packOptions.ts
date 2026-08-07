@@ -26,7 +26,8 @@ export function humanizePackId(id: string): string {
 
 /**
  * Map manifest pack rules to TUI display options.
- * agentCount is deferred to FEV-22 (per-pack manifest metadata).
+ * agentCount comes from the manifest (FEV-22); rules without it default to 0
+ * so legacy manifests keep rendering identically.
  *
  * @param rules - Pack rules from the manifest (e.g., getPackRules()).
  * @returns PackOption list suitable for IUserPrompt.selectPacks().
@@ -38,7 +39,7 @@ export function toPackOptions(rules: readonly FileRule[]): readonly PackOption[]
 			id,
 			name: humanizePackId(id),
 			description: rule.description,
-			agentCount: 0,
+			agentCount: rule.agentCount ?? 0,
 		};
 	});
 }

@@ -49,6 +49,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: true,
 		description:
 			"Software development pack (default ON, 146 agents: backend, frontend, mobile, DevOps, databases, AI/ML, security, testing)",
+		agentCount: 146,
 	},
 	{
 		path: "packs/business",
@@ -57,6 +58,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: true,
 		description:
 			"Business pack (92 agents: marketing, sales, product, project management, operations)",
+		agentCount: 92,
 	},
 	{
 		path: "packs/hardware-emerging",
@@ -65,6 +67,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: true,
 		description:
 			"Hardware-emerging pack (36 agents: IoT, embedded, blockchain, XR/spatial, game development)",
+		agentCount: 36,
 	},
 	{
 		path: "packs/science-research",
@@ -73,6 +76,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		isDirectory: true,
 		description:
 			"Science-research pack (31 agents: academic, GIS, healthcare, research, scientific-literature-researcher)",
+		agentCount: 31,
 	},
 	{
 		path: "packs/operations-support",
@@ -80,6 +84,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		category: "pack",
 		isDirectory: true,
 		description: "Operations-support pack (18 agents: customer support, IT ops, HR, translation)",
+		agentCount: 18,
 	},
 	{
 		path: "packs/finance",
@@ -87,6 +92,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		category: "pack",
 		isDirectory: true,
 		description: "Finance pack (11 agents: financial analysis, fintech, payments, accounting)",
+		agentCount: 11,
 	},
 	{
 		path: "packs/creative",
@@ -94,6 +100,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		category: "pack",
 		isDirectory: true,
 		description: "Creative pack (10 agents: design, UI/UX, brand, motion)",
+		agentCount: 10,
 	},
 	{
 		path: "packs/government-legal",
@@ -101,6 +108,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		category: "pack",
 		isDirectory: true,
 		description: "Government-legal pack (8 agents: legal, compliance, privacy, regulatory)",
+		agentCount: 8,
 	},
 
 	// =============================================

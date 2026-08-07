@@ -40,4 +40,11 @@ export interface FileRule {
 	 * agents/).
 	 */
 	readonly destPath?: string;
+	/**
+	 * Approximate per-pack agent count. Only meaningful for `pack` category
+	 * rules; used by the installer wizard to show `~N agents` per pack.
+	 * Backward compatible: rules without it default to 0. Approximate counts
+	 * are sufficient for v2.0.0 (specs/spec-installer-ux-v2.md §10 Q4).
+	 */
+	readonly agentCount?: number;
 }

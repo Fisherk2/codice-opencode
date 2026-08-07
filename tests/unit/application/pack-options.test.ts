@@ -92,27 +92,31 @@ describe("toPackOptions", () => {
 		expect(result[0]?.id).toBe(packIdFromPath(rule.path));
 	});
 
-	test("always sets agentCount to 0", () => {
-		const rules: FileRule[] = [
-			{
-				path: "packs/software-development",
-				category: "pack",
-				isDirectory: true,
-				description: "Software development agents",
-			},
-			{
-				path: "packs/creative",
-				category: "pack",
-				isDirectory: true,
-				description: "Creative agents",
-			},
-		];
+	test("reads agentCount from rule when present", () => {
+		const rule: FileRule = {
+			path: "packs/software-development",
+			category: "pack",
+			isDirectory: true,
+			description: "Software development agents",
+			agentCount: 146,
+		};
 
-		const result = toPackOptions(rules);
+		const result = toPackOptions([rule]);
 
-		for (const option of result) {
-			expect(option.agentCount).toBe(0);
-		}
+		expect(result[0]?.agentCount).toBe(146);
+	});
+
+	test("defaults agentCount to 0 when absent (backward compat)", () => {
+		const rule: FileRule = {
+			path: "packs/creative",
+			category: "pack",
+			isDirectory: true,
+			description: "Creative agents",
+		};
+
+		const result = toPackOptions([rule]);
+
+		expect(result[0]?.agentCount).toBe(0);
 	});
 
 	test("preserves description from the rule", () => {
