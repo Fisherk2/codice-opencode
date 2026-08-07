@@ -7,7 +7,15 @@ import type { FileRule } from "../domain/entities/FileRule";
 import { packIdFromPath } from "../domain/entities/FileRuleManifest";
 import type { InstallSummaryInfo } from "./ports/IUserPrompt";
 
-/** Rough estimate of files contributed by each mandatory directory. */
+/**
+ * Rough estimate of files contributed by each mandatory directory.
+ *
+ * Derivation: mandatory directories (core/, packs/) each contain a handful of
+ * top-level entries — opencode.json, commands/, skills/, .opencode/, agents/
+ * — so 5 approximates the non-agent file count. The summary is labeled "~"
+ * and informational only (spec §3.3); exact counts would require walking the
+ * template, which the pre-install summary intentionally avoids.
+ */
 const ESTIMATED_FILES_PER_MANDATORY_DIR = 5;
 
 /**

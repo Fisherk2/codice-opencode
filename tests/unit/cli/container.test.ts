@@ -12,7 +12,10 @@
  * the dedicated integration and E2E suites.
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock as mockFn } from "bun:test";
+import * as fs from "node:fs/promises";
+import * as os from "node:os";
+import * as path from "node:path";
 import { CleanInstallUseCase } from "../../../src/application/use-cases/CleanInstallUseCase";
 import { ProjectInstallUseCase } from "../../../src/application/use-cases/ProjectInstallUseCase";
 import { UpdateWorkspaceUseCase } from "../../../src/application/use-cases/UpdateWorkspaceUseCase";
@@ -32,6 +35,20 @@ import { ClackPromptsAdapter } from "../../../src/infrastructure/adapters/ClackP
  */
 function createDefault(): Dependencies {
 	return createDependencies();
+}
+
+/** Run an async fn with console.warn replaced by a spy; returns the spy. */
+async function withWarnSpy(fn: () => Promise<void>): Promise<ReturnType<typeof mockFn>> {
+	const warnSpy = mockFn((..._args: unknown[]) => {});
+	// biome-ignore lint/suspicious/noConsole: test code — mocking console.warn to verify verbose wiring
+	const originalWarn = console.warn;
+	console.warn = warnSpy as unknown as typeof console.warn;
+	try {
+		await fn();
+	} finally {
+		console.warn = originalWarn;
+	}
+	return warnSpy;
 }
 
 // ---------------------------------------------------------------------------
@@ -148,6 +165,41 @@ describe("createDependencies (DI container)", () => {
 			expect(deps1.userPrompt).not.toBe(deps2.userPrompt);
 			expect(deps1.projectInstall).not.toBe(deps2.projectInstall);
 			expect(deps1.updateWorkspace).not.toBe(deps2.updateWorkspace);
+		});
+	});
+
+	// -----------------------------------------------------------------------
+	// VerboseLogger wiring — guards against a regression where the logger
+	// is constructed but never injected into the adapter graph.
+	// -----------------------------------------------------------------------
+
+	describe("VerboseLogger wiring", () => {
+		it("emits timestamped log lines through adapters when verbose=true", async () => {
+			const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-container-"));
+			try {
+				const deps = createDependencies(tmpDir, true);
+				const warnSpy = await withWarnSpy(() => deps.fileSystem.cleanStaging());
+
+				expect(warnSpy).toHaveBeenCalled();
+				const [firstLine] = warnSpy.mock.calls[0]!;
+				expect(String(firstLine)).toMatch(
+					/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] clean:/,
+				);
+			} finally {
+				await fs.rm(tmpDir, { recursive: true, force: true });
+			}
+		});
+
+		it("stays silent through adapters when verbose=false", async () => {
+			const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-container-"));
+			try {
+				const deps = createDependencies(tmpDir, false);
+				const warnSpy = await withWarnSpy(() => deps.fileSystem.cleanStaging());
+
+				expect(warnSpy).not.toHaveBeenCalled();
+			} finally {
+				await fs.rm(tmpDir, { recursive: true, force: true });
+			}
 		});
 	});
 });

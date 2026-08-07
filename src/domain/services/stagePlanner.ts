@@ -26,11 +26,15 @@ export async function computeStagePlan(
 
 		if (isUpdateMode && rule.isDirectory && rule.category === "standard") {
 			// Tree-level diff: stage only files new in template but missing in dest.
-			// NOTE: Uses rule.path for BOTH source and dest walking. This is correct
-			// because standard rules currently never set destPath (only mandatory rules
-			// use it for core/→root and packs/*→agents/ mappings). If a future change
-			// adds destPath to a standard rule, this call must be updated to walk the
-			// destination directory at rule.destPath instead of rule.path.
+			// Standard rules never set destPath — only mandatory rules use it for
+			// core/→root and packs/*→agents/ mappings. Assert that invariant so a
+			// future change adding destPath to a standard rule fails fast instead
+			// of silently diffing the wrong destination directory.
+			if (rule.destPath !== undefined) {
+				throw new Error(
+					`Standard rule "${rule.path}" must not set destPath (update diff walks rule.path)`,
+				);
+			}
 			const newFiles = await diffTrees(fileSystem, rule.path, rule.path);
 			const hasNewFiles = newFiles.length > 0;
 			if (hasNewFiles) {

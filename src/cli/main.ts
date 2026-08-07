@@ -80,15 +80,31 @@ function handleTerminalFlags(args: readonly string[]): void {
 	}
 }
 
-/** SIGINT handler that exits immediately; returns a teardown removing it. */
-function registerSigintHandler(): () => void {
-	// Double SIGINT: already handling — exit immediately on the second signal
+/**
+ * SIGINT handler: best-effort staging cleanup, then exit.
+ * Returns a teardown removing the handler.
+ *
+ * The cleanup closes the SC-8 gap where an interrupt during commitStaging
+ * left residual `.codice-staging/` artifacts. `.codice-backup` files are
+ * deliberately NOT touched — they are the only copy of pre-update content
+ * on disk, and the next successful commit removes them.
+ */
+function registerSigintHandler(cleanup?: () => Promise<void>): () => void {
+	// Second SIGINT is a no-op: the first signal already began cleanup and
+	// will exit when it finishes (fs.rm with force cannot hang).
 	let interrupted = false;
-	const handleSigint = (): void => {
+	const handleSigint = async (): Promise<void> => {
 		if (interrupted) return;
 		interrupted = true;
 		// biome-ignore lint/suspicious/noConsole: intentional CLI output
 		console.error("\nInterrupted by user.");
+		if (cleanup) {
+			try {
+				await cleanup();
+			} catch {
+				// Never throw from the signal handler; exit regardless
+			}
+		}
 		process.exit(EXIT_INTERRUPT);
 	};
 	process.on("SIGINT", handleSigint);
@@ -159,8 +175,9 @@ async function main(): Promise<void> {
 	// Wire dependencies (needed early for SIGINT cleanup)
 	const deps = createDependencies(destinationPath, options.verbose);
 
-	// SIGINT handler — immediately exit to avoid races with async cleanup.
-	const unregisterSigint = registerSigintHandler();
+	// SIGINT handler — best-effort staging cleanup before exit. An immediate
+	// exit would leave residual .codice-staging/ after an interrupt mid-commit.
+	const unregisterSigint = registerSigintHandler(() => deps.fileSystem.cleanStaging());
 
 	try {
 		// Detect local installation state and surface it in the TUI header

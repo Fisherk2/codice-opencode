@@ -18,6 +18,13 @@ export class VerboseLogger {
 
 	/**
 	 * Emit a timestamped, structured line to stderr when verbose is enabled.
+	 *
+	 * Format: `[ISO-8601] operation: detail`. Every call site in the adapters
+	 * passes a detail string, so the `op:` prefix is always present in practice;
+	 * the bare `[ts] operation` branch exists only as a safety fallback. The
+	 * operation names ("stage", "commit", "github", ...) are stable identifiers,
+	 * making the output parseable without being JSON.
+	 *
 	 * @param operation - Operation/decision name (e.g. "stage", "commit", "github").
 	 * @param detail - Optional human-readable detail appended after a colon.
 	 */

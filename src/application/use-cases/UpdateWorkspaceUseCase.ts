@@ -6,7 +6,6 @@ import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
-import { stripVPrefix } from "../../domain/types/version";
 import {
 	checkWritable,
 	confirmOverwrite,
@@ -17,6 +16,11 @@ import {
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { isPreV2Version, parseVersionData, resolveUpdatePacks } from "./updateFlow";
+import {
+	notifyIfUpToDate,
+	reportRemoteStatus,
+	type UpdateStatusDeps,
+} from "./updateStatusCheck";
 
 /**
  * Options for the update workspace execution.
@@ -89,11 +93,11 @@ export class UpdateWorkspaceUseCase {
 		}
 
 		// Informational GitHub check — never blocks the update
-		await this.reportRemoteStatus(localVersion);
+		await reportRemoteStatus(this.statusDeps, localVersion);
 
 		// Compare installed version against bundled template version. Returns
 		// true when no update is needed (installed >= bundled).
-		if (await this.notifyIfUpToDate(localVersion)) {
+		if (await notifyIfUpToDate(this.statusDeps, localVersion)) {
 			return success(undefined);
 		}
 
@@ -163,37 +167,14 @@ export class UpdateWorkspaceUseCase {
 		return localVersion;
 	}
 
-	/** Informational GitHub check — never blocks the update. */
-	private async reportRemoteStatus(localVersion: WorkspaceVersion): Promise<void> {
-		const remoteTag = await this.gitHubClient.getLatestReleaseTag();
-		if (!remoteTag) {
-			await this.userPrompt.showWarning(
-				"Could not check for updates via GitHub. Falling back to the bundled template version.",
-			);
-			return;
-		}
-		const remoteVersion = stripVPrefix(remoteTag);
-		const comparison = this.versionComparator.compare(localVersion.version, remoteVersion);
-		if (comparison.ok && comparison.value === "ahead") {
-			await this.userPrompt.showInfo(
-				`A newer version (v${remoteVersion}) is available on GitHub. The bundled template (v${this.bundledVersion}) will be used for this update.`,
-			);
-		}
-	}
-
-	/** True when installed >= bundled; a failed comparison falls through to the "0.0.0" fallback. */
-	private async notifyIfUpToDate(localVersion: WorkspaceVersion): Promise<boolean> {
-		const bundledComparison = this.versionComparator.compare(
-			localVersion.version,
-			this.bundledVersion,
-		);
-		const isUpToDate = bundledComparison.ok && bundledComparison.value !== "ahead";
-		if (isUpToDate) {
-			await this.userPrompt.showInfo(
-				`Workspace is already up to date at version ${localVersion.version}. No update needed.`,
-			);
-		}
-		return isUpToDate;
+	/** Collaborators for the status checks, derived from the injected deps. */
+	private get statusDeps(): UpdateStatusDeps {
+		return {
+			gitHubClient: this.gitHubClient,
+			versionComparator: this.versionComparator,
+			userPrompt: this.userPrompt,
+			bundledVersion: this.bundledVersion,
+		};
 	}
 
 	/**

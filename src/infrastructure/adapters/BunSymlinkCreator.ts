@@ -4,7 +4,7 @@ import type { ISymlinkCreator, SymlinkSpec } from "../../application/ports/ISyml
 import type { Result } from "../../domain/types/Result";
 import { failure, success } from "../../domain/types/Result";
 import { type SymlinkError, symlinkError } from "../../domain/types/SymlinkError";
-import { isErrnoException } from "./errorTypeGuards";
+import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import { isPathWithin } from "./pathResolver";
 import { VerboseLogger } from "./VerboseLogger";
 

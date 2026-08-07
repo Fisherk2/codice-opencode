@@ -5,7 +5,7 @@ import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import { VERSION_FILE_NAME } from "../config/constants";
 import { AtomicStager } from "./AtomicStager";
 import { walkDirectory } from "./directoryWalker";
-import { isErrnoException } from "./errorTypeGuards";
+import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import { TemplateResolver } from "./TemplateResolver";
 import { VerboseLogger } from "./VerboseLogger";
 

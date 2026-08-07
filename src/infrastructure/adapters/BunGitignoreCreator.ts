@@ -9,7 +9,7 @@ import {
 } from "../../domain/types/GitignoreError";
 import type { Result } from "../../domain/types/Result";
 import { failure, success } from "../../domain/types/Result";
-import { isErrnoException } from "./errorTypeGuards";
+import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import { isPathWithin } from "./pathResolver";
 import { VerboseLogger } from "./VerboseLogger";
 

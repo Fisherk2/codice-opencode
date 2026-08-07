@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { parseArgs, validateDestPath } from "../../../src/cli/parse-args";
+import { parseArgs } from "../../../src/cli/parse-args";
+import { validateDestPath } from "../../../src/cli/validateDestPath";
 
 describe("parseArgs", () => {
 	it("should return interactive mode when no flags are given", () => {

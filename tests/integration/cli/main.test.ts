@@ -346,14 +346,14 @@ describe("main() — SIGINT handling", () => {
 	 * none of the captured handlers invoked process.exit (e.g. only Bun's
 	 * internal handlers were registered).
 	 *
-	 * Our handler is idempotent (second invocation is a no-op), so the search
-	 * itself counts as the first SIGINT when the returned handler is invoked
-	 * again by the caller.
+	 * Our handler is async (it awaits the staging cleanup before exiting) and
+	 * idempotent (second invocation is a no-op), so the search itself counts
+	 * as the first SIGINT when the returned handler is invoked again.
 	 */
-	function findExitTriggeringHandler(): (() => void) | null {
+	async function findExitTriggeringHandler(): Promise<(() => void) | null> {
 		for (const handler of capturedHandlers) {
 			const before = sigintExitMock.mock.calls.length;
-			handler();
+			await handler();
 			if (sigintExitMock.mock.calls.length > before) {
 				return handler;
 			}
@@ -385,7 +385,7 @@ describe("main() — SIGINT handling", () => {
 		}
 
 		const callCountBefore = sigintExitMock.mock.calls.length;
-		const handler = findExitTriggeringHandler();
+		const handler = await findExitTriggeringHandler();
 
 		expect(handler).not.toBeNull();
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
@@ -403,14 +403,14 @@ describe("main() — SIGINT handling", () => {
 		}
 
 		const callCountBefore = sigintExitMock.mock.calls.length;
-		const handler = findExitTriggeringHandler();
+		const handler = await findExitTriggeringHandler();
 
 		// First SIGINT already fired inside the search — mock incremented once
 		expect(handler).not.toBeNull();
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
 
 		// Second SIGINT — same handler is idempotent
-		handler!();
+		await handler!();
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
 	});
 });
