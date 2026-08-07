@@ -18,8 +18,8 @@ import { detectVersionContext } from "./versionContext";
 export { createDependencies, type Dependencies } from "./container";
 export { VERSION } from "./output";
 export { type CliOptions, type Mode, type ParsedArgs, parseArgs } from "./parse-args";
-export { detectVersionContext } from "./versionContext";
 export { handleTerminalFlags, registerSigintHandler } from "./signalHandlers";
+export { detectVersionContext } from "./versionContext";
 // Export main for dynamic import via bin.js (npm requires .js bin extension)
 export { main };
 

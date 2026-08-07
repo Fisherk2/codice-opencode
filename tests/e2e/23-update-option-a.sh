@@ -45,8 +45,8 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 # Seed a v2.0-rc installation with ONLY the software-development pack.
 # 2.0.0-rc.1 is older than bundled 2.0.0 (semver) but passes the major>=2
 # gate, so the update merge actually runs.
-echo '{"version":"2.0.0-rc.1","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":[]}' > "$TEMP_DIR/.codice-version"
-log_info "Seeded .codice-version with v2.0.0-rc.1 installation (software-development only)"
+echo '{"version":"2.0.0-alpha.1","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":[]}' > "$TEMP_DIR/.codice-version"
+log_info "Seeded .codice-version with v2.0.0-alpha.1 installation (software-development only)"
 
 # Pre-create a user's custom agent file — must survive the update
 mkdir -p "$TEMP_DIR/agents"

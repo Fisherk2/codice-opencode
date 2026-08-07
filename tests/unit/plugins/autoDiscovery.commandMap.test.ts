@@ -95,6 +95,7 @@ describe("discoverCommandAgentMap", () => {
 	});
 
 	test("skips unreadable files without throwing", async () => {
+		if (process.platform === "win32") return; // Windows uses ACLs, not POSIX chmod; chmod 0o000 has no effect
 		const dir = join(tmpDir, "cmd-unreadable");
 		await mkdir(dir);
 		const unreadablePath = join(dir, "locked.md");

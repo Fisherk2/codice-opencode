@@ -12,8 +12,9 @@ import * as path from "node:path";
 
 /**
  * Well-known system directories that are never valid project destinations.
- * Prefix matching catches sub-paths (e.g. /etc/cron.d). /tmp is intentionally
- * omitted — users commonly install to /tmp for testing.
+ * Prefix matching catches sub-paths (e.g. /etc/cron.d). /tmp and /var are
+ * intentionally omitted — /tmp is commonly used for testing, and macOS
+ * returns /var/folders/... from os.tmpdir() which is the user's temp dir.
  */
 const SYSTEM_DIRS: readonly string[] =
 	process.platform === "win32"
@@ -24,9 +25,8 @@ const SYSTEM_DIRS: readonly string[] =
 				"C:\\Program Files (x86)",
 				"C:\\Users\\Public",
 				"C:\\ProgramData",
-				"C:\\Users",
 			]
-		: ["/etc", "/var", "/usr", "/bin", "/boot", "/dev", "/proc", "/sys", "/opt", "/sbin", "/root"];
+		: ["/etc", "/usr", "/bin", "/boot", "/dev", "/proc", "/sys", "/opt", "/sbin", "/root"];
 
 /** Bare Windows drive roots (C:\, D:\, etc.) */
 const DRIVE_ROOT_RE = /^[A-Z]:\\?$/i;
