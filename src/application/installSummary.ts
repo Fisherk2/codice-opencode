@@ -26,10 +26,12 @@ export function buildInstallSummary(
 	// Dedupe selected packs: filterByPacks merges duplicates via a Set, so the
 	// summary must match — otherwise a duplicate id double-counts its agents.
 	const rulesByPack = new Map(packRules.map((rule) => [packIdFromPath(rule.path), rule]));
-	const packs = [...new Set(selectedPacks)]
-		.map((id) => rulesByPack.get(id))
-		.filter((rule): rule is FileRule => rule !== undefined)
-		.map((rule) => ({ id: packIdFromPath(rule.path), agentCount: rule.agentCount ?? 0 }));
+	// Map lookup key already IS the pack id — no need to re-derive it from the
+	// rule path; unknown ids drop out via [] exactly like the old filter did.
+	const packs = [...new Set(selectedPacks)].flatMap((id) => {
+		const rule = rulesByPack.get(id);
+		return rule ? [{ id, agentCount: rule.agentCount ?? 0 }] : [];
+	});
 	const totalAgents = packs.reduce((sum, pack) => sum + pack.agentCount, 0);
 	const mandatoryDirs = allRules
 		.filter((rule) => rule.category === "mandatory" && rule.isDirectory)
