@@ -177,7 +177,7 @@ En Option B los packs ya instalados quedan **bloqueados** (no se pueden quitar, 
 
 ### ¿Cómo elimino un pack?
 
-**Todavía no existe un mecanismo.** Los agentes de un pack instalado persisten en `agents/`. La eliminación de packs está **diferida a v2.2.0** (tracked como TD-V2-6 en [TECH_DEBT.md](./TECH_DEBT.md)). Mientras tanto, puedes eliminar manualmente los archivos de agentes de ese pack (consulta los IDs en `installedPacks` de `.codice-version`).
+**Todavía no existe un mecanismo.** Los agentes de un pack instalado persisten en `agents/`. La eliminación de packs está **diferida a v2.3.0** (tracked como TD-V2-6 en [TECH_DEBT.md](./TECH_DEBT.md)). Mientras tanto, puedes eliminar manualmente los archivos de agentes de ese pack (consulta los IDs en `installedPacks` de `.codice-version`).
 
 ### ¿Por qué el tarball npm creció (8MB)?
 

@@ -1,12 +1,12 @@
-# Spec: Códice — Opencode Workspace Installer v1.2.0
+# Spec: Códice — Opencode Workspace Installer v2.0.0
 
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v1.2.0  
+**Current Version:** v2.0.0  
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
-> **v2.0 Progress:** FEV-17 ✅ + FEV-18 ✅ (2026-08-04) + FEV-19 ✅ + FEV-20 ✅ (2026-08-05) + FEV-21 ✅ (2026-08-06) + FEV-22 ✅ (2026-08-06) → FEV-23 ready to plan. FEV-23 (v2.0.0 Testing & Integration) is ready to plan.
+> **v2.0 Progress:** FEV-17 ✅ + FEV-18 ✅ (2026-08-04) + FEV-19 ✅ + FEV-20 ✅ (2026-08-05) + FEV-21 ✅ (2026-08-06) + FEV-22 ✅ (2026-08-06) + FEV-23 ✅ (2026-08-07) → **v2.0.0 pre-release ready**. FEV-23 (v2.0.0 Testing & Integration) is complete: 1920 tests, 30/30 E2E, coverage 95.68% overall / 99.12% production `src/`. Pre-release ready for review.
 
 ---
 
