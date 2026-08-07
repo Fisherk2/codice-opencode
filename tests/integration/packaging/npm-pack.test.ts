@@ -121,20 +121,24 @@ describePack("npm package — extracted installation", () => {
 	// Test B: Binary --version works from installed package
 	// -----------------------------------------------------------------------
 
-	itPack("binary --version works from extracted package (Test B)", async () => {
-		// Install dependencies in the package dir (needed for @clack/prompts etc.)
-		const installProc = Bun.spawnSync(["bun", "install"], {
-			cwd: packageDir,
-		});
-		expect(installProc.exitCode).toBe(0);
+	itPack(
+		"binary --version works from extracted package (Test B)",
+		async () => {
+			// Install dependencies in the package dir (needed for @clack/prompts etc.)
+			const installProc = Bun.spawnSync(["bun", "install"], {
+				cwd: packageDir,
+			});
+			expect(installProc.exitCode).toBe(0);
 
-		// Run --version
-		const versionProc = Bun.spawnSync(["bun", "run", "src/cli/main.ts", "--version"], {
-			cwd: packageDir,
-		});
-		expect(versionProc.exitCode).toBe(0);
-		expect(versionProc.stdout.toString()).toContain("Códice");
-	});
+			// Run --version
+			const versionProc = Bun.spawnSync(["bun", "run", "src/cli/main.ts", "--version"], {
+				cwd: packageDir,
+			});
+			expect(versionProc.exitCode).toBe(0);
+			expect(versionProc.stdout.toString()).toContain("Códice");
+		},
+		{ timeout: 30000 },
+	);
 
 	// -----------------------------------------------------------------------
 	// Test C: Clean install from extracted package
