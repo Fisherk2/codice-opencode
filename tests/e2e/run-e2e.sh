@@ -99,6 +99,8 @@ TESTS=(
     "$SCRIPT_DIR/21-update-blocked-missing.sh"
     "$SCRIPT_DIR/22-update-blocked-v1x.sh"
     "$SCRIPT_DIR/23-update-option-a.sh"
+    "$SCRIPT_DIR/24-install-summary-clean.sh"
+    "$SCRIPT_DIR/25-install-summary-packs.sh"
 )
 
 for test_script in "${TESTS[@]}"; do
