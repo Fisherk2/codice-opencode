@@ -92,7 +92,7 @@ export interface PostInstallOptions {
 	readonly operationLabel: string;
 	readonly successMessage: string;
 	/** If true, appends retry hint to opencode symlink warning. Only Clean Install sets this. */
-	readonly retryHint?: boolean;
+	readonly retryHint: boolean;
 }
 
 /**

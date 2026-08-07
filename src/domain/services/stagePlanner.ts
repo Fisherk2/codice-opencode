@@ -10,7 +10,7 @@ import { diffTrees } from "./treeDiff";
 export async function computeStagePlan(
 	fileSystem: IFileSystem,
 	rules: readonly FileRule[],
-	selected: Set<string>,
+	selected: ReadonlySet<string>,
 	isUpdateMode: boolean,
 ): Promise<{
 	stageDecisions: Map<string, boolean>;
@@ -53,7 +53,7 @@ export async function computeStagePlan(
 async function shouldStage(
 	rule: FileRule,
 	fileSystem: IFileSystem,
-	selected: Set<string>,
+	selected: ReadonlySet<string>,
 ): Promise<boolean> {
 	if (rule.category === "mandatory") return true;
 

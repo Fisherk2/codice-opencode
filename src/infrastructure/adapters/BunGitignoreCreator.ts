@@ -9,6 +9,7 @@ import {
 } from "../../domain/types/GitignoreError";
 import type { Result } from "../../domain/types/Result";
 import { failure, success } from "../../domain/types/Result";
+import { isErrnoException } from "./errorTypeGuards";
 import { isPathWithin } from "./pathResolver";
 
 const fsPromises = fs.promises;
@@ -86,10 +87,14 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 			return success(undefined);
 		} catch (error) {
 			// ENOENT means the path does not exist — proceed to create it.
-			const err = error as NodeJS.ErrnoException;
-			if (err.code !== "ENOENT") {
+			// Any other error — including non-Errno shapes — propagates
+			// (fail closed, matching the original guard).
+			if (!isErrnoException(error) || error.code !== "ENOENT") {
 				return failure(
-					gitignoreWriteError(resolvedDest, `Failed to check .gitignore path: ${err.message}`),
+					gitignoreWriteError(
+						resolvedDest,
+						`Failed to check .gitignore path: ${error instanceof Error ? error.message : String(error)}`,
+					),
 				);
 			}
 		}
@@ -106,11 +111,11 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 				return failure(gitignoreTemplateNotFoundError(resolvedDest, this.templatePath));
 			}
 
-			const nodeErr = error as NodeJS.ErrnoException;
+			const nodeErr = isErrnoException(error) ? error : undefined;
 			const msg =
-				nodeErr.code === "ENOENT"
+				nodeErr?.code === "ENOENT"
 					? `Template gitignore file not found at: ${templateFile}`
-					: `Failed to read template gitignore: ${nodeErr.message}`;
+					: `Failed to read template gitignore: ${nodeErr?.message ?? String(error)}`;
 			return failure(gitignoreReadError(resolvedDest, msg));
 		}
 
@@ -118,9 +123,12 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 		try {
 			await Bun.write(destGitignore, content);
 		} catch (error) {
-			const nodeError = error as NodeJS.ErrnoException;
+			const nodeError = isErrnoException(error) ? error : undefined;
 			return failure(
-				gitignoreWriteError(resolvedDest, `Failed to write .gitignore: ${nodeError.message}`),
+				gitignoreWriteError(
+					resolvedDest,
+					`Failed to write .gitignore: ${nodeError?.message ?? String(error)}`,
+				),
 			);
 		}
 

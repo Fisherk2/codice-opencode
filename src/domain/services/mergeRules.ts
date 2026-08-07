@@ -10,7 +10,11 @@ import type { FileRule } from "../entities/FileRule";
  * @param isUpdateMode - Whether the merge runs in update mode.
  * @returns The reason string for the skip event.
  */
-export function skipReason(rule: FileRule, selected: Set<string>, isUpdateMode = false): string {
+export function skipReason(
+	rule: FileRule,
+	selected: ReadonlySet<string>,
+	isUpdateMode = false,
+): string {
 	if (rule.category === "standard") {
 		if (isUpdateMode && rule.isDirectory) {
 			return "No new files in directory";

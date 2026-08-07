@@ -1,10 +1,12 @@
 import { valid } from "semver";
 import { FILE_RULE_MANIFEST, filterByPacks } from "../../domain/entities/FileRuleManifest";
+import type { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
+import { stripVPrefix } from "../../domain/types/version";
 import {
 	checkWritable,
 	confirmOverwrite,
@@ -55,15 +57,8 @@ export class UpdateWorkspaceUseCase {
 	) {}
 
 	/**
-	 * Execute a workspace update.
-	 *
-	 * Flow: writable check → version gate (v2.0+ only) → confirm (unless
-	 * forced) → GitHub info check → bundled comparison → pack scope
-	 * (Option A / Option B / addPacks) → scoped merge → write v2.0 version file.
-	 *
-	 * @param destinationPath - Target directory for the update.
-	 * @param options - Optional flags.
-	 * @returns Result indicating success or a structured error.
+	 * Execute a workspace update: writable check → v2.0 version gate → confirm
+	 * → GitHub info → bundled comparison → pack scope → scoped merge → version file.
 	 */
 	async execute(
 		destinationPath: string,
@@ -76,19 +71,8 @@ export class UpdateWorkspaceUseCase {
 		// Version gate (BEFORE any destructive prompt): the update system needs
 		// a v2.0+ installation with pack metadata. Missing, corrupt, or pre-v2.0
 		// files are all treated as "must reinstall" — never update blindly.
-		const localVersion = parseVersionData(await this.fileSystem.readVersionFile());
-		if (!localVersion) {
-			await this.userPrompt.showWarning(
-				"No previous Códice installation found. Update is not available — use Clean Install or Project Install.",
-			);
-			return success(undefined);
-		}
-		if (isPreV2Version(localVersion)) {
-			await this.userPrompt.showWarning(
-				`Detected v${localVersion.version} installation. The update system has changed in v2.0.0. Please reinstall using Clean Install or Project Install to adopt the new pack system.`,
-			);
-			return success(undefined);
-		}
+		const localVersion = await this.readInstalledVersion();
+		if (localVersion === null) return success(undefined);
 
 		// Ask for confirmation if not forced. Defaults to Yes so unattended
 		// sessions can accept the update with a single keystroke (plan Phase 4).
@@ -104,36 +88,12 @@ export class UpdateWorkspaceUseCase {
 			if (!confirmed) return success(undefined);
 		}
 
-		// Check GitHub for latest version (informational only)
-		const remoteTag = await this.gitHubClient.getLatestReleaseTag();
-		if (remoteTag) {
-			const remoteVersion = remoteTag.startsWith("v") ? remoteTag.slice(1) : remoteTag;
-			const remoteComparison = this.versionComparator.compare(localVersion.version, remoteVersion);
-			if (remoteComparison.ok && remoteComparison.value === "ahead") {
-				await this.userPrompt.showInfo(
-					`A newer version (v${remoteVersion}) is available on GitHub. The bundled template (v${this.bundledVersion}) will be used for this update.`,
-				);
-			}
-		} else {
-			await this.userPrompt.showWarning(
-				"Could not check for updates via GitHub. Falling back to the bundled template version.",
-			);
-		}
+		// Informational GitHub check — never blocks the update
+		await this.reportRemoteStatus(localVersion);
 
-		// Compare installed version against bundled template version.
-		// VersionComparator reports "ahead" when bundled > local (update
-		// available). isUpToDate requires the comparison to SUCCEED — a failed
-		// comparison (invalid bundled semver) must fall through so
-		// resolveNewVersion can write the "0.0.0" fallback.
-		const bundledComparison = this.versionComparator.compare(
-			localVersion.version,
-			this.bundledVersion,
-		);
-		const isUpToDate = bundledComparison.ok && bundledComparison.value !== "ahead";
-		if (isUpToDate) {
-			await this.userPrompt.showInfo(
-				`Workspace is already up to date at version ${localVersion.version}. No update needed.`,
-			);
+		// Compare installed version against bundled template version. Returns
+		// true when no update is needed (installed >= bundled).
+		if (await this.notifyIfUpToDate(localVersion)) {
 			return success(undefined);
 		}
 
@@ -185,14 +145,61 @@ export class UpdateWorkspaceUseCase {
 		return versionResult;
 	}
 
+	/** Read .codice-version and enforce the v2.0+ gate; null means "abort gracefully". */
+	private async readInstalledVersion(): Promise<WorkspaceVersion | null> {
+		const localVersion = parseVersionData(await this.fileSystem.readVersionFile());
+		if (!localVersion) {
+			await this.userPrompt.showWarning(
+				"No previous Códice installation found. Update is not available — use Clean Install or Project Install.",
+			);
+			return null;
+		}
+		if (isPreV2Version(localVersion)) {
+			await this.userPrompt.showWarning(
+				`Detected v${localVersion.version} installation. The update system has changed in v2.0.0. Please reinstall using Clean Install or Project Install to adopt the new pack system.`,
+			);
+			return null;
+		}
+		return localVersion;
+	}
+
+	/** Informational GitHub check — never blocks the update. */
+	private async reportRemoteStatus(localVersion: WorkspaceVersion): Promise<void> {
+		const remoteTag = await this.gitHubClient.getLatestReleaseTag();
+		if (!remoteTag) {
+			await this.userPrompt.showWarning(
+				"Could not check for updates via GitHub. Falling back to the bundled template version.",
+			);
+			return;
+		}
+		const remoteVersion = stripVPrefix(remoteTag);
+		const comparison = this.versionComparator.compare(localVersion.version, remoteVersion);
+		if (comparison.ok && comparison.value === "ahead") {
+			await this.userPrompt.showInfo(
+				`A newer version (v${remoteVersion}) is available on GitHub. The bundled template (v${this.bundledVersion}) will be used for this update.`,
+			);
+		}
+	}
+
+	/** True when installed >= bundled; a failed comparison falls through to the "0.0.0" fallback. */
+	private async notifyIfUpToDate(localVersion: WorkspaceVersion): Promise<boolean> {
+		const bundledComparison = this.versionComparator.compare(
+			localVersion.version,
+			this.bundledVersion,
+		);
+		const isUpToDate = bundledComparison.ok && bundledComparison.value !== "ahead";
+		if (isUpToDate) {
+			await this.userPrompt.showInfo(
+				`Workspace is already up to date at version ${localVersion.version}. No update needed.`,
+			);
+		}
+		return isUpToDate;
+	}
+
 	/**
-	 * Resolve the version string to write to .codice-version.
-	 * Priority: explicit flag > bundled template > fallback to "0.0.0".
-	 *
-	 * The fallback IS reachable: when the bundled template version is not
-	 * valid semver (e.g. a malformed package.json), valid() returns null and
-	 * "0.0.0" is written instead of crashing or corrupting the version file.
-	 * This is a runtime-safety net, not a type-level guarantee.
+	 * Version to write: explicit flag > bundled template > "0.0.0" fallback.
+	 * The fallback IS reachable when the bundled template version is not valid
+	 * semver (e.g. a malformed package.json) — a runtime-safety net.
 	 */
 	private resolveNewVersion(options: UpdateWorkspaceOptions | undefined): string {
 		const resolved = options?.version ?? this.bundledVersion;

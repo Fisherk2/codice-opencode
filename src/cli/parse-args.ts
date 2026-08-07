@@ -6,6 +6,7 @@
  */
 
 import * as path from "node:path";
+import type { InstallMode } from "../application/ports/IUserPrompt";
 import { validatePackList } from "./validatePackList";
 
 // ---------------------------------------------------------------------------
@@ -13,7 +14,7 @@ import { validatePackList } from "./validatePackList";
 // ---------------------------------------------------------------------------
 
 /** Installation modes supported by the CLI */
-export type Mode = "clean" | "project" | "update" | "interactive";
+export type Mode = InstallMode | "interactive";
 
 /** Parsed CLI options: packs/packsAll select packs; updateAddPacks adds packs. */
 export interface CliOptions {
@@ -129,8 +130,8 @@ function readFlagValue(
 	valueIndex: number,
 	isDest: boolean,
 ): string | null {
-	if (valueIndex >= args.length) return null;
-	const raw = args[valueIndex] as string;
+	const raw = args[valueIndex];
+	if (raw === undefined) return null;
 	if (isDest) {
 		const error = validateDestPath(raw);
 		if (error) {
@@ -171,7 +172,7 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 
 	let i = 0;
 	while (i < args.length) {
-		const arg: string = args[i]!; // Non-null: guarded by i < args.length
+		const arg = args[i]!; // Non-null: guarded by i < args.length
 		i++; // Consume the flag token
 
 		if (VALUE_FLAGS.has(arg)) {

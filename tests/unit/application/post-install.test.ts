@@ -153,6 +153,7 @@ function createDefaultPostInstallOptions(
 		version: "1.0.0",
 		operationLabel: "Installation",
 		successMessage: "Installation complete.",
+		retryHint: false,
 		...overrides,
 	};
 }

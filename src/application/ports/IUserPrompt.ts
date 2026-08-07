@@ -34,6 +34,9 @@ export interface VersionDisplayInfo {
  */
 export type UpdateOption = "current" | "add" | "cancel";
 
+/** Installation modes selectable from the TUI or CLI flags. */
+export type InstallMode = "clean" | "project" | "update";
+
 export interface UpdateOptionChoice {
 	readonly value: UpdateOption;
 	readonly label: string;
@@ -121,9 +124,9 @@ export interface IUserPrompt {
 
 	/**
 	 * Prompt the user to select an installation mode.
-	 * @returns Selected mode ("clean" | "project" | "update"), or null if cancelled.
+	 * @returns Selected mode, or null if cancelled.
 	 */
-	promptForMode(): Promise<"clean" | "project" | "update" | null>;
+	promptForMode(): Promise<InstallMode | null>;
 
 	/**
 	 * selectPacks — present a multiselect checklist for agent packs.

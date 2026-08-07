@@ -56,7 +56,7 @@ export class CleanInstallUseCase extends InstallUseCaseBase {
 	): readonly FileRule[] {
 		return filterByPacks(FILE_RULE_MANIFEST, selectedPacks)
 			.filter((r) => isRuleSelected(r, selectedOptionals))
-			.map((r) => ({ ...r, category: "mandatory" as const }));
+			.map((r) => ({ ...r, category: "mandatory" }));
 	}
 
 	/**

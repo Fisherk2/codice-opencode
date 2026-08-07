@@ -5,6 +5,7 @@ import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import { VERSION_FILE_NAME } from "../config/constants";
 import { AtomicStager } from "./AtomicStager";
 import { walkDirectory } from "./directoryWalker";
+import { isErrnoException } from "./errorTypeGuards";
 import { TemplateResolver } from "./TemplateResolver";
 
 /** Temporary file used to probe destination writability (removed after check). */
@@ -19,7 +20,7 @@ const VERSION_FILE_TMP_SUFFIX = ".tmp";
  * Any other code is treated as absent — staging will surface a clearer error.
  */
 function classifyAccessError(err: unknown): boolean {
-	const code = (err as NodeJS.ErrnoException).code;
+	const code = isErrnoException(err) ? err.code : undefined;
 	if (code === "ENOENT") return false;
 	if (code === "EACCES" || code === "EPERM") return true; // exists but unreadable
 	return false; // conservative: staging will fail with clearer message if unwritable

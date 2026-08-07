@@ -11,6 +11,7 @@ import { getPackRules } from "../../domain/entities/FileRuleManifest";
 // type-only import would be erased and throw "Cannot read properties of
 // undefined" inside parseVersionData's try/catch.
 import { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
+import { stripVPrefix } from "../../domain/types/version";
 import { toPackOptions } from "../packOptions";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 
@@ -39,7 +40,7 @@ export function parseVersionData(rawData: string | null): WorkspaceVersion | nul
  * tolerates a leading "v" during validation.
  */
 export function isPreV2Version(localVersion: WorkspaceVersion): boolean {
-	const major = parseInt(localVersion.version.replace(/^v/, ""), 10);
+	const major = parseInt(stripVPrefix(localVersion.version), 10);
 	return Number.isFinite(major) && major < 2;
 }
 

@@ -185,6 +185,6 @@ export function wrapMergeError(err: MergeError): Error {
  * Shared by Clean and Project install so the interactive branch (and the
  * "optional" category lookup) stays in one place.
  */
-export async function promptForOptionals(userPrompt: IUserPrompt): Promise<readonly string[]> {
-	return await userPrompt.selectOptional(getOptionalRules());
+export function promptForOptionals(userPrompt: IUserPrompt): Promise<readonly string[]> {
+	return userPrompt.selectOptional(getOptionalRules());
 }

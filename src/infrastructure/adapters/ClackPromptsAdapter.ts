@@ -1,6 +1,7 @@
 import * as clack from "@clack/prompts";
 import { formatInstallSummary } from "../../application/installSummary";
 import type {
+	InstallMode,
 	InstallSummaryInfo,
 	IUserPrompt,
 	PackOption,
@@ -15,32 +16,32 @@ import { buildVersionInfoMessages } from "./versionInfoMessages";
 /** @clack/prompts adapter implementing IUserPrompt. */
 
 /** Mode-selection menu options — hoisted to avoid re-allocation on every call. */
-const MODE_OPTIONS = [
+const MODE_OPTIONS: { value: InstallMode; label: string; hint: string }[] = [
 	{
-		value: "clean" as const,
+		value: "clean",
 		label: "Clean Install",
 		hint: "Complete template overwrite (all files)",
 	},
 	{
-		value: "project" as const,
+		value: "project",
 		label: "Project Install",
 		hint: "Selective merge with file classification",
 	},
 	{
-		value: "update" as const,
+		value: "update",
 		label: "Update Workspace",
 		hint: "Update to latest template version",
 	},
 ];
 
-/** Progress-event category → @clack/prompts display call. Looked up by logProgressEvent via Object.hasOwn. */
-const PROGRESS_EMITTERS: Record<string, (text: string) => void> = {
-	commit: (text) => clack.log.success(`✓ ${text}`),
-	symlink: (text) => clack.log.success(`🔗 ${text}`),
-	gitignore: (text) => clack.log.info(`📄 ${text}`),
-	error: (text) => clack.log.error(`✗ ${text}`),
-	skip: (text) => clack.log.warn(`⊘ ${text}`),
-};
+/** Progress-event category → @clack/prompts display call. Map avoids prototype-key collisions. */
+const PROGRESS_EMITTERS = new Map<string, (text: string) => void>([
+	["commit", (text) => clack.log.success(`✓ ${text}`)],
+	["symlink", (text) => clack.log.success(`🔗 ${text}`)],
+	["gitignore", (text) => clack.log.info(`📄 ${text}`)],
+	["error", (text) => clack.log.error(`✗ ${text}`)],
+	["skip", (text) => clack.log.warn(`⊘ ${text}`)],
+]);
 
 export class ClackPromptsAdapter implements IUserPrompt {
 	// biome-ignore lint/complexity/noUselessConstructor: Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
@@ -65,7 +66,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 	async confirm(message: string, defaultYes?: boolean): Promise<boolean> {
 		const result = await clack.confirm({ message, initialValue: defaultYes ?? true });
 		if (clack.isCancel(result)) return false;
-		return result as boolean;
+		return result;
 	}
 
 	/**
@@ -113,8 +114,9 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		if (colonIdx > 0) {
 			const category = message.slice(0, colonIdx).trim().toLowerCase();
 			const text = message.slice(colonIdx + 1).trim();
-			if (Object.hasOwn(PROGRESS_EMITTERS, category)) {
-				PROGRESS_EMITTERS[category]!(text);
+			const emitter = PROGRESS_EMITTERS.get(category);
+			if (emitter !== undefined) {
+				emitter(text);
 				return;
 			}
 		}
@@ -150,13 +152,13 @@ export class ClackPromptsAdapter implements IUserPrompt {
 	}
 
 	/** Present mode selection menu. Returns selected mode or null on cancel. */
-	async promptForMode(): Promise<"clean" | "project" | "update" | null> {
+	async promptForMode(): Promise<InstallMode | null> {
 		const result = await clack.select({
 			message: "Select installation mode:",
 			options: MODE_OPTIONS,
 		});
 		if (clack.isCancel(result)) return null;
-		return result as "clean" | "project" | "update";
+		return result;
 	}
 
 	/** Present the agent pack selection checklist. Returns selected IDs, [] on cancel. */
@@ -174,7 +176,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 			required: true,
 		});
 		if (clack.isCancel(result)) return [];
-		return result as readonly string[];
+		return result;
 	}
 
 	/** Display detected local installation info before the mode menu. */
@@ -190,7 +192,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 			options: options.map((opt) => ({ value: opt.value, label: opt.label, hint: opt.hint })),
 		});
 		if (clack.isCancel(result)) return null;
-		return result as UpdateOption;
+		return result;
 	}
 
 	/** Display the pre-install summary via clack.note() (spec §3.3). */

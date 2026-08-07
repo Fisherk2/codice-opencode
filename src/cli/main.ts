@@ -2,7 +2,11 @@
  * Códice CLI entry point — parses args, wires dependencies, launches installer mode.
  */
 
-import type { IUserPrompt, VersionDisplayInfo } from "../application/ports/IUserPrompt";
+import type {
+	InstallMode,
+	IUserPrompt,
+	VersionDisplayInfo,
+} from "../application/ports/IUserPrompt";
 import { getAllPackIds } from "../domain/entities/FileRuleManifest";
 import type { Result } from "../domain/types/Result";
 import { createDependencies, type Dependencies } from "./container";
@@ -28,9 +32,7 @@ export { main };
 // --- Interactive mode selection ---
 
 /** Show an interactive mode selection menu; delegates to IUserPrompt. */
-export function promptForMode(
-	userPrompt: IUserPrompt,
-): Promise<"clean" | "project" | "update" | null> {
+export function promptForMode(userPrompt: IUserPrompt): Promise<InstallMode | null> {
 	return userPrompt.promptForMode();
 }
 
@@ -43,7 +45,7 @@ export async function resolveInteractiveMode(
 	userPrompt: IUserPrompt,
 	version: string,
 	versionContext: VersionDisplayInfo,
-): Promise<"clean" | "project" | "update" | null> {
+): Promise<InstallMode | null> {
 	if (mode !== "interactive") {
 		return mode;
 	}
@@ -102,7 +104,7 @@ function registerSigintHandler(): () => void {
  * Separated from main() to enable testing with mock dependencies.
  */
 export async function runMode(
-	mode: "clean" | "project" | "update",
+	mode: InstallMode,
 	deps: Dependencies,
 	destinationPath: string,
 	options: CliOptions,

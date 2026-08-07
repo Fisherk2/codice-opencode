@@ -22,3 +22,12 @@ export type ComparisonResult = "newer" | "older" | "equal";
  * (remote vs local). Sharing one type across both silently inverts semantics.
  */
 export type RemoteVersionStatus = "ahead" | "behind" | "equal";
+
+/**
+ * Strip a leading "v" tag prefix, e.g. "v2.1.0" → "2.1.0".
+ * GitHub release tags conventionally carry the prefix; semver parsing
+ * tolerates it, but consumers comparing raw strings need the bare form.
+ */
+export function stripVPrefix(version: string): string {
+	return version.startsWith("v") ? version.slice(1) : version;
+}

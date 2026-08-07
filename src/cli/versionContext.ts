@@ -9,12 +9,22 @@
 import type { VersionDisplayInfo } from "../application/ports/IUserPrompt";
 import { WorkspaceVersion } from "../domain/entities/WorkspaceVersion";
 import type { IFileSystem } from "../domain/ports/IFileSystem";
+import { stripVPrefix } from "../domain/types/version";
+
+/**
+ * Classify a version's status for the TUI header.
+ * v2.x → "v2.0+", v1.2+ → "pre-2.0.0", anything older → "pre-1.2.0".
+ */
+function classifyStatus(major: number, minor: number): VersionDisplayInfo["status"] {
+	if (major >= 2) return "v2.0+";
+	if (major === 1 && minor >= 2) return "pre-2.0.0";
+	return "pre-1.2.0";
+}
 
 /**
  * Detect the local installation state for the TUI header.
  *
- * Derives the status from the major/minor version: v2.x → "v2.0+",
- * v1.2+ → "pre-2.0.0", anything older → "pre-1.2.0". Malformed or missing
+ * Derives the status from the major/minor version. Malformed or missing
  * files degrade to "missing" — detection is fail-open and never crashes the
  * CLI (worst case the header shows "No Installation Detected").
  *
@@ -25,14 +35,12 @@ export async function detectVersionContext(fileSystem: IFileSystem): Promise<Ver
 	try {
 		const data = await fileSystem.readVersionFile();
 		if (data === null) return { version: null, installedPacks: [], status: "missing" };
-		const version = WorkspaceVersion.fromJSON(JSON.parse(data) as unknown);
+		const version = WorkspaceVersion.fromJSON(JSON.parse(data));
 		const { version: rawVersion, installedPacks } = version;
-		const [majorStr, minorStr] = rawVersion.replace(/^v/, "").split(".");
+		const [majorStr, minorStr] = stripVPrefix(rawVersion).split(".");
 		const major = parseInt(majorStr ?? "0", 10);
 		const minor = parseInt(minorStr ?? "0", 10);
-		const status: VersionDisplayInfo["status"] =
-			major >= 2 ? "v2.0+" : major === 1 && minor >= 2 ? "pre-2.0.0" : "pre-1.2.0";
-		return { version: rawVersion, installedPacks, status };
+		return { version: rawVersion, installedPacks, status: classifyStatus(major, minor) };
 	} catch {
 		return { version: null, installedPacks: [], status: "missing" };
 	}
