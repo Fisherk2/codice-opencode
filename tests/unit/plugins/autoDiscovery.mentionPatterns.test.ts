@@ -16,8 +16,8 @@ describe("discoverAgentMentionPatterns", () => {
 		const result = discoverAgentMentionPatterns(agents);
 
 		expect(Object.keys(result)).toEqual(expect.arrayContaining(["quetzalcoatl", "tlaloc"]));
-		expect(result["quetzalcoatl"]).toHaveLength(2);
-		expect(result["tlaloc"]).toHaveLength(2);
+		expect(result.quetzalcoatl).toHaveLength(2);
+		expect(result.tlaloc).toHaveLength(2);
 	});
 
 	test("returns empty record when no primary agents are in the set", () => {
@@ -44,7 +44,7 @@ describe("discoverAgentMentionPatterns", () => {
 		const agents = new Set(["tlaloc"]);
 		const result = discoverAgentMentionPatterns(agents);
 
-		const patterns = result["tlaloc"];
+		const patterns = result.tlaloc;
 		expect(patterns).toBeDefined();
 		expect(patterns).toHaveLength(2);
 

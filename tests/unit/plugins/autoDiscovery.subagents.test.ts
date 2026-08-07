@@ -79,6 +79,21 @@ describe("discoverValidSubagents", () => {
 		expect(result.has("reviewer")).toBe(true);
 	});
 
+	test("dedupes duplicate basenames across subdirectories", async () => {
+		const dir = join(tmpDir, "agents-duplicates");
+		await mkdir(join(dir, "pack-a"), { recursive: true });
+		await writeFile(join(dir, "pack-a", "shared-agent.md"), "# Shared A");
+		await mkdir(join(dir, "pack-b"), { recursive: true });
+		await writeFile(join(dir, "pack-b", "shared-agent.md"), "# Shared B");
+
+		const result = discoverValidSubagents(dir);
+
+		// Set semantics dedupe the shared basename regardless of the scanner's
+		// duplicate warning — one entry, not two.
+		expect(result.size).toBe(1 + PRIMARY_AGENTS.length);
+		expect(result.has("shared-agent")).toBe(true);
+	});
+
 	test("set size equals discovered files plus PRIMARY_AGENTS", async () => {
 		const dir = join(tmpDir, "agents-count");
 		await mkdir(dir);
