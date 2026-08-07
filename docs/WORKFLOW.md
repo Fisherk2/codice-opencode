@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.0.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-06 (FEV-21 completado; FEV-22 listo para planeación) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-06 (FEV-21, FEV-22 completados; FEV-23 listo para planeación) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -39,7 +39,7 @@
 | FEV-19 | Permission Unification & Subagent Table Removal (v2.0 Phase 3) | TD-V2-2, TD-V2-3, TD-V2-4: unified `task:` + docs update | ✅ Completo (2026-08-05) |
 | FEV-20 | Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4) | TD-V2-1, TD-V2-5: plugin cleanup + auto-discovery recursive scan | ✅ Completo (2026-08-05) |
 | FEV-21 | Installer UX — Pack Selection & Version Detection (v2.0 Phase 5) | Pack wizard, version gating, `.codice-version` metadata format | ✅ Completo (2026-08-06) |
-| FEV-22 | Installer UX — Updater with Pack Scoping (v2.0 Phase 6) | Option A (current packs) + Option B (add packs), CLI flags | 🔲 Planificado |
+| FEV-22 | Installer UX Enhancements (v2.0 Phase 6) | agentCount metadata, install summary screen, wiki sync | ✅ Completo (2026-08-06) |
 | FEV-23 | v2.0.0 Testing & Integration | Unit/integration/E2E updates for pack-aware installer | 🔲 Planificado |
 
 ## 2. Desglose por Fase (Completadas)
@@ -344,13 +344,15 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - Nota transicional: el merge de Update es inerte mientras `package.json` sea v1.2.0 (bundled < 2.0.0 → "already up to date"); E2E 04/15/16/23 lo documentan. Update se activa al publicar ≥ 2.0.0. Comportamiento de merge cubierto por integration tests con `BUNDLED_TEST_VERSION=2.1.0`.
 **Resultado:** Wizard de instalación con selección de packs, version gating y metadata persistente `.codice-version` v2.0. 7 commits atómicos en `feat/new-agents`. 1822 tests unit+integration 0 fail, 23/23 E2E, `just check` limpio.
 
-### FEV-22 — Installer UX: Updater with Pack Scoping 🔲
-**Esfuerzo:** ~6h | **Dependencias:** FEV-21 | **Spec:** S6-UX-V2 §4, §7
-- Option A: actualizar solo packs instalados (leer `installedPacks` de metadata, scope update)
-- Option B: actualizar + agregar packs (packs instalados bloqueados, permitir seleccionar nuevos)
-- Actualizar `UpdateWorkspaceUseCase` para scoping basado en metadata
-- Nuevos CLI flags: `--packs <pack1,pack2>`, `--packs-all`, `--update-add-packs <pack1,pack2>`
-**Resultado:** Updater con 2 opciones, scoping por metadata, 3 nuevos CLI flags funcionales.
+### FEV-22 — Installer UX Enhancements ✅
+**Estado:** ✅ Completo (2026-08-06) | **Esfuerzo:** ~6h | **Dependencias:** FEV-21 | **Spec:** S6-UX-V2 §3.3, §10 Q4 | **Tech Debt:** ninguno nuevo (TD-V2-6 sigue abierto)
+- `FileRule.agentCount?: number` — metadata per-pack en el manifest (146, 92, 36, 31, 18, 11, 10, 8); `toPackOptions()` lee `agentCount ?? 0` (backward compat, spec §10 Q4: counts aproximados son SSOT)
+- Install summary screen (spec §3.3): se muestra entre pack selection y merge en Clean/Project install — packs con counts, dirs obligatorios (core, packs/main, packs/writers), optionals seleccionados, total estimado de agents + files; informativo (sin confirmation, decisión FEV-22 #5)
+- `IUserPrompt.showInstallSummary()` + tipo `InstallSummaryInfo` (método 16); helper puro `installSummary.ts` (`buildInstallSummary` + `formatInstallSummary`, dedupe de pack ids); `ClackPromptsAdapter` vía `clack.note()` con título "📋 Installation Summary"
+- Wiki sync: Home, Getting-Started, Agents, Workspace-Structure (+SDD-Pipeline count) → v2.0 (~360 agents en 10 packs, 352 subagents); repo wiki sincronizado y pusheado (602ba26)
+- Tests: +10 unit, +4 integration, +2 E2E (full suite 1822 → 1869 tests, 0 fail); E2E 23 → 25 scripts (24-install-summary-clean, 25-install-summary-packs)
+- Sin version bump (v2.0.0 coordina con FEV-23); sin deuda técnica nueva
+**Resultado:** Installer UX production-grade para v2.0.0: counts reales por pack, summary pre-merge con impacto visible, wiki alineada. 6 commits atómicos en `feat/new-agents`.
 
 ### FEV-23 — v2.0.0 Testing & Integration 🔲
 **Esfuerzo:** ~6h | **Dependencias:** FEV-17 a FEV-22 | **Spec:** S5-PACKS §9, S6-UX-V2 §9
@@ -396,5 +398,5 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
 - **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
-- **v2.0.0 planificado:** FEV-17 ✅ completado, FEV-18 ✅ completado, FEV-19 ✅ completado (2026-08-05), FEV-20 ✅ completado (2026-08-05), FEV-21 ✅ completado (2026-08-06) → FEV-22 a FEV-23 🔲 pendientes (Installer UX v2) (specs: S5-PACKS, S6-UX-V2)
-- **Esfuerzo estimado v2.0.0:** ~44h (FEV-17: 4h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h ✅, FEV-21: 8h ✅, FEV-22: 6h 🔲, FEV-23: 6h 🔲)
+- **v2.0.0 planificado:** FEV-17 ✅ completado, FEV-18 ✅ completado, FEV-19 ✅ completado (2026-08-05), FEV-20 ✅ completado (2026-08-05), FEV-21 ✅ completado (2026-08-06), FEV-22 ✅ completado (2026-08-06) → FEV-23 🔲 pendiente (specs: S5-PACKS, S6-UX-V2)
+- **Esfuerzo estimado v2.0.0:** ~44h (FEV-17: 4h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h ✅, FEV-21: 8h ✅, FEV-22: 6h ✅, FEV-23: 6h 🔲)

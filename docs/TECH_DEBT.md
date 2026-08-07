@@ -1,7 +1,7 @@
 # Technical Debt — Códice
 
 **Last updated:** 2026-08-06
-**Status:** FEV-21 complete — installer UX pack selection + version detection (v2.0)
+**Status:** FEV-21, FEV-22 complete — installer UX pack selection + version detection + install summary (v2.0)
 **Current version:** v1.2.0 (1822 tests, 0 fail)
 **Next version:** v2.0.0 (installer UX, pack selection)
 
@@ -233,6 +233,8 @@ Specs drafted: [spec-agent-packs.md](../specs/spec-agent-packs.md), [spec-instal
 > **FEV-20 (Plugin VALID_SUBAGENTS Removal) ✅ complete (2026-08-05):** TD-V2-1, TD-V2-5 closed. `VALID_SUBAGENTS` Set (~110 entries) deleted from `validSubagents.ts`; `PRIMARY_AGENTS` (6) is the only hardcoded list. `defaults.ts` cleaned (5 maps). `sdd-pipeline.ts` fallback → `new Set(PRIMARY_AGENTS)`; error message → "agents/ directory"; validation case-insensitive. `discoverValidSubagents()` recursive (skips hidden entries, lowercases names); `directoryScanner.ts` extracted. Tests: -2 assertions, +4 auto-discovery tests, `toolExecuteBefore.test.ts` rewritten. Wiki `SDD-Pipeline.md` + plugin README updated. 51 plugin tests + 1747 suite + 16/16 E2E + 3/3 plugin E2E, `just check` + `just check-plugin` clean. Post-review hardening: maxDepth=10 + duplicate-basename warning in scanner, absolute-path error messages, noUncheckedIndexedAccess in plugin tsconfig, `tsc` added to `just check-plugin`.
 
 > **FEV-21 (Installer UX: Pack Selection & Version Detection) ✅ complete (2026-08-06):** Pack selection wizard (8 selectable packs, `software-development` default, min 1, cancel aborts). Version gate in Update (blocks missing / < 2.0.0). `.codice-version` v2.0 format `{ version, installedPacks, installedAt, optionalSelections? }` (backward-compatible with `installedVersion`). Update Option A (current packs) / Option B (add packs, installed LOCKED) + `--update-add-packs`. 3 new CLI flags, 3 new `IUserPrompt` methods, `RuleCategory "pack"` (8 entries migrated from `"mandatory"`). 1822 unit+integration tests, 23 E2E scripts, 7 atomic commits on `feat/new-agents`. **Transitional note:** update merge inert while `package.json` is v1.2.0 (bundled < 2.0.0 → "already up to date"); becomes functional at publication ≥ 2.0.0. **Opened:** [TD-V2-6](#td-v2-6-no-pack-removal-mechanism) (no pack removal — deferred to v2.2.0).
+
+> **FEV-22 (Installer UX Enhancements) ✅ complete (2026-08-06):** `FileRule.agentCount?` metadata for the 8 selectable packs (146, 92, 36, 31, 18, 11, 10, 8) + `toPackOptions()` reads `agentCount ?? 0`. Install summary screen (spec §3.3) between pack selection and merge (Clean/Project only): `IUserPrompt.showInstallSummary()` (method 16) + pure `buildInstallSummary`/`formatInstallSummary` helpers + `ClackPromptsAdapter` via `clack.note()`. Informational only (no confirm — decision #5). Wiki synced to v2.0 (~360 agents in 10 packs, pushed 602ba26). Full suite 1869 tests (0 fail), 25 E2E scripts; `just check` clean. No new tech debt; TD-V2-6 remains OPEN (deferred v2.2.0). No version bump.
 
 | ID | Item | Effort | Risk | Description |
 |----|------|--------|------|-------------|
