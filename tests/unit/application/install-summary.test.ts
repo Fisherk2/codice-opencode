@@ -179,4 +179,57 @@ describe("formatInstallSummary", () => {
 		expect(text).not.toContain("Mandatory:");
 		expect(text).not.toContain("Optional:");
 	});
+
+	test("formats pack with explicit agentCount=0 as 0 agents", () => {
+		const text = formatInstallSummary({
+			packs: [{ id: "creative", agentCount: 0 }],
+			mandatoryDirs: [],
+			optionalFiles: [],
+			totalAgents: 0,
+			totalFiles: 0,
+		});
+
+		expect(text).toContain("creative (0 agents)");
+		expect(text).toContain("~0 agents");
+	});
+});
+
+describe("buildInstallSummary — edge cases", () => {
+	test("totalFiles is 0 when packs all have agentCount=0 and no mandatory dirs", () => {
+		const ZERO_RULE: FileRule = {
+			path: "packs/creative",
+			destPath: "agents",
+			category: "pack",
+			isDirectory: true,
+			description: "Creative pack",
+			agentCount: 0,
+		};
+
+		const info = buildInstallSummary([ZERO_RULE], ["creative"], [], []);
+
+		expect(info.totalAgents).toBe(0);
+		expect(info.totalFiles).toBe(0);
+		expect(info.packs[0]?.agentCount).toBe(0);
+	});
+
+	test("totalFiles counts optionals even when agentCount is 0", () => {
+		const ZERO_RULE: FileRule = {
+			path: "packs/creative",
+			destPath: "agents",
+			category: "pack",
+			isDirectory: true,
+			description: "Creative pack",
+			agentCount: 0,
+		};
+
+		const info = buildInstallSummary(
+			[ZERO_RULE],
+			["creative"],
+			["Justfile", "Dockerfile", ".editorconfig"],
+			[],
+		);
+
+		// totalFiles = 0 agents + 0 mandatory*5 + 3 optionals = 3
+		expect(info.totalFiles).toBe(3);
+	});
 });
