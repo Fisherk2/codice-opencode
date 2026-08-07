@@ -1,1 +1,1 @@
-# Script para ejecutar linters
+# Lint script

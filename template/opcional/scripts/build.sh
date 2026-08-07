@@ -1,1 +1,1 @@
-# Script para construir el proyecto
+# Build script
