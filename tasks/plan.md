@@ -1,6 +1,6 @@
 # Implementation Plan: FEV-22 — Installer UX Enhancements (v2.0 Phase 6)
 
-**Phase:** FEV-22 (v2.0 Phase 6) — 🔲 Planificado
+**Phase:** FEV-22 (v2.0 Phase 6) — ✅ Completo (2026-08-06)
 **Scope:** Implementar los 3 enhancements diferidos del installer UX v2.0: (1) `PackOption.agentCount` per-pack metadata (counts reales en `FileRuleManifestData`), (2) install summary screen (spec §3.3) con `clack.note()` mostrando packs + counts + optionals + total estimado antes del merge, (3) Wiki sync para reflejar el sistema de packs + install wizard + update scoping. NO toca lógica de Option A/B (ya en FEV-21), NO version bump (v2.0.0 coordina al final con FEV-23).
 **Spec:** [specs/spec-installer-ux-v2.md §3.3, §5.2, §10 Q4](../specs/spec-installer-ux-v2.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md)
 **Tech Debt:** TD-V2-6 (open — no change, deferred to v2.2.0)

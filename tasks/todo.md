@@ -1,6 +1,6 @@
 # FEV-22 Todo List — Installer UX Enhancements (v2.0 Phase 6)
 
-**Phase:** FEV-22 (v2.0 Phase 6) — 🔲 Planificado
+**Phase:** FEV-22 (v2.0 Phase 6) — ✅ Completo (2026-08-06)
 **Scope:** Implementar los 3 enhancements diferidos del installer UX v2.0: (1) `PackOption.agentCount` per-pack metadata con counts reales, (2) install summary screen (spec §3.3) con `clack.note()` mostrando packs + counts + optionals + total, (3) Wiki sync para reflejar el sistema de packs v2.0. NO toca lógica de Option A/B (ya en FEV-21), NO version bump (v2.0.0 coordina al final con FEV-23).
 **Spec:** [specs/spec-installer-ux-v2.md §3.3, §5.2, §10 Q4](../specs/spec-installer-ux-v2.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md)
 **Tech Debt:** TD-V2-6 (open — no change, deferred to v2.2.0)
@@ -130,57 +130,57 @@ FEV-22 Complete → FEV-23 ready
 
 ## Phase 1: Domain Foundation
 
-- [ ] **Task 1.1:** Add `agentCount?: number` field to `FileRule` interface in `src/domain/entities/FileRule.ts` with JSDoc (mentions backward compat + spec §10 Q4). Populate `agentCount: N` in 8 pack entries of `src/domain/entities/FileRuleManifestData.ts` (N = 146, 92, 36, 31, 18, 11, 10, 8). Update `src/application/packOptions.ts` line 41: `agentCount: 0` → `agentCount: rule.agentCount ?? 0`. Commit: `feat(domain): add agentCount metadata to FileRule for accurate pack summary`
-- [ ] **Task 1.2:** Update `tests/unit/application/pack-options.test.ts`. Replace test "always sets agentCount to 0" (lines 95-116) with 2 tests: (1) "reads agentCount from rule when present", (2) "defaults agentCount to 0 when absent (backward compat)". Commit (bundled): `test(domain): cover agentCount metadata in pack-options helper`
+- [x] **Task 1.1:** Add `agentCount?: number` field to `FileRule` interface in `src/domain/entities/FileRule.ts` with JSDoc (mentions backward compat + spec §10 Q4). Populate `agentCount: N` in 8 pack entries of `src/domain/entities/FileRuleManifestData.ts` (N = 146, 92, 36, 31, 18, 11, 10, 8). Update `src/application/packOptions.ts` line 41: `agentCount: 0` → `agentCount: rule.agentCount ?? 0`. Commit: `feat(domain): add agentCount metadata to FileRule for accurate pack summary`
+- [x] **Task 1.2:** Update `tests/unit/application/pack-options.test.ts`. Replace test "always sets agentCount to 0" (lines 95-116) with 2 tests: (1) "reads agentCount from rule when present", (2) "defaults agentCount to 0 when absent (backward compat)". Commit (bundled): `test(domain): cover agentCount metadata in pack-options helper`
 
 **Checkpoint:** ✅
-- [ ] `FileRule.agentCount?: number` field added with JSDoc
-- [ ] 8 pack entries in manifest have `agentCount: N`
-- [ ] `toPackOptions()` reads from `rule.agentCount ?? 0`
-- [ ] 1 unit test updated, 1 new test added (8 total in pack-options.test.ts)
-- [ ] `just test-unit` shows 1824+ tests pass (1822 baseline + 2 net)
-- [ ] **Review con humano antes de Phase 2**
+- [x] `FileRule.agentCount?: number` field added with JSDoc
+- [x] 8 pack entries in manifest have `agentCount: N`
+- [x] `toPackOptions()` reads from `rule.agentCount ?? 0`
+- [x] 1 unit test updated, 1 new test added (8 total in pack-options.test.ts)
+- [x] `just test-unit` shows 1824+ tests pass (1822 baseline + 2 net)
+- [x] **Review con humano antes de Phase 2**
 
 ---
 
 ## Phase 2: IUserPrompt Port Extension + Install Summary
 
-- [ ] **Task 2.1:** Add `InstallSummaryInfo` type + `showInstallSummary()` method to `src/application/ports/IUserPrompt.ts`. Add `formatInstallSummary()` import to `src/infrastructure/adapters/ClackPromptsAdapter.ts` and implement method using `clack.note()`. Commit (bundled): `feat(adapter): add IUserPrompt.showInstallSummary for pre-install summary`
-- [ ] **Task 2.2:** Create `src/application/installSummary.ts` (NEW, ≤60 lines) with 2 exports: `buildInstallSummary(packRules, selectedPacks, selectedOptionals, allRules): InstallSummaryInfo` (aggregates agent counts + computes totals) and `formatInstallSummary(info): string` (multi-line text for `clack.note()`). Commit (bundled): Same as T2.1
-- [ ] **Task 2.3:** Update `src/application/use-cases/InstallUseCaseBase.ts`. Insert new phase between `buildRules` (line 96) and `mergeEngine.execute` (line 101). Call `userPrompt.showInstallSummary(buildInstallSummary(...))`. Add 2 imports (`FILE_RULE_MANIFEST, getPackRules` + `buildInstallSummary`). If file exceeds 200 lines, extract summary phase to private method `private showSummary(rules, packs, optionals)`. Commit (bundled): Same as T2.1
-- [ ] **Task 2.4:** Add tests: (1) NEW `tests/unit/application/install-summary.test.ts` with 4+ unit tests for `buildInstallSummary` + `formatInstallSummary`; (2) add 2-3 tests to `clack-prompts-adapter.test.ts` for `showInstallSummary()`; (3) add 1 test to `clean-install.test.ts` and 1 to `project-install.test.ts` verifying summary shown. Commit (bundled): `test(adapter): cover install summary helper and port method`
+- [x] **Task 2.1:** Add `InstallSummaryInfo` type + `showInstallSummary()` method to `src/application/ports/IUserPrompt.ts`. Add `formatInstallSummary()` import to `src/infrastructure/adapters/ClackPromptsAdapter.ts` and implement method using `clack.note()`. Commit (bundled): `feat(adapter): add IUserPrompt.showInstallSummary for pre-install summary`
+- [x] **Task 2.2:** Create `src/application/installSummary.ts` (NEW, ≤60 lines) with 2 exports: `buildInstallSummary(packRules, selectedPacks, selectedOptionals, allRules): InstallSummaryInfo` (aggregates agent counts + computes totals) and `formatInstallSummary(info): string` (multi-line text for `clack.note()`). Commit (bundled): Same as T2.1
+- [x] **Task 2.3:** Update `src/application/use-cases/InstallUseCaseBase.ts`. Insert new phase between `buildRules` (line 96) and `mergeEngine.execute` (line 101). Call `userPrompt.showInstallSummary(buildInstallSummary(...))`. Add 2 imports (`FILE_RULE_MANIFEST, getPackRules` + `buildInstallSummary`). If file exceeds 200 lines, extract summary phase to private method `private showSummary(rules, packs, optionals)`. Commit (bundled): Same as T2.1
+- [x] **Task 2.4:** Add tests: (1) NEW `tests/unit/application/install-summary.test.ts` with 4+ unit tests for `buildInstallSummary` + `formatInstallSummary`; (2) add 2-3 tests to `clack-prompts-adapter.test.ts` for `showInstallSummary()`; (3) add 1 test to `clean-install.test.ts` and 1 to `project-install.test.ts` verifying summary shown. Commit (bundled): `test(adapter): cover install summary helper and port method`
 
 **Checkpoint:** ✅
-- [ ] `IUserPrompt.showInstallSummary()` + `InstallSummaryInfo` type added
-- [ ] `installSummary.ts` helper created with 2 exports
-- [ ] `InstallUseCaseBase` shows summary between `buildRules` and `merge`
-- [ ] `ClackPromptsAdapter.showInstallSummary()` implemented via `clack.note()`
-- [ ] 8+ new tests pass (4 unit + 2 adapter + 1 clean + 1 project)
-- [ ] `just test-integration` shows 100% pass
-- [ ] `just test-unit` shows 1830+ tests pass (1824 baseline + 6+ new unit)
-- [ ] **Review con humano antes de Phase 3**
+- [x] `IUserPrompt.showInstallSummary()` + `InstallSummaryInfo` type added
+- [x] `installSummary.ts` helper created with 2 exports
+- [x] `InstallUseCaseBase` shows summary between `buildRules` and `merge`
+- [x] `ClackPromptsAdapter.showInstallSummary()` implemented via `clack.note()`
+- [x] 8+ new tests pass (4 unit + 2 adapter + 1 clean + 1 project)
+- [x] `just test-integration` shows 100% pass
+- [x] `just test-unit` shows 1830+ tests pass (1824 baseline + 6+ new unit)
+- [x] **Review con humano antes de Phase 3**
 
 ---
 
 ## Phase 3: E2E Tests
 
-- [ ] **Task 3.1:** Create 2 new E2E bash scripts in `tests/e2e/`:
+- [x] **Task 3.1:** Create 2 new E2E bash scripts in `tests/e2e/`:
   - `24-install-summary-clean.sh` — Verify Clean Install muestra el summary (assert_output_contains "📋 Installation Summary" + "software-development (146 agents)" + "Total: ~238 agents" con `--packs software-development,business`)
   - `25-install-summary-packs.sh` — Verify count accuracy (manifest count matches summary + filesystem count in expected range)
   
   Each script uses `common.sh` helpers (`assert_output_contains`, `setup_workspace`, `log_pass`). Commit: `test(e2e): cover install summary display and count accuracy`
 
 **Checkpoint:** ✅
-- [ ] 2 new E2E scripts created
-- [ ] All 25 E2E scenarios pass (`just test-e2e` shows 25/25)
-- [ ] SC-UX3 (installation summary) verified end-to-end
-- [ ] **Review con humano antes de Phase 4**
+- [x] 2 new E2E scripts created
+- [x] All 25 E2E scenarios pass (`just test-e2e` shows 25/25)
+- [x] SC-UX3 (installation summary) verified end-to-end
+- [x] **Review con humano antes de Phase 4**
 
 ---
 
 ## Phase 4: Wiki Sync
 
-- [ ] **Task 4.1:** Update 4 wiki pages in `docs/wiki-source/`:
+- [x] **Task 4.1:** Update 4 wiki pages in `docs/wiki-source/`:
   - `Home.md` — Update agent count 98 → ~355, mention "10 packs (2 mandatory + 8 selectable)"
   - `Getting-Started.md` — Add mention of pack selection wizard + install summary in Clean Install section
   - `Agents.md` — Add pack distribution table with counts (146, 92, 36, 31, 18, 11, 10, 8, 6, 4)
@@ -197,40 +197,40 @@ FEV-22 Complete → FEV-23 ready
   Commit: `docs(wiki): sync v2.0 pack system and install summary to public wiki`
 
 **Checkpoint:** ✅
-- [ ] 4 wiki pages updated
-- [ ] .wiki/ repo synced and pushed
-- [ ] Public wiki reflects v2.0 pack system
-- [ ] **Review con humano antes de Phase 5**
+- [x] 4 wiki pages updated
+- [x] .wiki/ repo synced and pushed
+- [x] Public wiki reflects v2.0 pack system
+- [x] **Review con humano antes de Phase 5**
 
 ---
 
 ## Phase 5: Final Documentation
 
-- [ ] **Task 5.1:** Update 3 files: (1) `CHANGELOG.md` — add FEV-22 entry under `[Unreleased]` → `### Added` with summary of changes; (2) `docs/WORKFLOW.md` — FEV-22 status `🔲 Planificado` → `✅ Completo (2026-08-06)` + expand section with detailed bullets; (3) `docs/TECH_DEBT.md` — add FEV-22 closure note to v2.0.0 section. Commit: `docs: FEV-22 changelog, workflow, and tech debt updates`
+- [x] **Task 5.1:** Update 3 files: (1) `CHANGELOG.md` — add FEV-22 entry under `[Unreleased]` → `### Added` with summary of changes; (2) `docs/WORKFLOW.md` — FEV-22 status `🔲 Planificado` → `✅ Completo (2026-08-06)` + expand section with detailed bullets; (3) `docs/TECH_DEBT.md` — add FEV-22 closure note to v2.0.0 section. Commit: `docs: FEV-22 changelog, workflow, and tech debt updates`
 
 **Checkpoint:** ✅
-- [ ] Commits atómicos con Conventional Commits (5 total)
-- [ ] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Branch `feat/new-agents` ready para PR a `develop`
-- [ ] **FEV-22 cierra; FEV-23 (Testing & Integration) puede comenzar**
+- [x] Commits atómicos con Conventional Commits (5 total)
+- [x] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
+- [x] Branch `feat/new-agents` ready para PR a `develop`
+- [x] **FEV-22 cierra; FEV-23 (Testing & Integration) puede comenzar**
 
 ---
 
 ## Phase 6: Verification (CRITICAL — gates FEV-23)
 
-- [ ] **Task 6.1:** Run full verification — `just check` (0 errors) + `just test` (1830+ tests pass, 0 fail) + `just test-e2e` (25/25 scenarios)
-- [ ] Manual validation:
-  - [ ] `bun run src/cli/main.ts --help` shows 10 flags (no new flags in FEV-22)
-  - [ ] `bun run src/cli/main.ts --clean --force --packs software-development,business` shows install summary with "(238 agents)"
-  - [ ] `grep "agentCount:" src/domain/entities/FileRuleManifestData.ts | wc -l` = 8
-  - [ ] `git -C docs/wiki-source/.wiki log -1` shows new wiki commit
+- [x] **Task 6.1:** Run full verification — `just check` (0 errors) + `just test` (1830+ tests pass, 0 fail) + `just test-e2e` (25/25 scenarios)
+- [x] Manual validation:
+  - [x] `bun run src/cli/main.ts --help` shows 10 flags (no new flags in FEV-22)
+  - [x] `bun run src/cli/main.ts --clean --force --packs software-development,business` shows install summary with "(238 agents)"
+  - [x] `grep "agentCount:" src/domain/entities/FileRuleManifestData.ts | wc -l` = 8
+  - [x] `git -C docs/wiki-source/.wiki log -1` shows new wiki commit
 
 **Checkpoint:** ✅
-- [ ] `just check` 0 errors
-- [ ] `just test` 1830+ tests pass
-- [ ] `just test-e2e` 25/25 pass
-- [ ] Coverage overall ≥ 95% line
-- [ ] **Si algo falla, NO proceder a FEV-23, identificar root cause**
+- [x] `just check` 0 errors
+- [x] `just test` 1830+ tests pass
+- [x] `just test-e2e` 25/25 pass
+- [x] Coverage overall ≥ 95% line
+- [x] **Si algo falla, NO proceder a FEV-23, identificar root cause**
 
 ---
 
@@ -238,50 +238,50 @@ FEV-22 Complete → FEV-23 ready
 
 ### Funcional
 
-- [ ] `FileRule.agentCount?: number` field added with JSDoc
-- [ ] 8 pack entries in `FileRuleManifestData` have `agentCount: N` (146, 92, 36, 31, 18, 11, 10, 8)
-- [ ] `toPackOptions()` reads from `rule.agentCount ?? 0` (backward compat)
-- [ ] `IUserPrompt.showInstallSummary()` + `InstallSummaryInfo` type added
-- [ ] `ClackPromptsAdapter.showInstallSummary()` implemented via `clack.note()`
-- [ ] `installSummary.ts` helper with 2 exports (`buildInstallSummary`, `formatInstallSummary`)
-- [ ] `InstallUseCaseBase` shows summary between `buildRules` and `merge`
-- [ ] Wiki 4 pages updated + .wiki/ repo synced
+- [x] `FileRule.agentCount?: number` field added with JSDoc
+- [x] 8 pack entries in `FileRuleManifestData` have `agentCount: N` (146, 92, 36, 31, 18, 11, 10, 8)
+- [x] `toPackOptions()` reads from `rule.agentCount ?? 0` (backward compat)
+- [x] `IUserPrompt.showInstallSummary()` + `InstallSummaryInfo` type added
+- [x] `ClackPromptsAdapter.showInstallSummary()` implemented via `clack.note()`
+- [x] `installSummary.ts` helper with 2 exports (`buildInstallSummary`, `formatInstallSummary`)
+- [x] `InstallUseCaseBase` shows summary between `buildRules` and `merge`
+- [x] Wiki 4 pages updated + .wiki/ repo synced
 
 ### Tests
 
-- [ ] 1 unit test updated in `pack-options.test.ts` (hardcoded 0 → reads from rule)
-- [ ] 1 new unit test in `pack-options.test.ts` (defaults to 0 when absent)
-- [ ] 4+ new unit tests in `install-summary.test.ts`
-- [ ] 2-3 new adapter tests in `clack-prompts-adapter.test.ts`
-- [ ] 1 new test in `clean-install.test.ts` (summary shown)
-- [ ] 1 new test in `project-install.test.ts` (summary shown)
-- [ ] 2 new E2E scripts (24-25)
-- [ ] 1830+ tests pass, 0 fail (1822 baseline + 8+ new)
+- [x] 1 unit test updated in `pack-options.test.ts` (hardcoded 0 → reads from rule)
+- [x] 1 new unit test in `pack-options.test.ts` (defaults to 0 when absent)
+- [x] 4+ new unit tests in `install-summary.test.ts`
+- [x] 2-3 new adapter tests in `clack-prompts-adapter.test.ts`
+- [x] 1 new test in `clean-install.test.ts` (summary shown)
+- [x] 1 new test in `project-install.test.ts` (summary shown)
+- [x] 2 new E2E scripts (24-25)
+- [x] 1830+ tests pass, 0 fail (1822 baseline + 8+ new)
 
 ### Docs
 
-- [ ] `CHANGELOG.md` FEV-22 entry with subsecciones (Added)
-- [ ] `docs/WORKFLOW.md` FEV-22 marked ✅ + section expanded
-- [ ] `docs/TECH_DEBT.md` FEV-22 closure documented
-- [ ] Wiki 4 pages updated + .wiki/ repo synced and pushed
-- [ ] No version bump (v2.0.0 coordina al final con FEV-23)
+- [x] `CHANGELOG.md` FEV-22 entry with subsecciones (Added)
+- [x] `docs/WORKFLOW.md` FEV-22 marked ✅ + section expanded
+- [x] `docs/TECH_DEBT.md` FEV-22 closure documented
+- [x] Wiki 4 pages updated + .wiki/ repo synced and pushed
+- [x] No version bump (v2.0.0 coordina al final con FEV-23)
 
 ### Calidad
 
-- [ ] `just check`: 0 errors, 0 warnings nuevos
-- [ ] `just test`: 1830+ tests, 0 fail
-- [ ] `just test-e2e`: 25/25 scenarios
-- [ ] Coverage overall ≥ 95% line (unchanged or +)
-- [ ] No `any` types introducidos
-- [ ] No nuevos dependencies
+- [x] `just check`: 0 errors, 0 warnings nuevos
+- [x] `just test`: 1830+ tests, 0 fail
+- [x] `just test-e2e`: 25/25 scenarios
+- [x] Coverage overall ≥ 95% line (unchanged or +)
+- [x] No `any` types introducidos
+- [x] No nuevos dependencies
 
 ### Proceso
 
-- [ ] 5 atomic commits con Conventional Commits format
-- [ ] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Branch `feat/new-agents` (continúa de FEV-17/18/19/20/21)
-- [ ] PR description documentado
-- [ ] No version bump (v2.0.0 coordina al final con FEV-23)
+- [x] 5 atomic commits con Conventional Commits format
+- [x] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
+- [x] Branch `feat/new-agents` (continúa de FEV-17/18/19/20/21)
+- [x] PR description documentado
+- [x] No version bump (v2.0.0 coordina al final con FEV-23)
 
 ---
 

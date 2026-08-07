@@ -37,12 +37,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **FEV-22 — Installer UX Enhancements (v2.0 Phase 6):**
-  - Per-pack agent counts: `FileRule.agentCount?` field populated for the 8 selectable packs (146, 92, 36, 31, 18, 11, 10, 8); `toPackOptions()` reads `agentCount ?? 0` (backward compatible)
-  - Install summary screen (spec §3.3) before merge in Clean/Project install: packs with agent counts, mandatory dirs (core, main, writers), selected optionals, total agents + files estimate — informational only
-  - New `IUserPrompt.showInstallSummary()` + `InstallSummaryInfo` type; pure `buildInstallSummary`/`formatInstallSummary` helpers (`src/application/installSummary.ts`, dedupes pack ids)
-  - Wiki sync: Home/Getting-Started/Agents/Workspace-Structure updated to v2.0 (~360 agents in 10 packs)
-  - Tests: +10 unit, +4 integration, +2 E2E (full suite 1869 tests, 0 failures; 25 E2E scripts); `just check` clean
-  - No version bump (v2.0.0 coordinates at FEV-23); no new tech debt (TD-V2-6 remains open)
+   - Per-pack agent counts: `FileRule.agentCount?` field populated for the 8 selectable packs (146, 92, 36, 31, 18, 11, 10, 8); `toPackOptions()` reads `agentCount ?? 0` (backward compatible)
+   - Install summary screen (spec §3.3) before merge in Clean/Project install: packs with agent counts, mandatory dirs (core, main, writers), selected optionals, total agents + files estimate — informational only
+   - New `IUserPrompt.showInstallSummary()` + `InstallSummaryInfo` type; pure `buildInstallSummary`/`formatInstallSummary` helpers (`src/application/installSummary.ts`, dedupes pack ids)
+   - Wiki sync: Home/Getting-Started/Agents/Workspace-Structure updated to v2.0 (~360 agents in 10 packs)
+   - Tests: +13 unit, +4 integration, +2 E2E (full suite 1872 tests, 0 failures; 25 E2E scripts); `just check` clean
+   - Code simplification: flatMap restructure in `buildInstallSummary`, hoisted `options.force ?? false`, dropped async wrapper in `promptForPackSelection`, extracted `ESTIMATED_FILES_PER_MANDATORY_DIR` constant, removed dead `packIdFromPath` re-export
+   - 5-axis code review (correctness, readability, architecture, security, performance): APPROVE — 3 nits fixed
+   - No version bump (v2.0.0 coordinates at FEV-23); no new tech debt (TD-V2-6 remains open)
 
 - **FEV-21 — Installer UX: Pack Selection & Version Detection (v2.0 Phase 5):**
   - Pack selection wizard: 8 selectable packs with `software-development` pre-selected; minimum 1 enforced; cancelling aborts before any file writes

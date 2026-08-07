@@ -6,7 +6,7 @@
 **Current Version:** v1.2.0  
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
-> **v2.0 Progress:** FEV-17 ✅ + FEV-18 ✅ (2026-08-04) + FEV-19 ✅ + FEV-20 ✅ (2026-08-05) + FEV-21 ✅ (2026-08-06) → FEV-22 ready to plan → FEV-23 🔲. FEV-22 (Installer UX: Updater with Pack Scoping) is ready to plan.
+> **v2.0 Progress:** FEV-17 ✅ + FEV-18 ✅ (2026-08-04) + FEV-19 ✅ + FEV-20 ✅ (2026-08-05) + FEV-21 ✅ (2026-08-06) + FEV-22 ✅ (2026-08-06) → FEV-23 ready to plan. FEV-23 (v2.0.0 Testing & Integration) is ready to plan.
 
 ---
 
