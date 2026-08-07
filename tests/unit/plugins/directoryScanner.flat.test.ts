@@ -9,25 +9,24 @@
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { scanMarkdownFiles } from "../../../template/obligatorio/core/.opencode/plugins/src/directoryScanner";
+import { cleanupTestDir, createTestDir } from "./helpers";
 
 let tmpDir: string;
 
 beforeAll(async () => {
-	tmpDir = join(tmpdir(), `dirscan-flat-${Date.now()}`);
-	await mkdir(tmpDir, { recursive: true });
+	tmpDir = await createTestDir("dirscan-flat");
 });
 
 afterAll(async () => {
-	await rm(tmpDir, { recursive: true, force: true });
+	await cleanupTestDir(tmpDir);
 });
 
 describe("scanMarkdownFiles", () => {
 	test("returns empty array for non-existent directory", () => {
-		const result = scanMarkdownFiles("/tmp/definitely-not-a-real-dir-12345");
+		const result = scanMarkdownFiles(join(tmpDir, "missing-dir"));
 		expect(result).toEqual([]);
 	});
 

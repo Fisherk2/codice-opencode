@@ -7,26 +7,25 @@
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { discoverValidSubagents } from "../../../template/obligatorio/core/.opencode/plugins/src/autoDiscovery";
 import { PRIMARY_AGENTS } from "../../../template/obligatorio/core/.opencode/plugins/src/validSubagents";
+import { cleanupTestDir, createTestDir } from "./helpers";
 
 let tmpDir: string;
 
 beforeAll(async () => {
-	tmpDir = join(tmpdir(), `auto-disc-agents-${Date.now()}`);
-	await mkdir(tmpDir, { recursive: true });
+	tmpDir = await createTestDir("auto-disc-agents");
 });
 
 afterAll(async () => {
-	await rm(tmpDir, { recursive: true, force: true });
+	await cleanupTestDir(tmpDir);
 });
 
 describe("discoverValidSubagents", () => {
 	test("returns empty Set for non-existent directory", () => {
-		const result = discoverValidSubagents("/tmp/no-agents-dir-99999");
+		const result = discoverValidSubagents(join(tmpDir, "missing-dir"));
 		expect(result).toEqual(new Set());
 	});
 

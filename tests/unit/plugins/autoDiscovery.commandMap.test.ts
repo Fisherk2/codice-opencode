@@ -8,25 +8,24 @@
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { chmod, mkdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { chmod, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { discoverCommandAgentMap } from "../../../template/obligatorio/core/.opencode/plugins/src/autoDiscovery";
+import { cleanupTestDir, createTestDir } from "./helpers";
 
 let tmpDir: string;
 
 beforeAll(async () => {
-	tmpDir = join(tmpdir(), `auto-disc-cmd-${Date.now()}`);
-	await mkdir(tmpDir, { recursive: true });
+	tmpDir = await createTestDir("auto-disc-cmd");
 });
 
 afterAll(async () => {
-	await rm(tmpDir, { recursive: true, force: true });
+	await cleanupTestDir(tmpDir);
 });
 
 describe("discoverCommandAgentMap", () => {
 	test("returns empty object for non-existent directory", () => {
-		const result = discoverCommandAgentMap("/tmp/non-existent-cmd-dir-99999");
+		const result = discoverCommandAgentMap(join(tmpDir, "missing-dir"));
 		expect(result).toEqual({});
 	});
 

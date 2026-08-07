@@ -3,32 +3,49 @@
  *
  * Validates recursive scanning, hidden-entry skipping, maxDepth enforcement,
  * and duplicate-basename detection. These tests cover the scanTree function
- * (lines 73-97) and the scanMarkdownFilesRecursive wrapper (lines 56-64).
+ * and the scanMarkdownFilesRecursive wrapper.
  *
  * Uses real temporary directories (no mocks) since the module operates
  * directly on the filesystem via node:fs.
  */
 
-import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test";
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	spyOn,
+	test,
+} from "bun:test";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { scanMarkdownFilesRecursive } from "../../../template/obligatorio/core/.opencode/plugins/src/directoryScanner";
+import { cleanupTestDir, createTestDir } from "./helpers";
 
 let tmpDir: string;
+let debugSpy: ReturnType<typeof spyOn>;
 
 beforeAll(async () => {
-	tmpDir = join(tmpdir(), `dirscan-recursive-${Date.now()}`);
-	await mkdir(tmpDir, { recursive: true });
+	tmpDir = await createTestDir("dirscan-recursive");
 });
 
 afterAll(async () => {
-	await rm(tmpDir, { recursive: true, force: true });
+	await cleanupTestDir(tmpDir);
+});
+
+beforeEach(() => {
+	debugSpy = spyOn(console, "debug");
+});
+
+afterEach(() => {
+	debugSpy.mockRestore();
 });
 
 describe("scanMarkdownFilesRecursive", () => {
 	test("returns empty array for non-existent directory", () => {
-		const result = scanMarkdownFilesRecursive("/tmp/no-such-dir-99999");
+		const result = scanMarkdownFilesRecursive(join(tmpDir, "missing-dir"));
 		expect(result).toEqual([]);
 	});
 
@@ -102,16 +119,10 @@ describe("scanMarkdownFilesRecursive", () => {
 		await mkdir(join(dir, "sub"));
 		await writeFile(join(dir, "sub", "nested.md"), "# Nested");
 
-		const spy = spyOn(console, "debug");
-		try {
-			const result = scanMarkdownFilesRecursive(dir, 0);
+		const result = scanMarkdownFilesRecursive(dir, 0);
 
-			expect(result).toEqual(["root-file"]);
-			const debugCalls = spy.mock.calls.flat().map(String);
-			expect(debugCalls.some((c) => c.includes("Max depth exceeded"))).toBe(true);
-		} finally {
-			spy.mockRestore();
-		}
+		expect(result).toEqual(["root-file"]);
+		expect(debugCallsContain("Max depth exceeded")).toBe(true);
 	});
 
 	test("stops recursing at maxDepth=1 (descends one level only)", async () => {
@@ -123,16 +134,12 @@ describe("scanMarkdownFilesRecursive", () => {
 		await mkdir(join(dir, "level1", "level2"));
 		await writeFile(join(dir, "level1", "level2", "l2.md"), "# L2");
 
-		const spy = spyOn(console, "debug");
-		try {
-			const result = scanMarkdownFilesRecursive(dir, 1);
+		const result = scanMarkdownFilesRecursive(dir, 1);
 
-			expect(result).toEqual(expect.arrayContaining(["root", "l1"]));
-			expect(result).not.toEqual(expect.arrayContaining(["l2"]));
-			expect(spy).toHaveBeenCalled();
-		} finally {
-			spy.mockRestore();
-		}
+		// Root and level1 are included, but level2 is beyond maxDepth.
+		expect(result).toEqual(expect.arrayContaining(["root", "l1"]));
+		expect(result).not.toContain("l2");
+		expect(debugCallsContain("Max depth exceeded")).toBe(true);
 	});
 
 	test("detects duplicate basenames across subdirectories", async () => {
@@ -142,16 +149,11 @@ describe("scanMarkdownFilesRecursive", () => {
 		await mkdir(join(dir, "pack-b"), { recursive: true });
 		await writeFile(join(dir, "pack-b", "agent.md"), "# Agent B");
 
-		const spy = spyOn(console, "debug");
-		try {
-			const result = scanMarkdownFilesRecursive(dir);
+		const result = scanMarkdownFilesRecursive(dir);
 
-			expect(result.filter((n) => n === "agent").length).toBe(2);
-			const debugCalls = spy.mock.calls.flat().map(String);
-			expect(debugCalls.some((c) => c.includes('Duplicate agent basename "agent"'))).toBe(true);
-		} finally {
-			spy.mockRestore();
-		}
+		// Both occurrences are added to names (caller's Set dedupes).
+		expect(result.filter((n) => n === "agent").length).toBe(2);
+		expect(debugCallsContain('Duplicate agent basename "agent"')).toBe(true);
 	});
 
 	test("returns empty array for an empty directory", async () => {
@@ -163,3 +165,11 @@ describe("scanMarkdownFilesRecursive", () => {
 		expect(result).toEqual([]);
 	});
 });
+
+/** True if any captured console.debug call contains the given fragment. */
+function debugCallsContain(fragment: string): boolean {
+	return debugSpy.mock.calls
+		.flat()
+		.map(String)
+		.some((call: string) => call.includes(fragment));
+}

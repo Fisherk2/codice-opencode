@@ -47,17 +47,16 @@ describe("discoverAgentMentionPatterns", () => {
 		const patterns = result["tlaloc"];
 		expect(patterns).toBeDefined();
 		expect(patterns).toHaveLength(2);
-		const atPattern = patterns![0];
-		const agentePattern = patterns![1];
-		expect(atPattern).toBeInstanceOf(RegExp);
-		expect(agentePattern).toBeInstanceOf(RegExp);
 
-		expect(atPattern!.test("@tlaloc")).toBe(true);
-		expect(atPattern!.test("@tlaloc!")).toBe(true);
-		expect(agentePattern!.test("agente tlaloc")).toBe(true);
-		expect(agentePattern!.test("agente  tlaloc")).toBe(true);
-		expect(atPattern!.test("tlaloc")).toBe(false);
-		expect(agentePattern!.test("tlaloc")).toBe(false);
+		// @tlaloc should match
+		expect(patterns?.[0]?.test("@tlaloc")).toBe(true);
+		expect(patterns?.[0]?.test("@tlaloc!")).toBe(true);
+		// agente tlaloc should match
+		expect(patterns?.[1]?.test("agente tlaloc")).toBe(true);
+		expect(patterns?.[1]?.test("agente  tlaloc")).toBe(true);
+		// Partial matches should not match
+		expect(patterns?.[0]?.test("tlaloc")).toBe(false);
+		expect(patterns?.[1]?.test("tlaloc")).toBe(false);
 	});
 
 	test("returns empty record for empty set", () => {
