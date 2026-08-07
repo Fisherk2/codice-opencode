@@ -371,7 +371,7 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
   - ✅ Destino plano `agents/` sin subdirectorios de packs — E2E 28
 - ✅ Version bump 1.2.0 → 2.0.0 (T3.1): `VERSION` auto-derivado de `package.json` (sin cambio de código); activa el merge real de Update
 - ✅ E2E 04/15/16 comment-only cleanup + E2E 10 fixed: short-circuit "already up to date" ahora comportamiento permanente, no workaround transicional
-**Resultado:** Suite completa para v2.0.0 — **1920 tests unit+integration 0 fail**, **30/30 E2E**, `just check` limpio, coverage overall 95.68% (producción `src/` 99.12% — gap pre-existente de FEV-17→22 en test-helpers/plugins/scripts/Windows-only branches, ver TECH_DEBT TD-V2-7). No-op transicional eliminado — update merge funcional con template bundled v2.0.0. **v2.0.0 PRE-RELEASE READY** (la coordinación del release — merge a main, tag, publicación npm — es un proceso separado).
+**Resultado:** Suite completa para v2.0.0 — **1920 tests unit+integration 0 fail**, **30/30 E2E**, `just check` limpio, coverage overall 95.68% (producción `src/` 99.12% — gap pre-existente de FEV-17→22 en test-helpers/plugins/scripts/Windows-only branches, ver TECH_DEBT TD-V2-7). No-op transicional eliminado — update merge funcional con template bundled v2.0.0. **v2.0.0 released** (2026-08-07).
 
 ---
 
@@ -403,5 +403,5 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
 - **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
-- **v2.0.0 completo:** FEV-17 ✅, FEV-18 ✅, FEV-19 ✅ (2026-08-05), FEV-20 ✅ (2026-08-05), FEV-21 ✅ (2026-08-06), FEV-22 ✅ (2026-08-06), FEV-23 ✅ (2026-08-07) — **v2.0.0 PRE-RELEASE READY** (1920 tests, 30/30 E2E, coverage 95.68% — coordinación del release separada: PR develop→main, tag v2.0.0, publicación npm)
+- **v2.0.0 completo:** FEV-17 ✅, FEV-18 ✅, FEV-19 ✅ (2026-08-05), FEV-20 ✅ (2026-08-05), FEV-21 ✅ (2026-08-06), FEV-22 ✅ (2026-08-06), FEV-23 ✅ (2026-08-07) — **v2.0.0 released** (2026-08-07) (1920 tests, 30/30 E2E, coverage 95.68%)
 - **Esfuerzo estimado v2.0.0:** ~50h (FEV-17: 7h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h ✅, FEV-21: 8h ✅, FEV-22: 6h ✅, FEV-23: 6h ✅ = 41h de implementación + ~9h de overhead: code reviews 5-axis, wiki sync, release coordination)
