@@ -5,8 +5,8 @@ color: "#32CD32"
 temperature: 0.2
 hidden: true
 permission:
-  write: ask
-  edit: ask
+  write: allow
+  edit: allow
   bash:
     "npm test *": allow
     "npx vitest *": allow
