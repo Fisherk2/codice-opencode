@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { parseArgs, validateDestPath } from "../../../src/cli/parse-args";
+import { parseArgs } from "../../../src/cli/parse-args";
+import { validateDestPath } from "../../../src/cli/validateDestPath";
 
 describe("parseArgs", () => {
 	it("should return interactive mode when no flags are given", () => {
@@ -101,6 +102,53 @@ describe("parseArgs", () => {
 		expect(result!.destination).toBe("./my-project");
 		expect(result!.options.force).toBe(true);
 		expect(result!.options.verbose).toBe(true);
+	});
+
+	// -----------------------------------------------------------------------
+	// --packs / --packs-all / --update-add-packs flag tests
+	// -----------------------------------------------------------------------
+
+	it("should parse --packs with a comma-separated list", () => {
+		const result = parseArgs(["--clean", "--force", "--packs", "software-development,business"]);
+		expect(result).not.toBeNull();
+		expect(result!.options.packs).toEqual(["software-development", "business"]);
+	});
+
+	it("should parse --packs-all flag", () => {
+		const result = parseArgs(["--clean", "--force", "--packs-all"]);
+		expect(result).not.toBeNull();
+		expect(result!.options.packsAll).toBe(true);
+	});
+
+	it("should parse --update-add-packs with a comma-separated list", () => {
+		const result = parseArgs(["--update", "--force", "--update-add-packs", "creative,finance"]);
+		expect(result).not.toBeNull();
+		expect(result!.options.updateAddPacks).toEqual(["creative", "finance"]);
+	});
+
+	it("should return null for an empty --packs value", () => {
+		const result = parseArgs(["--clean", "--packs", ""]);
+		expect(result).toBeNull();
+	});
+
+	it("should return null when --packs is provided without a value", () => {
+		const result = parseArgs(["--clean", "--packs"]);
+		expect(result).toBeNull();
+	});
+
+	it("should return null for an unknown pack ID in --packs", () => {
+		const result = parseArgs(["--clean", "--packs", "software-development,nonexistent-pack"]);
+		expect(result).toBeNull();
+	});
+
+	it("should return null for an unknown pack ID in --update-add-packs", () => {
+		const result = parseArgs(["--update", "--update-add-packs", "ghost-pack"]);
+		expect(result).toBeNull();
+	});
+
+	it("should return null when a flag is mistaken for a --packs value", () => {
+		const result = parseArgs(["--clean", "--packs", "--force"]);
+		expect(result).toBeNull();
 	});
 
 	// -----------------------------------------------------------------------

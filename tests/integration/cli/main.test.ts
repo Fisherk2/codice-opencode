@@ -1,7 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, mock as mockFn } from "bun:test";
 import * as fs from "node:fs/promises";
+import * as os from "node:os";
+import * as path from "node:path";
 import type { Dependencies } from "../../../src/cli/main";
-import { createDependencies, main, promptForMode, runMode, VERSION } from "../../../src/cli/main";
+import {
+	createDependencies,
+	detectVersionContext,
+	main,
+	promptForMode,
+	runMode,
+	VERSION,
+} from "../../../src/cli/main";
 import { EXIT_ERROR, EXIT_INTERRUPT, EXIT_SUCCESS, EXIT_USAGE } from "../../../src/cli/output";
 import { failure, success } from "../../../src/domain/types/Result";
 
@@ -94,6 +103,50 @@ describe("runMode", () => {
 		expect(callArgs[1]).toEqual({ force: true, version: VERSION });
 	});
 
+	it("should pass --packs list to clean install execute options", async () => {
+		const deps = createMockDeps();
+		await runMode("clean", deps, "/tmp/project", {
+			force: false,
+			verbose: false,
+			packs: ["software-development", "business"],
+		});
+		const callArgs = (deps.cleanInstall.execute as ReturnType<typeof mockFn>).mock
+			.calls[0] as unknown[];
+		expect(callArgs[1]).toEqual({
+			force: false,
+			version: VERSION,
+			packs: ["software-development", "business"],
+		});
+	});
+
+	it("should pass --packs-all resolution to project install execute options", async () => {
+		const deps = createMockDeps();
+		await runMode("project", deps, "/tmp/project", {
+			force: true,
+			verbose: false,
+			packsAll: true,
+		});
+		const callArgs = (deps.projectInstall.execute as ReturnType<typeof mockFn>).mock
+			.calls[0] as unknown[];
+		const options = callArgs[1] as { packs: readonly string[] };
+		// resolvePacks(--packs-all) yields all 8 pack IDs
+		expect(options.packs).toHaveLength(8);
+		expect(options.packs).toContain("software-development");
+		expect(options.packs).toContain("business");
+	});
+
+	it("should pass --update-add-packs to update execute options", async () => {
+		const deps = createMockDeps();
+		await runMode("update", deps, "/tmp/project", {
+			force: true,
+			verbose: false,
+			updateAddPacks: ["creative"],
+		});
+		const callArgs = (deps.updateWorkspace.execute as ReturnType<typeof mockFn>).mock
+			.calls[0] as unknown[];
+		expect(callArgs[1]).toEqual({ force: true, version: VERSION, addPacks: ["creative"] });
+	});
+
 	it("should return error when use case fails", async () => {
 		const deps = createMockDeps();
 		(deps.cleanInstall.execute as ReturnType<typeof mockFn>).mockResolvedValue(
@@ -134,6 +187,80 @@ describe("createDependencies", () => {
 		expect(typeof deps.fileSystem.stageFile).toBe("function");
 		expect(typeof deps.userPrompt.showIntro).toBe("function");
 		expect(typeof deps.userPrompt.confirm).toBe("function");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// detectVersionContext
+// ---------------------------------------------------------------------------
+
+describe("detectVersionContext", () => {
+	it("detects a v2.0+ installation from .codice-version", async () => {
+		const deps = createMockDeps();
+		(deps.fileSystem.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+			JSON.stringify({
+				version: "2.0.0",
+				installedAt: "2026-08-01T00:00:00.000Z",
+				installedPacks: ["software-development"],
+			}),
+		);
+
+		const info = await detectVersionContext(deps.fileSystem);
+
+		expect(info.status).toBe("v2.0+");
+		expect(info.version).toBe("2.0.0");
+		expect(info.installedPacks).toEqual(["software-development"]);
+	});
+
+	it("reports 'missing' when .codice-version is absent", async () => {
+		const deps = createMockDeps();
+
+		const info = await detectVersionContext(deps.fileSystem);
+
+		expect(info.status).toBe("missing");
+		expect(info.version).toBeNull();
+		expect(info.installedPacks).toEqual([]);
+	});
+
+	it("reports 'pre-2.0.0' for a v1.2+ installation", async () => {
+		const deps = createMockDeps();
+		(deps.fileSystem.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+			JSON.stringify({
+				version: "1.4.0",
+				installedAt: "2026-08-01T00:00:00.000Z",
+			}),
+		);
+
+		const info = await detectVersionContext(deps.fileSystem);
+
+		expect(info.status).toBe("pre-2.0.0");
+		expect(info.version).toBe("1.4.0");
+	});
+
+	it("reports 'pre-1.2.0' for a v1.0-1.1 installation", async () => {
+		const deps = createMockDeps();
+		(deps.fileSystem.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+			JSON.stringify({
+				version: "1.1.0",
+				installedAt: "2026-08-01T00:00:00.000Z",
+			}),
+		);
+
+		const info = await detectVersionContext(deps.fileSystem);
+
+		expect(info.status).toBe("pre-1.2.0");
+	});
+
+	it("degrades to 'missing' when .codice-version is malformed", async () => {
+		const deps = createMockDeps();
+		(deps.fileSystem.readVersionFile as ReturnType<typeof mockFn>).mockResolvedValue(
+			"{ not valid json",
+		);
+
+		const info = await detectVersionContext(deps.fileSystem);
+
+		expect(info.status).toBe("missing");
+		expect(info.version).toBeNull();
 	});
 });
 
@@ -182,7 +309,7 @@ describe("main() — SIGINT handling", () => {
 	let origExit2: typeof process.exit;
 	let capturedHandlers: Array<() => void>;
 	let sigintExitMock: ReturnType<typeof mockFn>;
-	const testDir = "/tmp/test-codice-sigint";
+	let testDir: string;
 
 	beforeEach(async () => {
 		origOn = process.on;
@@ -204,8 +331,10 @@ describe("main() — SIGINT handling", () => {
 		process.off = mockFn(() => process) as unknown as typeof process.off;
 		process.exit = sigintExitMock as unknown as typeof process.exit;
 
-		// Ensure clean test directory
-		await fs.mkdir(testDir, { recursive: true });
+		// Unique per-run directory: a fixed /tmp path would accumulate staging
+		// artifacts from a previously interrupted run, making this test flaky
+		// (SIGINT can leave .codice-staging/.codice-backup behind).
+		testDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-sigint-"));
 	});
 
 	afterEach(async () => {
@@ -221,14 +350,14 @@ describe("main() — SIGINT handling", () => {
 	 * none of the captured handlers invoked process.exit (e.g. only Bun's
 	 * internal handlers were registered).
 	 *
-	 * Our handler is idempotent (second invocation is a no-op), so the search
-	 * itself counts as the first SIGINT when the returned handler is invoked
-	 * again by the caller.
+	 * Our handler is async (it awaits the staging cleanup before exiting) and
+	 * idempotent (second invocation is a no-op), so the search itself counts
+	 * as the first SIGINT when the returned handler is invoked again.
 	 */
-	function findExitTriggeringHandler(): (() => void) | null {
+	async function findExitTriggeringHandler(): Promise<(() => void) | null> {
 		for (const handler of capturedHandlers) {
 			const before = sigintExitMock.mock.calls.length;
-			handler();
+			await handler();
 			if (sigintExitMock.mock.calls.length > before) {
 				return handler;
 			}
@@ -260,7 +389,7 @@ describe("main() — SIGINT handling", () => {
 		}
 
 		const callCountBefore = sigintExitMock.mock.calls.length;
-		const handler = findExitTriggeringHandler();
+		const handler = await findExitTriggeringHandler();
 
 		expect(handler).not.toBeNull();
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
@@ -278,14 +407,14 @@ describe("main() — SIGINT handling", () => {
 		}
 
 		const callCountBefore = sigintExitMock.mock.calls.length;
-		const handler = findExitTriggeringHandler();
+		const handler = await findExitTriggeringHandler();
 
 		// First SIGINT already fired inside the search — mock incremented once
 		expect(handler).not.toBeNull();
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
 
 		// Second SIGINT — same handler is idempotent
-		handler!();
+		await handler!();
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
 	});
 });
@@ -316,7 +445,7 @@ describe("main() — execution path", () => {
 	});
 
 	it("exits with EXIT_SUCCESS on clean install with --clean --force", async () => {
-		const testDir = "/tmp/test-main-success";
+		const testDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-success-"));
 
 		try {
 			await fs.mkdir(testDir, { recursive: true });
@@ -338,7 +467,7 @@ describe("main() — execution path", () => {
 	});
 
 	it("triggers EXIT_ERROR when installation fails (read-only destination)", async () => {
-		const readonlyDir = "/tmp/test-main-readonly";
+		const readonlyDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-readonly-"));
 
 		try {
 			await fs.mkdir(readonlyDir, { recursive: true });
@@ -361,7 +490,7 @@ describe("main() — execution path", () => {
 	});
 
 	it("exits with EXIT_ERROR on update with --update when version is missing", async () => {
-		const testDir = "/tmp/test-main-update";
+		const testDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-update-"));
 		const prevApiUrl = process.env.CODICE_GITHUB_API_URL;
 		const prevBypass = process.env.CODICE_BYPASS_URL_VALIDATION;
 		const prevNodeEnv = process.env.NODE_ENV;
@@ -393,7 +522,7 @@ describe("main() — execution path", () => {
 	});
 
 	it("cleans up SIGINT listener in finally block after completion", async () => {
-		const testDir = "/tmp/test-main-finally";
+		const testDir = await fs.mkdtemp(path.join(os.tmpdir(), "codice-finally-"));
 		await fs.mkdir(testDir, { recursive: true });
 
 		const offMock = mockFn(() => process);

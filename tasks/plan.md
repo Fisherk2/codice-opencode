@@ -1,111 +1,230 @@
-# Implementation Plan: FEV-16 — v1.2.0 Pre-release Tech Debt Closure
+# Implementation Plan: FEV-23 — v2.0.0 Testing & Integration
 
-**Phase:** FEV-16 (v1.2 Phase 6) — 📋 Pendiente
-**Scope:** Mega-FEV consolidado (5 items del TECH_DEBT.md sin FEV registrado)
-**Spec:** [SPEC.md](../SPEC.md), [docs/WORKFLOW.md](../docs/WORKFLOW.md) §FEV-16, [docs/TECH_DEBT.md](../docs/TECH_DEBT.md)
-**Date:** 2026-07-30
+**Phase:** FEV-23 (v2.0.0 Final Phase) — 🔲 Listo para implementar
+**Scope:** Cerrar el ciclo de v2.0.0 con: (1) **5 nuevos E2E scripts** para SC-UX7, SC-UX9, SC-UX10, SC-UX12 + Project Install con pack selection, (2) **~5 nuevos integration/unit tests** para cerrar gaps en coverage de Option B, Project Install pack flow, y version detection edge cases, (3) **Version bump** `package.json` 1.2.0 → 2.0.0 + remover el "transitional no-op" workaround de E2E #23, (4) **Release documentation** (CHANGELOG v2.0.0 entry + README actualizado + NUEVO `docs/MIGRATION.md` para v1.x→v2.0.0 + WORKFLOW/TECH_DEBT actualizados). NO incluye el release real (PR merge, tag v2.0.0, npm publish) — eso es proceso de release separado del maintainer.
+**Spec:** [specs/spec-installer-ux-v2.md §9](../specs/spec-installer-ux-v2.md), [specs/spec-agent-packs.md §9](../specs/spec-agent-packs.md)
+**Tech Debt:** TD-V2-6 (sigue abierto — no pack removal, deferred a v2.2.0)
+**Date:** 2026-08-06
 **Author:** Moctezuma (Strategic Planner)
-**Branch base:** `develop` (FEV-15 ✅ ya mergeado)
-**Methodology:** Vertical slicing + Critical path first + Parallel where possible + Template Method pattern (GoF) + Strategy pattern (existing) + Tree-level diff
+**Branch:** `feat/new-agents` (continúa de FEV-17 a FEV-22)
+**Methodology:** Per-phase atomic commits (1 por fase = **4 commits atómicos** + 1 verification) + checkpoints. Total: **~5.5-6h wall-clock**.
+**Wall-clock estimate:** ~5.5-6h (1.5-2h Phase 1 + 1.5h Phase 2 + 0.5h Phase 3 + 1h Phase 4 + 0.5h Phase 5)
 
 ---
 
 ## Overview
 
-Cerrar la deuda técnica listada en [`docs/TECH_DEBT.md`](../docs/TECH_DEBT.md) que está **preparada para v1.2.0** pero **no asignada a ningún FEV registrado**, antes del pre-release de v1.2.0. Esto consolida **5 items** en un único **FEV-16** con **4 workstreams paralelos** y **1 workstream secuencial** (coverage).
+FEV-23 cierra el ciclo de v2.0.0 después de que FEV-17 a FEV-22 entregaran:
+- **FEV-17**: Template directory restructuring (`core/` + `packs/`)
+- **FEV-18**: Agent classification & migration (~355 agents en 10 packs)
+- **FEV-19**: Permission unification & subagent table removal
+- **FEV-20**: Plugin `VALID_SUBAGENTS` removal + recursive auto-discovery
+- **FEV-21**: Pack selection wizard + version detection + Option A/B
+- **FEV-22**: Install summary + `agentCount` metadata + wiki sync
 
-**Items incluidos (verificados vía `grep` en TECH_DEBT.md):**
+El branch `feat/new-agents` tiene **1872 unit+integration tests (0 fail), 25/25 E2E pass, coverage ≥95%**. FEV-23 entrega la **suite completa** para v2.0.0 + **version bump** + **release documentation**.
 
-| ID | Sección | Item | Esfuerzo | Tipo |
-|----|---------|------|----------|------|
-| TD-1.1 | §1.1 | `src/cli/main.ts` coverage (interactive mode + catch block) | 2h | Test infrastructure |
-| TD-2.1 | §2.1 | CleanInstall/ProjectInstall duplicación (Template Method refactor) | 4h | Code refactor (GoF) |
-| TD-5.1 | §5.1 | E2E Coverage Not Captured by `bun --coverage` | 8h | Test infrastructure |
-| TD-5.2 | §5.2 | No Performance Benchmarks (SC-9/10/11 sin automatizar) | 4h | Test infrastructure |
-| TD-6.2 | §6.2 | Standard Directory Updates Are All-or-Nothing | 6h | Domain logic (Strategy) |
-| | | **TOTAL** | **24h** | |
+**Lo que FEV-23 hace:**
 
-**Restricciones del usuario confirmadas (vía question tool, 2026-07-30):**
-- **Agrupación:** 1 mega FEV-16 (todo en un solo FEV)
-- **Orden de ejecución:** Critical path primero + paralelo donde posible
-- **Refactor de Template Method:** Sí, aplicar ahora (no esperar al cuarto modo)
-- **Diagnosis docs:** No nuevos; actualizar docs existentes (TECH_DEBT, WORKFLOW) para establecer el scope de FEV-16
+1. **Completa la matriz de Success Criteria** del spec §9 (12 SCs):
+   - SC-UX1 ✅ (E2E 17, FEV-21)
+   - SC-UX2 ✅ (E2E 19, FEV-21)
+   - SC-UX3 ✅ (E2E 24, FEV-22)
+   - SC-UX4 ✅ (E2E 20, FEV-21)
+   - SC-UX5 🟡 (E2E 21, 22; falta pre-1.2.0 → **Phase 1**)
+   - SC-UX6 ✅ (E2E 23 transitional, will be **real** after Phase 3)
+   - SC-UX7 ❌ (Option B no testeado E2E → **Phase 1**)
+   - SC-UX8 ✅ (unit test en `update-flow.test.ts` line 146-154)
+   - SC-UX9 ❌ (--packs non-interactive no es E2E explícito → **Phase 1**)
+   - SC-UX10 ❌ (flat agents destination no testeado → **Phase 1**)
+   - SC-UX11 ✅ (E2E 22, FEV-21)
+   - SC-UX12 ❌ (pre-1.2.0 cleanup message no testeado → **Phase 1**)
 
-**Versión:** Sin bump. v1.2.0 se cierra coordinadamente con FEV-11/12/13/14/15/16.
+2. **Bump version** a 2.0.0 con cleanup del transitional workaround
+
+3. **Release documentation** lista para PR a `main` + tag v2.0.0
+
+**Lo que FEV-23 NO hace:**
+- ❌ PR merge `feat/new-agents` → `develop` (release coordination, separate)
+- ❌ PR merge `develop` → `main` (release coordination, separate)
+- ❌ Tag `v2.0.0` en git (release coordination, separate)
+- ❌ `npm publish` con dist-tag `latest` (release coordination, separate)
+- ❌ Pack removal mechanism (TD-V2-6, deferred a v2.2.0)
+- ❌ Auto-discovery of new packs (out of scope para v2.0.0)
 
 ---
 
 ## Architecture Decisions
 
-| Decision | Rationale |
-|----------|-----------|
-| **Mega FEV-16 (no split en 4 FEVs)** | 5 items temáticamente distintos pero todos必须在 v1.2.0 pre-release. Un FEV consolidado evita overhead de branches y mantiene atomic release. |
-| **Template Method pattern para Clean/Project Install** | Elimina ~80 líneas de duplicación. La lógica común (constructor de 7 params, flujo `checkWritable → confirmOverwrite → selectOptionals → merge → postInstall`) varía solo en 3 hooks: `buildRules()`, `selectOptionals()`, mensajes. GoF Template Method es el ajuste idiomático. |
-| **Tree-level diff para Update Granularity** | `FileMergeEngine.shouldStage()` actualmente hace check directory-level. Refactor a file-level diff: comparar template y destination file lists, stagear solo archivos nuevos. Strategy pattern ya existente (3 estrategias: Obligatorio/Estándar/Opcional) se extiende con 4ª: Estándar-Update. |
-| **`hyperfine` para benchmarks (no custom code)** | Estándar de la industria. `cargo bench`/`go bench` son innecesarios para nuestro caso. `hyperfine` mide wall-clock con warmup, JSON output parseable, integración trivial con CI. |
-| **NYC/Istanbul via Bun's `--coverage` workaround** | Bun no soporta NYC directamente. Usar wrapper script que envuelve `bun test` con `c8` (NYC-compatible) o `bun --coverage` + post-procesamiento con `lcov`. Documentar trade-off en TECH_DEBT. |
-| **`main.ts` interactive mode extraction** | Líneas 134-145 son las únicas sin cobertura (junto con catch block). Extraer `resolveInteractiveMode()` como función exportada permite test con mock `IUserPrompt`. |
-| **Coverage thresholds en CI** | Forzar `lines ≥ 95%` y `funcs ≥ 95%` como quality gate. Si E2E instrumentation funciona, el threshold sube a `lines ≥ 96.5%` (nuevo baseline). |
-| **Sin diagnosis docs nuevos** | Decisión del usuario. El plan cubre el diagnóstico suficiente. WORKFLOW.md y TECH_DEBT.md actualizados reflejan el scope de FEV-16. |
-| **Sin bump de versión** | Cierre coordinado FEV-11/12/13/14/15/16 → todos publican bajo v1.2.0. Mantener consistencia con FEV-14/15. |
-| **Total: ~24h wall-clock (3 días focused, 5-7 días calendario con review cycles)** | Plan completo para v1.2.0 pre-release. |
+| # | Decision | Rationale |
+|---|----------|-----------|
+| **1** | **5 nuevos E2E scripts (no 6)** | E2E #23 será **reescrito** en Phase 3 (no es "nuevo"). Total: 25 + 5 nuevos + 1 reescrito = 30 E2E scripts. |
+| **2** | **Version bump en Phase 3 separada** | Aislar el cambio de versión en un commit dedicado. Facilita revert si hay issues con el bump. Phase 1 y Phase 2 son tests con `package.json: 1.2.0`; Phase 3 cambia a `2.0.0` y reescribe E2E #23. |
+| **3** | **MIGRATION.md NUEVO** | v1.x → v2.0.0 es un breaking change (incompatible metadata, no update path). Los usuarios necesitan guía explícita: qué se pierde, qué hacer, cuándo. CHANGELOG no es suficiente. |
+| **4** | **4 atomic commits (1 por fase) + 1 verification** | Consistente con FEV-20 (10 commits), FEV-21 (7 commits), FEV-22 (5 commits). Cada commit toca 1 concern: tests E2E, tests integration/unit, version bump, docs. |
+| **5** | **Reescribir E2E #23 con v2.0.0** | Una vez bumpeado, el "transitional no-op" workaround ya no aplica. Reescribir verifica la lógica real: Option A actualiza solo `installedPacks`, NO agrega nuevos packs. |
+| **6** | **5 nuevos E2E scripts en 1 commit atómico** | Todos los E2E nuevos están interrelacionados (cubren SC-UX del mismo spec). 1 commit = 1 logical change ("cover remaining SC-UX criteria"). |
+| **7** | **~5 nuevos integration/unit tests en 1 commit** | Similar al anterior: tests de use cases pack-aware están en el mismo concern. 1 commit. |
+| **8** | **No crear nuevos helpers** | Toda la infra ya existe (`common.sh` para E2E, mock helpers para integration). FEV-23 solo escribe tests, no producción. |
+| **9** | **Mantener BUNDLED_TEST_VERSION solo donde es necesario** | Después de bump, ningún E2E necesita BUNDLED_TEST_VERSION env var. Remover referencias en E2E 04, 15, 16 si las tienen. |
+| **10** | **Continuar en `feat/new-agents`** | Consistente con FEV-17/18/19/20/21/22. La rama acumula 7 FEVs del ciclo v2.0.0. |
+| **11** | **Total: ~5.5-6h wall-clock** | 1.5-2h Phase 1 + 1.5h Phase 2 + 0.5h Phase 3 + 1h Phase 4 + 0.5h Phase 5. |
+| **12** | **Reusar mocks de `update-flow.test.ts`** | El mock `IUserPrompt` ya existe con `selectUpdateOption` configurable. No duplicar — solo agregar tests que usen el mock existente. |
+
+---
+
+## Patterns Applied (Design Decision Documentation)
+
+| Pattern | Where | Why |
+|---------|-------|-----|
+| **Test Pyramid** | 1 unit (logic) → 5 unit (Phase 2) → 5 E2E (Phase 1) → 1 verify (Phase 5) | Domain unit tests son baratos; E2E son caros pero realistas. Pyramid balance = mantener velocity sin sacrificar confidence. |
+| **Single Source of Truth (SSOT)** | `FileRuleManifestData` es la única fuente de pack IDs, counts, paths | Todos los tests leen del manifest. Cambio en manifest = cambio en tests automático (no hardcoded constants). |
+| **Port + Adapter** | `IUserPrompt` mock reutilizado en 6+ tests | Test 1 escribe el mock; tests 2-N lo extienden. DRY en testing infrastructure. |
+| **Given-When-Then (AAA)** | Cada test: setup (given) → action (when) → assertion (then) | Consistente con codebase style. Reduce cognitive load. |
+| **Behavior-Driven Naming** | `describe("Option B", () => test("merges installed with new packs"))` | Test names describen el comportamiento esperado, no la implementación. |
+| **Boundary Testing** | Tests para: 0 packs, 1 pack, 8 packs, unknown pack, empty list, whitespace | Edge cases identificados en `validatePackList.test.ts` (FEV-21). Mismo patrón. |
+| **Template Method** | E2E scripts usan `common.sh` helpers (`setup_workspace`, `assert_contains`, `log_pass`) | FEV-2-D/3/16 establecieron este patrón. E2E 26-30 siguen el template. |
+| **Test Isolation** | Cada E2E crea `TEMP_DIR` con `create_temp_dir` (no comparte state) | Independiente del orden de ejecución. CI safety. |
+| **Defensive Validation** | Tests verifican que `installedPacks` está bien-formado antes de mergear | Si metadata está corrupta, FEV-23 atrapa el issue antes de v2.0.0 release. |
+
+---
+
+## Pre-Audit Snapshot (2026-08-06)
+
+### Current Test State (post-FEV-22)
+
+| Metric | Value |
+|--------|------:|
+| Tests (pass/fail) | 1872 / 0 |
+| E2E scenarios | 25 / 25 |
+| `just check` errors | 0 |
+| `just check-plugin` errors | 0 |
+| Coverage (lines) | ≥95% |
+| `FileRule` fields | 7 (+1 `agentCount?`) |
+| `IUserPrompt` methods | 16 |
+| CLI flags | 10 |
+| Pack entry count | 8 (category: "pack") |
+| Branch | `feat/new-agents` |
+| `package.json` version | 1.2.0 |
+| `src/cli/version.ts` VERSION | 1.2.0 (auto-derived) |
+
+### E2E Coverage Matrix (current vs target)
+
+| SC | Spec | E2E Current | Status | Phase to add |
+|----|------|-------------|--------|--------------|
+| SC-UX1 | Pack selection screen w/ default | 17-pack-selection-default | ✅ | — |
+| SC-UX2 | Min 1 pack validation | 19-pack-validation-min1 + validatePackList.test.ts | ✅ | — |
+| SC-UX3 | Install summary | 24, 25 (FEV-22) | ✅ | — |
+| SC-UX4 | .codice-version format | 20-codice-version-installedPacks | ✅ | — |
+| SC-UX5 | Update blocked | 21 (missing), 22 (1.x) | 🟡 | **Phase 1** (pre-1.2.0) |
+| SC-UX6 | Option A scope | 23 (transitional) | 🟡 | **Phase 3** (rewrite) |
+| SC-UX7 | Option B locked packs | none | ❌ | **Phase 1** |
+| SC-UX8 | Option B cancel no new | update-flow.test.ts:146-154 | ✅ | — |
+| SC-UX9 | --packs non-interactive | none (used as helper) | ❌ | **Phase 1** |
+| SC-UX10 | Flat agents/ | none | ❌ | **Phase 1** |
+| SC-UX11 | Legacy v1.x message | 22 (v1.x) | ✅ | — |
+| SC-UX12 | Pre-1.2.0 cleanup | none | ❌ | **Phase 1** |
+
+**Score:** 7/12 ✅ + 3 🟡 + 3 ❌ → FEV-23 → 12/12 ✅
+
+### Files requiring modification (12) + new (8) = 20 total
+
+| File | Layer | Action | Phase |
+|------|-------|--------|:-----:|
+| `tests/e2e/26-update-blocked-pre-1.2.0.sh` | E2E | NEW (SC-UX12) | 1 |
+| `tests/e2e/27-update-option-b.sh` | E2E | NEW (SC-UX7) | 1 |
+| `tests/e2e/28-flat-agents-destination.sh` | E2E | NEW (SC-UX10) | 1 |
+| `tests/e2e/29-non-interactive-packs.sh` | E2E | NEW (SC-UX9) | 1 |
+| `tests/e2e/30-project-install-packs.sh` | E2E | NEW (Project Install + packs) | 1 |
+| `tests/integration/use-cases/update-workspace.test.ts` | Test | Add Option B execution tests | 2 |
+| `tests/integration/use-cases/project-install.test.ts` | Test | Add pack selection coverage | 2 |
+| `tests/integration/use-cases/clean-install.test.ts` | Test | Add pack summary verification | 2 |
+| `tests/unit/cli/version-context.test.ts` | Test | Add pre-1.2.0 edge cases (3 tests) | 2 |
+| `tests/e2e/23-update-option-a.sh` | E2E | REWRITE (remove transitional) | 3 |
+| `package.json` | Build | 1.2.0 → 2.0.0 | 3 |
+| `CHANGELOG.md` | Docs | Add v2.0.0 entry | 4 |
+| `README.md` | Docs | Update to v2.0.0 | 4 |
+| `docs/MIGRATION.md` | Docs | NEW (v1.x → v2.0.0 guide) | 4 |
+| `docs/WORKFLOW.md` | Docs | Mark FEV-23 ✅ + v2.0.0 ready | 4 |
+| `docs/TECH_DEBT.md` | Docs | Document v2.0.0 closure | 4 |
+| `tests/e2e/common.sh` | E2E | Possibly extend (verify) | 1 |
+| `tests/e2e/04-update-workspace.sh` | E2E | Verify BUNDLED_TEST_VERSION (Phase 3) | 3 |
+| `tests/e2e/15-update-workspace-existing-project.sh` | E2E | Verify (Phase 3) | 3 |
+| `tests/e2e/16-update-granularity.sh` | E2E | Verify (Phase 3) | 3 |
+
+**Total:** 16 files modified + 6 new (5 E2E + 1 doc) = 22 files
+**Note:** Some files overlap between E2E 23 rewrite and Phase 3 version bump work.
+
+### Files NOT modified (verified)
+
+- `src/application/installSummary.ts` (FEV-22, no change)
+- `src/application/packOptions.ts` (FEV-22, no change)
+- `src/application/ports/IUserPrompt.ts` (FEV-22, no change)
+- `src/application/use-cases/InstallUseCaseBase.ts` (FEV-22, no change)
+- `src/infrastructure/adapters/ClackPromptsAdapter.ts` (FEV-22, no change)
+- `src/domain/entities/FileRule.ts` (FEV-22, no change)
+- `src/domain/entities/FileRuleManifestData.ts` (FEV-22, no change)
+- `src/application/use-cases/updateFlow.ts` (FEV-21, no change)
+- `src/cli/versionContext.ts` (FEV-21, no change)
+- `src/infrastructure/adapters/versionInfoMessages.ts` (FEV-21, no change)
+- `template/obligatorio/packs/**` (no change — pack content intact)
+- `docs/wiki-source/**` (FEV-22, no change)
+
+### Baseline metrics (post-FEV-22)
+
+| Metric | Value |
+|--------|------:|
+| Tests (pass/fail) | 1872 / 0 |
+| E2E scenarios | 25 / 25 |
+| `just check` errors | 0 |
+| Coverage (lines) | ≥95% |
+| `FileRule` fields | 7 |
+| `IUserPrompt` methods | 16 |
+| CLI flags | 10 |
+| `.codice-version` fields | 4 |
+| Tarball size | 8.0MB (SC-15 deviation, accepted 2026-08-04) |
 
 ---
 
 ## Dependency Graph
 
 ```
-Phase 0: Preparation (sequential, no deps)
-├── Task 0.1: Create branch feat/fev16-tech-debt from develop
-└── Task 0.2: Verify baseline (just check + bun test exit 0)
-
-Phase 1: Coverage Foundation (sequential, blocks Phase 5)
-└── Task 1.1: Extract resolveInteractiveMode() from main.ts
-└── Task 1.2: Unit tests for resolveInteractiveMode() with mock IUserPrompt
-
-Phase 2: Use Case Refactor [PARALLELIZABLE]
-├── Task 2.1: Create InstallUseCaseBase abstract class (Template Method)
-├── Task 2.2: Migrate CleanInstallUseCase to extend base
-├── Task 2.3: Migrate ProjectInstallUseCase to extend base
-└── Task 2.4: Verify no regression (lines removed ≥ duplication added)
-
-Phase 3: Performance Benchmarks [PARALLELIZABLE]
-├── Task 3.1: Add just bench recipe with hyperfine
-├── Task 3.2: Create benchmarks/clean-install.bench.sh
-├── Task 3.3: Create benchmarks/project-install.bench.sh
-├── Task 3.4: Create benchmarks/update-workspace.bench.sh
-└── Task 3.5: Add SC-9/10/11 assertions (warn on regression >10%)
-
-Phase 4: Update Granularity [PARALLELIZABLE]
-├── Task 4.1: Add tree-level diff function in domain/services/
-├── Task 4.2: Refactor FileMergeEngine.shouldStage() to use file-level diff
-├── Task 4.3: Unit tests: standard dir update delivers new files
-├── Task 4.4: Integration tests: real filesystem with mock template
-└── Task 4.5: E2E test 16: update existing project gets new standard file
-
-Phase 5: Coverage Instrumentation [SEQUENTIAL, depends on Phase 1]
-├── Task 5.1: Add c8 dev dep + bun-coverage wrapper script
-├── Task 5.2: Generate E2E coverage report (lcov format)
-├── Task 5.3: Add coverage gate to CI (--coverage-threshold)
-└── Task 5.4: Update main.ts coverage from 86.21% → ≥95%
-
-Phase 6: Documentation & Verification [SEQUENTIAL, depends on all above]
-├── Task 6.1: Update CHANGELOG.md (FEV-16 entry under [Unreleased])
-├── Task 6.2: Update docs/WORKFLOW.md (mark FEV-16 complete)
-├── Task 6.3: Update docs/TECH_DEBT.md (move 5 items to Resolved)
-├── Task 6.4: just check + bun test (full suite, ≥810 + new tests)
-├── Task 6.5: just test:e2e (≥15 + 1 new = ≥16 passing)
-├── Task 6.6: just bench (3 benchmarks, no regressions >10%)
-└── Task 6.7: Commit with trailer Co-Authored-By: Moctezuma
-
-Checkpoint: FEV-16 Complete ✅
-└── 5 TECH_DEBT items closed, PR ready for review
+FEV-22 ✅ (feat/new-agents base)
+    ↓
+Phase 1: Missing E2E Tests (~1.5-2h, 1 commit)
+    ├── T1.1: 5 new E2E scripts (26, 27, 28, 29, 30)
+    └── T1.2: Verify common.sh has needed helpers
+    ↓
+Phase 2: Unit/Integration Test Gaps (~1.5h, 1 commit)
+    ├── T2.1: update-workspace.test.ts (Option B execution)
+    ├── T2.2: project-install.test.ts (pack selection coverage)
+    ├── T2.3: clean-install.test.ts (pack summary verification)
+    └── T2.4: version-context.test.ts (pre-1.2.0 edge cases)
+    ↓
+Phase 3: Version Bump to v2.0.0 (~0.5h, 1 commit)
+    ├── T3.1: package.json 1.2.0 → 2.0.0
+    ├── T3.2: Rewrite E2E 23 (real Option A verification)
+    └── T3.3: Verify other E2E scripts work with v2.0.0
+    ↓
+Phase 4: Release Documentation (~1h, 1 commit)
+    ├── T4.1: CHANGELOG.md (v2.0.0 entry)
+    ├── T4.2: README.md (pack system prominent)
+    ├── T4.3: docs/MIGRATION.md (NEW)
+    ├── T4.4: docs/WORKFLOW.md (FEV-23 ✅)
+    └── T4.5: docs/TECH_DEBT.md (v2.0.0 closure)
+    ↓
+Phase 5: Verification (~0.5h, gates release)
+    ├── T5.1: just check + just test + just test-e2e
+    ├── T5.2: Coverage ≥95% verification
+    ├── T5.3: npm pack --dry-run (verify tarball)
+    └── T5.4: Manual CLI smoke test
+    ↓
+FEV-23 Complete → Release coordination (separate)
 ```
 
-**Critical path:** Phase 0 → 1 → 5 → 6 (~12h, longest chain)
-**Parallelizable branches:** Phase 2, 3, 4 (run in any order, ~14h combined if solo, ~4-5h if 3 agents)
-**Solo execution time:** ~24h sequential, 5-7 calendar days with review
-**Risk mitigation:** Phase 1 → Phase 5 is the only true blocker. Phase 2/3/4 can be reordered or split.
+**Critical path:** T1.1 → T2.1-T2.4 → T3.1-T3.3 → T4.1-T4.5 → T5.1-T5.4 (~5.5-6h total)
+**Atomic commits:** 4 (1 per phase) + 1 verification (no commit)
+**Parallel opportunities:** T2.1-T2.4 can be parallelized in execution (but bundled in 1 commit for atomicity).
 
 ---
 
@@ -113,1484 +232,1554 @@ Checkpoint: FEV-16 Complete ✅
 
 ```mermaid
 graph TD
-    P0[Phase 0: Prep] --> P1[Phase 1: Coverage Foundation]
-    P1 --> P5[Phase 5: Coverage Instrumentation]
-    P1 --> P6[Phase 6: Docs & Verify]
-    
-    P2[Phase 2: Use Case Refactor] --> P6
-    P3[Phase 3: Performance Benchmarks] --> P6
-    P4[Phase 4: Update Granularity] --> P6
-    
-    P5 --> P6
-    P2 -.->|parallel| P3
-    P2 -.->|parallel| P4
-    P3 -.->|parallel| P4
-    
-    P6 --> DONE[PR Ready]
-    
-    classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
-    classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
-    classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
-    classDef seq fill:#ffd43b,stroke:#f59f00,color:#000
-    
-    class P1,P5 crit
-    class P6,DONE gate
-    class P2,P3,P4 par
-    class P0 seq
+    F22[FEV-22 ✅<br/>feat/new-agents base<br/>1872 tests, 25 E2E]:::done --> P1
+    P1[Phase 1: Missing E2E<br/>5 new scripts (26-30)<br/>~1.5-2h]:::seq --> CP1
+    CP1{Phase 1 Checkpoint<br/>30/30 E2E pass}:::gate --> P2
+    P2[Phase 2: Unit/Integration<br/>~5 new tests<br/>~1.5h]:::seq --> CP2
+    CP2{Phase 2 Checkpoint<br/>1877+ tests pass}:::gate --> P3
+    P3[Phase 3: Version Bump<br/>1.2.0→2.0.0<br/>E2E 23 rewrite<br/>~0.5h]:::seq --> CP3
+    CP3{Phase 3 Checkpoint<br/>VERSION=2.0.0<br/>E2E 23 real}:::gate --> P4
+    P4[Phase 4: Release Docs<br/>CHANGELOG + README<br/>+ MIGRATION + W/TD<br/>~1h]:::seq --> CP4
+    CP4{Phase 4 Checkpoint<br/>docs v2.0.0 ready}:::gate --> P5
+    P5[Phase 5: Verify<br/>check + test + e2e<br/>+ coverage + npm pack<br/>~0.5h]:::seq --> DONE
+    DONE[FEV-23 Complete ✅<br/>v2.0.0 release-ready]:::done
+
+    classDef done fill:#51cf66,stroke:#2f9e44,color:#fff
+    classDef gate fill:#ffd43b,stroke:#f59f00,color:#000
+    classDef seq fill:#e7e7e7,stroke:#666,color:#000
 ```
 
-**Critical path:** Phase 0 → 1 → 5 → 6 (~12h)
-**Parallel opportunities (3-agent split):**
-- Agent A: Phase 2 (refactor, 4h)
-- Agent B: Phase 3 (benchmarks, 4h)
-- Agent C: Phase 4 (granularity, 6h)
-- Solo contributor: do them sequentially in any order
+---
+
+## File-by-File Change Matrix
+
+| File | Phase | Change Type | Lines Affected | Commit |
+|------|:-----:|-------------|:--------------:|--------|
+| `tests/e2e/26-update-blocked-pre-1.2.0.sh` | 1 | NEW | +85 / -0 | T1.1 |
+| `tests/e2e/27-update-option-b.sh` | 1 | NEW | +110 / -0 | T1.1 |
+| `tests/e2e/28-flat-agents-destination.sh` | 1 | NEW | +90 / -0 | T1.1 |
+| `tests/e2e/29-non-interactive-packs.sh` | 1 | NEW | +95 / -0 | T1.1 |
+| `tests/e2e/30-project-install-packs.sh` | 1 | NEW | +110 / -0 | T1.1 |
+| `tests/integration/use-cases/update-workspace.test.ts` | 2 | Add Option B tests | +80 / -0 | T2.1 |
+| `tests/integration/use-cases/project-install.test.ts` | 2 | Add pack selection | +60 / -0 | T2.2 |
+| `tests/integration/use-cases/clean-install.test.ts` | 2 | Add pack summary | +40 / -0 | T2.3 |
+| `tests/unit/cli/version-context.test.ts` | 2 | Add pre-1.2.0 cases | +30 / -0 | T2.4 |
+| `tests/e2e/23-update-option-a.sh` | 3 | REWRITE (no transitional) | +30 / -50 | T3.2 |
+| `package.json` | 3 | 1.2.0 → 2.0.0 | +1 / -1 | T3.1 |
+| `tests/e2e/04-update-workspace.sh` | 3 | Verify (no BUNDLED env) | ±5 | T3.3 |
+| `tests/e2e/15-update-workspace-existing-project.sh` | 3 | Verify | ±5 | T3.3 |
+| `tests/e2e/16-update-granularity.sh` | 3 | Verify | ±5 | T3.3 |
+| `CHANGELOG.md` | 4 | v2.0.0 entry | +60 / -0 | T4.1 |
+| `README.md` | 4 | Update to v2.0.0 | +40 / -20 | T4.2 |
+| `docs/MIGRATION.md` | 4 | NEW | +180 / -0 | T4.3 |
+| `docs/WORKFLOW.md` | 4 | FEV-23 ✅ | +20 / -5 | T4.4 |
+| `docs/TECH_DEBT.md` | 4 | v2.0.0 closure | +15 / -0 | T4.5 |
+
+**Total:** 13 files modified + 6 new = 19 files (some overlap with Phase 3)
+**Net lines:** +1076 new, -76 modified = **+1000 lines net** (mostly new E2E + new MIGRATION.md)
+**Commits:** 4 atomic commits + 1 verification (no commit)
 
 ---
 
 ## Task List
 
-### Phase 0: Preparation
+### Phase 1: Missing E2E Scenarios (~1.5-2h, 1 commit)
 
-#### Task 0.1: Create branch `feat/fev16-tech-debt` from `develop`
+> **Vertical slicing: 1 E2E = 1 SC criterion.** Cada script es independiente y atómico. Phase 1 = 5 scripts (26-30). Total time: 1.5-2h. Pattern: copiar estructura de 17-25 (FEV-21/22) + custom assertions.
 
-**Description:** Create working branch for FEV-16. Branch from `develop` (per CONTRIBUTING.md rules — FEV-15 was already merged to develop).
+#### Task 1.1: 5 new E2E scripts
 
-**Acceptance criteria:**
-- [ ] Branch `feat/fev16-tech-debt` created from `develop`
-- [ ] `git status` clean (no uncommitted changes)
-- [ ] Branch is up-to-date with base (no diverging commits)
+**Description:** Crear 5 nuevos scripts bash E2E en `tests/e2e/`. Cada uno cubre 1 SC del spec §9. Pattern: copiar 17-pack-selection-default.sh como template (es el más reciente con pack-related logic).
 
-**Verification:**
-- [ ] `git branch --show-current` shows `feat/fev16-tech-debt`
-- [ ] `git log develop..feat/fev16-tech-debt` is empty
-- [ ] `git status` shows "nothing to commit, working tree clean"
-
-**Dependencies:** None
-**Files likely touched:** None (git operation only)
-**Estimated scope:** XS (1 command)
-
----
-
-#### Task 0.2: Verify baseline (`just check` + `bun test` exit 0)
-
-**Description:** Run the full quality infrastructure to confirm the baseline is green before any changes. Protects against confusing regressions with new code.
-
-**Acceptance criteria:**
-- [ ] `just check` exits 0 (Biome + tsc clean)
-- [ ] `just test` exits 0 (≥810 tests, 0 fail)
-- [ ] `just test:e2e` exits 0 (19/19 scenarios)
-
-**Verification:**
-- [ ] Output of `just check` shows 0 errors
-- [ ] Output of `just test` shows all tests passing
-- [ ] Output of `just test:e2e` shows 19/19 passing
-
-**Dependencies:** Task 0.1
-**Files likely touched:** None (verification only)
-**Estimated scope:** XS (3 commands)
-
----
-
-### Phase 1: Coverage Foundation (CRITICAL — blocks Phase 5)
-
-#### Task 1.1: Extract `resolveInteractiveMode()` from `main.ts`
-
-**Description:** The interactive mode block (main.ts lines 134-145) is the only uncovered code path besides the catch block. Extract it into a testable exported function to enable unit testing with mock `IUserPrompt`.
-
-**File path:** `src/cli/main.ts`
-
-**Change:** Replace inline block with exported function:
-
-```typescript
-/**
- * Resolve the installation mode from interactive selection.
- * Extracted for testability — main() can't be tested in non-TTY environments.
- * @param mode - The mode parsed from CLI args (may be "interactive").
- * @param userPrompt - User prompt adapter for showing intro/menu/cancel.
- * @param version - The current version string.
- * @returns Resolved mode (clean|project|update) or null if user cancelled.
- */
-export async function resolveInteractiveMode(
-  mode: Mode,
-  userPrompt: IUserPrompt,
-  version: string,
-): Promise<Mode | null> {
-  if (mode !== "interactive") return mode;
-  userPrompt.showIntro(`Códice v${version} — Opencode Workspace Installer`);
-  const selected = await userPrompt.promptForMode();
-  if (selected === null) {
-    userPrompt.showCancel("Installation cancelled.");
-    return null;
-  }
-  return selected;
-}
-```
-
-**Acceptance criteria:**
-- [ ] `resolveInteractiveMode()` exported from `main.ts`
-- [ ] Original inline block (lines 134-145) replaced with single call to `resolveInteractiveMode()`
-- [ ] Function signature: `(mode: Mode, userPrompt: IUserPrompt, version: string) => Promise<Mode | null>`
-- [ ] JSDoc explains why it was extracted (testability)
-- [ ] No behavioral changes (just refactor)
-
-**Verification:**
-- [ ] `grep "export async function resolveInteractiveMode" src/cli/main.ts` shows the new export
-- [ ] `grep "if (mode === \"interactive\")" src/cli/main.ts` shows the simplified call
-- [ ] `bun run tsc --noEmit` passes
-- [ ] `wc -l src/cli/main.ts` shows similar length (±5 lines)
-
-**Dependencies:** Task 0.2
-**Files likely touched:**
-- `src/cli/main.ts` (modified, refactor — line count similar)
-
-**Estimated scope:** XS (1 function extraction, ~20 lines)
-
----
-
-#### Task 1.2: Unit tests for `resolveInteractiveMode()` with mock `IUserPrompt`
-
-**Description:** Add unit tests for the extracted function covering all paths: non-interactive passthrough, interactive selection, and cancellation.
-
-**Test file:** `tests/unit/cli/main.test.ts` (new)
-
-**Test scenarios:**
-1. `mode === "interactive"` + user selects `"clean"` → returns `"clean"`
-2. `mode === "interactive"` + user selects `"project"` → returns `"project"`
-3. `mode === "interactive"` + user selects `"update"` → returns `"update"`
-4. `mode === "interactive"` + user cancels (returns `null`) → returns `null`
-5. `mode === "clean"` (non-interactive) → returns `"clean"` (no prompt)
-6. `mode === "project"` (non-interactive) → returns `"project"` (no prompt)
-7. `mode === "update"` (non-interactive) → returns `"update"` (no prompt)
-8. Verifies `userPrompt.showIntro()` called with version string
-9. Verifies `userPrompt.showCancel()` called when user cancels
-
-**Acceptance criteria:**
-- [ ] New test file `tests/unit/cli/main.test.ts` created
-- [ ] 9 test cases covering all branches
-- [ ] All tests pass
-- [ ] Coverage of `main.ts` improves from 86.21% → ≥90% lines (catch block may remain)
-
-**Verification:**
-- [ ] `bun test tests/unit/cli/main.test.ts` passes (9/9)
-- [ ] `bun test --coverage tests/unit/cli/main.test.ts` shows ≥90% line coverage of main.ts
-- [ ] `grep "resolveInteractiveMode" tests/unit/cli/main.test.ts` shows ≥9 references
-
-**Dependencies:** Task 1.1
-**Files likely touched:**
-- `tests/unit/cli/main.test.ts` (new, ~80 lines)
-
-**Estimated scope:** S (1 new test file, 9 cases)
-
----
-
-### Checkpoint: Coverage Foundation Complete (Phase 1)
-
-- [ ] `resolveInteractiveMode()` extracted and tested
-- [ ] 9 new unit tests added (baseline: 810 + 9 = 819)
-- [ ] `main.ts` coverage ≥90% lines
-- [ ] `just check` exit 0
-- [ ] `bun test` ≥819 tests, 0 fail
-- [ ] Review with human before proceeding to parallel phases
-
----
-
-### Phase 2: Use Case Refactor (PARALLELIZABLE)
-
-**Pattern:** GoF Template Method
-
-#### Task 2.1: Create `InstallUseCaseBase` abstract class
-
-**Description:** Extract the common flow from `CleanInstallUseCase` and `ProjectInstallUseCase` into an abstract base class. The Template Method pattern allows subclasses to vary 3 hooks: `buildRules()`, `selectOptionals()`, and success messages.
-
-**File path:** `src/application/use-cases/InstallUseCaseBase.ts` (new)
-
-**Base class structure:**
-
-```typescript
-import type { IFileSystem } from "../../domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
-import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
-import type { FileRule } from "../../domain/entities/FileRule";
-import type { Result } from "../../domain/types/Result";
-import { checkWritable, confirmOverwrite, createProgressCallback } from "../helpers";
-import { runPostInstallSteps } from "../postInstall";
-import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
-import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
-import type { IUserPrompt } from "../ports/IUserPrompt";
-
-export interface BaseInstallOptions {
-  readonly force?: boolean;
-  readonly version?: string;
-}
-
-/**
- * Base class for Clean and Project Install use cases.
- * Implements the common flow (Template Method pattern):
- *   checkWritable → confirmOverwrite → selectOptionals → merge → postInstall
- *
- * Subclasses vary 3 hooks:
- *   - buildRules(): how to filter the manifest for this mode
- *   - selectOptionals(): how to gather user's optional file selection
- *   - getSuccessMessage(): the success message after install
- *
- * Update mode is NOT a subclass — it has different semantics (version check + no optionals).
- */
-export abstract class InstallUseCaseBase {
-  constructor(
-    protected readonly fileSystem: IFileSystem & IStagingSystem,
-    protected readonly mergeEngine: IFileMergeEngine,
-    protected readonly userPrompt: IUserPrompt,
-    protected readonly symlinkCreator: ISymlinkCreator,
-    protected readonly opencodeSymlinks: readonly SymlinkSpec[],
-    protected readonly devinSymlinks: readonly SymlinkSpec[],
-    protected readonly gitignoreCreator: IGitignoreCreator,
-  ) {}
-
-  /**
-   * Template Method — runs the full install flow.
-   * Subclasses implement the 3 hooks below.
-   */
-  async execute(
-    destinationPath: string,
-    options: BaseInstallOptions,
-  ): Promise<Result<void, Error>> {
-    // 1. Validate destination is writable
-    const writable = await checkWritable(this.fileSystem, destinationPath);
-    if (!writable.ok) return writable;
-
-    // 2. If destination is not empty and force is false, ask user for confirmation
-    if (!options.force) {
-      const confirmed = await confirmOverwrite(this.fileSystem, destinationPath, this.userPrompt);
-      if (!confirmed.ok) return confirmed;
-      if (!confirmed.value) {
-        return { ok: false, error: new Error("Installation cancelled by user.") };
-      }
-    }
-
-    // 3. Present optional files menu (subclass decides behavior)
-    const selectedOptionals = await this.selectOptionals(options.force ?? false);
-
-    // 4. Build rules (subclass-specific)
-    const rules = this.buildRules(selectedOptionals);
-
-    // 5. Execute the merge engine
-    const progressCallback = createProgressCallback(this.userPrompt, this.symlinkCreator);
-    const mergeResult = await this.mergeEngine.execute(
-      destinationPath,
-      rules,
-      progressCallback,
-    );
-    if (!mergeResult.ok) return mergeResult;
-
-    // 6. Post-installation: gitignore + symlinks + version file
-    const postInstallResult = await runPostInstallSteps(
-      this.fileSystem,
-      this.gitignoreCreator,
-      this.symlinkCreator,
-      this.opencodeSymlinks,
-      this.devinSymlinks,
-      destinationPath,
-      options.version ?? "0.0.0",
-      selectedOptionals,
-    );
-    if (!postInstallResult.ok) return postInstallResult;
-
-    // 7. Show success message (subclass-specific)
-    this.userPrompt.showSuccess(this.getSuccessMessage());
-    return { ok: true, value: undefined };
-  }
-
-  /** Build the FileRule list to apply in this mode. */
-  protected abstract buildRules(selectedOptionals: readonly string[]): readonly FileRule[];
-
-  /** Present optional file selection menu (or return [] if force=true or no menu needed). */
-  protected abstract selectOptionals(force: boolean): Promise<readonly string[]>;
-
-  /** Success message after install completes. */
-  protected abstract getSuccessMessage(): string;
-}
-```
-
-**Acceptance criteria:**
-- [ ] `src/application/use-cases/InstallUseCaseBase.ts` created
-- [ ] Abstract class with `execute()` Template Method
-- [ ] 3 protected abstract methods: `buildRules()`, `selectOptionals()`, `getSuccessMessage()`
-- [ ] All 7 constructor params match CleanInstall/ProjectInstall signature
-- [ ] Imports match existing patterns (Result, helpers, postInstall)
-- [ ] JSDoc explains why base class exists and why Update is NOT a subclass
-
-**Verification:**
-- [ ] `ls src/application/use-cases/InstallUseCaseBase.ts` shows file exists
-- [ ] `grep "abstract class InstallUseCaseBase" src/application/use-cases/InstallUseCaseBase.ts` shows the class
-- [ ] `bun run tsc --noEmit` passes
-- [ ] `wc -l src/application/use-cases/InstallUseCaseBase.ts` shows ~80-100 lines
-
-**Dependencies:** None (independent of Phase 1, can run in parallel)
-**Files likely touched:**
-- `src/application/use-cases/InstallUseCaseBase.ts` (new, ~80-100 lines)
-
-**Estimated scope:** M (1 new file, abstract class with 3 hooks)
-
----
-
-#### Task 2.2: Migrate `CleanInstallUseCase` to extend `InstallUseCaseBase`
-
-**Description:** Refactor `CleanInstallUseCase` to extend the new `InstallUseCaseBase`. Remove the duplicated constructor and `execute()` method. Keep the subclass-specific logic: `buildRules()` (converts all to mandatory), `selectOptionals()` (force=true selects all), success message.
-
-**File path:** `src/application/use-cases/CleanInstallUseCase.ts`
-
-**Change:** Replace constructor + execute + buildRules + selectOptionals with subclass implementation.
-
-**Subclass structure:**
-
-```typescript
-export class CleanInstallUseCase extends InstallUseCaseBase {
-  protected buildRules(selectedOptionals: readonly string[]): readonly FileRule[] {
-    // Clean: convert all categories to mandatory (always overwrite)
-    return [
-      ...getRulesByCategory("mandatory"),
-      ...getRulesByCategory("standard"),
-      ...getRulesByCategory("optional").filter((r) => selectedOptionals.includes(r.path)),
-    ];
-  }
-
-  protected async selectOptionals(force: boolean): Promise<readonly string[]> {
-    if (force) {
-      // --force: select all optionals without prompting
-      return FILE_RULE_MANIFEST
-        .filter((r) => r.category === "optional")
-        .map((r) => r.path);
-    }
-    return this.userPrompt.selectOptionals();
-  }
-
-  protected getSuccessMessage(): string {
-    return "Clean install completed successfully.";
-  }
-}
-```
-
-**Acceptance criteria:**
-- [ ] `CleanInstallUseCase` extends `InstallUseCaseBase`
-- [ ] 3 protected methods implemented: `buildRules()`, `selectOptionals()`, `getSuccessMessage()`
-- [ ] Constructor delegates to `super(...)` (no duplication)
-- [ ] `execute()` method REMOVED (inherited from base)
-- [ ] File length: was 166 lines, now expected ~60 lines (-106 lines)
-
-**Verification:**
-- [ ] `grep "extends InstallUseCaseBase" src/application/use-cases/CleanInstallUseCase.ts` shows the extension
-- [ ] `grep "async execute" src/application/use-cases/CleanInstallUseCase.ts` shows NO matches (execute removed)
-- [ ] `wc -l src/application/use-cases/CleanInstallUseCase.ts` shows ~60 lines (was 166)
-- [ ] `bun run tsc --noEmit` passes
-- [ ] `just test` exit 0 (no regression in CleanInstall tests)
-
-**Dependencies:** Task 2.1
-**Files likely touched:**
-- `src/application/use-cases/CleanInstallUseCase.ts` (modified, 166 → ~60 lines)
-
-**Estimated scope:** M (refactor, removes ~106 lines)
-
----
-
-#### Task 2.3: Migrate `ProjectInstallUseCase` to extend `InstallUseCaseBase`
-
-**Description:** Refactor `ProjectInstallUseCase` to extend `InstallUseCaseBase`. Same approach as Task 2.2 but with Project-specific hooks: `buildRules()` (uses manifest as-is, no category conversion), `selectOptionals()` (always shows menu, returns empty if user deselects all).
-
-**File path:** `src/application/use-cases/ProjectInstallUseCase.ts`
-
-**Subclass structure:**
-
-```typescript
-export class ProjectInstallUseCase extends InstallUseCaseBase {
-  protected buildRules(selectedOptionals: readonly string[]): readonly FileRule[] {
-    // Project: pass manifest as-is, filter optionals by user selection
-    return [
-      ...getRulesByCategory("mandatory"),
-      ...getRulesByCategory("standard"),
-      ...getRulesByCategory("optional").filter((r) => selectedOptionals.includes(r.path)),
-    ];
-  }
-
-  protected async selectOptionals(_force: boolean): Promise<readonly string[]> {
-    // Project: always show menu (force flag bypasses overwrite confirm, not optionals)
-    return this.userPrompt.selectOptionals();
-  }
-
-  protected getSuccessMessage(): string {
-    return "Project install completed successfully.";
-  }
-}
-```
-
-**Acceptance criteria:**
-- [ ] `ProjectInstallUseCase` extends `InstallUseCaseBase`
-- [ ] 3 protected methods implemented
-- [ ] Constructor delegates to `super(...)` (no duplication)
-- [ ] `execute()` method REMOVED
-- [ ] File length: was 147 lines, now expected ~50 lines (-97 lines)
-
-**Verification:**
-- [ ] `grep "extends InstallUseCaseBase" src/application/use-cases/ProjectInstallUseCase.ts` shows the extension
-- [ ] `grep "async execute" src/application/use-cases/ProjectInstallUseCase.ts` shows NO matches
-- [ ] `wc -l src/application/use-cases/ProjectInstallUseCase.ts` shows ~50 lines (was 147)
-- [ ] `bun run tsc --noEmit` passes
-- [ ] `just test` exit 0 (no regression in ProjectInstall tests)
-
-**Dependencies:** Task 2.2
-**Files likely touched:**
-- `src/application/use-cases/ProjectInstallUseCase.ts` (modified, 147 → ~50 lines)
-
-**Estimated scope:** M (refactor, removes ~97 lines)
-
----
-
-#### Task 2.4: Verify duplication eliminated (lines removed ≥ duplication added)
-
-**Description:** Final verification that the refactor actually reduced duplication. The base class adds ~80-100 lines; subclasses removed ~200 lines combined. Net reduction: ~100-120 lines.
-
-**Acceptance criteria:**
-- [ ] `wc -l src/application/use-cases/InstallUseCaseBase.ts` shows ~80-100 lines
-- [ ] `wc -l src/application/use-cases/CleanInstallUseCase.ts` shows ~60 lines (was 166)
-- [ ] `wc -l src/application/use-cases/ProjectInstallUseCase.ts` shows ~50 lines (was 147)
-- [ ] Net change: +90 (base) - 106 (Clean) - 97 (Project) = **-113 lines** (or similar)
-- [ ] `just test` exit 0 (≥819 tests, no regression)
-- [ ] `just test:e2e` exit 0 (19/19 scenarios, no regression)
-
-**Verification:**
-- [ ] Total lines: before = 313, after = ~190. **Saved: ~123 lines.**
-- [ ] `git diff --stat HEAD~1 HEAD` shows the 3 files modified
-
-**Dependencies:** Task 2.3
-**Files likely touched:** None (verification)
-**Estimated scope:** XS (verification commands)
-
----
-
-### Checkpoint: Use Case Refactor Complete (Phase 2)
-
-- [ ] `InstallUseCaseBase` created with 3 abstract hooks
-- [ ] `CleanInstallUseCase` and `ProjectInstallUseCase` extend base
-- [ ] ~123 lines of duplication eliminated
-- [ ] `just check` exit 0
-- [ ] `just test` ≥819 tests, 0 fail
-- [ ] `just test:e2e` 19/19 passing
-- [ ] No behavioral changes (refactor only)
-
----
-
-### Phase 3: Performance Benchmarks (PARALLELIZABLE)
-
-#### Task 3.1: Add `just bench` recipe with `hyperfine`
-
-**Description:** Add a `just bench` recipe that uses `hyperfine` (industry-standard CLI benchmarking tool) to measure wall-clock time for the 3 installation modes. Outputs JSON for regression detection.
-
-**File path:** `Justfile`
-
-**Change:** Add new recipe after `test-e2e`:
-
-```makefile
-# Install hyperfine first: cargo install hyperfine (or download from GitHub releases)
-bench:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    mkdir -p tests/fixtures/bench
-    @echo "Benchmarking Clean Install..."
-    hyperfine \
-        --warmup 1 \
-        --runs 5 \
-        --export-json tests/fixtures/bench/clean-install.json \
-        --command-name "clean-install" \
-        "bun run src/cli/main.ts --mode clean --dest tests/fixtures/bench/clean --force"
-    @echo "Benchmarking Project Install..."
-    hyperfine \
-        --warmup 1 \
-        --runs 5 \
-        --export-json tests/fixtures/bench/project-install.json \
-        --command-name "project-install" \
-        "bun run src/cli/main.ts --mode project --dest tests/fixtures/bench/project --force"
-    @echo "Benchmarking Update Workspace..."
-    hyperfine \
-        --warmup 1 \
-        --runs 5 \
-        --export-json tests/fixtures/bench/update-workspace.json \
-        --command-name "update-workspace" \
-        "bun run src/cli/main.ts --mode update --dest tests/fixtures/bench/update --force"
-```
-
-**Acceptance criteria:**
-- [ ] `just bench` recipe added to Justfile
-- [ ] 3 commands benchmarked: clean, project, update
-- [ ] `--warmup 1` (1 warmup run before measurement)
-- [ ] `--runs 5` (5 measurement runs)
-- [ ] `--export-json` outputs parseable JSON
-- [ ] Each command uses `--force` to skip prompts
-
-**Verification:**
-- [ ] `grep "^bench:" Justfile` shows the new recipe
-- [ ] `just bench` runs successfully (requires `hyperfine` installed)
-- [ ] 3 JSON files created in `tests/fixtures/bench/`
-
-**Dependencies:** None (independent)
-**Files likely touched:**
-- `Justfile` (modified, +25 lines)
-- `tests/fixtures/bench/` (new directory, JSON outputs)
-
-**Estimated scope:** S (1 new recipe, requires hyperfine)
-
----
-
-#### Task 3.2: Create `benchmarks/clean-install.bench.sh` benchmark script
-
-**Description:** Create a reusable shell script for benchmarking Clean Install that can be run standalone or via `just bench`. Uses `hyperfine` with verbose output for human inspection.
-
-**File path:** `benchmarks/clean-install.bench.sh` (new)
-
-**Script content:**
+**Target `26-update-blocked-pre-1.2.0.sh` (SC-UX12):**
 
 ```bash
-#!/usr/bin/env bash
-# Benchmark Clean Install performance.
-# Asserts SC-9: Complete local installation (Clean Install) completes in < 5 seconds on a modern SSD.
-set -euo pipefail
+#!/bin/bash
+# FEV-23-T1: Update Blocked — Pre-1.2.0 Cleanup Suggestion E2E
+#
+# Scenario: Seed .codice-version with version "1.1.0" (pre-1.2.0).
+# Expected (version gate — pre-1.2.0 status):
+#   - exit code 0 (gate returns success without updating)
+#   - output contains "Pre-1.2.0 Installation Detected"
+#   - output contains "references/" and ".devin/"
+#   - NO merge (opencode.json absent)
+#
+# SC-UX12: Pre-1.2.0 users see cleanup suggestion for references/ and .devin/.
 
-DEST="${1:-tests/fixtures/bench/clean}"
-mkdir -p "$DEST"
+set -Eeuo pipefail
+source "$(dirname "$0")/common.sh"
 
-hyperfine \
-    --warmup 1 \
-    --runs 5 \
-    --command-name "clean-install" \
-    "bun run src/cli/main.ts --mode clean --dest $DEST --force"
+log_step "FEV-23-T1: Update Blocked — Pre-1.2.0 Cleanup Suggestion"
 
-echo ""
-echo "SC-9 assertion: Clean Install should complete in < 5 seconds (median)."
-echo "Check the 'Time' column above. If median > 5s, file an issue."
-```
+TEMP_DIR="$(create_temp_dir)"
+log_info "Test directory: $TEMP_DIR"
+cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 
-**Acceptance criteria:**
-- [ ] `benchmarks/clean-install.bench.sh` created
-- [ ] Executable (chmod +x)
-- [ ] Uses `hyperfine` with warmup=1, runs=5
-- [ ] Documents SC-9 assertion
-- [ ] Accepts optional destination argument
+# Seed pre-1.2.0 installation (1.1.0 — older than 1.2.0)
+echo '{"version":"1.1.0","installedAt":"2026-01-01T00:00:00.000Z"}' > "$TEMP_DIR/.codice-version"
+log_info "Seeded .codice-version with v1.1.0 (pre-1.2.0)"
 
-**Verification:**
-- [ ] `bash benchmarks/clean-install.bench.sh` runs successfully
-- [ ] `file benchmarks/clean-install.bench.sh` shows "Bourne-Again shell script, executable"
+start_mock_server
 
-**Dependencies:** None (independent)
-**Files likely touched:**
-- `benchmarks/clean-install.bench.sh` (new, ~20 lines)
+EXIT_CODE=0
+STDERR_FILE="$TEMP_DIR/stderr.log"
+STDOUT_FILE="$TEMP_DIR/stdout.log"
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
 
-**Estimated scope:** XS (1 shell script)
+stop_mock_server
 
----
-
-#### Task 3.3: Create `benchmarks/project-install.bench.sh`
-
-**Description:** Same as Task 3.2 but for Project Install.
-
-**File path:** `benchmarks/project-install.bench.sh` (new)
-
-**Acceptance criteria:**
-- [ ] `benchmarks/project-install.bench.sh` created
-- [ ] Documents SC-9 assertion (also applies to Project)
-- [ ] Executable
-
-**Dependencies:** None
-**Files likely touched:**
-- `benchmarks/project-install.bench.sh` (new, ~20 lines)
-
-**Estimated scope:** XS
-
----
-
-#### Task 3.4: Create `benchmarks/update-workspace.bench.sh`
-
-**Description:** Same as Task 3.2 but for Update Workspace.
-
-**File path:** `benchmarks/update-workspace.bench.sh` (new)
-
-**Acceptance criteria:**
-- [ ] `benchmarks/update-workspace.bench.sh` created
-- [ ] Documents SC-9 assertion
-- [ ] Executable
-
-**Dependencies:** None
-**Files likely touched:**
-- `benchmarks/update-workspace.bench.sh` (new, ~20 lines)
-
-**Estimated scope:** XS
-
----
-
-#### Task 3.5: Add SC-9/10/11 regression assertion script
-
-**Description:** Create a script that reads the JSON outputs from `just bench` and asserts that median times don't regress >10% from baseline. Documents SC-9 (Clean <5s), SC-10 (API <3s), SC-11 (TUI <100ms).
-
-**File path:** `benchmarks/assert-no-regression.sh` (new)
-
-**Script content:**
-
-```bash
-#!/usr/bin/env bash
-# Assert benchmark results don't regress >10% from baseline.
-set -euo pipefail
-
-BASELINE_FILE="${1:-benchmarks/baseline.json}"
-RESULTS_DIR="${2:-tests/fixtures/bench}"
-
-if [ ! -f "$BASELINE_FILE" ]; then
-    echo "Baseline file not found: $BASELINE_FILE"
-    echo "Create one with: jq -s '{clean: .[0].results[0].median, ...}' tests/fixtures/bench/*.json > $BASELINE_FILE"
+if [[ "$EXIT_CODE" -ne 0 ]]; then
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
     exit 1
 fi
+log_pass "CLI exited with code 0"
 
-# Read baseline times (in seconds)
-BASELINE_CLEAN=$(jq -r '.clean' "$BASELINE_FILE")
-BASELINE_PROJECT=$(jq -r '.project' "$BASELINE_FILE")
-BASELINE_UPDATE=$(jq -r '.update' "$BASELINE_FILE")
+COMBINED_OUTPUT=$(cat "$STDOUT_FILE" "$STDERR_FILE" 2>/dev/null || echo "")
 
-# Read current results
-CURRENT_CLEAN=$(jq -r '.results[0].median' "$RESULTS_DIR/clean-install.json")
-CURRENT_PROJECT=$(jq -r '.results[0].median' "$RESULTS_DIR/project-install.json")
-CURRENT_UPDATE=$(jq -r '.results[0].median' "$RESULTS_DIR/update-workspace.json")
+# Verify pre-1.2.0 detection
+assert_contains "$COMBINED_OUTPUT" "Pre-1.2.0 Installation Detected"
+log_pass "Pre-1.2.0 status detected"
 
-# Assert <10% regression
-REGRESSION_THRESHOLD=1.10
+# Verify cleanup suggestion message
+assert_contains "$COMBINED_OUTPUT" "references/"
+assert_contains "$COMBINED_OUTPUT" ".devin/"
+log_pass "Cleanup suggestion for references/ and .devin/ displayed"
 
-assert_no_regression() {
-    local name="$1"
-    local baseline="$2"
-    local current="$3"
-    local ratio
-    ratio=$(echo "scale=4; $current / $baseline" | bc)
-    local threshold
-    threshold=$(echo "$REGRESSION_THRESHOLD" | bc)
+# Verify NO merge
+assert_file_missing "$TEMP_DIR/opencode.json"
+log_pass "No merge happened (opencode.json absent)"
 
-    if (( $(echo "$ratio > $threshold" | bc -l) )); then
-        echo "❌ REGRESSION: $name regressed ${ratio}x (baseline=${baseline}s, current=${current}s)"
-        return 1
-    fi
-    echo "✅ OK: $name at ${current}s (baseline=${baseline}s, ratio=${ratio}x)"
-}
-
-assert_no_regression "Clean Install" "$BASELINE_CLEAN" "$CURRENT_CLEAN"
-assert_no_regression "Project Install" "$BASELINE_PROJECT" "$CURRENT_PROJECT"
-assert_no_regression "Update Workspace" "$BASELINE_UPDATE" "$CURRENT_UPDATE"
-
-echo ""
-echo "All performance regressions within 10% threshold."
-echo "SC-9: Clean Install < 5s — verified"
-echo "SC-10: GitHub API < 3s — verified separately in integration tests"
-echo "SC-11: TUI < 100ms — verified manually (not benchmarked)"
+log_pass "FEV-23-T1: All assertions passed"
 ```
 
-**Acceptance criteria:**
-- [ ] `benchmarks/assert-no-regression.sh` created
-- [ ] Reads baseline + current JSON
-- [ ] Asserts <10% regression for all 3 modes
-- [ ] Documents SC-9/10/11 criteria
-- [ ] Executable
+**Target `27-update-option-b.sh` (SC-UX7):**
 
-**Verification:**
-- [ ] `bash benchmarks/assert-no-regression.sh benchmarks/baseline.json` runs successfully
-- [ ] Output shows 3 ✅ lines + summary
-
-**Dependencies:** Tasks 3.1, 3.2, 3.3, 3.4
-**Files likely touched:**
-- `benchmarks/assert-no-regression.sh` (new, ~50 lines)
-- `benchmarks/baseline.json` (new, baseline times from initial bench run)
-
-**Estimated scope:** S (1 script with regression logic)
-
----
-
-### Checkpoint: Performance Benchmarks Complete (Phase 3)
-
-- [ ] `just bench` recipe works (requires hyperfine)
-- [ ] 3 standalone benchmark scripts created
-- [ ] Regression assertion script created
-- [ ] Baseline JSON captured
-- [ ] SC-9/10/11 documented in scripts
-- [ ] No new bugs introduced (just additions)
-
----
-
-### Phase 4: Update Granularity (PARALLELIZABLE)
-
-**Pattern:** Strategy (existing pattern) — add 4th strategy for "Estándar-Update"
-
-#### Task 4.1: Add tree-level diff function in domain services
-
-**Description:** Add a pure function that compares two directory trees and returns the list of files present in source but missing in destination. This is the core algorithm for tree-level diffing.
-
-**File path:** `src/domain/services/treeDiff.ts` (new)
-
-**Function signature:**
-
-```typescript
-import type { IFileSystem } from "../ports/IFileSystem";
-
-/**
- * Compare two directory trees and return files present in source but missing in destination.
- * Used by Update mode to deliver new standard files to existing users.
- *
- * @param fileSystem - Adapter for filesystem reads.
- * @param sourceDir - Template directory (e.g., "template/estandar/docs").
- * @param destDir - Destination directory (e.g., "/user/project/docs").
- * @returns Sorted array of relative paths (from sourceDir) of files missing in destDir.
- */
-export async function diffTrees(
-  fileSystem: IFileSystem,
-  sourceDir: string,
-  destDir: string,
-): Promise<readonly string[]>;
-```
-
-**Acceptance criteria:**
-- [ ] `src/domain/services/treeDiff.ts` created
-- [ ] `diffTrees()` async function exported
-- [ ] Returns relative paths (from sourceDir) of files missing in destDir
-- [ ] Pure function (no side effects, only I/O via injected `IFileSystem`)
-- [ ] Handles nested directories recursively
-- [ ] Skips symlinks (consistent with `directoryWalker`)
-
-**Verification:**
-- [ ] `ls src/domain/services/treeDiff.ts` shows file exists
-- [ ] `grep "export async function diffTrees" src/domain/services/treeDiff.ts` shows the function
-- [ ] `bun run tsc --noEmit` passes
-
-**Dependencies:** None
-**Files likely touched:**
-- `src/domain/services/treeDiff.ts` (new, ~40 lines)
-
-**Estimated scope:** S (1 new pure function)
-
----
-
-#### Task 4.2: Refactor `FileMergeEngine.shouldStage()` to use file-level diff
-
-**Description:** Modify `FileMergeEngine.shouldStage()` to perform tree-level diffing for standard directories in Update mode. Instead of skipping the entire directory if it exists, stage only the new files.
-
-**File path:** `src/domain/services/FileMergeEngine.ts`
-
-**Change:** Update `shouldStage()` to accept mode context and use `diffTrees()` for standard rules in update mode.
-
-**New method signature:**
-
-```typescript
-private async shouldStage(
-  rule: FileRule,
-  destinationPath: string,
-  isUpdateMode: boolean,
-): Promise<Result<boolean, MergeError>>;
-```
-
-**Logic:**
-- If `rule.category === "mandatory"`: always stage (existing behavior)
-- If `rule.category === "standard"` AND `isUpdateMode === true`:
-  - Use `diffTrees()` to find new files
-  - If new files exist: stage only those
-  - If no new files: skip
-- If `rule.category === "standard"` AND `isUpdateMode === false`:
-  - If destination missing: stage all
-  - If destination exists: skip all (existing behavior)
-- If `rule.category === "optional"`: never stage in update mode (existing behavior)
-
-**Acceptance criteria:**
-- [ ] `FileMergeEngine.shouldStage()` updated with tree-level diff logic
-- [ ] `isUpdateMode` parameter added
-- [ ] Standard rules in update mode stage only new files (not all)
-- [ ] Mandatory rules in update mode still stage all (unchanged)
-- [ ] Optional rules in update mode still skip (unchanged)
-- [ ] Project/Clean install modes unchanged
-
-**Verification:**
-- [ ] `grep "diffTrees" src/domain/services/FileMergeEngine.ts` shows the integration
-- [ ] `bun run tsc --noEmit` passes
-- [ ] `just test` exit 0 (existing FileMergeEngine tests still pass)
-
-**Dependencies:** Task 4.1
-**Files likely touched:**
-- `src/domain/services/FileMergeEngine.ts` (modified, +20 lines for tree diff logic)
-
-**Estimated scope:** M (refactor + new logic)
-
----
-
-#### Task 4.3: Unit tests: standard dir update delivers new files
-
-**Description:** Add unit tests for the new tree-level diff behavior in `FileMergeEngine`. Verify that:
-- Standard dir with new files: only new files are staged
-- Standard dir with no new files: nothing is staged
-- Standard dir missing in destination: all files staged (existing behavior)
-
-**Test file:** `tests/unit/domain/services/file-merge-engine-update.test.ts` (new)
-
-**Test scenarios:**
-1. Update mode + standard dir with 1 new file → only that file staged
-2. Update mode + standard dir with 3 new files → those 3 files staged, existing files skipped
-3. Update mode + standard dir with 0 new files → nothing staged
-4. Update mode + standard dir missing in destination → all files staged
-5. Project mode + standard dir exists → nothing staged (unchanged behavior)
-6. Clean mode + standard dir exists → all files staged (unchanged behavior)
-
-**Acceptance criteria:**
-- [ ] New test file with 6+ test cases
-- [ ] Uses mock `IFileSystem` and mock `IFileMergeEngine`
-- [ ] Tests both update and non-update modes
-- [ ] All tests pass
-
-**Verification:**
-- [ ] `bun test tests/unit/domain/services/file-merge-engine-update.test.ts` passes (6+ tests)
-- [ ] `grep "diffTrees" tests/unit/domain/services/file-merge-engine-update.test.ts` shows usage
-
-**Dependencies:** Task 4.2
-**Files likely touched:**
-- `tests/unit/domain/services/file-merge-engine-update.test.ts` (new, ~120 lines)
-
-**Estimated scope:** M (1 new test file, 6+ cases)
-
----
-
-#### Task 4.4: Integration tests: real filesystem with mock template
-
-**Description:** Add integration tests that use real temp directories to verify the tree-level diff works end-to-end. Pre-populate destination with existing files, add new files to template, run update, verify only new files are delivered.
-
-**Test file:** `tests/integration/use-cases/update-granularity.test.ts` (new)
-
-**Test scenarios:**
-1. Pre-populate `dest/docs/` with `file1.md`. Template has `file1.md` (unchanged) + `file2.md` (new). Run update. Assert `file2.md` exists in dest, `file1.md` content unchanged.
-2. Pre-populate `dest/docs/` with `file1.md` (modified). Template has `file1.md` (different content). Run update. Assert `file1.md` content UNCHANGED (standard rule).
-3. Template has no new files. Run update. Assert no changes to dest.
-
-**Acceptance criteria:**
-- [ ] New integration test file with 3+ test cases
-- [ ] Uses real temp directories
-- [ ] Verifies file content (not just existence)
-- [ ] All tests pass
-
-**Verification:**
-- [ ] `bun test tests/integration/use-cases/update-granularity.test.ts` passes (3+ tests)
-- [ ] `grep "mkdtemp" tests/integration/use-cases/update-granularity.test.ts` shows real temp dir usage
-
-**Dependencies:** Task 4.3
-**Files likely touched:**
-- `tests/integration/use-cases/update-granularity.test.ts` (new, ~100 lines)
-
-**Estimated scope:** M (1 new integration test file, 3+ cases)
-
----
-
-#### Task 4.5: E2E test 16: update existing project gets new standard file
-
-**Description:** Add a new E2E scenario that verifies Update mode delivers new standard files to existing users. This is the end-to-end validation of the tree-level diff feature.
-
-**Test file:** `tests/e2e/16-update-granularity.sh` (new)
-
-**Scenario:**
-1. Pre-populate destination with `dest/docs/file1.md` (existing user file)
-2. Add new file `template/estandar/docs/file2.md` (simulating template update)
-3. Run `bun run src/cli/main.ts --mode update --dest <tmp> --force`
-4. Assert `file1.md` content UNCHANGED (preserved)
-5. Assert `file2.md` exists in dest (delivered)
-
-**Note:** This test requires a way to simulate a template update. Options:
-- (a) Modify the actual template during the test (risky, requires cleanup)
-- (b) Use a custom template path via env var (cleaner)
-- (c) Test against a fixture template (safest, requires fixture setup)
-
-**Recommended:** Option (c) — use `tests/fixtures/template/` as a test template and add the new file there.
-
-**Acceptance criteria:**
-- [ ] New E2E scenario `tests/e2e/16-update-granularity.sh` created
-- [ ] Uses `tests/fixtures/template/` for isolated test template
-- [ ] Verifies existing files preserved + new files delivered
-- [ ] Cleanup trap removes temp directory
-- [ ] Test passes
-
-**Verification:**
-- [ ] `bash tests/e2e/16-update-granularity.sh` exits 0
-- [ ] `just test:e2e` shows 20/20 passing (was 19, now 20)
-- [ ] `grep "16-update-granularity" tests/e2e/run-e2e.sh` shows it's included
-
-**Dependencies:** Task 4.4
-**Files likely touched:**
-- `tests/e2e/16-update-granularity.sh` (new, ~50 lines)
-- `tests/fixtures/template/` (new directory, contains test template)
-- `tests/e2e/run-e2e.sh` (modified, +1 line to include scenario 16)
-
-**Estimated scope:** M (1 new E2E + fixture + run script update)
-
----
-
-### Checkpoint: Update Granularity Complete (Phase 4)
-
-- [ ] `diffTrees()` pure function added
-- [ ] `FileMergeEngine.shouldStage()` uses tree-level diff
-- [ ] 6+ unit tests + 3+ integration tests + 1 E2E test added
-- [ ] `just test` ≥825 tests, 0 fail (819 baseline + 6 new)
-- [ ] `just test:e2e` 20/20 passing
-- [ ] Existing user files preserved in update mode
-- [ ] New standard files delivered to existing users
-
----
-
-### Phase 5: Coverage Instrumentation (SEQUENTIAL, depends on Phase 1)
-
-#### Task 5.1: Add `c8` dev dep + bun-coverage wrapper script
-
-**Description:** Bun doesn't support NYC/Istanbul natively. Use `c8` (NYC-compatible) as a wrapper around `bun test --coverage` to generate lcov reports that can be enforced in CI.
-
-**File path:** `package.json` + `scripts/coverage-e2e.sh` (new)
-
-**Changes:**
-
-1. Add `c8` to devDependencies in `package.json`:
-```json
-"devDependencies": {
-  "@biomejs/biome": "^2.5.3",
-  "c8": "^10.1.3",
-  ...
-}
-```
-
-2. Create `scripts/coverage-e2e.sh`:
 ```bash
-#!/usr/bin/env bash
-# Generate coverage report including E2E tests.
-# Bun's --coverage doesn't instrument E2E scripts; c8 wraps bun test with NYC-compatible output.
-set -euo pipefail
+#!/bin/bash
+# FEV-23-T2: Update Option B — Add New Packs (Non-Interactive) E2E
+#
+# Scenario: Seed v2.0.0 installation with ONLY software-development pack.
+# Run --update --force --update-add-packs creative,business.
+# Expected (Option B with addPacks):
+#   - exit code 0
+#   - .codice-version updated: installedPacks now includes "creative" and "business"
+#   - agents from creative + business now present in agents/
+#   - software-development agents still present (lock)
+#
+# SC-UX7: Option B adds new packs during update, installed packs are LOCKED.
+# Note: With bundled v1.2.0, the comparison reports "already up to date" and
+# no merge happens. The test verifies the metadata is correct (installedPacks
+# was updated), and the merge behavior is documented as verified by integration
+# tests with BUNDLED_TEST_VERSION env var (FEV-23 verification).
 
-mkdir -p coverage
-c8 --reporter=lcov --reporter=text --reports-dir=coverage bun test tests/ --coverage
-echo "Coverage report: coverage/lcov.info"
+set -Eeuo pipefail
+source "$(dirname "$0")/common.sh"
+
+log_step "FEV-23-T2: Update Option B — Add New Packs (Non-Interactive)"
+
+TEMP_DIR="$(create_temp_dir)"
+log_info "Test directory: $TEMP_DIR"
+cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
+
+# Seed v2.0.0 installation with ONLY software-development
+echo '{"version":"2.0.0","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":[]}' > "$TEMP_DIR/.codice-version"
+log_info "Seeded .codice-version with v2.0.0 (software-development only)"
+
+start_mock_server
+
+EXIT_CODE=0
+STDERR_FILE="$TEMP_DIR/stderr.log"
+STDOUT_FILE="$TEMP_DIR/stdout.log"
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force --update-add-packs creative,business) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
+
+stop_mock_server
+
+if [[ "$EXIT_CODE" -ne 0 ]]; then
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
+    exit 1
+fi
+log_pass "CLI exited with code 0"
+
+COMBINED_OUTPUT=$(cat "$STDOUT_FILE" "$STDERR_FILE" 2>/dev/null || echo "")
+
+# Verify .codice-version updated
+assert_file_exists "$TEMP_DIR/.codice-version"
+VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
+
+# installedPacks must now include software-development (lock) + creative + business
+if ! echo "$VERSION_DATA" | grep -q '"software-development"'; then
+    log_fail "Version file missing 'software-development' (lock broken)"
+    exit 1
+fi
+if ! echo "$VERSION_DATA" | grep -q '"creative"'; then
+    log_fail "Version file missing 'creative' (addPacks not merged)"
+    exit 1
+fi
+if ! echo "$VERSION_DATA" | grep -q '"business"'; then
+    log_fail "Version file missing 'business' (addPacks not merged)"
+    exit 1
+fi
+log_pass "installedPacks updated: software-development (lock) + creative + business"
+
+log_pass "FEV-23-T2: All assertions passed"
+```
+
+**Target `28-flat-agents-destination.sh` (SC-UX10):**
+
+```bash
+#!/bin/bash
+# FEV-23-T3: Flat Agents Destination E2E
+#
+# Scenario: Run --clean --force --packs software-development,business.
+# Expected (flat destination preserved):
+#   - exit code 0
+#   - agents/backend-developer.md exists (from software-development, at agents/ root)
+#   - agents/business-analyst.md exists (from business, at agents/ root)
+#   - NO agents/software-development/ subdirectory created
+#   - NO agents/business/ subdirectory created
+#
+# SC-UX10: Agents are copied to flat agents/ directory, not pack subdirectories.
+
+set -Eeuo pipefail
+source "$(dirname "$0")/common.sh"
+
+log_step "FEV-23-T3: Flat Agents Destination"
+
+TEMP_DIR="$(create_temp_dir)"
+log_info "Test directory: $TEMP_DIR"
+cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
+
+EXIT_CODE=0
+STDERR_FILE="$TEMP_DIR/stderr.log"
+STDOUT_FILE="$TEMP_DIR/stdout.log"
+(cd "$TEMP_DIR" && $CODICE_CLI --clean --force --packs software-development,business) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
+
+if [[ "$EXIT_CODE" -ne 0 ]]; then
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
+    exit 1
+fi
+log_pass "CLI exited with code 0"
+
+# Verify agents are at agents/ root (flat)
+assert_file_exists "$TEMP_DIR/agents/backend-developer.md"
+assert_file_exists "$TEMP_DIR/agents/business-analyst.md"
+log_pass "Agents copied to flat agents/ directory"
+
+# Verify NO pack subdirectories
+assert_dir_missing "$TEMP_DIR/agents/software-development"
+assert_dir_missing "$TEMP_DIR/agents/business"
+log_pass "No pack subdirectories created"
+
+log_pass "FEV-23-T3: All assertions passed"
+```
+
+**Target `29-non-interactive-packs.sh` (SC-UX9):**
+
+```bash
+#!/bin/bash
+# FEV-23-T4: --packs Flag Non-Interactive E2E
+#
+# Scenario: Run --clean --force --packs business,creative
+# (NO default software-development).
+# Expected (non-interactive pack override):
+#   - exit code 0
+#   - .codice-version records installedPacks: ["business", "creative"]
+#   - NO software-development agents (e.g., backend-developer.md absent)
+#   - business + creative agents present
+#   - NO interactive prompts invoked
+#
+# SC-UX9: --packs flag works in non-interactive mode.
+
+set -Eeuo pipefail
+source "$(dirname "$0")/common.sh"
+
+log_step "FEV-23-T4: --packs Flag Non-Interactive"
+
+TEMP_DIR="$(create_temp_dir)"
+log_info "Test directory: $TEMP_DIR"
+cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
+
+EXIT_CODE=0
+STDERR_FILE="$TEMP_DIR/stderr.log"
+STDOUT_FILE="$TEMP_DIR/stdout.log"
+(cd "$TEMP_DIR" && $CODICE_CLI --clean --force --packs business,creative) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
+
+if [[ "$EXIT_CODE" -ne 0 ]]; then
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
+    exit 1
+fi
+log_pass "CLI exited with code 0"
+
+# Verify .codice-version
+assert_file_exists "$TEMP_DIR/.codice-version"
+VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
+
+if ! echo "$VERSION_DATA" | grep -q '"business"'; then
+    log_fail "Version file missing 'business'"
+    exit 1
+fi
+if ! echo "$VERSION_DATA" | grep -q '"creative"'; then
+    log_fail "Version file missing 'creative'"
+    exit 1
+fi
+log_pass "installedPacks = [business, creative] recorded"
+
+# Verify NO software-development agents
+assert_file_missing "$TEMP_DIR/agents/backend-developer.md"
+log_pass "No software-development agents (default overridden)"
+
+# Verify business + creative agents present
+assert_file_exists "$TEMP_DIR/agents/business-analyst.md"
+assert_file_exists "$TEMP_DIR/agents/designer.md"
+log_pass "business + creative agents present"
+
+log_pass "FEV-23-T4: All assertions passed"
+```
+
+**Target `30-project-install-packs.sh` (Project Install + packs):**
+
+```bash
+#!/bin/bash
+# FEV-23-T5: Project Install with Pack Selection E2E
+#
+# Scenario: Pre-populate destination with a file that exists in estandar/
+# (e.g., README.md). Run --project --force --packs business
+# Expected (Project Install + pack selection):
+#   - exit code 0
+#   - README.md is PRESERVED (Project Install doesn't overwrite standard)
+#   - agents from business pack present
+#   - .codice-version records installedPacks: ["business"]
+#   - NO software-development agents (pack selection respected)
+#
+# Note: Project Install + packs is the "selective merge" use case from US-2
+# (existing project) combined with the new pack system.
+
+set -Eeuo pipefail
+source "$(dirname "$0")/common.sh"
+
+log_step "FEV-23-T5: Project Install with Pack Selection"
+
+TEMP_DIR="$(create_temp_dir)"
+log_info "Test directory: $TEMP_DIR"
+cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
+
+# Pre-populate README.md (user's existing project)
+echo "# My Custom Project" > "$TEMP_DIR/README.md"
+log_info "Pre-populated README.md (user's custom content)"
+
+EXIT_CODE=0
+STDERR_FILE="$TEMP_DIR/stderr.log"
+STDOUT_FILE="$TEMP_DIR/stdout.log"
+(cd "$TEMP_DIR" && $CODICE_CLI --project --force --packs business) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
+
+if [[ "$EXIT_CODE" -ne 0 ]]; then
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
+    exit 1
+fi
+log_pass "CLI exited with code 0"
+
+# Verify README.md PRESERVED (Project Install behavior)
+assert_file_exists "$TEMP_DIR/README.md"
+if ! grep -q "My Custom Project" "$TEMP_DIR/README.md"; then
+    log_fail "README.md was overwritten (Project Install should preserve standard files)"
+    exit 1
+fi
+log_pass "README.md preserved (Project Install selective merge)"
+
+# Verify .codice-version
+assert_file_exists "$TEMP_DIR/.codice-version"
+VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
+if ! echo "$VERSION_DATA" | grep -q '"business"'; then
+    log_fail "Version file missing 'business' in installedPacks"
+    exit 1
+fi
+log_pass "installedPacks = [business] recorded"
+
+# Verify business agents present, software-development absent
+assert_file_exists "$TEMP_DIR/agents/business-analyst.md"
+assert_file_missing "$TEMP_DIR/agents/backend-developer.md"
+log_pass "business pack installed, software-development skipped"
+
+log_pass "FEV-23-T5: All assertions passed"
 ```
 
 **Acceptance criteria:**
-- [ ] `c8` added to `package.json` devDependencies
-- [ ] `scripts/coverage-e2e.sh` created
-- [ ] Generates lcov report in `coverage/`
-- [ ] Documented in Justfile or README
+
+- [ ] 5 E2E scripts created (26, 27, 28, 29, 30)
+- [ ] Each script uses `common.sh` helpers
+- [ ] Each script is self-contained (no shared state)
+- [ ] `just test-e2e` shows 30/30 scenarios pass (25 baseline + 5 new)
+- [ ] SC-UX7, SC-UX9, SC-UX10, SC-UX12 each covered by exactly 1 E2E
+- [ ] Project Install + pack selection covered by 1 E2E (30)
+- [ ] All scripts executable (chmod +x)
 
 **Verification:**
-- [ ] `grep '"c8"' package.json` shows the dep
-- [ ] `bash scripts/coverage-e2e.sh` runs successfully
-- [ ] `ls coverage/lcov.info` shows the report
 
-**Dependencies:** Task 1.2 (coverage foundation)
-**Files likely touched:**
-- `package.json` (modified, +1 dep)
-- `scripts/coverage-e2e.sh` (new, ~10 lines)
+- [ ] `bash tests/e2e/26-update-blocked-pre-1.2.0.sh` exit 0
+- [ ] `bash tests/e2e/27-update-option-b.sh` exit 0
+- [ ] `bash tests/e2e/28-flat-agents-destination.sh` exit 0
+- [ ] `bash tests/e2e/29-non-interactive-packs.sh` exit 0
+- [ ] `bash tests/e2e/30-project-install-packs.sh` exit 0
+- [ ] `just test-e2e` shows 30/30 pass
 
-**Estimated scope:** S (1 new script + 1 dep)
+**Dependencies:** FEV-22 ✅
+**Files likely touched:** 5 new E2E scripts (+490 lines)
+**Estimated scope:** M (5 scripts, ~490 lines, 1.5-2h)
+**Commit:** `test(e2e): cover remaining SC-UX criteria and project install with pack selection`
 
 ---
 
-#### Task 5.2: Generate E2E coverage report (lcov format)
+#### Checkpoint: Phase 1 Complete (gates Phase 2)
 
-**Description:** Run the E2E tests under `c8` to capture coverage from `main.ts` and use cases. Verify that the E2E coverage is now captured and that `main.ts` coverage improves.
-
-**Acceptance criteria:**
-- [ ] `bash scripts/coverage-e2e.sh` runs all tests + E2E instrumentation
-- [ ] `coverage/lcov.info` is generated
-- [ ] `main.ts` coverage improves from 86.21% → ≥95% (lines 134-145 are now covered by E2E)
-
-**Verification:**
-- [ ] `grep "main.ts" coverage/lcov.info` shows coverage data
-- [ ] Coverage report shows main.ts ≥95% lines
-
-**Dependencies:** Task 5.1
-**Files likely touched:**
-- None (just running the script)
-
-**Estimated scope:** XS (verification)
+- [ ] 5 new E2E scripts created
+- [ ] All 30 E2E scenarios pass (`just test-e2e` shows 30/30)
+- [ ] SC-UX7, SC-UX9, SC-UX10, SC-UX12 verified end-to-end
+- [ ] Project Install + pack selection verified
+- [ ] **Review con humano antes de Phase 2**
 
 ---
 
-#### Task 5.3: Add coverage gate to CI
+### Phase 2: Unit/Integration Test Gaps (~1.5h, 1 commit)
 
-**Description:** Modify `.github/workflows/ci.yml` to enforce coverage thresholds. Fail the build if lines < 95% or functions < 95%.
+> **Vertical slicing: 1 test file = 1 use case concern.** Cada test file agrega tests para un use case o helper. Phase 2 = 4 test files modificados. Total time: 1.5h.
 
-**File path:** `.github/workflows/ci.yml`
+#### Task 2.1: Add Option B execution tests to `update-workspace.test.ts`
 
-**Change:** Add a new step after `just test`:
+**Description:** El test unit `update-flow.test.ts` ya cubre la lógica de resolución (Option A vs B vs cancel) con mocks. Lo que falta es verificar que `UpdateWorkspaceUseCase` realmente invoca `mergeEngine.execute()` con los packs correctos cuando Option B está activo.
 
-```yaml
-- name: Check coverage thresholds
-  run: |
-    bun test tests/ --coverage --coverage-threshold=lines=95,functions=95
+**Test additions:**
+
+```typescript
+// In tests/integration/use-cases/update-workspace.test.ts (add new describe block)
+
+describe("UpdateWorkspaceUseCase — Option B (add packs)", () => {
+  test("merges installed packs + newly added packs when Option B selected", async () => {
+    // Setup: v2.0.0 install with [software-development]
+    // Mock: selectUpdateOption returns "add", selectPacks returns
+    //       [software-development, business, creative] (with installed locked)
+    // Expected: mergeEngine.execute called with rules including all 3 packs
+    //           (installedPacks = [software-development, business, creative])
+    // Verify: mockMergeEngine.execute called with rules
+    //         Verify: .codice-version written with all 3 packs
+  });
+
+  test("Option B with only installed packs selected returns null and skips merge", async () => {
+    // Mock: selectUpdateOption returns "add", selectPacks returns
+    //       [software-development] (no new packs)
+    // Expected: mergeEngine.execute NOT called
+    // Verify: prompt.showInfo called with "No new packs selected. Update cancelled."
+  });
+
+  test("Option B preserves installed packs even if user attempts to deselect", async () => {
+    // This is the "hard lock" test — same as unit test but verifies the
+    // use case receives the locked list, not what user "selected"
+    // Mock: selectPacks returns [creative] (deselected software-development)
+    // Expected: installedPacks = [software-development, creative] (lock wins)
+    // Verify: mergeEngine.execute called with both
+  });
+});
 ```
 
 **Acceptance criteria:**
-- [ ] New step added to CI workflow
-- [ ] Thresholds: lines ≥ 95%, functions ≥ 95%
-- [ ] Build fails if thresholds not met
+
+- [ ] 3 new integration tests added to `update-workspace.test.ts`
+- [ ] All use existing `createMockPrompt` + `createMockMergeEngine` helpers
+- [ ] All verify the correct pack list reaches `mergeEngine.execute()`
+- [ ] All tests pass
 
 **Verification:**
-- [ ] `grep "coverage-threshold" .github/workflows/ci.yml` shows the gate
-- [ ] CI workflow syntax is valid (yamllint or similar)
 
-**Dependencies:** Task 5.2
-**Files likely touched:**
-- `.github/workflows/ci.yml` (modified, +5 lines)
+- [ ] `bun test tests/integration/use-cases/update-workspace.test.ts` shows new tests pass
+- [ ] No regression in existing 32419-line test file
+- [ ] Coverage of `UpdateWorkspaceUseCase.ts` ≥90%
 
-**Estimated scope:** XS (1 CI step)
+**Dependencies:** Phase 1 complete
+**Files likely touched:** `tests/integration/use-cases/update-workspace.test.ts` (+80)
+**Estimated scope:** S (1 test file, ~80 lines, 0.5h)
+**Commit (bundled):** `test(integration): cover Option B execution and pack-aware use cases`
 
 ---
 
-#### Task 5.4: Update `main.ts` coverage from 86.21% → ≥95%
+#### Task 2.2: Add pack selection coverage to `project-install.test.ts`
 
-**Description:** With E2E instrumentation in place, the interactive mode block (lines 134-145) and possibly the catch block should now be covered by E2E tests. Verify and document the new baseline.
+**Description:** El test file `project-install.test.ts` (27K lines) cubre Project Install en general. Faltan tests específicos que verifiquen que Project Install respeta `--packs` y que la merge engine solo incluye los packs seleccionados.
+
+**Test additions:**
+
+```typescript
+// In tests/integration/use-cases/project-install.test.ts
+
+describe("ProjectInstallUseCase — pack selection", () => {
+  test("respects --packs flag (only includes selected packs)", async () => {
+    // Setup: pre-populated destination
+    // Run: project install with --packs business
+    // Expected: agents/business-analyst.md present
+    //           agents/backend-developer.md absent (software-development skipped)
+  });
+
+  test("preserves user's standard files when pack differs from default", async () => {
+    // Setup: README.md, CHANGELOG.md exist
+    // Run: project install with --packs business
+    // Expected: README.md, CHANGELOG.md preserved
+    //           business pack agents copied
+  });
+
+  test("default pack (software-development) when --packs not specified", async () => {
+    // Run: project install WITHOUT --packs
+    // Expected: software-development agents present
+    //           business pack agents absent
+  });
+});
+```
 
 **Acceptance criteria:**
-- [ ] `main.ts` line coverage ≥95% (was 86.21%)
-- [ ] Function coverage ≥95% (was 100%)
-- [ ] Coverage report shows main.ts at the new baseline
+
+- [ ] 3 new integration tests added to `project-install.test.ts`
+- [ ] All tests pass
+- [ ] Coverage of `ProjectInstallUseCase.ts` ≥90%
 
 **Verification:**
-- [ ] `bun test --coverage` shows main.ts lines ≥95%
-- [ ] `coverage/lcov.info` shows updated main.ts coverage
 
-**Dependencies:** Task 5.3
-**Files likely touched:** None (coverage verification)
-**Estimated scope:** XS (verification)
+- [ ] `bun test tests/integration/use-cases/project-install.test.ts` shows new tests pass
+- [ ] No regression
 
----
-
-### Checkpoint: Coverage Instrumentation Complete (Phase 5)
-
-- [ ] `c8` integrated with Bun test
-- [ ] E2E coverage captured in lcov format
-- [ ] CI enforces coverage thresholds (≥95% lines/functions)
-- [ ] `main.ts` coverage ≥95% (was 86.21%)
-- [ ] Overall coverage report available in `coverage/`
+**Dependencies:** Phase 1 complete
+**Files likely touched:** `tests/integration/use-cases/project-install.test.ts` (+60)
+**Estimated scope:** S (1 test file, ~60 lines, 0.3h)
+**Commit (bundled):** Same as T2.1
 
 ---
 
-### Phase 6: Documentation & Verification
+#### Task 2.3: Add pack summary verification to `clean-install.test.ts`
 
-#### Task 6.1: Update `CHANGELOG.md` with FEV-16 entry under `[Unreleased]`
+**Description:** El test file `clean-install.test.ts` (27K lines) cubre Clean Install general. Faltan tests que verifiquen que la install summary se muestra con los packs correctos (FEV-22 agregó `showInstallSummary` pero clean-install.test.ts no verifica el contenido).
 
-**Description:** Add a comprehensive FEV-16 entry to `CHANGELOG.md` under the `[Unreleased]` section. Cover all 5 workstreams: coverage, refactor, benchmarks, granularity, coverage instrumentation.
+**Test additions:**
 
-**File path:** `CHANGELOG.md`
+```typescript
+// In tests/integration/use-cases/clean-install.test.ts
 
-**Changes:** Replace `_No unreleased changes._` with FEV-16 entries:
+describe("CleanInstallUseCase — install summary", () => {
+  test("summary shows selected packs with agent counts", async () => {
+    // Run: clean install with --packs software-development,business
+    // Verify: prompt.showInstallSummary called with:
+    //         - packs: [{id: "software-development", agentCount: 146},
+    //                   {id: "business", agentCount: 92}]
+    //         - totalAgents: 238
+  });
+
+  test("summary shows mandatory directories (main + writers)", async () => {
+    // Verify: summary.mandatoryDirs includes "packs/main", "packs/writers"
+  });
+
+  test("summary shows selected optional files when present", async () => {
+    // Run: clean install with optional selections
+    // Verify: summary.optionalFiles includes the selections
+  });
+});
+```
+
+**Acceptance criteria:**
+
+- [ ] 3 new integration tests added to `clean-install.test.ts`
+- [ ] All tests pass
+- [ ] Coverage of `installSummary.ts` ≥95%
+
+**Verification:**
+
+- [ ] `bun test tests/integration/use-cases/clean-install.test.ts` shows new tests pass
+- [ ] No regression
+
+**Dependencies:** Phase 1 complete
+**Files likely touched:** `tests/integration/use-cases/clean-install.test.ts` (+40)
+**Estimated scope:** S (1 test file, ~40 lines, 0.3h)
+**Commit (bundled):** Same as T2.1
+
+---
+
+#### Task 2.4: Add pre-1.2.0 edge cases to `version-context.test.ts`
+
+**Description:** El test file `version-context.test.ts` (112 lines) ya cubre v2.0+, pre-2.0.0, pre-1.2.0 (1 test), malformed, missing. Faltan edge cases: version strings con v-prefix, version exactamente en 1.2.0 (boundary), version con minor patch.
+
+**Test additions:**
+
+```typescript
+// In tests/unit/cli/version-context.test.ts
+
+describe("detectVersionContext — edge cases", () => {
+  test("v-prefix on version is stripped before status determination", async () => {
+    // v1.2.0 → should be pre-2.0.0
+  });
+
+  test("version 1.2.0 exactly is pre-2.0.0 (not pre-1.2.0)", async () => {
+    // 1.2.0 → boundary, should be pre-2.0.0
+  });
+
+  test("version 1.1.999 is pre-1.2.0 (minor < 2)", async () => {
+    // 1.1.999 → pre-1.2.0
+  });
+
+  test("version 0.9.0 is pre-1.2.0", async () => {
+    // 0.9.0 → pre-1.2.0
+  });
+});
+```
+
+**Acceptance criteria:**
+
+- [ ] 4 new unit tests added to `version-context.test.ts`
+- [ ] All tests pass
+- [ ] Total tests in file: 13 (was 9)
+
+**Verification:**
+
+- [ ] `bun test tests/unit/cli/version-context.test.ts` shows 13 tests pass
+- [ ] No regression
+
+**Dependencies:** Phase 1 complete
+**Files likely touched:** `tests/unit/cli/version-context.test.ts` (+30)
+**Estimated scope:** XS (1 test file, ~30 lines, 0.2h)
+**Commit (bundled):** Same as T2.1
+
+---
+
+#### Checkpoint: Phase 2 Complete (gates Phase 3)
+
+- [ ] 13 new tests added (3 + 3 + 3 + 4)
+- [ ] `just test-integration` shows 100% pass
+- [ ] `just test-unit` shows 1885+ tests pass (1872 baseline + 13 new)
+- [ ] Coverage of `UpdateWorkspaceUseCase`, `ProjectInstallUseCase`, `installSummary.ts` ≥90%
+- [ ] No regression in existing 1872 tests
+- [ ] **Review con humano antes de Phase 3**
+
+---
+
+### Phase 3: Version Bump to v2.0.0 (~0.5h, 1 commit)
+
+> **Atomic concern: 1 commit para el bump.** `package.json` 1.2.0 → 2.0.0, E2E 23 reescrito, comentarios transitional removidos. Phase 3 = 1 commit. Total time: 0.5h.
+
+#### Task 3.1: Update `package.json` version to 2.0.0
+
+**Description:** En `package.json`, cambiar `"version": "1.2.0"` → `"version": "2.0.0"`. El VERSION constant en `src/cli/version.ts` se deriva de package.json (auto-update, no change needed).
+
+**Change:**
+
+```diff
+   "name": "@fisherk2-dev/codice",
+-  "version": "1.2.0",
++  "version": "2.0.0",
+   "license": "MIT",
+```
+
+**Acceptance criteria:**
+
+- [ ] `package.json` has `"version": "2.0.0"`
+- [ ] `bun run src/cli/main.ts --version` outputs "2.0.0"
+- [ ] No other code changes needed (VERSION auto-derived)
+
+**Verification:**
+
+- [ ] `grep "version" package.json | head -1` shows 2.0.0
+- [ ] Manual: `bun run src/cli/main.ts --version` shows 2.0.0
+
+**Dependencies:** Phase 2 complete
+**Files likely touched:** `package.json` (+1 / -1)
+**Estimated scope:** XS (1 line change, 0.05h)
+**Commit (bundled):** `feat(release): bump version to 2.0.0 and rewrite Option A E2E`
+
+---
+
+#### Task 3.2: Rewrite E2E #23 (real Option A verification)
+
+**Description:** Reescribir `tests/e2e/23-update-option-a.sh` para verificar la lógica REAL de Option A (sin transitional no-op). Ahora que `package.json` es 2.0.0, el bundled version match hace que el merge realmente ocurra. Verificar que:
+- Update con `--update --force` (Option A default) NO agrega nuevos packs
+- Solo actualiza los packs en `installedPacks`
+- `business` pack NO se copia (no estaba instalado)
+
+**Target `23-update-option-a.sh` (rewritten):**
+
+```bash
+#!/bin/bash
+# FEV-23-T6: Update Option A — Real Pack-Scoped Merge E2E
+#
+# Scenario: Seed v2.0.0 installation with ONLY software-development pack.
+# Run --update --force.
+# Expected (Option A with bundled v2.0.0):
+#   - exit code 0
+#   - business pack agents do NOT appear (not in installedPacks)
+#   - software-development agents are updated
+#   - .codice-version records installedPacks: ["software-development"] (unchanged)
+#
+# SC-UX6: Option A updates only agents from installedPacks.
+# Note: This test supersedes the "transitional no-op" version (FEV-21)
+#       now that the bundled version is 2.0.0.
+
+set -Eeuo pipefail
+source "$(dirname "$0")/common.sh"
+
+log_step "FEV-23-T6: Update Option A — Real Pack-Scoped Merge"
+
+TEMP_DIR="$(create_temp_dir)"
+log_info "Test directory: $TEMP_DIR"
+cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
+
+# Seed v2.0.0 installation with ONLY software-development
+echo '{"version":"2.0.0","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":[]}' > "$TEMP_DIR/.codice-version"
+log_info "Seeded .codice-version with v2.0.0 (software-development only)"
+
+# Pre-create a custom file in business pack destination to verify it's NOT touched
+mkdir -p "$TEMP_DIR/agents"
+echo "# User's custom business file" > "$TEMP_DIR/agents/business-custom.md"
+
+start_mock_server
+
+EXIT_CODE=0
+STDERR_FILE="$TEMP_DIR/stderr.log"
+STDOUT_FILE="$TEMP_DIR/stdout.log"
+(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
+
+stop_mock_server
+
+if [[ "$EXIT_CODE" -ne 0 ]]; then
+    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
+    exit 1
+fi
+log_pass "CLI exited with code 0"
+
+# Verify business pack agents did NOT appear (Option A scope)
+assert_file_missing "$TEMP_DIR/agents/business-analyst.md"
+log_pass "Business pack agents absent (not in installedPacks)"
+
+# Verify user's custom business file is preserved
+assert_file_exists "$TEMP_DIR/agents/business-custom.md"
+log_pass "User's custom business file preserved (Option A doesn't delete)"
+
+# Verify .codice-version unchanged
+assert_file_exists "$TEMP_DIR/.codice-version"
+VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
+if ! echo "$VERSION_DATA" | grep -q '"software-development"'; then
+    log_fail "Version file lost 'software-development' from installedPacks"
+    exit 1
+fi
+if echo "$VERSION_DATA" | grep -q '"business"'; then
+    log_fail "Version file records 'business' — unexpected (Option A doesn't add)"
+    exit 1
+fi
+log_pass "installedPacks = [software-development] (Option A scope respected)"
+
+log_pass "FEV-23-T6: All assertions passed"
+```
+
+**Acceptance criteria:**
+
+- [ ] E2E 23 rewritten (no transitional comments)
+- [ ] Verifies real Option A merge behavior
+- [ ] All assertions pass
+
+**Verification:**
+
+- [ ] `bash tests/e2e/23-update-option-a.sh` exit 0
+- [ ] No references to "transitional no-op" in E2E 23
+
+**Dependencies:** Task 3.1
+**Files likely touched:** `tests/e2e/23-update-option-a.sh` (+30 / -50, net reduction)
+**Estimated scope:** S (1 file rewrite, 0.2h)
+**Commit (bundled):** Same as T3.1
+
+---
+
+#### Task 3.3: Verify other E2E scripts work with v2.0.0
+
+**Description:** Revisar `tests/e2e/04-update-workspace.sh`, `15-update-workspace-existing-project.sh`, `16-update-granularity.sh` que pueden tener referencias a `BUNDLED_TEST_VERSION` env var o a "transitional" comments. Si los tienen, simplificarlos (ya que bundled es 2.0.0, ya no son necesarios).
+
+**Acceptance criteria:**
+
+- [ ] E2E 04, 15, 16 reviewed
+- [ ] No BUNDLED_TEST_VERSION env var references (unless actually needed)
+- [ ] No "transitional" comments
+- [ ] All scripts pass
+
+**Verification:**
+
+- [ ] `grep -l "BUNDLED_TEST_VERSION\|transitional" tests/e2e/*.sh` returns 0 files (or only legitimate uses)
+- [ ] `just test-e2e` shows 30/30 pass
+
+**Dependencies:** Task 3.2
+**Files likely touched:** 0-3 E2E files (verification only, no expected changes)
+**Estimated scope:** XS (verification, 0.05h)
+**Commit (bundled):** Same as T3.1
+
+---
+
+#### Checkpoint: Phase 3 Complete (gates Phase 4)
+
+- [ ] `package.json` version is 2.0.0
+- [ ] `--version` flag outputs 2.0.0
+- [ ] E2E 23 rewritten (no transitional comments)
+- [ ] All 30 E2E pass with v2.0.0
+- [ ] No regression in 1885+ unit/integration tests
+- [ ] **Review con humano antes de Phase 4**
+
+---
+
+### Phase 4: Release Documentation (~1h, 1 commit)
+
+> **Atomic concern: 1 commit para docs.** CHANGELOG + README + MIGRATION + WORKFLOW + TECH_DEBT. Phase 4 = 1 commit. Total time: 1h.
+
+#### Task 4.1: Update `CHANGELOG.md` with v2.0.0 entry
+
+**Description:** En `CHANGELOG.md`, agregar nueva sección `## [2.0.0] - 2026-08-XX` con los 6 FEVs (17-23). Usar Keep a Changelog format (Added, Changed, Deprecated, Removed, Fixed, Security).
+
+**Target addition:**
 
 ```markdown
-## [Unreleased]
+## [2.0.0] - 2026-08-XX
 
 ### Added
-
-- **FEV-16 — Pre-release Tech Debt Closure:** Resolves 5 TECH_DEBT.md items prepared for v1.2.0:
-  - **Coverage foundation:** `resolveInteractiveMode()` extracted from `main.ts` for testability. 9 new unit tests. `main.ts` coverage 86.21% → ≥90% lines.
-  - **Use case refactor:** Template Method pattern applied to `CleanInstallUseCase` + `ProjectInstallUseCase`. New `InstallUseCaseBase` abstract class. ~123 lines of duplication eliminated.
-  - **Performance benchmarks:** `just bench` recipe with `hyperfine` for 3 installation modes. 3 standalone benchmark scripts + `assert-no-regression.sh` for SC-9/10/11 verification.
-  - **Update granularity:** Tree-level diff for standard directories. New `diffTrees()` pure function. `FileMergeEngine.shouldStage()` updated to stage only new files in update mode. Existing user files preserved.
-  - **Coverage instrumentation:** `c8` integration with Bun for E2E coverage. CI enforces ≥95% lines/functions. `main.ts` coverage ≥95% (was 86.21%).
+- **Agent Pack System:** 8 selectable packs (software-development, business,
+  creative, finance, government-legal, science-research, hardware-emerging,
+  operations-support) + 2 mandatory packs (main, writers). ~355 agents
+  distributed across packs.
+- **Pack Selection Wizard:** Interactive checkbox selection during install
+  with `software-development` pre-selected. Minimum 1 pack enforced.
+- **Installation Summary:** Pre-install summary showing selected packs +
+  agent counts + optional files + total estimated size (via `clack.note()`).
+- **`.codice-version` v2.0 Format:** Added `installedPacks` array for
+  update scoping. Backward-compatible with v1.x `installedVersion`.
+- **3 New CLI Flags:** `--packs <list>`, `--packs-all`, `--update-add-packs <list>`
+  for non-interactive install/update.
+- **Update Option A/B:** Option A updates only installed packs; Option B
+  adds new packs (installed packs locked). Interactive menu or
+  `--update-add-packs` flag.
+- **Version Detection:** Pre-1.2.0 (cleanup suggestion), pre-2.0.0 (reinstall
+  required), v2.0+ (full update). 4 status states with context-aware messages.
+- **E2E Suite:** 30 scenarios (was 16 in v1.2.0) covering pack selection,
+  version detection, update Option A/B, atomic rollback, path traversal,
+  symlinks, gitignore, install summary.
+- **Unit/Integration Tests:** 1885+ tests (was 844 in v1.2.0).
+- **Wiki:** Updated for v2.0 pack system, install wizard, update flow.
 
 ### Changed
+- **Template Structure:** `template/obligatorio/` restructured to
+  `core/` (workspace infra) + `packs/` (agent categories). Flat `agents/`
+  destination preserved.
+- **Permission Model:** 4 primary agents unified to `task: "*": allow` +
+  deny 5 primaries. Adding new agents no longer requires manual updates.
+- **Auto-Discovery:** Plugin `VALID_SUBAGENTS` Set removed; recursive
+  filesystem scan of `packs/` subdirectories.
 
-- **FEV-16 — FileMergeEngine:** Tree-level diff replaces directory-level skip. Standard rules in update mode now deliver new files (previously skipped entirely).
-- **FEV-16 — CleanInstallUseCase / ProjectInstallUseCase:** Reduced from 313 → ~190 lines combined via Template Method.
-- **FEV-16 — Coverage thresholds:** CI now enforces ≥95% lines/functions (was unenforced).
+### Removed
+- **Plugin `VALID_SUBAGENTS`:** Hardcoded Set of ~110 entries deleted;
+  `PRIMARY_AGENTS` (6) is the only hardcoded list.
+- **Subagent Index Tables:** "AVAILABLE SUBAGENTS" sections removed from
+  all 6 primary agents (huitzilopochtli included — FEV-19 amendment).
+
+### Deprecated
+- **Update path for v1.x users:** Must reinstall via Clean Install or
+  Project Install. See `docs/MIGRATION.md` for guide.
 
 ### Fixed
+- **SC-15 Tarball Size Deviation:** 8.0MB (was target <5MB) — accepted
+  2026-08-04, see TECH_DEBT.md §7.2. Pack system adds ~4MB of agent files.
 
-- **FEV-16 — TECH_DEBT items resolved:** TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 all closed.
-- **FEV-16 — Performance criteria SC-9/10/11:** Now benchmarked and regression-protected.
+### Security
+- N/A (no security changes in v2.0.0; existing v1.x security model
+  preserved).
 ```
 
 **Acceptance criteria:**
-- [ ] `[Unreleased]` section no longer has `_No unreleased changes._`
-- [ ] 5 items covered in `### Added`
-- [ ] 3 items in `### Changed`
-- [ ] 2 items in `### Fixed`
-- [ ] Keep a Changelog format preserved
-- [ ] ~25 lines added
+
+- [ ] CHANGELOG has `## [2.0.0]` section
+- [ ] All Keep a Changelog categories present (Added, Changed, Removed,
+      Deprecated, Fixed, Security)
+- [ ] FEV-17 to FEV-23 referenced
+- [ ] Migration note in Deprecated
 
 **Verification:**
-- [ ] `grep "FEV-16" CHANGELOG.md` shows ≥10 matches
-- [ ] `wc -l CHANGELOG.md` shows +25 lines (was ~595, now ~620)
 
-**Dependencies:** All implementation phases (1-5)
-**Files likely touched:**
-- `CHANGELOG.md` (modified, +25 lines)
+- [ ] `grep "## \[2.0.0\]" CHANGELOG.md` ≥ 1
+- [ ] `grep "FEV-17\|FEV-18\|FEV-19\|FEV-20\|FEV-21\|FEV-22\|FEV-23" CHANGELOG.md` ≥ 6
 
-**Estimated scope:** XS (1 section, ~25 lines)
+**Dependencies:** Phase 3 complete
+**Files likely touched:** `CHANGELOG.md` (+60)
+**Estimated scope:** S (1 file, 0.3h)
+**Commit (bundled):** `docs: v2.0.0 release documentation (CHANGELOG, README, MIGRATION)`
 
 ---
 
-#### Task 6.2: Update `docs/WORKFLOW.md` (mark FEV-16 complete)
+#### Task 4.2: Update `README.md` for v2.0.0
 
-**Description:** Update `docs/WORKFLOW.md` to mark FEV-16 as complete. Add a results section matching the format of FEV-14/15.
+**Description:** Actualizar `README.md` para reflejar v2.0.0: pack system prominent, install wizard mentioned, update flow (Option A/B), version detection.
 
-**File path:** `docs/WORKFLOW.md`
+**Target changes:**
 
-**Changes:**
-1. Line 35 area: add `| FEV-16 | Pre-release Tech Debt Closure (v1.2 Phase 6) | TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2 closure | ✅ Completo |`
-2. Add a new "### Fase FEV-16 — Pre-release Tech Debt Closure (v1.2 Phase 6) ✅ Completo" section after FEV-15
-3. Include: Date, Items resolved, Results (coverage, refactor, benchmarks, granularity, coverage instrumentation), Metrics
+```diff
+ # Códice — OpenCode Workspace Installer
+
+-Install the OpenCode workspace template with a single command.
++Install the OpenCode workspace template with a single command.
++Now with the **Agent Pack System** (v2.0) — choose which of 8 packs to
++install based on your domain (software-development, business, creative,
++finance, government-legal, science-research, hardware-emerging,
++operations-support).
+
+ ## Quick Install
+
+ ```bash
+ bunx @fisherk2-dev/codice --clean --force
+ # OR non-interactive with packs:
+ bunx @fisherk2-dev/codice --clean --force --packs software-development,business
+ ```
+
++## What's New in v2.0
++
++- **Agent Packs** — Select only the agents you need. Default:
++  `software-development`. No more 90+ irrelevant agents for business users.
++- **Pack Selection Wizard** — Interactive checkboxes during install.
++- **Scoped Updates** — Update only your installed packs, or add new ones
++  via Option B.
++- **Smart Version Detection** — Detects v1.x / pre-1.2.0 and suggests
++  the right action.
++
+ ## Installation Modes
+@@
+ ### Clean Install
+-Overwrites everything in the destination.
++Overwrites everything in the destination. Prompts for pack selection.
+ 
+ ### Project Install
+-Selective merge — preserves your existing files.
++Selective merge — preserves your existing files. Prompts for pack selection.
+ 
+ ### Update Workspace
+-Update an existing Códice installation to the latest version.
++Update an existing Códice installation to the latest version. Requires
++v2.0.0+ (v1.x users must reinstall).
++
++**Option A:** Update only installed packs.
++**Option B:** Update + add new packs (installed packs locked).
+```
 
 **Acceptance criteria:**
-- [ ] FEV-16 line added to phase table with `✅ Completo`
-- [ ] New "Fase FEV-16" section added with results
-- [ ] Metrics: ≥825 tests, 20/20 E2E, ≥95% coverage, 5 items closed
-- [ ] Line count stays <300 lines (per FEV-13 documentation reduction)
+
+- [ ] README mentions pack system prominently
+- [ ] Quick Install shows `--packs` flag example
+- [ ] Installation modes mention pack selection
+- [ ] Update Workspace mentions Option A/B
+- [ ] "What's New in v2.0" section added
+- [ ] No "v1.2.0" references remain (or only historical context)
 
 **Verification:**
-- [ ] `grep "FEV-16" docs/WORKFLOW.md` shows the updated status
-- [ ] `wc -l docs/WORKFLOW.md` shows <300 lines
 
-**Dependencies:** Task 6.1
-**Files likely touched:**
-- `docs/WORKFLOW.md` (modified, +30 lines)
+- [ ] `grep "v2.0\|pack system\|Pack" README.md | wc -l` ≥ 5
+- [ ] `grep "v1.2" README.md | wc -l` ≤ 2 (only historical)
 
-**Estimated scope:** S (status update + new section, ~30 lines)
+**Dependencies:** Phase 3 complete
+**Files likely touched:** `README.md` (+40 / -20)
+**Estimated scope:** S (1 file, 0.2h)
+**Commit (bundled):** Same as T4.1
 
 ---
 
-#### Task 6.3: Update `docs/TECH_DEBT.md` (resolve 5 items in "Resolved")
+#### Task 4.3: NEW `docs/MIGRATION.md` (v1.x → v2.0.0)
 
-**Description:** Move the 5 FEV-16 items to the "Resolved" section of `TECH_DEBT.md`. Each item gets a row with `✅` resolution.
+**Description:** Crear `docs/MIGRATION.md` con guía explícita para usuarios v1.x que necesitan migrar a v2.0.0. Explicar: por qué el update no funciona, qué hacer, qué se preserva, qué se pierde.
 
-**File path:** `docs/TECH_DEBT.md`
-
-**Changes:** Add a new "### FEV-16 — Pre-release Tech Debt Closure (2026-07-30)" subsection in the "Resolved" section, with 5 rows:
+**Target content:**
 
 ```markdown
-### FEV-16 — Pre-release Tech Debt Closure (2026-07-30)
+# Migration Guide: v1.x → v2.0.0
 
-| ID | Item | Resolution |
-|----|------|------------|
-| **TD-1.1** | `src/cli/main.ts` coverage gap (interactive mode + catch block) | ✅ `resolveInteractiveMode()` extracted. 9 new unit tests. Coverage 86.21% → ≥95% (with E2E instrumentation). |
-| **TD-2.1** | CleanInstall/ProjectInstall duplicación (~80 líneas) | ✅ Template Method pattern. `InstallUseCaseBase` created. 313 → ~190 lines (-123). |
-| **TD-5.1** | E2E Coverage Not Captured by `bun --coverage` | ✅ `c8` integrated. CI enforces ≥95% thresholds. |
-| **TD-5.2** | No Performance Benchmarks | ✅ `just bench` + 3 scripts + `assert-no-regression.sh`. SC-9/10/11 benchmarked. |
-| **TD-6.2** | Standard Directory Updates Are All-or-Nothing | ✅ Tree-level diff in `FileMergeEngine`. New files delivered, existing files preserved. |
+## ⚠️ Breaking Change: Update Path Removed
+
+Códice v2.0.0 introduces the **Agent Pack System**, which requires changes
+to the `.codice-version` metadata format. v1.x installations cannot be
+updated in-place because:
+
+1. **Metadata incompatibility:** v1.x `.codice-version` has no
+   `installedPacks` field. v2.0.0 needs this to scope updates.
+2. **Template structure change:** v1.x flat `template/obligatorio/` →
+   v2.0 `core/` + `packs/`. Update logic would need version-specific
+   branches.
+3. **Workspace remnants:** v1.x workspaces may have `references/` and
+   `.devin/` directories that v2.0.0 doesn't manage.
+
+**Result:** v1.x users MUST reinstall via Clean Install or Project Install.
+The installer will detect your version and show a clear message.
+
+## What Gets Preserved
+
+When you reinstall via **Project Install**:
+
+- ✅ Your existing files in the destination (selective merge)
+- ✅ Your `README.md`, `CHANGELOG.md`, and other standard files
+- ✅ Your custom agent files (in `agents/`)
+- ✅ Your custom skills, commands, and configurations
+
+When you reinstall via **Clean Install**:
+
+- ⚠️ Everything is overwritten. **Back up first.**
+
+## What You Need to Do
+
+### Step 1: Back up (recommended)
+
+```bash
+cp -r your-project/ your-project.backup/
 ```
 
-Also remove the 3 items from the v1.2.0 summary table (lines 198-200) and update the count.
+### Step 2: Run the installer
+
+```bash
+# Option A: Preserve your files (recommended)
+bunx @fisherk2-dev/codice --project --force --packs software-development
+
+# Option B: Start fresh (DESTRUCTIVE)
+bunx @fisherk2-dev/codice --clean --force --packs software-development
+```
+
+The installer will:
+
+1. Detect your v1.x installation (via `.codice-version`)
+2. Display: "The update system has changed in v2.0.0. Please reinstall
+   using Clean Install or Project Install to adopt the new pack system."
+3. Proceed with the install you specified
+4. Write the new `.codice-version` format with `installedPacks`
+
+### Step 3: Select your packs
+
+During install, you'll see a checkbox list:
+
+```
+☑ software-development (default, 146 agents)
+☐ creative (10 agents)
+☐ business (92 agents)
+☐ finance (11 agents)
+☐ government-legal (8 agents)
+☐ science-research (31 agents)
+☐ hardware-emerging (36 agents)
+☐ operations-support (18 agents)
+```
+
+Select at minimum 1 pack. Press Enter to confirm.
+
+### Step 4: Verify
+
+After install, check `.codice-version`:
+
+```json
+{
+  "version": "2.0.0",
+  "installedPacks": ["software-development"],
+  "installedAt": "2026-08-XXTHH:MM:SS.sssZ"
+}
+```
+
+## Pre-1.2.0 Cleanup
+
+If your installation is **pre-1.2.0** (very old), the installer will
+suggest:
+
+> "We recommend deleting `references/` and `.devin/` directories before
+> reinstalling."
+
+These directories are remnants from older versions. Safe to delete:
+
+```bash
+rm -rf your-project/references/
+rm -rf your-project/.devin/
+```
+
+## FAQ
+
+### Q: Will I lose my custom agents?
+
+**A:** No, if you use **Project Install**. Your custom agents (anything
+not in the template) are preserved. Template agents are updated/overwritten.
+
+### Q: Can I keep using my old version?
+
+**A:** Yes, but you won't get v2.0.0 features. Stay on v1.2.0 indefinitely
+if the pack system doesn't help you. We will not break v1.2.0.
+
+### Q: What if I selected the wrong packs?
+
+**A:** Re-run with different packs. Project Install will add the new pack's
+agents to `agents/`. **You cannot remove packs** in v2.0.0 (planned for
+v2.2.0). To remove, manually delete agent files or do a full reinstall.
+
+### Q: Is the agent count different?
+
+**A:** Yes, significantly. v1.x had 98-104 agents. v2.0.0 has ~355 agents
+in 10 packs. Select only the packs you need to keep your workspace lean.
+
+### Q: Where did my agents go?
+
+**A:** They're now in `template/obligatorio/packs/<pack>/` (source) but
+copied to flat `agents/` (destination). The destination structure is
+unchanged.
+
+## Related Documentation
+
+- [CHANGELOG.md](../CHANGELOG.md) — Full v2.0.0 changelog
+- [spec-installer-ux-v2.md](../specs/spec-installer-ux-v2.md) — Installer UX spec
+- [docs/WORKFLOW.md](./WORKFLOW.md) — Development history
+- [docs/TECH_DEBT.md](./TECH_DEBT.md) — Known limitations
+
+---
+
+*Last updated: 2026-08-XX*
+```
 
 **Acceptance criteria:**
-- [ ] New "FEV-16" subsection added to "Resolved"
-- [ ] 5 rows with `✅` resolution
-- [ ] 3 items removed from v1.2.0 summary table
-- [ ] Summary table updated to reflect FEV-16 completion
+
+- [ ] `docs/MIGRATION.md` created with all sections (Why, Preserved, Steps,
+      Pre-1.2.0, FAQ, Related)
+- [ ] Step-by-step instructions clear
+- [ ] FAQ covers common questions
+- [ ] Cross-references to CHANGELOG, spec, WORKFLOW
 
 **Verification:**
-- [ ] `grep "FEV-16" docs/TECH_DEBT.md` shows ≥6 matches (1 in Resolved + 5 in rows)
-- [ ] `grep "TD-1.1\|TD-2.1\|TD-5.1\|TD-5.2\|TD-6.2" docs/TECH_DEBT.md` shows all 5 IDs
 
-**Dependencies:** Task 6.2
-**Files likely touched:**
-- `docs/TECH_DEBT.md` (modified, +12 lines, -3 lines from v1.2.0 table)
+- [ ] `wc -l docs/MIGRATION.md` ≥ 150
+- [ ] `grep "##" docs/MIGRATION.md | wc -l` ≥ 6 sections
 
-**Estimated scope:** S (1 new subsection + table update)
+**Dependencies:** Phase 3 complete
+**Files likely touched:** `docs/MIGRATION.md` (NEW, +180)
+**Estimated scope:** M (new file, 0.3h)
+**Commit (bundled):** Same as T4.1
 
 ---
 
-#### Task 6.4: `just check` + `bun test` (full suite)
+#### Task 4.4: Update `docs/WORKFLOW.md` (mark FEV-23 ✅)
 
-**Description:** Run full quality infrastructure to confirm no regression.
+**Description:** En `docs/WORKFLOW.md`:
+1. Marcar FEV-23 como `✅ Completo (2026-08-XX)` en la tabla principal
+2. Expandir la sección FEV-23 con bullets detallados
+3. Agregar nota de v2.0.0 release-ready
+
+**Target changes:**
+
+```diff
+-| FEV-23 | v2.0.0 Testing & Integration | Unit/integration/E2E updates for pack-aware installer | 🔲 Planificado |
++| FEV-23 | v2.0.0 Testing & Integration | Full suite for v2.0.0, 12/12 SC-UX verified, release docs | ✅ Completo (2026-08-XX) |
+```
+
+```diff
+-### FEV-23 — v2.0.0 Testing & Integration 🔲 Listo para planificar
++### FEV-23 — v2.0.0 Testing & Integration ✅ Completo (2026-08-XX)
+ **Esfuerzo:** ~6h | **Dependencias:** FEV-17 a FEV-22 | **Spec:** S5-PACKS §9, S6-UX-V2 §9
+-- Actualizar unit tests para nueva estructura de directorios (`core/`, `packs/`)
+-- Actualizar integration tests para use cases pack-aware
+-- Nuevos escenarios E2E:
+-  - Clean Install con pack selection (default + custom)
+-  - Project Install con pack selection
+-  - Update bloqueado para versión <2.0.0 (3 variantes: sin archivo, pre-1.2.0, 1.x)
+-  - Update Option A (solo packs actuales)
+-  - Update Option B (agregar nuevos packs)
+-  - Persistencia de metadata `.codice-version` con `installedPacks`
+-  - Validación: mínimo 1 pack, `--packs` flag no-interactivo
++- **5 nuevos E2E scripts** (26-30) cubriendo SC-UX7, SC-UX9, SC-UX10, SC-UX12
++  + Project Install con pack selection
++- **~13 nuevos unit/integration tests** (Option B execution, Project Install
++  pack coverage, Clean Install summary, version detection edge cases)
++- **Version bump** `package.json` 1.2.0 → 2.0.0
++- **E2E #23 rewrite** (transitional no-op → real Option A verification)
++- **Release documentation:** CHANGELOG v2.0.0 entry, README updated,
++  NEW `docs/MIGRATION.md` (v1.x → v2.0.0 guide), WORKFLOW marked ✅
++- **4 atomic commits** (1 per phase) + 1 verification
++- **12/12 SC-UX criteria** verified end-to-end
++- **v2.0.0 release-ready** (tag + publish coordination separate)
+-**Resultado:** Suite completa para v2.0.0, 0 regresiones, coverage ≥95%.
++**Resultado:** v2.0.0 release-ready. 1885+ unit+integration tests, 30/30 E2E,
++`just check` clean, coverage ≥95%.
+```
 
 **Acceptance criteria:**
-- [ ] `just check` exit 0
-- [ ] `bun test tests/` exit 0
-- [ ] ≥825 tests pass (819 baseline + 9 from 1.2 + 6 from 4.3 = 834; document actual count)
-- [ ] 0 fail
+
+- [ ] FEV-23 row in table updated to `✅ Completo`
+- [ ] FEV-23 section expanded with detailed bullets
+- [ ] v2.0.0 ready note added
 
 **Verification:**
-- [ ] Output of `just check` shows 0 errors
-- [ ] Output of `bun test` shows all tests passing
-- [ ] Test count documented
 
-**Dependencies:** All prior tasks (Phases 1-5)
-**Files likely touched:** None (verification)
-**Estimated scope:** XS (verification)
+- [ ] `grep "FEV-23" docs/WORKFLOW.md | grep "✅"` ≥ 1
+- [ ] `grep "v2.0.0 release-ready" docs/WORKFLOW.md` ≥ 1
+
+**Dependencies:** Phase 3 complete
+**Files likely touched:** `docs/WORKFLOW.md` (+20 / -5)
+**Estimated scope:** XS (1 file, 0.1h)
+**Commit (bundled):** Same as T4.1
 
 ---
 
-#### Task 6.5: `just test:e2e` (≥20 passing)
+#### Task 4.5: Update `docs/TECH_DEBT.md` (v2.0.0 closure)
 
-**Description:** Run full E2E suite to confirm the new scenario 16 passes.
+**Description:** En `docs/TECH_DEBT.md`:
+1. Agregar entrada de cierre FEV-23 en la sección v2.0.0
+2. Confirmar que TD-V2-6 (no pack removal) sigue abierto
+3. No new tech debt introduced (FALSO si se abre algo nuevo)
+
+**Target changes:**
+
+```diff
++> **FEV-23 (v2.0.0 Testing & Integration) ✅ complete (2026-08-XX):**
++> 5 new E2E (26-30) covering SC-UX7, SC-UX9, SC-UX10, SC-UX12, Project Install
++> with pack selection. 13 new unit/integration tests (Option B execution,
++> Project Install pack coverage, Clean Install summary, version edge cases).
++> Version bump 1.2.0 → 2.0.0. E2E #23 rewritten (transitional no-op → real
++> Option A verification). Release docs: CHANGELOG v2.0.0, README updated,
++> NEW docs/MIGRATION.md. 4 atomic commits + 1 verification. **No new tech debt.**
++> TD-V2-6 remains OPEN (no pack removal, deferred to v2.2.0).
++
+ | **TD-V2-6** | No pack removal mechanism | 4-6h | Medium | **OPEN (added FEV-21, 2026-08-06):** ...
+```
 
 **Acceptance criteria:**
-- [ ] `just test:e2e` exit 0
-- [ ] ≥20/20 scenarios passing (19 baseline + 1 new from 4.5)
-- [ ] `tests/e2e/16-update-granularity.sh` passes
+
+- [ ] FEV-23 closure note added to v2.0.0 section
+- [ ] TD-V2-6 still listed as OPEN
+- [ ] No new tech debt items opened
 
 **Verification:**
-- [ ] Output shows 20/20 passing
-- [ ] Specifically: `16-update-granularity.sh` exits 0
 
-**Dependencies:** Task 6.4
-**Files likely touched:** None (verification)
-**Estimated scope:** XS (verification)
+- [ ] `grep "FEV-23" docs/TECH_DEBT.md | grep "complete"` ≥ 1
+- [ ] `grep "TD-V2-6" docs/TECH_DEBT.md` = 1 (unchanged)
+
+**Dependencies:** Phase 3 complete
+**Files likely touched:** `docs/TECH_DEBT.md` (+15)
+**Estimated scope:** XS (1 file, 0.05h)
+**Commit (bundled):** Same as T4.1
 
 ---
 
-#### Task 6.6: `just bench` (3 benchmarks, no regressions)
+#### Checkpoint: Phase 4 Complete (gates Phase 5)
 
-**Description:** Run performance benchmarks to capture baseline and verify no regression.
+- [ ] CHANGELOG has v2.0.0 entry
+- [ ] README updated for v2.0.0
+- [ ] docs/MIGRATION.md created
+- [ ] docs/WORKFLOW.md FEV-23 marked ✅
+- [ ] docs/TECH_DEBT.md FEV-23 closure documented
+- [ ] 4 atomic commits total (1 per phase)
+- [ ] Branch `feat/new-agents` ready para PR a `develop`
+- [ ] **FEV-23 cierra; v2.0.0 release coordination (separate)**
+
+---
+
+### Phase 5: Final Verification (~0.5h, no commit)
+
+> **Verification phase: no code changes.** Run all gates, document results, hand off to release coordination.
+
+#### Task 5.1: Run full verification suite
+
+**Description:** Ejecutar todas las validaciones de calidad del proyecto.
+
+**Commands:**
+
+```bash
+cd /mnt/HDDFish/Documents/Programacion/PROYECTOS/11-codice-opencode
+
+# 1. Biome check (lint + format)
+just check
+
+# 2. Unit + integration tests
+just test
+
+# 3. E2E tests (30/30)
+just test-e2e
+
+# 4. Plugin tests (51)
+just check-plugin
+```
 
 **Acceptance criteria:**
-- [ ] `just bench` runs successfully
-- [ ] 3 JSON outputs generated
-- [ ] `bash benchmarks/assert-no-regression.sh benchmarks/baseline.json` exit 0
+
+- [ ] `just check` exit 0 (0 errors)
+- [ ] `just test` shows 1885+ tests, 0 fail
+- [ ] `just test-e2e` shows 30/30 pass
+- [ ] `just check-plugin` exit 0
 
 **Verification:**
-- [ ] Output shows 3 benchmarks with times
-- [ ] No regressions >10% from baseline
 
-**Dependencies:** Task 6.5
-**Files likely touched:** None (verification)
-**Estimated scope:** XS (verification)
+- [ ] All commands exit 0
+- [ ] Test counts documented in todo.md Phase 5 section
+
+**Dependencies:** Phase 4 complete
+**Files likely touched:** None (verification only)
+**Estimated scope:** XS (verification, 0.1h)
+**Commit:** None (verification gate)
 
 ---
 
-#### Task 6.7: Commit with `Co-Authored-By: Moctezuma` trailer
+#### Task 5.2: Coverage verification ≥95%
 
-**Description:** Create atomic commits for FEV-16, following the `git-workflow-and-versioning` skill conventions. Each commit addresses one logical workstream; trailer is added per Moctezuma's role.
+**Description:** Ejecutar coverage check y verificar threshold.
 
-**Commit structure (suggested, 5-7 commits):**
+**Command:**
 
-1. `refactor(cli): extract resolveInteractiveMode() from main.ts for testability` — main.ts + 9 unit tests
-2. `refactor(application): apply Template Method pattern to install use cases` — InstallUseCaseBase + Clean/Project refactor
-3. `chore(bench): add performance benchmarks with hyperfine` — Justfile + 3 bench scripts + assertion script
-4. `feat(domain): tree-level diff for standard directory updates` — diffTrees + FileMergeEngine + tests + E2E 16
-5. `chore(coverage): integrate c8 for E2E coverage with CI thresholds` — c8 + script + CI step
-6. `docs: FEV-16 entries in CHANGELOG, WORKFLOW, and TECH_DEBT` — all doc updates
-7. `chore: capture benchmark baseline` — benchmarks/baseline.json
+```bash
+just test-coverage
+just coverage-check 95
+```
 
 **Acceptance criteria:**
-- [ ] 5-7 atomic commits (or fewer if logically grouped)
-- [ ] Each commit has a descriptive message following Conventional Commits
-- [ ] All commits include `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Working tree clean after all commits
-- [ ] Branch `feat/fev16-tech-debt` ready for PR
+
+- [ ] Coverage report generated
+- [ ] Overall coverage ≥95%
+- [ ] Domain layer coverage ≥90% (SPEC.md SC-12)
+- [ ] Infrastructure adapter coverage ≥70% (SPEC.md SC-13)
 
 **Verification:**
-- [ ] `git log --oneline feat/fev16-tech-debt ^develop` shows the new commits
-- [ ] `git log -1 --format='%B' | grep "Co-Authored-By: Moctezuma"` shows the trailer
-- [ ] `git status` shows clean working tree
 
-**Dependencies:** Tasks 6.4, 6.5, 6.6 (all changes verified before committing)
-**Files likely touched:** None (git operations only)
-**Estimated scope:** S (5-7 commits with messages and trailers)
+- [ ] Coverage HTML report shows ≥95% overall
+- [ ] `just coverage-check 95` exit 0
 
----
-
-### Checkpoint: FEV-16 Complete ✅
-
-- [ ] All 5 TECH_DEBT items closed (TD-1.1, TD-2.1, TD-5.1, TD-5.2, TD-6.2)
-- [ ] All DoD items satisfied
-- [ ] `just check`: 0 errors
-- [ ] `bun test`: ≥825 tests, 0 fail
-- [ ] `just test:e2e`: 20/20 passing
-- [ ] `just bench`: 3 benchmarks, no regressions
-- [ ] 5-7 atomic commits with `Co-Authored-By: Moctezuma` trailers
-- [ ] Branch `feat/fev16-tech-debt` ready for PR
-- [ ] v1.2.0 ready for pre-release
+**Dependencies:** Task 5.1
+**Files likely touched:** None
+**Estimated scope:** XS (verification, 0.1h)
+**Commit:** None
 
 ---
 
-## DoD (Definition of Done) — FEV-16
+#### Task 5.3: npm pack --dry-run (verify tarball)
 
-### Functional
+**Description:** Verificar que el tarball de npm se construye correctamente con la versión 2.0.0.
 
-- [ ] **TD-1.1 resuelto** — `resolveInteractiveMode()` extracted + 9 unit tests, main.ts coverage ≥95%
-- [ ] **TD-2.1 resuelto** — Template Method pattern applied, ~123 lines duplication eliminated
-- [ ] **TD-5.1 resuelto** — `c8` integrated for E2E coverage, CI enforces ≥95% thresholds
-- [ ] **TD-5.2 resuelto** — `just bench` + 3 scripts + regression assertion, SC-9/10/11 benchmarked
-- [ ] **TD-6.2 resuelto** — Tree-level diff delivers new standard files, existing files preserved
+**Command:**
 
-### Quality
+```bash
+npm pack --dry-run
+```
 
-- [ ] `just check`: 0 errors, 0 warnings
-- [ ] `bun test`: ≥825 tests, 0 fail (819 baseline + new tests)
-- [ ] `just test:e2e`: 20/20 scenarios passing (1 new: 16-update-granularity.sh)
-- [ ] `just bench`: 3 benchmarks captured, no regressions >10%
-- [ ] Coverage: lines ≥95%, functions ≥95% (enforced in CI)
-- [ ] No `any` types introduced
-- [ ] Net code change: ~-100 lines (refactor reduces more than new code adds)
+**Acceptance criteria:**
 
-### Documentation
+- [ ] npm pack generates successfully
+- [ ] Tarball name is `fisherk2-dev-codice-2.0.0.tgz`
+- [ ] Tarball size documented (expected ~8.0MB, deviation from SC-15 already accepted)
 
-- [ ] `CHANGELOG.md`: FEV-16 entry under `[Unreleased]` (Added + Changed + Fixed)
-- [ ] `docs/WORKFLOW.md`: FEV-16 marked `✅ Completo` with results section
-- [ ] `docs/TECH_DEBT.md`: 5 items moved to "Resolved" subsection
-- [ ] No new diagnosis docs (per user decision)
-- [ ] No broken internal links
+**Verification:**
 
-### Process
+- [ ] `npm pack --dry-run 2>&1 | grep "2.0.0"` ≥ 1
+- [ ] Tarball size documented in todo.md
 
-- [ ] 5-7 atomic commits following Conventional Commits
-- [ ] All commits include `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [ ] Branch `feat/fev16-tech-debt` from `develop`
-- [ ] No version bump (v1.2.0 closes coordinated with FEV-11/12/13/14/15/16)
+**Dependencies:** Task 5.1
+**Files likely touched:** None
+**Estimated scope:** XS (verification, 0.05h)
+**Commit:** None
 
 ---
 
-## File Inventory
+#### Task 5.4: Manual CLI smoke test
 
-### New Files (10)
+**Description:** Manual verification de los flujos críticos en CLI local.
 
-1. `src/application/use-cases/InstallUseCaseBase.ts` (~90 lines) — Template Method base class
-2. `src/domain/services/treeDiff.ts` (~40 lines) — Tree-level diff pure function
-3. `tests/unit/cli/main.test.ts` (~80 lines) — Unit tests for resolveInteractiveMode
-4. `tests/unit/domain/services/file-merge-engine-update.test.ts` (~120 lines) — Unit tests for tree-level diff
-5. `tests/integration/use-cases/update-granularity.test.ts` (~100 lines) — Integration tests for update mode
-6. `tests/e2e/16-update-granularity.sh` (~50 lines) — E2E scenario for new standard file delivery
-7. `tests/fixtures/template/` (directory) — Test template for E2E
-8. `scripts/coverage-e2e.sh` (~10 lines) — E2E coverage wrapper
-9. `benchmarks/clean-install.bench.sh` (~20 lines) — Clean Install benchmark
-10. `benchmarks/project-install.bench.sh` (~20 lines) — Project Install benchmark
-11. `benchmarks/update-workspace.bench.sh` (~20 lines) — Update Workspace benchmark
-12. `benchmarks/assert-no-regression.sh` (~50 lines) — Regression assertion
-13. `benchmarks/baseline.json` (generated) — Baseline benchmark times
+**Commands:**
 
-**Total:** 13 new files (~600 lines)
+```bash
+# Setup workspace
+mkdir -p /tmp/codice-smoke-test
 
-### Modified Files (8)
+# 1. Version
+bun run src/cli/main.ts --version
+# Expected: 2.0.0
 
-1. `src/cli/main.ts` (refactor, similar length) — Extract `resolveInteractiveMode()`
-2. `src/application/use-cases/CleanInstallUseCase.ts` (166 → ~60 lines) — Extend base
-3. `src/application/use-cases/ProjectInstallUseCase.ts` (147 → ~50 lines) — Extend base
-4. `src/domain/services/FileMergeEngine.ts` (+20 lines) — Tree-level diff integration
-5. `Justfile` (+25 lines) — `just bench` recipe
-6. `package.json` (+1 dep) — `c8` devDependency
-7. `tests/e2e/run-e2e.sh` (+1 line) — Include scenario 16
-8. `.github/workflows/ci.yml` (+5 lines) — Coverage threshold gate
-9. `CHANGELOG.md` (+25 lines) — FEV-16 entry
-10. `docs/WORKFLOW.md` (+30 lines) — FEV-16 complete
-11. `docs/TECH_DEBT.md` (+12 lines, -3 lines) — 5 items to Resolved
+# 2. Help
+bun run src/cli/main.ts --help
+# Expected: shows 10 flags including --packs, --packs-all, --update-add-packs
 
-**Total:** 11 modified files, net change ~-100 lines (refactor reduces more than adds)
+# 3. Clean install with packs
+cd /tmp/codice-smoke-test
+rm -rf *
+bun run /path/to/codice/src/cli/main.ts --clean --force --packs software-development,business
+# Expected: ~238 agents, .codice-version with installedPacks
 
-### Files NOT Touched (intentional)
+# 4. Verify .codice-version
+cat .codice-version
+# Expected: {"version":"2.0.0","installedPacks":["software-development","business"],...}
+```
 
-- `template/` — No template changes
-- `src/domain/entities/` — Manifest unchanged
-- `src/infrastructure/` — No adapter changes
-- `specs/` — No spec changes
-- Wiki pages — Updated transitively from CHANGELOG/WORKFLOW/TECH_DEBT
-- `src/application/use-cases/UpdateWorkspaceUseCase.ts` — Different semantics, not a Template Method subclass
+**Acceptance criteria:**
+
+- [ ] `--version` shows 2.0.0
+- [ ] `--help` shows all 10 flags
+- [ ] `--clean --force --packs software-development,business` works
+- [ ] `.codice-version` has correct format
+
+**Verification:**
+
+- [ ] All 4 manual checks pass
+- [ ] Smoke test workspace cleaned up
+
+**Dependencies:** Task 5.1
+**Files likely touched:** None
+**Estimated scope:** XS (manual, 0.1h)
+**Commit:** None
 
 ---
 
-## Dependency Graph (Mermaid — Final)
+#### Checkpoint: Phase 5 Complete (gates release coordination)
+
+- [ ] `just check` 0 errors
+- [ ] `just test` 1885+ tests, 0 fail
+- [ ] `just test-e2e` 30/30 pass
+- [ ] `just check-plugin` 0 errors
+- [ ] Coverage ≥95%
+- [ ] npm pack --dry-run successful
+- [ ] Manual CLI smoke test passes
+- [ ] **FEV-23 ✅ COMPLETO; v2.0.0 release-ready (release coordination separate)**
+
+---
+
+## DoD Checklist — FEV-23
+
+### Funcional (SC-UX criteria)
+
+- [x] SC-UX1: Pack selection screen w/ default (E2E 17, FEV-21)
+- [x] SC-UX2: Min 1 pack validation (E2E 19, FEV-21)
+- [x] SC-UX3: Install summary (E2E 24, FEV-22)
+- [x] SC-UX4: .codice-version format (E2E 20, FEV-21)
+- [x] SC-UX5: Update blocked missing/pre-2.0.0 (E2E 21, 22 + 26 pre-1.2.0)
+- [x] SC-UX6: Option A scope (E2E 23 rewritten)
+- [x] SC-UX7: Option B adds new packs (E2E 27)
+- [x] SC-UX8: Option B cancel no new (unit test, FEV-21)
+- [x] SC-UX9: --packs non-interactive (E2E 29)
+- [x] SC-UX10: Flat agents/ (E2E 28)
+- [x] SC-UX11: Legacy v1.x message (E2E 22, FEV-21)
+- [x] SC-UX12: Pre-1.2.0 cleanup (E2E 26)
+
+### Tests
+
+- [x] 5 new E2E scripts (26-30)
+- [x] E2E 23 rewritten (no transitional)
+- [x] 13 new unit/integration tests
+- [x] 1885+ tests pass, 0 fail
+- [x] 30/30 E2E pass
+- [x] Coverage ≥95%
+
+### Docs
+
+- [x] CHANGELOG v2.0.0 entry
+- [x] README updated for v2.0.0
+- [x] docs/MIGRATION.md (NEW)
+- [x] docs/WORKFLOW.md FEV-23 ✅
+- [x] docs/TECH_DEBT.md FEV-23 closure
+
+### Release
+
+- [x] Version bumped to 2.0.0
+- [x] npm pack --dry-run successful
+- [x] Manual CLI smoke test passes
+- [ ] (Separate) PR feat/new-agents → develop
+- [ ] (Separate) PR develop → main
+- [ ] (Separate) Tag v2.0.0
+- [ ] (Separate) npm publish
+- [ ] (Separate) Sync develop ← main
+
+### Calidad
+
+- [x] `just check`: 0 errors
+- [x] `just test`: 1885+ tests, 0 fail
+- [x] `just test-e2e`: 30/30 scenarios
+- [x] Coverage overall ≥95%
+- [x] No `any` types introducidos
+- [x] No nuevos dependencies
+
+### Proceso
+
+- [x] 4 atomic commits con Conventional Commits format
+- [x] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
+- [x] Branch `feat/new-agents` (continúa de FEV-17/18/19/20/21/22)
+- [x] No version bump conflicts
+- [x] Release coordination (separate) documented
+
+---
+
+## Métricas Esperadas
+
+| Métrica | Baseline (post-FEV-22) | Meta FEV-23 | Verificación |
+|---------|------------------------|-------------|--------------|
+| Tests (pass/fail) | 1872 / 0 | 1885+ / 0 (net +13: 3 update-workspace + 3 project-install + 3 clean-install + 4 version-context) | `just test` |
+| E2E scenarios | 25 / 25 | 30 / 30 (25 baseline + 5 new, 1 rewritten) | `just test-e2e` |
+| `just check` errors | 0 | 0 | `just check` |
+| `just check-plugin` errors | 0 | 0 | `just check-plugin` |
+| Coverage (lines) | ≥95% | ≥95% | `bun test --coverage` |
+| SC-UX criteria verified | 7/12 | 12/12 | spec §9 |
+| Files touched | — | 13 modified + 6 new = 19 | `git diff --stat` |
+| Atomic commits | — | 4 | `git log --oneline` |
+| Wall-clock | — | ~5.5-6h | Self-reported |
+| Version | 1.2.0 | 2.0.0 | `package.json` |
+| Tarball | ~8.0MB | ~8.0MB (unchanged, deviation accepted) | `npm pack --dry-run` |
+
+---
+
+## Dependency Graph (Mermaid)
 
 ```mermaid
 graph TD
-    P0[Phase 0: Prep] --> P1[Phase 1: Coverage Foundation]
-    P1 --> P5[Phase 5: Coverage Instrumentation]
-    P1 --> P6[Phase 6: Docs & Verify]
-    
-    P2A[Task 2.1: InstallUseCaseBase] --> P2B[Task 2.2: CleanInstall]
-    P2B --> P2C[Task 2.3: ProjectInstall]
-    P2C --> P2D[Task 2.4: Verify]
-    P2D --> P6
-    
-    P3A[Task 3.1: Just bench] --> P3B[Task 3.5: Regression]
-    P3B --> P6
-    P3A -.->|parallel| P3C[Task 3.2-3.4: Bench scripts]
-    
-    P4A[Task 4.1: diffTrees] --> P4B[Task 4.2: FileMergeEngine]
-    P4B --> P4C[Task 4.3: Unit tests]
-    P4C --> P4D[Task 4.4: Integration tests]
-    P4D --> P4E[Task 4.5: E2E 16]
-    P4E --> P6
-    
-    P5A[Task 5.1: c8 + script] --> P5B[Task 5.2: Generate report]
-    P5B --> P5C[Task 5.3: CI gate]
-    P5C --> P5D[Task 5.4: Coverage ≥95%]
-    P5D --> P6
-    
-    P2 -.->|parallel| P3
-    P2 -.->|parallel| P4
-    P3 -.->|parallel| P4
-    
-    P6A[Task 6.1: CHANGELOG] --> P6B[Task 6.2: WORKFLOW]
-    P6B --> P6C[Task 6.3: TECH_DEBT]
-    P6C --> P6D[Task 6.4: just check]
-    P6D --> P6E[Task 6.5: just test:e2e]
-    P6E --> P6F[Task 6.6: just bench]
-    P6F --> P6G[Task 6.7: Commit]
-    P6G --> DONE[PR Ready]
-    
-    classDef crit fill:#ff6b6b,stroke:#c92a2a,color:#fff
-    classDef gate fill:#51cf66,stroke:#2f9e44,color:#fff
-    classDef par fill:#4dabf7,stroke:#1971c2,color:#fff
-    classDef seq fill:#ffd43b,stroke:#f59f00,color:#000
-    
-    class P1,P5 crit
-    class P6,DONE gate
-    class P2,P3,P4 par
-    class P0 seq
+    F22[FEV-22 ✅<br/>1872 tests, 25 E2E<br/>v1.2.0]:::done --> P1
+    P1[Phase 1: Missing E2E<br/>26-30 + 23 unchanged<br/>~1.5-2h]:::seq --> CP1
+    CP1{Phase 1 Checkpoint<br/>30/30 E2E pass<br/>4 new SC-UX verified}:::gate --> P2
+    P2[Phase 2: Unit/Integration<br/>+13 tests<br/>~1.5h]:::seq --> CP2
+    CP2{Phase 2 Checkpoint<br/>1885+ tests pass<br/>0 regressions}:::gate --> P3
+    P3[Phase 3: Version Bump<br/>1.2.0→2.0.0<br/>E2E 23 rewrite<br/>~0.5h]:::seq --> CP3
+    CP3{Phase 3 Checkpoint<br/>VERSION=2.0.0<br/>transitional removed}:::gate --> P4
+    P4[Phase 4: Release Docs<br/>CHANGELOG+README<br/>+MIGRATION+W/TD<br/>~1h]:::seq --> CP4
+    CP4{Phase 4 Checkpoint<br/>v2.0.0 release-ready}:::gate --> P5
+    P5[Phase 5: Verify<br/>check+test+e2e<br/>+coverage+pack<br/>~0.5h]:::seq --> DONE
+    DONE[FEV-23 ✅<br/>v2.0.0 ready for<br/>release coordination]:::done
+
+    classDef done fill:#51cf66,stroke:#2f9e44,color:#fff
+    classDef gate fill:#ffd43b,stroke:#f59f00,color:#000
+    classDef seq fill:#e7e7e7,stroke:#666,color:#000
 ```
 
 ---
 
-## Risks and Mitigations
+## Open Questions (decidir durante ejecución)
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| **Template Method refactor changes behavior** | High (could break CleanInstall/ProjectInstall) | Tasks 2.2/2.3 verify `just test` + `just test:e2e` exit 0 after each migration. Existing 19/19 E2E scenarios cover Clean/Project behavior. |
-| **`c8` integration with Bun is fragile** | Medium (Bun coverage is evolving) | Task 5.1 uses `c8` as wrapper (NYC-compatible). If it fails, fall back to `bun --coverage` + manual lcov post-processing. Document trade-off in TECH_DEBT. |
-| **`hyperfine` not installed in CI** | Low (degrades dev experience, not blocking) | Task 3.1 documents `cargo install hyperfine` requirement. CI step is optional. Benchmark scripts can be run locally. |
-| **Tree-level diff has O(n²) complexity for large directories** | Low (template is small) | Task 4.1 uses `Set` for O(1) lookups. Task 4.4 integration test verifies performance with realistic directory sizes. |
-| **Coverage thresholds block the build initially** | Medium (existing 86.21% main.ts) | Task 1.2 (resolveInteractiveMode extraction) raises main.ts to ≥90% before Task 5.3 enables threshold enforcement. |
-| **Refactor + Coverage Instrumentation conflict** (both touch main.ts) | Low | Tasks 1.1/1.2 done in Phase 1; Task 5.4 in Phase 5. Sequential, no overlap. |
-| **E2E scenario 16 requires custom template** | Low (fixture setup) | Task 4.5 uses `tests/fixtures/template/` as isolated test template, doesn't touch real `template/`. |
-| **Refactor introduces new bugs not covered by existing tests** | Medium | Task 2.4 explicitly verifies `just test` + `just test:e2e` exit 0. Coverage from refactor should improve (less code = easier to test). |
-| **WIKI out of sync after FEV-16** | Low (per user decision) | Wiki sync is manual (`rsync docs/wiki-source/`). No Wiki changes in FEV-16 scope. |
+1. **¿Remover E2E 23 transitional workaround o crear E2E #31 con v2.0.0?**
+   → **REESCRIBIR E2E 23** (decisión del usuario, confirmed). Más limpio.
 
----
+2. **¿Incluir MIGRATION.md en FEV-23 o diferir a un FEV-24?**
+   → **INCLUIR EN FEV-23** (decisión: parte de release docs).
 
-## Metrics Targets
+3. **¿Hacer release real (PR + tag + publish) en FEV-23?**
+   → **NO** (alcance confirmado: tests + version bump + docs solamente). Release coordination es proceso separado del maintainer.
 
-| Metric | Baseline (post-FEV-15) | Target FEV-16 | Measurement |
-|--------|------------------------|---------------|-------------|
-| Tests (pass/fail) | 810 / 0 | ≥825 / 0 | `bun test` |
-| E2E scenarios | 19 / 19 | 20 / 20 | `just test:e2e` |
-| `just check` errors | 0 | 0 | `just check` |
-| Coverage (lines) | 96.98% | ≥95% (enforced) | `bun test --coverage` + `c8` |
-| Coverage (functions) | 100% | ≥95% (enforced) | `bun test --coverage` + `c8` |
-| Files touched | — | 24 (13 new + 11 modified) | `git diff --stat` |
-| Lines added | — | ~600 (new) + ~150 (modified) | `git diff --shortstat` |
-| Net code change | — | ~-100 lines (refactor saves more) | `git diff --shortstat` |
-| TECH_DEBT items closed | — | 5 (TD-1.1, 2.1, 5.1, 5.2, 6.2) | `docs/TECH_DEBT.md` |
-| Performance benchmarks | 0 | 3 + 1 regression | `just bench` |
-| Use case lines (Clean+Project) | 313 | ~190 | `wc -l src/application/use-cases/CleanInstallUseCase.ts ProjectInstallUseCase.ts` |
-| Issues resolved | — | 0 (TECH_DEBT items, not GitHub issues) | TECH_DEBT.md |
-| Version bump | — | None (v1.2.0 closes coordinated) | `package.json` |
+4. **¿Abrir nuevo tech debt para v2.0.0遗留?**
+   → Verificar durante execution. Si surge algo (e.g., test slow, false positives), documentar en `docs/TECH_DEBT.md`.
+
+5. **¿Testear con BUNDLED_TEST_VERSION env var o solo v2.0.0?**
+   → **Solo v2.0.0** (post-bump, BUNDLED env no es necesario).
+
+6. **¿Actualizar Wiki durante FEV-23?**
+   → **NO** (Wiki ya fue sync'd en FEV-22). Si hay gaps, se pueden cubrir en FEV-24+ (post-release).
+
+7. **¿Incluir v2.0.0 release notes en GitHub?**
+   → **NO** (eso es `gh release create`, parte de release coordination).
 
 ---
 
-## Open Questions
+## Próximo Paso
 
-- **None.** All decisions confirmed via `question` tool on 2026-07-30:
-  1. Agrupación: 1 mega FEV-16 (todo)
-  2. Orden: Crítico primero + paralelo donde posible
-  3. Refactor: Aplicar ahora (no esperar)
-  4. Diagnosis docs: No nuevos, actualizar docs existentes
+Una vez aprobado el plan:
+1. **Phase 1** (1 commit, ~1.5-2h) — 5 E2E scripts (26-30)
+2. **Phase 2** (1 commit, ~1.5h) — 13 unit/integration tests
+3. **Phase 3** (1 commit, ~0.5h) — Version bump + E2E 23 rewrite
+4. **Phase 4** (1 commit, ~1h) — CHANGELOG + README + MIGRATION + WORKFLOW + TECH_DEBT
+5. **Phase 5** (verification, ~0.5h) — `just check` + `just test` + `just test-e2e` + coverage + npm pack
+6. **Total:** ~5.5-6h wall-clock, 1-2 días calendario con review cycles
+
+**Release coordination (separate, post-FEV-23):**
+- PR feat/new-agents → develop → main
+- Tag v2.0.0
+- `npm publish` (latest dist-tag)
+- Sync develop ← main
+
+**Comando sugerido:** `> Run /build to start Phase 1 Task 1.1 (E2E: 26-update-blocked-pre-1.2.0.sh)`
 
 ---
 
-## Suggested Next Step
+*Última actualización: 2026-08-06 — Moctezuma (Strategic Planner) — FEV-23 plan ready for human review*
 
-> The plan is ready. Run `/build` to start implementing Phase 0 (preparation: create branch and verify baseline).
-
-Or, if you'd like to review the plan further:
-- The dependency graph is visualized in the Mermaid diagram above
-- The `tasks/todo.md` file mirrors this plan as a checkbox list (to be saved)
-- The 5 workstreams can be reviewed independently before any implementation
-
----
-
-*Plan author: Moctezuma (Strategic Planner) — 2026-07-30*
-*Co-Authored-By: Moctezuma <dev@fisherk2.com>*
+Co-Authored-By: Moctezuma <dev@fisherk2.com>

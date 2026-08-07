@@ -1,1 +1,1 @@
-# Configuración para Docker
+# Docker configuration

@@ -7,6 +7,11 @@ import type { SymlinkSpec } from "../../application/ports/ISymlinkCreator";
  * These are recreated post-installation so the user's workspace
  * matches the dev structure exactly.
  *
+ * Targets are relative to the FLAT installed destination (.opencode/ → ../agents),
+ * NOT to the v2.0 template source (core/.opencode/agents → ../../packs in the
+ * repo). The source symlink diverges intentionally — packs are a source
+ * grouping; the installed workspace always has a flat agents/ directory.
+ *
  * Reference: ADR-FEV2B-1, ADR-FEV2B-3
  */
 export const OPENCODE_SYMLINKS: readonly SymlinkSpec[] = [

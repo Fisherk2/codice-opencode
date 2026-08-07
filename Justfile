@@ -19,8 +19,8 @@ format-check:
 check:
     bunx @biomejs/biome ci src/ tests/ && bun run tsc --noEmit
 
-# Exclude template/obligatorio/skills/ and skills/ — external code with own test deps
-IGNORE_PATTERNS := "--path-ignore-patterns=template/obligatorio/skills/**,skills/**"
+# Exclude template/obligatorio/core/skills/ and skills/ — external code with own test deps
+IGNORE_PATTERNS := "--path-ignore-patterns=template/obligatorio/core/skills/**,skills/**"
 
 test:
     bun test tests/ {{IGNORE_PATTERNS}}
@@ -59,13 +59,13 @@ clean:
 
 # ─── Plugin Quality ──────────────────────────────────────────────────────────
 
-# Lint all plugin files with Biome
+# Lint and typecheck all plugin files
 check-plugin:
-    bunx @biomejs/biome check template/obligatorio/.opencode/plugins/ template/opcional/.opencode/plugins/
+    bunx @biomejs/biome check template/obligatorio/core/.opencode/plugins/ template/opcional/.opencode/plugins/ && bunx tsc -p template/obligatorio/core/.opencode/plugins/tsconfig.json
 
 # Run plugin unit tests
 test-plugin-unit:
-    bun test ./template/obligatorio/.opencode/plugins/src/__tests__/*.test.ts
+    bun test ./template/obligatorio/core/.opencode/plugins/src/__tests__/*.test.ts
 
 # Run plugin integration tests
 test-plugin-integration:

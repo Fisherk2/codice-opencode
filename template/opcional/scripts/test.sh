@@ -1,1 +1,1 @@
-# Script para ejecutar pruebas
+# Test script

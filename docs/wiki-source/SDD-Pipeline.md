@@ -2,7 +2,7 @@
 
 The SDD (Spec-Driven Development) Pipeline is an OpenCode plugin that orchestrates the development lifecycle. It uses auto-discovery and configuration-driven behavior to manage state, validate actions, and guide the workflow.
 
-> **Source:** `sdd-pipeline.ts` (366 lines) + 6 modules in `src/` (1142 lines) = **1508 lines total**
+> **Source:** `sdd-pipeline.ts` (385 lines) + 11 modules in `src/` (1112 lines) = **1497 lines total**
 >
 > **SDK:** `@opencode-ai/plugin` — see [opencode.ai/docs/plugins](https://opencode.ai/docs/plugins/) for the plugin API reference.
 
@@ -49,11 +49,13 @@ Commands are normalized before pattern matching: comments are stripped and white
 
 ### 2. Subagent Name Validation
 
-When an agent uses `task()` to delegate to a subagent, the plugin validates that the subagent name exists in the catalog (**104 agents**: 98 subagents + 6 primary). If the LLM invents a name, it receives an error:
+When an agent uses `task()` to delegate to a subagent, the plugin validates that the subagent name exists in the catalog (**~360 agents**: ~352 subagents discovered from the `agents/` directory + 6 primary + 4 writer agents). If the LLM invents a name, it receives an error:
 
 ```
-Unknown subagent: "python-wizard". Use an agent from the VALID_SUBAGENTS catalog.
+Unknown subagent: "python-wizard". Create an .md file in /path/to/project/agents/ or use a primary agent.
 ```
+
+Subagent names are **auto-discovered from the filesystem** — there is no hardcoded subagent catalog. At session start, the plugin recursively scans the `agents/` directory (including subdirectories, skipping hidden entries) and treats every `*.md` file as a registered subagent. Adding a new agent requires only creating `agents/<name>.md`; no plugin changes are needed. Names match case-insensitively.
 
 The validation checks these `task()` parameter fields for the agent name: `subagent_type`, `agent`, `name`, `type`, and `subagent`.
 
@@ -138,6 +140,8 @@ The plugin uses a 3-pillar architecture to minimize hardcoded configuration:
 
 Scans `commands/*.md` frontmatter and `agents/*.md` filenames to derive configuration. Falls back to `DEFAULTS` when directories do not exist.
 
+> **Note (FEV-20):** The `agents/` scan is **recursive** — subdirectories (e.g., `agents/packs/<pack-name>/`) are also scanned, and hidden entries (`.git`, `.opencode`, dot-files) are skipped. The 6 primary agents (`PRIMARY_AGENTS`) are the only hardcoded names; when no `agents/` directory exists, validation falls back to just those 6.
+
 ### Pillar 2: Config-driven (`configLoader.ts` + `defaults.ts`)
 
 Loads overrides from `opencode.json` `sddPipeline` section, merged with defaults. Only three maps are user-configurable: `commandPhaseMap`, `intentPatterns`, `phaseSuggestions`. Invalid entries are skipped with a warning.
@@ -150,11 +154,12 @@ Biome linting/formatting, unit + integration tests, strict TypeScript with no `a
 
 | File | Lines | Responsibility |
 |------|:-----:|----------------|
-| `sdd-pipeline.ts` | 366 | Plugin entry point, hook implementations |
-| `src/autoDiscovery.ts` | 190 | Filesystem scanning for commands and agents |
+| `sdd-pipeline.ts` | 385 | Plugin entry point, hook implementations |
+| `src/autoDiscovery.ts` | 159 | Filesystem scanning for commands and agents |
 | `src/configLoader.ts` | 228 | opencode.json config loading with defaults merge |
-| `src/defaults.ts` | 529 | All hardcoded configuration maps |
+| `src/defaults.ts` | 156 | All hardcoded configuration maps (VALID_SUBAGENTS removed in FEV-20) |
 | `src/destructivePatterns.ts` | 95 | Blocked command patterns (safety boundary) |
+| `src/directoryScanner.ts` | 99 | Flat + recursive markdown file scanners with maxDepth guard and duplicate-basename warning (extracted in FEV-20) |
 | `src/normalizeBash.ts` | 40 | Bash command normalization for pattern matching |
 | `src/types.ts` | 60 | TypeScript type definitions |
 

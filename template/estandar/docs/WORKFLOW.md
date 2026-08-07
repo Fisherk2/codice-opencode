@@ -1,34 +1,34 @@
-# Plan de implementación – [Producto] v[MVP]
-**Fecha:** [YYYY-MM-DD] | **Autor:** [Nombre] | **Metodología:** [Agile/Iterativo]
+# Implementation Plan – [Product] v[MVP]
+**Date:** [YYYY-MM-DD] | **Author:** [Name] | **Methodology:** [Agile/Iterative]
 
-## 1. Visión de Fases
-| Fase | Objetivo | Entregables | Duración Estimada |
-|------|----------|-------------|-------------------|
+## 1. Phase Overview
+| Phase | Objective | Deliverables | Estimated Duration |
+|-------|-----------|--------------|--------------------|
 
-## 2. Desglose por Fase
-### Fase [N] – [Nombre]
-- Tareas (ID, descripción, responsable, estimación):
-- Criterios de Completitud (DoD):
-- Dependencias internas/externas:
+## 2. Phase Breakdown
+### Phase [N] – [Name]
+- Tasks (ID, description, assignee, estimate):
+- Definition of Done (DoD):
+- Internal/external dependencies:
 
-## 3. Estrategia de Pruebas por Fase
-| Tipo | Alcance | Herramienta | Criterio de Éxito |
-|------|---------|-------------|-------------------|
+## 3. Testing Strategy per Phase
+| Type | Scope | Tool | Success Criterion |
+|------|-------|------|-------------------|
 
-## 4. Revisiones Técnicas Formales (FTRs)
-| Gate | Artefacto a Revisar | Checklist | Participantes | Resultado |
-|------|---------------------|-----------|---------------|-----------|
+## 4. Formal Technical Reviews (FTRs)
+| Gate | Artifact to Review | Checklist | Participants | Outcome |
+|------|--------------------|-----------|---------------|---------|
 
-## 5. Gestión de Riesgos
-| Riesgo | Probabilidad | Impacto | Mitigación | Contingencia |
-|--------|--------------|---------|------------|--------------|
+## 5. Risk Management
+| Risk | Probability | Impact | Mitigation | Contingency |
+|------|-------------|--------|------------|-------------|
 
-## 6. Métricas de Progreso
-- Velocidad, lead time, defect density, cobertura:
-- Definición de "Done" por capa (UI, lógica, datos, infra):
+## 6. Progress Metrics
+- Velocity, lead time, defect density, coverage:
+- Definition of "Done" per layer (UI, logic, data, infra):
 
-## 7. Cronograma y Hitos
-- Diagrama de Gantt o tabla de hitos:
-- Fechas de integración, UAT, release:
+## 7. Schedule and Milestones
+- Gantt diagram or milestone table:
+- Integration, UAT, release dates:
 
-## 8. Control de Cambios y Lecciones Aprendidas
+## 8. Change Control and Lessons Learned

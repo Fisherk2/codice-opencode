@@ -15,15 +15,21 @@ import { compare as semverCompare, valid } from "semver";
 import type { IGitHubClient } from "../../src/application/ports/IGitHubClient";
 import type { IUserPrompt } from "../../src/application/ports/IUserPrompt";
 import { UpdateWorkspaceUseCase } from "../../src/application/use-cases/UpdateWorkspaceUseCase";
-import { VERSION } from "../../src/cli/output";
 import type { FileRule } from "../../src/domain/entities/FileRule";
 import type { IFileMergeEngine } from "../../src/domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../src/domain/ports/IFileSystem";
 import type { IVersionComparator } from "../../src/domain/ports/IVersionComparator";
 import type { MergeError } from "../../src/domain/types/MergeError";
 import type { ProgressCallback } from "../../src/domain/types/ProgressEvent";
-import { type Result, success } from "../../src/domain/types/Result";
-import type { ComparisonResult } from "../../src/domain/types/version";
+import { failure, type Result, success } from "../../src/domain/types/Result";
+import type { RemoteVersionStatus } from "../../src/domain/types/version";
+
+/**
+ * Bundled template version used in the tests. Must be NEWER than the seeded
+ * v2.0.0 install so the update proceeds past the installed >= bundled check
+ * (the real package VERSION is 1.2.0, which would short-circuit every merge).
+ */
+const BUNDLED_TEST_VERSION = "2.1.0";
 
 // ---------------------------------------------------------------------------
 // Minimal test doubles
@@ -33,7 +39,11 @@ class FakeFileSystem implements IFileSystem {
 	async destinationExists(_path: string): Promise<boolean> {
 		return false;
 	}
-	async stageFile(_path: string, _excludeSubDirs?: Set<string>): Promise<void> {}
+	async stageFile(
+		_path: string,
+		_destPath?: string,
+		_excludeSubDirs?: Set<string>,
+	): Promise<void> {}
 	async commitStaging(): Promise<void> {}
 	async cleanStaging(): Promise<void> {}
 	async isWritable(): Promise<boolean> {
@@ -46,8 +56,14 @@ class FakeFileSystem implements IFileSystem {
 	async writeVersionFile(content: string): Promise<void> {
 		this.lastWrittenVersion = content;
 	}
+	/** Configurable .codice-version payload; defaults to a v2.0 install. */
+	versionFileContent: string | null = JSON.stringify({
+		version: "2.0.0",
+		installedPacks: ["software-development"],
+		installedAt: "2026-01-01T00:00:00.000Z",
+	});
 	async readVersionFile(): Promise<string | null> {
-		return null;
+		return this.versionFileContent;
 	}
 	async walkTemplateDirectory(_path: string): Promise<readonly string[]> {
 		return [];
@@ -85,7 +101,10 @@ class FakeGitHubClientBadTag implements IGitHubClient {
 }
 
 class FakeUserPrompt implements IUserPrompt {
-	showWarning(_message: string): void {}
+	warnings: string[] = [];
+	showWarning(message: string): void {
+		this.warnings.push(message);
+	}
 	showInfo(_message: string): void {}
 	async confirm(_message: string, _default?: boolean): Promise<boolean> {
 		return true;
@@ -104,19 +123,36 @@ class FakeUserPrompt implements IUserPrompt {
 	async promptForMode(): Promise<"clean" | "project" | "update" | null> {
 		return null;
 	}
+	async selectPacks(
+		_options: readonly import("../../src/application/ports/IUserPrompt").PackOption[],
+		_preSelected: readonly string[],
+	): Promise<readonly string[]> {
+		return ["software-development"];
+	}
+	showVersionInfo(
+		_info: import("../../src/application/ports/IUserPrompt").VersionDisplayInfo,
+	): void {}
+	async selectUpdateOption(
+		_options: readonly import("../../src/application/ports/IUserPrompt").UpdateOptionChoice[],
+	): Promise<"current" | "add" | "cancel" | null> {
+		return "current";
+	}
+	showInstallSummary(
+		_info: import("../../src/application/ports/IUserPrompt").InstallSummaryInfo,
+	): void {}
 }
 
 class FakeVersionComparator implements IVersionComparator {
-	compare(installed: string, remote: string): Result<ComparisonResult, Error> {
+	compare(installed: string, remote: string): Result<RemoteVersionStatus, Error> {
 		const validInstalled = valid(installed);
 		const validRemote = valid(remote);
 		if (!validInstalled || !validRemote) {
-			return success("incompatible" as ComparisonResult);
+			return failure(new Error("Invalid version format"));
 		}
 		const cmp = semverCompare(validInstalled, validRemote);
-		if (cmp < 0) return success("newer" as ComparisonResult);
-		if (cmp > 0) return success("older" as ComparisonResult);
-		return success("equal" as ComparisonResult);
+		if (cmp < 0) return success("ahead");
+		if (cmp > 0) return success("behind");
+		return success("equal");
 	}
 }
 
@@ -134,7 +170,7 @@ function makeUseCase(
 	gitHub?: FakeGitHubClient,
 	versionComparator?: FakeVersionComparator,
 	fileSystem?: FakeFileSystem,
-	bundledVersion = VERSION,
+	bundledVersion = BUNDLED_TEST_VERSION,
 ): UpdateWorkspaceUseCase {
 	return new UpdateWorkspaceUseCase(
 		fileSystem ?? new FakeFileSystem(),
@@ -190,9 +226,11 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 
 		await useCase.execute("/tmp/fake-dest", { force: true });
 
-		// All rules should be either 'mandatory' or 'standard', never 'optional'
+		// All rules should be either 'mandatory', 'standard' or 'pack', never 'optional'
 		const allCategories = mergeEngine.capturedRules.map((r) => r.category);
-		expect(allCategories.every((c) => c === "mandatory" || c === "standard")).toBe(true);
+		expect(allCategories.every((c) => c === "mandatory" || c === "standard" || c === "pack")).toBe(
+			true,
+		);
 
 		// There should be at least one 'standard' rule (not converted to mandatory)
 		const standardCount = allCategories.filter((c) => c === "standard").length;
@@ -209,6 +247,51 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 
 		expect(fs.lastWrittenVersion).not.toBeNull();
 		const versionData = JSON.parse(fs.lastWrittenVersion!);
-		expect(versionData.installedVersion).toBe(VERSION);
+		expect(versionData.version).toBe(BUNDLED_TEST_VERSION);
+	});
+
+	test("should block update when .codice-version is missing", async () => {
+		const mergeEngine = new CaptureMergeEngine();
+		const fs = new FakeFileSystem();
+		fs.versionFileContent = null;
+		const prompt = new FakeUserPrompt();
+		const useCase = new UpdateWorkspaceUseCase(
+			fs,
+			mergeEngine,
+			prompt,
+			new FakeGitHubClient(),
+			new FakeVersionComparator(),
+			BUNDLED_TEST_VERSION,
+		);
+
+		const result = await useCase.execute("/tmp/fake-dest", { force: true });
+
+		expect(result.ok).toBe(true);
+		expect(prompt.warnings.join(" ")).toContain("No previous Códice installation found");
+		expect(mergeEngine.capturedRules.length).toBe(0);
+	});
+
+	test("should block update when installed version is 1.x", async () => {
+		const mergeEngine = new CaptureMergeEngine();
+		const fs = new FakeFileSystem();
+		fs.versionFileContent = JSON.stringify({
+			version: "1.8.0",
+			installedAt: "2026-01-01T00:00:00.000Z",
+		});
+		const prompt = new FakeUserPrompt();
+		const useCase = new UpdateWorkspaceUseCase(
+			fs,
+			mergeEngine,
+			prompt,
+			new FakeGitHubClient(),
+			new FakeVersionComparator(),
+			BUNDLED_TEST_VERSION,
+		);
+
+		const result = await useCase.execute("/tmp/fake-dest", { force: true });
+
+		expect(result.ok).toBe(true);
+		expect(prompt.warnings.join(" ")).toContain("update system has changed");
+		expect(mergeEngine.capturedRules.length).toBe(0);
 	});
 });

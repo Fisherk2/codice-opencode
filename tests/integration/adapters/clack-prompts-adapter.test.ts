@@ -1,5 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
 import * as realClack from "@clack/prompts";
+import type { PackOption, UpdateOptionChoice } from "../../../src/application/ports/IUserPrompt";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
 
 /**
@@ -273,6 +274,167 @@ describe("ClackPromptsAdapter", () => {
 
 			const result = await adapter.promptForMode();
 			expect(result).toBeNull();
+		});
+	});
+
+	describe("ClackPromptsAdapter.selectPacks()", () => {
+		it("returns selected pack IDs on user selection", async () => {
+			mockMultiselect.mockResolvedValue(["software-development", "business"]);
+
+			const options: PackOption[] = [
+				{
+					id: "software-development",
+					name: "Software Development",
+					description: "Core development agents",
+					agentCount: 4,
+				},
+				{
+					id: "business",
+					name: "Business",
+					description: "Business-focused agents",
+					agentCount: 2,
+				},
+			];
+
+			const result = await adapter.selectPacks(options, ["software-development"]);
+			expect(result).toEqual(["software-development", "business"]);
+			expect(mockMultiselect).toHaveBeenCalledWith(
+				expect.objectContaining({
+					message: "Select agent packs to install:",
+					required: true,
+					initialValues: ["software-development"],
+				}),
+			);
+		});
+
+		it("returns empty array on cancel", async () => {
+			mockIsCancel.mockReturnValue(true);
+			mockMultiselect.mockResolvedValue(Symbol("cancel") as never);
+
+			const options: PackOption[] = [
+				{
+					id: "software-development",
+					name: "Software Development",
+					description: "Core development agents",
+					agentCount: 4,
+				},
+			];
+
+			const result = await adapter.selectPacks(options, []);
+			expect(result).toEqual([]);
+		});
+
+		it("marks locked packs with [INSTALLED, LOCKED] label", async () => {
+			mockMultiselect.mockResolvedValue(["software-development"]);
+
+			const options: PackOption[] = [
+				{
+					id: "software-development",
+					name: "Software Development",
+					description: "Core development agents",
+					agentCount: 4,
+					locked: true,
+				},
+			];
+
+			await adapter.selectPacks(options, []);
+			expect(mockMultiselect).toHaveBeenCalledWith(
+				expect.objectContaining({
+					options: expect.arrayContaining([
+						expect.objectContaining({
+							label: expect.stringContaining("[INSTALLED, LOCKED]"),
+						}),
+					]),
+				}),
+			);
+		});
+	});
+
+	describe("ClackPromptsAdapter.showVersionInfo()", () => {
+		it("shows 'v2.0+' installation message with current packs", () => {
+			adapter.showVersionInfo({
+				version: "2.0.0",
+				installedPacks: ["software-development", "business"],
+				status: "v2.0+",
+			});
+
+			expect(mockNote).toHaveBeenCalledWith(
+				expect.stringContaining("Current installation: v2.0.0"),
+				expect.stringContaining("v2.0+"),
+			);
+		});
+
+		it("shows 'No Installation Detected' for missing status", () => {
+			adapter.showVersionInfo({ version: null, installedPacks: [], status: "missing" });
+
+			expect(mockNote).toHaveBeenCalledWith(
+				expect.stringContaining("No previous Códice installation found"),
+				expect.stringContaining("No Installation Detected"),
+			);
+		});
+	});
+
+	describe("ClackPromptsAdapter.selectUpdateOption()", () => {
+		it("returns 'current' when user selects Option A", async () => {
+			mockSelect.mockResolvedValue("current");
+
+			const options: UpdateOptionChoice[] = [
+				{ value: "current", label: "Keep current packs" },
+				{ value: "add", label: "Add more packs" },
+				{ value: "cancel", label: "Cancel update" },
+			];
+
+			const result = await adapter.selectUpdateOption(options);
+			expect(result).toBe("current");
+		});
+
+		it("returns null on cancel", async () => {
+			mockIsCancel.mockReturnValue(true);
+			mockSelect.mockResolvedValue(Symbol("cancel") as never);
+
+			const options: UpdateOptionChoice[] = [
+				{ value: "current", label: "Keep current packs" },
+				{ value: "add", label: "Add more packs" },
+			];
+
+			const result = await adapter.selectUpdateOption(options);
+			expect(result).toBeNull();
+		});
+	});
+
+	describe("ClackPromptsAdapter.showInstallSummary()", () => {
+		it("displays summary via clack.note()", () => {
+			adapter.showInstallSummary({
+				packs: [{ id: "software-development", agentCount: 146 }],
+				mandatoryDirs: [],
+				optionalFiles: [],
+				totalAgents: 146,
+				totalFiles: 150,
+			});
+
+			expect(mockNote).toHaveBeenCalledWith(
+				expect.stringContaining("software-development (146 agents)"),
+				expect.stringContaining("📋 Installation Summary"),
+			);
+		});
+
+		it("formats the summary body from InstallSummaryInfo", () => {
+			adapter.showInstallSummary({
+				packs: [{ id: "software-development", agentCount: 146 }],
+				mandatoryDirs: ["core", "packs/main", "packs/writers"],
+				optionalFiles: ["Justfile", "Dockerfile"],
+				totalAgents: 146,
+				totalFiles: 163,
+			});
+
+			expect(mockNote).toHaveBeenCalledWith(
+				expect.stringContaining("Mandatory:"),
+				expect.stringContaining("📋 Installation Summary"),
+			);
+			expect(mockNote).toHaveBeenCalledWith(
+				expect.stringContaining("Optional:"),
+				expect.stringContaining("📋 Installation Summary"),
+			);
 		});
 	});
 });

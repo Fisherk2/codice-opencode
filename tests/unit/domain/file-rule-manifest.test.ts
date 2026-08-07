@@ -12,6 +12,7 @@ import {
 	FILE_RULE_MANIFEST,
 	getMandatoryRules,
 	getOptionalRules,
+	getPackRules,
 	getRulesByCategory,
 	getStandardRules,
 	isRuleSelected,
@@ -21,7 +22,8 @@ import {
 
 describe("FILE_RULE_MANIFEST completeness", () => {
 	test("manifest is a non-empty array", () => {
-		expect(FILE_RULE_MANIFEST.length).toBeGreaterThanOrEqual(27);
+		// FEV-17 collapsed mandatory from 7 to 4 source groupings (29 → 26).
+		expect(FILE_RULE_MANIFEST.length).toBeGreaterThanOrEqual(26);
 	});
 
 	test("no duplicate paths in manifest", () => {
@@ -31,7 +33,7 @@ describe("FILE_RULE_MANIFEST completeness", () => {
 	});
 
 	test("every rule has a valid category", () => {
-		const validCategories = ["mandatory", "standard", "optional"];
+		const validCategories = ["mandatory", "standard", "optional", "pack"];
 		for (const rule of FILE_RULE_MANIFEST) {
 			expect(validCategories).toContain(rule.category);
 		}
@@ -75,18 +77,70 @@ describe("Category distribution", () => {
 		const mandatory = getRulesByCategory("mandatory");
 		const standard = getRulesByCategory("standard");
 		const optional = getRulesByCategory("optional");
+		const pack = getRulesByCategory("pack");
 
-		expect(mandatory.length + standard.length + optional.length).toBe(FILE_RULE_MANIFEST.length);
+		expect(mandatory.length + standard.length + optional.length + pack.length).toBe(
+			FILE_RULE_MANIFEST.length,
+		);
 	});
 
-	test("mandatory rules include core config files", () => {
+	test("mandatory rules contain only core, packs/main and packs/writers (FEV-21)", () => {
 		const mandatory = getMandatoryRules();
 		const paths = mandatory.map((r) => r.path);
-		expect(paths).toContain("opencode.json");
-		expect(paths).toContain("skills-lock.json");
-		expect(paths).toContain("agents");
-		expect(paths).toContain("commands");
-		expect(paths).toContain(".opencode");
+		// FEV-21 moved the 8 selectable packs out of mandatory into the
+		// "pack" category; mandatory now holds core + the 2 fixed pack groups.
+		expect(paths.length).toBe(3);
+		expect(paths).toContain("core");
+		expect(paths).toContain("packs/main");
+		expect(paths).toContain("packs/writers");
+	});
+
+	test("pack rules include all 8 selectable pack source groupings (FEV-21)", () => {
+		const packRules = getPackRules();
+		const paths = packRules.map((r) => r.path);
+		expect(paths).toContain("packs/software-development");
+		expect(paths).toContain("packs/business");
+		expect(paths).toContain("packs/hardware-emerging");
+		expect(paths).toContain("packs/science-research");
+		expect(paths).toContain("packs/operations-support");
+		expect(paths).toContain("packs/finance");
+		expect(paths).toContain("packs/creative");
+		expect(paths).toContain("packs/government-legal");
+		expect(paths).not.toContain("packs/sin-clasificar");
+	});
+
+	test("mandatory core rule has destPath='' (spreads to destination root)", () => {
+		const coreRule = FILE_RULE_MANIFEST.find((r) => r.path === "core");
+		expect(coreRule).toBeDefined();
+		expect(coreRule!.destPath).toBe("");
+	});
+
+	test("pack rules have destPath='agents' (merge into flat agents/)", () => {
+		const packRules = getPackRules();
+		expect(packRules.length).toBe(8);
+		for (const packRule of packRules) {
+			expect(packRule.destPath).toBe("agents");
+		}
+		// Mandatory pack groupings (main, writers) also merge into agents/
+		const mandatoryPacks = getMandatoryRules().filter((r) => r.path.startsWith("packs/"));
+		expect(mandatoryPacks.map((r) => r.path)).toEqual(["packs/main", "packs/writers"]);
+		for (const packRule of mandatoryPacks) {
+			expect(packRule.destPath).toBe("agents");
+		}
+	});
+
+	test("standard rules have no destPath (use path as-is)", () => {
+		const standard = getStandardRules();
+		for (const r of standard) {
+			expect(r.destPath).toBeUndefined();
+		}
+	});
+
+	test("optional rules have no destPath (use path as-is)", () => {
+		const optional = getOptionalRules();
+		for (const r of optional) {
+			expect(r.destPath).toBeUndefined();
+		}
 	});
 
 	test("standard rules include documentation files", () => {
@@ -123,7 +177,7 @@ describe("Category distribution", () => {
 
 describe("createFileRule helper", () => {
 	test("returns FileRule for known mandatory path", () => {
-		const rule = createFileRule("opencode.json");
+		const rule = createFileRule("core");
 		expect(rule).not.toBeNull();
 		expect(rule!.category).toBe("mandatory");
 	});
@@ -154,15 +208,15 @@ describe("createFileRule helper", () => {
 
 describe("Edge cases", () => {
 	test("path with leading ./ is normalized", () => {
-		const rule = createFileRule("./opencode.json");
+		const rule = createFileRule("./core");
 		expect(rule).not.toBeNull();
-		expect(rule!.path).toBe("opencode.json");
+		expect(rule!.path).toBe("core");
 	});
 
 	test("path with trailing slash is handled", () => {
-		const rule = createFileRule("agents/");
+		const rule = createFileRule("core/");
 		expect(rule).not.toBeNull();
-		expect(rule!.path).toBe("agents");
+		expect(rule!.path).toBe("core");
 	});
 });
 

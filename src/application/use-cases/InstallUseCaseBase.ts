@@ -1,18 +1,10 @@
 /**
- * Base class for installation use cases implementing the Template Method pattern.
- *
- * CleanInstallUseCase and ProjectInstallUseCase share an identical flow
- * (check writable → confirm overwrite → select optionals → merge → post-install)
- * but differ in three hooks:
- *
- * - buildRules(): How manifest rules are transformed before merging.
- * - selectOptionals(): How optional files are chosen (auto-select vs. menu).
- * - getSuccessMessage(): Displayed on completion.
- *
- * Reference: GoF Template Method
+ * Base class for installation use cases implementing the Template Method pattern
+ * (GoF). Clean and Project installs share one flow; the abstract hooks specialize it.
  */
 
 import type { FileRule } from "../../domain/entities/FileRule";
+import { FILE_RULE_MANIFEST, getPackRules } from "../../domain/entities/FileRuleManifest";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
@@ -23,26 +15,25 @@ import {
 	createProgressCallback,
 	wrapMergeError,
 } from "../helpers";
+import { buildInstallSummary } from "../installSummary";
 import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { runPostInstallSteps } from "../postInstall";
 
-/**
- * Options shared by all installation modes.
- */
+/** Options shared by all installation modes. */
 export interface BaseInstallOptions {
 	/** Skip the non-empty directory confirmation prompt */
 	readonly force?: boolean;
 	/** Version tag to write into the version file (e.g. "1.0.0") */
 	readonly version?: string;
+	/** Packs to install; skips the wizard when provided via CLI (--packs/--packs-all) */
+	readonly packs?: readonly string[];
 }
 
 /**
  * Abstract base for Clean Install and Project Install use cases.
- *
  * Template method: execute() defines the invariant installation flow.
- * Subclass hooks supply the variant behavior.
  */
 export abstract class InstallUseCaseBase {
 	/**
@@ -63,10 +54,7 @@ export abstract class InstallUseCaseBase {
 	) {}
 
 	/**
-	 * Template method: execute the installation flow.
-	 *
-	 * Subclasses override the three abstract hooks to specialize behavior.
-	 *
+	 * Template method: run the installation flow with subclass hooks.
 	 * @param destinationPath - Target directory for installation.
 	 * @param options - Optional flags (force, version).
 	 * @returns Result indicating success or a structured error.
@@ -89,11 +77,18 @@ export abstract class InstallUseCaseBase {
 		);
 		if (!confirmed) return success(undefined);
 
+		// Phase 2.5: Select agent packs. CLI-provided packs skip the wizard;
+		// a cancel returns an empty selection — aborting prevents a partial install.
+		const force = options.force ?? false;
+		const selectedPacks = options.packs ?? (await this.selectPacks(force));
+		if (selectedPacks.length === 0) return success(undefined);
+
 		// Phase 3: Select optional files (subclass decides behavior)
-		const selectedOptionals = await this.selectOptionals(options.force ?? false);
+		const selectedOptionals = await this.selectOptionals(force);
 
 		// Phase 4: Build merge rules (subclass-specific transformation)
-		const rules = this.buildRules(selectedOptionals);
+		const rules = this.buildRules(selectedPacks, selectedOptionals);
+		this.showInstallSummary(selectedPacks, selectedOptionals);
 
 		// Phase 5: Execute merge with progress callback
 		const onProgress = createProgressCallback(this.userPrompt, this.getProgressLabel());
@@ -104,79 +99,71 @@ export abstract class InstallUseCaseBase {
 		}
 
 		// Phase 6: Post-install steps (gitignore, symlinks, version file)
-		return await this.runPostInstall(destinationPath, selectedOptionals, options.version);
+		return await this.runPostInstall(
+			destinationPath,
+			selectedPacks,
+			selectedOptionals,
+			options.version,
+		);
 	}
 
-	// ---------------------------------------------------------------------------
-	// Abstract hooks (required overrides — the Template Method variants)
-	// ---------------------------------------------------------------------------
+	// ---- Abstract hooks: selectPacks, buildRules, selectOptionals, getSuccessMessage ----
 
 	/**
-	 * Transform the manifest rules and selected optionals into the final rule set.
-	 * Called after the user has selected optional files.
-	 * Both subclasses filter the manifest to include only selected optionals.
-	 * CleanInstall additionally converts all categories to mandatory (overwrite).
+	 * Determine which agent packs to install. Behavior varies by mode:
+	 * - Clean: force=true selects all packs; else shows the interactive menu.
+	 * - Project: force=true selects default; else shows the interactive menu.
+	 * @param force - If true, use the default selection (no interactive menu).
+	 * @returns Array of pack IDs to install.
 	 */
-	protected abstract buildRules(selectedOptionals: readonly string[]): readonly FileRule[];
+	protected abstract selectPacks(force: boolean): Promise<readonly string[]>;
 
 	/**
-	 * Determine which optional files to include. Behavior varies by mode:
-	 * - Clean: force=true auto-selects all, else shows interactive menu.
-	 * - Project: always shows interactive menu (force skips overwrite, not optionals).
+	 * Transform manifest rules into the final rule set: filter by selected
+	 * packs; Clean additionally converts all categories to mandatory (overwrite).
+	 */
+	protected abstract buildRules(
+		selectedPacks: readonly string[],
+		selectedOptionals: readonly string[],
+	): readonly FileRule[];
+
+	/**
+	 * Determine which optional files to include: Clean force=true selects all;
+	 * Project force=true returns empty (no opt-in); else shows the interactive menu.
 	 */
 	protected abstract selectOptionals(force: boolean): Promise<readonly string[]>;
 
-	/**
-	 * Success message displayed after a successful installation.
-	 */
+	/** Success message displayed after a successful installation. */
 	protected abstract getSuccessMessage(): string;
 
-	// ---------------------------------------------------------------------------
-	// Overridable defaults (small differences between modes)
-	// ---------------------------------------------------------------------------
+	// ---- Overridable defaults (small differences between modes) ----
 
-	/**
-	 * Confirmation message shown when the destination directory is not empty.
-	 * Clean Install warns that "All existing files may be overwritten."
-	 * Project Install warns that "Some existing files may be overwritten."
-	 */
+	/** Confirmation message for a non-empty destination directory. */
 	protected getConfirmMessage(destinationPath: string): string {
 		return `The destination directory "${destinationPath}" is not empty. Existing files may be overwritten. Continue?`;
 	}
 
-	/**
-	 * Message shown when the user cancels the installation.
-	 */
+	/** Message shown when the user cancels the installation. */
 	protected getCancelMessage(): string {
 		return "Installation cancelled by user.";
 	}
 
-	/**
-	 * Label for the progress bar during file merge.
-	 */
+	/** Label for the progress bar during file merge. */
 	protected getProgressLabel(): string {
 		return "Installing...";
 	}
 
-	/**
-	 * Whether to include a "Re-run the installer" hint in symlink warnings.
-	 * Clean Install sets this to true (users can re-run to retry symlinks).
-	 * Project Install keeps false (re-run might overwrite customizations).
-	 */
+	/** Whether symlink warnings include a "Re-run the installer" hint. */
 	protected getRetryHint(): boolean {
 		return false;
 	}
 
-	// ---------------------------------------------------------------------------
-	// Private helpers
-	// ---------------------------------------------------------------------------
+	// ---- Private helpers ----
 
-	/**
-	 * Post-installation orchestration: gitignore, symlinks, version file.
-	 * Delegates to the shared runPostInstallSteps utility.
-	 */
+	/** Post-install orchestration: gitignore, symlinks, version file (via runPostInstallSteps). */
 	private async runPostInstall(
 		destinationPath: string,
+		selectedPacks: readonly string[],
 		selectedOptionals: readonly string[],
 		version?: string,
 	): Promise<Result<void, Error>> {
@@ -187,11 +174,23 @@ export abstract class InstallUseCaseBase {
 			userPrompt: this.userPrompt,
 			opencodeSymlinks: this.opencodeSymlinks,
 			destinationPath,
+			selectedPacks,
 			selectedOptionals,
 			version,
 			operationLabel: "Installation",
 			successMessage: this.getSuccessMessage(),
 			retryHint: this.getRetryHint(),
 		});
+	}
+
+	/** Show the pre-install summary via IUserPrompt (spec §3.3).
+	 * Informational only — earlier confirmations captured intent (FEV-22 #5). */
+	private showInstallSummary(
+		selectedPacks: readonly string[],
+		selectedOptionals: readonly string[],
+	): void {
+		this.userPrompt.showInstallSummary(
+			buildInstallSummary(getPackRules(), selectedPacks, selectedOptionals, FILE_RULE_MANIFEST),
+		);
 	}
 }

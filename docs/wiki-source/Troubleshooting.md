@@ -37,28 +37,44 @@ Both commands behave identically once running — the issue is limited to the in
 
 ---
 
-## 2. "GitHub version check fails with 404" in Update Workspace
+## 2. "Update Workspace is blocked" or "Pre-1.2.0 Installation Detected"
 
-**Symptom:** When selecting **Update Workspace** mode, the installer displays:
+**Symptom:** When selecting **Update Workspace**, the installer displays one of these messages:
 ```
-⚠️  Warning: Could not check for updates via GitHub. Falling back to the bundled template version.
+⚠️  Pre-1.2.0 Installation Detected
 ```
-The version check returns HTTP 404.
+or
+```
+⚠️  No .codice-version file found
+```
+or
+```
+⚠️  Detected v1.x installation — update system has changed
+```
+The installer exits without copying files.
 
-**Cause:** The `GITHUB_REPO` constant in the installer source was set to `"11-codice-opencode"` (an internal working name) instead of the correct repository name `"codice-opencode"`. The GitHub API endpoint `GET /repos/fisherk2/11-codice-opencode/releases/latest` returns 404 because the repository is actually located at `fisherk2/codice-opencode`.
+**Cause:** Starting with v2.0.0, Update Workspace is **version-gated** — it only runs on v2.0+ installations. The installer reads `.codice-version` on startup and classifies the installation:
 
-This was fixed in the v1.0.11 release (commit `a890d37`). The current version of the constant is:
-```
-GITHUB_REPO = "codice-opencode"
-```
-which correctly resolves to `https://api.github.com/repos/fisherk2/codice-opencode/releases/latest`.
+| Detected state | Behavior |
+|----------------|----------|
+| No `.codice-version` file | Blocked — guides you to reinstall |
+| Version < 1.2.0 | Blocked — suggests cleaning up `references/` and `.devin/` before reinstalling |
+| v1.2.0 ≤ version < 2.0.0 | Blocked — guides you to reinstall with Clean/Project Install |
+| v2.0.0+ | Normal — Option A (current packs) or Option B (add packs) |
 
-**Solution:** Update to the latest Códice version, which ships with the corrected repository name:
+This is by design, not a bug. The update system was redesigned in v2.0.0 to support the pack system (ADR-015) and cannot operate on legacy v1.x installations.
+
+**Solution:** Reinstall using Clean Install or Project Install:
+
 ```bash
-bunx --fresh @fisherk2-dev/codice@latest
+# Clean Install (fresh start — overwrites everything):
+bunx @fisherk2-dev/codice --clean
+
+# Project Install (preserves existing customizations):
+bunx @fisherk2-dev/codice --project
 ```
 
-If you cannot upgrade (air-gapped system, pinned version), the version check is **non-blocking**. The installer falls back gracefully to the bundled template version and proceeds with the update using local files. You can manually check for releases at [github.com/fisherk2/codice-opencode/releases](https://github.com/fisherk2/codice-opencode/releases).
+After reinstalling, your `.codice-version` will record v2.0+ and future updates will work normally. Your existing standard files (e.g., customized `README.md`) are preserved with Project Install.
 
 ---
 

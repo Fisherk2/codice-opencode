@@ -1,37 +1,38 @@
-# Database Schema – [Producto] v[MVP]
-**Fecha:** [YYYY-MM-DD] | **Autor:** [Nombre]
+# Database Schema – [Product] v[MVP]
+**Date:** [YYYY-MM-DD] | **Author:** [Name]
 
-## 1. Estrategia de Almacenamiento
-- Tipo (SQL/NoSQL/Híbrido):
-- Justificación arquitectónica:
-- Motor y versión:
+## 1. Storage Strategy
+- Type (SQL/NoSQL/Hybrid):
+- Architectural justification:
+- Engine and version:
 
-## 2. Modelo Entidad-Relación
-- Diagrama lógico/físico (enlace o Mermaid)
-- Reglas de normalización/desnormalización:
+## 2. Entity-Relationship Model
+- Logical/physical diagram (link or Mermaid)
+- Normalization/denormalization rules:
 
-## 3. Esquema de Tablas/Colecciones
-| Entidad | Campo | Tipo | Constraints | Índice | Nullable | Descripción |
-|---------|-------|------|-------------|--------|----------|-------------|
+## 3. Tables/Collections Schema
+| Entity | Field | Type | Constraints | Index | Nullable | Description |
+|--------|-------|------|-------------|-------|----------|-------------|
 
-## 4. Patrones de Acceso y Consultas Críticas
-- Queries frecuentes:
-- Estrategia de paginación/filtrado:
-- Caché (qué, dónde, TTL):
+## 4. Access Patterns and Critical Queries
+- Frequent queries:
+- Pagination/filtering strategy:
+- Cache (what, where, TTL):
 
-## 5. Ciclo de Vida y Retención
-- Creación, actualización, soft/hard delete:
-- Archivado y políticas de retención:
+## 5. Lifecycle and Retention
+- Create, update, soft/hard delete:
+- Archiving and retention policies:
 
-## 6. Seguridad y Cumplimiento
-- Cifrado en reposo/tránsito:
-- Máscara de datos/PII:
-- Auditoría (who/when/what):
+## 6. Security and Compliance
+- Encryption at rest/transit:
+- Data masking/PII:
+- Audit (who/when/what):
 
-## 7. Migraciones y Versionado
-- Estrategia (forward-only, rollback safe):
-- Herramienta:
-- Convención de nombres: `YYYYMMDDHHMMSS_descripcion`
+## 7. Migrations and Versioning
+- Strategy (forward-only, rollback safe):
+- Tool:
+- Naming convention: `YYYYMMDDHHMMSS_description`
 
-## 8. Trazabilidad
-| Entidad/Campo | PRD REQ-ID | Componente | Caso de Uso |
+## 8. Traceability
+| Entity/Field | PRD REQ-ID | Component | Use Case |
+|--------------|------------|-----------|----------|

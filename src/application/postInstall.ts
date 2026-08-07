@@ -85,12 +85,14 @@ export interface PostInstallOptions {
 	readonly userPrompt: IUserPrompt;
 	readonly opencodeSymlinks: readonly SymlinkSpec[];
 	readonly destinationPath: string;
+	/** [FEV-21] Packs selected during install wizard */
+	readonly selectedPacks: readonly string[];
 	readonly selectedOptionals: readonly string[];
 	readonly version?: string;
 	readonly operationLabel: string;
 	readonly successMessage: string;
 	/** If true, appends retry hint to opencode symlink warning. Only Clean Install sets this. */
-	readonly retryHint?: boolean;
+	readonly retryHint: boolean;
 }
 
 /**
@@ -99,7 +101,7 @@ export interface PostInstallOptions {
  * Both modes follow the same sequence after a successful merge:
  * 1. Generate .gitignore from template (graceful on failure).
  * 2. Create .opencode/{agents,commands,skills} symlinks (always).
- * 3. Write .codice-version file with version + optional selections.
+ * 3. Write .codice-version file with version, installedPacks, and optional selections.
  *
  * Each step emits a logProgressEvent AFTER the operation completes, so the
  * log reflects actual results — not predicted intent.
@@ -116,6 +118,7 @@ export async function runPostInstallSteps(
 		userPrompt,
 		opencodeSymlinks,
 		destinationPath,
+		selectedPacks,
 		selectedOptionals,
 		version,
 		operationLabel,
@@ -139,11 +142,13 @@ export async function runPostInstallSteps(
 		userPrompt.logProgressEvent(`symlink: Created ${spec.linkPath}`);
 	}
 
-	// Step 3: Write version file with optionalSelections recorded
+	// Step 3: Write version file in v2.0 format (version + installedPacks).
+	// The v2.0 reader keeps accepting the legacy field name for backward compatibility.
 	const versionResult = await writeVersionFileSafe(
 		fileSystem,
 		{
-			installedVersion: version ?? "0.0.0",
+			version: version ?? "0.0.0",
+			installedPacks: [...selectedPacks],
 			installedAt: new Date().toISOString(),
 			optionalSelections: selectedOptionals,
 		},

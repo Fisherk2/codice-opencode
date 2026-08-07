@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { IGitignoreCreator } from "../../application/ports/IGitignoreCreator";
+import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import {
 	type GitignoreError,
 	gitignoreReadError,
@@ -10,6 +11,7 @@ import {
 import type { Result } from "../../domain/types/Result";
 import { failure, success } from "../../domain/types/Result";
 import { isPathWithin } from "./pathResolver";
+import { VerboseLogger } from "./VerboseLogger";
 
 const fsPromises = fs.promises;
 
@@ -30,7 +32,7 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 
 	private readonly templatePath: string;
 
-	private readonly verbose: boolean;
+	private readonly logger: VerboseLogger;
 
 	/**
 	 * @param workspaceRoot - Absolute path to the workspace root directory.
@@ -38,12 +40,12 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 	 *                        this root for path containment (defense-in-depth).
 	 * @param templatePath - Absolute path to the template estandar directory
 	 *                       containing the `gitignore` file.
-	 * @param verbose - Enable verbose logging to stderr.
+	 * @param verbose - Verbose logger or legacy boolean flag (backward compat).
 	 */
-	constructor(workspaceRoot: string, templatePath: string, verbose?: boolean) {
+	constructor(workspaceRoot: string, templatePath: string, verbose?: VerboseLogger | boolean) {
 		this.workspaceRoot = path.resolve(workspaceRoot);
 		this.templatePath = templatePath;
-		this.verbose = verbose ?? false;
+		this.logger = verbose instanceof VerboseLogger ? verbose : new VerboseLogger(verbose ?? false);
 	}
 
 	/**
@@ -86,10 +88,14 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 			return success(undefined);
 		} catch (error) {
 			// ENOENT means the path does not exist — proceed to create it.
-			const err = error as NodeJS.ErrnoException;
-			if (err.code !== "ENOENT") {
+			// Any other error — including non-Errno shapes — propagates
+			// (fail closed, matching the original guard).
+			if (!isErrnoException(error) || error.code !== "ENOENT") {
 				return failure(
-					gitignoreWriteError(resolvedDest, `Failed to check .gitignore path: ${err.message}`),
+					gitignoreWriteError(
+						resolvedDest,
+						`Failed to check .gitignore path: ${error instanceof Error ? error.message : String(error)}`,
+					),
 				);
 			}
 		}
@@ -106,11 +112,11 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 				return failure(gitignoreTemplateNotFoundError(resolvedDest, this.templatePath));
 			}
 
-			const nodeErr = error as NodeJS.ErrnoException;
+			const nodeErr = isErrnoException(error) ? error : undefined;
 			const msg =
-				nodeErr.code === "ENOENT"
+				nodeErr?.code === "ENOENT"
 					? `Template gitignore file not found at: ${templateFile}`
-					: `Failed to read template gitignore: ${nodeErr.message}`;
+					: `Failed to read template gitignore: ${nodeErr?.message ?? String(error)}`;
 			return failure(gitignoreReadError(resolvedDest, msg));
 		}
 
@@ -118,16 +124,16 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 		try {
 			await Bun.write(destGitignore, content);
 		} catch (error) {
-			const nodeError = error as NodeJS.ErrnoException;
+			const nodeError = isErrnoException(error) ? error : undefined;
 			return failure(
-				gitignoreWriteError(resolvedDest, `Failed to write .gitignore: ${nodeError.message}`),
+				gitignoreWriteError(
+					resolvedDest,
+					`Failed to write .gitignore: ${nodeError?.message ?? String(error)}`,
+				),
 			);
 		}
 
-		if (this.verbose) {
-			// biome-ignore lint/suspicious/noConsole: verbose diagnostic output
-			console.warn(`[info] Created .gitignore (${content.length} bytes) from template.`);
-		}
+		this.logger.log("gitignore", `Created .gitignore (${content.length} bytes) from template.`);
 
 		return success(undefined);
 	}

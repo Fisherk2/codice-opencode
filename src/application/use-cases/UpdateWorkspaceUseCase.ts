@@ -1,5 +1,6 @@
 import { valid } from "semver";
-import { FILE_RULE_MANIFEST } from "../../domain/entities/FileRuleManifest";
+import { FILE_RULE_MANIFEST, filterByPacks } from "../../domain/entities/FileRuleManifest";
+import type { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
@@ -14,6 +15,8 @@ import {
 } from "../helpers";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
+import { isPreV2Version, parseVersionData, resolveUpdatePacks } from "./updateFlow";
+import { notifyIfUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
 
 /**
  * Options for the update workspace execution.
@@ -23,20 +26,17 @@ export interface UpdateWorkspaceOptions {
 	readonly force?: boolean;
 	/** Explicit version tag (overrides GitHub version lookup) */
 	readonly version?: string;
+	/** Packs to add during a non-interactive update (Option B without the menu) */
+	readonly addPacks?: readonly string[];
 }
 
 /**
- * Mode 3: Update Workspace — update an existing installation
- * to the latest template version. Only Obligatorio and Estándar
- * files are updated; Opcional files are preserved.
+ * Mode 3: Update Workspace — update an existing v2.0+ installation.
  *
- * Version logic:
- * - Compares the installed version (from .codice-version) against the
- *   bundled template version (the VERSION constant). If installed >= bundled,
- *   the workspace is considered up to date and no update is performed.
- * - The GitHub remote version is checked for informational purposes only —
- *   a newer remote version triggers a suggestion, but the update decision
- *   is based on bundled vs installed version.
+ * Version-gated: only runs when `.codice-version` parses to a major >= 2
+ * (the pack system); missing or pre-v2.0 installs are blocked with a
+ * reinstall suggestion. Pack scope: Option A (installed only), Option B
+ * (add packs, installed locked), or non-interactive addPacks.
  */
 export class UpdateWorkspaceUseCase {
 	/**
@@ -57,21 +57,8 @@ export class UpdateWorkspaceUseCase {
 	) {}
 
 	/**
-	 * Execute a workspace update.
-	 *
-	 * Flow:
-	 * 1. Validate destination is writable.
-	 * 2. If not forced, ask user for confirmation.
-	 * 3. Read local version info from `.codice-version` (best-effort).
-	 * 4. Check GitHub for latest release tag.
-	 * 5. Compare versions; if already up to date, inform user and skip.
-	 * 6. If GitHub unreachable, warn and continue with local template.
-	 * 7. Execute merge engine with only Obligatorio and Estándar rules.
-	 * 8. Write updated `.codice-version` file.
-	 *
-	 * @param destinationPath - Target directory for the update.
-	 * @param options - Optional flags.
-	 * @returns Result indicating success or a structured error.
+	 * Execute a workspace update: writable check → v2.0 version gate → confirm
+	 * → GitHub info → bundled comparison → pack scope → scoped merge → version file.
 	 */
 	async execute(
 		destinationPath: string,
@@ -81,75 +68,52 @@ export class UpdateWorkspaceUseCase {
 		const writableCheck = await checkWritable(this.fileSystem, destinationPath);
 		if (!writableCheck.ok) return writableCheck;
 
-		// Ask for confirmation if not forced
+		// Version gate (BEFORE any destructive prompt): the update system needs
+		// a v2.0+ installation with pack metadata. Missing, corrupt, or pre-v2.0
+		// files are all treated as "must reinstall" — never update blindly.
+		const localVersion = await this.readInstalledVersion();
+		if (localVersion === null) return success(undefined);
+
+		// Ask for confirmation if not forced. Defaults to Yes so unattended
+		// sessions can accept the update with a single keystroke (plan Phase 4).
 		if (!options?.force) {
 			const confirmed = await confirmOverwrite(
 				this.fileSystem,
 				this.userPrompt,
-				`Update workspace in "${destinationPath}"? Obligatorio and Estándar files will be updated. Opcional files will be preserved. Continue?`,
+				`Update workspace in "${destinationPath}"? Packs: ${localVersion.installedPacks.join(", ") || "(none)"}. Continue?`,
 				"Update cancelled by user.",
+				undefined,
+				true,
 			);
 			if (!confirmed) return success(undefined);
 		}
 
-		// Read local version info (best-effort). .codice-version lives in the
-		// user's project directory and is UNTRUSTED input: every field is
-		// validated and typed before use; malformed JSON falls back gracefully.
-		let installedVersion = "0.0.0";
-		let previousOptionalSelections: string[] = [];
-		try {
-			const versionData = await this.fileSystem.readVersionFile();
-			if (versionData) {
-				const parsed = JSON.parse(versionData);
-				// Validate fields (defense-in-depth — .codice-version could be corrupted or tampered)
-				if (typeof parsed.installedVersion === "string") {
-					installedVersion = parsed.installedVersion;
-				}
-				if (Array.isArray(parsed.optionalSelections)) {
-					previousOptionalSelections = parsed.optionalSelections.filter(
-						(s: unknown): s is string => typeof s === "string",
-					);
-				}
-			}
-		} catch {
-			// No version file or corrupted JSON — treat as a first update in an existing project
-		}
+		// Informational GitHub check — never blocks the update
+		await reportRemoteStatus(this.statusDeps, localVersion);
 
-		// Check GitHub for latest version (informational only)
-		const remoteTag = await this.gitHubClient.getLatestReleaseTag();
-		let remoteVersion: string | undefined;
-		if (remoteTag) {
-			remoteVersion = remoteTag.startsWith("v") ? remoteTag.slice(1) : remoteTag;
-			const remoteComparison = this.versionComparator.compare(installedVersion, remoteVersion);
-			if (remoteComparison.ok && remoteComparison.value === "newer") {
-				await this.userPrompt.showInfo(
-					`A newer version (v${remoteVersion}) is available on GitHub. The bundled template (v${this.bundledVersion}) will be used for this update.`,
-				);
-			}
-		} else {
-			await this.userPrompt.showWarning(
-				"Could not check for updates via GitHub. Falling back to the bundled template version.",
-			);
-		}
-
-		// Compare installed version against bundled template version
-		const bundledComparison = this.versionComparator.compare(installedVersion, this.bundledVersion);
-		if (bundledComparison.ok && bundledComparison.value !== "newer") {
-			// Installed >= bundled — workspace is already up to date
-			await this.userPrompt.showInfo(
-				`Workspace is already up to date at version ${installedVersion}. No update needed.`,
-			);
+		// Compare installed version against bundled template version. Returns
+		// true when no update is needed (installed >= bundled).
+		if (await notifyIfUpToDate(this.statusDeps, localVersion)) {
 			return success(undefined);
 		}
 
-		// Get only Obligatorio + Estándar rules (skip Opcional).
-		// Obligatorio rules overwrite existing files (mandatory category).
-		// Estándar rules respect destinationExists (preserve existing user files).
-		const updateRules = FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional");
+		// Option A / Option B / non-interactive addPacks → pack scope
+		const finalPacks = await resolveUpdatePacks(
+			this.userPrompt,
+			localVersion.installedPacks,
+			options ?? {},
+		);
+		if (finalPacks === null) return success(undefined);
+
+		// Non-optional rules, scoped to the resolved packs so agents from
+		// unselected packs are never merged.
+		const updateRules = filterByPacks(
+			FILE_RULE_MANIFEST.filter((rule) => rule.category !== "optional"),
+			finalPacks,
+		);
 
 		// Execute the merge engine with progress
 		const onProgress = createProgressCallback(this.userPrompt, "Updating files...");
-
 		const mergeResult = await this.mergeEngine.execute(updateRules, {
 			onProgress,
 			updateMode: true,
@@ -161,29 +125,58 @@ export class UpdateWorkspaceUseCase {
 
 		const safeVersion = this.resolveNewVersion(options);
 
-		// Write version file with preserved optional selections
+		// Update skips opcional entirely (spec §6.1): optionalSelections resets.
 		const versionResult = await writeVersionFileSafe(
 			this.fileSystem,
 			{
-				installedVersion: safeVersion,
+				version: safeVersion,
+				installedPacks: [...finalPacks],
 				installedAt: new Date().toISOString(),
-				optionalSelections: previousOptionalSelections,
+				optionalSelections: [],
 			},
 			"Update",
 		);
 
 		if (versionResult.ok) {
-			this.userPrompt.showSuccess("Workspace update complete.");
+			this.userPrompt.showSuccess(
+				`Workspace updated to v${safeVersion}. Packs: ${finalPacks.join(", ")}`,
+			);
 		}
 		return versionResult;
 	}
 
+	/** Read .codice-version and enforce the v2.0+ gate; null means "abort gracefully". */
+	private async readInstalledVersion(): Promise<WorkspaceVersion | null> {
+		const localVersion = parseVersionData(await this.fileSystem.readVersionFile());
+		if (!localVersion) {
+			await this.userPrompt.showWarning(
+				"No previous Códice installation found. Update is not available — use Clean Install or Project Install.",
+			);
+			return null;
+		}
+		if (isPreV2Version(localVersion)) {
+			await this.userPrompt.showWarning(
+				`Detected v${localVersion.version} installation. The update system has changed in v2.0.0. Please reinstall using Clean Install or Project Install to adopt the new pack system.`,
+			);
+			return null;
+		}
+		return localVersion;
+	}
+
+	/** Collaborators for the status checks, derived from the injected deps. */
+	private get statusDeps(): UpdateStatusDeps {
+		return {
+			gitHubClient: this.gitHubClient,
+			versionComparator: this.versionComparator,
+			userPrompt: this.userPrompt,
+			bundledVersion: this.bundledVersion,
+		};
+	}
+
 	/**
-	 * Resolve the version string to write to .codice-version.
-	 * Priority: explicit flag > bundled template > fallback to "0.0.0".
-	 *
-	 * The bundled template version is always available,
-	 * so the chain never reaches the fallback — kept for type safety.
+	 * Version to write: explicit flag > bundled template > "0.0.0" fallback.
+	 * The fallback IS reachable when the bundled template version is not valid
+	 * semver (e.g. a malformed package.json) — a runtime-safety net.
 	 */
 	private resolveNewVersion(options: UpdateWorkspaceOptions | undefined): string {
 		const resolved = options?.version ?? this.bundledVersion;

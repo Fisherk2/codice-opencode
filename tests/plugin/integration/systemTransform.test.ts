@@ -10,7 +10,7 @@
 // ---------------------------------------------------------------------------
 
 import { describe, expect, test } from "bun:test";
-import { PHASE_SUGGESTIONS } from "../../../template/obligatorio/.opencode/plugins/src/defaults";
+import { PHASE_SUGGESTIONS } from "../../../template/obligatorio/core/.opencode/plugins/src/defaults";
 
 // ---------------------------------------------------------------------------
 // Types (replicated from the plugin)

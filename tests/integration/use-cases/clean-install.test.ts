@@ -1,168 +1,49 @@
-import { describe, expect, it, mock as mockFn } from "bun:test";
-import type { IGitignoreCreator } from "../../../src/application/ports/IGitignoreCreator";
-import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
-import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
+import { describe, expect, it } from "bun:test";
+import { DEFAULT_PACKS } from "../../../src/application/packOptions";
 import { CleanInstallUseCase } from "../../../src/application/use-cases/CleanInstallUseCase";
 import {
 	FILE_RULE_MANIFEST,
+	filterByPacks,
+	getPackRules,
 	getRulesByCategory,
+	packIdFromPath,
 } from "../../../src/domain/entities/FileRuleManifest";
-import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
-import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
 import { OPENCODE_SYMLINKS } from "../../../src/infrastructure/config/symlinks";
+import { createCleanInstallFixture } from "./clean-install-fixture";
 
 /** Entries that require actual template file staging (excludes noTemplateCopy) */
 const STAGEABLE_RULES = FILE_RULE_MANIFEST.filter((r) => !r.noTemplateCopy);
 
-const allOptionalPaths = getRulesByCategory("optional").map((r) => r.path);
+/** Stageable rules after default pack filtering (software-development only) */
+const STAGEABLE_DEFAULT_PACK_RULES = filterByPacks(FILE_RULE_MANIFEST, DEFAULT_PACKS).filter(
+	(r) => !r.noTemplateCopy,
+);
 
-/**
- * Create a mock IFileSystem with configurable default behaviors.
- * Each test can override specific methods via the returned object.
- */
-function createMockFileSystem(): {
-	stub: IFileSystem & IStagingSystem;
-	calls: {
-		stageFile: string[];
-		commitStaging: number;
-		cleanStaging: number;
-		writeVersionFile: string[];
-	};
-} {
-	const calls = {
-		stageFile: [] as string[],
-		commitStaging: 0,
-		cleanStaging: 0,
-		writeVersionFile: [] as string[],
-	};
-
-	const stub: IFileSystem & IStagingSystem = {
-		destinationExists: mockFn(() => Promise.resolve(false)),
-		stageFile: mockFn(async (path: string) => {
-			calls.stageFile.push(path);
-		}) as (path: string, excludeSubDirs?: Set<string>) => Promise<void>,
-		commitStaging: mockFn(async () => {
-			calls.commitStaging++;
-		}),
-		cleanStaging: mockFn(async () => {
-			calls.cleanStaging++;
-		}),
-		isWritable: mockFn(() => Promise.resolve(true)),
-		isEmpty: mockFn(() => Promise.resolve(true)),
-		writeVersionFile: mockFn(async (data: string) => {
-			calls.writeVersionFile.push(data);
-		}),
-		readVersionFile: mockFn(() => Promise.resolve(null)),
-		walkTemplateDirectory: mockFn(() => Promise.resolve([])),
-		walkDestinationDirectory: mockFn(() => Promise.resolve([])),
-	};
-
-	return { stub, calls };
-}
-
-/** Default mock: selectOptional returns all optional paths */
-function createMockPrompt(): IUserPrompt {
-	return {
-		showWarning: mockFn(() => {}),
-		showInfo: mockFn(() => {}),
-		confirm: mockFn(() => Promise.resolve(true)),
-		selectOptional: mockFn(() => Promise.resolve([...allOptionalPaths])),
-		showProgressBar: mockFn(() => {}),
-		updateProgress: mockFn(() => {}),
-		completeProgress: mockFn(() => {}),
-		logProgressEvent: mockFn(() => {}),
-		showIntro: mockFn(() => {}),
-		showSuccess: mockFn(() => {}),
-		showCancel: mockFn(() => {}),
-		showError: mockFn(() => {}),
-		promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
-	};
-}
-
-/**
- * Create a mock ISymlinkCreator that records calls.
- */
-function createMockSymlinkCreator(): ISymlinkCreator & {
-	createSymlinksCalls: Array<readonly unknown[]>;
-} {
-	const calls: Array<readonly unknown[]> = [];
-	return {
-		createSymlink: mockFn(() =>
-			Promise.resolve({ ok: true, value: undefined } as Result<void, SymlinkError>),
-		),
-		createSymlinks: mockFn((symlinks: readonly unknown[]) => {
-			calls.push(symlinks);
-			return Promise.resolve({ ok: true, value: undefined } as Result<void, SymlinkError[]>);
-		}),
-		get createSymlinksCalls() {
-			return calls;
-		},
-	};
-}
-
-/**
- * Create a mock IGitignoreCreator that records calls.
- */
-function createMockGitignoreCreator(): IGitignoreCreator & {
-	gitignoreCalls: string[];
-} {
-	const calls: string[] = [];
-	return {
-		createGitignore: mockFn((destPath: string) => {
-			calls.push(destPath);
-			return Promise.resolve({ ok: true, value: undefined } as Result<void, GitignoreError>);
-		}),
-		get gitignoreCalls() {
-			return calls;
-		},
-	};
-}
+/** Count of stageable rules that are not optional (mandatory + standard). */
+const NON_OPTIONAL_COUNT = STAGEABLE_DEFAULT_PACK_RULES.filter(
+	(r) => r.category !== "optional",
+).length;
 
 describe("CleanInstallUseCase", () => {
 	describe("constructor", () => {
 		it("should create an instance when given valid dependencies", () => {
-			const { stub: fs } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkCreator = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkCreator,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase } = createCleanInstallFixture();
 			expect(useCase).toBeInstanceOf(CleanInstallUseCase);
 		});
 	});
 
 	describe("execute", () => {
 		it("should copy all files from the manifest when destination is empty", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkCreator = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkCreator,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, calls, prompt, gitignoreCreator } = createCleanInstallFixture();
 
 			const result = await useCase.execute("/tmp/project");
 
 			expect(result.ok).toBe(true);
-			// All manifest files should be staged (since all are treated as mandatory)
-			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
+			// Default pack selection stages manifest minus unselected packs (8 packs, only 1 selected)
+			expect(calls.stageFile.length).toBe(STAGEABLE_DEFAULT_PACK_RULES.length);
 			// Commit should have been called
 			expect(calls.commitStaging).toBe(1);
 			// Version file should be written
@@ -177,20 +58,8 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should skip confirmation when destination is empty (no prompt)", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
+			const { useCase, calls, prompt } = createCleanInstallFixture();
 			// fs.isEmpty already returns true by default
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkCreator = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkCreator,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -198,20 +67,16 @@ describe("CleanInstallUseCase", () => {
 			// Should NOT have asked for confirmation (isEmpty short-circuits)
 			expect(prompt.confirm).not.toHaveBeenCalled();
 			// Operation proceeds normally
-			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
+			expect(calls.stageFile.length).toBe(STAGEABLE_DEFAULT_PACK_RULES.length);
 			expect(calls.commitStaging).toBe(1);
 			// Success message shown
 			expect(prompt.showSuccess).toHaveBeenCalledWith("Clean installation complete.");
 		});
 
 		it("should show warning but still succeed when gitignore creation fails", async () => {
-			const { stub: fs } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkCreator = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
+			const { useCase, prompt, gitignoreCreator } = createCleanInstallFixture();
 			// Configure gitignore mock to return failure
-			(gitignoreCreator.createGitignore as ReturnType<typeof mockFn>).mockResolvedValue({
+			gitignoreCreator.createGitignore.mockResolvedValue({
 				ok: false,
 				error: {
 					destPath: "/tmp/project",
@@ -219,14 +84,6 @@ describe("CleanInstallUseCase", () => {
 					code: "READ_FAILED",
 				},
 			} as Result<void, GitignoreError>);
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkCreator,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -238,19 +95,7 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should create symlinks after successful merge", async () => {
-			const { stub: fs } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkCreator = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkCreator,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, symlinkCreator } = createCleanInstallFixture();
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -261,29 +106,17 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should show warning but still succeed when symlink creation fails", async () => {
-			const { stub: fs } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkCreator = createMockSymlinkCreator();
+			const { useCase, prompt, symlinkCreator } = createCleanInstallFixture();
 			// Configure mock to return symlink failures for ALL calls
 			const symlinkError: SymlinkError = {
 				target: "../agents",
 				linkPath: ".opencode/agents",
 				message: "Symlink target does not exist",
 			};
-			(symlinkCreator.createSymlinks as ReturnType<typeof mockFn>).mockResolvedValue({
+			symlinkCreator.createSymlinks.mockResolvedValue({
 				ok: false,
 				error: [symlinkError],
 			} as Result<void, SymlinkError[]>);
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkCreator,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -299,20 +132,8 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should return an error when destination is not writable", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
-			(fs.isWritable as ReturnType<typeof mockFn>).mockResolvedValue(false);
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkCreator = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkCreator,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, fs, calls } = createCleanInstallFixture();
+			fs.isWritable.mockResolvedValue(false);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -324,47 +145,24 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should ask for confirmation when destination is not empty and force=false", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
-			(fs.isEmpty as ReturnType<typeof mockFn>).mockResolvedValue(false);
-			const prompt = createMockPrompt();
+			const { useCase, fs, calls, prompt } = createCleanInstallFixture();
+			fs.isEmpty.mockResolvedValue(false);
 			// User confirms
-			(prompt.confirm as ReturnType<typeof mockFn>).mockResolvedValue(true);
-			const engine = new FileMergeEngine(fs);
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				createMockSymlinkCreator(),
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			prompt.confirm.mockResolvedValue(true);
 
 			const result = await useCase.execute("/tmp/project");
 
 			expect(result.ok).toBe(true);
 			expect(prompt.confirm).toHaveBeenCalledTimes(1);
-			// Files should be staged after confirmation
-			expect(calls.stageFile.length).toBe(STAGEABLE_RULES.length);
+			// Files should be staged after confirmation (default pack selection)
+			expect(calls.stageFile.length).toBe(STAGEABLE_DEFAULT_PACK_RULES.length);
 		});
 
 		it("should skip installation when user rejects the confirmation", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
-			(fs.isEmpty as ReturnType<typeof mockFn>).mockResolvedValue(false);
-			const prompt = createMockPrompt();
+			const { useCase, fs, calls, prompt } = createCleanInstallFixture();
+			fs.isEmpty.mockResolvedValue(false);
 			// User rejects
-			(prompt.confirm as ReturnType<typeof mockFn>).mockResolvedValue(false);
-			const engine = new FileMergeEngine(fs);
-			const symlinkMock = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkMock,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			prompt.confirm.mockResolvedValue(false);
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -375,20 +173,8 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should skip confirmation when force=true even if destination is not empty", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
-			(fs.isEmpty as ReturnType<typeof mockFn>).mockResolvedValue(false);
-			const prompt = createMockPrompt();
-			const engine = new FileMergeEngine(fs);
-			const symlinkMock = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkMock,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, fs, calls, prompt } = createCleanInstallFixture();
+			fs.isEmpty.mockResolvedValue(false);
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -400,68 +186,33 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should write a JSON version file on success", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkMock = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkMock,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, calls } = createCleanInstallFixture();
 
 			const result = await useCase.execute("/tmp/project");
 
 			expect(result.ok).toBe(true);
 			expect(calls.writeVersionFile.length).toBe(1);
 			const versionData = JSON.parse(calls.writeVersionFile[0]!);
-			expect(versionData).toHaveProperty("installedVersion");
+			expect(versionData).toHaveProperty("version");
+			expect(versionData).toHaveProperty("installedPacks");
 			expect(versionData).toHaveProperty("installedAt");
 			expect(typeof versionData.installedAt).toBe("string");
 		});
 
 		it("should call selectOptional when force is not set", async () => {
-			const { stub: fs } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkMock = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkMock,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, prompt } = createCleanInstallFixture();
 
 			await useCase.execute("/tmp/project");
 
 			expect(prompt.selectOptional).toHaveBeenCalledTimes(1);
-			const selectArgs = (prompt.selectOptional as ReturnType<typeof mockFn>).mock.calls[0]!;
+			const selectArgs = prompt.selectOptional.mock.calls[0]!;
 			// Should pass all optional rules to the selection prompt
 			const allOptionals = getRulesByCategory("optional");
 			expect(selectArgs[0].length).toBe(allOptionals.length);
 		});
 
 		it("should skip selectOptional when force=true and auto-select all", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkMock = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkMock,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, calls, prompt } = createCleanInstallFixture();
 
 			await useCase.execute("/tmp/project", { force: true });
 
@@ -474,47 +225,20 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should stage no optional files when user selects none", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue([]);
-			const symlinkMock = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkMock,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, calls, prompt } = createCleanInstallFixture();
+			prompt.selectOptional.mockResolvedValue([]);
 
 			const result = await useCase.execute("/tmp/project");
 
 			expect(result.ok).toBe(true);
-			// Only mandatory + standard files should be staged
-			const mandatoryAndStandardCount = STAGEABLE_RULES.filter(
-				(r) => r.category !== "optional",
-			).length;
-			expect(calls.stageFile.length).toBe(mandatoryAndStandardCount);
+			// Only mandatory + standard files should be staged (default pack, no optionals)
+			expect(calls.stageFile.length).toBe(NON_OPTIONAL_COUNT);
 		});
 
 		it("should record optionalSelections in version file", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
+			const { useCase, calls, prompt } = createCleanInstallFixture();
 			const selectedPaths: string[] = [getRulesByCategory("optional")[0]!.path];
-			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue(selectedPaths);
-			const symlinkMock = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkMock,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			prompt.selectOptional.mockResolvedValue(selectedPaths);
 
 			await useCase.execute("/tmp/project");
 
@@ -524,23 +248,9 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should return error and clean staging when merge engine fails", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
+			const { useCase, fs, calls } = createCleanInstallFixture();
 			// Make stageFile throw to trigger a merge engine failure
-			(fs.stageFile as ReturnType<typeof mockFn>).mockRejectedValue(
-				new Error("Disk full during staging"),
-			);
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkMock = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkMock,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			fs.stageFile.mockRejectedValue(new Error("Disk full during staging"));
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -554,20 +264,8 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should handle version file write failure gracefully", async () => {
-			const { stub: fs, calls } = createMockFileSystem();
-			(fs.writeVersionFile as ReturnType<typeof mockFn>).mockRejectedValue(new Error("Disk full"));
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkMock = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkMock,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, fs, calls } = createCleanInstallFixture();
+			fs.writeVersionFile.mockRejectedValue(new Error("Disk full"));
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -579,19 +277,7 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should emit progress events during merge", async () => {
-			const { stub: fs } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkCreator = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkCreator,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, prompt } = createCleanInstallFixture();
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -611,19 +297,7 @@ describe("CleanInstallUseCase", () => {
 		});
 
 		it("should emit symlink and gitignore log events after merge", async () => {
-			const { stub: fs } = createMockFileSystem();
-			const engine = new FileMergeEngine(fs);
-			const prompt = createMockPrompt();
-			const symlinkCreator = createMockSymlinkCreator();
-			const gitignoreCreator = createMockGitignoreCreator();
-			const useCase = new CleanInstallUseCase(
-				fs,
-				engine,
-				prompt,
-				symlinkCreator,
-				OPENCODE_SYMLINKS,
-				gitignoreCreator,
-			);
+			const { useCase, prompt } = createCleanInstallFixture();
 
 			const result = await useCase.execute("/tmp/project");
 
@@ -632,6 +306,104 @@ describe("CleanInstallUseCase", () => {
 			expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/commands");
 			expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/skills");
 			expect(prompt.logProgressEvent).toHaveBeenCalledWith("gitignore: Generated .gitignore");
+		});
+
+		it("should persist all pack IDs to version file when force=true", async () => {
+			const { useCase, calls, prompt } = createCleanInstallFixture();
+
+			const result = await useCase.execute("/tmp/project", { force: true });
+
+			expect(result.ok).toBe(true);
+			// force=true auto-selects ALL packs — no interactive pack menu
+			expect(prompt.selectPacks).not.toHaveBeenCalled();
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			const allPackIds = getPackRules().map((r) => packIdFromPath(r.path));
+			expect(versionData.installedPacks).toEqual(allPackIds);
+			// v2.0 writer emits "version" (not legacy "installedVersion")
+			expect(versionData.version).toBeDefined();
+			expect(versionData.installedVersion).toBeUndefined();
+		});
+
+		it("should persist custom pack selection to version file", async () => {
+			const { useCase, calls, prompt } = createCleanInstallFixture();
+			prompt.selectPacks.mockResolvedValueOnce(["software-development", "business"]);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual(["software-development", "business"]);
+		});
+
+		it("should skip the pack selection wizard when packs are provided via options", async () => {
+			const { useCase, calls, prompt } = createCleanInstallFixture();
+
+			const result = await useCase.execute("/tmp/project", {
+				packs: ["software-development", "business"],
+			});
+
+			expect(result.ok).toBe(true);
+			// CLI-provided packs take precedence — the wizard is never shown
+			expect(prompt.selectPacks).not.toHaveBeenCalled();
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual(["software-development", "business"]);
+		});
+
+		it("should abort when user cancels the pack selection wizard (no partial install)", async () => {
+			const { useCase, calls, prompt } = createCleanInstallFixture();
+			prompt.selectPacks.mockResolvedValueOnce([]);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// Cancel aborts before merging — nothing staged, no version file written
+			expect(calls.stageFile.length).toBe(0);
+			expect(calls.writeVersionFile.length).toBe(0);
+			expect(calls.commitStaging).toBe(0);
+		});
+
+		it("shows install summary before merge", async () => {
+			const { useCase, prompt } = createCleanInstallFixture();
+
+			await useCase.execute("/tmp/project", { force: true });
+
+			// force=true auto-selects all 8 packs → 352 total agents
+			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
+				expect.objectContaining({
+					packs: expect.arrayContaining([{ id: "software-development", agentCount: 146 }]),
+					totalAgents: 352,
+					totalFiles: expect.any(Number),
+				}),
+			);
+		});
+
+		it("should include core, main and writers in the install summary mandatory directories", async () => {
+			const { useCase, prompt } = createCleanInstallFixture();
+
+			await useCase.execute("/tmp/project", { force: true });
+
+			// buildInstallSummary derives mandatoryDirs from the manifest's
+			// mandatory directory rules (core + the two always-installed packs)
+			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
+				expect.objectContaining({
+					mandatoryDirs: expect.arrayContaining(["core", "packs/main", "packs/writers"]),
+				}),
+			);
+		});
+
+		it("should include selected optional files in the install summary", async () => {
+			const { useCase, prompt } = createCleanInstallFixture();
+			// Wizard runs (force=false): user picks two optional files
+			prompt.selectOptional.mockResolvedValue(["Justfile", "docs/DESIGN.md"]);
+
+			await useCase.execute("/tmp/project");
+
+			// Selected optional paths flow straight into the summary
+			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
+				expect.objectContaining({
+					optionalFiles: expect.arrayContaining(["Justfile", "docs/DESIGN.md"]),
+				}),
+			);
 		});
 	});
 });

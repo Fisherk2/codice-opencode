@@ -76,7 +76,7 @@ describe("WorkspaceVersion comparison", () => {
 	test("fromJSON rejects invalid version format", () => {
 		expect(() =>
 			WorkspaceVersion.fromJSON({
-				installedVersion: 123,
+				version: 123,
 				installedAt: "2026-06-13T12:00:00.000Z",
 			}),
 		).toThrow("must be a version string");
@@ -85,7 +85,7 @@ describe("WorkspaceVersion comparison", () => {
 	test("fromJSON rejects non-semver version string", () => {
 		expect(() =>
 			WorkspaceVersion.fromJSON({
-				installedVersion: "not-a-version",
+				version: "not-a-version",
 				installedAt: "2026-06-13T12:00:00.000Z",
 			}),
 		).toThrow("not a valid semver version");
@@ -93,7 +93,7 @@ describe("WorkspaceVersion comparison", () => {
 
 	test("fromJSON accepts v-prefixed semver versions", () => {
 		const v = WorkspaceVersion.fromJSON({
-			installedVersion: "v1.0.0",
+			version: "v1.0.0",
 			installedAt: "2026-06-13T12:00:00.000Z",
 		});
 		expect(v.version).toBe("v1.0.0");
@@ -102,7 +102,7 @@ describe("WorkspaceVersion comparison", () => {
 	test("fromJSON rejects invalid installedAt type", () => {
 		expect(() =>
 			WorkspaceVersion.fromJSON({
-				installedVersion: "1.0.0",
+				version: "1.0.0",
 				installedAt: 123,
 			}),
 		).toThrow("must be an ISO 8601 timestamp");
@@ -111,7 +111,7 @@ describe("WorkspaceVersion comparison", () => {
 	test("fromJSON rejects non-ISO 8601 installedAt string", () => {
 		expect(() =>
 			WorkspaceVersion.fromJSON({
-				installedVersion: "1.0.0",
+				version: "1.0.0",
 				installedAt: "yesterday",
 			}),
 		).toThrow("must be an ISO 8601 timestamp");
@@ -119,7 +119,7 @@ describe("WorkspaceVersion comparison", () => {
 
 	test("fromJSON accepts ISO 8601 with milliseconds", () => {
 		const v = WorkspaceVersion.fromJSON({
-			installedVersion: "1.0.0",
+			version: "1.0.0",
 			installedAt: "2026-06-13T12:00:00.000Z",
 		});
 		expect(v.installedAt).toBe("2026-06-13T12:00:00.000Z");
@@ -127,7 +127,7 @@ describe("WorkspaceVersion comparison", () => {
 
 	test("fromJSON accepts ISO 8601 without milliseconds", () => {
 		const v = WorkspaceVersion.fromJSON({
-			installedVersion: "1.0.0",
+			version: "1.0.0",
 			installedAt: "2026-06-13T12:00:00Z",
 		});
 		expect(v.installedAt).toBe("2026-06-13T12:00:00Z");
@@ -138,16 +138,16 @@ describe("WorkspaceVersion comparison", () => {
 	});
 
 	test("toJSON serializes correctly", () => {
-		const v = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z", ["Justfile"]);
+		const v = new WorkspaceVersion("1.0.0", "2026-06-13T12:00:00.000Z", [], ["Justfile"]);
 		const json = v.toJSON();
-		expect(json.installedVersion).toBe("1.0.0");
+		expect(json.version).toBe("1.0.0");
 		expect(json.installedAt).toBe("2026-06-13T12:00:00.000Z");
 		expect(json.optionalSelections).toEqual(["Justfile"]);
 	});
 
 	test("fromJSON parses optionalSelections array of strings", () => {
 		const v = WorkspaceVersion.fromJSON({
-			installedVersion: "1.0.0",
+			version: "1.0.0",
 			installedAt: "2026-06-13T12:00:00.000Z",
 			optionalSelections: ["Justfile", "README.md"],
 		});
@@ -156,7 +156,7 @@ describe("WorkspaceVersion comparison", () => {
 
 	test("fromJSON treats non-array optionalSelections as empty", () => {
 		const v = WorkspaceVersion.fromJSON({
-			installedVersion: "1.0.0",
+			version: "1.0.0",
 			installedAt: "2026-06-13T12:00:00.000Z",
 			optionalSelections: "not-an-array",
 		});
@@ -165,9 +165,64 @@ describe("WorkspaceVersion comparison", () => {
 
 	test("fromJSON treats missing optionalSelections as empty", () => {
 		const v = WorkspaceVersion.fromJSON({
-			installedVersion: "1.0.0",
+			version: "1.0.0",
 			installedAt: "2026-06-13T12:00:00.000Z",
 		});
 		expect(v.optionalSelections).toEqual([]);
+	});
+});
+
+describe("WorkspaceVersion v2.0 format", () => {
+	test("fromJSON accepts v2.0 format with version and installedPacks", () => {
+		const v = WorkspaceVersion.fromJSON({
+			version: "2.0.0",
+			installedPacks: ["software-development", "business"],
+			installedAt: "2026-08-06T12:00:00.000Z",
+		});
+		expect(v.version).toBe("2.0.0");
+		expect(v.installedPacks).toEqual(["software-development", "business"]);
+	});
+
+	test("fromJSON accepts legacy v1.x format with installedVersion (backward compat)", () => {
+		const v = WorkspaceVersion.fromJSON({
+			installedVersion: "1.2.0",
+			installedAt: "2026-08-06T12:00:00.000Z",
+		});
+		expect(v.version).toBe("1.2.0");
+		expect(v.installedPacks).toEqual([]);
+	});
+
+	test("fromJSON rejects installedPacks that is not an array", () => {
+		expect(() =>
+			WorkspaceVersion.fromJSON({
+				version: "2.0.0",
+				installedPacks: "software-development",
+				installedAt: "2026-08-06T12:00:00.000Z",
+			}),
+		).toThrow("must be an array of pack IDs");
+	});
+
+	test("fromJSON filters non-string entries from installedPacks", () => {
+		const v = WorkspaceVersion.fromJSON({
+			version: "2.0.0",
+			installedPacks: ["software-development", 123, null, "business"],
+			installedAt: "2026-08-06T12:00:00.000Z",
+		});
+		expect(v.installedPacks).toEqual(["software-development", "business"]);
+	});
+
+	test("toJSON emits v2.0 format with version, installedPacks, installedAt, optionalSelections", () => {
+		const v = new WorkspaceVersion(
+			"2.0.0",
+			"2026-08-06T12:00:00.000Z",
+			["software-development"],
+			["scripts/build.sh"],
+		);
+		expect(v.toJSON()).toEqual({
+			version: "2.0.0",
+			installedPacks: ["software-development"],
+			installedAt: "2026-08-06T12:00:00.000Z",
+			optionalSelections: ["scripts/build.sh"],
+		});
 	});
 });

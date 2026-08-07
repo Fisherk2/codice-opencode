@@ -14,6 +14,7 @@
  * @module
  */
 
+import { getOptionalRules } from "../domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../domain/ports/IStagingSystem";
 import type { MergeError } from "../domain/types/MergeError";
@@ -59,6 +60,8 @@ export async function checkWritable(
  * @param message - Confirmation message shown to the user.
  * @param cancelMessage - Message shown if the user cancels.
  * @param force - If true, skip the prompt. If false or undefined, check isEmpty and prompt.
+ * @param defaultYes - Default answer for the confirm prompt. Update mode defaults to
+ *   Yes so a single keystroke accepts the update (plan Phase 4); install modes keep No.
  * @returns true if the operation should proceed, false if cancelled.
  */
 export async function confirmOverwrite(
@@ -67,13 +70,14 @@ export async function confirmOverwrite(
 	message: string,
 	cancelMessage: string,
 	force?: boolean,
+	defaultYes = false,
 ): Promise<boolean> {
 	if (force) return true;
 
 	const isEmpty = await fileSystem.isEmpty();
 	if (isEmpty) return true;
 
-	const confirmed = await userPrompt.confirm(message, false);
+	const confirmed = await userPrompt.confirm(message, defaultYes);
 	if (!confirmed) {
 		await userPrompt.showCancel(cancelMessage);
 	}
@@ -174,4 +178,13 @@ export function createProgressCallback(userPrompt: IUserPrompt, label: string): 
 export function wrapMergeError(err: MergeError): Error {
 	const context = err.path ? ` during ${err.phase} of ${err.path}` : ` during ${err.phase}`;
 	return new Error(`${err.message}${context}`);
+}
+
+/**
+ * Show the optional-file checklist via the TUI.
+ * Shared by Clean and Project install so the interactive branch (and the
+ * "optional" category lookup) stays in one place.
+ */
+export function promptForOptionals(userPrompt: IUserPrompt): Promise<readonly string[]> {
+	return userPrompt.selectOptional(getOptionalRules());
 }

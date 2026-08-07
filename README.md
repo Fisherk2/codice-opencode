@@ -31,7 +31,8 @@ A production-grade workspace integrating 51 engineering skills organized in 10 S
 
 - **52 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, Obsidian vault management, and more, organized in 10 SDD phases (3 optional) + Extra
 - **13 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`
-- **6 Main Agents + 98 Subagents** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 98 subagents specialized in frontend, backend, DevOps, testing, security, and more
+- **6 Main Agents + 355 Subagents (10 packs)** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 355 subagents organized in 10 packs (2 mandatory + 8 selectable) specialized in frontend, backend, DevOps, testing, security, and more. Install only the packs you need via `--packs`, or everything with `--packs-all`.
+- **Install summary screen** — Before merging, Códice shows the selected packs with agent counts, mandatory directories, and optional files so you know exactly what's being installed.
 - **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
 - **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
 
@@ -56,7 +57,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Master of orchestration and strategic delegation</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/huitzilopochtli.md"><code>template/obligatorio/agents/huitzilopochtli.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/huitzilopochtli.md"><code>template/obligatorio/packs/main/huitzilopochtli.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>opencode/ling-3.0-flash-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>MiniMax-M3</code> <code>Hy3</code> <code>Step 3.7</code> <code>GPT-5.6 Luna</code> <code>Gemini 3.5 Flash Lite</code> <code>Claude Sonnet 4.6</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> GPT-5.6 Luna as the cost-effective default (1M context). Hy3 or Gemini 3.5 Flash Lite for extreme speed/cost. Claude Sonnet 4.6 for critical routing with the full agent catalog.</td></tr>
@@ -75,7 +76,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>System architect and specification designer</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/quetzalcoatl.md"><code>template/obligatorio/agents/quetzalcoatl.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/quetzalcoatl.md"><code>template/obligatorio/packs/main/quetzalcoatl.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>opencode/big-pickle</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Pro</code> <code>Qwen 3.7 Plus</code> <code>Kimi K3</code> <code>Claude Opus 4.6</code> <code>Gemini 3.1 Pro</code> <code>GPT-5.6 Terra</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Pro for long specs/ADRs at low cost. Qwen 3.7 for high-quality specs. Claude Opus 4.6 for publication-quality architecture/ADRs.</td></tr>
@@ -94,7 +95,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Task planner and work breakdown specialist</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/moctezuma.md"><code>template/obligatorio/agents/moctezuma.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/moctezuma.md"><code>template/obligatorio/packs/main/moctezuma.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>opencode/nemotron-3-ultra-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>Nemotron 3 Ultra Free</code> <code>GLM-5.2</code> <code>MiniMax-M3</code> <code>Claude Sonnet 4.6</code> <code>GPT-5.4</code> <code>Gemini 3.5 Flash</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> Nemotron 3 Ultra Free as the default (deterministic, free). GLM-5.2 for structured task lists. Claude Sonnet 4.6 for strict acceptance criteria.</td></tr>
@@ -113,7 +114,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Main implementer and feature builder</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/tlaloc.md"><code>template/obligatorio/agents/tlaloc.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/tlaloc.md"><code>template/obligatorio/packs/main/tlaloc.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>opencode/deepseek-v4-flash-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>Kimi K2.7 Code</code> <code>DeepSeek V4 Pro</code> <code>GPT-5.3 Codex</code> <code>Claude Sonnet 4.6</code> <code>Grok Build 0.1</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash as the permanent default (best cost/quality for 150 steps, 384k output). Kimi K2.7 Code for code-intensive tasks. Claude Sonnet 4.6 / GPT-5.3 Codex for strict architectural rules.</td></tr>
@@ -132,7 +133,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Quality validator and deployment guardian</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/mictlantecuhtli.md"><code>template/obligatorio/agents/mictlantecuhtli.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/mictlantecuhtli.md"><code>template/obligatorio/packs/main/mictlantecuhtli.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>opencode/laguna-s-2.1-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>MiMo V2.5</code> <code>Laguna S 2.1</code> <code>Claude Haiku 4.5</code> <code>GPT-5.4 Mini</code> <code>Gemini 3.5 Flash Lite</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash / MiMo V2.5 for cheap test+patch loops (100 steps). Claude Haiku 4.5 for the final deployment gate. Gemini 3.5 Flash Lite for huge CI/log dumps.</td></tr>
@@ -151,13 +152,13 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
     </td>
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Code critic and quality auditor</code></td></tr>
-  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/agents/tezcatlipoca.md"><code>template/obligatorio/agents/tezcatlipoca.md</code></a></td></tr>
+  <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/tezcatlipoca.md"><code>template/obligatorio/packs/main/tezcatlipoca.md</code></a></td></tr>
   <tr><td colspan="2"><b>Default Model:</b> <code>opencode/mimo-v2.5-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Pro</code> <code>GLM-5.2</code> <code>Kimi K3</code> <code>Claude Opus 4.6</code> <code>GPT-5.6 Sol</code> <code>Gemini 3.1 Pro</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Pro for deep 5-axis audit (384k report, <$1/M). Claude Opus 4.6 for pre-merge/security audit. Gemini 3.1 Pro for recurring full-repo audit.</td></tr>
 </table>
 
-Additionally, over **98 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
+Additionally, over **355 specialized subagents** organized in 10 packs are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
 
 ---
 
@@ -189,7 +190,9 @@ Códice presents an interactive menu with three installation modes:
 |------|-------------|-------------|
 | **Clean Install** | Overwrites the destination with the complete template | Starting a fresh project |
 | **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
-| **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
+| **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing v2.0+ installation current |
+
+> **Version-gated updates:** Update Workspace only runs on v2.0+ installations. v1.x installations must reinstall with Clean or Project Install; pre-1.2.0 installs receive a cleanup suggestion. See [docs/MIGRATION.md](docs/MIGRATION.md) for the upgrade guide.
 
 ```bash
 # Interactive menu (default):
@@ -200,6 +203,19 @@ bunx @fisherk2-dev/codice --dest ./my-project
 bunx @fisherk2-dev/codice --force
 bunx @fisherk2-dev/codice --version
 bunx @fisherk2-dev/codice --help
+```
+
+Códice v2.0 lets you select which agent packs to install. Install specific packs non-interactively, or add packs later during an update:
+
+```bash
+# Install only software-development and business packs:
+bunx @fisherk2-dev/codice --packs software-development,business
+
+# Install all 8 selectable packs:
+bunx @fisherk2-dev/codice --packs-all
+
+# Update an existing installation and add the creative pack:
+bunx @fisherk2-dev/codice --update --update-add-packs creative
 ```
 
 > Use `--verbose` for detailed logging of every step.
@@ -215,7 +231,12 @@ bunx @fisherk2-dev/codice --help
 | `--clean` | Run Clean Install mode (skip interactive menu) |
 | `--project` | Run Project Install mode (skip interactive menu) |
 | `--update` | Run Update Workspace mode (skip interactive menu) |
+| `--packs <list>` | Install only the specified packs (comma-separated, e.g. `software-development,business`) |
+| `--packs-all` | Install all 8 selectable packs |
+| `--update-add-packs <list>` | Add packs to an existing installation during update |
 | `--help` | Show usage help |
+
+**Documentation:** [Getting Started](https://github.com/fisherk2/codice-opencode/wiki/Getting-Started) · [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents) · [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills) · [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) · [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers) · [Configuration](https://github.com/fisherk2/codice-opencode/wiki/Configuration)
 
 ---
 
@@ -281,6 +302,7 @@ This project would not exist without the work of:
 - **[awesome-opencode](https://github.com/weisser-dev/awesome-opencode)** — Source of inspiration for implementing new skills, the 90+ specialized agents, and OpenCode documentation.
 - **[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)** — Base of this project. This repository is a fork of that work, which laid the foundations of the AI agent skill ecosystem.
 - **[oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim/)** — Direct inspiration for the multi-main-agent architecture and Mexican orchestration system design.
+- **[msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)** — Source of the new subagents added to the pack system. This repository provided the agent definitions that were adapted and integrated into Códice's 10-pack architecture.
 
 Thanks to their authors and contributors for their invaluable contribution to the community.
 

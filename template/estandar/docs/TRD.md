@@ -1,40 +1,41 @@
-# Technical Requirements Document – [Nombre del Producto] v[MVP]
-**Fecha:** [YYYY-MM-DD] | **Autor:** [Nombre] | **Estado:** [Borrador/Revisado/Aprobado]
+# Technical Requirements Document – [Product Name] v[MVP]
+**Date:** [YYYY-MM-DD] | **Author:** [Name] | **Status:** [Draft/Reviewed/Approved]
 
-## 1. Arquitectura de Referencia
-- Diagrama de alto nivel (Clean Architecture / Hexagonal / MVC)
-- Capas y responsabilidades:
-  - Dominio/Entidades:
-  - Casos de Uso/Aplicación:
-  - Interfaces/Adaptadores:
-  - Infraestructura:
+## 1. Reference Architecture
+- High-level diagram (Clean Architecture / Hexagonal / MVC)
+- Layers and responsibilities:
+  - Domain/Entities:
+  - Use Cases/Application:
+  - Interfaces/Adapters:
+  - Infrastructure:
 
-## 2. Stack Tecnológico & Justificación
-| Capa | Tecnología | Versión | Justificación Arquitectónica |
-|------|------------|---------|------------------------------|
+## 2. Technology Stack & Justification
+| Layer | Technology | Version | Architectural Justification |
+|-------|------------|---------|-----------------------------|
 
-## 3. Componentes del Sistema
-| Componente | Responsabilidad | Interfaces Expuestas | Dependencias | Principio SOLID Aplicado |
-|------------|-----------------|----------------------|--------------|--------------------------|
+## 3. System Components
+| Component | Responsibility | Exposed Interfaces | Dependencies | SOLID Principle Applied |
+|-----------|----------------|--------------------|--------------|-------------------------|
 
-## 4. Contratos de API / Integraciones
-| Endpoint | Método | Request | Response | Autenticación | Rate Limit |
-|----------|--------|---------|----------|---------------|------------|
+## 4. API Contracts / Integrations
+| Endpoint | Method | Request | Response | Authentication | Rate Limit |
+|----------|--------|---------|----------|----------------|------------|
 
-## 5. Requisitos Técnicos No Funcionales
-- Escalabilidad:
-- Latencia/Throughput:
-- Seguridad (OWASP, cifrado, gestión de secretos):
-- Observabilidad (logs, métricas, tracing):
+## 5. Non-Functional Technical Requirements
+- Scalability:
+- Latency/Throughput:
+- Security (OWASP, encryption, secret management):
+- Observability (logs, metrics, tracing):
 
-## 6. Estrategia de Despliegue & CI/CD
-- Entornos:
+## 6. Deployment Strategy & CI/CD
+- Environments:
 - Pipeline:
 - Rollback/Blue-Green:
 
-## 7. Matriz de Trazabilidad
-| PRD REQ-ID | TRD Componente | API/DB | Estado |
-|------------|----------------|--------|--------|
+## 7. Traceability Matrix
+| PRD REQ-ID | TRD Component | API/DB | Status |
+|------------|---------------|--------|--------|
 
 ## 8. ADRs (Architecture Decision Records)
-| ADR-ID | Contexto | Decisión | Consecuencias | Alternativas Descartadas |
+| ADR-ID | Context | Decision | Consequences | Discarded Alternatives |
+|--------|---------|----------|--------------|------------------------|
