@@ -195,16 +195,16 @@ describe("formatInstallSummary", () => {
 });
 
 describe("buildInstallSummary — edge cases", () => {
-	test("totalFiles is 0 when packs all have agentCount=0 and no mandatory dirs", () => {
-		const ZERO_RULE: FileRule = {
-			path: "packs/creative",
-			destPath: "agents",
-			category: "pack",
-			isDirectory: true,
-			description: "Creative pack",
-			agentCount: 0,
-		};
+	const ZERO_RULE: FileRule = {
+		path: "packs/creative",
+		destPath: "agents",
+		category: "pack",
+		isDirectory: true,
+		description: "Creative pack",
+		agentCount: 0,
+	};
 
+	test("totalFiles is 0 when packs all have agentCount=0 and no mandatory dirs", () => {
 		const info = buildInstallSummary([ZERO_RULE], ["creative"], [], []);
 
 		expect(info.totalAgents).toBe(0);
@@ -213,15 +213,6 @@ describe("buildInstallSummary — edge cases", () => {
 	});
 
 	test("totalFiles counts optionals even when agentCount is 0", () => {
-		const ZERO_RULE: FileRule = {
-			path: "packs/creative",
-			destPath: "agents",
-			category: "pack",
-			isDirectory: true,
-			description: "Creative pack",
-			agentCount: 0,
-		};
-
 		const info = buildInstallSummary(
 			[ZERO_RULE],
 			["creative"],
