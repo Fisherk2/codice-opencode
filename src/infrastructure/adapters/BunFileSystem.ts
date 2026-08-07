@@ -2,10 +2,10 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
+import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import { VERSION_FILE_NAME } from "../config/constants";
 import { AtomicStager } from "./AtomicStager";
 import { walkDirectory } from "./directoryWalker";
-import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import { TemplateResolver } from "./TemplateResolver";
 import { VerboseLogger } from "./VerboseLogger";
 

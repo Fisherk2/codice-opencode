@@ -16,11 +16,7 @@ import {
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { isPreV2Version, parseVersionData, resolveUpdatePacks } from "./updateFlow";
-import {
-	notifyIfUpToDate,
-	reportRemoteStatus,
-	type UpdateStatusDeps,
-} from "./updateStatusCheck";
+import { notifyIfUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
 
 /**
  * Options for the update workspace execution.

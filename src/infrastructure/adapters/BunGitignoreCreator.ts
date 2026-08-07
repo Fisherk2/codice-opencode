@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { IGitignoreCreator } from "../../application/ports/IGitignoreCreator";
+import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import {
 	type GitignoreError,
 	gitignoreReadError,
@@ -9,7 +10,6 @@ import {
 } from "../../domain/types/GitignoreError";
 import type { Result } from "../../domain/types/Result";
 import { failure, success } from "../../domain/types/Result";
-import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import { isPathWithin } from "./pathResolver";
 import { VerboseLogger } from "./VerboseLogger";
 

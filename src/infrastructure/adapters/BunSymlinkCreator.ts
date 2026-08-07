@@ -1,10 +1,10 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { ISymlinkCreator, SymlinkSpec } from "../../application/ports/ISymlinkCreator";
+import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import type { Result } from "../../domain/types/Result";
 import { failure, success } from "../../domain/types/Result";
 import { type SymlinkError, symlinkError } from "../../domain/types/SymlinkError";
-import { isErrnoException } from "../../domain/types/errorTypeGuards";
 import { isPathWithin } from "./pathResolver";
 import { VerboseLogger } from "./VerboseLogger";
 

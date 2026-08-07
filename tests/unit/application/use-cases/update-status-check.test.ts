@@ -8,7 +8,6 @@
  */
 
 import { describe, expect, mock as mockFn, test } from "bun:test";
-import { WorkspaceVersion } from "../../../../src/domain/entities/WorkspaceVersion";
 import type { IGitHubClient } from "../../../../src/application/ports/IGitHubClient";
 import type { IUserPrompt } from "../../../../src/application/ports/IUserPrompt";
 import {
@@ -16,6 +15,7 @@ import {
 	reportRemoteStatus,
 	type UpdateStatusDeps,
 } from "../../../../src/application/use-cases/updateStatusCheck";
+import { WorkspaceVersion } from "../../../../src/domain/entities/WorkspaceVersion";
 
 /** VersionComparator stub: returns a canned result for every compare() call. */
 function makeComparator(result: "ahead" | "behind" | "equal") {
@@ -73,7 +73,10 @@ function makeDeps(overrides: Partial<UpdateStatusDeps> = {}): UpdateStatusDeps {
 describe("reportRemoteStatus", () => {
 	test("warns and returns when the GitHub check yields no tag", async () => {
 		const deps = makeDeps();
-		await reportRemoteStatus(deps, WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!);
+		await reportRemoteStatus(
+			deps,
+			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
+		);
 
 		const prompt = deps.userPrompt as unknown as { warnings: string[] };
 		expect(prompt.warnings.length).toBe(1);
@@ -88,7 +91,10 @@ describe("reportRemoteStatus", () => {
 			gitHubClient,
 			versionComparator: makeComparator("ahead"),
 		});
-		await reportRemoteStatus(deps, WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!);
+		await reportRemoteStatus(
+			deps,
+			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
+		);
 
 		const prompt = deps.userPrompt as unknown as { infos: string[] };
 		expect(prompt.infos.length).toBe(1);
@@ -104,7 +110,10 @@ describe("reportRemoteStatus", () => {
 			gitHubClient,
 			versionComparator: makeComparator("behind"),
 		});
-		await reportRemoteStatus(deps, WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!);
+		await reportRemoteStatus(
+			deps,
+			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
+		);
 
 		const prompt = deps.userPrompt as unknown as { infos: string[]; warnings: string[] };
 		expect(prompt.infos.length).toBe(0);
@@ -115,7 +124,10 @@ describe("reportRemoteStatus", () => {
 describe("notifyIfUpToDate", () => {
 	test("returns true and informs when installed >= bundled", async () => {
 		const deps = makeDeps({ versionComparator: makeComparator("behind") });
-		const upToDate = await notifyIfUpToDate(deps, WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!);
+		const upToDate = await notifyIfUpToDate(
+			deps,
+			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
+		);
 
 		const prompt = deps.userPrompt as unknown as { infos: string[] };
 		expect(upToDate).toBe(true);
@@ -125,7 +137,10 @@ describe("notifyIfUpToDate", () => {
 
 	test("returns false and stays silent when bundled is newer", async () => {
 		const deps = makeDeps({ versionComparator: makeComparator("ahead") });
-		const upToDate = await notifyIfUpToDate(deps, WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!);
+		const upToDate = await notifyIfUpToDate(
+			deps,
+			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
+		);
 
 		const prompt = deps.userPrompt as unknown as { infos: string[] };
 		expect(upToDate).toBe(false);
@@ -137,12 +152,16 @@ describe("notifyIfUpToDate", () => {
 			versionComparator: {
 				// Explicit Failure shape: mockFn() widens ok to boolean, but the
 				// comparator contract is Result<RemoteVersionStatus, Error>.
-				compare: mockFn(
-					(): { ok: false; error: Error } => ({ ok: false, error: new Error("boom") }),
-				),
+				compare: mockFn((): { ok: false; error: Error } => ({
+					ok: false,
+					error: new Error("boom"),
+				})),
 			},
 		});
-		const upToDate = await notifyIfUpToDate(deps, WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!);
+		const upToDate = await notifyIfUpToDate(
+			deps,
+			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
+		);
 
 		expect(upToDate).toBe(false);
 	});
