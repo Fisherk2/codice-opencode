@@ -49,7 +49,7 @@ Commands are normalized before pattern matching: comments are stripped and white
 
 ### 2. Subagent Name Validation
 
-When an agent uses `task()` to delegate to a subagent, the plugin validates that the subagent name exists in the catalog (**~361 agents**: ~355 subagents discovered from the `agents/` directory + 6 primary). If the LLM invents a name, it receives an error:
+When an agent uses `task()` to delegate to a subagent, the plugin validates that the subagent name exists in the catalog (**~360 agents**: ~352 subagents discovered from the `agents/` directory + 6 primary + 4 writer agents). If the LLM invents a name, it receives an error:
 
 ```
 Unknown subagent: "python-wizard". Create an .md file in /path/to/project/agents/ or use a primary agent.

@@ -4,12 +4,12 @@ The Códice workspace defines a two-tier agent hierarchy that governs how AI ass
 
 ## Architecture Overview
 
-The workspace ships with **~355 agents in 10 packs** organized into two levels:
+The workspace ships with **~360 agents in 10 packs** organized into two levels:
 
 | Level | Count | Role | How They're Invoked |
 |-------|-------|------|---------------------|
 | **Primary Agents** | 6 | Entry points for slash commands | Via `/command` from the user |
-| **Subagents** | ~355 | Domain specialists in 8 selectable + 2 mandatory packs | Via `task()` from a primary agent |
+| **Subagents** | ~352 | Domain specialists in 8 selectable packs | Via `task()` from a primary agent |
 
 ### Two-Tier Model
 
@@ -21,7 +21,7 @@ The workspace ships with **~355 agents in 10 packs** organized into two levels:
 
 **Subagents** are domain experts with deep knowledge of a specific area: a programming language, an architectural pattern, a tool, or a process. They are invoked via the `task()` mechanism when a primary agent needs specialized work done. Each subagent runs in its own context window and returns its output to the calling primary agent.
 
-The division exists because no single AI context window can hold expertise across 97 domains. A Python developer doesn't need Kubernetes configs in its context; a security auditor doesn't need React component patterns. The two-tier model keeps each agent focused and its context clean.
+The division exists because no single AI context window can hold expertise across 100+ domains. A Python developer doesn't need Kubernetes configs in its context; a security auditor doesn't need React component patterns. The two-tier model keeps each agent focused and its context clean.
 
 ### File Count and Distribution
 
@@ -32,7 +32,7 @@ packs/
 ├── main/                  (6 primary agents — MANDATORY)
 ├── writers/               (4 writer agents — MANDATORY)
 ├── software-development/  (146 agents — DEFAULT selected)
-├── business/              (91 agents)
+├── business/              (92 agents)
 ├── science-research/      (31 agents)
 ├── hardware-emerging/     (36 agents)
 ├── operations-support/    (18 agents)
@@ -41,7 +41,9 @@ packs/
 └── government-legal/      (8 agents)
 ```
 
-At install time, agents are copied to the flat `agents/` directory (pack is an installer concept; at runtime all agents are peers). Each agent file follows the same structure (see [Agent File Pattern](#agent-file-pattern) below).
+8 selectable packs = 352 agents; +6 primary + 4 writers = ~360 total.
+
+At install time, agents are copied to the flat `agents/` directory (pack is an installer concept — selected packs are chosen via the installer wizard; at runtime all agents are peers). Each agent file follows the same structure (see [Agent File Pattern](#agent-file-pattern) below).
 
 ## Primary Agents
 
@@ -62,7 +64,7 @@ Every agent file follows the same structure: YAML frontmatter, markdown body, an
 
 ## Subagents
 
-Subagents cover 98+ domain specialties organized into categories:
+Subagents cover 100+ domain specialties organized into categories:
 
 | Category | Example Agents | Count |
 |----------|---------------|-------|
