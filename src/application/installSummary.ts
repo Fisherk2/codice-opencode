@@ -27,7 +27,7 @@ export function buildInstallSummary(
 	// summary must match — otherwise a duplicate id double-counts its agents.
 	const rulesByPack = new Map(packRules.map((rule) => [packIdFromPath(rule.path), rule]));
 	// Map lookup key already IS the pack id — no need to re-derive it from the
-	// rule path; unknown ids drop out via [] exactly like the old filter did.
+	// rule path; unknown ids drop out via the empty-array branch.
 	const packs = [...new Set(selectedPacks)].flatMap((id) => {
 		const rule = rulesByPack.get(id);
 		return rule ? [{ id, agentCount: rule.agentCount ?? 0 }] : [];
