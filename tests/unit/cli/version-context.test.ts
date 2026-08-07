@@ -109,4 +109,30 @@ describe("detectVersionContext", () => {
 
 		expect(result.status).toBe("missing");
 	});
+
+	test("strips 'v' prefix from version before status determination", async () => {
+		const fs = createMockFS(versionJSON("v1.2.0"));
+		const result = await detectVersionContext(fs);
+
+		// The v-prefix is stripped before the major/minor split, so v1.2.0
+		// classifies as pre-2.0.0; the raw version string is preserved for display.
+		expect(result.status).toBe("pre-2.0.0");
+		expect(result.version).toBe("v1.2.0");
+	});
+
+	test("returns 'pre-1.2.0' for version 1.1.999 (minor < 2)", async () => {
+		const fs = createMockFS(versionJSON("1.1.999"));
+		const result = await detectVersionContext(fs);
+
+		expect(result.status).toBe("pre-1.2.0");
+		expect(result.version).toBe("1.1.999");
+	});
+
+	test("returns 'pre-1.2.0' for version 0.9.0 (major 0)", async () => {
+		const fs = createMockFS(versionJSON("0.9.0"));
+		const result = await detectVersionContext(fs);
+
+		expect(result.status).toBe("pre-1.2.0");
+		expect(result.version).toBe("0.9.0");
+	});
 });

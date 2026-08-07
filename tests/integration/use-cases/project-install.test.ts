@@ -772,5 +772,72 @@ describe("ProjectInstallUseCase", () => {
 				}),
 			);
 		});
+
+		it("should respect explicit options.packs override (skips wizard, only business pack)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project", {
+				force: true,
+				packs: ["business"],
+			});
+
+			expect(result.ok).toBe(true);
+			// CLI-provided packs bypass the pack-selection wizard entirely
+			expect(prompt.selectPacks).not.toHaveBeenCalled();
+			// Summary reports the business pack with its manifest agent count
+			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
+				expect.objectContaining({
+					packs: expect.arrayContaining([{ id: "business", agentCount: 92 }]),
+				}),
+			);
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual(["business"]);
+			// Only the business pack's rule is staged — software-development is excluded
+			expect(calls.stageFile).toContain("packs/business");
+			expect(calls.stageFile).not.toContain("packs/software-development");
+		});
+
+		it("should preserve existing standard files when installing a non-default pack", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			// README.md already exists in the destination → standard rule skips it
+			(fs.destinationExists as ReturnType<typeof mockFn>).mockImplementation(
+				async (path: string) => path === "README.md",
+			);
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new ProjectInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				createMockSymlinkCreator(),
+				OPENCODE_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			const result = await useCase.execute("/tmp/project", {
+				force: true,
+				packs: ["business"],
+			});
+
+			expect(result.ok).toBe(true);
+			// Existing standard file is carried over, never overwritten
+			expect(calls.stageFile).not.toContain("README.md");
+			// The non-default pack's agents are still staged
+			expect(calls.stageFile).toContain("packs/business");
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.installedPacks).toEqual(["business"]);
+		});
 	});
 });

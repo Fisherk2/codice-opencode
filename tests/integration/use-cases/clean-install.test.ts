@@ -781,5 +781,61 @@ describe("CleanInstallUseCase", () => {
 				}),
 			);
 		});
+
+		it("should include core, main and writers in the install summary mandatory directories", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkMock = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			await useCase.execute("/tmp/project", { force: true });
+
+			// buildInstallSummary derives mandatoryDirs from the manifest's
+			// mandatory directory rules (core + the two always-installed packs)
+			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
+				expect.objectContaining({
+					mandatoryDirs: expect.arrayContaining(["core", "packs/main", "packs/writers"]),
+				}),
+			);
+		});
+
+		it("should include selected optional files in the install summary", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			// Wizard runs (force=false): user picks two optional files
+			(prompt.selectOptional as ReturnType<typeof mockFn>).mockResolvedValue([
+				"Justfile",
+				"docs/DESIGN.md",
+			]);
+			const symlinkMock = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			await useCase.execute("/tmp/project");
+
+			// Selected optional paths flow straight into the summary
+			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
+				expect.objectContaining({
+					optionalFiles: expect.arrayContaining(["Justfile", "docs/DESIGN.md"]),
+				}),
+			);
+		});
 	});
 });

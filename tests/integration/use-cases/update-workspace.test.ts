@@ -926,5 +926,35 @@ describe("UpdateWorkspaceUseCase", () => {
 			// Non-interactive add must not show the Option A/B menu
 			expect(prompt.selectUpdateOption).not.toHaveBeenCalled();
 		});
+
+		it("should skip the merge when Option B selects no new packs (only installed)", async () => {
+			const { stub: fs, calls } = createMockFileSystem();
+			// Default mock seeds v2.0.0 with software-development installed
+			const prompt = createMockPrompt();
+			(prompt.selectUpdateOption as ReturnType<typeof mockFn>).mockResolvedValue("add");
+			// User picks ONLY the already-installed pack → no new packs to add
+			(prompt.selectPacks as ReturnType<typeof mockFn>).mockResolvedValue(["software-development"]);
+			const engine = new FileMergeEngine(fs);
+			const gitHub = createMockGitHubClient("v1.0.0");
+			const comparator = new VersionComparator();
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				engine,
+				prompt,
+				gitHub,
+				comparator,
+				BUNDLED_TEST_VERSION,
+			);
+
+			const result = await useCase.execute("/tmp/project");
+
+			expect(result.ok).toBe(true);
+			// resolveUpdatePacks cancels gracefully via showInfo — not an error result
+			expect(prompt.showInfo).toHaveBeenCalledWith("No new packs selected. Update cancelled.");
+			// The merge engine must never be invoked when the pack scope is empty
+			expect(calls.stageFile.length).toBe(0);
+			expect(calls.commitStaging).toBe(0);
+			expect(calls.writeVersionFile.length).toBe(0);
+		});
 	});
 });
