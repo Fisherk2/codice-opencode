@@ -278,12 +278,14 @@ assert_version_has_pack() {
     local version_data
     version_data=$(cat "$version_file" 2>/dev/null || echo "")
 
-    if ! echo "$version_data" | grep -q '"installedPacks"'; then
+    if ! echo "$version_data" | grep -qF '"installedPacks"'; then
         log_fail "Version file is missing 'installedPacks'"
         echo "    Version data: $version_data" >&2
         return 1
     fi
-    if ! echo "$version_data" | grep -q "\"$pack_id\""; then
+    # -F treats the pack id as a literal string, so ids with regex
+    # metacharacters (e.g. '+') can never break the pattern.
+    if ! echo "$version_data" | grep -qF "\"$pack_id\""; then
         log_fail "Version file does not list '$pack_id' in installedPacks"
         echo "    Version data: $version_data" >&2
         return 1

@@ -1,72 +1,17 @@
 import { describe, expect, it } from "bun:test";
 import { DEFAULT_PACKS } from "../../../src/application/packOptions";
-import { CleanInstallUseCase } from "../../../src/application/use-cases/CleanInstallUseCase";
-import {
-	FILE_RULE_MANIFEST,
-	filterByPacks,
-	getRulesByCategory,
-} from "../../../src/domain/entities/FileRuleManifest";
-import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
+import { FILE_RULE_MANIFEST, filterByPacks } from "../../../src/domain/entities/FileRuleManifest";
 import { OPENCODE_SYMLINKS } from "../../../src/infrastructure/config/symlinks";
-import {
-	createMockFileSystem,
-	createMockGitignoreCreator,
-	createMockPrompt,
-	createMockSymlinkCreator,
-	type FileSystemMockCalls,
-	type FileSystemMockOptions,
-	type GitignoreCreatorMock,
-	type MockedFileSystem,
-	type SymlinkCreatorMock,
-	type UserPromptMock,
-} from "./test-doubles";
+import { createCleanInstallFixture } from "./clean-install-fixture";
 
 /** Stageable rules after default pack filtering (software-development only) */
 const STAGEABLE_COUNT = filterByPacks(FILE_RULE_MANIFEST, DEFAULT_PACKS).filter(
 	(r) => !r.noTemplateCopy,
 ).length;
 
-interface CleanFixture {
-	useCase: CleanInstallUseCase;
-	fs: MockedFileSystem;
-	calls: FileSystemMockCalls;
-	prompt: UserPromptMock;
-	symlinkCreator: SymlinkCreatorMock;
-	gitignoreCreator: GitignoreCreatorMock;
-}
-
-/**
- * Wire a fully-mocked CleanInstallUseCase (mirrors clean-install.test.ts).
- * The shared prompt mock captures logProgressEvent messages into
- * prompt.logEntries so ordering assertions stay self-contained.
- */
-function createCleanFixture(options: FileSystemMockOptions = {}): CleanFixture {
-	const { stub: fs, calls } = createMockFileSystem(options);
-	const engine = new FileMergeEngine(fs);
-	const prompt = createMockPrompt({
-		selectOptionalDefault: "all",
-		allOptionalPaths: getRulesByCategory("optional").map((r) => r.path),
-	});
-	const symlinkCreator = createMockSymlinkCreator();
-	const gitignoreCreator = createMockGitignoreCreator();
-	const useCase = new CleanInstallUseCase(
-		fs,
-		engine,
-		prompt,
-		symlinkCreator,
-		OPENCODE_SYMLINKS,
-		gitignoreCreator,
-	);
-	return { useCase, fs, calls, prompt, symlinkCreator, gitignoreCreator };
-}
-
-// ---------------------------------------------------------------------------
-// Tests: Structured log events
-// ---------------------------------------------------------------------------
-
 describe("CleanInstallUseCase structured log events", () => {
 	it("should emit all structured log events during a successful install", async () => {
-		const { useCase, prompt } = createCleanFixture();
+		const { useCase, prompt } = createCleanInstallFixture();
 
 		const result = await useCase.execute("/tmp/project");
 
@@ -90,7 +35,7 @@ describe("CleanInstallUseCase structured log events", () => {
 	});
 
 	it("should emit commit messages before gitignore and symlink messages", async () => {
-		const { useCase, prompt } = createCleanFixture();
+		const { useCase, prompt } = createCleanInstallFixture();
 
 		const result = await useCase.execute("/tmp/project");
 
@@ -115,7 +60,7 @@ describe("CleanInstallUseCase structured log events", () => {
 	});
 
 	it("should emit log events for all opencode symlinks (2 commit + 1 gitignore + 3 symlinks)", async () => {
-		const { useCase, prompt } = createCleanFixture();
+		const { useCase, prompt } = createCleanInstallFixture();
 
 		const result = await useCase.execute("/tmp/project");
 
@@ -134,7 +79,7 @@ describe("CleanInstallUseCase structured log events", () => {
 	});
 
 	it("should emit only commit log events when merge fails (no symlink/gitignore)", async () => {
-		const { useCase, fs, prompt } = createCleanFixture();
+		const { useCase, fs, prompt } = createCleanInstallFixture();
 		// Make stageFile throw to trigger merge failure
 		fs.stageFile.mockRejectedValue(new Error("Disk full"));
 
@@ -155,7 +100,7 @@ describe("CleanInstallUseCase structured log events", () => {
 	});
 
 	it("should still emit symlink/gitignore log events when no optionals are selected", async () => {
-		const { useCase, prompt } = createCleanFixture();
+		const { useCase, prompt } = createCleanInstallFixture();
 		// User selects NO optional files
 		prompt.selectOptional.mockResolvedValue([]);
 

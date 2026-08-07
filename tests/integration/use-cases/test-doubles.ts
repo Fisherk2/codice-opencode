@@ -16,9 +16,7 @@ import type { ISymlinkCreator, SymlinkSpec } from "../../../src/application/port
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
-import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
-import type { Result } from "../../../src/domain/types/Result";
-import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
+import { success } from "../../../src/domain/types/Result";
 import type {
 	FileSystemMockCalls,
 	FileSystemMockOptions,
@@ -141,15 +139,12 @@ export function createMockSymlinkCreator(): SymlinkCreatorMock {
 	const calls: Array<readonly unknown[]> = [];
 	return {
 		createSymlink: mockFn<ISymlinkCreator["createSymlink"]>(() =>
-			Promise.resolve({ ok: true, value: undefined } as Result<void, SymlinkError>),
+			Promise.resolve(success(undefined)),
 		),
 		createSymlinks: mockFn<ISymlinkCreator["createSymlinks"]>(
 			(symlinks: readonly SymlinkSpec[]) => {
 				calls.push(symlinks);
-				return Promise.resolve({
-					ok: true,
-					value: undefined,
-				} as Result<void, SymlinkError[]>);
+				return Promise.resolve(success(undefined));
 			},
 		),
 		get createSymlinksCalls() {
@@ -163,7 +158,7 @@ export function createMockGitignoreCreator(): GitignoreCreatorMock {
 	return {
 		createGitignore: mockFn<IGitignoreCreator["createGitignore"]>((destPath: string) => {
 			calls.push(destPath);
-			return Promise.resolve({ ok: true, value: undefined } as Result<void, GitignoreError>);
+			return Promise.resolve(success(undefined));
 		}),
 		get gitignoreCalls() {
 			return calls;
