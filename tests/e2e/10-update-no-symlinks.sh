@@ -1,23 +1,23 @@
 #!/bin/bash
 #===============================================================================
-# FEV-2-B: Update No Symlinks E2E (FEV-21 version-gate behavior)
+# FEV-2-B: Update No Symlinks E2E
 #
 # Scenario: Install template with --clean --force (which creates symlinks and
 # writes .codice-version), then remove the .opencode symlinks, then run
 # --update --force.
 #
-# Expected (FEV-21 version gate): the clean install writes .codice-version
-# with the bundled version 1.2.0 (major < 2), which FAILS the update version
-# gate. The update therefore prints the "update system has changed in
-# v2.0.0 ... reinstall" warning and exits 0 WITHOUT merging:
+# Expected (bundled == local): the clean install writes .codice-version with
+# the bundled version 2.0.0, which is EQUAL to the bundled template. The
+# update therefore reports "Workspace is already up to date" and exits 0
+# WITHOUT merging:
 #   - exit code 0
 #   - .opencode symlinks remain ABSENT (update did nothing)
-#   - stdout/stderr contains "update system has changed" / "reinstall"
+#   - stdout/stderr contains "already up to date"
 #   - .codice-version still exists (untouched)
 #
 # NOTE: This validates ADR-008 (symlink generation is scoped to Clean Install
-# and Project Install only, NOT Update mode) while also exercising the new
-# version-gate behavior that replaced the old pre-v2.0 update merge.
+# and Project Install only, NOT Update mode): no matter why the update skips
+# the merge, it never recreates the .opencode/ symlinks.
 #===============================================================================
 
 set -Eeuo pipefail
@@ -51,7 +51,8 @@ fi
 log_pass "Clean install exited with code 0"
 
 # The clean install writes .codice-version with the bundled CLI version
-# (1.2.0) — major < 2, so the update version gate will block below.
+# (2.0.0) — equal to the bundled template, so the update reports
+# "already up to date" and skips the merge below.
 assert_file_exists "$TEMP_DIR/.codice-version"
 
 # Verify symlinks were actually created before we remove them
@@ -101,14 +102,13 @@ log_pass "Update exited with code 0"
 # Step 4: Assert version-gate warning + symlinks still absent
 # ---------------------------------------------------------------------------
 
-log_info "=== Step 4: Verifying version-gate blocked the update ==="
+log_info "=== Step 4: Verifying the update reported up to date (no merge) ==="
 
 # Combined output for message assertions (TUI messages emit on stdout via clack)
 COMBINED_OUTPUT=$(cat "$STDOUT_FILE" "$STDERR_FILE" 2>/dev/null || echo "")
 
-# .codice-version is 1.2.0 (written by clean install) → pre-v2.0 → blocked
-assert_contains "$COMBINED_OUTPUT" "update system has changed"
-assert_contains "$COMBINED_OUTPUT" "reinstall"
+# .codice-version is 2.0.0 (written by clean install) → equal to bundled → up to date
+assert_contains "$COMBINED_OUTPUT" "already up to date"
 
 # .opencode/ symlinks should still be absent (update did nothing)
 if [[ -L "$TEMP_DIR/.opencode/agents" ]]; then

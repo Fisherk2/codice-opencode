@@ -1,13 +1,13 @@
 #!/bin/bash
 #===============================================================================
-# FEV4-T1: Update Granularity — Tree-Level Diff E2E (FEV-21 transitional behavior)
+# FEV4-T1: Update Granularity — Tree-Level Diff E2E
 #
 # Scenario: Pre-populate destination with SOME files in a standard directory
 #           but NOT all files, plus a v2.0.0 .codice-version. Run --update.
 #
-# Expected (TRANSITIONAL NO-OP): the bundled template is v1.2.0, so the
-# bundled comparison (installed >= bundled) reports "Workspace is already up
-# to date" and NO merge happens:
+# Scenario: the local installation matches the bundled template version
+# (equal), so the bundled comparison reports "already up to date" and no
+# merge happens:
 #   - exit code 0
 #   - docs/README.md + docs/ARCHITECTURE.md + specs/README.md PRESERVED
 #   - opencode.json (mandatory) NOT overwritten (nothing merges)
@@ -15,10 +15,6 @@
 #   - NO new files created in docs/ (no merge → NEW_FILES_FOUND == 0)
 #   - no security warnings in stderr
 #   - stdout/stderr contains "already up to date"
-#
-# NOTE: Update mode only becomes functional once the package is published
-# at >= 2.0.0 (FEV-21 plan). Until then this E2E verifies the real observable
-# no-op behavior instead of the tree-level diff merge.
 #===============================================================================
 
 set -Eeuo pipefail
@@ -55,8 +51,8 @@ echo '{"custom": true, "version": "0.9.0"}' > "$TEMP_DIR/opencode.json"
 mkdir -p "$TEMP_DIR/scripts"
 echo "# Custom Script — Preserved" > "$TEMP_DIR/scripts/build.sh"
 
-# Write version file in the v2.0 format with a version NEWER than the
-# bundled template (1.2.0) so the bundled comparison reports "up to date".
+# Write version file in the v2.0 format with a version EQUAL to the
+# bundled template (2.0.0) so the bundled comparison reports "up to date".
 echo '{"version":"2.0.0","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":["scripts/build.sh"]}' > "$TEMP_DIR/.codice-version"
 
 log_info "Pre-populated project with partial standard directory content"
@@ -122,10 +118,10 @@ for f in CODE_STYLE.md PRD.md SECURITY.md TECH_DEBT.md TRD.md WORKFLOW.md APPFLO
 	fi
 done
 if [[ "$NEW_FILES_FOUND" -ne 0 ]]; then
-	log_fail "$NEW_FILES_FOUND new files created in docs/ — expected NO merge (transitional no-op)"
+	log_fail "$NEW_FILES_FOUND new files created in docs/ — expected NO merge (workspace already up to date)"
 	exit 1
 fi
-log_pass "No new files created in docs/ (NEW_FILES_FOUND=0 — transitional no-op confirmed)"
+log_pass "No new files created in docs/ (NEW_FILES_FOUND=0 — no merge happened)"
 
 # 3. Obligatorio files should NOT be overwritten (no merge)
 log_info "Checking that obligatorio file was NOT overwritten..."
@@ -136,7 +132,7 @@ if [[ "$PRESERVED_OPENCODE" != '{"custom": true, "version": "0.9.0"}' ]]; then
 	echo "    Actual first line: $PRESERVED_OPENCODE" >&2
 	exit 1
 fi
-log_pass "opencode.json untouched (transitional no-op confirmed)"
+log_pass "opencode.json untouched (no merge — workspace already up to date)"
 
 # 4. Opcional file should be PRESERVED
 log_info "Checking that opcional file was PRESERVED..."

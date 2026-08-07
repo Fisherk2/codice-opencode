@@ -1,14 +1,14 @@
 #!/bin/bash
 #===============================================================================
-# FEV3-T6: Update Workspace Existing Project E2E (FEV-21 transitional behavior)
+# FEV3-T6: Update Workspace Existing Project E2E
 #
 # Scenario: Pre-populate directory with an existing project (custom standard
 #           files and directories, custom mandatory files, custom optional
 #           files) and a v2.0.0 .codice-version, then run --update --force.
 #
-# Expected (TRANSITIONAL NO-OP): the bundled template is v1.2.0, so the
-# bundled comparison (installed >= bundled) reports "Workspace is already up
-# to date" and NO merge happens:
+# Scenario: the local installation matches the bundled template version
+# (equal), so the bundled comparison reports "already up to date" and no
+# merge happens:
 #   - exit code 0
 #   - README.md, docs/README.md, specs/README.md, .env.example all PRESERVED
 #   - scripts/build.sh (opcional) PRESERVED
@@ -16,10 +16,6 @@
 #   - stderr has no traversal/EPERM warnings
 #   - stdout/stderr contains "already up to date"
 #   - .codice-version still exists in the v2.0 format ("version" key)
-#
-# NOTE: Update mode only becomes functional once the package is published
-# at >= 2.0.0 (FEV-21 plan). Until then this E2E verifies the real observable
-# no-op behavior instead of the merge.
 #===============================================================================
 
 set -Eeuo pipefail
@@ -59,8 +55,8 @@ echo '{"custom": true, "version": "0.9.0"}' > "$TEMP_DIR/opencode.json"
 mkdir -p "$TEMP_DIR/scripts"
 echo "# CUSTOM SCRIPT — My Custom Build" > "$TEMP_DIR/scripts/build.sh"
 
-# Write version file in the v2.0 format with a version NEWER than the
-# bundled template (1.2.0) so the bundled comparison reports "up to date".
+# Write version file in the v2.0 format with a version EQUAL to the
+# bundled template (2.0.0) so the bundled comparison reports "up to date".
 echo '{"version":"2.0.0","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":["scripts/build.sh"]}' > "$TEMP_DIR/.codice-version"
 
 log_info "Pre-populated project with existing standard files and directories"
@@ -143,7 +139,7 @@ if [[ "$PRESERVED_OPENCODE" != '{"custom": true, "version": "0.9.0"}' ]]; then
     echo "    Actual first line: $PRESERVED_OPENCODE" >&2
     exit 1
 fi
-log_pass "opencode.json untouched (transitional no-op confirmed)"
+log_pass "opencode.json untouched (no merge — workspace already up to date)"
 
 # 6. Optional file preserved
 log_info "Checking that opcional file was PRESERVED..."

@@ -102,6 +102,7 @@ TESTS=(
     "$SCRIPT_DIR/24-install-summary-clean.sh"
     "$SCRIPT_DIR/25-install-summary-packs.sh"
     "$SCRIPT_DIR/26-update-blocked-pre-1.2.0.sh"
+    "$SCRIPT_DIR/27-update-option-b.sh"
     "$SCRIPT_DIR/28-flat-agents-destination.sh"
     "$SCRIPT_DIR/29-non-interactive-packs.sh"
     "$SCRIPT_DIR/30-project-install-packs.sh"
