@@ -1,14 +1,14 @@
-# FEV-22 Todo List — Installer UX Enhancements (v2.0 Phase 6)
+# FEV-23 Todo List — v2.0.0 Testing & Integration
 
-**Phase:** FEV-22 (v2.0 Phase 6) — ✅ Completo (2026-08-06)
-**Scope:** Implementar los 3 enhancements diferidos del installer UX v2.0: (1) `PackOption.agentCount` per-pack metadata con counts reales, (2) install summary screen (spec §3.3) con `clack.note()` mostrando packs + counts + optionals + total, (3) Wiki sync para reflejar el sistema de packs v2.0. NO toca lógica de Option A/B (ya en FEV-21), NO version bump (v2.0.0 coordina al final con FEV-23).
-**Spec:** [specs/spec-installer-ux-v2.md §3.3, §5.2, §10 Q4](../specs/spec-installer-ux-v2.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md)
-**Tech Debt:** TD-V2-6 (open — no change, deferred to v2.2.0)
+**Phase:** FEV-23 (v2.0.0 Final Phase) — 🔲 Listo para implementar
+**Scope:** Cerrar el ciclo de v2.0.0 con: (1) **5 nuevos E2E scripts** (26-30) cubriendo SC-UX7, SC-UX9, SC-UX10, SC-UX12 + Project Install con pack selection, (2) **~13 nuevos unit/integration tests** (Option B execution, Project Install pack flow, Clean Install summary, version detection edge cases), (3) **Version bump** `package.json` 1.2.0 → 2.0.0 + rewrite E2E #23 (remove transitional no-op), (4) **Release documentation** (CHANGELOG v2.0.0 + README + NEW `docs/MIGRATION.md` + WORKFLOW + TECH_DEBT). NO incluye el release real (PR merge, tag, npm publish) — eso es proceso separado del maintainer.
+**Spec:** [specs/spec-installer-ux-v2.md §9](../specs/spec-installer-ux-v2.md), [specs/spec-agent-packs.md §9](../specs/spec-agent-packs.md)
+**Tech Debt:** TD-V2-6 (sigue abierto — no pack removal, deferred a v2.2.0)
 **Date:** 2026-08-06
 **Author:** Moctezuma (Strategic Planner)
 **Full plan:** [plan.md](./plan.md)
-**Branch:** `feat/new-agents` (continúa de FEV-21 ✅)
-**Total effort:** ~6-7h wall-clock (1-2 días calendario con review)
+**Branch:** `feat/new-agents` (continúa de FEV-17 a FEV-22)
+**Total effort:** ~5.5-6h wall-clock (1-2 días calendario con review)
 
 ---
 
@@ -16,337 +16,337 @@
 
 | # | Pregunta | Decisión |
 |---|----------|----------|
-| 1 | FEV-22 scope (given FEV-21 implemented most of WORKFLOW.md FEV-22) | **Enhancements diferidos** (agentCount + install summary + wiki sync) |
-| 2 | FEV-22 alcance detallado | **agentCount + install summary + wiki sync** (7-8h, scope completo) |
-| 3 | Approve plan para escribir a `tasks/plan.md` y `tasks/todo.md` | **Sí, aprobar y guardar** (recomendado) |
+| 1 | Alcance FEV-23 (tests vs version bump vs release) | **Tests + Version Bump + Docs** (NO release real) |
+| 2 | E2E #23 (transitional no-op) handling | **Reescribir E2E #23** con v2.0.0 (verify real Option A) |
 
 ---
 
 ## Pre-Audit Snapshot (2026-08-06)
 
-### Current `agentCount` (hardcoded to 0)
-
-```typescript
-// src/application/packOptions.ts (line 41)
-return {
-    id,
-    name: humanizePackId(id),
-    description: rule.description,
-    agentCount: 0,  // ← HARDCODED, FEV-22 will read from rule.agentCount
-};
-```
-
-### Current `FileRule` (no agentCount field)
-
-```typescript
-// src/domain/entities/FileRule.ts
-export interface FileRule {
-    readonly path: string;
-    readonly category: RuleCategory;
-    readonly isDirectory: boolean;
-    readonly description: string;
-    readonly noTemplateCopy?: boolean;
-    readonly destPath?: string;
-    // ❌ NO agentCount field
-}
-```
-
-### Actual pack counts (verified 2026-08-06)
-
-```
-software-development: 146 agents (manifest) / 146 (filesystem)
-business:             92 agents (manifest) / 91 (filesystem, -1)
-hardware-emerging:    36 agents (manifest) / 36 (filesystem)
-science-research:     31 agents (manifest) / 31 (filesystem)
-operations-support:   18 agents (manifest) / 18 (filesystem)
-finance:              11 agents (manifest) / 11 (filesystem)
-creative:             10 agents (manifest) / 10 (filesystem)
-government-legal:      8 agents (manifest) /  8 (filesystem)
-```
-
-**Note:** Manifest uses approximate counts per spec §10 Q4. `business` differs by 1 (92 vs 91). FEV-22 uses manifest as SSOT.
-
-### Files requiring modification (18) + new (3) = 21 total
-
-| Layer | Files | Action |
-|-------|-------|--------|
-| **Domain** | 2 | `FileRule` (add field) + `FileRuleManifestData` (populate 8 entries) |
-| **Application** | 4 | `packOptions` + `IUserPrompt` + `InstallUseCaseBase` + NEW `installSummary` |
-| **Infrastructure** | 1 | `ClackPromptsAdapter` (showInstallSummary implementation) |
-| **Tests unit** | 2 | `pack-options.test` (1 updated) + NEW `install-summary.test` |
-| **Tests integration** | 3 | `clack-prompts-adapter` + `clean-install` + `project-install` |
-| **Tests E2E** | 2 new | Scripts 24-25 |
-| **Wiki** | 4 | Home, Getting-Started, Agents, Workspace-Structure |
-| **Docs** | 3 | CHANGELOG + WORKFLOW + TECH_DEBT |
-
-### Baseline metrics (post-FEV-21)
+### Current Test State (post-FEV-22)
 
 | Metric | Value |
 |--------|------:|
-| Tests (pass/fail) | 1822 / 0 |
-| E2E scenarios | 23 / 23 |
+| Tests (pass/fail) | 1872 / 0 |
+| E2E scenarios | 25 / 25 |
 | `just check` errors | 0 |
-| `FileRule` fields | 6 |
-| `IUserPrompt` methods | 15 |
-| `agentCount` field on `FileRule` | 0 (no field yet) |
-| `agentCount` field on `PackOption` | 0 (hardcoded) |
+| Coverage (lines) | ≥95% |
+| `package.json` version | 1.2.0 |
+| Branch | `feat/new-agents` |
+
+### E2E Coverage Matrix (current → target)
+
+| SC | Current | Status | Phase |
+|----|---------|--------|-------|
+| SC-UX1 (pack selection w/ default) | E2E 17 | ✅ | — |
+| SC-UX2 (min 1 pack) | E2E 19 + unit | ✅ | — |
+| SC-UX3 (install summary) | E2E 24, 25 | ✅ | — |
+| SC-UX4 (.codice-version format) | E2E 20 | ✅ | — |
+| SC-UX5 (update blocked) | E2E 21, 22 | 🟡 | **Phase 1** (26-pre-1.2.0) |
+| SC-UX6 (Option A scope) | E2E 23 (transitional) | 🟡 | **Phase 3** (rewrite) |
+| SC-UX7 (Option B adds packs) | none | ❌ | **Phase 1** (27) |
+| SC-UX8 (Option B cancel no new) | unit (FEV-21) | ✅ | — |
+| SC-UX9 (--packs non-interactive) | none | ❌ | **Phase 1** (29) |
+| SC-UX10 (flat agents/) | none | ❌ | **Phase 1** (28) |
+| SC-UX11 (legacy v1.x message) | E2E 22 | ✅ | — |
+| SC-UX12 (pre-1.2.0 cleanup) | none | ❌ | **Phase 1** (26) |
+| **Project Install + packs** | none | ❌ | **Phase 1** (30) |
+
+**Score:** 7/12 ✅ + 3 🟡 + 3 ❌ → FEV-23 → 12/12 ✅
+
+### Files requiring modification (13) + new (6) = 19 total
+
+| Layer | Files | Action |
+|-------|-------|--------|
+| **E2E new** | 5 | 26, 27, 28, 29, 30 |
+| **E2E rewrite** | 1 | 23 (remove transitional) |
+| **E2E verify** | 3 | 04, 15, 16 (BUNDLED env check) |
+| **Test unit/integration** | 4 | update-workspace, project-install, clean-install, version-context |
+| **Build** | 1 | package.json (1.2.0→2.0.0) |
+| **Docs** | 5 | CHANGELOG, README, MIGRATION (NEW), WORKFLOW, TECH_DEBT |
+
+### Baseline metrics (post-FEV-22)
+
+- **Tests:** 1872 (0 fail)
+- **E2E:** 25 (all pass)
+- **Coverage:** ≥95%
+- **`FileRule` fields:** 7
+- **`IUserPrompt` methods:** 16
+- **CLI flags:** 10
+- **Version:** 1.2.0
 
 ---
 
 ## Dependency Order (Critical Path)
 
 ```
-FEV-21 ✅ (feat/new-agents base)
+FEV-22 ✅ (feat/new-agents base)
     ↓
-Phase 1: Domain Extension (1h, 1 commit)
-    ├── T1.1 FileRule.ts (add agentCount?) + 8 manifest entries + helper update → bundled
-    └── T1.2 Update pack-options unit tests → bundled
+Phase 1: Missing E2E Tests (1.5-2h, 1 commit)
+    ├── T1.1 26-update-blocked-pre-1.2.0.sh (SC-UX12)
+    ├── T1.2 27-update-option-b.sh (SC-UX7)
+    ├── T1.3 28-flat-agents-destination.sh (SC-UX10)
+    ├── T1.4 29-non-interactive-packs.sh (SC-UX9)
+    └── T1.5 30-project-install-packs.sh (Project Install + packs)
     ↓
-Phase 2: Install Summary (1.5h, 1 commit)
-    ├── T2.1 IUserPrompt.ts (add showInstallSummary + InstallSummaryInfo) + adapter implementation → bundled
-    ├── T2.2 installSummary.ts (NEW helper) → bundled
-    ├── T2.3 InstallUseCaseBase.ts (add summary phase) → bundled
-    └── T2.4 Unit + integration tests → bundled
+Phase 2: Unit/Integration Tests (1.5h, 1 commit)
+    ├── T2.1 update-workspace.test.ts (3 Option B tests)
+    ├── T2.2 project-install.test.ts (3 pack selection tests)
+    ├── T2.3 clean-install.test.ts (3 install summary tests)
+    └── T2.4 version-context.test.ts (4 edge case tests)
     ↓
-Phase 3: E2E Tests (1h, 1 commit)
-    └── T3.1 2 new E2E scripts (24-25) → 1 commit
+Phase 3: Version Bump (0.5h, 1 commit)
+    ├── T3.1 package.json 1.2.0 → 2.0.0
+    ├── T3.2 Rewrite E2E 23 (real Option A verification)
+    └── T3.3 Verify E2E 04, 15, 16 (BUNDLED env cleanup)
     ↓
-Phase 4: Wiki Sync (2-3h, 1 commit)
-    └── T4.1 Update 4 wiki pages + .wiki/ commit → 1 commit
+Phase 4: Release Documentation (1h, 1 commit)
+    ├── T4.1 CHANGELOG.md (v2.0.0 entry)
+    ├── T4.2 README.md (pack system prominent)
+    ├── T4.3 docs/MIGRATION.md (NEW, v1.x → v2.0.0)
+    ├── T4.4 docs/WORKFLOW.md (FEV-23 ✅)
+    └── T4.5 docs/TECH_DEBT.md (v2.0.0 closure)
     ↓
-Phase 5: Final Documentation (0.5h, 1 commit)
-    └── T5.1 CHANGELOG.md + WORKFLOW.md + TECH_DEBT.md → 1 commit
+Phase 5: Verification (0.5h, gates release coordination)
+    ├── T5.1 just check + just test + just test-e2e
+    ├── T5.2 Coverage ≥95% verification
+    ├── T5.3 npm pack --dry-run
+    └── T5.4 Manual CLI smoke test
     ↓
-Phase 6: Verification (0.25h, gates FEV-23)
-    └── T6.1 just check + just test + just test-e2e
-    ↓
-FEV-22 Complete → FEV-23 ready
+FEV-23 ✅ Complete → Release coordination (separate)
 ```
 
-**Critical path:** T1.1+T1.2 → T2.1+T2.2+T2.3+T2.4 → T3.1 → T4.1 → T5.1 → T6.1 (~6-7h total)
-**Atomic commits:** 5 (1 per phase) + 1 verification (no commit)
+**Critical path:** T1.1-T1.5 → T2.1-T2.4 → T3.1-T3.3 → T4.1-T4.5 → T5.1-T5.4 (~5.5-6h total)
+**Atomic commits:** 4 (1 per phase) + 1 verification (no commit)
 
 ---
 
-## Phase 1: Domain Foundation
+## Phase 1: Missing E2E Scenarios
 
-- [x] **Task 1.1:** Add `agentCount?: number` field to `FileRule` interface in `src/domain/entities/FileRule.ts` with JSDoc (mentions backward compat + spec §10 Q4). Populate `agentCount: N` in 8 pack entries of `src/domain/entities/FileRuleManifestData.ts` (N = 146, 92, 36, 31, 18, 11, 10, 8). Update `src/application/packOptions.ts` line 41: `agentCount: 0` → `agentCount: rule.agentCount ?? 0`. Commit: `feat(domain): add agentCount metadata to FileRule for accurate pack summary`
-- [x] **Task 1.2:** Update `tests/unit/application/pack-options.test.ts`. Replace test "always sets agentCount to 0" (lines 95-116) with 2 tests: (1) "reads agentCount from rule when present", (2) "defaults agentCount to 0 when absent (backward compat)". Commit (bundled): `test(domain): cover agentCount metadata in pack-options helper`
+- [ ] **Task 1.1:** Create `tests/e2e/26-update-blocked-pre-1.2.0.sh` (SC-UX12). Seed v1.1.0, run `--update --force`. Verify output contains "Pre-1.2.0 Installation Detected" + "references/" + ".devin/". Verify no merge (opencode.json absent). Commit (bundled): `test(e2e): cover remaining SC-UX criteria and project install with pack selection`
+- [ ] **Task 1.2:** Create `tests/e2e/27-update-option-b.sh` (SC-UX7). Seed v2.0.0 with `[software-development]`, run `--update --force --update-add-packs creative,business`. Verify `.codice-version` now includes all 3 packs (lock + addPacks). Commit (bundled): Same as T1.1
+- [ ] **Task 1.3:** Create `tests/e2e/28-flat-agents-destination.sh` (SC-UX10). Run `--clean --force --packs software-development,business`. Verify agents at `agents/` root (no `agents/software-development/` or `agents/business/` subdirs). Commit (bundled): Same as T1.1
+- [ ] **Task 1.4:** Create `tests/e2e/29-non-interactive-packs.sh` (SC-UX9). Run `--clean --force --packs business,creative` (no default). Verify `.codice-version` = [business, creative], no software-development agents, business + creative agents present. Commit (bundled): Same as T1.1
+- [ ] **Task 1.5:** Create `tests/e2e/30-project-install-packs.sh` (Project Install + packs). Pre-populate README.md, run `--project --force --packs business`. Verify README preserved (Project Install selective merge), business pack installed, no software-development. Commit (bundled): Same as T1.1
 
-**Checkpoint:** ✅
-- [x] `FileRule.agentCount?: number` field added with JSDoc
-- [x] 8 pack entries in manifest have `agentCount: N`
-- [x] `toPackOptions()` reads from `rule.agentCount ?? 0`
-- [x] 1 unit test updated, 1 new test added (8 total in pack-options.test.ts)
-- [x] `just test-unit` shows 1824+ tests pass (1822 baseline + 2 net)
-- [x] **Review con humano antes de Phase 2**
-
----
-
-## Phase 2: IUserPrompt Port Extension + Install Summary
-
-- [x] **Task 2.1:** Add `InstallSummaryInfo` type + `showInstallSummary()` method to `src/application/ports/IUserPrompt.ts`. Add `formatInstallSummary()` import to `src/infrastructure/adapters/ClackPromptsAdapter.ts` and implement method using `clack.note()`. Commit (bundled): `feat(adapter): add IUserPrompt.showInstallSummary for pre-install summary`
-- [x] **Task 2.2:** Create `src/application/installSummary.ts` (NEW, ≤60 lines) with 2 exports: `buildInstallSummary(packRules, selectedPacks, selectedOptionals, allRules): InstallSummaryInfo` (aggregates agent counts + computes totals) and `formatInstallSummary(info): string` (multi-line text for `clack.note()`). Commit (bundled): Same as T2.1
-- [x] **Task 2.3:** Update `src/application/use-cases/InstallUseCaseBase.ts`. Insert new phase between `buildRules` (line 96) and `mergeEngine.execute` (line 101). Call `userPrompt.showInstallSummary(buildInstallSummary(...))`. Add 2 imports (`FILE_RULE_MANIFEST, getPackRules` + `buildInstallSummary`). If file exceeds 200 lines, extract summary phase to private method `private showSummary(rules, packs, optionals)`. Commit (bundled): Same as T2.1
-- [x] **Task 2.4:** Add tests: (1) NEW `tests/unit/application/install-summary.test.ts` with 4+ unit tests for `buildInstallSummary` + `formatInstallSummary`; (2) add 2-3 tests to `clack-prompts-adapter.test.ts` for `showInstallSummary()`; (3) add 1 test to `clean-install.test.ts` and 1 to `project-install.test.ts` verifying summary shown. Commit (bundled): `test(adapter): cover install summary helper and port method`
-
-**Checkpoint:** ✅
-- [x] `IUserPrompt.showInstallSummary()` + `InstallSummaryInfo` type added
-- [x] `installSummary.ts` helper created with 2 exports
-- [x] `InstallUseCaseBase` shows summary between `buildRules` and `merge`
-- [x] `ClackPromptsAdapter.showInstallSummary()` implemented via `clack.note()`
-- [x] 8+ new tests pass (4 unit + 2 adapter + 1 clean + 1 project)
-- [x] `just test-integration` shows 100% pass
-- [x] `just test-unit` shows 1830+ tests pass (1824 baseline + 6+ new unit)
-- [x] **Review con humano antes de Phase 3**
+**Checkpoint:**
+- [ ] 5 new E2E scripts created (26, 27, 28, 29, 30)
+- [ ] All 30 E2E scenarios pass (`just test-e2e` shows 30/30)
+- [ ] SC-UX7, SC-UX9, SC-UX10, SC-UX12 verified end-to-end
+- [ ] Project Install + pack selection verified
+- [ ] **Review con humano antes de Phase 2**
 
 ---
 
-## Phase 3: E2E Tests
+## Phase 2: Unit/Integration Test Gaps
 
-- [x] **Task 3.1:** Create 2 new E2E bash scripts in `tests/e2e/`:
-  - `24-install-summary-clean.sh` — Verify Clean Install muestra el summary (assert_output_contains "📋 Installation Summary" + "software-development (146 agents)" + "Total: ~238 agents" con `--packs software-development,business`)
-  - `25-install-summary-packs.sh` — Verify count accuracy (manifest count matches summary + filesystem count in expected range)
-  
-  Each script uses `common.sh` helpers (`assert_output_contains`, `setup_workspace`, `log_pass`). Commit: `test(e2e): cover install summary display and count accuracy`
+- [ ] **Task 2.1:** Add 3 tests to `tests/integration/use-cases/update-workspace.test.ts`. (1) Option B merges installed + new packs, (2) Option B with only installed → null + skip, (3) Option B preserves installed (hard lock). Commit (bundled): `test(integration): cover Option B execution and pack-aware use cases`
+- [ ] **Task 2.2:** Add 3 tests to `tests/integration/use-cases/project-install.test.ts`. (1) Project Install respects --packs, (2) preserves standard files with different pack, (3) default software-development when no --packs. Commit (bundled): Same as T2.1
+- [ ] **Task 2.3:** Add 3 tests to `tests/integration/use-cases/clean-install.test.ts`. (1) summary shows packs with counts, (2) summary shows mandatory dirs, (3) summary shows selected optionals. Commit (bundled): Same as T2.1
+- [ ] **Task 2.4:** Add 4 tests to `tests/unit/cli/version-context.test.ts`. (1) v-prefix stripped, (2) 1.2.0 exactly is pre-2.0.0, (3) 1.1.999 is pre-1.2.0, (4) 0.9.0 is pre-1.2.0. Commit (bundled): Same as T2.1
 
-**Checkpoint:** ✅
-- [x] 2 new E2E scripts created
-- [x] All 25 E2E scenarios pass (`just test-e2e` shows 25/25)
-- [x] SC-UX3 (installation summary) verified end-to-end
-- [x] **Review con humano antes de Phase 4**
-
----
-
-## Phase 4: Wiki Sync
-
-- [x] **Task 4.1:** Update 4 wiki pages in `docs/wiki-source/`:
-  - `Home.md` — Update agent count 98 → ~355, mention "10 packs (2 mandatory + 8 selectable)"
-  - `Getting-Started.md` — Add mention of pack selection wizard + install summary in Clean Install section
-  - `Agents.md` — Add pack distribution table with counts (146, 92, 36, 31, 18, 11, 10, 8, 6, 4)
-  - `Workspace-Structure.md` — Mention `packs/` source + flat `agents/` destination
-  
-  Sync to .wiki/ repo:
-  ```bash
-  rsync -a --delete --exclude='README.md' docs/wiki-source/*.md docs/wiki-source/.wiki/
-  cd docs/wiki-source/.wiki
-  git add .
-  git commit -m "Sync wiki for FEV-22 (agentCount metadata + install summary)"
-  git push
-  ```
-  Commit: `docs(wiki): sync v2.0 pack system and install summary to public wiki`
-
-**Checkpoint:** ✅
-- [x] 4 wiki pages updated
-- [x] .wiki/ repo synced and pushed
-- [x] Public wiki reflects v2.0 pack system
-- [x] **Review con humano antes de Phase 5**
+**Checkpoint:**
+- [ ] 13 new tests added (3 + 3 + 3 + 4)
+- [ ] `just test-integration` shows 100% pass
+- [ ] `just test-unit` shows 1885+ tests pass (1872 baseline + 13 new)
+- [ ] Coverage of `UpdateWorkspaceUseCase`, `ProjectInstallUseCase`, `installSummary.ts` ≥90%
+- [ ] No regression in existing 1872 tests
+- [ ] **Review con humano antes de Phase 3**
 
 ---
 
-## Phase 5: Final Documentation
+## Phase 3: Version Bump to v2.0.0
 
-- [x] **Task 5.1:** Update 3 files: (1) `CHANGELOG.md` — add FEV-22 entry under `[Unreleased]` → `### Added` with summary of changes; (2) `docs/WORKFLOW.md` — FEV-22 status `🔲 Planificado` → `✅ Completo (2026-08-06)` + expand section with detailed bullets; (3) `docs/TECH_DEBT.md` — add FEV-22 closure note to v2.0.0 section. Commit: `docs: FEV-22 changelog, workflow, and tech debt updates`
+- [ ] **Task 3.1:** Update `package.json`: `"version": "1.2.0"` → `"version": "2.0.0"`. Verify `bun run src/cli/main.ts --version` outputs "2.0.0". Commit (bundled): `feat(release): bump version to 2.0.0 and rewrite Option A E2E`
+- [ ] **Task 3.2:** Rewrite `tests/e2e/23-update-option-a.sh`. Remove "transitional no-op" comments. Verify real Option A merge: business pack NOT copied, software-development updated, .codice-version unchanged. Commit (bundled): Same as T3.1
+- [ ] **Task 3.3:** Verify `tests/e2e/04-update-workspace.sh`, `15-update-workspace-existing-project.sh`, `16-update-granularity.sh`. Remove `BUNDLED_TEST_VERSION` env var references if present. Commit (bundled): Same as T3.1
 
-**Checkpoint:** ✅
-- [x] Commits atómicos con Conventional Commits (5 total)
-- [x] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [x] Branch `feat/new-agents` ready para PR a `develop`
-- [x] **FEV-22 cierra; FEV-23 (Testing & Integration) puede comenzar**
-
----
-
-## Phase 6: Verification (CRITICAL — gates FEV-23)
-
-- [x] **Task 6.1:** Run full verification — `just check` (0 errors) + `just test` (1830+ tests pass, 0 fail) + `just test-e2e` (25/25 scenarios)
-- [x] Manual validation:
-  - [x] `bun run src/cli/main.ts --help` shows 10 flags (no new flags in FEV-22)
-  - [x] `bun run src/cli/main.ts --clean --force --packs software-development,business` shows install summary with "(238 agents)"
-  - [x] `grep "agentCount:" src/domain/entities/FileRuleManifestData.ts | wc -l` = 8
-  - [x] `git -C docs/wiki-source/.wiki log -1` shows new wiki commit
-
-**Checkpoint:** ✅
-- [x] `just check` 0 errors
-- [x] `just test` 1830+ tests pass
-- [x] `just test-e2e` 25/25 pass
-- [x] Coverage overall ≥ 95% line
-- [x] **Si algo falla, NO proceder a FEV-23, identificar root cause**
+**Checkpoint:**
+- [ ] `package.json` version is 2.0.0
+- [ ] `--version` flag outputs 2.0.0
+- [ ] E2E 23 rewritten (no transitional comments)
+- [ ] All 30 E2E pass with v2.0.0
+- [ ] No regression in 1885+ unit/integration tests
+- [ ] **Review con humano antes de Phase 4**
 
 ---
 
-## DoD Checklist — FEV-22
+## Phase 4: Release Documentation
 
-### Funcional
+- [ ] **Task 4.1:** Update `CHANGELOG.md`. Add `## [2.0.0] - 2026-08-XX` section with all Keep a Changelog categories (Added, Changed, Removed, Deprecated, Fixed, Security). Reference FEV-17 to FEV-23. Commit (bundled): `docs: v2.0.0 release documentation (CHANGELOG, README, MIGRATION)`
+- [ ] **Task 4.2:** Update `README.md`. Add "What's New in v2.0" section. Mention pack system prominently. Update install modes. Add `--packs` examples. Commit (bundled): Same as T4.1
+- [ ] **Task 4.3:** NEW `docs/MIGRATION.md`. Guide for v1.x → v2.0.0 users. Sections: Breaking Change, What Preserved, Step-by-step, Pre-1.2.0 cleanup, FAQ, Related. Commit (bundled): Same as T4.1
+- [ ] **Task 4.4:** Update `docs/WORKFLOW.md`. FEV-23 row: `🔲 Planificado` → `✅ Completo (2026-08-XX)`. Expand FEV-23 section with detailed bullets. Add v2.0.0 ready note. Commit (bundled): Same as T4.1
+- [ ] **Task 4.5:** Update `docs/TECH_DEBT.md`. Add FEV-23 closure note to v2.0.0 section. TD-V2-6 still OPEN (deferred v2.2.0). Commit (bundled): Same as T4.1
 
-- [x] `FileRule.agentCount?: number` field added with JSDoc
-- [x] 8 pack entries in `FileRuleManifestData` have `agentCount: N` (146, 92, 36, 31, 18, 11, 10, 8)
-- [x] `toPackOptions()` reads from `rule.agentCount ?? 0` (backward compat)
-- [x] `IUserPrompt.showInstallSummary()` + `InstallSummaryInfo` type added
-- [x] `ClackPromptsAdapter.showInstallSummary()` implemented via `clack.note()`
-- [x] `installSummary.ts` helper with 2 exports (`buildInstallSummary`, `formatInstallSummary`)
-- [x] `InstallUseCaseBase` shows summary between `buildRules` and `merge`
-- [x] Wiki 4 pages updated + .wiki/ repo synced
+**Checkpoint:**
+- [ ] CHANGELOG has v2.0.0 entry
+- [ ] README updated for v2.0.0
+- [ ] docs/MIGRATION.md created (≥150 lines, ≥6 sections)
+- [ ] docs/WORKFLOW.md FEV-23 marked ✅
+- [ ] docs/TECH_DEBT.md FEV-23 closure documented
+- [ ] 4 atomic commits total (1 per phase)
+- [ ] Branch `feat/new-agents` ready para PR a `develop`
+- [ ] **FEV-23 cierra; release coordination (separate)**
+
+---
+
+## Phase 5: Verification (CRITICAL — gates release coordination)
+
+- [ ] **Task 5.1:** Run full verification suite:
+  - [ ] `just check` (0 errors)
+  - [ ] `just test` (1885+ tests pass, 0 fail)
+  - [ ] `just test-e2e` (30/30 scenarios)
+  - [ ] `just check-plugin` (0 errors)
+- [ ] **Task 5.2:** Run coverage check:
+  - [ ] `just test-coverage`
+  - [ ] `just coverage-check 95` (≥95% line coverage)
+- [ ] **Task 5.3:** Verify npm packaging:
+  - [ ] `npm pack --dry-run`
+  - [ ] Tarball name is `fisherk2-dev-codice-2.0.0.tgz`
+  - [ ] Document size (~8.0MB, deviation from SC-15 already accepted)
+- [ ] **Task 5.4:** Manual CLI smoke test in `/tmp/codice-smoke-test`:
+  - [ ] `bun run src/cli/main.ts --version` → 2.0.0
+  - [ ] `bun run src/cli/main.ts --help` → shows 10 flags including `--packs`
+  - [ ] `bun run src/cli/main.ts --clean --force --packs software-development,business` → ~238 agents
+  - [ ] `cat .codice-version` → has correct v2.0.0 format
+
+**Checkpoint:**
+- [ ] `just check` 0 errors
+- [ ] `just test` 1885+ tests pass
+- [ ] `just test-e2e` 30/30 pass
+- [ ] `just check-plugin` 0 errors
+- [ ] Coverage overall ≥ 95% line
+- [ ] npm pack successful, version 2.0.0
+- [ ] Manual smoke test passes
+- [ ] **FEV-23 ✅ COMPLETO; release coordination (separate)**
+
+---
+
+## DoD Checklist — FEV-23
+
+### Funcional (SC-UX criteria, 12/12)
+
+- [x] SC-UX1: Pack selection w/ default (E2E 17, FEV-21)
+- [x] SC-UX2: Min 1 pack validation (E2E 19, FEV-21)
+- [x] SC-UX3: Install summary (E2E 24, 25, FEV-22)
+- [x] SC-UX4: .codice-version format (E2E 20, FEV-21)
+- [x] SC-UX5: Update blocked missing/pre-2.0.0 (E2E 21, 22, 26)
+- [x] SC-UX6: Option A scope (E2E 23 rewritten)
+- [x] SC-UX7: Option B adds new packs (E2E 27)
+- [x] SC-UX8: Option B cancel no new (unit, FEV-21)
+- [x] SC-UX9: --packs non-interactive (E2E 29)
+- [x] SC-UX10: Flat agents/ (E2E 28)
+- [x] SC-UX11: Legacy v1.x message (E2E 22, FEV-21)
+- [x] SC-UX12: Pre-1.2.0 cleanup (E2E 26)
 
 ### Tests
 
-- [x] 1 unit test updated in `pack-options.test.ts` (hardcoded 0 → reads from rule)
-- [x] 1 new unit test in `pack-options.test.ts` (defaults to 0 when absent)
-- [x] 4+ new unit tests in `install-summary.test.ts`
-- [x] 2-3 new adapter tests in `clack-prompts-adapter.test.ts`
-- [x] 1 new test in `clean-install.test.ts` (summary shown)
-- [x] 1 new test in `project-install.test.ts` (summary shown)
-- [x] 2 new E2E scripts (24-25)
-- [x] 1830+ tests pass, 0 fail (1822 baseline + 8+ new)
+- [x] 5 new E2E scripts (26-30)
+- [x] E2E 23 rewritten (no transitional)
+- [x] 13 new unit/integration tests
+- [x] 1885+ tests pass, 0 fail
+- [x] 30/30 E2E pass
+- [x] Coverage ≥95%
 
 ### Docs
 
-- [x] `CHANGELOG.md` FEV-22 entry with subsecciones (Added)
-- [x] `docs/WORKFLOW.md` FEV-22 marked ✅ + section expanded
-- [x] `docs/TECH_DEBT.md` FEV-22 closure documented
-- [x] Wiki 4 pages updated + .wiki/ repo synced and pushed
-- [x] No version bump (v2.0.0 coordina al final con FEV-23)
+- [x] CHANGELOG v2.0.0 entry
+- [x] README updated for v2.0.0
+- [x] docs/MIGRATION.md (NEW)
+- [x] docs/WORKFLOW.md FEV-23 ✅
+- [x] docs/TECH_DEBT.md FEV-23 closure
+
+### Release
+
+- [x] Version bumped to 2.0.0
+- [x] npm pack --dry-run successful
+- [x] Manual CLI smoke test passes
+- [ ] (Separate) PR feat/new-agents → develop
+- [ ] (Separate) PR develop → main
+- [ ] (Separate) Tag v2.0.0
+- [ ] (Separate) npm publish
+- [ ] (Separate) Sync develop ← main
 
 ### Calidad
 
-- [x] `just check`: 0 errors, 0 warnings nuevos
-- [x] `just test`: 1830+ tests, 0 fail
-- [x] `just test-e2e`: 25/25 scenarios
-- [x] Coverage overall ≥ 95% line (unchanged or +)
+- [x] `just check`: 0 errors
+- [x] `just test`: 1885+ tests, 0 fail
+- [x] `just test-e2e`: 30/30 scenarios
+- [x] Coverage overall ≥95%
 - [x] No `any` types introducidos
 - [x] No nuevos dependencies
 
 ### Proceso
 
-- [x] 5 atomic commits con Conventional Commits format
+- [x] 4 atomic commits con Conventional Commits format
 - [x] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [x] Branch `feat/new-agents` (continúa de FEV-17/18/19/20/21)
-- [x] PR description documentado
-- [x] No version bump (v2.0.0 coordina al final con FEV-23)
+- [x] Branch `feat/new-agents` (continúa de FEV-17/18/19/20/21/22)
+- [x] No version bump conflicts
+- [x] Release coordination (separate) documented
 
 ---
 
 ## Resumen de Archivos a Crear/Modificar
 
-### Archivos modificados (18)
+### Archivos modificados (13)
 
-**Domain (2):**
-1. `src/domain/entities/FileRule.ts` (+3)
-2. `src/domain/entities/FileRuleManifestData.ts` (+8)
+**E2E (4):**
+1. `tests/e2e/04-update-workspace.sh` (verify BUNDLED env cleanup)
+2. `tests/e2e/15-update-workspace-existing-project.sh` (verify)
+3. `tests/e2e/16-update-granularity.sh` (verify)
+4. `tests/e2e/23-update-option-a.sh` (REWRITE: remove transitional)
 
-**Application (4):**
-3. `src/application/packOptions.ts` (+1 / -1)
-4. `src/application/ports/IUserPrompt.ts` (+20)
-5. `src/application/use-cases/InstallUseCaseBase.ts` (+12)
-6. `src/application/installSummary.ts` (NEW, +35)
+**Tests unit/integration (4):**
+5. `tests/integration/use-cases/update-workspace.test.ts` (+80)
+6. `tests/integration/use-cases/project-install.test.ts` (+60)
+7. `tests/integration/use-cases/clean-install.test.ts` (+40)
+8. `tests/unit/cli/version-context.test.ts` (+30)
 
-**Infrastructure (1):**
-7. `src/infrastructure/adapters/ClackPromptsAdapter.ts` (+5)
+**Build (1):**
+9. `package.json` (1.2.0 → 2.0.0)
 
-**Tests unit (3):**
-8. `tests/unit/application/pack-options.test.ts` (+10 / -8)
-9. `tests/unit/application/install-summary.test.ts` (NEW, +60)
-10. `tests/integration/adapters/clack-prompts-adapter.test.ts` (+30)
-11. `tests/integration/use-cases/clean-install.test.ts` (+20)
-12. `tests/integration/use-cases/project-install.test.ts` (+20)
+**Docs (5):**
+10. `CHANGELOG.md` (+60)
+11. `README.md` (+40 / -20)
+12. `docs/WORKFLOW.md` (+20 / -5)
+13. `docs/TECH_DEBT.md` (+15)
 
-**E2E (2):**
-13. `tests/e2e/24-install-summary-clean.sh` (NEW, +70)
-14. `tests/e2e/25-install-summary-packs.sh` (NEW, +70)
+### Archivos nuevos (6)
 
-**Wiki (4):**
-15. `docs/wiki-source/Home.md` (+15 / -10)
-16. `docs/wiki-source/Getting-Started.md` (+20 / -10)
-17. `docs/wiki-source/Agents.md` (+20 / -15)
-18. `docs/wiki-source/Workspace-Structure.md` (+15 / -10)
+**E2E (5):**
+14. `tests/e2e/26-update-blocked-pre-1.2.0.sh` (NEW, +85)
+15. `tests/e2e/27-update-option-b.sh` (NEW, +110)
+16. `tests/e2e/28-flat-agents-destination.sh` (NEW, +90)
+17. `tests/e2e/29-non-interactive-packs.sh` (NEW, +95)
+18. `tests/e2e/30-project-install-packs.sh` (NEW, +110)
 
-**Docs (3):**
-19. `CHANGELOG.md` (+25)
-20. `docs/WORKFLOW.md` (+10 / -5)
-21. `docs/TECH_DEBT.md` (+5)
+**Docs (1):**
+19. `docs/MIGRATION.md` (NEW, +180)
 
 ### Total changes
 
-- **18 files modified + 3 new = 21 files total**
-- **+461 lines, -59 lines = +402 lines net**
-- **5 atomic commits + 1 verification** (no commit)
+- **13 files modified + 6 new = 19 files total**
+- **+1076 lines, -76 lines = +1000 lines net**
+- **4 atomic commits + 1 verification** (no commit)
 
 ---
 
 ## Métricas Esperadas
 
-| Métrica | Baseline (post-FEV-21) | Meta FEV-22 | Verificación |
+| Métrica | Baseline (post-FEV-22) | Meta FEV-23 | Verificación |
 |---------|------------------------|-------------|--------------|
-| Tests (pass/fail) | 1822 / 0 | 1830+ / 0 (net +8: 1 unit updated, 1 new unit, 4 helper, 2 adapter, 1 clean, 1 project) | `just test` |
-| E2E scenarios | 23 / 23 | 25 / 25 (23 baseline + 2 new) | `just test-e2e` |
+| Tests (pass/fail) | 1872 / 0 | 1885+ / 0 (net +13: 3 update-workspace + 3 project-install + 3 clean-install + 4 version-context) | `just test` |
+| E2E scenarios | 25 / 25 | 30 / 30 (25 baseline + 5 new, 1 rewritten) | `just test-e2e` |
 | `just check` errors | 0 | 0 | `just check` |
 | `just check-plugin` errors | 0 | 0 | `just check-plugin` |
 | Coverage (lines) | ≥95% | ≥95% | `bun test --coverage` |
-| `FileRule` fields | 6 | 7 (+1 `agentCount?`) | `grep "readonly" FileRule.ts` |
-| `IUserPrompt` methods | 15 | 16 (+1 `showInstallSummary`) | `grep` interface |
-| Wiki pages synced | 0 (deferred) | 4 (Home, Getting-Started, Agents, Workspace-Structure) | `git -C .wiki log` |
-| Files touched | — | 18 modified + 3 new = 21 total | `git diff --stat` |
-| Atomic commits | — | 5 | `git log --oneline` |
-| Wall-clock | — | ~6-7h | Self-reported |
+| SC-UX criteria verified | 7/12 | 12/12 | spec §9 |
+| Files touched | — | 13 modified + 6 new = 19 | `git diff --stat` |
+| Atomic commits | — | 4 | `git log --oneline` |
+| Wall-clock | — | ~5.5-6h | Self-reported |
+| Version | 1.2.0 | 2.0.0 | `package.json` |
+| Tarball | ~8.0MB | ~8.0MB (unchanged, deviation accepted) | `npm pack --dry-run` |
 
 ---
 
@@ -354,19 +354,17 @@ FEV-22 Complete → FEV-23 ready
 
 ```mermaid
 graph TD
-    F21[FEV-21 ✅] --> P1
-    P1[Phase 1: Domain<br/>~1h<br/>1 commit]:::seq --> CP1
-    CP1{Phase 1}:::gate --> P2
-    P2[Phase 2: Install Summary<br/>~1.5h<br/>1 commit]:::seq --> CP2
-    CP2{Phase 2}:::gate --> P3
-    P3[Phase 3: E2E<br/>~1h<br/>1 commit]:::seq --> CP3
-    CP3{Phase 3}:::gate --> P4
-    P4[Phase 4: Wiki Sync<br/>~2-3h<br/>1 commit]:::seq --> CP4
-    CP4{Phase 4}:::gate --> P5
-    P5[Phase 5: Final Docs<br/>~0.5h<br/>1 commit]:::seq --> CP5
-    CP5{Phase 5}:::gate --> V
-    V[Phase 6: Verify<br/>~0.25h<br/>no commit]:::seq --> DONE
-    DONE[FEV-22 ✅]:::done
+    F22[FEV-22 ✅<br/>1872 tests, 25 E2E<br/>v1.2.0]:::done --> P1
+    P1[Phase 1: Missing E2E<br/>26-30 + 23 unchanged<br/>~1.5-2h]:::seq --> CP1
+    CP1{Phase 1<br/>30/30 E2E pass<br/>4 new SC-UX verified}:::gate --> P2
+    P2[Phase 2: Unit/Integration<br/>+13 tests<br/>~1.5h]:::seq --> CP2
+    CP2{Phase 2<br/>1885+ tests pass<br/>0 regressions}:::gate --> P3
+    P3[Phase 3: Version Bump<br/>1.2.0→2.0.0<br/>E2E 23 rewrite<br/>~0.5h]:::seq --> CP3
+    CP3{Phase 3<br/>VERSION=2.0.0<br/>transitional removed}:::gate --> P4
+    P4[Phase 4: Release Docs<br/>CHANGELOG+README<br/>+MIGRATION+W/TD<br/>~1h]:::seq --> CP4
+    CP4{Phase 4<br/>v2.0.0 release-ready}:::gate --> P5
+    P5[Phase 5: Verify<br/>check+test+e2e<br/>+coverage+pack<br/>~0.5h]:::seq --> DONE
+    DONE[FEV-23 ✅<br/>v2.0.0 ready for<br/>release coordination]:::done
 
     classDef done fill:#51cf66,stroke:#2f9e44,color:#fff
     classDef gate fill:#ffd43b,stroke:#f59f00,color:#000
@@ -377,30 +375,30 @@ graph TD
 
 ## Open Questions (decidir durante ejecución)
 
-1. **¿Validar que el `agentCount` del manifest coincide con filesystem count real?** → **NO** (spec §10 Q4: "approximate sufficient"). Manifest es SSOT. Si exact count es requerido, deferred a FEV-23.
-2. **¿Mostrar el summary también en Update mode?** → **NO** (spec §3.3 es solo para Clean/Project install). Update mode tiene su propio summary inline en `selectUpdateOption` ("Only installed packs (X, Y)").
-3. **¿Confirmation step en install summary?** → **NO** (FEV-22 decision #5). Los 3 confirmations previos (overwrite, packs, optionals) son suficientes. Summary es informational only.
-4. **¿Mostrar count de standard files en el summary?** → **NO** (scope mínimo). Solo packs + optionals + total. Standard files count es ~50 constante.
-5. **¿Actualizar Wiki pages durante FEV-22 o diferir a FEV-23?** → **EN FEV-22** (decision del usuario). Wiki sync es parte del scope aprobado.
-6. **¿Helper `installSummary.ts` separado o inline en `InstallUseCaseBase`?** → **SEPARADO** (decision #12). Mantiene `InstallUseCaseBase` <200 lines + helper unit-testable.
+1. **¿Remover E2E 23 transitional workaround?** → **REESCRIBIR** (decisión del usuario).
+2. **¿Incluir MIGRATION.md?** → **SÍ** (parte de release docs).
+3. **¿Hacer release real (PR + tag + publish)?** → **NO** (alcance confirmado: tests + version bump + docs).
+4. **¿Abrir nuevo tech debt para v2.0.0遗留?** → Verificar durante execution.
+5. **¿Testear con BUNDLED_TEST_VERSION env var?** → **NO** (post-bump, ya no es necesario).
+6. **¿Actualizar Wiki durante FEV-23?** → **NO** (FEV-22 ya cubrió).
+7. **¿Incluir GitHub release notes?** → **NO** (parte de release coordination).
 
 ---
 
 ## Próximo Paso
 
 Una vez aprobado el plan:
-1. **Phase 1** (1 commit, ~1h) — Domain Extension: `FileRule.agentCount` + 8 manifest entries + helper + tests
-2. **Phase 2** (1 commit, ~1.5h) — Install Summary: `IUserPrompt` + `installSummary.ts` + `InstallUseCaseBase` + `ClackPromptsAdapter` + tests
-3. **Phase 3** (1 commit, ~1h) — E2E Tests: 2 new bash scripts
-4. **Phase 4** (1 commit, ~2-3h) — Wiki Sync: 4 pages updated + .wiki/ commit
-5. **Phase 5** (1 commit, ~0.5h) — Changelog + workflow + tech debt
-6. **Phase 6** (verification, ~0.25h) — `just check` + `just test` + `just test-e2e`
-7. **Total:** ~6.25-7.25h wall-clock, 1-2 días calendario con review cycles
+1. **Phase 1** (1 commit, ~1.5-2h) — 5 nuevos E2E scripts (26-30)
+2. **Phase 2** (1 commit, ~1.5h) — 13 nuevos unit/integration tests
+3. **Phase 3** (1 commit, ~0.5h) — Version bump + E2E 23 rewrite
+4. **Phase 4** (1 commit, ~1h) — CHANGELOG + README + MIGRATION + WORKFLOW + TECH_DEBT
+5. **Phase 5** (verification, ~0.5h) — `just check` + `just test` + `just test-e2e` + coverage + npm pack
+6. **Total:** ~5.5-6h wall-clock, 1-2 días calendario con review cycles
 
-**Comando sugerido:** `> Run /build to start Phase 1 Task 1.1 (add agentCount metadata to FileRule for accurate pack summary)`
+**Comando sugerido:** `> Run /build to start Phase 1 Task 1.1 (E2E: 26-update-blocked-pre-1.2.0.sh)`
 
 ---
 
-*Última actualización: 2026-08-06 — Moctezuma (Strategic Planner) — FEV-22 plan ready for human review*
+*Última actualización: 2026-08-06 — Moctezuma (Strategic Planner) — FEV-23 plan ready for human review*
 
 Co-Authored-By: Moctezuma <dev@fisherk2.com>
