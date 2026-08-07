@@ -753,5 +753,32 @@ describe("CleanInstallUseCase", () => {
 			expect(calls.writeVersionFile.length).toBe(0);
 			expect(calls.commitStaging).toBe(0);
 		});
+
+		it("shows install summary before merge", async () => {
+			const { stub: fs } = createMockFileSystem();
+			const engine = new FileMergeEngine(fs);
+			const prompt = createMockPrompt();
+			const symlinkMock = createMockSymlinkCreator();
+			const gitignoreCreator = createMockGitignoreCreator();
+			const useCase = new CleanInstallUseCase(
+				fs,
+				engine,
+				prompt,
+				symlinkMock,
+				OPENCODE_SYMLINKS,
+				gitignoreCreator,
+			);
+
+			await useCase.execute("/tmp/project", { force: true });
+
+			// force=true auto-selects all 8 packs → 352 total agents
+			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
+				expect.objectContaining({
+					packs: expect.arrayContaining([{ id: "software-development", agentCount: 146 }]),
+					totalAgents: 352,
+					totalFiles: expect.any(Number),
+				}),
+			);
+		});
 	});
 });
