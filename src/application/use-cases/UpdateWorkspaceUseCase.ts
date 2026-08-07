@@ -109,7 +109,7 @@ export class UpdateWorkspaceUseCase {
 		if (remoteTag) {
 			const remoteVersion = remoteTag.startsWith("v") ? remoteTag.slice(1) : remoteTag;
 			const remoteComparison = this.versionComparator.compare(localVersion.version, remoteVersion);
-			if (remoteComparison.ok && remoteComparison.value === "newer") {
+			if (remoteComparison.ok && remoteComparison.value === "ahead") {
 				await this.userPrompt.showInfo(
 					`A newer version (v${remoteVersion}) is available on GitHub. The bundled template (v${this.bundledVersion}) will be used for this update.`,
 				);
@@ -121,15 +121,15 @@ export class UpdateWorkspaceUseCase {
 		}
 
 		// Compare installed version against bundled template version.
-		// Comparator reports "newer" when bundled > local (update available).
-		// isUpToDate requires the comparison to SUCCEED — a failed comparison
-		// (invalid bundled semver) must fall through so resolveNewVersion can
-		// write the "0.0.0" fallback.
+		// VersionComparator reports "ahead" when bundled > local (update
+		// available). isUpToDate requires the comparison to SUCCEED — a failed
+		// comparison (invalid bundled semver) must fall through so
+		// resolveNewVersion can write the "0.0.0" fallback.
 		const bundledComparison = this.versionComparator.compare(
 			localVersion.version,
 			this.bundledVersion,
 		);
-		const isUpToDate = bundledComparison.ok && bundledComparison.value !== "newer";
+		const isUpToDate = bundledComparison.ok && bundledComparison.value !== "ahead";
 		if (isUpToDate) {
 			await this.userPrompt.showInfo(
 				`Workspace is already up to date at version ${localVersion.version}. No update needed.`,
@@ -189,8 +189,10 @@ export class UpdateWorkspaceUseCase {
 	 * Resolve the version string to write to .codice-version.
 	 * Priority: explicit flag > bundled template > fallback to "0.0.0".
 	 *
-	 * The bundled template version is always available,
-	 * so the chain never reaches the fallback — kept for type safety.
+	 * The fallback IS reachable: when the bundled template version is not
+	 * valid semver (e.g. a malformed package.json), valid() returns null and
+	 * "0.0.0" is written instead of crashing or corrupting the version file.
+	 * This is a runtime-safety net, not a type-level guarantee.
 	 */
 	private resolveNewVersion(options: UpdateWorkspaceOptions | undefined): string {
 		const resolved = options?.version ?? this.bundledVersion;

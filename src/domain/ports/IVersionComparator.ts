@@ -1,5 +1,5 @@
 import type { Result } from "../types/Result";
-import type { ComparisonResult } from "../types/version";
+import type { RemoteVersionStatus } from "../types/version";
 
 /**
  * Interface for semantic version comparison.
@@ -11,8 +11,9 @@ export interface IVersionComparator {
 	 * Compare a local version against a remote version.
 	 * @param local - Installed version string (e.g. "1.0.0")
 	 * @param remote - Latest remote version string (e.g. "1.1.0")
-	 * @returns Result with ComparisonResult or an Error if either version
-	 *          string is not a valid semver format.
+	 * @returns Result with RemoteVersionStatus (from the remote's perspective,
+	 *          e.g. "ahead" when remote > local, meaning an update is available)
+	 *          or an Error if either version string is not a valid semver format.
 	 */
-	compare(local: string, remote: string): Result<ComparisonResult, Error>;
+	compare(local: string, remote: string): Result<RemoteVersionStatus, Error>;
 }

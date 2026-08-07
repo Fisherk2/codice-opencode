@@ -21,8 +21,8 @@ import type { IFileSystem } from "../../src/domain/ports/IFileSystem";
 import type { IVersionComparator } from "../../src/domain/ports/IVersionComparator";
 import type { MergeError } from "../../src/domain/types/MergeError";
 import type { ProgressCallback } from "../../src/domain/types/ProgressEvent";
-import { type Result, success } from "../../src/domain/types/Result";
-import type { ComparisonResult } from "../../src/domain/types/version";
+import { failure, type Result, success } from "../../src/domain/types/Result";
+import type { RemoteVersionStatus } from "../../src/domain/types/version";
 
 /**
  * Bundled template version used in the tests. Must be NEWER than the seeded
@@ -140,16 +140,16 @@ class FakeUserPrompt implements IUserPrompt {
 }
 
 class FakeVersionComparator implements IVersionComparator {
-	compare(installed: string, remote: string): Result<ComparisonResult, Error> {
+	compare(installed: string, remote: string): Result<RemoteVersionStatus, Error> {
 		const validInstalled = valid(installed);
 		const validRemote = valid(remote);
 		if (!validInstalled || !validRemote) {
-			return success("incompatible" as ComparisonResult);
+			return failure(new Error("Invalid version format"));
 		}
 		const cmp = semverCompare(validInstalled, validRemote);
-		if (cmp < 0) return success("newer" as ComparisonResult);
-		if (cmp > 0) return success("older" as ComparisonResult);
-		return success("equal" as ComparisonResult);
+		if (cmp < 0) return success("ahead");
+		if (cmp > 0) return success("behind");
+		return success("equal");
 	}
 }
 
