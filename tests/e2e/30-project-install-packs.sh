@@ -46,14 +46,7 @@ log_info "Pre-populated README.md with unique content"
 # ---------------------------------------------------------------------------
 
 log_info "Running: $CODICE_CLI --project --force --packs business in $TEMP_DIR"
-EXIT_CODE=0
-CLI_OUTPUT=$(cd "$TEMP_DIR" && $CODICE_CLI --project --force --packs business 2>&1) || EXIT_CODE=$?
-
-if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
-    exit 1
-fi
-log_pass "CLI exited with code 0"
+run_cli_capture -- --project --force --packs business
 
 # ---------------------------------------------------------------------------
 # Assertions
@@ -72,18 +65,7 @@ log_pass "README.md preserved (estandar — not overwritten)"
 # 2. Version file records the selected pack
 log_info "Checking .codice-version records installedPacks with business..."
 assert_file_exists "$TEMP_DIR/.codice-version"
-
-VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
-if ! echo "$VERSION_DATA" | grep -q '"installedPacks"'; then
-    log_fail "Version file is missing 'installedPacks'"
-    echo "    Version data: $VERSION_DATA" >&2
-    exit 1
-fi
-if ! echo "$VERSION_DATA" | grep -q '"business"'; then
-    log_fail "Version file does not list 'business' in installedPacks"
-    echo "    Version data: $VERSION_DATA" >&2
-    exit 1
-fi
+assert_version_has_pack "$TEMP_DIR/.codice-version" "business"
 log_pass "Version file records installedPacks with business"
 
 # 3. Selected pack agent present

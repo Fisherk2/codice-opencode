@@ -41,14 +41,7 @@ cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
 # ---------------------------------------------------------------------------
 
 log_info "Running: $CODICE_CLI --clean --force --packs software-development,business in $TEMP_DIR"
-EXIT_CODE=0
-CLI_OUTPUT=$(cd "$TEMP_DIR" && $CODICE_CLI --clean --force --packs software-development,business 2>&1) || EXIT_CODE=$?
-
-if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
-    exit 1
-fi
-log_pass "CLI exited with code 0"
+run_cli_capture -- --clean --force --packs software-development,business
 
 # ---------------------------------------------------------------------------
 # Assertions

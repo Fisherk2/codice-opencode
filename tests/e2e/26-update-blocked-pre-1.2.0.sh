@@ -47,26 +47,14 @@ log_info "Mock GitHub API pointing to $CODICE_GITHUB_API_URL"
 # ---------------------------------------------------------------------------
 
 log_info "Running: $CODICE_CLI --update --force in $TEMP_DIR"
-EXIT_CODE=0
-STDERR_FILE="$TEMP_DIR/stderr.log"
-STDOUT_FILE="$TEMP_DIR/stdout.log"
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
+run_cli_capture_split " — gate returns success" -- --update --force
 
 # Stop mock server
 stop_mock_server
 
-if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "CLI exited with code $EXIT_CODE (expected 0 — gate returns success)"
-    exit 1
-fi
-log_pass "CLI exited with code 0"
-
 # ---------------------------------------------------------------------------
 # Assertions
 # ---------------------------------------------------------------------------
-
-# Combined output for message assertions (TUI messages emit on stdout via clack)
-COMBINED_OUTPUT=$(cat "$STDOUT_FILE" "$STDERR_FILE" 2>/dev/null || echo "")
 
 log_info "Checking that the version gate detected the pre-1.2.0 installation..."
 assert_contains "$COMBINED_OUTPUT" "Pre-1.2.0 Installation Detected"
