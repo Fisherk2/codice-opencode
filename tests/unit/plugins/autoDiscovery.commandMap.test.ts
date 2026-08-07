@@ -74,6 +74,26 @@ describe("discoverCommandAgentMap", () => {
 		expect(result).toEqual({});
 	});
 
+	test("returns empty object for an existing empty directory", async () => {
+		const dir = join(tmpDir, "cmd-empty-existing");
+		await mkdir(dir);
+
+		const result = discoverCommandAgentMap(dir);
+
+		expect(result).toEqual({});
+	});
+
+	test("skips files with malformed frontmatter (unclosed delimiter)", async () => {
+		const dir = join(tmpDir, "cmd-malformed");
+		await mkdir(dir);
+		await writeFile(join(dir, "broken.md"), "---\nagent: tlaloc\nno-closing-marker\n");
+		await writeFile(join(dir, "valid.md"), "---\nagent: quetzalcoatl\n---\n# Valid");
+
+		const result = discoverCommandAgentMap(dir);
+
+		expect(result).toEqual({ "/valid": "quetzalcoatl" });
+	});
+
 	test("skips unreadable files without throwing", async () => {
 		const dir = join(tmpDir, "cmd-unreadable");
 		await mkdir(dir);

@@ -57,6 +57,10 @@ describe("discoverAgentMentionPatterns", () => {
 		// Partial matches should not match
 		expect(patterns?.[0]?.test("tlaloc")).toBe(false);
 		expect(patterns?.[1]?.test("tlaloc")).toBe(false);
+		// Word boundary: trailing letters break the @match, and the agent
+		// pattern must not match a different agent name.
+		expect(patterns?.[0]?.test("@tlalocX")).toBe(false);
+		expect(patterns?.[1]?.test("agente quetzalcoatl")).toBe(false);
 	});
 
 	test("returns empty record for empty set", () => {

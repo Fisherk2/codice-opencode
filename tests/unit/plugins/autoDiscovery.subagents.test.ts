@@ -78,4 +78,66 @@ describe("discoverValidSubagents", () => {
 		expect(result.has("writer")).toBe(true);
 		expect(result.has("reviewer")).toBe(true);
 	});
+
+	test("set size equals discovered files plus PRIMARY_AGENTS", async () => {
+		const dir = join(tmpDir, "agents-count");
+		await mkdir(dir);
+		const discovered = [
+			"typescript-pro",
+			"golang-pro",
+			"docker-expert",
+			"docs-writer",
+			"test-engineer",
+		];
+		for (const name of discovered) {
+			await writeFile(join(dir, `${name}.md`), `# ${name}`);
+		}
+
+		const result = discoverValidSubagents(dir);
+
+		expect(result.size).toBe(discovered.length + PRIMARY_AGENTS.length);
+	});
+
+	test("ignores non-.md files while keeping PRIMARY_AGENTS", async () => {
+		const dir = join(tmpDir, "agents-nonmd");
+		await mkdir(dir);
+		await writeFile(join(dir, "rust-engineer.md"), "# Rust");
+		await writeFile(join(dir, "readme.txt"), "not an agent");
+		await writeFile(join(dir, "config.yaml"), "not an agent");
+
+		const result = discoverValidSubagents(dir);
+
+		expect(result.size).toBe(1 + PRIMARY_AGENTS.length);
+		expect(result.has("rust-engineer")).toBe(true);
+	});
+
+	test("skips hidden directories like .git and .opencode", async () => {
+		const dir = join(tmpDir, "agents-hidden-dirs");
+		await mkdir(dir);
+		await writeFile(join(dir, "visible-agent.md"), "# Visible");
+		await mkdir(join(dir, ".git"));
+		await writeFile(join(dir, ".git", "should-be-ignored.md"), "# Ignored");
+		await mkdir(join(dir, ".opencode"));
+		await writeFile(join(dir, ".opencode", "internal-agent.md"), "# Internal");
+
+		const result = discoverValidSubagents(dir);
+
+		expect(result.size).toBe(1 + PRIMARY_AGENTS.length);
+		expect(result.has("visible-agent")).toBe(true);
+		expect(result.has("should-be-ignored")).toBe(false);
+		expect(result.has("internal-agent")).toBe(false);
+	});
+
+	test("skips hidden dot-files like .agent.md and .gitkeep", async () => {
+		const dir = join(tmpDir, "agents-hidden-files");
+		await mkdir(dir);
+		await writeFile(join(dir, "visible-agent.md"), "# Visible");
+		await writeFile(join(dir, ".agent.md"), "# Hidden agent");
+		await writeFile(join(dir, ".gitkeep"), "");
+
+		const result = discoverValidSubagents(dir);
+
+		expect(result.size).toBe(1 + PRIMARY_AGENTS.length);
+		expect(result.has("visible-agent")).toBe(true);
+	});
 });
