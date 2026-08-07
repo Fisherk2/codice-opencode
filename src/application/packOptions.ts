@@ -52,6 +52,3 @@ export function toPackOptions(rules: readonly FileRule[]): readonly PackOption[]
 export function promptForPackSelection(userPrompt: IUserPrompt): Promise<readonly string[]> {
 	return userPrompt.selectPacks(toPackOptions(getPackRules()), [...DEFAULT_PACKS]);
 }
-
-// Re-export for consumers that need the pack-id derivation.
-export { packIdFromPath } from "../domain/entities/FileRuleManifest";

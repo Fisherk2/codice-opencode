@@ -170,7 +170,7 @@ export interface IUserPrompt {
 export interface InstallSummaryInfo {
 	/** Packs to install with their agent counts */
 	readonly packs: readonly { readonly id: string; readonly agentCount: number }[];
-	/** Mandatory directories always included (core, main, writers) */
+	/** Mandatory directories always included in the install */
 	readonly mandatoryDirs: readonly string[];
 	/** Optional files the user selected (empty if none) */
 	readonly optionalFiles: readonly string[];

@@ -1,5 +1,5 @@
 import { describe, expect, it, mock as mockFn } from "bun:test";
-import { DEFAULT_PACKS, packIdFromPath } from "../../../src/application/packOptions";
+import { DEFAULT_PACKS } from "../../../src/application/packOptions";
 import type { IGitignoreCreator } from "../../../src/application/ports/IGitignoreCreator";
 import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
@@ -9,6 +9,7 @@ import {
 	filterByPacks,
 	getPackRules,
 	getRulesByCategory,
+	packIdFromPath,
 } from "../../../src/domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";

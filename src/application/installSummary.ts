@@ -7,6 +7,9 @@ import type { FileRule } from "../domain/entities/FileRule";
 import { packIdFromPath } from "../domain/entities/FileRuleManifest";
 import type { InstallSummaryInfo } from "./ports/IUserPrompt";
 
+/** Rough estimate of files contributed by each mandatory directory. */
+const ESTIMATED_FILES_PER_MANDATORY_DIR = 5;
+
 /**
  * Build the pre-install summary data from selected rules.
  * Aggregates pack agent counts (from FileRule.agentCount, defaulting to 0).
@@ -41,8 +44,11 @@ export function buildInstallSummary(
 		mandatoryDirs,
 		optionalFiles: [...selectedOptionals],
 		totalAgents,
-		// Rough estimate: each mandatory directory contributes ~5 files.
-		totalFiles: totalAgents + mandatoryDirs.length * 5 + selectedOptionals.length,
+		// Rough estimate: each mandatory directory contributes a few files.
+		totalFiles:
+			totalAgents +
+			mandatoryDirs.length * ESTIMATED_FILES_PER_MANDATORY_DIR +
+			selectedOptionals.length,
 	};
 }
 
