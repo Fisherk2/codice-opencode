@@ -9,12 +9,12 @@
 
 ## 1. Purpose
 
-FEV-18 migrates 267 new agents from `agency-agents-main/` into pack directories.
+FEV-18 migrates 267 new agents from external sources into pack directories.
 These source files use a minimalist frontmatter that is incompatible with the
 Códice workspace standard. This spec defines the **target v2.0 format** and the
 conversion rules applied by `scripts/reformat-agent.ts`.
 
-## 2. Source Format (agency-agents-main)
+## 2. Source Format
 
 ```yaml
 ---
@@ -145,9 +145,8 @@ and legacy subagents (`template/obligatorio/packs/sin-clasificar/typescript-pro.
 `scripts/reformat-agent.ts` must produce identical output when run twice:
 
 - Running on a source file always generates fresh v2.0 content (deterministic).
-- Running on an **already-converted** file is not supported (source is
-  `agency-agents-main/`, target is `template/obligatorio/packs/` — different
-  directories, so re-conversion never happens on the same file).
+- Running on an **already-converted** file is not supported (source and
+  target are in different directories, so re-conversion never happens on the same file).
 - The test suite verifies: converting the same source to two targets yields
   identical content, and re-writing the same target does not duplicate the
   `## COMPOSITION` block.

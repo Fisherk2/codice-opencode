@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-04
 **Author:** Moctezuma (Strategic Planner)
-**Sources:** `agency-agents-main/` (267) + `template/obligatorio/packs/sin-clasificar/` (95)
+**Sources:** External agent repositories (267) + `template/obligatorio/packs/sin-clasificar/` (95)
 **Method:** Source-category defaults (S5-PACKS §3) + purpose-based overrides for
 `engineering/` and `specialized/` (agent descriptions reviewed 2026-08-04).
 

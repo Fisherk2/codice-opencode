@@ -10,7 +10,7 @@
 
 | Metric | Spec (S5-PACKS §3.1) | Reality (2026-08-04) | Delta |
 |--------|----------------------|----------------------|-------|
-| IDEAL new agents | ~345 | **257** (only in agency-agents-main) | −88 |
+| IDEAL new agents | ~345 | **257** (new-only) | −88 |
 | IMPROVABLE | 59 | **0 explicit** (deferred to Phase 2 domain comparison) | −59 |
 | REDUNDANT | 13 | **10** (name collisions, legacy wins) | −3 |
 | Legacy v1.x (sin-clasificar) | — | **95** | +95 |

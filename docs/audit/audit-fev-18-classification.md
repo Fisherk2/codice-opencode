@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-04
 **Author:** Moctezuma (Strategic Planner)
-**Sources:** `agency-agents-main/` (267) + `template/obligatorio/packs/sin-clasificar/` (95 legacy v1.x)
+**Sources:** External agent repositories (267) + `template/obligatorio/packs/sin-clasificar/` (95 legacy v1.x)
 **Method:** Name-intersection analysis (`comm`). IMPROVABLE detection deferred to Phase 2 (per-pack domain comparison).
 
 ---
@@ -13,7 +13,7 @@
 |----------|-------|--------|
 | **REDUNDANT** (same name in both sources) | 10 | Legacy v1.x wins — new source discarded |
 | **Legacy-only** (only in `sin-clasificar/`) | 85 | Distribute to pack, keep v1.x format (hybrid decision) |
-| **New-only** (only in `agency-agents-main/`) | 257 | Distribute to pack, reformat to v2.0 (YAML + COMPOSITION) |
+| **New-only** (only in external sources) | 257 | Distribute to pack, reformat to v2.0 (YAML + COMPOSITION) |
 | **Unique agents total** | **352** | 95 + 267 − 10 overlaps |
 
 > **Note:** The spec (S5-PACKS §3.1) predicted 59 IMPROVABLE + 13 REDUNDANT + ~345 IDEAL = 417.
@@ -25,21 +25,21 @@
 
 ## 2. REDUNDANT Agents (10) — Legacy v1.x wins
 
-These names exist in BOTH `sin-clasificar/` (legacy) and `agency-agents-main/` (new).
+These names exist in BOTH `sin-clasificar/` (legacy) and external sources (new).
 **Decision:** Keep the legacy v1.x version (backward compat for existing users), discard the new version.
 
 | # | Agent | Legacy location | New source location |
 |---|-------|----------------|---------------------|
-| 1 | `ai-engineer` | `sin-clasificar/ai-engineer.md` | `agency-agents-main/engineering/ai-engineer.md` |
-| 2 | `data-engineer` | `sin-clasificar/data-engineer.md` | `agency-agents-main/engineering/data-engineer.md` |
-| 3 | `database-optimizer` | `sin-clasificar/database-optimizer.md` | `agency-agents-main/engineering/database-optimizer.md` |
-| 4 | `frontend-developer` | `sin-clasificar/frontend-developer.md` | `agency-agents-main/engineering/frontend-developer.md` |
-| 5 | `network-engineer` | `sin-clasificar/network-engineer.md` | `agency-agents-main/engineering/network-engineer.md` |
-| 6 | `product-manager` | `sin-clasificar/product-manager.md` | `agency-agents-main/product/product-manager.md` |
-| 7 | `prompt-engineer` | `sin-clasificar/prompt-engineer.md` | `agency-agents-main/engineering/prompt-engineer.md` |
-| 8 | `sales-engineer` | `sin-clasificar/sales-engineer.md` | `agency-agents-main/sales/sales-engineer.md` |
-| 9 | `sre-engineer` | `sin-clasificar/sre-engineer.md` | `agency-agents-main/engineering/sre-engineer.md` |
-| 10 | `ux-researcher` | `sin-clasificar/ux-researcher.md` | `agency-agents-main/design/ux-researcher.md` |
+| 1 | `ai-engineer` | `sin-clasificar/ai-engineer.md` | External source |
+| 2 | `data-engineer` | `sin-clasificar/data-engineer.md` | External source |
+| 3 | `database-optimizer` | `sin-clasificar/database-optimizer.md` | External source |
+| 4 | `frontend-developer` | `sin-clasificar/frontend-developer.md` | External source |
+| 5 | `network-engineer` | `sin-clasificar/network-engineer.md` | External source |
+| 6 | `product-manager` | `sin-clasificar/product-manager.md` | External source |
+| 7 | `prompt-engineer` | `sin-clasificar/prompt-engineer.md` | External source |
+| 8 | `sales-engineer` | `sin-clasificar/sales-engineer.md` | External source |
+| 9 | `sre-engineer` | `sin-clasificar/sre-engineer.md` | External source |
+| 10 | `ux-researcher` | `sin-clasificar/ux-researcher.md` | External source |
 
 ---
 
@@ -55,7 +55,7 @@ These 85 agents exist ONLY in `template/obligatorio/packs/sin-clasificar/`. They
 
 ## 4. New-only Agents (257) — v2.0 format required
 
-These 257 agents exist ONLY in `agency-agents-main/`. They are distributed to packs in Phase 2 **with v2.0 reformatting** (YAML frontmatter + body + `## COMPOSITION` block).
+These 257 agents exist ONLY in external sources. They are distributed to packs in Phase 2 **with v2.0 reformatting** (YAML frontmatter + body + `## COMPOSITION` block).
 
 ```
 (Listed in tasks/audit-fev-18-pack-assignment.md §New — full per-agent pack mapping)

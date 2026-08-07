@@ -1,8 +1,8 @@
-# FEV-18 Audit — Inventory of `agency-agents-main/`
+# FEV-18 Audit — Inventory of External Agent Sources
 
 **Date:** 2026-08-04
 **Author:** Moctezuma (Strategic Planner)
-**Source:** `agency-agents-main/` (untracked, FEV-17 resource)
+**Source:** External agent repositories (untracked, FEV-17 resource)
 **Total files:** 267 `.md` files across 17 categories
 **Total size:** 4.3MB
 
