@@ -1,0 +1,60 @@
+/**
+ * Pre-install summary helpers for the installer wizard (spec §3.3).
+ * Pure functions — no I/O, no side effects.
+ */
+
+import type { FileRule } from "../domain/entities/FileRule";
+import { packIdFromPath } from "../domain/entities/FileRuleManifest";
+import type { InstallSummaryInfo } from "./ports/IUserPrompt";
+
+/**
+ * Build the pre-install summary data from selected rules.
+ * Aggregates pack agent counts (from FileRule.agentCount, defaulting to 0).
+ *
+ * @param packRules - Pack rules from getPackRules() (for pack lookup).
+ * @param selectedPacks - Pack IDs the user selected.
+ * @param selectedOptionals - Optional file paths the user selected.
+ * @param allRules - Full rule set (for mandatory directory detection).
+ * @returns InstallSummaryInfo suitable for IUserPrompt.showInstallSummary.
+ */
+export function buildInstallSummary(
+	packRules: readonly FileRule[],
+	selectedPacks: readonly string[],
+	selectedOptionals: readonly string[],
+	allRules: readonly FileRule[],
+): InstallSummaryInfo {
+	// Dedupe selected packs: filterByPacks merges duplicates via a Set, so the
+	// summary must match — otherwise a duplicate id double-counts its agents.
+	const rulesByPack = new Map(packRules.map((rule) => [packIdFromPath(rule.path), rule]));
+	const packs = [...new Set(selectedPacks)]
+		.map((id) => rulesByPack.get(id))
+		.filter((rule): rule is FileRule => rule !== undefined)
+		.map((rule) => ({ id: packIdFromPath(rule.path), agentCount: rule.agentCount ?? 0 }));
+	const totalAgents = packs.reduce((sum, pack) => sum + pack.agentCount, 0);
+	const mandatoryDirs = allRules
+		.filter((rule) => rule.category === "mandatory" && rule.isDirectory)
+		.map((rule) => rule.path);
+	return {
+		packs,
+		mandatoryDirs,
+		optionalFiles: [...selectedOptionals],
+		totalAgents,
+		// Rough estimate: each mandatory directory contributes ~5 files.
+		totalFiles: totalAgents + mandatoryDirs.length * 5 + selectedOptionals.length,
+	};
+}
+
+/** Format InstallSummaryInfo as a multi-line string for clack.note(). */
+export function formatInstallSummary(info: InstallSummaryInfo): string {
+	const lines = [
+		`Packs: ${info.packs.map((pack) => `${pack.id} (${pack.agentCount} agents)`).join(", ")}`,
+	];
+	if (info.mandatoryDirs.length > 0) {
+		lines.push(`Mandatory: ${info.mandatoryDirs.join(", ")}`);
+	}
+	if (info.optionalFiles.length > 0) {
+		lines.push(`Optional: ${info.optionalFiles.length} file(s)`);
+	}
+	lines.push(`Total: ~${info.totalAgents} agents | ~${info.totalFiles} files`);
+	return lines.join("\n");
+}

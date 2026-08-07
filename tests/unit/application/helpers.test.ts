@@ -51,6 +51,7 @@ function createMockPrompt(opts?: { confirmResult?: boolean }): {
 			selectUpdateOption: mockFn(() =>
 				Promise.resolve<"current" | "add" | "cancel" | null>("current"),
 			),
+			showInstallSummary: mockFn(() => {}),
 		},
 	};
 }

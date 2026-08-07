@@ -91,6 +91,7 @@ function createMockPrompt(): IUserPrompt & { logEntries: string[] } {
 		selectUpdateOption: mockFn(() =>
 			Promise.resolve<"current" | "add" | "cancel" | null>("current"),
 		),
+		showInstallSummary: mockFn(() => {}),
 		get logEntries() {
 			return logEntries;
 		},

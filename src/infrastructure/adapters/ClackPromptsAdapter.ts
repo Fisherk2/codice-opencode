@@ -1,5 +1,7 @@
 import * as clack from "@clack/prompts";
+import { formatInstallSummary } from "../../application/installSummary";
 import type {
+	InstallSummaryInfo,
 	IUserPrompt,
 	PackOption,
 	UpdateOption,
@@ -44,16 +46,12 @@ export class ClackPromptsAdapter implements IUserPrompt {
 	// biome-ignore lint/complexity/noUselessConstructor: Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
 	constructor() {}
 
-	/**
-	 * Display a warning message using @clack/prompts note() with yellow styling.
-	 */
+	/** Display a warning message using @clack/prompts note() with yellow styling. */
 	showWarning(message: string): void {
 		clack.note(message, "⚠️  Warning");
 	}
 
-	/**
-	 * Display an informational message using @clack/prompts note().
-	 */
+	/** Display an informational message using @clack/prompts note(). */
 	showInfo(message: string): void {
 		clack.note(message, "Info");
 	}
@@ -193,5 +191,10 @@ export class ClackPromptsAdapter implements IUserPrompt {
 		});
 		if (clack.isCancel(result)) return null;
 		return result as UpdateOption;
+	}
+
+	/** Display the pre-install summary via clack.note() (spec §3.3). */
+	showInstallSummary(info: InstallSummaryInfo): void {
+		clack.note(formatInstallSummary(info), "📋 Installation Summary");
 	}
 }

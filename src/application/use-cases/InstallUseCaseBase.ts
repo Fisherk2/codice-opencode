@@ -1,15 +1,10 @@
 /**
- * Base class for installation use cases implementing the Template Method pattern.
- *
- * CleanInstallUseCase and ProjectInstallUseCase share an identical flow
- * (check writable → confirm overwrite → select packs → select optionals →
- * merge → post-install) but differ in four hooks: selectPacks, buildRules,
- * selectOptionals, and getSuccessMessage (each documented below).
- *
- * Reference: GoF Template Method
+ * Base class for installation use cases implementing the Template Method pattern
+ * (GoF). Clean and Project installs share one flow; the abstract hooks specialize it.
  */
 
 import type { FileRule } from "../../domain/entities/FileRule";
+import { FILE_RULE_MANIFEST, getPackRules } from "../../domain/entities/FileRuleManifest";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
@@ -20,14 +15,13 @@ import {
 	createProgressCallback,
 	wrapMergeError,
 } from "../helpers";
+import { buildInstallSummary } from "../installSummary";
 import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { runPostInstallSteps } from "../postInstall";
 
-/**
- * Options shared by all installation modes.
- */
+/** Options shared by all installation modes. */
 export interface BaseInstallOptions {
 	/** Skip the non-empty directory confirmation prompt */
 	readonly force?: boolean;
@@ -61,7 +55,6 @@ export abstract class InstallUseCaseBase {
 
 	/**
 	 * Template method: run the installation flow with subclass hooks.
-	 *
 	 * @param destinationPath - Target directory for installation.
 	 * @param options - Optional flags (force, version).
 	 * @returns Result indicating success or a structured error.
@@ -94,6 +87,7 @@ export abstract class InstallUseCaseBase {
 
 		// Phase 4: Build merge rules (subclass-specific transformation)
 		const rules = this.buildRules(selectedPacks, selectedOptionals);
+		this.showInstallSummary(selectedPacks, selectedOptionals);
 
 		// Phase 5: Execute merge with progress callback
 		const onProgress = createProgressCallback(this.userPrompt, this.getProgressLabel());
@@ -116,18 +110,16 @@ export abstract class InstallUseCaseBase {
 
 	/**
 	 * Determine which agent packs to install. Behavior varies by mode:
-	 * - Clean: force=true auto-selects all packs; else shows interactive menu.
-	 * - Project: force=true selects default; else shows interactive menu.
-	 *
-	 * @param force - If true, use default selection (no interactive menu).
+	 * - Clean: force=true selects all packs; else shows the interactive menu.
+	 * - Project: force=true selects default; else shows the interactive menu.
+	 * @param force - If true, use the default selection (no interactive menu).
 	 * @returns Array of pack IDs to install.
 	 */
 	protected abstract selectPacks(force: boolean): Promise<readonly string[]>;
 
 	/**
-	 * Transform manifest rules, selected packs, and selected optionals into the
-	 * final rule set. Both subclasses apply filterByPacks() before merging.
-	 * CleanInstall additionally converts all categories to mandatory (overwrite).
+	 * Transform manifest rules into the final rule set: filter by selected
+	 * packs; Clean additionally converts all categories to mandatory (overwrite).
 	 */
 	protected abstract buildRules(
 		selectedPacks: readonly string[],
@@ -135,9 +127,8 @@ export abstract class InstallUseCaseBase {
 	): readonly FileRule[];
 
 	/**
-	 * Determine which optional files to include. Behavior varies by mode:
-	 * - Clean: force=true auto-selects all, else shows interactive menu.
-	 * - Project: force=true returns empty (no opt-in), else shows interactive menu.
+	 * Determine which optional files to include: Clean force=true selects all;
+	 * Project force=true returns empty (no opt-in); else shows the interactive menu.
 	 */
 	protected abstract selectOptionals(force: boolean): Promise<readonly string[]>;
 
@@ -168,10 +159,7 @@ export abstract class InstallUseCaseBase {
 
 	// ---- Private helpers ----
 
-	/**
-	 * Post-installation orchestration: gitignore, symlinks, version file.
-	 * Delegates to the shared runPostInstallSteps utility.
-	 */
+	/** Post-install orchestration: gitignore, symlinks, version file (via runPostInstallSteps). */
 	private async runPostInstall(
 		destinationPath: string,
 		selectedPacks: readonly string[],
@@ -192,5 +180,16 @@ export abstract class InstallUseCaseBase {
 			successMessage: this.getSuccessMessage(),
 			retryHint: this.getRetryHint(),
 		});
+	}
+
+	/** Show the pre-install summary via IUserPrompt (spec §3.3).
+	 * Informational only — earlier confirmations captured intent (FEV-22 #5). */
+	private showInstallSummary(
+		selectedPacks: readonly string[],
+		selectedOptionals: readonly string[],
+	): void {
+		this.userPrompt.showInstallSummary(
+			buildInstallSummary(getPackRules(), selectedPacks, selectedOptionals, FILE_RULE_MANIFEST),
+		);
 	}
 }

@@ -137,6 +137,9 @@ class FakeUserPrompt implements IUserPrompt {
 	): Promise<"current" | "add" | "cancel" | null> {
 		return "current";
 	}
+	showInstallSummary(
+		_info: import("../../src/application/ports/IUserPrompt").InstallSummaryInfo,
+	): void {}
 }
 
 class FakeVersionComparator implements IVersionComparator {

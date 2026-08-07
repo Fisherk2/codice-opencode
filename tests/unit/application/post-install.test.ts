@@ -70,6 +70,7 @@ function createMockPrompt(): { stub: IUserPrompt; warnings: string[]; successes:
 			selectUpdateOption: mockFn(() =>
 				Promise.resolve<"current" | "add" | "cancel" | null>("current"),
 			),
+			showInstallSummary: mockFn(() => {}),
 		},
 	};
 }

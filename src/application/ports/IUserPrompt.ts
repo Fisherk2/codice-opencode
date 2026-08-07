@@ -151,4 +151,31 @@ export interface IUserPrompt {
 	 * @returns Selected option or null on cancel.
 	 */
 	selectUpdateOption(options: readonly UpdateOptionChoice[]): Promise<UpdateOption | null>;
+
+	/**
+	 * showInstallSummary — display a pre-install summary of what will be
+	 * installed. Called by InstallUseCaseBase between buildRules and merge.
+	 * Informational only; no confirmation step.
+	 *
+	 * @param info - Summary data (packs, optionals, totals).
+	 */
+	showInstallSummary(info: InstallSummaryInfo): void;
+}
+
+/**
+ * Pre-install summary data displayed before the merge step.
+ * The user has already confirmed overwrite + packs + optionals; this is
+ * informational only (no confirmation step per FEV-22 decision #5).
+ */
+export interface InstallSummaryInfo {
+	/** Packs to install with their agent counts */
+	readonly packs: readonly { readonly id: string; readonly agentCount: number }[];
+	/** Mandatory directories always included (core, main, writers) */
+	readonly mandatoryDirs: readonly string[];
+	/** Optional files the user selected (empty if none) */
+	readonly optionalFiles: readonly string[];
+	/** Total estimated agents (sum of pack agentCount) */
+	readonly totalAgents: number;
+	/** Total estimated files (packs + mandatory + optionals) */
+	readonly totalFiles: number;
 }

@@ -43,6 +43,7 @@ function createMockUserPrompt(
 		selectUpdateOption: mockFn(() =>
 			Promise.resolve<"current" | "add" | "cancel" | null>("current"),
 		),
+		showInstallSummary: mockFn(() => {}),
 	};
 }
 
