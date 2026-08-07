@@ -79,11 +79,12 @@ export abstract class InstallUseCaseBase {
 
 		// Phase 2.5: Select agent packs. CLI-provided packs skip the wizard;
 		// a cancel returns an empty selection — aborting prevents a partial install.
-		const selectedPacks = options.packs ?? (await this.selectPacks(options.force ?? false));
+		const force = options.force ?? false;
+		const selectedPacks = options.packs ?? (await this.selectPacks(force));
 		if (selectedPacks.length === 0) return success(undefined);
 
 		// Phase 3: Select optional files (subclass decides behavior)
-		const selectedOptionals = await this.selectOptionals(options.force ?? false);
+		const selectedOptionals = await this.selectOptionals(force);
 
 		// Phase 4: Build merge rules (subclass-specific transformation)
 		const rules = this.buildRules(selectedPacks, selectedOptionals);
