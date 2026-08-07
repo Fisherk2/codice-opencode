@@ -3,7 +3,7 @@ import { dirname } from "node:path";
 
 /**
  * FEV-18 Phase 1 — v2.0 agent reformatting.
- * Converts agency-agents-main source files (name/description/color/emoji/vibe)
+ * Converts external source files (name/description/color/emoji/vibe)
  * to the project standard subagent format (description/mode/permission)
  * with a trailing ## COMPOSITION block.
  */
@@ -156,7 +156,7 @@ function buildV2Content(content: string): string {
 /**
  * Convert a source agent file to the v2.0 format.
  * Idempotent: re-running on an already-converted file is a no-op guard.
- * @param sourcePath - agency-agents-main source .md file.
+ * @param sourcePath - source .md file to convert.
  * @param targetPath - destination .md file in a pack directory.
  * @returns Result with the generated content (ok) or an error message.
  */

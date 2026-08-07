@@ -7,7 +7,7 @@ import { reformatAgent } from "../../../scripts/reformat-agent";
 
 /**
  * Unit tests for the v2.0 agent reformatting pipeline (FEV-18 Phase 1).
- * Verifies source (agency-agents-main) → v2.0 (project standard) conversion,
+ * Verifies source → v2.0 (project standard) conversion,
  * including COMPOSITION block append and idempotency guarantees.
  */
 describe("reformatAgent", () => {

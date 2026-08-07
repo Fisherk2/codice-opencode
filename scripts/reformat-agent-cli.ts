@@ -16,7 +16,7 @@ function printUsage(): void {
 	console.error(
 		"Usage: bun run scripts/reformat-agent-cli.ts <source-file> <target-path> [--dry-run]",
 	);
-	console.error("  Converts an agency-agents-main file to the v2.0 project format.");
+	console.error("  Converts a source agent file to the v2.0 project format.");
 }
 
 function main(): number {
