@@ -15,7 +15,7 @@
 # v1.1.0 as "pre-1.2.0" (major===1 && minor < 2, see versionContext.ts), and
 # the UpdateWorkspaceUseCase gate (isPreV2Version) blocks the update before
 # any merge. The pre-1.2.0 gate runs before any version comparison, so this
-# works with the current bundled version (1.2.0).
+# works regardless of the bundled version.
 #===============================================================================
 
 set -Eeuo pipefail

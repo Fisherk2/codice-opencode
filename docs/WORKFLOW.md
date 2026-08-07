@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.0.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-06 (FEV-21, FEV-22 completados; FEV-23 listo para planeación) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-07 (FEV-23 completado; v2.0.0 release-ready) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -40,7 +40,7 @@
 | FEV-20 | Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4) | TD-V2-1, TD-V2-5: plugin cleanup + auto-discovery recursive scan | ✅ Completo (2026-08-05) |
 | FEV-21 | Installer UX — Pack Selection & Version Detection (v2.0 Phase 5) | Pack wizard, version gating, `.codice-version` metadata format | ✅ Completo (2026-08-06) |
 | FEV-22 | Installer UX Enhancements (v2.0 Phase 6) | agentCount metadata, install summary screen, wiki sync | ✅ Completo (2026-08-06) |
-| FEV-23 | v2.0.0 Testing & Integration | Unit/integration/E2E updates for pack-aware installer | 🔲 Planificado |
+| FEV-23 | v2.0.0 Testing & Integration | Unit/integration/E2E updates for pack-aware installer | ✅ Completo (2026-08-07) |
 
 ## 2. Desglose por Fase (Completadas)
 
@@ -275,7 +275,7 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 
 ---
 
-## 5. Desglose por Fase evolutiva — v2.0.0 (Planificado)
+## 5. Desglose por Fase evolutiva — v2.0.0 ✅ Completo
 
 > **Specs:** [spec-agent-packs.md](../specs/spec-agent-packs.md), [spec-installer-ux-v2.md](../specs/spec-installer-ux-v2.md)
 > **ADRs:** [ADR-014](../specs/adr/adr-014-agent-pack-system.md), [ADR-015](../specs/adr/adr-015-installer-ux-v2.md)
@@ -341,7 +341,7 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - `CleanInstallUseCase` y `ProjectInstallUseCase`: flujo de pack selection + installation summary
 - Tests: 1747 → 1822 unit+integration (~75 nuevos); E2E 16 → 23 scripts (7 nuevos, 4 update re-seeded v2.0)
 - Tech debt: TD-V2-6 añadido (No pack removal — diferido a v2.2.0)
-- Nota transicional: el merge de Update es inerte mientras `package.json` sea v1.2.0 (bundled < 2.0.0 → "already up to date"); E2E 04/15/16/23 lo documentan. Update se activa al publicar ≥ 2.0.0. Comportamiento de merge cubierto por integration tests con `BUNDLED_TEST_VERSION=2.1.0`.
+- Nota transicional: el merge de Update era inerte mientras `package.json` fuera v1.2.0 (bundled < 2.0.0 → "already up to date"); E2E 04/15/16/23 lo documentaban. **Resuelto en FEV-23** — el bundled ahora es 2.0.0 y el merge de Update es funcional (E2E 23 reescrito como merge real, no-op eliminado). Comportamiento de merge cubierto por integration tests con `BUNDLED_TEST_VERSION=2.1.0`.
 **Resultado:** Wizard de instalación con selección de packs, version gating y metadata persistente `.codice-version` v2.0. 7 commits atómicos en `feat/new-agents`. 1822 tests unit+integration 0 fail, 23/23 E2E, `just check` limpio.
 
 ### FEV-22 — Installer UX Enhancements ✅
@@ -356,19 +356,22 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - Sin version bump (v2.0.0 coordina con FEV-23); sin deuda técnica nueva
 **Resultado:** Installer UX production-grade para v2.0.0: counts reales por pack, summary pre-merge con impacto visible, wiki alineada. 11 commits atómicos en `feat/new-agents` (5 FEV-22 core + 3 QA + 3 simplification).
 
-### FEV-23 — v2.0.0 Testing & Integration 🔲 Listo para planificar
-**Esfuerzo:** ~6h | **Dependencias:** FEV-17 a FEV-22 | **Spec:** S5-PACKS §9, S6-UX-V2 §9
-- Actualizar unit tests para nueva estructura de directorios (`core/`, `packs/`)
-- Actualizar integration tests para use cases pack-aware
-- Nuevos escenarios E2E:
-  - Clean Install con pack selection (default + custom)
-  - Project Install con pack selection
-  - Update bloqueado para versión <2.0.0 (3 variantes: sin archivo, pre-1.2.0, 1.x)
-  - Update Option A (solo packs actuales)
-  - Update Option B (agregar nuevos packs)
-  - Persistencia de metadata `.codice-version` con `installedPacks`
-  - Validación: mínimo 1 pack, `--packs` flag no-interactivo
-**Resultado:** Suite completa para v2.0.0, 0 regresiones, coverage ≥95%.
+### FEV-23 — v2.0.0 Testing & Integration ✅ Completo (2026-08-07)
+**Estado:** ✅ Completo (2026-08-07) | **Esfuerzo:** ~6h | **Dependencias:** FEV-17 a FEV-22 | **Spec:** S5-PACKS §9, S6-UX-V2 §9
+- ✅ Unit tests actualizados para nueva estructura de directorios (`core/`, `packs/`)
+- ✅ Integration tests actualizados para use cases pack-aware: +8 nuevos (Option B cancel path sin invocar merge engine, project-install con `options.packs` bypassing wizard + estandar preservado, clean-install summary passthrough con mandatoryDirs, version-context con v-prefix y clasificación pre-1.2.0)
+- ✅ Nuevos escenarios E2E (5 scripts: 26-30) — suite completa 30/30:
+  - ✅ Clean Install con pack selection (default + custom) — E2E 17/18 (FEV-21), 24/25 (FEV-22)
+  - ✅ Project Install con pack selection — E2E 30 (respetando estandar, p.ej. README.md)
+  - ✅ Update bloqueado para versión <2.0.0 (3 variantes: sin archivo, pre-1.2.0, 1.x) — E2E 21/22/26
+  - ✅ Update Option A (solo packs actuales) — E2E 23 **reescrito como merge real** (no-op transicional eliminado; semilla 2.0.0-rc.1)
+  - ✅ Update Option B (agregar nuevos packs, instalados LOCKED) — E2E 27 (`--update-add-packs creative,business`)
+  - ✅ Persistencia de metadata `.codice-version` con `installedPacks` — E2E 20
+  - ✅ Validación: mínimo 1 pack, `--packs` flag no-interactivo — E2E 19/29
+  - ✅ Destino plano `agents/` sin subdirectorios de packs — E2E 28
+- ✅ Version bump 1.2.0 → 2.0.0 (T3.1): `VERSION` auto-derivado de `package.json` (sin cambio de código); activa el merge real de Update
+- ✅ E2E 04/15/16 comment-only cleanup + E2E 10 fixed: short-circuit "already up to date" ahora comportamiento permanente, no workaround transicional
+**Resultado:** Suite completa para v2.0.0 — **1880 tests unit+integration 0 fail**, **30/30 E2E**, `just check` limpio, coverage ≥95%. No-op transicional eliminado — update merge funcional con template bundled v2.0.0. **v2.0.0 RELEASE-READY** (la coordinación del release — merge a main, tag, publicación npm — es un proceso separado).
 
 ---
 
@@ -400,5 +403,5 @@ Todos los FEV (FEV-11 a FEV-16) completados. Code review aplicado. Pre-release v
 - **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
 - **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
 - **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
-- **v2.0.0 planificado:** FEV-17 ✅ completado, FEV-18 ✅ completado, FEV-19 ✅ completado (2026-08-05), FEV-20 ✅ completado (2026-08-05), FEV-21 ✅ completado (2026-08-06), FEV-22 ✅ completado (2026-08-06) → FEV-23 🔲 listo para planificar (specs: S5-PACKS, S6-UX-V2)
-- **Esfuerzo estimado v2.0.0:** ~44h (FEV-17: 4h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h ✅, FEV-21: 8h ✅, FEV-22: 6h ✅, FEV-23: 6h 🔲)
+- **v2.0.0 completo:** FEV-17 ✅, FEV-18 ✅, FEV-19 ✅ (2026-08-05), FEV-20 ✅ (2026-08-05), FEV-21 ✅ (2026-08-06), FEV-22 ✅ (2026-08-06), FEV-23 ✅ (2026-08-07) — **v2.0.0 RELEASE-READY** (coordinación del release separada: PR develop→main, tag v2.0.0, publicación npm)
+- **Esfuerzo estimado v2.0.0:** ~50h (FEV-17: 7h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h ✅, FEV-21: 8h ✅, FEV-22: 6h ✅, FEV-23: 6h ✅ = 41h de implementación + ~9h de overhead: code reviews 5-axis, wiki sync, release coordination)

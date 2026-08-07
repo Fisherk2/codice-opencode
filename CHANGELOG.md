@@ -7,45 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+### Added
 
-- **FEV-20 — Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4):**
-  - Removed the hardcoded `VALID_SUBAGENTS` Set (~110 entries) from the SDD plugin's `validSubagents.ts`; `PRIMARY_AGENTS` (6 built-in agents) is now the only hardcoded list.
-  - `defaults.ts` no longer imports/re-exports `VALID_SUBAGENTS`; `DEFAULTS` holds 5 maps (was 6).
-  - `sdd-pipeline.ts` fallback changed from `DEFAULTS.VALID_SUBAGENTS` to `new Set(PRIMARY_AGENTS)` — when no `agents/` directory exists, only the 6 primary agents are valid.
-  - Error message updated: "Use an agent from the VALID_SUBAGENTS catalog" → "Create an .md file in the agents/ directory or use a primary agent".
-  - `discoverValidSubagents()` now scans the `agents/` directory **recursively** (forward-compatible with `packs/<name>/` layouts) and skips hidden entries (`.git`, `.opencode`, dot-files). Names are lowercased so `task()` validation is case-insensitive.
-  - Markdown scanners extracted to a new `directoryScanner.ts` module (keeps `autoDiscovery.ts` under the 200-line convention).
-  - Tests: removed 2 `VALID_SUBAGENTS` assertions in `defaults.test.ts`; added 4 auto-discovery tests (nested subdirs, hidden dirs, hidden dot-files, lowercase normalization); `toolExecuteBefore.test.ts` rewritten to model filesystem discovery.
-  - Wiki `SDD-Pipeline.md` updated: agent count 104 → ~361, error message example, recursive-scan note, module table.
+- *(Nothing yet — v2.0.0 released 2026-08-07.)*
 
-- **FEV-20 — Post-review hardening (5-axis code review fixes):**
-  - `directoryScanner.ts`: `scanMarkdownFilesRecursive` now takes `maxDepth = 10` to guard against stack overflow on pathological trees; a shared `seen`-set across recursion levels emits a `console.debug` warning when the same agent basename appears in two subtrees (previously silent dedup via the caller's `Set`). Extracted internal `scanTree` helper to share accumulators while keeping the public `(dir, maxDepth?)` signature.
-  - `autoDiscovery.ts`: `discoverValidSubagents` seeds the `Set` from `PRIMARY_AGENTS` (already lowercase) and lowercases only discovered names — avoids the intermediate spread+map array. Guard comment on `parseAgentFromFrontmatter` clarified (noUncheckedIndexedAccess enabled in both root and plugin tsconfigs).
-  - `mergeConfig.ts`: added lookup guard on `merged[phase]` required by noUncheckedIndexedAccess.
-  - `sdd-pipeline.ts`: unknown-subagent error now includes the absolute `agents/` path (`${join(projectDir, "agents")}/`) per CODE_STYLE actionable-message guidance.
-  - Plugin `tsconfig.json`: enabled `noUncheckedIndexedAccess: true` so the plugin's own compiler enforces the guard (previously only the root tsconfig enforced it, and it excludes `template/`).
-  - Tests: added test 15 (duplicate basenames dedupe + warning emitted via `spyOn(console, "debug")`) and test 11 (non-primary agents excluded from `discoverAgentMentionPatterns`) in `autoDiscovery.test.ts`; `defaults.test.ts` and `autoDiscovery.test.ts` updated for noUncheckedIndexedAccess (optional chaining on record lookups).
-  - `just check-plugin` now runs `tsc` against the plugin tsconfig (previously Biome only).
-
-- **FEV-19 — Permission Unification & Subagent Table Removal (v2.0 Phase 3):**
-  - Unified `task:` permissions for 4 primary delegators (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli) to `"*": allow` + deny 5 other primaries pattern. Moctezuma and tezcatlipoca unchanged (`task: "*": deny`). 106 explicit allow-list entries removed (quetzalcoatl 21, tlaloc 73, mictlantecuhtli 12).
-  - **Removed ALL subagent index/catalog sections from the 6 primary agents** (user decision 2026-08-05): huitzilopochtli's ~355-subagent AVAILABLE SUBAGENTS catalog included. RULES now reference the `agents/` directory: "use ANY subagents in `agents/`". Primary agents never delegate to each other.
-- **FEV-19 — CONTRIBUTING.md:** "Add a New Agent" reduced from 5 steps to 3 (removed delegation-table step and huitzilopochtli catalog step). Removed "persona table updates" from primary agent requirements.
-- **FEV-19 — Wiki Agents.md:** agent count 104 → ~355 in 10 packs, file tree `agents/` → `packs/`, permission model updated to unified pattern, "Step 4: Update Delegation Tables" removed. README subagent count 98 → 355.
+## [2.0.0] - 2026-08-07
 
 ### Added
 
+- **FEV-23 — v2.0.0 Testing & Integration (release):** 5 new E2E scripts (`26-update-blocked-pre-1.2.0`, `27-update-option-b`, `28-flat-agents-destination`, `29-non-interactive-packs`, `30-project-install-packs`) bring the E2E suite to 30/30. 8 new unit/integration tests (Option B cancel path, pack-aware project install, clean-install summary passthrough, version-context classification) bring the full suite to 1880 tests, 0 failures. E2E 23 rewritten as a real Option A pack-scoped merge — the FEV-21 transitional no-op is removed and the update merge is now functional with the bundled v2.0.0 template. Coverage ≥ 95%.
 - **FEV-22 — Installer UX Enhancements (v2.0 Phase 6):**
    - Per-pack agent counts: `FileRule.agentCount?` field populated for the 8 selectable packs (146, 92, 36, 31, 18, 11, 10, 8); `toPackOptions()` reads `agentCount ?? 0` (backward compatible)
    - Install summary screen (spec §3.3) before merge in Clean/Project install: packs with agent counts, mandatory dirs (core, main, writers), selected optionals, total agents + files estimate — informational only
    - New `IUserPrompt.showInstallSummary()` + `InstallSummaryInfo` type; pure `buildInstallSummary`/`formatInstallSummary` helpers (`src/application/installSummary.ts`, dedupes pack ids)
    - Wiki sync: Home/Getting-Started/Agents/Workspace-Structure updated to v2.0 (~360 agents in 10 packs)
-   - Tests: +13 unit, +4 integration, +2 E2E (full suite 1872 tests, 0 failures; 25 E2E scripts); `just check` clean
+   - Tests: +13 unit, +4 integration, +2 E2E (suite totals superseded by FEV-23: 1880 tests, 30/30 E2E); `just check` clean
    - Code simplification: flatMap restructure in `buildInstallSummary`, hoisted `options.force ?? false`, dropped async wrapper in `promptForPackSelection`, extracted `ESTIMATED_FILES_PER_MANDATORY_DIR` constant, removed dead `packIdFromPath` re-export
    - 5-axis code review (correctness, readability, architecture, security, performance): APPROVE — 3 nits fixed
-   - No version bump (v2.0.0 coordinates at FEV-23); no new tech debt (TD-V2-6 remains open)
-
+   - No version bump (v2.0.0 coordinated at FEV-23); no new tech debt (TD-V2-6 remains open)
 - **FEV-21 — Installer UX: Pack Selection & Version Detection (v2.0 Phase 5):**
   - Pack selection wizard: 8 selectable packs with `software-development` pre-selected; minimum 1 enforced; cancelling aborts before any file writes
   - Version detection: `.codice-version` read on startup; Update blocked for missing or < 2.0.0 installations with specific guidance
@@ -55,28 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 3 new IUserPrompt methods: `selectPacks()`, `showVersionInfo()`, `selectUpdateOption()`
   - New `RuleCategory`: `"pack"` (8 entries migrated from `"mandatory"`)
   - New helpers: `getPackRules()`, `filterByPacks()`, `packIdFromPath()`
-  - 7 new E2E scripts (17-23); 4 update E2E scripts re-seeded for v2.0 format
-  - ~75 new tests (unit + integration)
+  - 7 new E2E scripts (17-23); 4 update E2E scripts re-seeded for v2.0 format (suite totals superseded by FEV-23: 30/30 E2E)
+  - ~75 new tests (unit + integration) (suite total superseded by FEV-23: 1880)
   - Tech debt: TD-V2-6 added in FEV-21 (No pack removal — deferred to v2.2.0)
-  - Transitional note: Update merge is inert until the package is published at ≥ 2.0.0 (bundled version < 2.0.0 → "already up to date"); merge behavior covered by integration tests with `BUNDLED_TEST_VERSION=2.1.0`
-
 - **FEV-17 — Template Directory Restructuring (v2.0 Phase 1):** `template/obligatorio/` restructured from flat (`agents/`, `commands/`, `skills/`, `opencode.json`, `skills-lock.json`, `.opencode/`) to hierarchical: `core/` (infrastructure) + `packs/{main,writers,sin-clasificar,<8 empty>}/` (agent packs). 6 primary agents moved to `packs/main/`, 3 writers to `packs/writers/`, 95 unclassified agents to `packs/sin-clasificar/` (pending FEV-18 classification). 8 empty pack directories created for FEV-18.
-
-### Changed
-
-- **FEV-17 — FileRuleManifestData:** Collapsed 7 standalone mandatory entries into 4 source groupings (`core` → destination root, `packs/main`/`packs/writers`/`packs/sin-clasificar` → `agents/`) using the new `destPath` field on `FileRule`. Standard + optional sections unchanged.
-- **FEV-17 — destPath support:** `FileRule` gained optional `destPath`; `IStagingSystem.stageFile` / `BunFileSystem` / `FileMergeEngine` now support source ≠ destination paths, keeping the installed workspace flat (`agents/`, `commands/`, `opencode.json` at root) while the template source uses `core/` + `packs/` groupings.
-- **FEV-17 — Tests updated:** 16+ unit/integration/plugin/packaging tests + 1 E2E script updated to new template paths.
-
-### Fixed
-
-- **FEV-18 — Dry-run hardening:** `scripts/reformat-agent-cli.ts` replaced the predictable `/tmp/.reformat-dry-run-target.md` path with a per-invocation `mkdtempSync` temp dir under `os.tmpdir()`, cleaned up in a `finally` block. The doc comment was corrected to accurately describe the write-then-delete behavior (previously claimed "never persisted" which was false — `reformatAgent` unconditionally writes to the target path). This closes the symlink-overwrite hazard on shared hosts.
-- **FEV-18 — Stale references:** `tasks/plan.md` updated 11 occurrences of `scripts/reformat-agent.ts` to `scripts/reformat-agent-cli.ts` to reflect the CLI rename.
-
-- **FEV-17 — Template path references:** README, CONTRIBUTING, WORKFLOW, TECH_DEBT, and CHANGELOG references to `template/obligatorio/{agents,commands,skills,opencode.json}` updated to `core/` / `packs/` locations.
-
-### Added
-
 - **FEV-18 — Agent Classification & Migration (v2.0 Phase 2):** 352 unique agents distributed across 8 selectable packs + 2 mandatory (main, writers). 257 new agents from `agency-agents-main/` reformatted to the v2.0 standard (YAML `mode: subagent` + `## COMPOSITION` block); 95 legacy v1.x agents distributed in original format. Pack counts: software-development 146, business 92, hardware-emerging 36, science-research 31, operations-support 18, finance 11, creative 10, government-legal 8. 10 REDUNDANT name collisions resolved (legacy wins).
 - **FEV-18 — Agent Format v2.0 spec:** `specs/spec-agent-format-v2.md` defines source→target mapping, canonical YAML template, `## COMPOSITION` block, and idempotency rules.
 - **FEV-18 — Reformat script:** `scripts/reformat-agent.ts` (idempotent conversion, `--dry-run`) + `scripts/reformat-agent-cli.ts` + `scripts/distribute-agents.ts` (batch distribution from Phase 0 audit mapping).
@@ -84,9 +45,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **FEV-23 — Version bump 1.2.0 → 2.0.0:** `package.json` bumped to 2.0.0. `VERSION` in `src/cli/version.ts` is auto-derived from `package.json` (no code change required), so `--version` now prints Códice v2.0.0. This activates the real update-merge path (previously inert at bundled < 2.0.0). E2E 04/15/16 comment-only cleanup and E2E 10 fixed: the equal-version "already up to date" short-circuit is now the permanent behavior, not a transitional workaround.
+- **FEV-20 — Plugin VALID_SUBAGENTS Removal (v2.0 Phase 4):**
+  - Removed the hardcoded `VALID_SUBAGENTS` Set (~110 entries) from the SDD plugin's `validSubagents.ts`; `PRIMARY_AGENTS` (6 built-in agents) is now the only hardcoded list.
+  - `defaults.ts` no longer imports/re-exports `VALID_SUBAGENTS`; `DEFAULTS` holds 5 maps (was 6).
+  - `sdd-pipeline.ts` fallback changed from `DEFAULTS.VALID_SUBAGENTS` to `new Set(PRIMARY_AGENTS)` — when no `agents/` directory exists, only the 6 primary agents are valid.
+  - Error message updated: "Use an agent from the VALID_SUBAGENTS catalog" → "Create an .md file in the agents/ directory or use a primary agent".
+  - `discoverValidSubagents()` now scans the `agents/` directory **recursively** (forward-compatible with `packs/<name>/` layouts) and skips hidden entries (`.git`, `.opencode`, dot-files). Names are lowercased so `task()` validation is case-insensitive.
+  - Markdown scanners extracted to a new `directoryScanner.ts` module (keeps `autoDiscovery.ts` under the 200-line convention).
+  - Tests: removed 2 `VALID_SUBAGENTS` assertions in `defaults.test.ts`; added 4 auto-discovery tests (nested subdirs, hidden dirs, hidden dot-files, lowercase normalization); `toolExecuteBefore.test.ts` rewritten to model filesystem discovery.
+  - Wiki `SDD-Pipeline.md` updated: agent count 104 → ~361, error message example, recursive-scan note, module table.
+  - Post-review hardening: `scanMarkdownFilesRecursive` takes `maxDepth = 10` (stack-overflow guard); duplicate agent basenames across subtrees emit a `console.debug` warning; unknown-subagent error includes the absolute `agents/` path; plugin `tsconfig.json` enables `noUncheckedIndexedAccess: true`; `just check-plugin` now runs `tsc` against the plugin tsconfig (previously Biome only).
+- **FEV-19 — Permission Unification & Subagent Table Removal (v2.0 Phase 3):**
+  - Unified `task:` permissions for 4 primary delegators (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli) to `"*": allow` + deny 5 other primaries pattern. Moctezuma and tezcatlipoca unchanged (`task: "*": deny`). 106 explicit allow-list entries removed (quetzalcoatl 21, tlaloc 73, mictlantecuhtli 12).
+  - **Removed ALL subagent index/catalog sections from the 6 primary agents** (user decision 2026-08-05): huitzilopochtli's ~355-subagent AVAILABLE SUBAGENTS catalog included. RULES now reference the `agents/` directory: "use ANY subagents in `agents/`". Primary agents never delegate to each other.
+  - **CONTRIBUTING.md:** "Add a New Agent" reduced from 5 steps to 3 (removed delegation-table step and huitzilopochtli catalog step). Removed "persona table updates" from primary agent requirements.
+  - **Wiki Agents.md:** agent count 104 → ~355 in 10 packs, file tree `agents/` → `packs/`, permission model updated to unified pattern, "Step 4: Update Delegation Tables" removed. README subagent count 98 → 355.
+- **FEV-17 — FileRuleManifestData:** Collapsed 7 standalone mandatory entries into 4 source groupings (`core` → destination root, `packs/main`/`packs/writers`/`packs/sin-clasificar` → `agents/`) using the new `destPath` field on `FileRule`. Standard + optional sections unchanged.
+- **FEV-17 — destPath support:** `FileRule` gained optional `destPath`; `IStagingSystem.stageFile` / `BunFileSystem` / `FileMergeEngine` now support source ≠ destination paths, keeping the installed workspace flat (`agents/`, `commands/`, `opencode.json` at root) while the template source uses `core/` + `packs/` groupings.
+- **FEV-17 — Tests updated:** 16+ unit/integration/plugin/packaging tests + 1 E2E script updated to new template paths.
 - **FEV-18 — FileRuleManifestData:** 4 → 11 mandatory entries. Added 8 selectable pack entries (`packs/software-development`, `packs/business`, `packs/hardware-emerging`, `packs/science-research`, `packs/operations-support`, `packs/finance`, `packs/creative`, `packs/government-legal`), all with `destPath: "agents"`. Writers description updated (2 writers; scientific-literature-researcher moved to science-research).
 - **FEV-18 — Huitzilopochtli catalog:** AVAILABLE SUBAGENTS expanded from ~96 to ~355 subagents, reorganized by pack.
 - **FEV-18 — scientific-literature-researcher:** moved from `packs/writers/` to `packs/science-research/` (analysis agent, not writer — user decision).
+
+### Fixed
+
+- **FEV-18 — Dry-run hardening:** `scripts/reformat-agent-cli.ts` replaced the predictable `/tmp/.reformat-dry-run-target.md` path with a per-invocation `mkdtempSync` temp dir under `os.tmpdir()`, cleaned up in a `finally` block. The doc comment was corrected to accurately describe the write-then-delete behavior (previously claimed "never persisted" which was false — `reformatAgent` unconditionally writes to the target path). This closes the symlink-overwrite hazard on shared hosts.
+- **FEV-18 — Stale references:** `tasks/plan.md` updated 11 occurrences of `scripts/reformat-agent.ts` to `scripts/reformat-agent-cli.ts` to reflect the CLI rename.
+- **FEV-17 — Template path references:** README, CONTRIBUTING, WORKFLOW, TECH_DEBT, and CHANGELOG references to `template/obligatorio/{agents,commands,skills,opencode.json}` updated to `core/` / `packs/` locations.
 
 ### Removed
 

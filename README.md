@@ -27,11 +27,22 @@ A production-grade workspace integrating 51 engineering skills organized in 10 S
 
 ---
 
+## What's New in v2.0
+
+- **Pack-based agent system** — 355 agents organized in 10 packs: 2 mandatory (`main`, `writers`) and 8 selectable (software-development, business, hardware-emerging, science-research, operations-support, finance, creative, government-legal). Install only the packs you need, or everything with `--packs-all`.
+- **Install summary screen** — Before merging, Códice shows the selected packs with agent counts, mandatory directories, and optional files so you know exactly what's being installed.
+- **Version-gated updates** — Update Workspace now only runs on v2.0+ installations. v1.x installations must reinstall; pre-1.2.0 installs get a cleanup suggestion.
+- **New flags** — `--packs <list>`, `--packs-all`, and `--update-add-packs <list>` enable non-interactive pack selection and updates.
+
+> **Upgrading from v1.x?** See [docs/MIGRATION.md](docs/MIGRATION.md) for the step-by-step migration guide.
+
+---
+
 ## Features
 
 - **52 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, Obsidian vault management, and more, organized in 10 SDD phases (3 optional) + Extra
 - **13 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`
-- **6 Main Agents + 355 Subagents** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 355 subagents specialized in frontend, backend, DevOps, testing, security, and more
+- **6 Main Agents + 355 Subagents (10 packs)** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 355 subagents organized in 10 packs (2 mandatory + 8 selectable) specialized in frontend, backend, DevOps, testing, security, and more
 - **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
 - **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
 
@@ -157,7 +168,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Pro for deep 5-axis audit (384k report, <$1/M). Claude Opus 4.6 for pre-merge/security audit. Gemini 3.1 Pro for recurring full-repo audit.</td></tr>
 </table>
 
-Additionally, over **355 specialized subagents** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
+Additionally, over **355 specialized subagents** organized in 10 packs are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
 
 ---
 
@@ -189,7 +200,7 @@ Códice presents an interactive menu with three installation modes:
 |------|-------------|-------------|
 | **Clean Install** | Overwrites the destination with the complete template | Starting a fresh project |
 | **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
-| **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing installation current |
+| **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing v2.0+ installation current |
 
 ```bash
 # Interactive menu (default):
@@ -200,6 +211,19 @@ bunx @fisherk2-dev/codice --dest ./my-project
 bunx @fisherk2-dev/codice --force
 bunx @fisherk2-dev/codice --version
 bunx @fisherk2-dev/codice --help
+```
+
+Códice v2.0 lets you select which agent packs to install. Install specific packs non-interactively, or add packs later during an update:
+
+```bash
+# Install only software-development and business packs:
+bunx @fisherk2-dev/codice --packs software-development,business
+
+# Install all 8 selectable packs:
+bunx @fisherk2-dev/codice --packs-all
+
+# Update an existing installation and add the creative pack:
+bunx @fisherk2-dev/codice --update --update-add-packs creative
 ```
 
 > Use `--verbose` for detailed logging of every step.
@@ -215,6 +239,9 @@ bunx @fisherk2-dev/codice --help
 | `--clean` | Run Clean Install mode (skip interactive menu) |
 | `--project` | Run Project Install mode (skip interactive menu) |
 | `--update` | Run Update Workspace mode (skip interactive menu) |
+| `--packs <list>` | Install only the specified packs (comma-separated, e.g. `software-development,business`) |
+| `--packs-all` | Install all 8 selectable packs |
+| `--update-add-packs <list>` | Add packs to an existing installation during update |
 | `--help` | Show usage help |
 
 ---
@@ -271,6 +298,13 @@ flowchart LR
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
 | `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
 | Symlinks not created | If `.opencode/agents` is missing after installation, re-run the installer. Symlinks are created during post-installation and require write permissions in the project directory |
+
+---
+
+## Resources
+
+- **Upgrading from v1.x** — [docs/MIGRATION.md](docs/MIGRATION.md)
+- **GitHub Wiki** — [Getting Started](https://github.com/fisherk2/codice-opencode/wiki/Getting-Started) · [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents) · [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills) · [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) · [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers) · [Configuration](https://github.com/fisherk2/codice-opencode/wiki/Configuration)
 
 ---
 
