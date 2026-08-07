@@ -23,6 +23,11 @@ const STAGEABLE_DEFAULT_PACK_RULES = filterByPacks(FILE_RULE_MANIFEST, DEFAULT_P
 	(r) => !r.noTemplateCopy,
 );
 
+/** Count of stageable rules that are not optional (mandatory + standard). */
+const NON_OPTIONAL_COUNT = STAGEABLE_DEFAULT_PACK_RULES.filter(
+	(r) => r.category !== "optional",
+).length;
+
 /**
  * Create a mock IFileSystem with configurable default behaviors.
  * Each test can override specific methods via the returned object.
@@ -295,10 +300,7 @@ describe("ProjectInstallUseCase", () => {
 			expect(prompt.confirm).not.toHaveBeenCalled();
 			expect(prompt.selectOptional).not.toHaveBeenCalled();
 			// Only non-optional files should be staged (default pack, mandatory + standard)
-			const nonOptionalCount = STAGEABLE_DEFAULT_PACK_RULES.filter(
-				(r) => r.category !== "optional",
-			).length;
-			expect(calls.stageFile.length).toBe(nonOptionalCount);
+			expect(calls.stageFile.length).toBe(NON_OPTIONAL_COUNT);
 		});
 
 		it("should present optional files checkbox and use selected paths", async () => {
@@ -329,10 +331,7 @@ describe("ProjectInstallUseCase", () => {
 			expect(selectArgs[0].length).toBe(optionalRules.length);
 			// Only one optional file was selected, so non-selected optional files are skipped
 			// Default pack + mandatory + standard + 1 selected stageable optional
-			const stageableNonOptional = STAGEABLE_DEFAULT_PACK_RULES.filter(
-				(r) => r.category !== "optional",
-			).length;
-			expect(calls.stageFile.length).toBe(stageableNonOptional + 1);
+			expect(calls.stageFile.length).toBe(NON_OPTIONAL_COUNT + 1);
 		});
 
 		it("should skip optional files when user selects none", async () => {
@@ -354,10 +353,7 @@ describe("ProjectInstallUseCase", () => {
 
 			expect(result.ok).toBe(true);
 			// Only mandatory + standard files should be staged (default pack, no optionals)
-			const nonOptionalCount = STAGEABLE_DEFAULT_PACK_RULES.filter(
-				(r) => r.category !== "optional",
-			).length;
-			expect(calls.stageFile.length).toBe(nonOptionalCount);
+			expect(calls.stageFile.length).toBe(NON_OPTIONAL_COUNT);
 		});
 
 		it("should carry over standard files that already exist", async () => {
@@ -441,10 +437,7 @@ describe("ProjectInstallUseCase", () => {
 			// But mandatory + standard + pack files (minus existing standard) should still be staged
 			// Since destinationExists returns true for the optional path only, standard files
 			// that don't exist should still be staged
-			const nonOptionalCount = STAGEABLE_DEFAULT_PACK_RULES.filter(
-				(r) => r.category !== "optional",
-			).length;
-			expect(calls.stageFile.length).toBe(nonOptionalCount);
+			expect(calls.stageFile.length).toBe(NON_OPTIONAL_COUNT);
 		});
 
 		it("should return error and clean staging when merge engine fails", async () => {

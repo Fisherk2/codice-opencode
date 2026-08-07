@@ -27,6 +27,11 @@ const STAGEABLE_DEFAULT_PACK_RULES = filterByPacks(FILE_RULE_MANIFEST, DEFAULT_P
 	(r) => !r.noTemplateCopy,
 );
 
+/** Count of stageable rules that are not optional (mandatory + standard). */
+const NON_OPTIONAL_COUNT = STAGEABLE_DEFAULT_PACK_RULES.filter(
+	(r) => r.category !== "optional",
+).length;
+
 const allOptionalPaths = getRulesByCategory("optional").map((r) => r.path);
 
 /**
@@ -509,10 +514,7 @@ describe("CleanInstallUseCase", () => {
 
 			expect(result.ok).toBe(true);
 			// Only mandatory + standard files should be staged (default pack, no optionals)
-			const mandatoryAndStandardCount = STAGEABLE_DEFAULT_PACK_RULES.filter(
-				(r) => r.category !== "optional",
-			).length;
-			expect(calls.stageFile.length).toBe(mandatoryAndStandardCount);
+			expect(calls.stageFile.length).toBe(NON_OPTIONAL_COUNT);
 		});
 
 		it("should record optionalSelections in version file", async () => {

@@ -629,8 +629,7 @@ describe("UpdateWorkspaceUseCase", () => {
 			// No warnings should contain .gitignore (no gitignore operations in update mode)
 			const warningCalls = (prompt.showWarning as ReturnType<typeof mockFn>).mock.calls;
 			const gitignoreWarnings = warningCalls.filter(
-				(call: unknown[]) =>
-					typeof call[0] === "string" && (call[0] as string).includes(".gitignore"),
+				(call: unknown[]) => typeof call[0] === "string" && call[0].includes(".gitignore"),
 			);
 			expect(gitignoreWarnings.length).toBe(0);
 		});
