@@ -1,5 +1,5 @@
-# Technical Requirements Document – Códice: Opencode Workspace Installer v1.2.0
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-03 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Technical Requirements Document – Códice: Opencode Workspace Installer v2.0.0
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-07 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Arquitectura de Referencia
 Se aplicará **Clean Architecture** adaptada a una aplicación de línea de comandos (CLI). Esto garantiza que la lógica de negocio (reglas de fusión, comparación de versiones) esté completamente desacoplada de los detalles de implementación (sistema de archivos, red, librería de TUI).
@@ -16,6 +16,9 @@ graph TD
         TUI[TUI Adapter<br/>@clack/prompts]
         BSC[BunSymlinkCreator<br/>Post-install symlinks]
         BGC[BunGitignoreCreator<br/>Post-install gitignore]
+        VL[VerboseLogger<br/>Structured verbose logging]
+        PPO[packPromptOptions.ts<br/>Pack prompt definitions]
+        VIM[versionInfoMessages.ts<br/>Version info messages]
         
         FS -->|delegates| TR
         FS -->|delegates| AS
@@ -32,6 +35,11 @@ graph TD
         IST[Port: IStagingSystem]
         HLP[helpers.ts<br/>Shared guard logic]
         PI[postInstall.ts<br/>Post-install orchestration]
+        ISUM[installSummary.ts<br/>Install summary computation]
+        PO[packOptions.ts<br/>Pack selection definitions]
+        IUCB[InstallUseCaseBase<br/>Template Method base]
+        UF[updateFlow.ts<br/>Update merge logic]
+        USC[updateStatusCheck.ts<br/>Version status check]
     end
 
     subgraph "Domain Layer (Reglas de Negocio - Core)"
@@ -60,7 +68,7 @@ graph TD
 |------|------------|---------|------------------------------|
 | **Runtime/Build** | Bun | >= 1.1.x | Velocidad de ejecución superior y API moderna de sistema de archivos. Distribución vía npm/bunx (compilación a binario removida en v1.2.0 — ADR-011). |
 | **TUI / UX** | `@clack/prompts` | Latest | Ligera, moderna, zero-dependency tree profundo, ideal para herramientas CLI. |
-| **Validación** | `zod` | Latest | Esquemas de validación de datos en tiempo de ejecución (ej: validar respuesta de GitHub API). Principio de *Fail-Fast*. |
+| **Validación** | TypeScript strict + semver | Built-in / Latest | Validación de tipos en compilación + validación de versiones semánticas. Principio de *Fail-Fast*. |
 | **Versionado** | `semver` | Latest | Comparación robusta de versiones semánticas (v1.0.0 vs v1.1.0). |
 | **Orquestación** | `just` | Latest | Task runner moderno, sintaxis más limpia que Make, escrito en Rust, ideal para definir flujos de desarrollo y CI/CD. |
 
@@ -87,6 +95,16 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 - Validan path containment para prevenir symlink escape fuera del directorio destino.
 
 **Referencias:** ADR-008 (symlinks), ADR-009 (gitignore), ADR-010 (noTemplateCopy flag).
+
+### 3.2 Componentes v2.0.0 (Pack System & Installer UX)
+
+| Componente | Responsabilidad | Interfaces Expuestas | Dependencias | Principio SOLID Aplicado |
+|------------|-----------------|----------------------|--------------|--------------------------|
+| `InstallUseCaseBase` | Template Method base para CleanInstall y ProjectInstall. Define el esqueleto del algoritmo de instalación. | `execute()` | `IFileSystem`, `IUserPrompt` | **Template Method**: Subclasses override specific steps. |
+| `installSummary.ts` | Computar resumen pre-instalación: packs seleccionados, conteos de agentes, archivos estimados. | `computeInstallSummary()` | `packOptions`, manifest data | **SRP**: Solo computa el resumen, no lo renderiza. |
+| `updateStatusCheck.ts` | Verificar versión local vs bundled, clasificar estado de instalación (pre-1.2.0, v1.x, v2.0+). | `checkUpdateStatus()` | `WorkspaceVersion`, `.codice-version` | **SRP**: Solo verifica estado, no ejecuta merge. |
+| `updateFlow.ts` | Lógica de merge para update mode: Option A (packs actuales) y Option B (agregar packs). | `executeUpdateFlow()` | `IFileSystem`, `FileMergeEngine` | **SRP**: Solo ejecuta el flujo de update. |
+| `VerboseLogger` | Adapter para logging estructurado en modo verbose. | `log()`, `logProgress()` | `output.ts` | **SRP**: Solo maneja logging verbose. |
 
 ## 4. Contratos de API / Integraciones
 | Endpoint | Método | Request | Response | Autenticación | Rate Limit |
@@ -136,5 +154,7 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | **ADR-011** | Binary Removal | npm/bunx como única distribución; compilación de binarios removida | Eliminación de 74MB binarios, simplificación CI/CD | Mantener binarios (mantenimiento alto, poco uso) |
 | **ADR-012** | References Co-location | Referencias co-locadas con skills, expuestas vía sección reference | Skills autocontenidos, configuración opcional | Referencias centralizadas en template/obligatorio/references/ |
 | **ADR-013** | SDD Plugin Auto-Discovery | Auto-descubrimiento filesystem + configuración JSON + quality infra | Plugin desacoplado de documentación, extensible | Maps hardcoded en sdd-pipeline.ts |
+| **ADR-014** | Sistema de packs | Clasificación de agentes en packs: 8 seleccionables + 2 obligatorios (main, writers) | Instalación selectiva de agentes, wizard de selección, tarball 8MB | Todos los agentes siempre (sin selección) |
+| **ADR-015** | Installer UX v2 | UX metadata-driven con selección de packs, resumen pre-instalación, y actualizaciones version-gated | Mejor UX para gestión de packs, bloqueo de update en v1.x | UX plana sin selección de packs |
 
 ---
