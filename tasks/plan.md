@@ -1,56 +1,42 @@
-# Implementation Plan: FEV-23 — v2.0.0 Testing & Integration
+# Implementation Plan: FEV-24 — v2.1.0 New Commands
 
-**Phase:** FEV-23 (v2.0.0 Final Phase) — 🔲 Listo para implementar
-**Scope:** Cerrar el ciclo de v2.0.0 con: (1) **5 nuevos E2E scripts** para SC-UX7, SC-UX9, SC-UX10, SC-UX12 + Project Install con pack selection, (2) **~5 nuevos integration/unit tests** para cerrar gaps en coverage de Option B, Project Install pack flow, y version detection edge cases, (3) **Version bump** `package.json` 1.2.0 → 2.0.0 + remover el "transitional no-op" workaround de E2E #23, (4) **Release documentation** (CHANGELOG v2.0.0 entry + README actualizado + NUEVO `docs/MIGRATION.md` para v1.x→v2.0.0 + WORKFLOW/TECH_DEBT actualizados). NO incluye el release real (PR merge, tag v2.0.0, npm publish) — eso es proceso de release separado del maintainer.
-**Spec:** [specs/spec-installer-ux-v2.md §9](../specs/spec-installer-ux-v2.md), [specs/spec-agent-packs.md §9](../specs/spec-agent-packs.md)
-**Tech Debt:** TD-V2-6 (sigue abierto — no pack removal, deferred a v2.2.0)
-**Date:** 2026-08-06
-**Author:** Moctezuma (Strategic Planner)
-**Branch:** `feat/new-agents` (continúa de FEV-17 a FEV-22)
-**Methodology:** Per-phase atomic commits (1 por fase = **4 commits atómicos** + 1 verification) + checkpoints. Total: **~5.5-6h wall-clock**.
-**Wall-clock estimate:** ~5.5-6h (1.5-2h Phase 1 + 1.5h Phase 2 + 0.5h Phase 3 + 1h Phase 4 + 0.5h Phase 5)
+**Phase:** FEV-24 (v2.1.0 New Features) — 🔍 Plan listo para revisión
+**Scope:** Implementar 4 nuevos comandos agent-orchestration en `template/obligatorio/core/commands/`:
+- **`/sync`** (FEV-24-A, Issue #68) — Sincronización bidireccional con resolución inteligente de conflictos
+- **`/migrate`** (FEV-24-B, Issue #67, OPCIONAL) — Generador de guías de migración tecnológica
+- **`/deploy`** (FEV-24-C, Issue #64) — Configuración y ejecución de git workflow + CI/CD
+- **`/deploy`** (FEV-24-C, Issue #64) — Configuración de Git workflow + CI/CD
+- **`/analyze`** (FEV-24-D, Issue #57) — Generación de `TECH_DEBT.md` por análisis arquitectónico
+
+**Specs:** [`docs/diagnosis/fix09-sync-command.md`](../docs/diagnosis/fix09-sync-command.md), [`fix10-migrate-command.md`](../docs/diagnosis/fix10-migrate-command.md), [`fix11-deploy-command.md`](../docs/diagnosis/fix11-deploy-command.md), [`fix12-analyze-command.md`](../docs/diagnosis/fix12-analyze-command.md)
+**Branch:** `feature/new-commands` (continúa de FEV-24 docs merged in commit `673a029`)
+**Methodology:** Per-phase atomic commits (1 per phase = **5 commits atómicos** + 1 verification). Total: **~7-8h wall-clock**.
+**Wall-clock estimate:** ~7.5-8.5h (1.5-2h Phase 1 + 1.5-2h Phase 2 + 1.5-2h Phase 3 + 1.5-2h Phase 4 + 1.3h Phase 5 + 0.5h Phase 6)
 
 ---
 
 ## Overview
 
-FEV-23 cierra el ciclo de v2.0.0 después de que FEV-17 a FEV-22 entregaran:
-- **FEV-17**: Template directory restructuring (`core/` + `packs/`)
-- **FEV-18**: Agent classification & migration (~355 agents en 10 packs)
-- **FEV-19**: Permission unification & subagent table removal
-- **FEV-20**: Plugin `VALID_SUBAGENTS` removal + recursive auto-discovery
-- **FEV-21**: Pack selection wizard + version detection + Option A/B
-- **FEV-22**: Install summary + `agentCount` metadata + wiki sync
+FEV-24 entrega 4 nuevos comandos agent-orchestration que extienden el flujo SDD de Códice. Cada comando sigue el patrón establecido de los comandos existentes (`plan.md`, `ship.md`, `review.md`, `help.md`):
 
-El branch `feat/new-agents` tiene **1872 unit+integration tests (0 fail), 25/25 E2E pass, coverage ≥95%**. FEV-23 entrega la **suite completa** para v2.0.0 + **version bump** + **release documentation**.
+- **YAML frontmatter** con `description` (orquestador) + `agent` (agente ejecutor)
+- **Cuerpo estructurado** en Pre-flight → Phases → Suggested Next Step
+- **Composición** sobre implementación: delega a skills + subagents, no contiene lógica embebida
 
-**Lo que FEV-23 hace:**
+**Lo que FEV-24 hace:**
 
-1. **Completa la matriz de Success Criteria** del spec §9 (12 SCs):
-   - SC-UX1 ✅ (E2E 17, FEV-21)
-   - SC-UX2 ✅ (E2E 19, FEV-21)
-   - SC-UX3 ✅ (E2E 24, FEV-22)
-   - SC-UX4 ✅ (E2E 20, FEV-21)
-   - SC-UX5 🟡 (E2E 21, 22; falta pre-1.2.0 → **Phase 1**)
-   - SC-UX6 ✅ (E2E 23 transitional, will be **real** after Phase 3)
-   - SC-UX7 ❌ (Option B no testeado E2E → **Phase 1**)
-   - SC-UX8 ✅ (unit test en `update-flow.test.ts` line 146-154)
-   - SC-UX9 ❌ (--packs non-interactive no es E2E explícito → **Phase 1**)
-   - SC-UX10 ❌ (flat agents destination no testeado → **Phase 1**)
-   - SC-UX11 ✅ (E2E 22, FEV-21)
-   - SC-UX12 ❌ (pre-1.2.0 cleanup message no testeado → **Phase 1**)
+1. **4 nuevos archivos** de comando en `template/obligatorio/core/commands/`
+2. **1 nuevo E2E smoke test** (`31-commands-fe24-smoke.sh`) que valida frontmatter + estructura
+3. **1 actualización menor** a `diagnosis.md` (FEV-24-D requiere `TECH_DEBT.md` como input)
+4. **Documentación sincronizada**: `CHANGELOG.md` (v2.1.0), `docs/WORKFLOW.md` (FEV-24 ✅), `docs/wiki-source/` (Commands/Agents pages)
 
-2. **Bump version** a 2.0.0 con cleanup del transitional workaround
+**Lo que FEV-24 NO hace:**
 
-3. **Release documentation** lista para PR a `main` + tag v2.0.0
-
-**Lo que FEV-23 NO hace:**
-- ❌ PR merge `feat/new-agents` → `develop` (release coordination, separate)
-- ❌ PR merge `develop` → `main` (release coordination, separate)
-- ❌ Tag `v2.0.0` en git (release coordination, separate)
-- ❌ `npm publish` con dist-tag `latest` (release coordination, separate)
-- ❌ Pack removal mechanism (TD-V2-6, deferred a v2.2.0)
-- ❌ Auto-discovery of new packs (out of scope para v2.0.0)
+- ❌ Release real (PR merge, tag v2.1.0, npm publish) — release coordination deferred
+- ❌ Versión bump en `package.json` (deferred hasta release coordination)
+- ❌ Comandos que ejecuten lógica real (son orquestadores de agentes + skills; el agente decide qué hacer)
+- ❌ Nuevas dependencias npm (cero deps nuevas; todo es Markdown + skills existentes)
+- ❌ E2E tests de comportamiento (solo smoke tests de existencia/frontmatter)
 
 ---
 
@@ -58,18 +44,19 @@ El branch `feat/new-agents` tiene **1872 unit+integration tests (0 fail), 25/25 
 
 | # | Decision | Rationale |
 |---|----------|-----------|
-| **1** | **5 nuevos E2E scripts (no 6)** | E2E #23 será **reescrito** en Phase 3 (no es "nuevo"). Total: 25 + 5 nuevos + 1 reescrito = 30 E2E scripts. |
-| **2** | **Version bump en Phase 3 separada** | Aislar el cambio de versión en un commit dedicado. Facilita revert si hay issues con el bump. Phase 1 y Phase 2 son tests con `package.json: 1.2.0`; Phase 3 cambia a `2.0.0` y reescribe E2E #23. |
-| **3** | **MIGRATION.md NUEVO** | v1.x → v2.0.0 es un breaking change (incompatible metadata, no update path). Los usuarios necesitan guía explícita: qué se pierde, qué hacer, cuándo. CHANGELOG no es suficiente. |
-| **4** | **4 atomic commits (1 por fase) + 1 verification** | Consistente con FEV-20 (10 commits), FEV-21 (7 commits), FEV-22 (5 commits). Cada commit toca 1 concern: tests E2E, tests integration/unit, version bump, docs. |
-| **5** | **Reescribir E2E #23 con v2.0.0** | Una vez bumpeado, el "transitional no-op" workaround ya no aplica. Reescribir verifica la lógica real: Option A actualiza solo `installedPacks`, NO agrega nuevos packs. |
-| **6** | **5 nuevos E2E scripts en 1 commit atómico** | Todos los E2E nuevos están interrelacionados (cubren SC-UX del mismo spec). 1 commit = 1 logical change ("cover remaining SC-UX criteria"). |
-| **7** | **~5 nuevos integration/unit tests en 1 commit** | Similar al anterior: tests de use cases pack-aware están en el mismo concern. 1 commit. |
-| **8** | **No crear nuevos helpers** | Toda la infra ya existe (`common.sh` para E2E, mock helpers para integration). FEV-23 solo escribe tests, no producción. |
-| **9** | **Mantener BUNDLED_TEST_VERSION solo donde es necesario** | Después de bump, ningún E2E necesita BUNDLED_TEST_VERSION env var. Remover referencias en E2E 04, 15, 16 si las tienen. |
-| **10** | **Continuar en `feat/new-agents`** | Consistente con FEV-17/18/19/20/21/22. La rama acumula 7 FEVs del ciclo v2.0.0. |
-| **11** | **Total: ~5.5-6h wall-clock** | 1.5-2h Phase 1 + 1.5h Phase 2 + 0.5h Phase 3 + 1h Phase 4 + 0.5h Phase 5. |
-| **12** | **Reusar mocks de `update-flow.test.ts`** | El mock `IUserPrompt` ya existe con `selectUpdateOption` configurable. No duplicar — solo agregar tests que usen el mock existente. |
+| **1** | **4 comandos en 4 phases** | Cada comando es independiente; phases permiten commits atómicos y rollback granular. Vertical slicing (1 comando = 1 phase). |
+| **2** | **Smoke test único (`31-commands-fe24-smoke.sh`)** | User confirmó "Smoke tests only". 1 script valida los 4 comandos (más simple que 4 scripts). Cobertura: existencia + frontmatter + estructura básica. |
+| **3** | **5 atomic commits (1 per phase 1-5) + 1 verification** | Consistente con FEV-23 (4 atomic commits). Cada commit = 1 concern. Verify = sin commit. |
+| **4** | **Agent mapping per diagnosis** | `/sync` → `tlaloc` (Builder, git ops), `/migrate` → `quetzalcoatl` (Architect, .md only), `/deploy` → `mictlantecuhtli` (Judge, full access), `/analyze` → `quetzalcoatl` (Architect, .md only). Ya validado en diagnosis docs. |
+| **5** | **Comando `/migrate` es OPCIONAL** | El diagnosis (fix10) lo marca como opcional "similar a `/design` que solo se usa para UI/UX". Documentado en commit `9dd9fb7`. |
+| **6** | **Solo `diagnosis.md` se actualiza (Fase 4)** | FEV-24-D requiere que `diagnosis.md` considere `TECH_DEBT.md` como input. Las otras 3 commands no requieren updates a comandos existentes. |
+| **7** | **Wiki source sync sigue patrón FEV-22** | FEV-22 actualizó `docs/wiki-source/`. FEV-24 añade 4 entradas en `Commands.md` y 0 en `Agents.md` (los agents ya existen). |
+| **8** | **Sin versión bump en `package.json`** | User confirmó "defer release decision". El bump queda para release coordination. `CHANGELOG.md` se actualiza con anticipación. |
+| **13** | **README.md update in-place (no new section)** | Per user clarification: do NOT add "What's New in v2.1.0" section. Instead, update 3 existing sections in place: (1) Features list (13→17 commands), (2) Mermaid workflow diagram (4 new command nodes at SDD positions), (3) Full Cycle table (4 new rows). User prefers in-place updates over highlight boxes. |
+| **9** | **Branch: `feature/new-commands` (continuar)** | Ya existe el branch con docs merged. FEV-24 implementation continúa ahí. |
+| **10** | **Comando body = 200-400 líneas** | Siguiendo el patrón de `ship.md` (102 líneas) y `help.md` (63 líneas). Comandos con más fases pueden ser más largos pero <500 líneas (CODE_STYLE.md: max 200, pero commands son orquestadores con narrativa). |
+| **11** | **No nuevos skills ni subagents** | Los 4 comandos delegan a skills/subagents ya existentes. Si un comando necesita un skill nuevo, se delega como "TODO" en el cuerpo (no se crea en FEV-24). |
+| **12** | **No tests de comportamiento** | User confirmó smoke tests only. Comandos son orquestadores, no lógica; el comportamiento real se valida manualmente por el agente ejecutor. |
 
 ---
 
@@ -77,154 +64,125 @@ El branch `feat/new-agents` tiene **1872 unit+integration tests (0 fail), 25/25 
 
 | Pattern | Where | Why |
 |---------|-------|-----|
-| **Test Pyramid** | 1 unit (logic) → 5 unit (Phase 2) → 5 E2E (Phase 1) → 1 verify (Phase 5) | Domain unit tests son baratos; E2E son caros pero realistas. Pyramid balance = mantener velocity sin sacrificar confidence. |
-| **Single Source of Truth (SSOT)** | `FileRuleManifestData` es la única fuente de pack IDs, counts, paths | Todos los tests leen del manifest. Cambio en manifest = cambio en tests automático (no hardcoded constants). |
-| **Port + Adapter** | `IUserPrompt` mock reutilizado en 6+ tests | Test 1 escribe el mock; tests 2-N lo extienden. DRY en testing infrastructure. |
-| **Given-When-Then (AAA)** | Cada test: setup (given) → action (when) → assertion (then) | Consistente con codebase style. Reduce cognitive load. |
-| **Behavior-Driven Naming** | `describe("Option B", () => test("merges installed with new packs"))` | Test names describen el comportamiento esperado, no la implementación. |
-| **Boundary Testing** | Tests para: 0 packs, 1 pack, 8 packs, unknown pack, empty list, whitespace | Edge cases identificados en `validatePackList.test.ts` (FEV-21). Mismo patrón. |
-| **Template Method** | E2E scripts usan `common.sh` helpers (`setup_workspace`, `assert_contains`, `log_pass`) | FEV-2-D/3/16 establecieron este patrón. E2E 26-30 siguen el template. |
-| **Test Isolation** | Cada E2E crea `TEMP_DIR` con `create_temp_dir` (no comparte state) | Independiente del orden de ejecución. CI safety. |
-| **Defensive Validation** | Tests verifican que `installedPacks` está bien-formado antes de mergear | Si metadata está corrupta, FEV-23 atrapa el issue antes de v2.0.0 release. |
+| **Vertical Slicing** | 1 phase = 1 complete command (file + smoke test) | Cada commit entrega funcionalidad completa. No horizontal layers. |
+| **Template Method** | Todos los comandos: Pre-flight → Phases → Suggested Next Step | Patrón establecido en comandos existentes (`plan.md`, `ship.md`, `review.md`). Consistencia. |
+| **Single Responsibility** | Cada comando = 1 concern (`/sync` solo sincroniza, `/deploy` solo deploys) | Clarity of purpose. Cada agente tiene un rol claro. |
+| **Agent Capability Mapping** | Permission set del agente elegido debe permitir el trabajo | `tlaloc`: write/edit allow → git ops OK. `quetzalcoatl`: edit .md only → doc generation OK. `mictlantecuhtli`: full access → CI/CD YAML OK. |
+| **Composition over Implementation** | Comandos delegan a skills + subagents; no embeben lógica | Permite evolución independiente. Reduce code duplication. |
+| **Single Source of Truth (SSOT)** | `FileRuleManifestData` ya es SSOT para packs. Comandos extienden `.opencode/commands/` declarativamente. | Mismo principio: añadir command = añadir archivo, no modificar registry. |
+| **Boundary Testing** | Smoke test: file exists, frontmatter has 2 required fields, agent field matches expected value | Valida el contrato (frontmatter schema) sin ejecutar comportamiento. |
+| **Test Isolation** | Cada E2E script crea su propio TEMP_DIR; smoke test no requiere filesystem ops | Cumple SC-1 testing pattern del proyecto. |
 
 ---
 
-## Pre-Audit Snapshot (2026-08-06)
+## Pre-Audit Snapshot (2026-08-07)
 
-### Current Test State (post-FEV-22)
+### Current State (post-FEV-24 docs merge, pre-FEV-24 implementation)
 
 | Metric | Value |
 |--------|------:|
-| Tests (pass/fail) | 1872 / 0 |
-| E2E scenarios | 25 / 25 |
+| Tests (pass/fail) | 1920 / 0 (post-FEV-23) |
+| E2E scenarios | 30 / 30 |
 | `just check` errors | 0 |
-| `just check-plugin` errors | 0 |
-| Coverage (lines) | ≥95% |
-| `FileRule` fields | 7 (+1 `agentCount?`) |
-| `IUserPrompt` methods | 16 |
-| CLI flags | 10 |
-| Pack entry count | 8 (category: "pack") |
-| Branch | `feat/new-agents` |
-| `package.json` version | 1.2.0 |
-| `src/cli/version.ts` VERSION | 1.2.0 (auto-derived) |
+| Coverage (lines) | 95.68% overall / 99.12% production `src/` |
+| `package.json` version | 2.0.0 (no bump in FEV-24) |
+| Branch | `feature/new-commands` |
+| Working tree | clean (commit `9dd9fb7` HEAD) |
+| Existing commands | 13 (build, code-simplify, design, diagnosis, docs-update, evolve, help, plan, review, ship, spec, test, webperf) |
+| Existing primary agents | 6 (huitzilopochtli, mictlantecuhtli, moctezuma, quetzalcoatl, tezcatlipoca, tlaloc) |
 
-### E2E Coverage Matrix (current vs target)
+### Command-to-Agent Mapping Matrix
 
-| SC | Spec | E2E Current | Status | Phase to add |
-|----|------|-------------|--------|--------------|
-| SC-UX1 | Pack selection screen w/ default | 17-pack-selection-default | ✅ | — |
-| SC-UX2 | Min 1 pack validation | 19-pack-validation-min1 + validatePackList.test.ts | ✅ | — |
-| SC-UX3 | Install summary | 24, 25 (FEV-22) | ✅ | — |
-| SC-UX4 | .codice-version format | 20-codice-version-installedPacks | ✅ | — |
-| SC-UX5 | Update blocked | 21 (missing), 22 (1.x) | 🟡 | **Phase 1** (pre-1.2.0) |
-| SC-UX6 | Option A scope | 23 (transitional) | 🟡 | **Phase 3** (rewrite) |
-| SC-UX7 | Option B locked packs | none | ❌ | **Phase 1** |
-| SC-UX8 | Option B cancel no new | update-flow.test.ts:146-154 | ✅ | — |
-| SC-UX9 | --packs non-interactive | none (used as helper) | ❌ | **Phase 1** |
-| SC-UX10 | Flat agents/ | none | ❌ | **Phase 1** |
-| SC-UX11 | Legacy v1.x message | 22 (v1.x) | ✅ | — |
-| SC-UX12 | Pre-1.2.0 cleanup | none | ❌ | **Phase 1** |
+| Command | Owner Agent | Reason | Agent Permissions |
+|---------|-------------|--------|-------------------|
+| `/sync` | `tlaloc` | Builder executes git ops + writes code | write:allow, edit:allow, patch:allow |
+| `/migrate` | `quetzalcoatl` | Architect plans + writes .md only | write:deny, edit:*.md:allow, patch:deny |
+| `/deploy` | `mictlantecuhtli` | Judge validates + writes CI/CD YAML | write:allow, edit:allow, patch:allow |
+| `/analyze` | `quetzalcoatl` | Architect analyzes + writes TECH_DEBT.md | write:deny, edit:*.md:allow, patch:deny |
 
-**Score:** 7/12 ✅ + 3 🟡 + 3 ❌ → FEV-23 → 12/12 ✅
+### E2E Coverage Matrix (current → target)
 
-### Files requiring modification (12) + new (8) = 20 total
+| Scenario | Current | Status | Phase |
+|----------|---------|--------|:-----:|
+| FEV-24 smoke (4 new commands) | none | ❌ | **Phase 5** (smoke test added in Phase 1, 2, 3, 4 but bundled into Phase 5 commit) |
+| `/sync` exists + frontmatter | — | ❌ | **Phase 1** |
+| `/migrate` exists + frontmatter | — | ❌ | **Phase 2** |
+| `/deploy` exists + frontmatter | — | ❌ | **Phase 3** |
+| `/analyze` exists + frontmatter | — | ❌ | **Phase 4** |
+
+### Files requiring modification (3) + new (5) = 8 total
 
 | File | Layer | Action | Phase |
 |------|-------|--------|:-----:|
-| `tests/e2e/26-update-blocked-pre-1.2.0.sh` | E2E | NEW (SC-UX12) | 1 |
-| `tests/e2e/27-update-option-b.sh` | E2E | NEW (SC-UX7) | 1 |
-| `tests/e2e/28-flat-agents-destination.sh` | E2E | NEW (SC-UX10) | 1 |
-| `tests/e2e/29-non-interactive-packs.sh` | E2E | NEW (SC-UX9) | 1 |
-| `tests/e2e/30-project-install-packs.sh` | E2E | NEW (Project Install + packs) | 1 |
-| `tests/integration/use-cases/update-workspace.test.ts` | Test | Add Option B execution tests | 2 |
-| `tests/integration/use-cases/project-install.test.ts` | Test | Add pack selection coverage | 2 |
-| `tests/integration/use-cases/clean-install.test.ts` | Test | Add pack summary verification | 2 |
-| `tests/unit/cli/version-context.test.ts` | Test | Add pre-1.2.0 edge cases (3 tests) | 2 |
-| `tests/e2e/23-update-option-a.sh` | E2E | REWRITE (remove transitional) | 3 |
-| `package.json` | Build | 1.2.0 → 2.0.0 | 3 |
-| `CHANGELOG.md` | Docs | Add v2.0.0 entry | 4 |
-| `README.md` | Docs | Update to v2.0.0 | 4 |
-| `docs/MIGRATION.md` | Docs | NEW (v1.x → v2.0.0 guide) | 4 |
-| `docs/WORKFLOW.md` | Docs | Mark FEV-23 ✅ + v2.0.0 ready | 4 |
-| `docs/TECH_DEBT.md` | Docs | Document v2.0.0 closure | 4 |
-| `tests/e2e/common.sh` | E2E | Possibly extend (verify) | 1 |
-| `tests/e2e/04-update-workspace.sh` | E2E | Verify BUNDLED_TEST_VERSION (Phase 3) | 3 |
-| `tests/e2e/15-update-workspace-existing-project.sh` | E2E | Verify (Phase 3) | 3 |
-| `tests/e2e/16-update-granularity.sh` | E2E | Verify (Phase 3) | 3 |
+| `template/obligatorio/core/commands/sync.md` | Template | NEW | 1 |
+| `template/obligatorio/core/commands/migrate.md` | Template | NEW | 2 |
+| `template/obligatorio/core/commands/deploy.md` | Template | NEW | 3 |
+| `template/obligatorio/core/commands/analyze.md` | Template | NEW | 4 |
+| `template/obligatorio/core/commands/diagnosis.md` | Template | UPDATE (FEV-24-D integration) | 4 |
+| `tests/e2e/31-commands-fe24-smoke.sh` | E2E | NEW | 5 |
+| `CHANGELOG.md` | Docs | UPDATE (v2.1.0 entry) | 5 |
+| `README.md` | Docs | UPDATE (3 sections in place: Features, Mermaid, Full Cycle) | 5 |
+| `docs/WORKFLOW.md` | Docs | UPDATE (FEV-24 ✅) | 5 |
+| `docs/wiki-source/Commands.md` | Wiki | UPDATE (4 new commands) | 5 |
 
-**Total:** 16 files modified + 6 new (5 E2E + 1 doc) = 22 files
-**Note:** Some files overlap between E2E 23 rewrite and Phase 3 version bump work.
+**Total:** 5 new files + 5 modified = 10 files
 
 ### Files NOT modified (verified)
 
-- `src/application/installSummary.ts` (FEV-22, no change)
-- `src/application/packOptions.ts` (FEV-22, no change)
-- `src/application/ports/IUserPrompt.ts` (FEV-22, no change)
-- `src/application/use-cases/InstallUseCaseBase.ts` (FEV-22, no change)
-- `src/infrastructure/adapters/ClackPromptsAdapter.ts` (FEV-22, no change)
-- `src/domain/entities/FileRule.ts` (FEV-22, no change)
-- `src/domain/entities/FileRuleManifestData.ts` (FEV-22, no change)
-- `src/application/use-cases/updateFlow.ts` (FEV-21, no change)
-- `src/cli/versionContext.ts` (FEV-21, no change)
-- `src/infrastructure/adapters/versionInfoMessages.ts` (FEV-21, no change)
-- `template/obligatorio/packs/**` (no change — pack content intact)
-- `docs/wiki-source/**` (FEV-22, no change)
-
-### Baseline metrics (post-FEV-22)
-
-| Metric | Value |
-|--------|------:|
-| Tests (pass/fail) | 1872 / 0 |
-| E2E scenarios | 25 / 25 |
-| `just check` errors | 0 |
-| Coverage (lines) | ≥95% |
-| `FileRule` fields | 7 |
-| `IUserPrompt` methods | 16 |
-| CLI flags | 10 |
-| `.codice-version` fields | 4 |
-| Tarball size | 8.0MB (SC-15 deviation, accepted 2026-08-04) |
+- `src/cli/**` — no CLI changes (commands are markdown files, not source)
+- `src/application/**` — no new use cases
+- `src/infrastructure/**` — no new adapters
+- `package.json` — no version bump (deferred to release)
+- `tsconfig.json`, `biome.json` — no config changes
+- `template/obligatorio/packs/**` — no new agents/subagents
+- `template/obligatorio/core/skills/**` — no new skills (commands reference existing)
+- `.opencode/agents/**` — no new agents
 
 ---
 
 ## Dependency Graph
 
 ```
-FEV-22 ✅ (feat/new-agents base)
+FEV-23 ✅ (v2.0.0 base, 1920 tests, 30 E2E, 2.0.0)
     ↓
-Phase 1: Missing E2E Tests (~1.5-2h, 1 commit)
-    ├── T1.1: 5 new E2E scripts (26, 27, 28, 29, 30)
-    └── T1.2: Verify common.sh has needed helpers
+Phase 1: FEV-24-A /sync (tlaloc) (~1.5-2h, 1 commit)
+    ├── T1.1: Create template/obligatorio/core/commands/sync.md
+    ├── T1.2: Update smoke test (add /sync check)
+    └── T1.3: Verify smoke test passes
     ↓
-Phase 2: Unit/Integration Test Gaps (~1.5h, 1 commit)
-    ├── T2.1: update-workspace.test.ts (Option B execution)
-    ├── T2.2: project-install.test.ts (pack selection coverage)
-    ├── T2.3: clean-install.test.ts (pack summary verification)
-    └── T2.4: version-context.test.ts (pre-1.2.0 edge cases)
+Phase 2: FEV-24-B /migrate (quetzalcoatl) (~1.5-2h, 1 commit)
+    ├── T2.1: Create template/obligatorio/core/commands/migrate.md
+    └── T2.2: Update smoke test (add /migrate check)
     ↓
-Phase 3: Version Bump to v2.0.0 (~0.5h, 1 commit)
-    ├── T3.1: package.json 1.2.0 → 2.0.0
-    ├── T3.2: Rewrite E2E 23 (real Option A verification)
-    └── T3.3: Verify other E2E scripts work with v2.0.0
+Phase 3: FEV-24-C /deploy (mictlantecuhtli) (~1.5-2h, 1 commit)
+    ├── T3.1: Create template/obligatorio/core/commands/deploy.md
+    └── T3.2: Update smoke test (add /deploy check)
     ↓
-Phase 4: Release Documentation (~1h, 1 commit)
-    ├── T4.1: CHANGELOG.md (v2.0.0 entry)
-    ├── T4.2: README.md (pack system prominent)
-    ├── T4.3: docs/MIGRATION.md (NEW)
-    ├── T4.4: docs/WORKFLOW.md (FEV-23 ✅)
-    └── T4.5: docs/TECH_DEBT.md (v2.0.0 closure)
+Phase 4: FEV-24-D /analyze (quetzalcoatl) (~1.5-2h, 1 commit)
+    ├── T4.1: Create template/obligatorio/core/commands/analyze.md
+    ├── T4.2: Update template/obligatorio/core/commands/diagnosis.md (TECH_DEBT.md input)
+    └── T4.3: Update smoke test (add /analyze + diagnosis integration check)
     ↓
-Phase 5: Verification (~0.5h, gates release)
-    ├── T5.1: just check + just test + just test-e2e
-    ├── T5.2: Coverage ≥95% verification
-    ├── T5.3: npm pack --dry-run (verify tarball)
-    └── T5.4: Manual CLI smoke test
+Phase 5: Documentation Sync (~1.3h, 1 commit)
+    ├── T5.1: CHANGELOG.md (v2.1.0 entry)
+    ├── T5.2: docs/WORKFLOW.md (FEV-24 ✅ + 4 commands listed)
+    ├── T5.3: docs/wiki-source/Commands.md (4 new commands)
+    ├── T5.4: Finalize smoke test
+    └── T5.5: README.md (in-place: Features + Mermaid + Full Cycle)
     ↓
-FEV-23 Complete → Release coordination (separate)
+Phase 6: Verification (~0.5h, no commit)
+    ├── T6.1: just check (0 errors)
+    ├── T6.2: just test (1920+ tests, 0 fail)
+    ├── T6.3: just test-e2e (31/31 E2E pass: 30 baseline + 1 new smoke)
+    ├── T6.4: npm pack --dry-run (verify tarball integrity)
+    └── T6.5: Manual load test (verify 4 commands load in OpenCode harness)
+    ↓
+FEV-24 Complete → Release coordination deferred (separate)
 ```
 
-**Critical path:** T1.1 → T2.1-T2.4 → T3.1-T3.3 → T4.1-T4.5 → T5.1-T5.4 (~5.5-6h total)
-**Atomic commits:** 4 (1 per phase) + 1 verification (no commit)
-**Parallel opportunities:** T2.1-T2.4 can be parallelized in execution (but bundled in 1 commit for atomicity).
+**Critical path:** T1.1 → T2.1 → T3.1 → T4.1 → T5.1-T5.5 → T6.1-T6.5 (~7.5-8.5h total)
+**Atomic commits:** 5 (1 per phase 1-5) + 1 verification (no commit)
+**Parallel opportunities:** Phases 1-4 are sequential by design (each updates same smoke test file). Could parallelize via separate worktrees but adds merge complexity.
 
 ---
 
@@ -232,17 +190,19 @@ FEV-23 Complete → Release coordination (separate)
 
 ```mermaid
 graph TD
-    F22[FEV-22 ✅<br/>feat/new-agents base<br/>1872 tests, 25 E2E]:::done --> P1
-    P1[Phase 1: Missing E2E<br/>5 new scripts (26-30)<br/>~1.5-2h]:::seq --> CP1
-    CP1{Phase 1 Checkpoint<br/>30/30 E2E pass}:::gate --> P2
-    P2[Phase 2: Unit/Integration<br/>~5 new tests<br/>~1.5h]:::seq --> CP2
-    CP2{Phase 2 Checkpoint<br/>1877+ tests pass}:::gate --> P3
-    P3[Phase 3: Version Bump<br/>1.2.0→2.0.0<br/>E2E 23 rewrite<br/>~0.5h]:::seq --> CP3
-    CP3{Phase 3 Checkpoint<br/>VERSION=2.0.0<br/>E2E 23 real}:::gate --> P4
-    P4[Phase 4: Release Docs<br/>CHANGELOG + README<br/>+ MIGRATION + W/TD<br/>~1h]:::seq --> CP4
-    CP4{Phase 4 Checkpoint<br/>docs v2.0.0 ready}:::gate --> P5
-    P5[Phase 5: Verify<br/>check + test + e2e<br/>+ coverage + npm pack<br/>~0.5h]:::seq --> DONE
-    DONE[FEV-23 Complete ✅<br/>v2.0.0 release-ready]:::done
+    F23[FEV-23 ✅<br/>v2.0.0 base<br/>1920 tests, 30 E2E<br/>2.0.0]:::done --> P1
+    P1[Phase 1: /sync<br/>tlaloc<br/>~1.5-2h]:::seq --> CP1
+    CP1{Phase 1 Checkpoint<br/>sync.md + smoke<br/>pass}:::gate --> P2
+    P2[Phase 2: /migrate<br/>quetzalcoatl<br/>~1.5-2h]:::seq --> CP2
+    CP2{Phase 2 Checkpoint<br/>migrate.md + smoke<br/>pass}:::gate --> P3
+    P3[Phase 3: /deploy<br/>mictlantecuhtli<br/>~1.5-2h]:::seq --> CP3
+    CP3{Phase 3 Checkpoint<br/>deploy.md + smoke<br/>pass}:::gate --> P4
+    P4[Phase 4: /analyze<br/>quetzalcoatl<br/>+ diagnosis update<br/>~1.5-2h]:::seq --> CP4
+    CP4{Phase 4 Checkpoint<br/>analyze.md + smoke<br/>pass}:::gate --> P5
+    P5[Phase 5: Docs Sync<br/>CHANGELOG+WORKFLOW<br/>+Wiki+README<br/>~1.3h]:::seq --> CP5
+    CP5{Phase 5 Checkpoint<br/>docs v2.1.0 ready}:::gate --> P6
+    P6[Phase 6: Verify<br/>check+test+e2e<br/>+npm pack+manual<br/>~0.5h]:::seq --> DONE
+    DONE[FEV-24 Complete ✅<br/>v2.1.0 implementation<br/>ready, release deferred]:::done
 
     classDef done fill:#51cf66,stroke:#2f9e44,color:#fff
     classDef gate fill:#ffd43b,stroke:#f59f00,color:#000
@@ -255,1460 +215,1480 @@ graph TD
 
 | File | Phase | Change Type | Lines Affected | Commit |
 |------|:-----:|-------------|:--------------:|--------|
-| `tests/e2e/26-update-blocked-pre-1.2.0.sh` | 1 | NEW | +85 / -0 | T1.1 |
-| `tests/e2e/27-update-option-b.sh` | 1 | NEW | +110 / -0 | T1.1 |
-| `tests/e2e/28-flat-agents-destination.sh` | 1 | NEW | +90 / -0 | T1.1 |
-| `tests/e2e/29-non-interactive-packs.sh` | 1 | NEW | +95 / -0 | T1.1 |
-| `tests/e2e/30-project-install-packs.sh` | 1 | NEW | +110 / -0 | T1.1 |
-| `tests/integration/use-cases/update-workspace.test.ts` | 2 | Add Option B tests | +80 / -0 | T2.1 |
-| `tests/integration/use-cases/project-install.test.ts` | 2 | Add pack selection | +60 / -0 | T2.2 |
-| `tests/integration/use-cases/clean-install.test.ts` | 2 | Add pack summary | +40 / -0 | T2.3 |
-| `tests/unit/cli/version-context.test.ts` | 2 | Add pre-1.2.0 cases | +30 / -0 | T2.4 |
-| `tests/e2e/23-update-option-a.sh` | 3 | REWRITE (no transitional) | +30 / -50 | T3.2 |
-| `package.json` | 3 | 1.2.0 → 2.0.0 | +1 / -1 | T3.1 |
-| `tests/e2e/04-update-workspace.sh` | 3 | Verify (no BUNDLED env) | ±5 | T3.3 |
-| `tests/e2e/15-update-workspace-existing-project.sh` | 3 | Verify | ±5 | T3.3 |
-| `tests/e2e/16-update-granularity.sh` | 3 | Verify | ±5 | T3.3 |
-| `CHANGELOG.md` | 4 | v2.0.0 entry | +60 / -0 | T4.1 |
-| `README.md` | 4 | Update to v2.0.0 | +40 / -20 | T4.2 |
-| `docs/MIGRATION.md` | 4 | NEW | +180 / -0 | T4.3 |
-| `docs/WORKFLOW.md` | 4 | FEV-23 ✅ | +20 / -5 | T4.4 |
-| `docs/TECH_DEBT.md` | 4 | v2.0.0 closure | +15 / -0 | T4.5 |
+| `template/obligatorio/core/commands/sync.md` | 1 | NEW | +350 / -0 | T1.1 |
+| `tests/e2e/31-commands-fe24-smoke.sh` | 1,5 | NEW (built incrementally, finalized in P5) | +200 / -0 | T5.4 (final) |
+| `template/obligatorio/core/commands/migrate.md` | 2 | NEW | +300 / -0 | T2.1 |
+| `template/obligatorio/core/commands/deploy.md` | 3 | NEW | +350 / -0 | T3.1 |
+| `template/obligatorio/core/commands/analyze.md` | 4 | NEW | +300 / -0 | T4.1 |
+| `template/obligatorio/core/commands/diagnosis.md` | 4 | UPDATE (add TECH_DEBT.md input) | +10 / -2 | T4.2 |
+| `CHANGELOG.md` | 5 | UPDATE (v2.1.0 entry) | +50 / -0 | T5.1 |
+| `README.md` | 5 | UPDATE (3 sections in place) | +30 / -5 | T5.5 |
+| `docs/WORKFLOW.md` | 5 | UPDATE (FEV-24 ✅) | +20 / -5 | T5.2 |
+| `docs/wiki-source/Commands.md` | 5 | UPDATE (4 new commands) | +80 / -0 | T5.3 |
 
-**Total:** 13 files modified + 6 new = 19 files (some overlap with Phase 3)
-**Net lines:** +1076 new, -76 modified = **+1000 lines net** (mostly new E2E + new MIGRATION.md)
-**Commits:** 4 atomic commits + 1 verification (no commit)
+**Total:** 6 new files + 4 modified = 10 files
+**Net lines:** +1690 new, -12 modified = **+1678 lines net** (mostly new commands)
+**Commits:** 5 atomic commits + 1 verification (no commit)
 
 ---
 
 ## Task List
 
-### Phase 1: Missing E2E Scenarios (~1.5-2h, 1 commit)
+### Phase 1: FEV-24-A `/sync` (~1.5-2h, 1 commit)
 
-> **Vertical slicing: 1 E2E = 1 SC criterion.** Cada script es independiente y atómico. Phase 1 = 5 scripts (26-30). Total time: 1.5-2h. Pattern: copiar estructura de 17-25 (FEV-21/22) + custom assertions.
+> **Vertical slice: 1 command = 1 phase.** Crear el archivo del comando con frontmatter correcto, body estructurado, y agregar al smoke test. Total time: 1.5-2h.
 
-#### Task 1.1: 5 new E2E scripts
+#### Task 1.1: Create `template/obligatorio/core/commands/sync.md`
 
-**Description:** Crear 5 nuevos scripts bash E2E en `tests/e2e/`. Cada uno cubre 1 SC del spec §9. Pattern: copiar 17-pack-selection-default.sh como template (es el más reciente con pack-related logic).
+**Description:** Crear el archivo del comando `/sync` siguiendo el patrón de `ship.md` y `help.md`. El comando orquesta sincronización bidireccional con resolución de conflictos. Agent ejecutor: `tlaloc` (Builder).
 
-**Target `26-update-blocked-pre-1.2.0.sh` (SC-UX12):**
+**Target `sync.md` (estructura):**
 
-```bash
-#!/bin/bash
-# FEV-23-T1: Update Blocked — Pre-1.2.0 Cleanup Suggestion E2E
-#
-# Scenario: Seed .codice-version with version "1.1.0" (pre-1.2.0).
-# Expected (version gate — pre-1.2.0 status):
-#   - exit code 0 (gate returns success without updating)
-#   - output contains "Pre-1.2.0 Installation Detected"
-#   - output contains "references/" and ".devin/"
-#   - NO merge (opencode.json absent)
-#
-# SC-UX12: Pre-1.2.0 users see cleanup suggestion for references/ and .devin/.
+```markdown
+---
+description: Bidirectional git sync with intelligent conflict resolution (4 modes, 4 strategies)
+agent: tlaloc
+---
 
-set -Eeuo pipefail
-source "$(dirname "$0")/common.sh"
+## Pre-Flight: Detect Git State
 
-log_step "FEV-23-T1: Update Blocked — Pre-1.2.0 Cleanup Suggestion"
+1. Verify `git` is installed and accessible.
+2. Verify the project is a git repository (`.git/` exists).
+3. Verify at least one remote is configured.
+4. If any check fails, abort with actionable error message.
 
-TEMP_DIR="$(create_temp_dir)"
-log_info "Test directory: $TEMP_DIR"
-cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
+Use the `question` tool to let the user confirm the sync mode:
 
-# Seed pre-1.2.0 installation (1.1.0 — older than 1.2.0)
-echo '{"version":"1.1.0","installedAt":"2026-01-01T00:00:00.000Z"}' > "$TEMP_DIR/.codice-version"
-log_info "Seeded .codice-version with v1.1.0 (pre-1.2.0)"
+### Sync Modes (user selects ONE)
 
-start_mock_server
+- **A) `full-sync`** — Bidirectional sync. Fetch + pull --rebase + push.
+- **B) `incremental-sync`** — Only changes since last sync (tracked in `docs/.codice-sync-state.json`).
+- **C) `dry-run`** — Preview changes without applying. No mutations.
+- **D) `conflict-resolution`** — Interactive mode. Detect conflicts, ask user strategy.
 
-EXIT_CODE=0
-STDERR_FILE="$TEMP_DIR/stderr.log"
-STDOUT_FILE="$TEMP_DIR/stdout.log"
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
+If the user selects **A** or **B**, ask the resolution strategy (4 options).
 
-stop_mock_server
+## Phase 1: Resolution Strategy (only for modes A/B)
 
-if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
-    exit 1
-fi
-log_pass "CLI exited with code 0"
+Use `question` tool:
 
-COMBINED_OUTPUT=$(cat "$STDOUT_FILE" "$STDERR_FILE" 2>/dev/null || echo "")
+- **`NEWER_WINS`** — Latest timestamp wins (file content from newer mtime).
+- **`GITHUB_WINS`** — Remote changes take precedence.
+- **`LOCAL_WINS`** — Local changes take precedence.
+- **`INTELLIGENT_MERGE`** — Contextual field-level merge (best-effort, may require manual review).
 
-# Verify pre-1.2.0 detection
-assert_contains "$COMBINED_OUTPUT" "Pre-1.2.0 Installation Detected"
-log_pass "Pre-1.2.0 status detected"
+## Phase 2: Execute Sync
 
-# Verify cleanup suggestion message
-assert_contains "$COMBINED_OUTPUT" "references/"
-assert_contains "$COMBINED_OUTPUT" ".devin/"
-log_pass "Cleanup suggestion for references/ and .devin/ displayed"
+For mode A:
+1. `git fetch --all --prune`
+2. `git status` to check working tree
+3. If dirty: stash or commit (ask user)
+4. `git pull --rebase` (or `git pull` if rebase fails)
+5. Detect conflicts via `git diff --name-only --diff-filter=U`
+6. If conflicts: apply selected strategy
+7. `git push` (only if ahead)
 
-# Verify NO merge
-assert_file_missing "$TEMP_DIR/opencode.json"
-log_pass "No merge happened (opencode.json absent)"
+For mode B:
+1. Read `docs/.codice-sync-state.json` to find last sync timestamp
+2. Use `git diff <last-sync>..HEAD` and `<last-sync>..origin/main` to detect changes
+3. Show preview; apply strategy if approved
 
-log_pass "FEV-23-T1: All assertions passed"
+For mode C (dry-run):
+1. Run all `git fetch` / `git status` / `git diff` commands
+2. Show summary of changes that WOULD be applied
+3. Exit without mutations
+
+For mode D (conflict-resolution):
+1. `git fetch`
+2. `git status` + `git diff` to identify conflicts
+3. For each conflict: use `question` tool to ask strategy per-file
+4. Apply resolutions
+5. `git add` resolved files
+6. Optional: commit and push
+
+## Phase 3: Post-Sync Report
+
+Generate report:
+- **Conflicts detected:** N files
+- **Strategy applied:** [NAME]
+- **Files changed:** N
+- **Push status:** success / skipped
+- **Time elapsed:** Xs
+- **Sync state updated:** `docs/.codice-sync-state.json` (mode B only)
+
+## Phase 4: State Persistence (mode B only)
+
+Update `docs/.codice-sync-state.json`:
+```json
+{
+  "lastSync": "2026-08-07T10:00:00.000Z",
+  "lastCommit": "<sha>",
+  "mode": "incremental-sync",
+  "strategy": "INTELLIGENT_MERGE"
+}
 ```
 
-**Target `27-update-option-b.sh` (SC-UX7):**
+## Rules
 
-```bash
-#!/bin/bash
-# FEV-23-T2: Update Option B — Add New Packs (Non-Interactive) E2E
-#
-# Scenario: Seed v2.0.0 installation with ONLY software-development pack.
-# Run --update --force --update-add-packs creative,business.
-# Expected (Option B with addPacks):
-#   - exit code 0
-#   - .codice-version updated: installedPacks now includes "creative" and "business"
-#   - agents from creative + business now present in agents/
-#   - software-development agents still present (lock)
-#
-# SC-UX7: Option B adds new packs during update, installed packs are LOCKED.
-# Note: With bundled v1.2.0, the comparison reports "already up to date" and
-# no merge happens. The test verifies the metadata is correct (installedPacks
-# was updated), and the merge behavior is documented as verified by integration
-# tests with BUNDLED_TEST_VERSION env var (FEV-23 verification).
+1. **Always pre-flight check first** — never run git commands on a non-git project.
+2. **Never `git push --force`** to shared branches. Only force-push to feature branches.
+3. **Atomic state updates** — if conflict resolution fails mid-way, leave git in a recoverable state.
+4. **Always show dry-run output** before applying — even in `full-sync` mode, print what will change.
+5. **Log all operations** if user passes `--verbose` flag (delegated to tlaloc's verbose logger).
+6. **Back up uncommitted changes** before sync (stash or commit, ask user).
 
-set -Eeuo pipefail
-source "$(dirname "$0")/common.sh"
+## Skills Used
 
-log_step "FEV-23-T2: Update Option B — Add New Packs (Non-Interactive)"
+- `git-workflow-and-versioning` — for safe git operations
+- `interview-me` — for asking clarifying questions about conflict resolution
+- `observability-and-instrumentation` — for sync state tracking
 
-TEMP_DIR="$(create_temp_dir)"
-log_info "Test directory: $TEMP_DIR"
-cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
+## Suggested Next Step
 
-# Seed v2.0.0 installation with ONLY software-development
-echo '{"version":"2.0.0","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":[]}' > "$TEMP_DIR/.codice-version"
-log_info "Seeded .codice-version with v2.0.0 (software-development only)"
-
-start_mock_server
-
-EXIT_CODE=0
-STDERR_FILE="$TEMP_DIR/stderr.log"
-STDOUT_FILE="$TEMP_DIR/stdout.log"
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force --update-add-packs creative,business) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
-
-stop_mock_server
-
-if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
-    exit 1
-fi
-log_pass "CLI exited with code 0"
-
-COMBINED_OUTPUT=$(cat "$STDOUT_FILE" "$STDERR_FILE" 2>/dev/null || echo "")
-
-# Verify .codice-version updated
-assert_file_exists "$TEMP_DIR/.codice-version"
-VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
-
-# installedPacks must now include software-development (lock) + creative + business
-if ! echo "$VERSION_DATA" | grep -q '"software-development"'; then
-    log_fail "Version file missing 'software-development' (lock broken)"
-    exit 1
-fi
-if ! echo "$VERSION_DATA" | grep -q '"creative"'; then
-    log_fail "Version file missing 'creative' (addPacks not merged)"
-    exit 1
-fi
-if ! echo "$VERSION_DATA" | grep -q '"business"'; then
-    log_fail "Version file missing 'business' (addPacks not merged)"
-    exit 1
-fi
-log_pass "installedPacks updated: software-development (lock) + creative + business"
-
-log_pass "FEV-23-T2: All assertions passed"
-```
-
-**Target `28-flat-agents-destination.sh` (SC-UX10):**
-
-```bash
-#!/bin/bash
-# FEV-23-T3: Flat Agents Destination E2E
-#
-# Scenario: Run --clean --force --packs software-development,business.
-# Expected (flat destination preserved):
-#   - exit code 0
-#   - agents/backend-developer.md exists (from software-development, at agents/ root)
-#   - agents/business-analyst.md exists (from business, at agents/ root)
-#   - NO agents/software-development/ subdirectory created
-#   - NO agents/business/ subdirectory created
-#
-# SC-UX10: Agents are copied to flat agents/ directory, not pack subdirectories.
-
-set -Eeuo pipefail
-source "$(dirname "$0")/common.sh"
-
-log_step "FEV-23-T3: Flat Agents Destination"
-
-TEMP_DIR="$(create_temp_dir)"
-log_info "Test directory: $TEMP_DIR"
-cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
-
-EXIT_CODE=0
-STDERR_FILE="$TEMP_DIR/stderr.log"
-STDOUT_FILE="$TEMP_DIR/stdout.log"
-(cd "$TEMP_DIR" && $CODICE_CLI --clean --force --packs software-development,business) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
-
-if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
-    exit 1
-fi
-log_pass "CLI exited with code 0"
-
-# Verify agents are at agents/ root (flat)
-assert_file_exists "$TEMP_DIR/agents/backend-developer.md"
-assert_file_exists "$TEMP_DIR/agents/business-analyst.md"
-log_pass "Agents copied to flat agents/ directory"
-
-# Verify NO pack subdirectories
-assert_dir_missing "$TEMP_DIR/agents/software-development"
-assert_dir_missing "$TEMP_DIR/agents/business"
-log_pass "No pack subdirectories created"
-
-log_pass "FEV-23-T3: All assertions passed"
-```
-
-**Target `29-non-interactive-packs.sh` (SC-UX9):**
-
-```bash
-#!/bin/bash
-# FEV-23-T4: --packs Flag Non-Interactive E2E
-#
-# Scenario: Run --clean --force --packs business,creative
-# (NO default software-development).
-# Expected (non-interactive pack override):
-#   - exit code 0
-#   - .codice-version records installedPacks: ["business", "creative"]
-#   - NO software-development agents (e.g., backend-developer.md absent)
-#   - business + creative agents present
-#   - NO interactive prompts invoked
-#
-# SC-UX9: --packs flag works in non-interactive mode.
-
-set -Eeuo pipefail
-source "$(dirname "$0")/common.sh"
-
-log_step "FEV-23-T4: --packs Flag Non-Interactive"
-
-TEMP_DIR="$(create_temp_dir)"
-log_info "Test directory: $TEMP_DIR"
-cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
-
-EXIT_CODE=0
-STDERR_FILE="$TEMP_DIR/stderr.log"
-STDOUT_FILE="$TEMP_DIR/stdout.log"
-(cd "$TEMP_DIR" && $CODICE_CLI --clean --force --packs business,creative) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
-
-if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
-    exit 1
-fi
-log_pass "CLI exited with code 0"
-
-# Verify .codice-version
-assert_file_exists "$TEMP_DIR/.codice-version"
-VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
-
-if ! echo "$VERSION_DATA" | grep -q '"business"'; then
-    log_fail "Version file missing 'business'"
-    exit 1
-fi
-if ! echo "$VERSION_DATA" | grep -q '"creative"'; then
-    log_fail "Version file missing 'creative'"
-    exit 1
-fi
-log_pass "installedPacks = [business, creative] recorded"
-
-# Verify NO software-development agents
-assert_file_missing "$TEMP_DIR/agents/backend-developer.md"
-log_pass "No software-development agents (default overridden)"
-
-# Verify business + creative agents present
-assert_file_exists "$TEMP_DIR/agents/business-analyst.md"
-assert_file_exists "$TEMP_DIR/agents/designer.md"
-log_pass "business + creative agents present"
-
-log_pass "FEV-23-T4: All assertions passed"
-```
-
-**Target `30-project-install-packs.sh` (Project Install + packs):**
-
-```bash
-#!/bin/bash
-# FEV-23-T5: Project Install with Pack Selection E2E
-#
-# Scenario: Pre-populate destination with a file that exists in estandar/
-# (e.g., README.md). Run --project --force --packs business
-# Expected (Project Install + pack selection):
-#   - exit code 0
-#   - README.md is PRESERVED (Project Install doesn't overwrite standard)
-#   - agents from business pack present
-#   - .codice-version records installedPacks: ["business"]
-#   - NO software-development agents (pack selection respected)
-#
-# Note: Project Install + packs is the "selective merge" use case from US-2
-# (existing project) combined with the new pack system.
-
-set -Eeuo pipefail
-source "$(dirname "$0")/common.sh"
-
-log_step "FEV-23-T5: Project Install with Pack Selection"
-
-TEMP_DIR="$(create_temp_dir)"
-log_info "Test directory: $TEMP_DIR"
-cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
-
-# Pre-populate README.md (user's existing project)
-echo "# My Custom Project" > "$TEMP_DIR/README.md"
-log_info "Pre-populated README.md (user's custom content)"
-
-EXIT_CODE=0
-STDERR_FILE="$TEMP_DIR/stderr.log"
-STDOUT_FILE="$TEMP_DIR/stdout.log"
-(cd "$TEMP_DIR" && $CODICE_CLI --project --force --packs business) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
-
-if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
-    exit 1
-fi
-log_pass "CLI exited with code 0"
-
-# Verify README.md PRESERVED (Project Install behavior)
-assert_file_exists "$TEMP_DIR/README.md"
-if ! grep -q "My Custom Project" "$TEMP_DIR/README.md"; then
-    log_fail "README.md was overwritten (Project Install should preserve standard files)"
-    exit 1
-fi
-log_pass "README.md preserved (Project Install selective merge)"
-
-# Verify .codice-version
-assert_file_exists "$TEMP_DIR/.codice-version"
-VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
-if ! echo "$VERSION_DATA" | grep -q '"business"'; then
-    log_fail "Version file missing 'business' in installedPacks"
-    exit 1
-fi
-log_pass "installedPacks = [business] recorded"
-
-# Verify business agents present, software-development absent
-assert_file_exists "$TEMP_DIR/agents/business-analyst.md"
-assert_file_missing "$TEMP_DIR/agents/backend-developer.md"
-log_pass "business pack installed, software-development skipped"
-
-log_pass "FEV-23-T5: All assertions passed"
+> Sync complete. Run `/diagnosis` if conflicts revealed underlying issues, `/analyze` to refresh TECH_DEBT.md, or `/plan` to address new tasks surfaced.
 ```
 
 **Acceptance criteria:**
 
-- [ ] 5 E2E scripts created (26, 27, 28, 29, 30)
-- [ ] Each script uses `common.sh` helpers
-- [ ] Each script is self-contained (no shared state)
-- [ ] `just test-e2e` shows 30/30 scenarios pass (25 baseline + 5 new)
-- [ ] SC-UX7, SC-UX9, SC-UX10, SC-UX12 each covered by exactly 1 E2E
-- [ ] Project Install + pack selection covered by 1 E2E (30)
-- [ ] All scripts executable (chmod +x)
+- [ ] File `template/obligatorio/core/commands/sync.md` exists
+- [ ] YAML frontmatter has `description` (orchestrator) and `agent: tlaloc`
+- [ ] Body has sections: Pre-Flight, Phase 1, Phase 2, Phase 3, Phase 4 (mode B), Rules, Skills Used, Suggested Next Step
+- [ ] Body documents all 4 modes (full-sync, incremental-sync, dry-run, conflict-resolution)
+- [ ] Body documents all 4 strategies (NEWER_WINS, GITHUB_WINS, LOCAL_WINS, INTELLIGENT_MERGE)
+- [ ] No implementation code embedded (orchestrator only)
 
 **Verification:**
 
-- [ ] `bash tests/e2e/26-update-blocked-pre-1.2.0.sh` exit 0
-- [ ] `bash tests/e2e/27-update-option-b.sh` exit 0
-- [ ] `bash tests/e2e/28-flat-agents-destination.sh` exit 0
-- [ ] `bash tests/e2e/29-non-interactive-packs.sh` exit 0
-- [ ] `bash tests/e2e/30-project-install-packs.sh` exit 0
-- [ ] `just test-e2e` shows 30/30 pass
+- [ ] `just check-plugin` (or equivalent) — no errors
+- [ ] Smoke test includes /sync check
+- [ ] Manual: load command in OpenCode harness and verify agent resolves to `tlaloc`
 
-**Dependencies:** FEV-22 ✅
-**Files likely touched:** 5 new E2E scripts (+490 lines)
-**Estimated scope:** M (5 scripts, ~490 lines, 1.5-2h)
-**Commit:** `test(e2e): cover remaining SC-UX criteria and project install with pack selection`
+**Dependencies:** FEV-23 ✅
+**Files likely touched:** `template/obligatorio/core/commands/sync.md` (+350)
+**Estimated scope:** M (1 file, ~350 lines, 1.5-2h)
+**Commit:** `feat(command): add /sync for bidirectional git sync with intelligent conflict resolution`
+
+---
+
+#### Task 1.2: Add `/sync` to smoke test (incremental)
+
+**Description:** Update `tests/e2e/31-commands-fe24-smoke.sh` to include `/sync` validation. The smoke test is created in Phase 1 as a stub and built incrementally through Phases 1-4, finalized in Phase 5.
+
+**Note:** For Phase 1, create the file with the validation framework and the /sync check. Phases 2-4 will append their checks. Phase 5 finalizes the file.
+
+**Target initial structure (Phase 1):**
+
+```bash
+#!/bin/bash
+# FEV-24 Smoke Test: Validate 4 new commands (sync, migrate, deploy, analyze)
+#
+# Validates:
+#   - File exists
+#   - YAML frontmatter has 'description' and 'agent' fields
+#   - 'agent' field matches expected value
+#   - Body has 'Pre-Flight' and 'Suggested Next Step' sections
+#   - Body references at least one skill
+#
+# This test does NOT validate behavior — that's the agent's responsibility.
+
+set -Eeuo pipefail
+source "$(dirname "$0")/common.sh"
+
+COMMANDS_DIR="$CODICE_ROOT/template/obligatorio/core/commands"
+
+# validate_command <file> <expected_agent> <expected_description_substring>
+validate_command() {
+  local file="$1"
+  local expected_agent="$2"
+  local expected_desc_substr="$3"
+
+  log_step "Validating command: $(basename "$file")"
+
+  # File exists
+  assert_file_exists "$file"
+
+  # Frontmatter: description
+  if ! grep -q "^description:" "$file"; then
+    log_fail "Missing 'description' in frontmatter"
+    exit 1
+  fi
+
+  # Frontmatter: agent
+  if ! grep -qE "^agent:\s*${expected_agent}\s*$" "$file"; then
+    log_fail "Frontmatter 'agent' field does not match expected '${expected_agent}'"
+    exit 1
+  fi
+
+  # Description contains expected substring (sanity check)
+  if ! grep -q "$expected_desc_substr" "$file"; then
+    log_fail "Description does not contain expected substring: '$expected_desc_substr'"
+    exit 1
+  fi
+
+  # Body: Pre-Flight section
+  if ! grep -q "## Pre-Flight" "$file"; then
+    log_fail "Missing '## Pre-Flight' section in body"
+    exit 1
+  fi
+
+  # Body: Suggested Next Step section
+  if ! grep -q "## Suggested Next Step" "$file"; then
+    log_fail "Missing '## Suggested Next Step' section in body"
+    exit 1
+  fi
+
+  # Body: References at least one skill
+  if ! grep -qE "@?skills/" "$file"; then
+    log_fail "No skill references found in body (expected at least one)"
+    exit 1
+  fi
+
+  log_pass "Command valid: $(basename "$file")"
+}
+
+# /sync (FEV-24-A)
+validate_command \
+  "$COMMANDS_DIR/sync.md" \
+  "tlaloc" \
+  "sync"
+
+# Future: /migrate, /deploy, /analyze added in Phases 2, 3, 4
+
+log_pass "FEV-24 smoke test: /sync validated"
+```
+
+**Acceptance criteria:**
+
+- [ ] `tests/e2e/31-commands-fe24-smoke.sh` exists
+- [ ] Executable (`chmod +x`)
+- [ ] `/sync` validation passes
+- [ ] `validate_command` helper function is reusable for Phases 2-4
+
+**Verification:**
+
+- [ ] `bash tests/e2e/31-commands-fe24-smoke.sh` exit 0
+- [ ] `just test-e2e` shows 31/31 pass (30 baseline + 1 new)
+
+**Dependencies:** Task 1.1
+**Files likely touched:** `tests/e2e/31-commands-fe24-smoke.sh` (NEW, +90)
+**Estimated scope:** S (1 file, ~90 lines, 0.3h)
+**Commit:** (bundled with T1.1 — see "Commit Strategy" below)
+
+---
+
+#### Commit Strategy for Phase 1
+
+**Single atomic commit for Phase 1** (per architecture decision #3):
+
+```
+feat(command): add /sync for bidirectional git sync with intelligent conflict resolution
+
+- Create template/obligatorio/core/commands/sync.md
+- Add /sync validation to FEV-24 smoke test (tests/e2e/31-commands-fe24-smoke.sh)
+- Document 4 modes (full-sync, incremental-sync, dry-run, conflict-resolution)
+- Document 4 strategies (NEWER_WINS, GITHUB_WINS, LOCAL_WINS, INTELLIGENT_MERGE)
+- Agent: tlaloc (Builder, git operations + code)
+
+Refs: FEV-24-A, Issue #68
+```
+
+**Note:** The smoke test is created in Phase 1 with the validation framework + /sync check, but it's not "finalized" until Phase 5 (when all 4 commands are added). The Phase 1 commit includes the initial smoke test file with /sync check. Phases 2-4 will amend the smoke test in their respective commits.
 
 ---
 
 #### Checkpoint: Phase 1 Complete (gates Phase 2)
 
-- [ ] 5 new E2E scripts created
-- [ ] All 30 E2E scenarios pass (`just test-e2e` shows 30/30)
-- [ ] SC-UX7, SC-UX9, SC-UX10, SC-UX12 verified end-to-end
-- [ ] Project Install + pack selection verified
+- [ ] `template/obligatorio/core/commands/sync.md` created with full body
+- [ ] `tests/e2e/31-commands-fe24-smoke.sh` created with validation framework + /sync check
+- [ ] `bash tests/e2e/31-commands-fe24-smoke.sh` exit 0
+- [ ] `just check` 0 errors
 - [ ] **Review con humano antes de Phase 2**
 
 ---
 
-### Phase 2: Unit/Integration Test Gaps (~1.5h, 1 commit)
+### Phase 2: FEV-24-B `/migrate` (~1.5-2h, 1 commit)
 
-> **Vertical slicing: 1 test file = 1 use case concern.** Cada test file agrega tests para un use case o helper. Phase 2 = 4 test files modificados. Total time: 1.5h.
+> **Same vertical slice pattern as Phase 1.** Crear `/migrate` command + update smoke test. Agent: `quetzalcoatl` (Architect, write .md only).
 
-#### Task 2.1: Add Option B execution tests to `update-workspace.test.ts`
+#### Task 2.1: Create `template/obligatorio/core/commands/migrate.md`
 
-**Description:** El test unit `update-flow.test.ts` ya cubre la lógica de resolución (Option A vs B vs cancel) con mocks. Lo que falta es verificar que `UpdateWorkspaceUseCase` realmente invoca `mergeEngine.execute()` con los packs correctos cuando Option B está activo.
+**Description:** Comando opcional para guiar al usuario en migraciones tecnológicas del stack. Sigue el patrón de `design.md` (opcional, solo se usa cuando aplica).
 
-**Test additions:**
+**Target `migrate.md` (estructura):**
 
-```typescript
-// In tests/integration/use-cases/update-workspace.test.ts (add new describe block)
+```markdown
+---
+description: Generate a complete technology stack migration plan with impact analysis, breaking changes, and documentation updates
+agent: quetzalcoatl
+---
 
-describe("UpdateWorkspaceUseCase — Option B (add packs)", () => {
-  test("merges installed packs + newly added packs when Option B selected", async () => {
-    // Setup: v2.0.0 install with [software-development]
-    // Mock: selectUpdateOption returns "add", selectPacks returns
-    //       [software-development, business, creative] (with installed locked)
-    // Expected: mergeEngine.execute called with rules including all 3 packs
-    //           (installedPacks = [software-development, business, creative])
-    // Verify: mockMergeEngine.execute called with rules
-    //         Verify: .codice-version written with all 3 packs
-  });
+**Optional command** — Only run when the user needs to migrate technologies (frameworks, libraries, databases, architectures). Similar to `/design` which only runs for UI/UX work.
 
-  test("Option B with only installed packs selected returns null and skips merge", async () => {
-    // Mock: selectUpdateOption returns "add", selectPacks returns
-    //       [software-development] (no new packs)
-    // Expected: mergeEngine.execute NOT called
-    // Verify: prompt.showInfo called with "No new packs selected. Update cancelled."
-  });
+**SDD Flow Position:** Before `/diagnosis`, `/docs-update`, and `/evolve` (migration may require new specs and documentation updates).
 
-  test("Option B preserves installed packs even if user attempts to deselect", async () => {
-    // This is the "hard lock" test — same as unit test but verifies the
-    // use case receives the locked list, not what user "selected"
-    // Mock: selectPacks returns [creative] (deselected software-development)
-    // Expected: installedPacks = [software-development, creative] (lock wins)
-    // Verify: mergeEngine.execute called with both
-  });
-});
+## Pre-Flight: Detect Stack
+
+1. Identify project root (where `package.json`, `requirements.txt`, `Gemfile`, `go.mod`, `Cargo.toml`, or similar lives).
+2. Read lock files (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `Cargo.lock`, etc.) to detect current versions.
+3. Read config files (`tsconfig.json`, `vite.config.ts`, `next.config.js`, `webpack.config.js`, etc.).
+4. Use the `question` tool to ask the user: **"What technology do you want to migrate?"** with options:
+   - **A) Framework** (e.g., Next.js 14 → 15, React 18 → 19)
+   - **B) Language** (e.g., JavaScript → TypeScript, Python 2 → 3)
+   - **C) Database** (e.g., PostgreSQL 14 → 16, MongoDB 5 → 6)
+   - **D) Architecture** (e.g., monolith → microservices, REST → GraphQL)
+   - **E) Other** (specify)
+
+## Phase 1: Impact Analysis
+
+For the selected migration, evaluate:
+
+### Breaking Changes
+- Major version bumps in dependencies
+- API deprecations and removals
+- Configuration format changes
+- Runtime requirements (Node version, OS support)
+
+### Dependency Analysis
+- Use `dependency-audit` skill to identify affected dependencies
+- Check for transitive dependency conflicts
+- Identify unmaintained packages
+
+### Code Surface
+- Files affected (search for deprecated API usages)
+- Tests covering the affected code
+- Documentation references
+
+Use `interview-me` skill to ask the user for clarification if multiple migration paths exist.
+
+## Phase 2: Generate Migration Plan
+
+Create `docs/MIGRATION.md` (or update if exists) with:
+
+```markdown
+# Migration Plan: [FROM] → [TO]
+
+## Overview
+- **Date:** YYYY-MM-DD
+- **Scope:** [framework | language | database | architecture]
+- **Estimated effort:** Xh
+- **Risk level:** [low | medium | high]
+
+## Pre-Migration Checklist
+- [ ] Backup current state
+- [ ] Document current behavior
+- [ ] Identify rollback procedure
+
+## Phase 1: Preparation
+1. Update [package.json | requirements.txt | etc.] to new version
+2. Run [test command] to identify failures
+3. Document baseline metrics
+
+## Phase 2: Code Updates
+- [Specific code changes with file paths]
+- [Migration codemods if available]
+- [Manual interventions required]
+
+## Phase 3: Testing
+- [Run full test suite]
+- [Visual regression tests if UI changes]
+- [Performance benchmarks]
+
+## Phase 4: Documentation
+- [Update README]
+- [Update CHANGELOG]
+- [Update SPEC.md if architecture changes]
+- [Update WORKFLOW.md if process changes]
+
+## Phase 5: Deployment
+- [Staging deployment]
+- [Production deployment with feature flag]
+- [Monitoring and rollback triggers]
+
+## Rollback Procedure
+- [Exact steps to revert]
+- [Data migration reversal if applicable]
+- [Communication plan]
+
+## Success Criteria
+- [ ] All tests pass
+- [ ] Performance within X% of baseline
+- [ ] No new bugs filed in first 7 days
+```
+
+## Phase 3: Update Affected Documentation
+
+If migration changes architecture or process:
+
+- `docs/WORKFLOW.md` — Update workflow phases if process changes
+- `docs/SPEC.md` — Update spec if requirements change
+- `specs/` — Update affected modular specs
+- `README.md` — Update installation/usage instructions if user-facing
+
+## Rules
+
+1. **Always include rollback procedure** — every migration must be reversible.
+2. **Never skip impact analysis** — even for "minor" version bumps, breaking changes can hide.
+3. **Atomic commits per phase** — don't bundle migration phases into a single commit.
+4. **Preserve git history** — use `git mv` for renames, never delete + create.
+5. **Test before and after** — capture baseline metrics.
+6. **Document as you go** — update MIGRATION.md in the same commit as the code change.
+
+## Skills Used
+
+- `dependency-audit` — for analyzing dependency impact
+- `interview-me` — for clarifying migration scope
+- `deprecation-and-migration` — for planning the migration
+- `test-driven-development` — for writing tests for the new stack
+- `changelog-generate` — for documenting changes
+
+## Suggested Next Step
+
+> Migration plan generated. Run `/build` to execute Phase 1 (preparation), then `/test` to verify, then commit each phase atomically.
 ```
 
 **Acceptance criteria:**
 
-- [ ] 3 new integration tests added to `update-workspace.test.ts`
-- [ ] All use existing `createMockPrompt` + `createMockMergeEngine` helpers
-- [ ] All verify the correct pack list reaches `mergeEngine.execute()`
-- [ ] All tests pass
+- [ ] File `template/obligatorio/core/commands/migrate.md` exists
+- [ ] YAML frontmatter has `description` and `agent: quetzalcoatl`
+- [ ] Body marks the command as **Optional**
+- [ ] Body documents SDD flow position
+- [ ] Body has all phases (Pre-Flight, Phase 1, Phase 2, Phase 3, Rules, Skills, Suggested Next Step)
+- [ ] No implementation code embedded
 
 **Verification:**
 
-- [ ] `bun test tests/integration/use-cases/update-workspace.test.ts` shows new tests pass
-- [ ] No regression in existing 32419-line test file
-- [ ] Coverage of `UpdateWorkspaceUseCase.ts` ≥90%
+- [ ] Smoke test includes /migrate check
+- [ ] `just check-plugin` no errors
 
 **Dependencies:** Phase 1 complete
-**Files likely touched:** `tests/integration/use-cases/update-workspace.test.ts` (+80)
-**Estimated scope:** S (1 test file, ~80 lines, 0.5h)
-**Commit (bundled):** `test(integration): cover Option B execution and pack-aware use cases`
+**Files likely touched:** `template/obligatorio/core/commands/migrate.md` (+300)
+**Estimated scope:** M (1 file, ~300 lines, 1.5-2h)
+**Commit:** `feat(command): add /migrate (optional) for technology stack migration planning`
 
 ---
 
-#### Task 2.2: Add pack selection coverage to `project-install.test.ts`
+#### Task 2.2: Add `/migrate` to smoke test
 
-**Description:** El test file `project-install.test.ts` (27K lines) cubre Project Install en general. Faltan tests específicos que verifiquen que Project Install respeta `--packs` y que la merge engine solo incluye los packs seleccionados.
+**Description:** Amend `tests/e2e/31-commands-fe24-smoke.sh` to include `/migrate` validation.
 
-**Test additions:**
+**Append to smoke test:**
 
-```typescript
-// In tests/integration/use-cases/project-install.test.ts
+```bash
+# /migrate (FEV-24-B) — Optional
+validate_command \
+  "$COMMANDS_DIR/migrate.md" \
+  "quetzalcoatl" \
+  "migration"
 
-describe("ProjectInstallUseCase — pack selection", () => {
-  test("respects --packs flag (only includes selected packs)", async () => {
-    // Setup: pre-populated destination
-    // Run: project install with --packs business
-    // Expected: agents/business-analyst.md present
-    //           agents/backend-developer.md absent (software-development skipped)
-  });
-
-  test("preserves user's standard files when pack differs from default", async () => {
-    // Setup: README.md, CHANGELOG.md exist
-    // Run: project install with --packs business
-    // Expected: README.md, CHANGELOG.md preserved
-    //           business pack agents copied
-  });
-
-  test("default pack (software-development) when --packs not specified", async () => {
-    // Run: project install WITHOUT --packs
-    // Expected: software-development agents present
-    //           business pack agents absent
-  });
-});
+# Verify "Optional" marker in body (per fix10 diagnosis)
+if ! grep -qi "optional" "$COMMANDS_DIR/migrate.md"; then
+  log_fail "/migrate should be marked as Optional (per fix10 diagnosis)"
+  exit 1
+fi
+log_pass "/migrate marked as Optional"
 ```
 
 **Acceptance criteria:**
 
-- [ ] 3 new integration tests added to `project-install.test.ts`
-- [ ] All tests pass
-- [ ] Coverage of `ProjectInstallUseCase.ts` ≥90%
+- [ ] Smoke test includes /migrate validation
+- [ ] Smoke test verifies "Optional" marker is present
+- [ ] `bash tests/e2e/31-commands-fe24-smoke.sh` exit 0
 
 **Verification:**
 
-- [ ] `bun test tests/integration/use-cases/project-install.test.ts` shows new tests pass
-- [ ] No regression
+- [ ] All Phase 1 + 2 checks pass
+- [ ] `just test-e2e` shows 31/31 pass
 
-**Dependencies:** Phase 1 complete
-**Files likely touched:** `tests/integration/use-cases/project-install.test.ts` (+60)
-**Estimated scope:** S (1 test file, ~60 lines, 0.3h)
-**Commit (bundled):** Same as T2.1
-
----
-
-#### Task 2.3: Add pack summary verification to `clean-install.test.ts`
-
-**Description:** El test file `clean-install.test.ts` (27K lines) cubre Clean Install general. Faltan tests que verifiquen que la install summary se muestra con los packs correctos (FEV-22 agregó `showInstallSummary` pero clean-install.test.ts no verifica el contenido).
-
-**Test additions:**
-
-```typescript
-// In tests/integration/use-cases/clean-install.test.ts
-
-describe("CleanInstallUseCase — install summary", () => {
-  test("summary shows selected packs with agent counts", async () => {
-    // Run: clean install with --packs software-development,business
-    // Verify: prompt.showInstallSummary called with:
-    //         - packs: [{id: "software-development", agentCount: 146},
-    //                   {id: "business", agentCount: 92}]
-    //         - totalAgents: 238
-  });
-
-  test("summary shows mandatory directories (main + writers)", async () => {
-    // Verify: summary.mandatoryDirs includes "packs/main", "packs/writers"
-  });
-
-  test("summary shows selected optional files when present", async () => {
-    // Run: clean install with optional selections
-    // Verify: summary.optionalFiles includes the selections
-  });
-});
-```
-
-**Acceptance criteria:**
-
-- [ ] 3 new integration tests added to `clean-install.test.ts`
-- [ ] All tests pass
-- [ ] Coverage of `installSummary.ts` ≥95%
-
-**Verification:**
-
-- [ ] `bun test tests/integration/use-cases/clean-install.test.ts` shows new tests pass
-- [ ] No regression
-
-**Dependencies:** Phase 1 complete
-**Files likely touched:** `tests/integration/use-cases/clean-install.test.ts` (+40)
-**Estimated scope:** S (1 test file, ~40 lines, 0.3h)
-**Commit (bundled):** Same as T2.1
-
----
-
-#### Task 2.4: Add pre-1.2.0 edge cases to `version-context.test.ts`
-
-**Description:** El test file `version-context.test.ts` (112 lines) ya cubre v2.0+, pre-2.0.0, pre-1.2.0 (1 test), malformed, missing. Faltan edge cases: version strings con v-prefix, version exactamente en 1.2.0 (boundary), version con minor patch.
-
-**Test additions:**
-
-```typescript
-// In tests/unit/cli/version-context.test.ts
-
-describe("detectVersionContext — edge cases", () => {
-  test("v-prefix on version is stripped before status determination", async () => {
-    // v1.2.0 → should be pre-2.0.0
-  });
-
-  test("version 1.2.0 exactly is pre-2.0.0 (not pre-1.2.0)", async () => {
-    // 1.2.0 → boundary, should be pre-2.0.0
-  });
-
-  test("version 1.1.999 is pre-1.2.0 (minor < 2)", async () => {
-    // 1.1.999 → pre-1.2.0
-  });
-
-  test("version 0.9.0 is pre-1.2.0", async () => {
-    // 0.9.0 → pre-1.2.0
-  });
-});
-```
-
-**Acceptance criteria:**
-
-- [ ] 4 new unit tests added to `version-context.test.ts`
-- [ ] All tests pass
-- [ ] Total tests in file: 13 (was 9)
-
-**Verification:**
-
-- [ ] `bun test tests/unit/cli/version-context.test.ts` shows 13 tests pass
-- [ ] No regression
-
-**Dependencies:** Phase 1 complete
-**Files likely touched:** `tests/unit/cli/version-context.test.ts` (+30)
-**Estimated scope:** XS (1 test file, ~30 lines, 0.2h)
+**Dependencies:** Task 2.1
+**Files likely touched:** `tests/e2e/31-commands-fe24-smoke.sh` (+15)
+**Estimated scope:** XS (1 file, ~15 lines, 0.2h)
 **Commit (bundled):** Same as T2.1
 
 ---
 
 #### Checkpoint: Phase 2 Complete (gates Phase 3)
 
-- [ ] 13 new tests added (3 + 3 + 3 + 4)
-- [ ] `just test-integration` shows 100% pass
-- [ ] `just test-unit` shows 1885+ tests pass (1872 baseline + 13 new)
-- [ ] Coverage of `UpdateWorkspaceUseCase`, `ProjectInstallUseCase`, `installSummary.ts` ≥90%
-- [ ] No regression in existing 1872 tests
+- [ ] `template/obligatorio/core/commands/migrate.md` created
+- [ ] Smoke test includes /migrate validation
+- [ ] `just check` 0 errors
 - [ ] **Review con humano antes de Phase 3**
 
 ---
 
-### Phase 3: Version Bump to v2.0.0 (~0.5h, 1 commit)
+### Phase 3: FEV-24-C `/deploy` (~1.5-2h, 1 commit)
 
-> **Atomic concern: 1 commit para el bump.** `package.json` 1.2.0 → 2.0.0, E2E 23 reescrito, comentarios transitional removidos. Phase 3 = 1 commit. Total time: 0.5h.
+> **Same vertical slice pattern.** Crear `/deploy` command + update smoke test. Agent: `mictlantecuhtli` (Judge, full access for CI/CD YAML).
 
-#### Task 3.1: Update `package.json` version to 2.0.0
+#### Task 3.1: Create `template/obligatorio/core/commands/deploy.md`
 
-**Description:** En `package.json`, cambiar `"version": "1.2.0"` → `"version": "2.0.0"`. El VERSION constant en `src/cli/version.ts` se deriva de package.json (auto-update, no change needed).
+**Description:** Comando para configurar y ejecutar git workflow + CI/CD pipelines. Sigue el patrón de `ship.md` (post-`/ship`, deploy launches to production).
 
-**Change:**
+**Target `deploy.md` (estructura):**
 
-```diff
-   "name": "@fisherk2-dev/codice",
--  "version": "1.2.0",
-+  "version": "2.0.0",
-   "license": "MIT",
+```markdown
+---
+description: Configure and execute git workflow + CI/CD pipelines. Detects project type, proposes workflow, and generates modular configurations
+agent: mictlantecuhtli
+---
+
+**SDD Flow Position:** After `/ship` (ship reviews before launch, deploy launches to production).
+
+## Pre-Flight: Detect Existing Workflow
+
+1. Check for `CONTRIBUTING.md` in project root.
+2. Check for `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `.travis.yml`, or other CI config directories.
+3. Check for branch protection rules (via `gh` CLI if available, GitHub only).
+4. Check for existing PR templates in `.github/PULL_REQUEST_TEMPLATE.md`.
+
+Use the `question` tool to ask the user: **"What is the current state of your CI/CD setup?"** with options:
+- **A) No workflow configured** — generate from scratch
+- **B) Basic workflow, needs improvements** — analyze and optimize
+- **C) Established workflow** — execute the documented workflow
+- **D) Just analyze** — generate report without making changes
+
+## Phase 1: Project Analysis (if A or B)
+
+Detect project characteristics:
+
+### Project Type
+- **Language:** JavaScript/TypeScript, Python, Rust, Go, Java, Ruby, etc.
+- **Framework:** Next.js, Express, Django, Spring Boot, etc.
+- **Build system:** npm, yarn, pnpm, cargo, maven, gradle, etc.
+- **Test framework:** Jest, pytest, cargo test, etc.
+- **Deployment target:** Vercel, Netlify, AWS, GCP, Azure, self-hosted, etc.
+
+### Existing Config
+- `package.json` scripts
+- Docker / docker-compose files
+- Kubernetes manifests
+- Terraform / Pulumi configs
+- Helm charts
+
+## Phase 2: Propose Workflow (if A)
+
+For a new project, propose:
+
+### Branching Strategy
+- **Trunk-based** — single `main` branch, short-lived feature branches, deploy from main
+- **Gitflow** — `main` + `develop` branches, release branches, hotfix branches
+- **GitHub Flow** — `main` + feature branches via PRs
+
+### CI/CD Platform
+- **GitHub Actions** — if repo is on GitHub
+- **GitLab CI** — if repo is on GitLab
+- **CircleCI / Travis CI** — for cross-platform CI
+- **Jenkins** — for self-hosted enterprise
+
+### Pipeline Stages
+1. **Lint** — ESLint, Prettier, Biome, etc.
+2. **Test** — unit, integration, e2e
+3. **Build** — production bundle
+4. **Deploy** — staging → production (with approval gates)
+
+Use `question` tool to let the user choose:
+1. Branching strategy
+2. CI/CD platform
+3. Pipeline stages (toggle per stage)
+
+## Phase 3: Generate Configurations
+
+Create modular files:
+
+### Branch Protection Rules (if GitHub)
+```bash
+gh api repos/:owner/:repo/branches/main/protection -X PUT --input branch-protection.json
+```
+
+Or document manual steps in CONTRIBUTING.md.
+
+### PR Template
+`.github/PULL_REQUEST_TEMPLATE.md`:
+```markdown
+## Summary
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation
+
+## Changes
+- [Describe changes]
+
+## Testing
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+
+## Checklist
+- [ ] Code follows style guide
+- [ ] Self-reviewed
+- [ ] Comments added for complex logic
+- [ ] Documentation updated
+```
+
+### CI Pipeline (GitHub Actions example)
+`.github/workflows/ci.yml`:
+```yaml
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: bun install
+      - run: bun test
+      - run: bun run lint
+```
+
+### Deployment Strategy
+- **Blue-green** — zero-downtime via parallel environments
+- **Canary** — gradual rollout to subset of users
+- **Rolling** — sequential instance replacement
+- **Feature flag** — deploy hidden, enable via flag
+
+## Phase 4: Update Documentation
+
+Update or create `CONTRIBUTING.md` with:
+
+- Branching strategy
+- Commit message conventions
+- PR process
+- Review requirements
+- Deployment procedure
+- Rollback procedure
+
+## Phase 5: Execute Deployment (if C)
+
+For established workflow:
+
+1. Verify all tests pass on the latest commit
+2. Verify the deployment target is reachable
+3. Run the documented deployment commands
+4. Monitor for errors during deployment
+5. Confirm health checks pass
+6. Report deployment status
+
+## Rules
+
+1. **Never auto-push to `main`** — always require explicit user approval.
+2. **Test deployment in staging first** — unless the user explicitly requests direct-to-prod.
+3. **Document every config change** — commit message should explain why.
+4. **Modular configurations** — split large pipelines into reusable workflows.
+5. **Secrets via CI/CD platform** — never commit secrets to git.
+6. **Rollback procedure mandatory** — every deployment must have a documented rollback.
+
+## Skills Used
+
+- `ci-cd-and-automation` — for pipeline design
+- `git-workflow-and-versioning` — for branching strategy
+- `bash-defensive-patterns` — for robust deployment scripts
+- `observability-and-instrumentation` — for deployment monitoring
+- `interview-me` — for asking about CI/CD preferences
+
+## Suggested Next Step
+
+> Deployment configured. Run `/ship` to review before launch, then run `/deploy` again with mode C to execute. If issues arise, run `/diagnosis` to triage.
 ```
 
 **Acceptance criteria:**
 
-- [ ] `package.json` has `"version": "2.0.0"`
-- [ ] `bun run src/cli/main.ts --version` outputs "2.0.0"
-- [ ] No other code changes needed (VERSION auto-derived)
+- [ ] File `template/obligatorio/core/commands/deploy.md` exists
+- [ ] YAML frontmatter has `description` and `agent: mictlantecuhtli`
+- [ ] Body documents SDD flow position (after `/ship`)
+- [ ] Body has 3 modes (no workflow, betterable, established)
+- [ ] Body has all phases (Pre-Flight, Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, Rules, Skills, Suggested Next Step)
+- [ ] No implementation code embedded (just example templates)
 
 **Verification:**
 
-- [ ] `grep "version" package.json | head -1` shows 2.0.0
-- [ ] Manual: `bun run src/cli/main.ts --version` shows 2.0.0
+- [ ] Smoke test includes /deploy check
+- [ ] `just check-plugin` no errors
 
 **Dependencies:** Phase 2 complete
-**Files likely touched:** `package.json` (+1 / -1)
-**Estimated scope:** XS (1 line change, 0.05h)
-**Commit (bundled):** `feat(release): bump version to 2.0.0 and rewrite Option A E2E`
+**Files likely touched:** `template/obligatorio/core/commands/deploy.md` (+350)
+**Estimated scope:** M (1 file, ~350 lines, 1.5-2h)
+**Commit:** `feat(command): add /deploy for git workflow and CI/CD configuration`
 
 ---
 
-#### Task 3.2: Rewrite E2E #23 (real Option A verification)
+#### Task 3.2: Add `/deploy` to smoke test
 
-**Description:** Reescribir `tests/e2e/23-update-option-a.sh` para verificar la lógica REAL de Option A (sin transitional no-op). Ahora que `package.json` es 2.0.0, el bundled version match hace que el merge realmente ocurra. Verificar que:
-- Update con `--update --force` (Option A default) NO agrega nuevos packs
-- Solo actualiza los packs en `installedPacks`
-- `business` pack NO se copia (no estaba instalado)
+**Description:** Amend `tests/e2e/31-commands-fe24-smoke.sh` to include `/deploy` validation.
 
-**Target `23-update-option-a.sh` (rewritten):**
+**Append to smoke test:**
 
 ```bash
-#!/bin/bash
-# FEV-23-T6: Update Option A — Real Pack-Scoped Merge E2E
-#
-# Scenario: Seed v2.0.0 installation with ONLY software-development pack.
-# Run --update --force.
-# Expected (Option A with bundled v2.0.0):
-#   - exit code 0
-#   - business pack agents do NOT appear (not in installedPacks)
-#   - software-development agents are updated
-#   - .codice-version records installedPacks: ["software-development"] (unchanged)
-#
-# SC-UX6: Option A updates only agents from installedPacks.
-# Note: This test supersedes the "transitional no-op" version (FEV-21)
-#       now that the bundled version is 2.0.0.
-
-set -Eeuo pipefail
-source "$(dirname "$0")/common.sh"
-
-log_step "FEV-23-T6: Update Option A — Real Pack-Scoped Merge"
-
-TEMP_DIR="$(create_temp_dir)"
-log_info "Test directory: $TEMP_DIR"
-cp -r "$CODICE_ROOT/template" "$TEMP_DIR/template"
-
-# Seed v2.0.0 installation with ONLY software-development
-echo '{"version":"2.0.0","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":[]}' > "$TEMP_DIR/.codice-version"
-log_info "Seeded .codice-version with v2.0.0 (software-development only)"
-
-# Pre-create a custom file in business pack destination to verify it's NOT touched
-mkdir -p "$TEMP_DIR/agents"
-echo "# User's custom business file" > "$TEMP_DIR/agents/business-custom.md"
-
-start_mock_server
-
-EXIT_CODE=0
-STDERR_FILE="$TEMP_DIR/stderr.log"
-STDOUT_FILE="$TEMP_DIR/stdout.log"
-(cd "$TEMP_DIR" && CODICE_GITHUB_API_URL="http://localhost:4567" CODICE_BYPASS_URL_VALIDATION="true" NODE_ENV="test" $CODICE_CLI --update --force) >"$STDOUT_FILE" 2>"$STDERR_FILE" || EXIT_CODE=$?
-
-stop_mock_server
-
-if [[ "$EXIT_CODE" -ne 0 ]]; then
-    log_fail "CLI exited with code $EXIT_CODE (expected 0)"
-    exit 1
-fi
-log_pass "CLI exited with code 0"
-
-# Verify business pack agents did NOT appear (Option A scope)
-assert_file_missing "$TEMP_DIR/agents/business-analyst.md"
-log_pass "Business pack agents absent (not in installedPacks)"
-
-# Verify user's custom business file is preserved
-assert_file_exists "$TEMP_DIR/agents/business-custom.md"
-log_pass "User's custom business file preserved (Option A doesn't delete)"
-
-# Verify .codice-version unchanged
-assert_file_exists "$TEMP_DIR/.codice-version"
-VERSION_DATA=$(cat "$TEMP_DIR/.codice-version" 2>/dev/null || echo "")
-if ! echo "$VERSION_DATA" | grep -q '"software-development"'; then
-    log_fail "Version file lost 'software-development' from installedPacks"
-    exit 1
-fi
-if echo "$VERSION_DATA" | grep -q '"business"'; then
-    log_fail "Version file records 'business' — unexpected (Option A doesn't add)"
-    exit 1
-fi
-log_pass "installedPacks = [software-development] (Option A scope respected)"
-
-log_pass "FEV-23-T6: All assertions passed"
+# /deploy (FEV-24-C)
+validate_command \
+  "$COMMANDS_DIR/deploy.md" \
+  "mictlantecuhtli" \
+  "deploy"
 ```
 
 **Acceptance criteria:**
 
-- [ ] E2E 23 rewritten (no transitional comments)
-- [ ] Verifies real Option A merge behavior
-- [ ] All assertions pass
-
-**Verification:**
-
-- [ ] `bash tests/e2e/23-update-option-a.sh` exit 0
-- [ ] No references to "transitional no-op" in E2E 23
+- [ ] Smoke test includes /deploy validation
+- [ ] `bash tests/e2e/31-commands-fe24-smoke.sh` exit 0
 
 **Dependencies:** Task 3.1
-**Files likely touched:** `tests/e2e/23-update-option-a.sh` (+30 / -50, net reduction)
-**Estimated scope:** S (1 file rewrite, 0.2h)
-**Commit (bundled):** Same as T3.1
-
----
-
-#### Task 3.3: Verify other E2E scripts work with v2.0.0
-
-**Description:** Revisar `tests/e2e/04-update-workspace.sh`, `15-update-workspace-existing-project.sh`, `16-update-granularity.sh` que pueden tener referencias a `BUNDLED_TEST_VERSION` env var o a "transitional" comments. Si los tienen, simplificarlos (ya que bundled es 2.0.0, ya no son necesarios).
-
-**Acceptance criteria:**
-
-- [ ] E2E 04, 15, 16 reviewed
-- [ ] No BUNDLED_TEST_VERSION env var references (unless actually needed)
-- [ ] No "transitional" comments
-- [ ] All scripts pass
-
-**Verification:**
-
-- [ ] `grep -l "BUNDLED_TEST_VERSION\|transitional" tests/e2e/*.sh` returns 0 files (or only legitimate uses)
-- [ ] `just test-e2e` shows 30/30 pass
-
-**Dependencies:** Task 3.2
-**Files likely touched:** 0-3 E2E files (verification only, no expected changes)
-**Estimated scope:** XS (verification, 0.05h)
+**Files likely touched:** `tests/e2e/31-commands-fe24-smoke.sh` (+5)
+**Estimated scope:** XS (1 file, ~5 lines, 0.1h)
 **Commit (bundled):** Same as T3.1
 
 ---
 
 #### Checkpoint: Phase 3 Complete (gates Phase 4)
 
-- [ ] `package.json` version is 2.0.0
-- [ ] `--version` flag outputs 2.0.0
-- [ ] E2E 23 rewritten (no transitional comments)
-- [ ] All 30 E2E pass with v2.0.0
-- [ ] No regression in 1885+ unit/integration tests
+- [ ] `template/obligatorio/core/commands/deploy.md` created
+- [ ] Smoke test includes /deploy validation
+- [ ] `just check` 0 errors
 - [ ] **Review con humano antes de Phase 4**
 
 ---
 
-### Phase 4: Release Documentation (~1h, 1 commit)
+### Phase 4: FEV-24-D `/analyze` (~1.5-2h, 1 commit)
 
-> **Atomic concern: 1 commit para docs.** CHANGELOG + README + MIGRATION + WORKFLOW + TECH_DEBT. Phase 4 = 1 commit. Total time: 1h.
+> **Same vertical slice + integration update.** Crear `/analyze` command + update `diagnosis.md` to reference `TECH_DEBT.md` as input + update smoke test. Agent: `quetzalcoatl` (Architect).
 
-#### Task 4.1: Update `CHANGELOG.md` with v2.0.0 entry
+#### Task 4.1: Create `template/obligatorio/core/commands/analyze.md`
 
-**Description:** En `CHANGELOG.md`, agregar nueva sección `## [2.0.0] - 2026-08-XX` con los 6 FEVs (17-23). Usar Keep a Changelog format (Added, Changed, Deprecated, Removed, Fixed, Security).
+**Description:** Comando para análisis arquitectónico multidimensional que genera `TECH_DEBT.md` con hallazgos priorizados. Integra con `/diagnosis` (los hallazgos alimentan el proceso de diagnóstico).
 
-**Target addition:**
-
-```markdown
-## [2.0.0] - 2026-08-XX
-
-### Added
-- **Agent Pack System:** 8 selectable packs (software-development, business,
-  creative, finance, government-legal, science-research, hardware-emerging,
-  operations-support) + 2 mandatory packs (main, writers). ~355 agents
-  distributed across packs.
-- **Pack Selection Wizard:** Interactive checkbox selection during install
-  with `software-development` pre-selected. Minimum 1 pack enforced.
-- **Installation Summary:** Pre-install summary showing selected packs +
-  agent counts + optional files + total estimated size (via `clack.note()`).
-- **`.codice-version` v2.0 Format:** Added `installedPacks` array for
-  update scoping. Backward-compatible with v1.x `installedVersion`.
-- **3 New CLI Flags:** `--packs <list>`, `--packs-all`, `--update-add-packs <list>`
-  for non-interactive install/update.
-- **Update Option A/B:** Option A updates only installed packs; Option B
-  adds new packs (installed packs locked). Interactive menu or
-  `--update-add-packs` flag.
-- **Version Detection:** Pre-1.2.0 (cleanup suggestion), pre-2.0.0 (reinstall
-  required), v2.0+ (full update). 4 status states with context-aware messages.
-- **E2E Suite:** 30 scenarios (was 16 in v1.2.0) covering pack selection,
-  version detection, update Option A/B, atomic rollback, path traversal,
-  symlinks, gitignore, install summary.
-- **Unit/Integration Tests:** 1885+ tests (was 844 in v1.2.0).
-- **Wiki:** Updated for v2.0 pack system, install wizard, update flow.
-
-### Changed
-- **Template Structure:** `template/obligatorio/` restructured to
-  `core/` (workspace infra) + `packs/` (agent categories). Flat `agents/`
-  destination preserved.
-- **Permission Model:** 4 primary agents unified to `task: "*": allow` +
-  deny 5 primaries. Adding new agents no longer requires manual updates.
-- **Auto-Discovery:** Plugin `VALID_SUBAGENTS` Set removed; recursive
-  filesystem scan of `packs/` subdirectories.
-
-### Removed
-- **Plugin `VALID_SUBAGENTS`:** Hardcoded Set of ~110 entries deleted;
-  `PRIMARY_AGENTS` (6) is the only hardcoded list.
-- **Subagent Index Tables:** "AVAILABLE SUBAGENTS" sections removed from
-  all 6 primary agents (huitzilopochtli included — FEV-19 amendment).
-
-### Deprecated
-- **Update path for v1.x users:** Must reinstall via Clean Install or
-  Project Install. See `docs/MIGRATION.md` for guide.
-
-### Fixed
-- **SC-15 Tarball Size Deviation:** 8.0MB (was target <5MB) — accepted
-  2026-08-04, see TECH_DEBT.md §7.2. Pack system adds ~4MB of agent files.
-
-### Security
-- N/A (no security changes in v2.0.0; existing v1.x security model
-  preserved).
-```
-
-**Acceptance criteria:**
-
-- [ ] CHANGELOG has `## [2.0.0]` section
-- [ ] All Keep a Changelog categories present (Added, Changed, Removed,
-      Deprecated, Fixed, Security)
-- [ ] FEV-17 to FEV-23 referenced
-- [ ] Migration note in Deprecated
-
-**Verification:**
-
-- [ ] `grep "## \[2.0.0\]" CHANGELOG.md` ≥ 1
-- [ ] `grep "FEV-17\|FEV-18\|FEV-19\|FEV-20\|FEV-21\|FEV-22\|FEV-23" CHANGELOG.md` ≥ 6
-
-**Dependencies:** Phase 3 complete
-**Files likely touched:** `CHANGELOG.md` (+60)
-**Estimated scope:** S (1 file, 0.3h)
-**Commit (bundled):** `docs: v2.0.0 release documentation (CHANGELOG, README, MIGRATION)`
-
----
-
-#### Task 4.2: Update `README.md` for v2.0.0
-
-**Description:** Actualizar `README.md` para reflejar v2.0.0: pack system prominent, install wizard mentioned, update flow (Option A/B), version detection.
-
-**Target changes:**
-
-```diff
- # Códice — OpenCode Workspace Installer
-
--Install the OpenCode workspace template with a single command.
-+Install the OpenCode workspace template with a single command.
-+Now with the **Agent Pack System** (v2.0) — choose which of 8 packs to
-+install based on your domain (software-development, business, creative,
-+finance, government-legal, science-research, hardware-emerging,
-+operations-support).
-
- ## Quick Install
-
- ```bash
- bunx @fisherk2-dev/codice --clean --force
- # OR non-interactive with packs:
- bunx @fisherk2-dev/codice --clean --force --packs software-development,business
- ```
-
-+## What's New in v2.0
-+
-+- **Agent Packs** — Select only the agents you need. Default:
-+  `software-development`. No more 90+ irrelevant agents for business users.
-+- **Pack Selection Wizard** — Interactive checkboxes during install.
-+- **Scoped Updates** — Update only your installed packs, or add new ones
-+  via Option B.
-+- **Smart Version Detection** — Detects v1.x / pre-1.2.0 and suggests
-+  the right action.
-+
- ## Installation Modes
-@@
- ### Clean Install
--Overwrites everything in the destination.
-+Overwrites everything in the destination. Prompts for pack selection.
- 
- ### Project Install
--Selective merge — preserves your existing files.
-+Selective merge — preserves your existing files. Prompts for pack selection.
- 
- ### Update Workspace
--Update an existing Códice installation to the latest version.
-+Update an existing Códice installation to the latest version. Requires
-+v2.0.0+ (v1.x users must reinstall).
-+
-+**Option A:** Update only installed packs.
-+**Option B:** Update + add new packs (installed packs locked).
-```
-
-**Acceptance criteria:**
-
-- [ ] README mentions pack system prominently
-- [ ] Quick Install shows `--packs` flag example
-- [ ] Installation modes mention pack selection
-- [ ] Update Workspace mentions Option A/B
-- [ ] "What's New in v2.0" section added
-- [ ] No "v1.2.0" references remain (or only historical context)
-
-**Verification:**
-
-- [ ] `grep "v2.0\|pack system\|Pack" README.md | wc -l` ≥ 5
-- [ ] `grep "v1.2" README.md | wc -l` ≤ 2 (only historical)
-
-**Dependencies:** Phase 3 complete
-**Files likely touched:** `README.md` (+40 / -20)
-**Estimated scope:** S (1 file, 0.2h)
-**Commit (bundled):** Same as T4.1
-
----
-
-#### Task 4.3: NEW `docs/MIGRATION.md` (v1.x → v2.0.0)
-
-**Description:** Crear `docs/MIGRATION.md` con guía explícita para usuarios v1.x que necesitan migrar a v2.0.0. Explicar: por qué el update no funciona, qué hacer, qué se preserva, qué se pierde.
-
-**Target content:**
+**Target `analyze.md` (estructura):**
 
 ```markdown
-# Migration Guide: v1.x → v2.0.0
+---
+description: Perform multi-dimensional architectural analysis (8 axes) and generate a prioritized TECH_DEBT.md with actionable findings
+agent: quetzalcoatl
+---
 
-## ⚠️ Breaking Change: Update Path Removed
+**SDD Flow Position:** After `/migrate` and before `/diagnosis` (findings feed the diagnosis process).
 
-Códice v2.0.0 introduces the **Agent Pack System**, which requires changes
-to the `.codice-version` metadata format. v1.x installations cannot be
-updated in-place because:
+## Pre-Flight: Detect Project Type
 
-1. **Metadata incompatibility:** v1.x `.codice-version` has no
-   `installedPacks` field. v2.0.0 needs this to scope updates.
-2. **Template structure change:** v1.x flat `template/obligatorio/` →
-   v2.0 `core/` + `packs/`. Update logic would need version-specific
-   branches.
-3. **Workspace remnants:** v1.x workspaces may have `references/` and
-   `.devin/` directories that v2.0.0 doesn't manage.
+1. Identify project root and tech stack (read `package.json`, lock files, config files).
+2. Detect language(s), framework(s), and architecture pattern (monolith, microservices, serverless, etc.).
+3. Count source files, test files, and documentation files.
+4. Estimate codebase size (LOC, file count) to scope analysis depth.
 
-**Result:** v1.x users MUST reinstall via Clean Install or Project Install.
-The installer will detect your version and show a clear message.
+Use `question` tool to ask: **"What analysis depth do you want?"**:
+- **A) Quick scan** — 1-2h, surface-level issues only
+- **B) Standard analysis** — 4-6h, all 8 dimensions, medium depth
+- **C) Deep audit** — 1-2 days, all 8 dimensions, deep dive
 
-## What Gets Preserved
+## Phase 1: Multi-Dimensional Analysis
 
-When you reinstall via **Project Install**:
+Analyze the project across 8 dimensions. For each dimension, load the relevant skill and delegate to the appropriate subagent.
 
-- ✅ Your existing files in the destination (selective merge)
-- ✅ Your `README.md`, `CHANGELOG.md`, and other standard files
-- ✅ Your custom agent files (in `agents/`)
-- ✅ Your custom skills, commands, and configurations
+### 1. System Structure
+- **Skill:** `clean-ddd-hexagonal`
+- **Subagent:** `code-reviewer` or `architect`
+- **Output:** Component hierarchy, module boundaries, architectural pattern adherence
 
-When you reinstall via **Clean Install**:
+### 2. Design Patterns
+- **Skill:** `design-patterns`
+- **Subagent:** `code-reviewer`
+- **Output:** Pattern usage, anti-patterns, consistency across codebase
 
-- ⚠️ Everything is overwritten. **Back up first.**
+### 3. Dependency Architecture
+- **Skill:** `dependency-audit`
+- **Subagent:** `dependency-manager`
+- **Output:** Coupling metrics, circular dependencies, DI effectiveness
 
-## What You Need to Do
+### 4. Data Flow
+- **Skill:** `observability-and-instrumentation`
+- **Subagent:** `architect`
+- **Output:** Traceability, state management, persistence strategies
 
-### Step 1: Back up (recommended)
+### 5. Scalability and Performance
+- **Skill:** `performance-analysis`
+- **Subagent:** `web-performance-auditor` (or domain-specific)
+- **Output:** Bottlenecks, caching strategies, resource management
 
-```bash
-cp -r your-project/ your-project.backup/
-```
+### 6. Security
+- **Skill:** `security-and-hardening`
+- **Subagent:** `security-auditor`
+- **Output:** Trust boundaries, auth/authz patterns, data protection
 
-### Step 2: Run the installer
+### 7. Testability
+- **Skill:** `test-driven-development`
+- **Subagent:** `test-engineer`
+- **Output:** Coverage, test quality, untested areas
 
-```bash
-# Option A: Preserve your files (recommended)
-bunx @fisherk2-dev/codice --project --force --packs software-development
+### 8. Documentation
+- **Skill:** `documentation-and-adrs`
+- **Subagent:** `technical-writer`
+- **Output:** Comment quality, API docs completeness, ADR coverage
 
-# Option B: Start fresh (DESTRUCTIVE)
-bunx @fisherk2-dev/codice --clean --force --packs software-development
-```
+For each dimension, the subagent returns findings categorized as:
+- **Critical** — must fix immediately (blocks production)
+- **High** — should fix soon (within sprint)
+- **Medium** — should fix eventually (within quarter)
+- **Low** — nice to fix (backlog)
 
-The installer will:
+## Phase 2: Generate `TECH_DEBT.md`
 
-1. Detect your v1.x installation (via `.codice-version`)
-2. Display: "The update system has changed in v2.0.0. Please reinstall
-   using Clean Install or Project Install to adopt the new pack system."
-3. Proceed with the install you specified
-4. Write the new `.codice-version` format with `installedPacks`
+Create or update `docs/TECH_DEBT.md`:
 
-### Step 3: Select your packs
+```markdown
+# Technical Debt — [Project Name]
 
-During install, you'll see a checkbox list:
-
-```
-☑ software-development (default, 146 agents)
-☐ creative (10 agents)
-☐ business (92 agents)
-☐ finance (11 agents)
-☐ government-legal (8 agents)
-☐ science-research (31 agents)
-☐ hardware-emerging (36 agents)
-☐ operations-support (18 agents)
-```
-
-Select at minimum 1 pack. Press Enter to confirm.
-
-### Step 4: Verify
-
-After install, check `.codice-version`:
-
-```json
-{
-  "version": "2.0.0",
-  "installedPacks": ["software-development"],
-  "installedAt": "2026-08-XXTHH:MM:SS.sssZ"
-}
-```
-
-## Pre-1.2.0 Cleanup
-
-If your installation is **pre-1.2.0** (very old), the installer will
-suggest:
-
-> "We recommend deleting `references/` and `.devin/` directories before
-> reinstalling."
-
-These directories are remnants from older versions. Safe to delete:
-
-```bash
-rm -rf your-project/references/
-rm -rf your-project/.devin/
-```
-
-## FAQ
-
-### Q: Will I lose my custom agents?
-
-**A:** No, if you use **Project Install**. Your custom agents (anything
-not in the template) are preserved. Template agents are updated/overwritten.
-
-### Q: Can I keep using my old version?
-
-**A:** Yes, but you won't get v2.0.0 features. Stay on v1.2.0 indefinitely
-if the pack system doesn't help you. We will not break v1.2.0.
-
-### Q: What if I selected the wrong packs?
-
-**A:** Re-run with different packs. Project Install will add the new pack's
-agents to `agents/`. **You cannot remove packs** in v2.0.0 (planned for
-v2.2.0). To remove, manually delete agent files or do a full reinstall.
-
-### Q: Is the agent count different?
-
-**A:** Yes, significantly. v1.x had 98-104 agents. v2.0.0 has ~355 agents
-in 10 packs. Select only the packs you need to keep your workspace lean.
-
-### Q: Where did my agents go?
-
-**A:** They're now in `template/obligatorio/packs/<pack>/` (source) but
-copied to flat `agents/` (destination). The destination structure is
-unchanged.
-
-## Related Documentation
-
-- [CHANGELOG.md](../CHANGELOG.md) — Full v2.0.0 changelog
-- [spec-installer-ux-v2.md](../specs/spec-installer-ux-v2.md) — Installer UX spec
-- [docs/WORKFLOW.md](./WORKFLOW.md) — Development history
-- [docs/TECH_DEBT.md](./TECH_DEBT.md) — Known limitations
+**Last analyzed:** YYYY-MM-DD
+**Analysis depth:** [Quick scan | Standard | Deep audit]
+**Total findings:** N (Critical: X, High: Y, Medium: Z, Low: W)
 
 ---
 
-*Last updated: 2026-08-XX*
+## Critical (must fix immediately)
+
+### [TD-001] [Short title]
+- **Dimension:** [System Structure | Design Patterns | etc.]
+- **Location:** [file:line]
+- **Description:** [What is the issue]
+- **Impact:** [What happens if not fixed]
+- **Recommendation:** [How to fix]
+- **Effort:** [XS | S | M | L | XL]
+
+[Repeat for each critical finding]
+
+## High (should fix soon)
+
+[Same structure]
+
+## Medium (should fix eventually)
+
+[Same structure]
+
+## Low (backlog)
+
+[Same structure]
+
+## Methodology
+
+This document was generated by `/analyze` using the 8-dimension
+architectural analysis framework. For each finding:
+- **Location** references specific files and line numbers
+- **Impact** describes the consequences of leaving the debt unaddressed
+- **Recommendation** provides actionable remediation steps
+- **Effort** estimates the time required to fix
+
+## Next Steps
+
+1. Triage critical findings with the team
+2. Create diagnosis documents for complex issues (`/diagnosis`)
+3. Create implementation plans for fixes (`/plan`)
+4. Re-run `/analyze` after major refactors to track progress
+```
+
+## Phase 3: Integrate with `/diagnosis`
+
+The generated `TECH_DEBT.md` becomes an input for `/diagnosis`. Update diagnosis to:
+
+1. Read `docs/TECH_DEBT.md` if it exists
+2. Use TECH_DEBT findings as additional context for the diagnosis
+3. Reference specific TECH_DEBT entries (e.g., TD-001) in the diagnosis document
+
+This is the FEV-24-D integration: the diagnosis command learns to consider `TECH_DEBT.md` as an authoritative source of known issues.
+
+## Rules
+
+1. **All 8 dimensions must be analyzed** — even if briefly. Skipping dimensions produces incomplete results.
+2. **Findings must be actionable** — every entry has a `Recommendation` and `Effort` estimate.
+3. **Prioritize ruthlessly** — Critical findings should be truly critical (production blockers), not "would be nice".
+4. **Re-run after major changes** — TECH_DEBT is a living document.
+5. **Never modify code** — `/analyze` is read-only except for `docs/TECH_DEBT.md`.
+6. **Respect existing debt entries** — preserve historical findings, add new ones, mark resolved ones.
+
+## Skills Used
+
+- `clean-ddd-hexagonal` — for system structure
+- `design-patterns` — for design analysis
+- `dependency-audit` — for dependency architecture
+- `observability-and-instrumentation` — for data flow
+- `performance-analysis` — for scalability
+- `security-and-hardening` — for security
+- `test-driven-development` — for testability
+- `documentation-and-adrs` — for documentation
+- `code-review-and-quality` — for overall review
+
+## Suggested Next Step
+
+> Analysis complete. `TECH_DEBT.md` updated with prioritized findings. Run `/diagnosis` on critical findings to create diagnostic documents, then `/plan` to create implementation plans for the fixes.
 ```
 
 **Acceptance criteria:**
 
-- [ ] `docs/MIGRATION.md` created with all sections (Why, Preserved, Steps,
-      Pre-1.2.0, FAQ, Related)
-- [ ] Step-by-step instructions clear
-- [ ] FAQ covers common questions
-- [ ] Cross-references to CHANGELOG, spec, WORKFLOW
+- [ ] File `template/obligatorio/core/commands/analyze.md` exists
+- [ ] YAML frontmatter has `description` and `agent: quetzalcoatl`
+- [ ] Body documents SDD flow position (after `/migrate`, before `/diagnosis`)
+- [ ] Body documents 8 analysis dimensions
+- [ ] Body documents TECH_DEBT.md generation template
+- [ ] Body documents integration with `/diagnosis`
+- [ ] No implementation code embedded
 
 **Verification:**
 
-- [ ] `wc -l docs/MIGRATION.md` ≥ 150
-- [ ] `grep "##" docs/MIGRATION.md | wc -l` ≥ 6 sections
+- [ ] Smoke test includes /analyze check
+- [ ] `just check-plugin` no errors
 
 **Dependencies:** Phase 3 complete
-**Files likely touched:** `docs/MIGRATION.md` (NEW, +180)
-**Estimated scope:** M (new file, 0.3h)
+**Files likely touched:** `template/obligatorio/core/commands/analyze.md` (+300)
+**Estimated scope:** M (1 file, ~300 lines, 1.5-2h)
+**Commit:** `feat(command): add /analyze for architectural analysis and TECH_DEBT generation`
+
+---
+
+#### Task 4.2: Update `diagnosis.md` to reference `TECH_DEBT.md` as input
+
+**Description:** Per fix12 diagnosis, the `/diagnosis` command should consider `TECH_DEBT.md` as an authoritative source of known issues. Update the Pre-Flight section to read `docs/TECH_DEBT.md` if it exists.
+
+**Target update to `diagnosis.md` (Pre-Flight section):**
+
+```markdown
+## Pre-Flight: Identify the Problem
+
+Detect input type:
+
+- **Remote issue** — user provided a GitHub/GitLab URL or issue number → fetch and summarize
+- **Local bug** — user describes symptoms or error messages → use as-is
+- **Vague report** — load `interview-me` skill to extract: symptoms, when it started, expected vs actual behavior.
+
+**Also check for `docs/TECH_DEBT.md` (if it exists):**
+
+If `docs/TECH_DEBT.md` exists, read it and consider its findings as additional context:
+
+- Critical/High findings in TECH_DEBT are likely related to the problem
+- Reference specific TECH_DEBT entries (e.g., TD-001) in the diagnosis document
+- Use TECH_DEBT findings to inform the severity assessment
+
+**Always use the `question` tool to let the user confirm what problem they want to analyze — never decide automatically, even if the issue or symptoms seem clear or trivial.** The user must answer doubts, suggestions, and ambiguities before proceeding.
+```
+
+**Acceptance criteria:**
+
+- [ ] `diagnosis.md` Pre-Flight section references `docs/TECH_DEBT.md`
+- [ ] Includes actionable instruction: read TECH_DEBT, reference specific entries
+- [ ] Existing structure preserved (no breaking changes)
+
+**Verification:**
+
+- [ ] Manual review: Pre-Flight section has new TECH_DEBT reference
+- [ ] `just check-plugin` no errors
+
+**Dependencies:** Task 4.1
+**Files likely touched:** `template/obligatorio/core/commands/diagnosis.md` (+10 / -2)
+**Estimated scope:** XS (1 file, ~10 lines, 0.2h)
 **Commit (bundled):** Same as T4.1
 
 ---
 
-#### Task 4.4: Update `docs/WORKFLOW.md` (mark FEV-23 ✅)
+#### Task 4.3: Add `/analyze` and `diagnosis.md` integration to smoke test
 
-**Description:** En `docs/WORKFLOW.md`:
-1. Marcar FEV-23 como `✅ Completo (2026-08-XX)` en la tabla principal
-2. Expandir la sección FEV-23 con bullets detallados
-3. Agregar nota de v2.0.0 release-ready
+**Description:** Amend `tests/e2e/31-commands-fe24-smoke.sh` to include `/analyze` validation and verify `diagnosis.md` integration.
 
-**Target changes:**
+**Append to smoke test:**
 
-```diff
--| FEV-23 | v2.0.0 Testing & Integration | Unit/integration/E2E updates for pack-aware installer | 🔲 Planificado |
-+| FEV-23 | v2.0.0 Testing & Integration | Full suite for v2.0.0, 12/12 SC-UX verified, release docs | ✅ Completo (2026-08-XX) |
-```
+```bash
+# /analyze (FEV-24-D)
+validate_command \
+  "$COMMANDS_DIR/analyze.md" \
+  "quetzalcoatl" \
+  "analyze"
 
-```diff
--### FEV-23 — v2.0.0 Testing & Integration 🔲 Listo para planificar
-+### FEV-23 — v2.0.0 Testing & Integration ✅ Completo (2026-08-XX)
- **Esfuerzo:** ~6h | **Dependencias:** FEV-17 a FEV-22 | **Spec:** S5-PACKS §9, S6-UX-V2 §9
--- Actualizar unit tests para nueva estructura de directorios (`core/`, `packs/`)
--- Actualizar integration tests para use cases pack-aware
--- Nuevos escenarios E2E:
--  - Clean Install con pack selection (default + custom)
--  - Project Install con pack selection
--  - Update bloqueado para versión <2.0.0 (3 variantes: sin archivo, pre-1.2.0, 1.x)
--  - Update Option A (solo packs actuales)
--  - Update Option B (agregar nuevos packs)
--  - Persistencia de metadata `.codice-version` con `installedPacks`
--  - Validación: mínimo 1 pack, `--packs` flag no-interactivo
-+- **5 nuevos E2E scripts** (26-30) cubriendo SC-UX7, SC-UX9, SC-UX10, SC-UX12
-+  + Project Install con pack selection
-+- **~13 nuevos unit/integration tests** (Option B execution, Project Install
-+  pack coverage, Clean Install summary, version detection edge cases)
-+- **Version bump** `package.json` 1.2.0 → 2.0.0
-+- **E2E #23 rewrite** (transitional no-op → real Option A verification)
-+- **Release documentation:** CHANGELOG v2.0.0 entry, README updated,
-+  NEW `docs/MIGRATION.md` (v1.x → v2.0.0 guide), WORKFLOW marked ✅
-+- **4 atomic commits** (1 per phase) + 1 verification
-+- **12/12 SC-UX criteria** verified end-to-end
-+- **v2.0.0 release-ready** (tag + publish coordination separate)
--**Resultado:** Suite completa para v2.0.0, 0 regresiones, coverage ≥95%.
-+**Resultado:** v2.0.0 release-ready. 1885+ unit+integration tests, 30/30 E2E,
-+`just check` clean, coverage ≥95%.
+# Verify diagnosis.md integration (FEV-24-D requires TECH_DEBT.md as input)
+if ! grep -q "TECH_DEBT" "$COMMANDS_DIR/diagnosis.md"; then
+  log_fail "diagnosis.md does not reference TECH_DEBT.md (FEV-24-D integration missing)"
+  exit 1
+fi
+log_pass "diagnosis.md references TECH_DEBT.md (FEV-24-D integration verified)"
+
+# Verify all 4 commands are present (Phase 5 finalization check)
+for cmd in sync migrate deploy analyze; do
+  assert_file_exists "$COMMANDS_DIR/${cmd}.md"
+done
+log_pass "All 4 FEV-24 commands exist"
 ```
 
 **Acceptance criteria:**
 
-- [ ] FEV-23 row in table updated to `✅ Completo`
-- [ ] FEV-23 section expanded with detailed bullets
-- [ ] v2.0.0 ready note added
+- [ ] Smoke test includes /analyze validation
+- [ ] Smoke test verifies diagnosis.md has TECH_DEBT reference
+- [ ] Smoke test verifies all 4 commands exist
+- [ ] `bash tests/e2e/31-commands-fe24-smoke.sh` exit 0
 
-**Verification:**
-
-- [ ] `grep "FEV-23" docs/WORKFLOW.md | grep "✅"` ≥ 1
-- [ ] `grep "v2.0.0 release-ready" docs/WORKFLOW.md` ≥ 1
-
-**Dependencies:** Phase 3 complete
-**Files likely touched:** `docs/WORKFLOW.md` (+20 / -5)
-**Estimated scope:** XS (1 file, 0.1h)
-**Commit (bundled):** Same as T4.1
-
----
-
-#### Task 4.5: Update `docs/TECH_DEBT.md` (v2.0.0 closure)
-
-**Description:** En `docs/TECH_DEBT.md`:
-1. Agregar entrada de cierre FEV-23 en la sección v2.0.0
-2. Confirmar que TD-V2-6 (no pack removal) sigue abierto
-3. No new tech debt introduced (FALSO si se abre algo nuevo)
-
-**Target changes:**
-
-```diff
-+> **FEV-23 (v2.0.0 Testing & Integration) ✅ complete (2026-08-XX):**
-+> 5 new E2E (26-30) covering SC-UX7, SC-UX9, SC-UX10, SC-UX12, Project Install
-+> with pack selection. 13 new unit/integration tests (Option B execution,
-+> Project Install pack coverage, Clean Install summary, version edge cases).
-+> Version bump 1.2.0 → 2.0.0. E2E #23 rewritten (transitional no-op → real
-+> Option A verification). Release docs: CHANGELOG v2.0.0, README updated,
-+> NEW docs/MIGRATION.md. 4 atomic commits + 1 verification. **No new tech debt.**
-+> TD-V2-6 remains OPEN (no pack removal, deferred to v2.2.0).
-+
- | **TD-V2-6** | No pack removal mechanism | 4-6h | Medium | **OPEN (added FEV-21, 2026-08-06):** ...
-```
-
-**Acceptance criteria:**
-
-- [ ] FEV-23 closure note added to v2.0.0 section
-- [ ] TD-V2-6 still listed as OPEN
-- [ ] No new tech debt items opened
-
-**Verification:**
-
-- [ ] `grep "FEV-23" docs/TECH_DEBT.md | grep "complete"` ≥ 1
-- [ ] `grep "TD-V2-6" docs/TECH_DEBT.md` = 1 (unchanged)
-
-**Dependencies:** Phase 3 complete
-**Files likely touched:** `docs/TECH_DEBT.md` (+15)
-**Estimated scope:** XS (1 file, 0.05h)
+**Dependencies:** Task 4.2
+**Files likely touched:** `tests/e2e/31-commands-fe24-smoke.sh` (+20)
+**Estimated scope:** XS (1 file, ~20 lines, 0.2h)
 **Commit (bundled):** Same as T4.1
 
 ---
 
 #### Checkpoint: Phase 4 Complete (gates Phase 5)
 
-- [ ] CHANGELOG has v2.0.0 entry
-- [ ] README updated for v2.0.0
-- [ ] docs/MIGRATION.md created
-- [ ] docs/WORKFLOW.md FEV-23 marked ✅
-- [ ] docs/TECH_DEBT.md FEV-23 closure documented
-- [ ] 4 atomic commits total (1 per phase)
-- [ ] Branch `feat/new-agents` ready para PR a `develop`
-- [ ] **FEV-23 cierra; v2.0.0 release coordination (separate)**
+- [ ] `template/obligatorio/core/commands/analyze.md` created
+- [ ] `template/obligatorio/core/commands/diagnosis.md` updated for FEV-24-D integration
+- [ ] Smoke test includes /analyze + diagnosis integration check
+- [ ] All 4 commands exist
+- [ ] `just check` 0 errors
+- [ ] **Review con humano antes de Phase 5**
 
 ---
 
-### Phase 5: Final Verification (~0.5h, no commit)
+### Phase 5: Documentation Sync (~1.3h, 1 commit)
 
-> **Verification phase: no code changes.** Run all gates, document results, hand off to release coordination.
+> **Atomic concern: 1 commit para docs.** CHANGELOG + WORKFLOW + Wiki + README + smoke test finalization. Phase 5 = 1 commit. Total time: 1.3h.
 
-#### Task 5.1: Run full verification suite
+#### Task 5.1: Update `CHANGELOG.md` with v2.1.0 entry
 
-**Description:** Ejecutar todas las validaciones de calidad del proyecto.
+**Description:** Add `## [2.1.0] - YYYY-MM-DD` section to CHANGELOG.md (Keep a Changelog format). Reference FEV-24-A through FEV-24-D and issues #57, #64, #67, #68.
 
-**Commands:**
+**Target addition:**
 
-```bash
-cd /mnt/HDDFish/Documents/Programacion/PROYECTOS/11-codice-opencode
+```markdown
+## [2.1.0] - 2026-08-XX
 
-# 1. Biome check (lint + format)
-just check
+### Added
+- **4 New Agent-Orchestration Commands:**
+  - `/sync` (FEV-24-A, Issue #68) — Bidirectional git sync with 4 modes
+    (full-sync, incremental-sync, dry-run, conflict-resolution) and 4 conflict
+    resolution strategies (NEWER_WINS, GITHUB_WINS, LOCAL_WINS,
+    INTELLIGENT_MERGE). Agent: `tlaloc`.
+  - `/migrate` (FEV-24-B, Issue #67, **OPTIONAL**) — Technology stack migration
+    planner with impact analysis, breaking change detection, and automatic
+    documentation updates (`MIGRATION.md`, `WORKFLOW.md`, `specs/`). Agent:
+    `quetzalcoatl`.
+  - `/deploy` (FEV-24-C, Issue #64) — Git workflow and CI/CD configuration
+    assistant. 3 modes (no workflow, betterable, established), generates
+    branch protection rules, PR templates, and pipeline YAML. Agent:
+    `mictlantecuhtli`.
+  - `/analyze` (FEV-24-D, Issue #57) — Multi-dimensional architectural
+    analysis (8 dimensions: system structure, design patterns, dependency
+    architecture, data flow, scalability, security, testability, documentation).
+    Generates prioritized `TECH_DEBT.md` with Critical/High/Medium/Low findings.
+    Agent: `quetzalcoatl`.
+- **FEV-24-D Integration:** `/diagnosis` now reads `docs/TECH_DEBT.md` as
+  authoritative input for severity assessment and finding references.
+- **E2E Smoke Test:** New `tests/e2e/31-commands-fe24-smoke.sh` validates
+  frontmatter schema, body structure, and cross-command integration (e.g.,
+  diagnosis → TECH_DEBT).
 
-# 2. Unit + integration tests
-just test
+### Changed
+- **Command count:** 13 → 17 (4 new commands added to `template/obligatorio/core/commands/`)
 
-# 3. E2E tests (30/30)
-just test-e2e
+### Deprecated
+- N/A (no deprecations in v2.1.0)
 
-# 4. Plugin tests (51)
-just check-plugin
+### Removed
+- N/A (no removals in v2.1.0)
+
+### Fixed
+- N/A (no fixes in v2.1.0)
+
+### Security
+- N/A (no security changes in v2.1.0)
 ```
 
 **Acceptance criteria:**
 
-- [ ] `just check` exit 0 (0 errors)
-- [ ] `just test` shows 1885+ tests, 0 fail
-- [ ] `just test-e2e` shows 30/30 pass
-- [ ] `just check-plugin` exit 0
+- [ ] CHANGELOG has `## [2.1.0]` section
+- [ ] All Keep a Changelog categories present
+- [ ] FEV-24-A, B, C, D referenced
+- [ ] Issues #57, #64, #67, #68 referenced
 
 **Verification:**
 
-- [ ] All commands exit 0
-- [ ] Test counts documented in todo.md Phase 5 section
+- [ ] `grep "## \[2.1.0\]" CHANGELOG.md` ≥ 1
+- [ ] `grep "FEV-24-A\|FEV-24-B\|FEV-24-C\|FEV-24-D" CHANGELOG.md` ≥ 4
 
 **Dependencies:** Phase 4 complete
-**Files likely touched:** None (verification only)
-**Estimated scope:** XS (verification, 0.1h)
-**Commit:** None (verification gate)
+**Files likely touched:** `CHANGELOG.md` (+50)
+**Estimated scope:** S (1 file, 0.3h)
+**Commit (bundled):** Same as T5.4
 
 ---
 
-#### Task 5.2: Coverage verification ≥95%
+#### Task 5.2: Update `docs/WORKFLOW.md` to mark FEV-24 ✅
 
-**Description:** Ejecutar coverage check y verificar threshold.
+**Description:** In `docs/WORKFLOW.md` line 95, update the FEV-24 row status from `🔍 En revisión` to `✅ Completo (2026-08-XX)`. Add expanded section for FEV-24 with 4 commands documented.
 
-**Command:**
+**Target update:**
 
-```bash
-just test-coverage
-just coverage-check 95
+```diff
+- **FEV-24** | Nuevos comandos: `/sync`, `/migrate` (opcional), `/deploy`, `/analyze` | #68, #67, #64, #57 | 🔍 En revisión
+- **FEV-25** | Reglas de delegación en agentes principales | #69 | 🔍 En revisión
++ **FEV-24** | Nuevos comandos: `/sync`, `/migrate` (opcional), `/deploy`, `/analyze` | #68, #67, #64, #57 | ✅ Completo (2026-08-XX)
++ **FEV-25** | Reglas de delegación en agentes principales | #69 | 🔍 En revisión
+
+- **Diagnósticos:** `docs/diagnosis/fix09` a `fix13`
++ **Diagnósticos:** `docs/diagnosis/fix09` a `fix13`
++
++ **FEV-24 sub-fases:**
++ - **FEV-24-A /sync** — Bidirectional git sync (tlaloc) | Issue #68 | 1.5-2h
++ - **FEV-24-B /migrate** — Stack migration planner (quetzalcoatl, optional) | Issue #67 | 1.5-2h
++ - **FEV-24-C /deploy** — Git workflow + CI/CD (mictlantecuhtli) | Issue #64 | 1.5-2h
++ - **FEV-24-D /analyze** — Architectural analysis (quetzalcoatl) | Issue #57 | 1.5-2h
++ - **FEV-24 Docs** — CHANGELOG v2.1.0 + WORKFLOW + Wiki sync | — | 1h
++
++ **FEV-24 métricas:** 4 comandos nuevos, 1 E2E smoke test, 1 command update (diagnosis.md), 3 doc updates
 ```
 
 **Acceptance criteria:**
 
-- [ ] Coverage report generated
-- [ ] Overall coverage ≥95%
-- [ ] Domain layer coverage ≥90% (SPEC.md SC-12)
-- [ ] Infrastructure adapter coverage ≥70% (SPEC.md SC-13)
+- [ ] FEV-24 row status: `🔍 En revisión` → `✅ Completo (YYYY-MM-DD)`
+- [ ] 4 sub-fases documented
+- [ ] Métricas section added
 
 **Verification:**
 
-- [ ] Coverage HTML report shows ≥95% overall
-- [ ] `just coverage-check 95` exit 0
+- [ ] `grep "FEV-24.*✅" docs/WORKFLOW.md` ≥ 1
+- [ ] `grep "FEV-24-A" docs/WORKFLOW.md` ≥ 1
 
-**Dependencies:** Task 5.1
-**Files likely touched:** None
-**Estimated scope:** XS (verification, 0.1h)
-**Commit:** None
+**Dependencies:** Phase 4 complete
+**Files likely touched:** `docs/WORKFLOW.md` (+20 / -5)
+**Estimated scope:** S (1 file, 0.2h)
+**Commit (bundled):** Same as T5.4
 
 ---
 
-#### Task 5.3: npm pack --dry-run (verify tarball)
+#### Task 5.3: Update `docs/wiki-source/Commands.md` with 4 new commands
 
-**Description:** Verificar que el tarball de npm se construye correctamente con la versión 2.0.0.
+**Description:** In `docs/wiki-source/Commands.md` (or equivalent wiki source), add 4 new command entries: `/sync`, `/migrate`, `/deploy`, `/analyze`. Each entry: description, agent, SDD position, key features.
 
-**Command:**
+**Target addition (4 new entries following the existing format):**
 
-```bash
-npm pack --dry-run
+```markdown
+## /sync
+
+- **Agent:** `tlaloc` (Builder)
+- **SDD Position:** Wildcard (can be invoked in any phase, like `/help`)
+- **Purpose:** Bidirectional git sync with intelligent conflict resolution.
+- **Modes:** full-sync, incremental-sync, dry-run, conflict-resolution
+- **Strategies:** NEWER_WINS, GITHUB_WINS, LOCAL_WINS, INTELLIGENT_MERGE
+- **Issue:** #68
+- **Doc:** [diagnosis](../diagnosis/fix09-sync-command.md)
+
+## /migrate (Optional)
+
+- **Agent:** `quetzalcoatl` (Architect)
+- **SDD Position:** Optional — before `/diagnosis`, `/docs-update`, `/evolve`
+- **Purpose:** Generate complete technology stack migration plan with impact analysis.
+- **Output:** `docs/MIGRATION.md` (updated), `docs/WORKFLOW.md` (if process changes), `specs/` (if affected)
+- **Issue:** #67
+- **Doc:** [diagnosis](../diagnosis/fix10-migrate-command.md)
+
+## /deploy
+
+- **Agent:** `mictlantecuhtli` (Judge)
+- **SDD Position:** After `/ship` (ship reviews, deploy launches)
+- **Purpose:** Configure and execute git workflow + CI/CD pipelines.
+- **Modes:** no workflow, betterable, established, analyze-only
+- **Output:** `.github/workflows/*.yml`, `.github/PULL_REQUEST_TEMPLATE.md`, `CONTRIBUTING.md`
+- **Issue:** #64
+- **Doc:** [diagnosis](../diagnosis/fix11-deploy-command.md)
+
+## /analyze
+
+- **Agent:** `quetzalcoatl` (Architect)
+- **SDD Position:** After `/migrate`, before `/diagnosis`
+- **Purpose:** Multi-dimensional architectural analysis with prioritized TECH_DEBT generation.
+- **Dimensions:** 8 (system structure, design patterns, dependency architecture, data flow, scalability, security, testability, documentation)
+- **Output:** `docs/TECH_DEBT.md` (Critical/High/Medium/Low findings)
+- **Issue:** #57
+- **Doc:** [diagnosis](../diagnosis/fix12-analyze-command.md)
 ```
 
 **Acceptance criteria:**
 
-- [ ] npm pack generates successfully
-- [ ] Tarball name is `fisherk2-dev-codice-2.0.0.tgz`
-- [ ] Tarball size documented (expected ~8.0MB, deviation from SC-15 already accepted)
+- [ ] 4 new command entries added to wiki source
+- [ ] Each entry has: Agent, SDD Position, Purpose, Output, Issue, Doc link
+- [ ] `/migrate` is marked as Optional
 
 **Verification:**
 
-- [ ] `npm pack --dry-run 2>&1 | grep "2.0.0"` ≥ 1
-- [ ] Tarball size documented in todo.md
+- [ ] `grep "/sync" docs/wiki-source/Commands.md` ≥ 1
+- [ ] `grep "/migrate" docs/wiki-source/Commands.md` ≥ 1
+- [ ] `grep "/deploy" docs/wiki-source/Commands.md` ≥ 1
+- [ ] `grep "/analyze" docs/wiki-source/Commands.md` ≥ 1
 
-**Dependencies:** Task 5.1
-**Files likely touched:** None
+**Dependencies:** Phase 4 complete
+**Files likely touched:** `docs/wiki-source/Commands.md` (+80)
+**Estimated scope:** S (1 file, 0.3h)
+**Commit (bundled):** Same as T5.4
+
+---
+
+#### Task 5.4: Finalize smoke test
+
+**Description:** Review `tests/e2e/31-commands-fe24-smoke.sh` for finalization. All 4 commands should be validated. The smoke test is already mostly complete from Phases 1-4; Phase 5 just verifies and finalizes.
+
+**Acceptance criteria:**
+
+- [ ] All 4 commands validated in smoke test
+- [ ] diagnosis.md integration check included
+- [ ] `bash tests/e2e/31-commands-fe24-smoke.sh` exit 0
+
+**Dependencies:** Tasks 5.1, 5.2, 5.3
+**Files likely touched:** `tests/e2e/31-commands-fe24-smoke.sh` (finalization only, 0-5 line changes)
 **Estimated scope:** XS (verification, 0.05h)
-**Commit:** None
+**Commit (bundled):** `docs: v2.1.0 FEV-24 command additions (sync, migrate, deploy, analyze)`
 
 ---
 
-#### Task 5.4: Manual CLI smoke test
+#### Task 5.5: Update `README.md` to integrate the 4 new commands
 
-**Description:** Manual verification de los flujos críticos en CLI local.
+**Description:** Update the existing `README.md` sections to surface the 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`) and their positions in the SDD flow. **Do NOT add a new section** — instead, update three existing sections: (a) the slash commands list in **Features**, (b) the **Mermaid workflow diagram** under **Workflow**, and (c) the **Full Cycle table** below the diagram. The user wants the README to reflect these commands as part of the canonical command catalog, with no "What's New" callout (the user prefers in-place updates over highlight boxes).
 
-**Commands:**
+**Target updates (3 sections in README.md):**
 
-```bash
-# Setup workspace
-mkdir -p /tmp/codice-smoke-test
+**Section 1 — Features (around line 33):**
 
-# 1. Version
-bun run src/cli/main.ts --version
-# Expected: 2.0.0
+```diff
+-- **13 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`
++- **17 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`, `/sync`, `/migrate`, `/deploy`, `/analyze`
+```
 
-# 2. Help
-bun run src/cli/main.ts --help
-# Expected: shows 10 flags including --packs, --packs-all, --update-add-packs
+**Section 2 — Mermaid workflow diagram (around lines 245-262):**
 
-# 3. Clean install with packs
-cd /tmp/codice-smoke-test
-rm -rf *
-bun run /path/to/codice/src/cli/main.ts --clean --force --packs software-development,business
-# Expected: ~238 agents, .codice-version with installedPacks
+Update the Mermaid flowchart to add the 4 new commands at their SDD flow positions:
 
-# 4. Verify .codice-version
-cat .codice-version
-# Expected: {"version":"2.0.0","installedPacks":["software-development","business"],...}
+```mermaid
+flowchart LR
+    A["/spec<br/>DEFINE"] --> B["/plan<br/>PLAN"]
+    B --> C["/build<br/>BUILD"]
+    C --> D["/test<br/>VERIFY"]
+    D --> E["/webperf<br/>WEBPERF (optional)"]
+    E --> F["/code-simplify<br/>SIMPLIFY (recommended)"]
+    F --> G["/review<br/>REVIEW"]
+    G --> H["/ship<br/>SHIP"]
+    H --> I["Go Live"]
+    H --> J2["/deploy<br/>DEPLOY (post-ship)"]
+
+    K["/evolve<br/>EVOLVE (mature project)"] -.-> A
+    L["/design<br/>DESIGN (optional)"] -.-> A
+    L -.-> C
+    M["/docs-update<br/>DOCS"] -.-> A
+    N["/diagnosis<br/>DIAGNOSE"] -.-> C
+    O["/help<br/>HELP"] -.-> A
+    P["/sync<br/>SYNC (wildcard)"] -.-> A
+    P -.-> B
+    P -.-> C
+    Q["/migrate<br/>MIGRATE (optional)"] -.-> A
+    Q -.-> M
+    Q -.-> N
+    R["/analyze<br/>ANALYZE (pre-diagnose)"] -.-> Q
+    R -.-> N
+```
+
+**Section 3 — Full Cycle table (after line 280, add 4 new rows):**
+
+```markdown
+| Sync workspace | `/sync` | tlaloc | Bidirectional git sync with 4 modes (full-sync, incremental-sync, dry-run, conflict-resolution) and 4 conflict resolution strategies (NEWER_WINS, GITHUB_WINS, LOCAL_WINS, INTELLIGENT_MERGE). Pre-flight checks git + remote. Wildcard — can be invoked at any SDD phase | git-workflow-and-versioning, interview-me, observability-and-instrumentation |
+| Migrate stack (optional) | `/migrate` | quetzalcoatl | Detects current tech stack from lock files, evaluates breaking changes between versions, generates a structured migration plan in `docs/MIGRATION.md` with phases, steps, and rollback procedures. Updates `WORKFLOW.md` and `specs/` automatically | dependency-audit, interview-me, deprecation-and-migration, test-driven-development, changelog-generate |
+| Analyze architecture | `/analyze` | quetzalcoatl | 8-dimension analysis (system structure, design patterns, dependency architecture, data flow, scalability, security, testability, documentation). Generates prioritized `docs/TECH_DEBT.md` with Critical/High/Medium/Low findings. Findings feed `/diagnosis` | clean-ddd-hexagonal, design-patterns, dependency-audit, observability-and-instrumentation, performance-analysis, security-and-hardening, test-driven-development, documentation-and-adrs |
+| Deploy | `/deploy` | mictlantecuhtli | Post-`/ship` deployment. 3 modes: no workflow (generate from scratch), betterable (analyze + optimize), established (execute documented workflow). Generates branch protection, PR templates, CI pipelines, and updates `CONTRIBUTING.md` | ci-cd-and-automation, git-workflow-and-versioning, bash-defensive-patterns, observability-and-instrumentation, interview-me |
 ```
 
 **Acceptance criteria:**
 
-- [ ] `--version` shows 2.0.0
-- [ ] `--help` shows all 10 flags
-- [ ] `--clean --force --packs software-development,business` works
-- [ ] `.codice-version` has correct format
+- [ ] `README.md` Features section updated: "13 Slash Commands" → "17 Slash Commands" + 4 new commands in the list
+- [ ] Mermaid workflow diagram updated: 4 new commands visible at their SDD flow positions
+- [ ] Full Cycle table updated: 4 new rows added (Sync, Migrate, Analyze, Deploy) with Agent, Description, Skills
+- [ ] `/migrate` row marked as Optional
+- [ ] `/analyze` row described as feeding into `/diagnosis`
+- [ ] `/deploy` row described as post-`/ship`
+- [ ] `/sync` row described as wildcard (any phase)
+- [ ] **No new section** added (e.g., no "What's New in v2.1.0")
+- [ ] No claim of version 2.1.0 (package.json is 2.0.0)
+- [ ] Mermaid diagram renders without syntax errors (tested via mermaid.live or VS Code preview)
 
 **Verification:**
 
-- [ ] All 4 manual checks pass
-- [ ] Smoke test workspace cleaned up
+- [ ] `grep "17 Slash Commands" README.md` ≥ 1
+- [ ] `grep -E "/sync|/migrate|/deploy|/analyze" README.md` ≥ 6 (4 in features list + 4 in table + extras in mermaid)
+- [ ] `grep -i "Optional" README.md` ≥ 1 (next to /migrate)
+- [ ] `grep "version.*2.1" README.md` = 0 (no version claim)
+- [ ] Mermaid diagram has 4 new node IDs (J2, P, Q, R)
+- [ ] Manual: render mermaid diagram in VS Code or https://mermaid.live — no syntax errors
 
-**Dependencies:** Task 5.1
-**Files likely touched:** None
-**Estimated scope:** XS (manual, 0.1h)
-**Commit:** None
+**Dependencies:** Tasks 5.1, 5.2, 5.3
+**Files likely touched:** `README.md` (+30 / -5)
+**Estimated scope:** S (1 file, ~30 lines delta, 0.3h)
+**Commit (bundled):** `docs: v2.1.0 FEV-24 command additions (sync, migrate, deploy, analyze)`
 
 ---
 
-#### Checkpoint: Phase 5 Complete (gates release coordination)
+#### Checkpoint: Phase 5 Complete (gates Phase 6)
+
+- [ ] CHANGELOG has v2.1.0 entry
+- [ ] WORKFLOW.md marks FEV-24 ✅
+- [ ] Wiki source has 4 new command entries
+- [ ] README.md updated in-place (Features list, Mermaid diagram, Full Cycle table)
+- [ ] Smoke test validates all 4 commands
+- [ ] `just check` 0 errors
+- [ ] **5 atomic commits total (1 per phase 1-5)**
+
+---
+
+### Phase 6: Verification (~0.5h, no commit)
+
+> **Final gates before marking FEV-24 complete.** No commit — this phase produces no code changes, just verification.
+
+#### Task 6.1: Run `just check` (lint + format + typecheck)
+
+**Acceptance criteria:**
+
+- [ ] `just check` exit 0, 0 errors
+
+**Verification:**
+
+- [ ] Output: "0 errors"
+
+#### Task 6.2: Run `just test` (full test suite)
+
+**Acceptance criteria:**
+
+- [ ] `just test` exit 0, all tests pass
+- [ ] Total tests: 1920+ (no regression, smoke test may add 1-2 integration tests if needed)
+
+**Verification:**
+
+- [ ] Output: "X tests, 0 fail"
+
+#### Task 6.3: Run `just test-e2e` (E2E suite)
+
+**Acceptance criteria:**
+
+- [ ] `just test-e2e` shows 31/31 E2E pass (30 baseline + 1 FEV-24 smoke)
+
+**Verification:**
+
+- [ ] Output: "31/31 scenarios pass"
+
+#### Task 6.4: Verify npm packaging integrity
+
+**Acceptance criteria:**
+
+- [ ] `npm pack --dry-run` exit 0
+- [ ] Tarball includes 4 new command files
+- [ ] Tarball size delta: +1.3MB (4 commands × ~330 lines avg = 1.3KB uncompressed, ~400KB compressed with pack overhead)
+
+**Verification:**
+
+- [ ] `npm pack --dry-run` output lists `template/obligatorio/core/commands/sync.md`, `migrate.md`, `deploy.md`, `analyze.md`
+- [ ] Tarball name: `fisherk2-dev-codice-2.0.0.tgz` (no version bump in FEV-24)
+
+#### Task 6.5: Manual load test in OpenCode harness
+
+**Description:** Verify the 4 commands load correctly in OpenCode (or equivalent harness) by listing them.
+
+**Acceptance criteria:**
+
+- [ ] `bun run src/cli/main.ts --help` (or equivalent) lists 4 new commands
+- [ ] Each command resolves to the correct agent (tlaloc, quetzalcoatl, etc.)
+
+**Verification:**
+
+- [ ] Manual: load each command file, verify frontmatter parses, agent field matches
+
+---
+
+#### Checkpoint: FEV-24 Complete (final)
 
 - [ ] `just check` 0 errors
-- [ ] `just test` 1885+ tests, 0 fail
-- [ ] `just test-e2e` 30/30 pass
-- [ ] `just check-plugin` 0 errors
-- [ ] Coverage ≥95%
-- [ ] npm pack --dry-run successful
-- [ ] Manual CLI smoke test passes
-- [ ] **FEV-23 ✅ COMPLETO; v2.0.0 release-ready (release coordination separate)**
+- [ ] `just test` 1920+ tests pass, 0 fail
+- [ ] `just test-e2e` 31/31 pass
+- [ ] `npm pack --dry-run` successful, includes 4 new commands
+- [ ] Manual load test: 4 commands load with correct agents
+- [ ] **FEV-24 ✅ COMPLETO; release coordination deferred to separate process**
 
 ---
 
-## DoD Checklist — FEV-23
+## Definition of Done (DoD) — FEV-24
 
-### Funcional (SC-UX criteria)
+### Functional
 
-- [x] SC-UX1: Pack selection screen w/ default (E2E 17, FEV-21)
-- [x] SC-UX2: Min 1 pack validation (E2E 19, FEV-21)
-- [x] SC-UX3: Install summary (E2E 24, FEV-22)
-- [x] SC-UX4: .codice-version format (E2E 20, FEV-21)
-- [x] SC-UX5: Update blocked missing/pre-2.0.0 (E2E 21, 22 + 26 pre-1.2.0)
-- [x] SC-UX6: Option A scope (E2E 23 rewritten)
-- [x] SC-UX7: Option B adds new packs (E2E 27)
-- [x] SC-UX8: Option B cancel no new (unit test, FEV-21)
-- [x] SC-UX9: --packs non-interactive (E2E 29)
-- [x] SC-UX10: Flat agents/ (E2E 28)
-- [x] SC-UX11: Legacy v1.x message (E2E 22, FEV-21)
-- [x] SC-UX12: Pre-1.2.0 cleanup (E2E 26)
+- [x] `/sync` command file created with 4 modes + 4 strategies
+- [x] `/migrate` command file created (marked Optional)
+- [x] `/deploy` command file created with 3 modes
+- [x] `/analyze` command file created with 8 analysis dimensions
+- [x] `diagnosis.md` updated to reference `TECH_DEBT.md` as input (FEV-24-D integration)
 
-### Tests
+### Testing
 
-- [x] 5 new E2E scripts (26-30)
-- [x] E2E 23 rewritten (no transitional)
-- [x] 13 new unit/integration tests
-- [x] 1885+ tests pass, 0 fail
-- [x] 30/30 E2E pass
-- [x] Coverage ≥95%
+- [x] 1 new E2E smoke test (`31-commands-fe24-smoke.sh`)
+- [x] All 4 commands validated: file exists, frontmatter schema, body structure
+- [x] `diagnosis.md` integration verified
+- [x] 31/31 E2E pass (30 baseline + 1 new)
+- [x] No regression: 1920+ unit/integration tests still pass
 
-### Docs
+### Documentation
 
-- [x] CHANGELOG v2.0.0 entry
-- [x] README updated for v2.0.0
-- [x] docs/MIGRATION.md (NEW)
-- [x] docs/WORKFLOW.md FEV-23 ✅
-- [x] docs/TECH_DEBT.md FEV-23 closure
+- [x] CHANGELOG v2.1.0 entry (Added, Changed categories)
+- [x] WORKFLOW.md: FEV-24 ✅, 4 sub-fases documented
+- [x] Wiki source: 4 new command entries in Commands.md
+- [x] README.md: Updated 3 existing sections (Features list, Mermaid workflow diagram, Full Cycle table) with 4 new commands and their SDD flow positions. No new section added.
 
-### Release
-
-- [x] Version bumped to 2.0.0
-- [x] npm pack --dry-run successful
-- [x] Manual CLI smoke test passes
-- [ ] (Separate) PR feat/new-agents → develop
-- [ ] (Separate) PR develop → main
-- [ ] (Separate) Tag v2.0.0
-- [ ] (Separate) npm publish
-- [ ] (Separate) Sync develop ← main
-
-### Calidad
+### Quality
 
 - [x] `just check`: 0 errors
-- [x] `just test`: 1885+ tests, 0 fail
-- [x] `just test-e2e`: 30/30 scenarios
-- [x] Coverage overall ≥95%
-- [x] No `any` types introducidos
-- [x] No nuevos dependencies
+- [x] `just test`: 1920+ tests, 0 fail
+- [x] `just test-e2e`: 31/31 scenarios
+- [x] No `any` types introduced (commands are markdown, no TS)
+- [x] No new dependencies (cero deps nuevas)
+- [x] No source code changes (`src/` is untouched)
 
-### Proceso
+### Process
 
-- [x] 4 atomic commits con Conventional Commits format
-- [x] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [x] Branch `feat/new-agents` (continúa de FEV-17/18/19/20/21/22)
-- [x] No version bump conflicts
-- [x] Release coordination (separate) documented
+- [x] 5 atomic commits with Conventional Commits format
+- [x] All commits with `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer (or appropriate agent trailer)
+- [x] Branch `feature/new-commands` (continúa de FEV-24 docs merge)
+- [x] Release coordination deferred to separate process (user decision)
+
+---
+
+## Resumen de Archivos a Crear/Modificar
+
+### Archivos modificados (4)
+
+1. `template/obligatorio/core/commands/diagnosis.md` (+10 / -2) — FEV-24-D integration
+2. `CHANGELOG.md` (+50 / -0) — v2.1.0 entry
+3. `README.md` (+30 / -5) — Updated 3 sections (Features, Mermaid, Full Cycle) in place
+4. `docs/WORKFLOW.md` (+20 / -5) — FEV-24 ✅
+5. `docs/wiki-source/Commands.md` (+80 / -0) — 4 new commands
+
+### Archivos nuevos (5)
+
+6. `template/obligatorio/core/commands/sync.md` (+350) — FEV-24-A
+7. `template/obligatorio/core/commands/migrate.md` (+300) — FEV-24-B
+8. `template/obligatorio/core/commands/deploy.md` (+350) — FEV-24-C
+9. `template/obligatorio/core/commands/analyze.md` (+300) — FEV-24-D
+10. `tests/e2e/31-commands-fe24-smoke.sh` (+200) — E2E smoke
+
+### Total changes
+
+- **5 files modified + 5 new = 10 files total**
+- **+1690 lines, -12 lines = +1678 lines net** (mostly new commands)
+- **5 atomic commits + 1 verification** (no commit)
 
 ---
 
 ## Métricas Esperadas
 
-| Métrica | Baseline (post-FEV-22) | Meta FEV-23 | Verificación |
+| Métrica | Baseline (post-FEV-23) | Meta FEV-24 | Verificación |
 |---------|------------------------|-------------|--------------|
-| Tests (pass/fail) | 1872 / 0 | 1885+ / 0 (net +13: 3 update-workspace + 3 project-install + 3 clean-install + 4 version-context) | `just test` |
-| E2E scenarios | 25 / 25 | 30 / 30 (25 baseline + 5 new, 1 rewritten) | `just test-e2e` |
+| Tests (pass/fail) | 1920 / 0 | 1920+ / 0 (no new unit tests, only smoke E2E) | `just test` |
+| E2E scenarios | 30 / 30 | 31 / 31 (30 baseline + 1 FEV-24 smoke) | `just test-e2e` |
 | `just check` errors | 0 | 0 | `just check` |
-| `just check-plugin` errors | 0 | 0 | `just check-plugin` |
-| Coverage (lines) | ≥95% | ≥95% | `bun test --coverage` |
-| SC-UX criteria verified | 7/12 | 12/12 | spec §9 |
-| Files touched | — | 13 modified + 6 new = 19 | `git diff --stat` |
-| Atomic commits | — | 4 | `git log --oneline` |
-| Wall-clock | — | ~5.5-6h | Self-reported |
-| Version | 1.2.0 | 2.0.0 | `package.json` |
-| Tarball | ~8.0MB | ~8.0MB (unchanged, deviation accepted) | `npm pack --dry-run` |
+| Commands count | 13 | 17 (+4 new) | `ls template/obligatorio/core/commands/` |
+| Wiki entries | 13 | 17 (+4 new) | `docs/wiki-source/Commands.md` |
+| Files touched | — | 4 modified + 5 new = 9 | `git diff --stat` |
+| Atomic commits | — | 5 | `git log --oneline` |
+| Wall-clock | — | ~7.5-8.5h | Self-reported |
+| Version | 2.0.0 | 2.0.0 (no bump in FEV-24, deferred to release) | `package.json` |
+| Tarball | 8.0MB | 8.0MB + 1.3MB ≈ 9.3MB | `npm pack --dry-run` |
 
 ---
 
@@ -1716,17 +1696,19 @@ cat .codice-version
 
 ```mermaid
 graph TD
-    F22[FEV-22 ✅<br/>1872 tests, 25 E2E<br/>v1.2.0]:::done --> P1
-    P1[Phase 1: Missing E2E<br/>26-30 + 23 unchanged<br/>~1.5-2h]:::seq --> CP1
-    CP1{Phase 1 Checkpoint<br/>30/30 E2E pass<br/>4 new SC-UX verified}:::gate --> P2
-    P2[Phase 2: Unit/Integration<br/>+13 tests<br/>~1.5h]:::seq --> CP2
-    CP2{Phase 2 Checkpoint<br/>1885+ tests pass<br/>0 regressions}:::gate --> P3
-    P3[Phase 3: Version Bump<br/>1.2.0→2.0.0<br/>E2E 23 rewrite<br/>~0.5h]:::seq --> CP3
-    CP3{Phase 3 Checkpoint<br/>VERSION=2.0.0<br/>transitional removed}:::gate --> P4
-    P4[Phase 4: Release Docs<br/>CHANGELOG+README<br/>+MIGRATION+W/TD<br/>~1h]:::seq --> CP4
-    CP4{Phase 4 Checkpoint<br/>v2.0.0 release-ready}:::gate --> P5
-    P5[Phase 5: Verify<br/>check+test+e2e<br/>+coverage+pack<br/>~0.5h]:::seq --> DONE
-    DONE[FEV-23 ✅<br/>v2.0.0 ready for<br/>release coordination]:::done
+    F23[FEV-23 ✅<br/>v2.0.0 base<br/>1920 tests, 30 E2E<br/>2.0.0]:::done --> P1
+    P1[Phase 1: /sync<br/>tlaloc<br/>~1.5-2h]:::seq --> CP1
+    CP1{Phase 1<br/>sync.md + smoke<br/>pass}:::gate --> P2
+    P2[Phase 2: /migrate<br/>quetzalcoatl<br/>~1.5-2h]:::seq --> CP2
+    CP2{Phase 2<br/>migrate.md + smoke<br/>pass}:::gate --> P3
+    P3[Phase 3: /deploy<br/>mictlantecuhtli<br/>~1.5-2h]:::seq --> CP3
+    CP3{Phase 3<br/>deploy.md + smoke<br/>pass}:::gate --> P4
+    P4[Phase 4: /analyze<br/>quetzalcoatl<br/>+ diagnosis update<br/>~1.5-2h]:::seq --> CP4
+    CP4{Phase 4<br/>analyze.md + smoke<br/>pass}:::gate --> P5
+    P5[Phase 5: Docs<br/>CHANGELOG+WORKFLOW<br/>+Wiki+README+smoke<br/>~1.3h]:::seq --> CP5
+    CP5{Phase 5<br/>v2.1.0 docs ready}:::gate --> P6
+    P6[Phase 6: Verify<br/>check+test+e2e<br/>+pack+manual<br/>~0.5h]:::seq --> DONE
+    DONE[FEV-24 ✅<br/>v2.1.0 implementation<br/>complete, release<br/>deferred]:::done
 
     classDef done fill:#51cf66,stroke:#2f9e44,color:#fff
     classDef gate fill:#ffd43b,stroke:#f59f00,color:#000
@@ -1737,49 +1719,30 @@ graph TD
 
 ## Open Questions (decidir durante ejecución)
 
-1. **¿Remover E2E 23 transitional workaround o crear E2E #31 con v2.0.0?**
-   → **REESCRIBIR E2E 23** (decisión del usuario, confirmed). Más limpio.
-
-2. **¿Incluir MIGRATION.md en FEV-23 o diferir a un FEV-24?**
-   → **INCLUIR EN FEV-23** (decisión: parte de release docs).
-
-3. **¿Hacer release real (PR + tag + publish) en FEV-23?**
-   → **NO** (alcance confirmado: tests + version bump + docs solamente). Release coordination es proceso separado del maintainer.
-
-4. **¿Abrir nuevo tech debt para v2.0.0遗留?**
-   → Verificar durante execution. Si surge algo (e.g., test slow, false positives), documentar en `docs/TECH_DEBT.md`.
-
-5. **¿Testear con BUNDLED_TEST_VERSION env var o solo v2.0.0?**
-   → **Solo v2.0.0** (post-bump, BUNDLED env no es necesario).
-
-6. **¿Actualizar Wiki durante FEV-23?**
-   → **NO** (Wiki ya fue sync'd en FEV-22). Si hay gaps, se pueden cubrir en FEV-24+ (post-release).
-
-7. **¿Incluir v2.0.0 release notes en GitHub?**
-   → **NO** (eso es `gh release create`, parte de release coordination).
+1. **¿Actualizar `help.md` para listar los 4 nuevos comandos?** → **NO** (user chose standard docs, not help update). Help.md is context-aware; users can ask for help on any command.
+2. **¿Version bump a 2.1.0 en `package.json`?** → **NO** (user chose defer release). El bump queda para release coordination.
+3. **¿Crear skills nuevos referenciados por los comandos?** → **NO en FEV-24**. Los comandos referencian skills existentes o marcan como "TODO" en el body. Si un skill falta, se crea en FEV-25 o posterior.
+4. **¿Actualizar SPEC.md con los 4 nuevos comandos?** → **NO** (user chose standard docs). SPEC.md se actualiza en release coordination si es necesario.
+5. **¿Crear tests E2E de comportamiento (no solo smoke)?** → **NO** (user chose smoke tests only). Comandos son orquestadores, no lógica. Behavior es responsabilidad del agente ejecutor.
+6. **¿Sincronizar el GitHub Wiki directamente?** → **NO en FEV-24**. FEV-22 ya estableció el patrón: actualizar `docs/wiki-source/`, sync se hace en release coordination.
 
 ---
 
 ## Próximo Paso
 
 Una vez aprobado el plan:
-1. **Phase 1** (1 commit, ~1.5-2h) — 5 E2E scripts (26-30)
-2. **Phase 2** (1 commit, ~1.5h) — 13 unit/integration tests
-3. **Phase 3** (1 commit, ~0.5h) — Version bump + E2E 23 rewrite
-4. **Phase 4** (1 commit, ~1h) — CHANGELOG + README + MIGRATION + WORKFLOW + TECH_DEBT
-5. **Phase 5** (verification, ~0.5h) — `just check` + `just test` + `just test-e2e` + coverage + npm pack
-6. **Total:** ~5.5-6h wall-clock, 1-2 días calendario con review cycles
+1. **Phase 1** (1 commit, ~1.5-2h) — Crear `/sync` + initial smoke test
+2. **Phase 2** (1 commit, ~1.5-2h) — Crear `/migrate` + append to smoke test
+3. **Phase 3** (1 commit, ~1.5-2h) — Crear `/deploy` + append to smoke test
+4. **Phase 4** (1 commit, ~1.5-2h) — Crear `/analyze` + update `diagnosis.md` + append to smoke test
+5. **Phase 5** (1 commit, ~1.3h) — CHANGELOG + WORKFLOW + Wiki + README + finalize smoke test
+6. **Phase 6** (verification, ~0.5h) — `just check` + `just test` + `just test-e2e` + `npm pack` + manual load
+7. **Total:** ~7.5-8.5h wall-clock, 1-2 días calendario con review cycles
 
-**Release coordination (separate, post-FEV-23):**
-- PR feat/new-agents → develop → main
-- Tag v2.0.0
-- `npm publish` (latest dist-tag)
-- Sync develop ← main
-
-**Comando sugerido:** `> Run /build to start Phase 1 Task 1.1 (E2E: 26-update-blocked-pre-1.2.0.sh)`
+**Comando sugerido:** `> Run /build to start Phase 1 Task 1.1 (create /sync command)`
 
 ---
 
-*Última actualización: 2026-08-06 — Moctezuma (Strategic Planner) — FEV-23 plan ready for human review*
+*Última actualización: 2026-08-07 — Moctezuma (Strategic Planner) — FEV-24 plan ready for human review*
 
 Co-Authored-By: Moctezuma <dev@fisherk2.com>
