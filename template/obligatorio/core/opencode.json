@@ -1,7 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
 
-  "model": "nvidia/stepfun-ai/step-3.7-flash",
+  "model": "openrouter/openrouter/free",
   "small_model": "openrouter/openrouter/free",
 
   "compaction": {
@@ -12,16 +12,16 @@
 
   "agent": {
     "huitzilopochtli": {
-      "model": "opencode/ling-3.0-flash-free",
+      "model": "opencode/longcat-2.0-free",
       "color": "#d3e22b",
       "temperature": 0.5,
-      "steps": 25
+      "steps": 30
     },
     "quetzalcoatl": {
       "model": "opencode/big-pickle",
       "color": "#ffffff",
-      "temperature": 0.3,
-      "steps": 80
+      "temperature": 0.2,
+      "steps": 100
     },
     "moctezuma": {
       "model": "opencode/nemotron-3-ultra-free",
@@ -39,13 +39,13 @@
       "model": "opencode/laguna-s-2.1-free",
       "color": "#2d2d2d",
       "temperature": 0.2,
-      "steps": 100
+      "steps": 125
     },
     "tezcatlipoca": {
       "model": "opencode/mimo-v2.5-free",
       "color": "#ff3134",
       "temperature": 0.1,
-      "steps": 70
+      "steps": 80
     },
     "build": {
       "disable": true
@@ -54,7 +54,7 @@
       "disable": true
     },
     "explore": {
-      "model": "openrouter/openrouter/free"
+      "disable":true
     },
     "general": {
       "disable": true
@@ -80,7 +80,7 @@
     },
     "opencode": {
       "repository": "anomalyco/opencode",
-      "branch": "main",
+      "branch": "dev",
       "description": "Official OpenCode repository — CLI, API, and configuration reference"
     }
   },
