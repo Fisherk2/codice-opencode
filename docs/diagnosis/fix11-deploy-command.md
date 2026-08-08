@@ -42,7 +42,8 @@ El template asume que el usuario ya tiene un git workflow y CI/CD configurados, 
 ## Proposed Solution
 
 1. **Crear comando `/deploy`** en `template/obligatorio/core/commands/deploy.md` con agente ejecutor `Mictlantecuhtli`.
-2. **Pre-flight check**: Analizar si existe documentación de git workflow en `CONTRIBUTING.md` y CI/CD configurado.
+2. **Posición en flujo SDD**: Después de `/ship`, ya que ship revisa antes de lanzar y deploy es el que lanza a producción.
+3. **Pre-flight check**: Analizar si existe documentación de git workflow en `CONTRIBUTING.md` y CI/CD configurado.
 3. **Análisis del proyecto**: Detectar tipo de proyecto (lenguaje, framework, estructura) para sugerir configuraciones apropiadas.
 4. **Modos de operación**:
    - Si no hay workflow: Proponer opciones de git workflow (trunk-based, gitflow, feature-branch) y CI/CD platform.
@@ -72,7 +73,7 @@ El template asume que el usuario ya tiene un git workflow y CI/CD configurados, 
 
 ## FEV Plan — FEV-24-C (~8-10h)
 
-**Position in SDD Flow:** Independiente del flujo SDD (configuración de infraestructura).
+**Position in SDD Flow:** Después de `/ship` (ship revisa antes de lanzar, deploy lanza a producción).
 
 | Task ID | Description | Target | Est. |
 |---------|-------------|--------|------|

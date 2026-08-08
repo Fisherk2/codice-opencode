@@ -42,7 +42,7 @@ El template actual provee documentación de migración (`MIGRATION.md`) pero no 
 ## Proposed Solution
 
 1. **Crear comando `/migrate`** en `template/obligatorio/core/commands/migrate.md` con agente ejecutor `Quetzalcoatl`.
-2. **Posición en flujo SDD**: Antes de `/evolve`, ya que la migración puede requerir nuevas especificaciones.
+2. **Posición en flujo SDD**: Antes de `/diagnosis`, `/docs-update` y `/evolve`, ya que la migración puede requerir nuevas especificaciones y actualización de documentación.
 3. **Análisis del stack actual**: Detectar tecnologías desde lock files, config files, y dependencias.
 4. **Evaluación de impacto**: Analizar breaking changes, APIs deprecadas, y compatibilidad.
 5. **Generación de plan de migración**: Documento estructurado con fases, pasos, y criterios de aceptación.
@@ -68,7 +68,7 @@ El template actual provee documentación de migración (`MIGRATION.md`) pero no 
 
 ## FEV Plan — FEV-24-B (~6-8h)
 
-**Position in SDD Flow:** Antes de `/evolve` (la migración puede requerir nuevas specs).
+**Position in SDD Flow:** Antes de `/diagnosis`, `/docs-update` y `/evolve`.
 
 | Task ID | Description | Target | Est. |
 |---------|-------------|--------|------|

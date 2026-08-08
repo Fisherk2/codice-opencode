@@ -42,7 +42,7 @@ El template provee un documento `TECH_DEBT.md` pero no tiene un mecanismo automa
 ## Proposed Solution
 
 1. **Crear comando `/analyze`** en `template/obligatorio/core/commands/analyze.md` con agente ejecutor `Quetzalcoatl`.
-2. **Posición en flujo SDD**: Antes de `/diagnosis`, ya que los hallazgos alimentan el proceso de diagnóstico.
+2. **Posición en flujo SDD**: Después de `/migrate` pero antes de `/diagnosis`, ya que los hallazgos alimentan el proceso de diagnóstico.
 3. **Dimensiones de análisis**:
    - **Estructura del sistema**: Jerarquía de componentes, patrones arquitectónicos, límites de módulos.
    - **Patrones de diseño**: Consistencia, detección de anti-patrones, efectividad.
@@ -72,7 +72,7 @@ El template provee un documento `TECH_DEBT.md` pero no tiene un mecanismo automa
 
 ## FEV Plan — FEV-24-D (~6-8h)
 
-**Position in SDD Flow:** Antes de `/diagnosis` (los hallazgos alimentan el diagnóstico).
+**Position in SDD Flow:** Después de `/migrate` pero antes de `/diagnosis`.
 
 | Task ID | Description | Target | Est. |
 |---------|-------------|--------|------|

@@ -73,7 +73,7 @@ El flujo de trabajo SDD actual asume un único contribuidor por proyecto. No se 
 
 ## FEV Plan — FEV-24-A (~8-10h)
 
-**Position in SDD Flow:** Comodín, puede ejecutarse en cualquier fase.
+**Position in SDD Flow:** Comodín, puede ejecutarse en cualquier fase del flujo (similar a `/help`).
 
 | Task ID | Description | Target | Est. |
 |---------|-------------|--------|------|
