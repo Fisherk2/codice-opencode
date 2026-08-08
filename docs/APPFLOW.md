@@ -23,6 +23,8 @@ graph TD
     E -- 'Esc / Ctrl+C' --> Z
 ```
 
+> **v2.0.0:** En Clean Install y Project Install, después de la confirmación/checklist de opcionales, se presenta el **wizard de selección de packs** (8 packs seleccionables + 2 obligatorios). Ver Flujo 12.
+
 ### Flujo 2: Actualización de Workspace (Con verificación de versión)
 ```mermaid
 graph TD
@@ -30,17 +32,21 @@ graph TD
     B --> C{¿Existe archivo?}
     C -- No --> D[Error: No es un workspace de OpenCode válido]
     D --> Z([Fin con código de error 1])
-    C -- Sí --> E[Consultar GitHub API: /releases/latest]
-    E --> F{¿Timeout o Error de Red?}
-    F -- Sí --> G[Warning: No se pudo verificar. Continuando con instalación local...]
-    F -- No --> H{¿Versión Remota > Versión Local?}
+    C -- Sí --> C2{Clasificar versión}
+    C2 -- Sin versión / < 1.2.0 --> C3[Bloqueado: sugerir limpieza pre-1.2.0 y reinstalar]
+    C3 --> Z
+    C2 -- 1.2.0 ≤ v < 2.0.0 --> C4[Bloqueado: guiar a Clean/Project Install]
+    C4 --> Z
+    C2 -- v2.0.0+ --> E[Consultar versión bundled]
+    E --> H{¿Versión Bundled > Versión Local?}
     H -- No --> I[Vista: Éxito 'Ya tienes la versión más reciente']
     I --> Z([Fin con código 0])
-    H -- Sí --> J[Vista: Confirmación de Actualización]
-    J --> K{¿Usuario confirma?}
-    K -- No --> Z
-    K -- Sí --> L[Ejecutar Motor de Fusión Atómica]
-    L --> M{¿Éxito?}
+    H -- Sí --> J2{¿Option A o B?}
+    J2 -- Option A --> JA[Ejecutar merge con packs actuales]
+    J2 -- Option B --> JB[Wizard: seleccionar packs adicionales]
+    JB --> JC[Ejecutar merge con packs actuales + nuevos]
+    JA --> M{¿Éxito?}
+    JC --> M
     M -- Sí --> N[Vista: Éxito 'Workspace actualizado a vX.Y.Z']
     M -- No --> O[Vista: Error 'Fallo en instalación. Proyecto intacto.']
     N --> Z
@@ -162,6 +168,48 @@ graph TD
     D --> G{¿Pasaron?}
     G -- Sí --> H[Éxito]
     G -- No --> I[Reportar fallos]
+```
+
+### Flujo 12: Wizard de Selección de Packs (v2.0.0)
+```mermaid
+graph TD
+    A([Inicio: Pack Selection]) --> B[Mostrar 8 packs seleccionables]
+    B --> C{¿Usuario selecciona packs?}
+    C -- Al menos 1 --> D[Calcular resumen: conteos de agentes, archivos]
+    C -- Ninguno --> E[Error: Debe seleccionar al menos 1 pack]
+    E --> B
+    D --> F[Mostrar Install Summary Screen]
+    F --> G{¿Usuario confirma?}
+    G -- Sí --> H[Ejecutar merge con packs seleccionados]
+    G -- No --> B
+    H --> I[Post-install: symlinks + gitignore + .codice-version v2.0]
+```
+
+### Flujo 13: Install Summary Screen (v2.0.0)
+```mermaid
+graph TD
+    A([computeInstallSummary]) --> B[Calcular packs seleccionados + conteos]
+    B --> C[Calcular directorios obligatorios: core, main, writers]
+    C --> D[Calcular opcionales seleccionados]
+    D --> E[Mostrar resumen: packs, agentes, archivos estimados]
+    E --> F{¿Confirmar instalación?}
+    F -- Sí --> G[Ejecutar merge]
+    F -- No --> H[Volver al wizard de packs]
+```
+
+### Flujo 14: Update Option B — Agregar Packs (v2.0.0)
+```mermaid
+graph TD
+    A([Inicio: Option B]) --> B[Leer installedPacks de .codice-version]
+    B --> C[Mostrar packs: instalados bloqueados + disponibles]
+    C --> D{¿Usuario selecciona packs adicionales?}
+    D -- Sí --> E[Calcular resumen con packs actuales + nuevos]
+    D -- No --> F[Volver al menú de update]
+    E --> G[Mostrar Install Summary Screen]
+    G --> H{¿Confirmar?}
+    H -- Sí --> I[Ejecutar merge: solo archivos de nuevos packs]
+    H -- No --> F
+    I --> J[Actualizar .codice-version con nuevos installedPacks]
 ```
 
 ---
