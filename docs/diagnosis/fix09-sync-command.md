@@ -71,4 +71,26 @@ El flujo de trabajo SDD actual asume un único contribuidor por proyecto. No se 
 
 ---
 
+## FEV Plan — FEV-24-A (~8-10h)
+
+**Position in SDD Flow:** Comodín, puede ejecutarse en cualquier fase.
+
+| Task ID | Description | Target | Est. |
+|---------|-------------|--------|------|
+| FEV24A-T1 | Crear comando `/sync` con pre-flight check (git + remote) | `template/obligatorio/core/commands/sync.md` | 1h |
+| FEV24A-T2 | Definir 4 modos de sincronización (full, incremental, dry-run, conflict-resolution) | `sync.md` | 1.5h |
+| FEV24A-T3 | Definir 4 estrategias de resolución (NEWER_WINS, GITHUB_WINS, LOCAL_WINS, INTELLIGENT_MERGE) | `sync.md` | 1.5h |
+| FEV24A-T4 | Diseñar gestión de estado de sync en `docs/` | `sync.md` + template file | 1h |
+| FEV24A-T5 | Implementar seguridad transaccional (atomic ops + rollback) | `sync.md` | 1h |
+| FEV24A-T6 | Definir reporte post-sync (conflictos, estrategia, métricas) | `sync.md` | 1h |
+| FEV24A-T7 | Identificar skills y subagentes apropiados para el flujo | `sync.md` | 1h |
+
+**DoD:**
+- [ ] Comando `/sync` creado con todos los modos y estrategias
+- [ ] Pre-flight check funcional (detecta git + remote)
+- [ ] Reporte post-sync definido con todas las métricas
+- [ ] Skills y subagentes identificados y documentados
+
+---
+
 _Diagnosis created by `/diagnosis`. Update this file if the fix reveals additional insights._

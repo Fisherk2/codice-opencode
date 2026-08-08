@@ -66,4 +66,25 @@ El template actual provee documentación de migración (`MIGRATION.md`) pero no 
 
 ---
 
+## FEV Plan — FEV-24-B (~6-8h)
+
+**Position in SDD Flow:** Antes de `/evolve` (la migración puede requerir nuevas specs).
+
+| Task ID | Description | Target | Est. |
+|---------|-------------|--------|------|
+| FEV24B-T1 | Crear comando `/migrate` con análisis de stack actual | `template/obligatorio/core/commands/migrate.md` | 1.5h |
+| FEV24B-T2 | Definir evaluación de impacto (breaking changes, APIs deprecadas) | `migrate.md` | 1h |
+| FEV24B-T3 | Definir estructura del plan de migración (fases, pasos, criterios) | `migrate.md` | 1.5h |
+| FEV24B-T4 | Definir actualización automática de docs (MIGRATION.md, WORKFLOW.md, specs/) | `migrate.md` | 1h |
+| FEV24B-T5 | Definir estrategias de seguridad (backup, rollback, testing) | `migrate.md` | 1h |
+| FEV24B-T6 | Identificar skills y subagentes apropiados para el flujo | `migrate.md` | 1h |
+
+**DoD:**
+- [ ] Comando `/migrate` creado con análisis de stack y evaluación de impacto
+- [ ] Estructura de plan de migración definida
+- [ ] Actualización automática de documentación especificada
+- [ ] Skills y subagentes identificados y documentados
+
+---
+
 _Diagnosis created by `/diagnosis`. Update this file if the fix reveals additional insights._

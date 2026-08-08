@@ -70,4 +70,24 @@ El template provee un documento `TECH_DEBT.md` pero no tiene un mecanismo automa
 
 ---
 
+## FEV Plan — FEV-24-D (~6-8h)
+
+**Position in SDD Flow:** Antes de `/diagnosis` (los hallazgos alimentan el diagnóstico).
+
+| Task ID | Description | Target | Est. |
+|---------|-------------|--------|------|
+| FEV24D-T1 | Crear comando `/analyze` con dimensiones de análisis | `template/obligatorio/core/commands/analyze.md` | 1.5h |
+| FEV24D-T2 | Definir 8 dimensiones de análisis (estructura, patrones, dependencias, flujo de datos, escalabilidad, seguridad, testabilidad, documentación) | `analyze.md` | 1.5h |
+| FEV24D-T3 | Definir generación de `TECH_DEBT.md` con hallazgos priorizados | `analyze.md` | 1h |
+| FEV24D-T4 | Definir integración con `/diagnosis` (TECH_DEBT.md como input) | `analyze.md` + `diagnosis.md` | 1h |
+| FEV24D-T5 | Identificar skills y subagentes apropiados para el flujo | `analyze.md` | 1h |
+
+**DoD:**
+- [ ] Comando `/analyze` creado con 8 dimensiones de análisis
+- [ ] Generación de `TECH_DEBT.md` especificada
+- [ ] Integración con `/diagnosis` definida
+- [ ] Skills y subagentes identificados y documentados
+
+---
+
 _Diagnosis created by `/diagnosis`. Update this file if the fix reveals additional insights._

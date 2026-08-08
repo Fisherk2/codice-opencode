@@ -70,4 +70,25 @@ El template asume que el usuario ya tiene un git workflow y CI/CD configurados, 
 
 ---
 
+## FEV Plan — FEV-24-C (~8-10h)
+
+**Position in SDD Flow:** Independiente del flujo SDD (configuración de infraestructura).
+
+| Task ID | Description | Target | Est. |
+|---------|-------------|--------|------|
+| FEV24C-T1 | Crear comando `/deploy` con pre-flight check (CONTRIBUTING.md + CI/CD) | `template/obligatorio/core/commands/deploy.md` | 1.5h |
+| FEV24C-T2 | Definir análisis de proyecto (tipo, lenguaje, framework) | `deploy.md` | 1h |
+| FEV24C-T3 | Definir 3 modos de operación (no hay workflow, mejorable, establecido) | `deploy.md` | 1.5h |
+| FEV24C-T4 | Definir generación de configuraciones modulares (branch protection, PR templates, CI/CD) | `deploy.md` | 2h |
+| FEV24C-T5 | Definir actualización de CONTRIBUTING.md con workflow configurado | `deploy.md` | 1h |
+| FEV24C-T6 | Identificar skills y subagentes apropiados para el flujo | `deploy.md` | 1h |
+
+**DoD:**
+- [ ] Comando `/deploy` creado con pre-flight y análisis de proyecto
+- [ ] 3 modos de operación definidos
+- [ ] Configuraciones modulares especificadas
+- [ ] Skills y subagentes identificados y documentados
+
+---
+
 _Diagnosis created by `/diagnosis`. Update this file if the fix reveals additional insights._
