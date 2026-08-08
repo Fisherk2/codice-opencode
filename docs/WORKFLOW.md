@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v2.0.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-07 (v2.0.0 released) | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v2.1.0
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-07 (v2.1.0 FEV-24/25 en revisión) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -16,6 +16,7 @@
 | F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
 | F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth, TECH_DEBT.md | ✅ Completo |
 | FEV-1 a FEV-23 | Ver sección 3 | Issues críticos, SDD refactor, CI/CD, docs, agent packs, installer UX | ✅ Completo |
+| FEV-24 a FEV-25 | Ver sección 3 | Nuevos comandos v2.1, reglas delegación agentes | 🔍 En revisión |
 
 ## 2. Fases Iniciales (F0 – F6.5)
 
@@ -86,6 +87,15 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | **FEV-23** | Testing closure | 1920 tests, 30/30 E2E, v2.0.0 released |
 
 **Métricas v2.0.0:** ~41h implementación, ~9h overhead (code reviews, wiki sync, release)
+
+### v2.1.0 (FEV-24 a FEV-25) En Revisión
+
+| FEV | Objetivo | Issues | Estado |
+|-----|----------|--------|--------|
+| **FEV-24** | Nuevos comandos: `/sync`, `/migrate`, `/deploy`, `/analyze` | #68, #67, #64, #57 | 🔍 En revisión |
+| **FEV-25** | Reglas de delegación en agentes principales | #69 | 🔍 En revisión |
+
+**Diagnósticos:** `docs/diagnosis/fix09` a `fix13`
 
 ## 4. Estrategia de Pruebas por Fase
 
