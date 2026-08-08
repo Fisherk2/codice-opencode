@@ -55,14 +55,15 @@ just test           # All unit + integration tests
 just test-unit      # Domain logic only (pure functions, entities)
 just test-integration  # Adapters + use cases with mocked externals
 just test-packaging # npm tarball structure validation (5 scenarios)
-just test-e2e       # CLI against isolated directories (15 scenarios)
+just test-e2e       # CLI against isolated directories (30 scenarios)
 just test-watch     # Watch mode for development
 just test-coverage  # With coverage report
 ```
 
 - **Unit tests:** > 90% coverage target. Domain layer only.
 - **Integration tests:** Adapters with real temp dirs. No live network calls.
-- **E2E tests:** `bun run src/cli/main.ts`, isolated dirs, 15 scenarios. Bash scripts (Linux CI only).
+- **E2E tests:** `bun run src/cli/main.ts`, isolated dirs, 30 scenarios. Bash scripts (Linux CI only).
+- **Pack flags:** `--packs <list>` (comma-separated), `--packs-all` (all 8 selectable), `--update-add-packs <list>` (add packs during update).
 
 ---
 
@@ -207,4 +208,4 @@ See [docs/wiki-source/README.md](docs/wiki-source/README.md) for the full proced
 
 ---
 
-*Last revised: 2026-07-30*
+*Last revised: 2026-08-07*
