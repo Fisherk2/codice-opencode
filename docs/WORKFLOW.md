@@ -92,7 +92,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 | FEV | Objetivo | Issues | Estado |
 |-----|----------|--------|--------|
-| **FEV-24** | Nuevos comandos: `/sync`, `/migrate`, `/deploy`, `/analyze` | #68, #67, #64, #57 | 🔍 En revisión |
+| **FEV-24** | Nuevos comandos: `/sync`, `/migrate` (opcional), `/deploy`, `/analyze` | #68, #67, #64, #57 | 🔍 En revisión |
 | **FEV-25** | Reglas de delegación en agentes principales | #69 | 🔍 En revisión |
 
 **Diagnósticos:** `docs/diagnosis/fix09` a `fix13`
