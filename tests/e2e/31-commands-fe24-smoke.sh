@@ -88,4 +88,10 @@ if ! grep -qi "optional command" "$COMMANDS_DIR/migrate.md"; then
 fi
 log_pass "/migrate marked as Optional command"
 
-log_pass "FEV-24 smoke test: /sync, /migrate validated"
+# /deploy (FEV-24-C)
+validate_command \
+  "$COMMANDS_DIR/deploy.md" \
+  "mictlantecuhtli" \
+  "deploy"
+
+log_pass "FEV-24 smoke test: /sync, /migrate, /deploy validated"
