@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-08-07
+
+Final release of v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release: v1.2.0.
+
+This release includes all changes from [2.0.0-beta.1](#200-beta1--2026-08-07) plus final integration testing (FEV-23): 1920 tests, 30/30 E2E scenarios, coverage 95.68% overall / 99.12% production `src/`.
+
+### Added (since beta.1)
+
+- **5 new E2E scenarios** (26–30): update blocked pre-1.2.0, update Option B, flat agents destination, non-interactive packs, project install packs.
+- **8 new unit/integration tests**: Option B cancel path, pack-aware project install, clean-install summary passthrough, version-context classification.
+- **33 plugin source tests**: `directoryScanner.ts` and `autoDiscovery.ts` coverage (overall coverage 93.78% → 95.68%).
+
+### Changed (since beta.1)
+
+- **E2E 23 rewritten** as a real Option A pack-scoped merge — the FEV-21 transitional no-op removed; update merge is now functional with the bundled v2.0.0 template.
+- **Version bumped** 1.2.0 → 2.0.0 for final release.
+
+### Fixed (since beta.1)
+
+- **E2E 10**: equal-version "already up to date" short-circuit confirmed as permanent behavior, not transitional workaround.
+- **E2E 04/15/16**: comment-only cleanup.
+
 ## [2.0.0-beta.1] — 2026-08-07
 
 Pre-release for v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release: v1.2.0.
@@ -328,7 +350,8 @@ Pre-release for v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release
 
 - Path traversal prevention; symlink skipping in directory walk; SHA-256 checksums.
 
-[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0-beta.1...HEAD
+[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0-beta.1...v2.0.0
 [2.0.0-beta.1]: https://github.com/fisherk2/codice-opencode/compare/v1.2.0...v2.0.0-beta.1
 [1.2.0]: https://github.com/fisherk2/codice-opencode/compare/v1.1.3...v1.2.0
 [1.1.3]: https://github.com/fisherk2/codice-opencode/compare/v1.1.2...v1.1.3
