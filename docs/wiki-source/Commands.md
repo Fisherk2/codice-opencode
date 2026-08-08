@@ -280,6 +280,22 @@ Invokes quetzalcoatl to analyze problems (remote issues or local bugs), run diag
 
 Invokes quetzalcoatl to create or modify specs for mature projects. Detects project maturity first — if the project is new, redirects to `/spec`. Never writes to tasks/ or implements code.
 
+### `/sync` — Bidirectional Git Sync
+
+Invokes tlaloc to perform bidirectional git sync with intelligent conflict resolution. 4 modes (full-sync, incremental-sync, dry-run, conflict-resolution) and 4 strategies (NEWER_WINS, GITHUB_WINS, LOCAL_WINS, INTELLIGENT_MERGE). Wildcard — can be invoked at any SDD phase. Pre-flight verifies git + remote. Issue #68. [Diagnosis](../diagnosis/fix09-sync-command.md)
+
+### `/migrate` (Optional) — Stack Migration Planning
+
+Invokes quetzalcoatl (optional, like `/design`) to generate a complete technology stack migration plan with impact analysis. Detects current stack from lock files, evaluates breaking changes, and generates `docs/MIGRATION.md` with rollback procedures. SDD position: before `/diagnosis`, `/docs-update`, `/evolve`. Issue #67. [Diagnosis](../diagnosis/fix10-migrate-command.md)
+
+### `/deploy` — Git Workflow and CI/CD Configuration
+
+Invokes mictlantecuhtli to configure and execute git workflow + CI/CD pipelines. SDD position: after `/ship`. 3 modes (no workflow, betterable, established) + analyze-only. Generates branch protection rules, PR templates, pipeline YAML, and updates `CONTRIBUTING.md`. Issue #64. [Diagnosis](../diagnosis/fix11-deploy-command.md)
+
+### `/analyze` — Architectural Analysis
+
+Invokes quetzalcoatl to perform multi-dimensional architectural analysis across 8 dimensions (system structure, design patterns, dependency architecture, data flow, scalability, security, testability, documentation). Generates prioritized `docs/TECH_DEBT.md` with Critical/High/Medium/Low findings. SDD position: after `/migrate`, before `/diagnosis` (findings feed the diagnosis process). Issue #57. [Diagnosis](../diagnosis/fix12-analyze-command.md)
+
 ## Links
 
 - [OpenCode Command Documentation](https://opencode.ai/docs/commands) — Official OpenCode command configuration guide.

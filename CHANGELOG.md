@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-08-07
+
+### Added
+- **4 New Agent-Orchestration Commands:**
+  - `/sync` (FEV-24-A, Issue #68) — Bidirectional git sync with 4 modes
+    (full-sync, incremental-sync, dry-run, conflict-resolution) and 4 conflict
+    resolution strategies (NEWER_WINS, GITHUB_WINS, LOCAL_WINS,
+    INTELLIGENT_MERGE). Agent: `tlaloc`.
+  - `/migrate` (FEV-24-B, Issue #67, **OPTIONAL**) — Technology stack migration
+    planner with impact analysis, breaking change detection, and automatic
+    documentation updates (`MIGRATION.md`, `WORKFLOW.md`, `specs/`). Agent:
+    `quetzalcoatl`.
+  - `/deploy` (FEV-24-C, Issue #64) — Git workflow and CI/CD configuration
+    assistant. 3 modes (no workflow, betterable, established), generates
+    branch protection rules, PR templates, and pipeline YAML. Agent:
+    `mictlantecuhtli`.
+  - `/analyze` (FEV-24-D, Issue #57) — Multi-dimensional architectural
+    analysis (8 dimensions: system structure, design patterns, dependency
+    architecture, data flow, scalability, security, testability, documentation).
+    Generates prioritized `TECH_DEBT.md` with Critical/High/Medium/Low findings.
+    Agent: `quetzalcoatl`.
+- **FEV-24-D Integration:** `/diagnosis` now reads `docs/TECH_DEBT.md` as
+  authoritative input for severity assessment and finding references.
+- **E2E Smoke Test:** New `tests/e2e/31-commands-fe24-smoke.sh` validates
+  frontmatter schema, body structure, and cross-command integration (e.g.,
+  diagnosis → TECH_DEBT).
+
+### Changed
+- **Command count:** 13 → 17 (4 new commands added to `template/obligatorio/core/commands/`)
+
+### Deprecated
+- N/A (no deprecations in v2.1.0)
+
+### Removed
+- N/A (no removals in v2.1.0)
+
+### Fixed
+- N/A (no fixes in v2.1.0)
+
+### Security
+- N/A (no security changes in v2.1.0)
+
 ## [2.0.0] — 2026-08-07
 
 Final release of v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release: v1.2.0.

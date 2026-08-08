@@ -92,10 +92,19 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 | FEV | Objetivo | Issues | Estado |
 |-----|----------|--------|--------|
-| **FEV-24** | Nuevos comandos: `/sync`, `/migrate` (opcional), `/deploy`, `/analyze` | #68, #67, #64, #57 | 🔍 En revisión |
+| **FEV-24** | Nuevos comandos: `/sync`, `/migrate` (opcional), `/deploy`, `/analyze` | #68, #67, #64, #57 | ✅ Completo (2026-08-07) |
 | **FEV-25** | Reglas de delegación en agentes principales | #69 | 🔍 En revisión |
 
 **Diagnósticos:** `docs/diagnosis/fix09` a `fix13`
+
+**FEV-24 sub-fases:**
+- **FEV-24-A /sync** — Bidirectional git sync (tlaloc) | Issue #68 | 1.5-2h
+- **FEV-24-B /migrate** — Stack migration planner (quetzalcoatl, optional) | Issue #67 | 1.5-2h
+- **FEV-24-C /deploy** — Git workflow + CI/CD (mictlantecuhtli) | Issue #64 | 1.5-2h
+- **FEV-24-D /analyze** — Architectural analysis (quetzalcoatl) | Issue #57 | 1.5-2h
+- **FEV-24 Docs** — CHANGELOG v2.1.0 + WORKFLOW + Wiki sync | — | 1h
+
+**FEV-24 métricas:** 4 comandos nuevos, 1 E2E smoke test, 1 command update (diagnosis.md), 3 doc updates
 
 ## 4. Estrategia de Pruebas por Fase
 

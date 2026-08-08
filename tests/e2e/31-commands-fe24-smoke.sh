@@ -10,9 +10,7 @@
 #
 # This test does NOT validate behavior — that's the agent's responsibility.
 #
-# NOTE: Registered in run-e2e.sh TESTS array in the Phase 5 commit (when all
-# 4 commands are validated and the file is finalized). Until then, run it
-# directly via `bash tests/e2e/31-commands-fe24-smoke.sh`.
+# Registered in run-e2e.sh TESTS array (Phase 5 finalization).
 
 set -Eeuo pipefail
 source "$(dirname "$0")/common.sh"
