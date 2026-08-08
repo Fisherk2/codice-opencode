@@ -11,6 +11,14 @@ Detect input type:
 - **Local bug** — user describes symptoms or error messages → use as-is
 - **Vague report** — load `interview-me` skill to extract: symptoms, when it started, expected vs actual behavior.
 
+**Also check for `docs/TECH_DEBT.md` (if it exists):**
+
+If `docs/TECH_DEBT.md` exists, read it and consider its findings as additional context:
+
+- Critical/High findings in TECH_DEBT are likely related to the problem
+- Reference specific TECH_DEBT entries (e.g., TD-001) in the diagnosis document
+- Use TECH_DEBT findings to inform the severity assessment
+
 **Always use the `question` tool to let the user confirm what problem they want to analyze — never decide automatically, even if the issue or symptoms seem clear or trivial.** The user must answer doubts, suggestions, and ambiguities before proceeding.
 
 Output summary:

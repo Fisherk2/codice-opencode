@@ -94,4 +94,23 @@ validate_command \
   "mictlantecuhtli" \
   "deploy"
 
-log_pass "FEV-24 smoke test: /sync, /migrate, /deploy validated"
+# /analyze (FEV-24-D)
+validate_command \
+  "$COMMANDS_DIR/analyze.md" \
+  "quetzalcoatl" \
+  "analyze"
+
+# Verify diagnosis.md integration (FEV-24-D requires TECH_DEBT.md as input)
+if ! grep -q "TECH_DEBT" "$COMMANDS_DIR/diagnosis.md"; then
+  log_fail "diagnosis.md does not reference TECH_DEBT.md (FEV-24-D integration missing)"
+  exit 1
+fi
+log_pass "diagnosis.md references TECH_DEBT.md (FEV-24-D integration verified)"
+
+# Verify all 4 commands are present (Phase 5 finalization check)
+for cmd in sync migrate deploy analyze; do
+  assert_file_exists "$COMMANDS_DIR/${cmd}.md"
+done
+log_pass "All 4 FEV-24 commands exist"
+
+log_pass "FEV-24 smoke test: /sync, /migrate, /deploy, /analyze validated"
