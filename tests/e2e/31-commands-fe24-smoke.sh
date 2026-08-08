@@ -75,6 +75,17 @@ validate_command \
   "tlaloc" \
   "sync"
 
-# Future: /migrate, /deploy, /analyze added in Phases 2, 3, 4
+# /migrate (FEV-24-B) — Optional
+validate_command \
+  "$COMMANDS_DIR/migrate.md" \
+  "quetzalcoatl" \
+  "migration"
 
-log_pass "FEV-24 smoke test: /sync validated"
+# Verify "Optional" marker in body (per fix10 diagnosis)
+if ! grep -qi "optional command" "$COMMANDS_DIR/migrate.md"; then
+  log_fail "/migrate should be marked as Optional command (per fix10 diagnosis)"
+  exit 1
+fi
+log_pass "/migrate marked as Optional command"
+
+log_pass "FEV-24 smoke test: /sync, /migrate validated"
