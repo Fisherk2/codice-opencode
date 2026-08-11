@@ -24,7 +24,7 @@ Pick the next pending @tasks/ from the plan. For each task:
 9. Mark the task complete, then proceed to the next task and repeat steps 3-9 until all tasks are complete.
 10. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
-If agents are stuck or the implementation fails, **Delegate** to `debugger` subagent and follow @skills/debugging-and-error-recovery/SKILL.md to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observality-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
+If agents are stuck or the implementation fails, **Delegate** to `debugger` subagent and follow @skills/debugging-and-error-recovery/SKILL.md to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
 
 ## Suggested Next Step
 

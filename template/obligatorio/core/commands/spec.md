@@ -65,8 +65,7 @@ During documentation drafting, **Load** the following supporting skills as neede
 - `design-patterns` skill when applying GoF or enterprise patterns
 - `api-spec-generation` skill for OpenAPI or AsyncAPI specs
 
-Do **not** touch `specs/design/` or 
-`docs/DESIGN.md` — those belong to `/design`.  workspace documentation is managed separately.
+Do **not** touch `specs/design/` or `docs/DESIGN.md` — those belong to `/design`. Workspace documentation is managed separately.
 
 7. If @AGENTS.md and/or @SPEC.md exceeds **200 lines**, **Load** `agent-md-refactor` skill to modularize into progressive disclosure files in @specs/
 8. **When Specs created — do NOT touch or implement code files.**

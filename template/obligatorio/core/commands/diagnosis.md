@@ -41,7 +41,7 @@ For problems spanning multiple domains, invoke subagents **in parallel** and loa
 
 Use terminal tools to investigate: check logs, inspect config, test components, run diagnostics.
 
-Invoke `question-tool` to ask clarifying questions if needed before proceeding to Phase 2.
+Invoke `question` tool to ask clarifying questions if needed before proceeding to Phase 2.
 
 ## Phase 2: Document
 
@@ -62,7 +62,7 @@ Create diagnosis in `docs/diagnosis/` using @docs/diagnosis/diagnosis-template.m
 - ❌ Do NOT copy full issue content — link to remote issue instead
 - If the diagnosis reveals an existing fix in progress, update the existing diagnosis instead of creating a new one
 
-Invoke `question-tool` to confirm the diagnosis or ask for clarification if needed to make changes before proceeding with plan creation.
+Invoke `question` tool to confirm the diagnosis or ask for clarification if needed to make changes before proceeding with plan creation.
 
 Finally, commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 

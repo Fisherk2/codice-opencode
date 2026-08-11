@@ -38,7 +38,7 @@ Then, analyze the project across 8 dimensions sequentially. For each dimension, 
 
 ### 4. Data Flow
 - **Load:** `observability-and-instrumentation` skill
-- **Delegate:** `platform-engineer` subagent
+- **Delegate:** `platform-engineer` subagent.
 - **Output:** Traceability, state management, persistence strategies
 
 ### 5. Scalability and Performance

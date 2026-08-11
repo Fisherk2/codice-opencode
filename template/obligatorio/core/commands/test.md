@@ -40,7 +40,7 @@ For each confirmed tool:
 
 ## Phase 1: Audit & Analysis
 
-**Delegate** `test-engineer`subagent and scan recent changes to identify missing test coverage.
+**Delegate** `test-engineer` subagent and scan recent changes to identify missing test coverage.
 
 1. Run `git diff` against the integration branch to detect new/modified code.
 2. Cross-reference with existing test files to find gaps.
@@ -88,8 +88,8 @@ After ALL tests changes, run ALL quality checks AGAIN:
 
 **If ANY check fails, revert and reconsider:**
 
-6. Fix any discrepancies found during testing. before proceeding and run test after each change.
-7. If agents are stuck or the testing process fails, **Delegate** to `debugger` subagent and follow @skills/debugging-and-error-recovery/SKILL.md to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observality-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents. If conflict resolution fails mid-way, leave git in a recoverable state.
+6. Fix any discrepancies found during testing before proceeding, and run the test after each change.
+7. If agents are stuck or the testing process fails, **Delegate** to `debugger` subagent and follow @skills/debugging-and-error-recovery/SKILL.md to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
 8. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
 ## Escalation to Incident Response

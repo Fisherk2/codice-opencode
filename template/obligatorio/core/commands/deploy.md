@@ -29,7 +29,7 @@ Use the `question` tool to report findings and ask user whether to:
 
 ## Phase 0: Generate or Improve CI/CD Workflow
 
-1. **Delegate** `build-engineer` and `platform-engineer` subagents in parallel to analize the project:
+1. **Delegate** `build-engineer` and `platform-engineer` subagents in parallel to analyze the project:
 
 - **Project Type**: Language, Framework, Build Systems, Test Frameworks, Deployment Targets.
 - **Existing Config**: `Makefile`/`Justfile`, `package.json`, `Dockerfile`, `docker-compose.yml`, Kubernetes manifests, Terraform/Pulumi configs, Helm charts, etc.
@@ -37,7 +37,7 @@ Use the `question` tool to report findings and ask user whether to:
 
 2. Use `question` tool to let the user choose:
 
-A). Branching strategy (Trunk-based, Local Gitflow, Remote Gitflow, User-defined). If user choose User-defined branching strategy, **Load** `interview-me skill` skill and use `question` tool to clarify their branching strategy.
+A). Branching strategy (Trunk-based, Local Gitflow, Remote Gitflow, User-defined). If the user chooses User-defined branching strategy, **Load** `interview-me` skill and use `question` tool to clarify their branching strategy.
 B). CI/CD platform (GitHub Actions, GitLab CI, CircleCI, Jenkins, etc.)
 C). Pipeline stages (Lint, Test, Build, Deploy, etc. — toggle per stage)
 
@@ -49,7 +49,7 @@ C). Pipeline stages (Lint, Test, Build, Deploy, etc. — toggle per stage)
 - CI Pipeline files configuration.
 - Release Pipeline files configuration.
 - CD Pipeline files configuration.
-- Aditional support script files in @scripts/
+- Additional support script files in @scripts/
 
 **Load** `bash-defensive-patterns` skill if needed to ensure robust deployment scripts.
 

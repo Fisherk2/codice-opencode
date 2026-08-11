@@ -11,7 +11,7 @@ Review the current changes (staged or recent commits) across all five axes:
 2. **Readability** — Clear names? Straightforward logic? Well-organized? **Load** `solid` skill to evaluate SOLID principles and clean code
 3. **Architecture** — Follows existing patterns? Clean boundaries? Right abstraction level? **Load** `design-patterns` skill for architectural decisions and pattern usage
 4. **Security** — Input validated? Secrets safe? Auth checked? **Load** `security-and-hardening` skill
-5. **Performance** — No N+1 queries? No unbounded ops? **Load** `performance-optimization skill
+5. **Performance** — No N+1 queries? No unbounded ops? **Load** `performance-optimization` skill
 
 For frontend changes, also **Load** `design-taste-frontend` skill to review visual consistency and design quality.
 

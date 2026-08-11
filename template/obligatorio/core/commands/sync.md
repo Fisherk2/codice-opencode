@@ -22,7 +22,7 @@ If any check fails, **abort** with actionable error message.
 - **C) `dry-run`** — Preview changes without applying. No mutations.
 - **D) `conflict-resolution`** — Interactive mode. Detect conflicts, ask user strategy.
 
-If the user selects **A** or **B**, Use `question` tool to ask the resolution strategy:
+If the user selects **A** or **B**, use `question` tool to ask the resolution strategy:
 
 - **`NEWER_WINS`** — Latest timestamp wins (file content from newer mtime).
 - **`GITHUB_WINS`** — Remote changes take precedence.
@@ -59,13 +59,13 @@ For mode **conflict-resolution**:
 
 **Always show dry-run output** before applying — even in `full-sync` mode, print what will change.
 
-## Phase 2: Review merge conflicts:
+## Phase 2: Review Merge Conflicts
 
-1. **Delegate** `code-reviewer` subagent to run the full test suite to check for regressions and **Load** `code-review-and-quality` skill to review the result. For UI tasks, also verify **loading** `browser-testing-with-devtools` skill
+1. **Delegate** `code-reviewer` subagent to run the full test suite to check for regressions and **Load** `code-review-and-quality` skill to review the result. For UI tasks, also verify **Load** `browser-testing-with-devtools` skill
 2. Fix any discrepancies found during merge before proceeding and run test after each change.
 3. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
-If agents are stuck or the merge process fails, **Delegate** to `debugger` subagent and follow @skills/debugging-and-error-recovery/SKILL.md to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observality-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents. If conflict resolution fails mid-way, leave git in a recoverable state.
+If agents are stuck or the merge process fails, **Delegate** to `debugger` subagent and follow @skills/debugging-and-error-recovery/SKILL.md to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents. If conflict resolution fails mid-way, leave git in a recoverable state.
 
 **Never `git push --force`** to shared branches. Only force-push to feature branches.
 
