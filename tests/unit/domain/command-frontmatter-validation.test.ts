@@ -23,8 +23,6 @@ import {
 	collectCommandFiles,
 	extractFrontmatter,
 	loadCommandFrontmatter,
-	VALID_AGENTS,
-	VALID_COMMAND_FIELDS,
 	type ValidationError,
 	validateCommandFrontmatter,
 } from "./helpers/commandFrontmatterValidator";
@@ -49,12 +47,6 @@ function assertNoErrors(errors: readonly ValidationError[], label: string): void
 		.map((e) => `  ${e.file}${e.field ? ` [${e.field}]` : ""}: ${e.message}`)
 		.join("\n");
 	throw new Error(`Found ${errors.length} ${label}:\n${summary}`);
-}
-
-/** Fails the test with a formatted summary when raw strings are non-empty. */
-function assertNoRawErrors(errors: readonly string[], label: string): void {
-	if (errors.length === 0) return;
-	throw new Error(`Found ${errors.length} ${label}:\n${errors.join("\n")}`);
 }
 
 describe("Command Frontmatter Validation", () => {
@@ -106,66 +98,95 @@ describe("Command Frontmatter Validation", () => {
 		});
 	});
 
-	describe("Agent field correctness", () => {
-		const agentErrors: string[] = [];
+	describe("Synthetic fixture validation", () => {
+		// Feeds crafted frontmatter directly to validateCommandFrontmatter to
+		// cover branches the real command files never exercise (empty values,
+		// wrong types, unknown agents/fields). The path/templateRoot pair is
+		// arbitrary — relPath is what the error payloads are scoped to.
+		const FIXTURE_PATH = "/fake/commands/spec.md";
+		const FIXTURE_ROOT = "/fake/commands";
 
-		for (const filePath of commandFiles) {
-			const { parsed, error } = loadCommandFrontmatter(filePath);
-			if (error || !parsed?.agent) continue;
-			if (!VALID_AGENTS.has(parsed.agent as string)) {
-				agentErrors.push(`${relative(TEMPLATE_ROOT, filePath)}: agent="${parsed.agent}"`);
-			}
-		}
+		const validate = (frontmatter: Record<string, unknown>): ValidationError[] =>
+			validateCommandFrontmatter(FIXTURE_PATH, frontmatter, FIXTURE_ROOT);
 
-		it("has no unknown agent values across all command files", () => {
-			assertNoRawErrors(agentErrors, "unknown agent values");
+		it("flags a missing description", () => {
+			expect(validate({})).toEqual([
+				{ file: "spec.md", field: "description", message: 'Missing required field "description"' },
+			]);
 		});
-	});
 
-	describe("Optional field types", () => {
-		const typeErrors: string[] = [];
-
-		for (const filePath of commandFiles) {
-			const { parsed, error } = loadCommandFrontmatter(filePath);
-			if (error || !parsed) continue;
-			const relPath = relative(TEMPLATE_ROOT, filePath);
-
-			// model must be string if present
-			if (parsed.model !== undefined && typeof parsed.model !== "string") {
-				typeErrors.push(`${relPath}: model=${typeof parsed.model} (expected string)`);
-			}
-
-			// subtask must be boolean if present
-			if (parsed.subtask !== undefined && typeof parsed.subtask !== "boolean") {
-				typeErrors.push(`${relPath}: subtask=${typeof parsed.subtask} (expected boolean)`);
-			}
-
-			// template must be string if present
-			if (parsed.template !== undefined && typeof parsed.template !== "string") {
-				typeErrors.push(`${relPath}: template=${typeof parsed.template} (expected string)`);
-			}
-		}
-
-		it("has no optional field type errors across all command files", () => {
-			assertNoRawErrors(typeErrors, "optional field type errors");
+		it("flags an empty description", () => {
+			expect(validate({ description: "   " })).toEqual([
+				{ file: "spec.md", field: "description", message: "description must not be empty" },
+			]);
 		});
-	});
 
-	describe("Unknown field detection", () => {
-		const unknownFieldErrors: string[] = [];
+		it("flags a description of the wrong type", () => {
+			expect(validate({ description: 42 })).toEqual([
+				{
+					file: "spec.md",
+					field: "description",
+					message: "description must be a string, got number",
+				},
+			]);
+		});
 
-		for (const filePath of commandFiles) {
-			const { parsed, error } = loadCommandFrontmatter(filePath);
-			if (error || !parsed) continue;
-			for (const key of Object.keys(parsed)) {
-				if (!VALID_COMMAND_FIELDS.has(key)) {
-					unknownFieldErrors.push(`${relative(TEMPLATE_ROOT, filePath)}: "${key}"`);
-				}
-			}
-		}
+		it("flags an unknown agent", () => {
+			expect(validate({ description: "Valid", agent: "thor" })).toEqual([
+				{
+					file: "spec.md",
+					field: "agent",
+					message:
+						'Unknown agent "thor". Known agents: huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli, moctezuma, tezcatlipoca',
+				},
+			]);
+		});
 
-		it("has no unknown frontmatter fields across all command files", () => {
-			assertNoRawErrors(unknownFieldErrors, "unknown fields");
+		it("flags an empty model string", () => {
+			expect(validate({ description: "Valid", model: "  " })).toEqual([
+				{ file: "spec.md", field: "model", message: "model must not be empty" },
+			]);
+		});
+
+		it("flags a model of the wrong type", () => {
+			expect(validate({ description: "Valid", model: 42 })).toEqual([
+				{ file: "spec.md", field: "model", message: "model must be a string, got number" },
+			]);
+		});
+
+		it("flags a subtask of the wrong type", () => {
+			expect(validate({ description: "Valid", subtask: "yes" })).toEqual([
+				{ file: "spec.md", field: "subtask", message: "subtask must be a boolean, got string" },
+			]);
+		});
+
+		it("flags a template of the wrong type", () => {
+			expect(validate({ description: "Valid", template: 42 })).toEqual([
+				{ file: "spec.md", field: "template", message: "template must be a string, got number" },
+			]);
+		});
+
+		it("flags an unknown top-level field", () => {
+			expect(validate({ description: "Valid", phase: "define" })).toEqual([
+				{
+					file: "spec.md",
+					field: "phase",
+					message:
+						'Unknown frontmatter field "phase". Valid fields: description, agent, model, subtask, template',
+				},
+			]);
+		});
+
+		it("returns no errors for a fully valid frontmatter", () => {
+			expect(
+				validate({
+					description: "Valid",
+					agent: "tlaloc",
+					model: "gpt-4o",
+					subtask: true,
+					template: "prompt",
+				}),
+			).toEqual([]);
 		});
 	});
 

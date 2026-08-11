@@ -86,91 +86,62 @@ export function validateCommandFrontmatter(
 	const errors: ValidationError[] = [];
 	const relPath = relative(templateRoot, filePath);
 
+	/** Appends a validation error scoped to the current file. */
+	const err = (field: string | undefined, message: string): void => {
+		errors.push({ file: relPath, field, message });
+	};
+
 	// 1. Check for unknown top-level fields
 	for (const key of Object.keys(frontmatter)) {
 		if (!VALID_COMMAND_FIELDS.has(key)) {
-			errors.push({
-				file: relPath,
-				field: key,
-				message: `Unknown frontmatter field "${key}". Valid fields: ${[...VALID_COMMAND_FIELDS].join(", ")}`,
-			});
+			err(
+				key,
+				`Unknown frontmatter field "${key}". Valid fields: ${[...VALID_COMMAND_FIELDS].join(", ")}`,
+			);
 		}
 	}
 
 	// 2. Validate description (required)
 	if (frontmatter.description === undefined) {
-		errors.push({
-			file: relPath,
-			field: "description",
-			message: 'Missing required field "description"',
-		});
+		err("description", 'Missing required field "description"');
 	} else if (typeof frontmatter.description !== "string") {
-		errors.push({
-			file: relPath,
-			field: "description",
-			message: `description must be a string, got ${typeof frontmatter.description}`,
-		});
-	} else if ((frontmatter.description as string).trim().length === 0) {
-		errors.push({
-			file: relPath,
-			field: "description",
-			message: "description must not be empty",
-		});
+		err("description", `description must be a string, got ${typeof frontmatter.description}`);
+	} else if (frontmatter.description.trim().length === 0) {
+		err("description", "description must not be empty");
 	}
 
 	// 3. Validate agent (optional, but if present must be a known agent)
 	if (frontmatter.agent !== undefined) {
 		if (typeof frontmatter.agent !== "string") {
-			errors.push({
-				file: relPath,
-				field: "agent",
-				message: `agent must be a string, got ${typeof frontmatter.agent}`,
-			});
-		} else if (!VALID_AGENTS.has(frontmatter.agent as string)) {
-			errors.push({
-				file: relPath,
-				field: "agent",
-				message: `Unknown agent "${frontmatter.agent}". Known agents: ${[...VALID_AGENTS].join(", ")}`,
-			});
+			err("agent", `agent must be a string, got ${typeof frontmatter.agent}`);
+		} else if (!VALID_AGENTS.has(frontmatter.agent)) {
+			err(
+				"agent",
+				`Unknown agent "${frontmatter.agent}". Known agents: ${[...VALID_AGENTS].join(", ")}`,
+			);
 		}
 	}
 
 	// 4. Validate model (optional, string if present)
 	if (frontmatter.model !== undefined) {
 		if (typeof frontmatter.model !== "string") {
-			errors.push({
-				file: relPath,
-				field: "model",
-				message: `model must be a string, got ${typeof frontmatter.model}`,
-			});
-		} else if ((frontmatter.model as string).trim().length === 0) {
-			errors.push({
-				file: relPath,
-				field: "model",
-				message: "model must not be empty",
-			});
+			err("model", `model must be a string, got ${typeof frontmatter.model}`);
+		} else if (frontmatter.model.trim().length === 0) {
+			err("model", "model must not be empty");
 		}
 	}
 
 	// 5. Validate subtask (optional, boolean if present)
 	if (frontmatter.subtask !== undefined) {
 		if (typeof frontmatter.subtask !== "boolean") {
-			errors.push({
-				file: relPath,
-				field: "subtask",
-				message: `subtask must be a boolean, got ${typeof frontmatter.subtask}`,
-			});
+			err("subtask", `subtask must be a boolean, got ${typeof frontmatter.subtask}`);
 		}
 	}
 
 	// 6. Validate template (optional, string if present — markdown body is used instead)
 	if (frontmatter.template !== undefined) {
 		if (typeof frontmatter.template !== "string") {
-			errors.push({
-				file: relPath,
-				field: "template",
-				message: `template must be a string, got ${typeof frontmatter.template}`,
-			});
+			err("template", `template must be a string, got ${typeof frontmatter.template}`);
 		}
 	}
 
