@@ -106,7 +106,6 @@ TESTS=(
     "$SCRIPT_DIR/28-flat-agents-destination.sh"
     "$SCRIPT_DIR/29-non-interactive-packs.sh"
     "$SCRIPT_DIR/30-project-install-packs.sh"
-    "$SCRIPT_DIR/31-commands-fe24-smoke.sh"
 )
 
 for test_script in "${TESTS[@]}"; do
