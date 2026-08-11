@@ -1,11 +1,9 @@
 ---
-description: Run the pre-launch checklist via parallel fan-out to specialist personas, then synthesize a go/no-go decision
+description: Run the pre-launch checklist.
 agent: mictlantecuhtli
 ---
 
 Invoke @skills/shipping-and-launch/SKILL.md.
-
-`/ship` is a **fan-out orchestrator**. It runs specialist personas in parallel against the current change, then merges their reports into a single go/no-go decision with a rollback plan. The personas operate independently — no shared state, no ordering — which is what makes parallel execution safe and useful here.
 
 ## Phase 0 — Pre-flight: Detect project type
 
@@ -22,13 +20,11 @@ Before spawning subagents, detect whether the project has UI components. Check f
 - **If UI files exist** → spawn all 5 subagents (including `accessibility-tester`)
 - **If NO UI files** → spawn only 4 subagents (skip `accessibility-tester`)
 
-This avoids wasting tokens on accessibility audits for CLI tools, APIs, libraries, and other non-UI projects.
-
 ## Phase A — Parallel fan-out
 
-Spawn subagents concurrently using the Agent tool. **Issue all Agent tool calls in a single assistant turn so they execute in parallel** — sequential calls defeat the purpose of this command.
+The personas operate independently — no shared state, no ordering — which is what makes parallel execution safe and useful here.
 
-In OpenCode, each call passes `subagent_type` matching the persona's `name` field:
+Spawn subagents concurrently using the Agent tool. **Issue all Agent tool calls in a single assistant turn so they execute in parallel** — sequential calls defeat the purpose of this command:
 
 1. **`code-reviewer`** — Run a five-axis review (correctness, readability, architecture, security, performance) on the staged changes or recent commits. Output the standard review template.
 2. **`security-auditor`** — Run a vulnerability and threat-model pass. Check OWASP Top 10, secrets handling, auth/authz. Output the standard audit report.
@@ -36,13 +32,7 @@ In OpenCode, each call passes `subagent_type` matching the persona's `name` fiel
 4. **`dependency-manager`** — Audit dependencies for CVEs, outdated packages, license issues, and unused deps. Output a prioritized remediation list.
 5. **`accessibility-tester`** *(only if UI detected in Phase 0)* — Audit UI components for WCAG 2.1 AA/AAA compliance, keyboard navigation, screen reader support, and inclusive design. Output the standard accessibility report.
 
-In other harnesses without an Agent tool, invoke each persona's system prompt sequentially and treat their outputs as if returned in parallel — the merge phase still works.
-
-Constraints (from OpenCode's subagent model):
-- Subagents cannot spawn other subagents — do not let one persona delegate to another.
-- Each subagent gets its own context window and returns only its report to this main session.
-
-**Persona resolution.** If you've defined your own `code-reviewer`, `security-auditor`, `test-engineer`, `dependency-manager`, or `accessibility-tester` in `.opencode/agents/` or `~/.opencode/agents/`, those take precedence over this plugin's versions — `/ship` picks up your customizations automatically. This is intentional: plugin subagents sit at the bottom of Open Code's scope priority table, so user-level definitions win by design.
+In other harnesses without an Agent tool, invoke each persona's system prompt sequentially and treat their outputs as if returned in parallel — the merge phase still works. Each subagent gets its own context window and returns only its report to this main session.
 
 ## Phase B — Merge in main context
 
@@ -85,7 +75,7 @@ Produce a single output for user review:
 - [accessibility-tester report] *(if UI detected)*
 ```
 
-*If you find any Blockers/Recommended fixes:* resolve each one at a time via @skills/incremental-implementation/SKILL.md (implement→test→verify→commit), confirm all tests pass, then atomic-commit with descriptive messages per @skills/git-workflow-and-versioning/SKILL.md.
+**Pre-launch checklist is done — do NOT touch or implement code files.**
 
 ## Rules
 
@@ -95,8 +85,7 @@ Produce a single output for user review:
 4. If any persona returns a Critical finding, the default verdict is NO-GO unless the user explicitly accepts the risk.
 5. **Skip the fan-out only if all of the following are true:** the change touches 2 files or fewer, the diff is under 50 lines, and it does not touch auth, payments, data access, or config/env. Otherwise, default to fan-out. `/ship` is designed for production-bound changes — when the blast radius is non-trivial, run the parallel review even if the diff looks small.
 6. **Skip `accessibility-tester`** if Phase 0 detects no UI files. Do not spawn accessibility checks for CLI tools, APIs, libraries, or other non-UI projects.
-7. After launch, if an incident occurs, follow @skills/incident-response/SKILL.md for triage, communication, and blameless postmortems.
 
 ## Suggested Next Step
 
-> Ship evaluation complete. Run `/docs-update`, `/diagnosis`, or `/evolve` for maintenance. If you are not ready to launch, run `/ship` again when ready.
+> Ship evaluation complete. Switch to agent `tlaloc` to fix the observations, if you are not ready to launch, run `/ship` again when ready. Run `/deploy` to ship the change to production.
