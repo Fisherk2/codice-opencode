@@ -1,6 +1,8 @@
 # FEV-25 Todo List — Reglas de Delegación en Agentes Principales
 
-**Phase:** FEV-25 (v2.1.0) — 📋 Listo para implementar
+> **✅ COMPLETO** (2026-08-11). 4 commits atómicos + verificación final. Ver `docs/WORKFLOW.md` para estado actual.
+
+**Phase:** FEV-25 (v2.1.0) — ✅ Completo
 **Issue:** [#69](https://github.com/Fisherk2/codice-opencode/issues/69)
 **Diagnóstico:** [`docs/diagnosis/fix13-agent-delegation-rules.md`](../docs/diagnosis/fix13-agent-delegation-rules.md)
 **Full plan:** [plan.md](./plan.md)
@@ -8,6 +10,7 @@
 **Author:** Moctezuma (Strategic Planner)
 **Branch:** `feature/new-commands`
 **Total effort:** ~3-4.5h · 4 commits atómicos + 1 verificación sin commit
+**Commits:** `2b5cf02` (spec) · `20f7733` (4 delegantes) · `a96ba82` (2 no-delegantes) · `213f10b` (docs)
 
 ---
 
@@ -148,45 +151,45 @@ docs/wiki-source/Agents.md                             ← Fase 4
 
 ## Fase 5 — Verificación (~0.5h) · Sin commit
 
-- [ ] **T5.1** `bun test` → **2048 tests, 0 fail** (mismo número que el baseline: no se añadieron tests)
-- [ ] **T5.2** `just check` → 0 errores (biome ci + tsc --noEmit)
-- [ ] **T5.3** `bash tests/e2e/01-clean-install.sh` → exit 0 · `just test-e2e` → 30/30
-- [ ] **T5.4** `npm pack --dry-run` → los 6 agentes presentes, sin regresión de tamaño
-- [ ] **T5.5** Conteo final de líneas de los 6 agentes anotado abajo
-- [ ] **T5.6** Carga manual en el harness de OpenCode: la sección nueva aparece en el system prompt
+- [x] **T5.1** `just test` → **2048 tests, 0 fail** (mismo número que el baseline: no se añadieron tests)
+- [x] **T5.2** `just check` → 0 errores (biome ci + tsc --noEmit)
+- [x] **T5.3** `bash tests/e2e/01-clean-install.sh` → exit 0 · `just test-e2e` → 30/30
+- [x] **T5.4** `npm pack --dry-run` → los 6 agentes presentes (818 archivos), sin regresión de tamaño
+- [x] **T5.5** Conteo final de líneas de los 6 agentes anotado abajo
+- [x] **T5.6** Carga manual en el harness de OpenCode: la sección nueva aparece en el system prompt (sección visible entre RULES y KNOWLEDGE en cada agente)
 
-### Conteo final de líneas (rellenar en T5.5)
+### Conteo final de líneas (T5.5)
 
 | Agente | Body (≤100) | Total (≤150) | ✓ |
 |--------|------------:|-------------:|:-:|
-| `huitzilopochtli` | | | |
-| `quetzalcoatl` | | | |
-| `tlaloc` | | | |
-| `mictlantecuhtli` | | | |
-| `moctezuma` | | | |
-| `tezcatlipoca` | | | |
+| `huitzilopochtli` | 63 | 97 | ✅ |
+| `quetzalcoatl` | 62 | 104 | ✅ |
+| `tlaloc` | 61 | 84 | ✅ |
+| `mictlantecuhtli` | 62 | 85 | ✅ |
+| `moctezuma` | 51 | 86 | ✅ |
+| `tezcatlipoca` | 54 | 83 | ✅ |
 
 Comando: `for f in template/obligatorio/packs/main/*.md; do echo "$f $(awk 'f{n++} /^---$/{c++; if(c==2) f=1} END{print n}' "$f") $(wc -l < "$f")"; done`
 
 ### ✅ Checkpoint CP5 — FEV-25 Completo
 
-- [ ] Los 5 criterios del DoD de `fix13` cumplidos
-- [ ] `bun test` 2048/0 · `just check` 0 · E2E 30/30
-- [ ] 4 commits atómicos en `feature/new-commands`
-- [ ] Issue #69 listo para cerrar
+- [x] Los 5 criterios del DoD de `fix13` cumplidos
+- [x] `bun test` 2048/0 · `just check` 0 · E2E 30/30
+- [x] 4 commits atómicos en `feature/new-commands`
+- [x] Issue #69 listo para cerrar
 
 ---
 
 ## Definition of Done
 
-- [ ] `specs/spec-agent-format-v2.md` documenta el protocolo de delegación (§8)
-- [ ] 4 agentes delegantes con `## DELEGATION PROTOCOL` (contexto + skills + checklist)
-- [ ] 2 agentes no delegantes con `## SKILL ANALYSIS PROTOCOL`
-- [ ] Protocolo de análisis previo presente en los **6** agentes
-- [ ] Priorización de skills documentada (descubrimiento dinámico de `skills/`)
-- [ ] Límite <100 líneas de body respetado en los 6
-- [ ] `bun test` 2048/0 · `just check` 0 · E2E 30/30
-- [ ] CHANGELOG + WORKFLOW + wiki sincronizados
+- [x] `specs/spec-agent-format-v2.md` documenta el protocolo de delegación (§8)
+- [x] 4 agentes delegantes con `## DELEGATION PROTOCOL` (contexto + skills + checklist)
+- [x] 2 agentes no delegantes con `## SKILL ANALYSIS PROTOCOL`
+- [x] Protocolo de análisis previo presente en los **6** agentes
+- [x] Priorización de skills documentada (descubrimiento dinámico de `skills/`)
+- [x] Límite <100 líneas de body respetado en los 6 (máx. 63/100)
+- [x] `bun test` 2048/0 · `just check` 0 · E2E 30/30
+- [x] CHANGELOG + WORKFLOW + wiki sincronizados
 
 ---
 
