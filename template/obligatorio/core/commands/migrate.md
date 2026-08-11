@@ -1,127 +1,83 @@
 ---
-description: Generate a complete technology stack migration plan with impact analysis, breaking changes, and documentation updates
+description: Generate a complete technology stack migration plan.
 agent: quetzalcoatl
 ---
 
-**Optional command** — Only run when the user needs to migrate technologies (frameworks, libraries, databases, architectures). Similar to `/design` which only runs for UI/UX work.
-
-**SDD Flow Position:** Before `/diagnosis`, `/docs-update`, and `/evolve` (migration may require new specs and documentation updates).
-
 ## Pre-Flight: Detect Stack
+
+**Delegate** `codebase-onboarding-engineer` subagent to understand the project's structure:
 
 1. Identify project root (where `package.json`, `requirements.txt`, `Gemfile`, `go.mod`, `Cargo.toml`, or similar lives).
 2. Read lock files (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `Cargo.lock`, etc.) to detect current versions.
 3. Read config files (`tsconfig.json`, `vite.config.ts`, `next.config.js`, `webpack.config.js`, etc.).
-4. Use the `question` tool to ask the user: **"What technology do you want to migrate?"** with options:
+
+## Phase 0: Refine Migration Scope
+
+Use the `question` tool to clarify interactively:
    - **A) Framework** (e.g., Next.js 14 → 15, React 18 → 19)
    - **B) Language** (e.g., JavaScript → TypeScript, Python 2 → 3)
    - **C) Database** (e.g., PostgreSQL 14 → 16, MongoDB 5 → 6)
    - **D) Architecture** (e.g., monolith → microservices, REST → GraphQL)
    - **E) Other** (specify)
 
+If the user's request is vague or missing key details about the migration, **Load** the `interview-me` skill to extract intent before proceeding.
+
+If the user has a rough idea but needs to explore alternatives or variations, **Load** `idea-refine` skill to generate and evaluate options.
+
+**Always use the `question` tool to let the user confirm what they want to migrate and why — never decide automatically, even if the migration proposal or user histories seem clear or trivial.** The user must answer doubts, suggestions, and ambiguities before proceeding.
+
 ## Phase 1: Impact Analysis
 
-For the selected migration, evaluate:
+For the selected migration target, perform the following analysis in parallel:
 
 ### Breaking Changes
+**Delegate** `error-coordinator` subagent to identify:
 - Major version bumps in dependencies
 - API deprecations and removals
 - Configuration format changes
 - Runtime requirements (Node version, OS support)
 
 ### Dependency Analysis
-- Use `@skills/dependency-audit/SKILL.md` to identify affected dependencies
+**Delegate** `dependency-manager` subagent:
+- **Load** @skills/dependency-audit/SKILL.md to identify affected dependencies
 - Check for transitive dependency conflicts
 - Identify unmaintained packages
 
 ### Code Surface
+**Delegate** `legacy-modernizer` subagent to check:
 - Files affected (search for deprecated API usages)
 - Tests covering the affected code
 - Documentation references
 
-Use `interview-me` skill to ask the user for clarification if multiple migration paths exist.
+**Load** `interview-me` skill to use `question` tool to ask the user for clarification if multiple migration paths exist.
 
 ## Phase 2: Generate Migration Plan
 
-Create `docs/MIGRATION.md` (or update if exists) with:
+1. **Load** @skills/deprecation-and-migration/SKILL.md (and/or `db-migration` skill), then create @docs/MIGRATION.md (or update if exists) with:
 
-```markdown
-# Migration Plan: [FROM] → [TO]
+- Overview (date, scope, estimated effort, risk level)
+- Pre-migration checklist
+- Step-by-step migration procedure in phases
+- Rollback instructions
+- Expected impact analysis results
+- Timeline with milestones
+- Resources (documentation, tools, contacts)
 
-## Overview
-- **Date:** YYYY-MM-DD
-- **Scope:** [framework | language | database | architecture]
-- **Estimated effort:** Xh
-- **Risk level:** [low | medium | high]
+**Delegate** appropriate subagents to generate content for each section.
 
-## Pre-Migration Checklist
-- [ ] Backup current state
-- [ ] Document current behavior
-- [ ] Identify rollback procedure
-
-## Phase 1: Preparation
-1. Update [package.json | requirements.txt | etc.] to new version
-2. Run [test command] to identify failures
-3. Document baseline metrics
-
-## Phase 2: Code Updates
-- [Specific code changes with file paths]
-- [Migration codemods if available]
-- [Manual interventions required]
-
-## Phase 3: Testing
-- [Run full test suite]
-- [Visual regression tests if UI changes]
-- [Performance benchmarks]
-
-## Phase 4: Documentation
-- [Update README]
-- [Update CHANGELOG]
-- [Update SPEC.md if architecture changes]
-- [Update WORKFLOW.md if process changes]
-
-## Phase 5: Deployment
-- [Staging deployment]
-- [Production deployment with feature flag]
-- [Monitoring and rollback triggers]
-
-## Rollback Procedure
-- [Exact steps to revert]
-- [Data migration reversal if applicable]
-- [Communication plan]
-
-## Success Criteria
-- [ ] All tests pass
-- [ ] Performance within X% of baseline
-- [ ] No new bugs filed in first 7 days
-```
-
-## Phase 3: Update Affected Documentation
-
-If migration changes architecture or process:
+2. If migration changes architecture or process:
 
 - `docs/WORKFLOW.md` — Update workflow phases if process changes
 - `docs/SPEC.md` — Update spec if requirements change
+- `docs/ARCHITECTURE.md` — Update architecture diagram if structure changes
 - `specs/` — Update affected modular specs
 - `README.md` — Update installation/usage instructions if user-facing
+- `docs/` in general — Update any other affected documentation
 
-## Rules
-
-1. **Always include rollback procedure** — every migration must be reversible.
-2. **Never skip impact analysis** — even for "minor" version bumps, breaking changes can hide.
-3. **Atomic commits per phase** — don't bundle migration phases into a single commit.
-4. **Preserve git history** — use `git mv` for renames, never delete + create.
-5. **Test before and after** — capture baseline metrics.
-6. **Document as you go** — update MIGRATION.md in the same commit as the code change.
-
-## Skills Used
-
-- `@skills/dependency-audit/SKILL.md` — for analyzing dependency impact
-- `@skills/interview-me/SKILL.md` — for clarifying migration scope
-- `@skills/deprecation-and-migration/SKILL.md` — for planning the migration
-- `@skills/test-driven-development/SKILL.md` — for writing tests for the new stack
-- `@skills/changelog-generate/SKILL.md` — for documenting changes
+3. **Migrate plan done — do NOT touch or implement code files.**
+4. Use the `question` tool to confirm with the user before proceeding.
+5. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
 ## Suggested Next Step
 
-> Migration plan generated. Run `/build` to execute Phase 1 (preparation), then `/test` to verify, then commit each phase atomically.
+> Migration plan generated. Run `/plan` to create an implementation plan for the migration.

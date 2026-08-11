@@ -1,132 +1,59 @@
 ---
-description: Configure and execute git workflow + CI/CD pipelines. Detects project type, proposes workflow, and generates modular configurations
+description: Execute git workflow + CI/CD pipelines.
 agent: mictlantecuhtli
 ---
 
-**SDD Flow Position:** After `/ship` (ship reviews before launch, deploy launches to production).
-
 ## Pre-Flight: Detect Existing Workflow
 
-1. Check for `CONTRIBUTING.md` in project root.
-2. Check for `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `.travis.yml`, or other CI config directories.
-3. Check for branch protection rules (via `gh` CLI if available, GitHub only).
-4. Check for existing PR templates in `.github/PULL_REQUEST_TEMPLATE.md`.
+**Delegate** `deployment-engineer` subagent to detect the project's CI/CD infrastructure:
 
-Use the `question` tool to ask the user: **"What is the current state of your CI/CD setup?"** with options:
-- **A) No workflow configured** — generate from scratch
-- **B) Basic workflow, needs improvements** — analyze and optimize
-- **C) Established workflow** — execute the documented workflow
-- **D) Just analyze** — generate report without making changes
+1. **Contributing Guidelines** - Check for @CONTRIBUTING.md in project root.
+2. **Configuration Files** - Check for `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `.travis.yml`, or other CI config directories.
+3. **Branch Protection** - Check for branch protection rules (via CLI if available).
+4. **PR/Issue conventions** - Check for existing PR/issue templates in CI config directories.
 
-## Phase 1: Project Analysis (if A, B, or D)
+Output summary:
 
-Detect project characteristics:
-
-### Project Type
-- **Language:** JavaScript/TypeScript, Python, Rust, Go, Java, Ruby, etc.
-- **Framework:** Next.js, Express, Django, Spring Boot, etc.
-- **Build system:** npm, yarn, pnpm, cargo, maven, gradle, etc.
-- **Test framework:** Jest, pytest, cargo test, etc.
-- **Deployment target:** Vercel, Netlify, AWS, GCP, Azure, self-hosted, etc.
-
-### Existing Config
-- `package.json` scripts
-- Docker / docker-compose files
-- Kubernetes manifests
-- Terraform / Pulumi configs
-- Helm charts
-
-**If the user selected D (Just analyze):** stop after this phase, generate an analysis
-report (current workflow state, detected gaps, recommended improvements) and exit
-**without writing any files or running any commands** that mutate the project.
-
-## Phase 2: Propose Workflow (if A or B)
-
-For a new project, propose improvements over the existing basic workflow:
-
-### Branching Strategy
-- **Trunk-based** — single `main` branch, short-lived feature branches, deploy from main
-- **Gitflow** — `main` + `develop` branches, release branches, hotfix branches
-- **GitHub Flow** — `main` + feature branches via PRs
-
-### CI/CD Platform
-- **GitHub Actions** — if repo is on GitHub
-- **GitLab CI** — if repo is on GitLab
-- **CircleCI / Travis CI** — for cross-platform CI
-- **Jenkins** — for self-hosted enterprise
-
-### Pipeline Stages
-1. **Lint** — ESLint, Prettier, Biome, etc.
-2. **Test** — unit, integration, e2e
-3. **Build** — production bundle
-4. **Deploy** — staging → production (with approval gates)
-
-Use `question` tool to let the user choose:
-1. Branching strategy
-2. CI/CD platform
-3. Pipeline stages (toggle per stage)
-
-## Phase 3: Generate Configurations (if A or B)
-
-Create modular files:
-
-### Branch Protection Rules (if GitHub)
-```bash
-gh api repos/:owner/:repo/branches/main/protection -X PUT --input branch-protection.json
+```
+PROJECT CI/CD STATE:
+- CONTRIBUTING: [exists at <path> / missing / can be improved]
+- Configuration files: [exists at <path> / missing / can be improved]
+- Branch Protection: [exists at <path> / missing / can be improved]
+- PR/Issue Conventions: [exists at <path> / missing / can be improved]
 ```
 
-Or document manual steps in CONTRIBUTING.md.
+Use the `question` tool to report findings and ask user whether to:
 
-### PR Template
-`.github/PULL_REQUEST_TEMPLATE.md`:
-```markdown
-## Summary
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Breaking change
-- [ ] Documentation
+- **A) Generate, Upgrade or improve an existing CI/CD workflow** - Proceed with phase 0 to generate a new CI/CD workflow or improve an existing one, then proceed to phase 1.
+- **B) Execute the current workflow** - Run the current git workflow only with phase 1 and report results.
 
-## Changes
-- [Describe changes]
+## Phase 0: Generate or Improve CI/CD Workflow
 
-## Testing
-- [ ] Unit tests pass
-- [ ] Integration tests pass
-- [ ] Manual testing completed
+1. **Delegate** `build-engineer` and `platform-engineer` subagents in parallel to analize the project:
 
-## Checklist
-- [ ] Code follows style guide
-- [ ] Self-reviewed
-- [ ] Comments added for complex logic
-- [ ] Documentation updated
-```
+- **Project Type**: Language, Framework, Build Systems, Test Frameworks, Deployment Targets.
+- **Existing Config**: `Makefile`/`Justfile`, `package.json`, `Dockerfile`, `docker-compose.yml`, Kubernetes manifests, Terraform/Pulumi configs, Helm charts, etc.
+- **Guardrails**: Typechecking, Linting, Formatting, Testing, Security Audits, Code Coverage, etc.
 
-### CI Pipeline (GitHub Actions example)
-`.github/workflows/ci.yml`:
-```yaml
-name: CI
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      # GitHub-hosted runners do not ship Bun; install it explicitly.
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
-      - run: bun test
-      - run: bun run lint
-```
+2. Use `question` tool to let the user choose:
 
-### Deployment Strategy
-- **Blue-green** — zero-downtime via parallel environments
-- **Canary** — gradual rollout to subset of users
-- **Rolling** — sequential instance replacement
-- **Feature flag** — deploy hidden, enable via flag
+A). Branching strategy (Trunk-based, Local Gitflow, Remote Gitflow, User-defined). If user choose User-defined branching strategy, **Load** `interview-me skill` skill and use `question` tool to clarify their branching strategy.
+B). CI/CD platform (GitHub Actions, GitLab CI, CircleCI, Jenkins, etc.)
+C). Pipeline stages (Lint, Test, Build, Deploy, etc. — toggle per stage)
 
-## Phase 4: Update Documentation (if A or B)
+3. **Load** @skills/ci-cd-and-automation/SKILL.md and **Delegate** `devops-engineer` subagent to generate or improve the following files:
 
-Update or create `CONTRIBUTING.md` with:
+- Branch Protection Rules
+- PR Template file in CI/CD config directory.
+- Issue Template file in CI/CD config directory.
+- CI Pipeline files configuration.
+- Release Pipeline files configuration.
+- CD Pipeline files configuration.
+- Aditional support script files in @scripts/
+
+**Load** `bash-defensive-patterns` skill if needed to ensure robust deployment scripts.
+
+4. Update or create @CONTRIBUTING.md with:
 
 - Branching strategy
 - Commit message conventions
@@ -135,34 +62,20 @@ Update or create `CONTRIBUTING.md` with:
 - Deployment procedure
 - Rollback procedure
 
-## Phase 5: Execute Deployment (if C)
+## Phase 1: Execute Deployment
 
-For established workflow:
+For established workflow, **Load** @skills/git-workflow-and-versioning/SKILL.md and **Delegate** `git-workflow-master` subagent to execute deployment with these steps:
 
 1. Verify all tests pass on the latest commit
 2. Verify the deployment target is reachable
-3. Run the documented deployment commands
-4. Monitor for errors during deployment
+3. Run the @CONTRIBUTING.md documented deployment procedure.
+4. **Delegate** `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues during deployment.
 5. Confirm health checks pass
 6. Report deployment status
 
-## Rules
-
-1. **Never auto-push to `main`** — always require explicit user approval.
-2. **Test deployment in staging first** — unless the user explicitly requests direct-to-prod.
-3. **Document every config change** — commit message should explain why.
-4. **Modular configurations** — split large pipelines into reusable workflows.
-5. **Secrets via CI/CD platform** — never commit secrets to git.
-6. **Rollback procedure mandatory** — every deployment must have a documented rollback.
-
-## Skills Used
-
-- `@skills/ci-cd-and-automation/SKILL.md` — for pipeline design
-- `@skills/git-workflow-and-versioning/SKILL.md` — for branching strategy
-- `@skills/bash-defensive-patterns/SKILL.md` — for robust deployment scripts
-- `@skills/observability-and-instrumentation/SKILL.md` — for deployment monitoring
-- `@skills/interview-me/SKILL.md` — for asking about CI/CD preferences
+If agents are stuck or the deployment fails, **Delegate** to `incident-responder` subagent and follow @skills/observability-and-instrumentation/SKILL.md to monitor errors and fix issues. 
+If the incident responder can't resolve the issue, **Delegate** to `incident-response-commander` subagent and follow @skills/incident-response/SKILL.md for triage, communication, and blameless postmortems.
 
 ## Suggested Next Step
 
-> Deployment configured. Run `/ship` to review before launch, then run `/deploy` again with mode C to execute. If issues arise, run `/diagnosis` to triage.
+> Deployment finished. If issues arise, run `/diagnosis` to triage, then `/plan` to create implementation plans for the fixes.
