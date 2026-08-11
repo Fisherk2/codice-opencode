@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-07 (v2.1.0 FEV-24/25 en revisión) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-11 (FEV-24 completo, FEV-25 listo para planificar) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -16,7 +16,8 @@
 | F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
 | F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth, TECH_DEBT.md | ✅ Completo |
 | FEV-1 a FEV-23 | Ver sección 3 | Issues críticos, SDD refactor, CI/CD, docs, agent packs, installer UX | ✅ Completo |
-| FEV-24 a FEV-25 | Ver sección 3 | Nuevos comandos v2.1, reglas delegación agentes | 🔍 En revisión |
+| FEV-24 | Nuevos comandos v2.1: `/sync`, `/migrate`, `/deploy`, `/analyze` + SDD plugin refactor | #68, #67, #64, #57 | ✅ Completo (2026-08-11) |
+| FEV-25 | Reglas de delegación en agentes principales | #69 | 📋 Listo para planificar |
 
 ## 2. Fases Iniciales (F0 – F6.5)
 
@@ -88,23 +89,26 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 **Métricas v2.0.0:** ~41h implementación, ~9h overhead (code reviews, wiki sync, release)
 
-### v2.1.0 (FEV-24 a FEV-25) En Revisión
+### v2.1.0 (FEV-24 completo · FEV-25 listo para planificar)
 
 | FEV | Objetivo | Issues | Estado |
 |-----|----------|--------|--------|
 | **FEV-24** | Nuevos comandos: `/sync`, `/migrate` (opcional), `/deploy`, `/analyze` | #68, #67, #64, #57 | ✅ Completo (2026-08-07) |
-| **FEV-25** | Reglas de delegación en agentes principales | #69 | 🔍 En revisión |
+| **FEV-25** | Reglas de delegación en agentes principales | #69 | 📋 Listo para planificar |
 
 **Diagnósticos:** `docs/diagnosis/fix09` a `fix13`
 
 **FEV-24 sub-fases:**
-- **FEV-24-A /sync** — Bidirectional git sync (tlaloc) | Issue #68 | 1.5-2h
-- **FEV-24-B /migrate** — Stack migration planner (quetzalcoatl, optional) | Issue #67 | 1.5-2h
-- **FEV-24-C /deploy** — Git workflow + CI/CD (mictlantecuhtli) | Issue #64 | 1.5-2h
-- **FEV-24-D /analyze** — Architectural analysis (quetzalcoatl) | Issue #57 | 1.5-2h
-- **FEV-24 Docs** — CHANGELOG v2.1.0 + WORKFLOW + Wiki sync | — | 1h
+- **FEV-24-A /sync** — Bidirectional git sync (tlaloc) | Issue #68 | ✅ 2026-08-07
+- **FEV-24-B /migrate** — Stack migration planner (quetzalcoatl, optional) | Issue #67 | ✅ 2026-08-07
+- **FEV-24-C /deploy** — Git workflow + CI/CD (mictlantecuhtli) | Issue #64 | ✅ 2026-08-07
+- **FEV-24-D /analyze** — Architectural analysis (quetzalcoatl) | Issue #57 | ✅ 2026-08-07
+- **FEV-24 Docs** — CHANGELOG v2.1.0 + WORKFLOW + Wiki sync | — | ✅ 2026-08-07
+- **FEV-24 Plugin** — COMMAND_PHASE_MAP + OQ-3 removal + SDD pipeline refactor | — | ✅ 2026-08-08
+- **FEV-24 Integration** — Intent auto-discovery, command reference fixes, test consolidation | — | ✅ 2026-08-10
+- **FEV-24 Review** — Bilingual intents (SPANISH_INTENT_KEYWORDS), stopwords extraction, spec update | — | ✅ 2026-08-11
 
-**FEV-24 métricas:** 4 comandos nuevos, 1 E2E smoke test, 1 command update (diagnosis.md), 3 doc updates
+**FEV-24 métricas finales:** 4 comandos nuevos, 17→17 commands, SDD plugin simplificado (INTENT_PATTERNS eliminado, auto-discovery), 2048 tests / 0 fail, 30/30 E2E, just check 0 errores
 
 ## 4. Estrategia de Pruebas por Fase
 
@@ -127,6 +131,15 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 - **FEV-17 a FEV-23:** Todos completos
 - **Esfuerzo total v2.0.0:** ~41h implementación + ~9h overhead (code reviews, wiki sync, release)
 
+### v2.1.0 (FEV-24 completo — 2026-08-11)
+
+- **Tests totales:** 2048 tests, 0 fail
+- **Tests E2E:** 30/30 pasando
+- **`just check`:** 0 errores (145 archivos)
+- **FEV-24:** Completo (8 sub-fases: 4 commands + docs + plugin + integration + review)
+- **FEV-25:** 📋 Listo para planificar (Issue #69)
+- **SDD plugin:** INTENT_PATTERNS eliminado → auto-discovery + SPANISH_INTENT_KEYWORDS overlay
+
 ### Histórico de releases
 
 | Release | Tests | E2E | Coverage | Fecha |
@@ -137,3 +150,4 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | v1.1.0 | 581 | 15/15 | 98.13% | 2026-07-10 |
 | v1.2.0 | 844 | 15/15 | 98.1% | 2026-08-03 |
 | v2.0.0 | 1920 | 30/30 | 95.68% | 2026-08-07 |
+| v2.1.0 | 2048 | 30/30 | ~96% | 2026-08-11 |
