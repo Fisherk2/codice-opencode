@@ -98,9 +98,11 @@ graph TD
 
 **What moves:** `INTENT_PATTERNS`, `COMMAND_PHASE_MAP`, and `PHASE_SUGGESTIONS` move to `opencode.json` under a `sddPipeline` key.
 
-**Why not auto-discovered:** These are behavioral mappings, not structural. A command's intent keywords, SDD phase, and cross-agent suggestions cannot be inferred from the file's frontmatter — they require human editorial judgment.
+**Why not auto-discovered (phases & suggestions):** `COMMAND_PHASE_MAP` and `PHASE_SUGGESTIONS` are behavioral mappings, not structural. A command's SDD phase and cross-agent suggestions cannot be inferred from the file's frontmatter — they require human editorial judgment.
 
-**Why not hardcoded:** Users customize their SDD workflow. Editing a JSON config is safer than editing a 665-line TypeScript file.
+**Intent keywords ARE auto-discovered (FEV-24):** `INTENT_PATTERNS` was removed from the hardcoded defaults in v2.1.0 and replaced by `discoverIntentPatterns()` in `src/intentDiscovery.ts`, which derives keywords from each command's own `description:` frontmatter plus the command name. This removes the contributor maintenance burden (adding a command no longer requires updating a keyword map) and gives end-user commands intent detection without manual registration. **Tradeoff:** description-derived keywords are English-only and less curated than the old bilingual map; Spanish-language intent detection is lost for built-in commands. Users can still override or extend keywords per-command via `opencode.json` `sddPipeline.intentPatterns` (validated keys starting with `/`).
+
+**Why not hardcoded:** Users customize their SDD workflow. Editing a JSON config is safer than editing a large TypeScript file.
 
 ### 3.3 Pillar 3: Quality Infrastructure
 
