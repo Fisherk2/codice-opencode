@@ -1,65 +1,70 @@
 ---
-description: Perform multi-dimensional architectural analysis (8 axes) and generate a prioritized TECH_DEBT.md with actionable findings
+description: Perform multi-dimensional architectural analysis.
 agent: quetzalcoatl
 ---
 
-**SDD Flow Position:** After `/migrate` and before `/diagnosis` (findings feed the diagnosis process).
-
 ## Pre-Flight: Detect Project Type
+
+**Delegate** `codebase-onboarding-engineer` subagent to understand the project:
 
 1. Identify project root and tech stack (read `package.json`, lock files, config files).
 2. Detect language(s), framework(s), and architecture pattern (monolith, microservices, serverless, etc.).
 3. Count source files, test files, and documentation files.
 4. Estimate codebase size (LOC, file count) to scope analysis depth.
 
-Use `question` tool to ask: **"What analysis depth do you want?"**:
-- **A) Quick scan** — 1-2h, surface-level issues only
-- **B) Standard analysis** — 4-6h, all 8 dimensions, medium depth
-- **C) Deep audit** — 1-2 days, all 8 dimensions, deep dive
-
 ## Phase 1: Multi-Dimensional Analysis
 
-Analyze the project across 8 dimensions. For each dimension, load the relevant skill and delegate to the appropriate subagent.
+Use `question` tool to ask: **"What analysis depth do you want?"**:
+- **A) Quick scan** — Surface-level issues only
+- **B) Standard analysis** — All 8 dimensions, medium depth
+- **C) Deep audit** — All 8 dimensions, deep dive
+
+Then, analyze the project across 8 dimensions sequentially. For each dimension, load the relevant skill and delegate to the appropriate subagent.
 
 ### 1. System Structure
-- **Skill:** `@skills/clean-ddd-hexagonal/SKILL.md`
-- **Subagent:** `code-reviewer` or `software-architect`
+- **Load:** `clean-ddd-hexagonal` skill
+- **Delegate:** `software-architect` and `backend-architect` subagents in parallel.
 - **Output:** Component hierarchy, module boundaries, architectural pattern adherence
 
 ### 2. Design Patterns
-- **Skill:** `@skills/design-patterns/SKILL.md`
-- **Subagent:** `code-reviewer`
+- **Load:** `design-patterns` skill
+- **Delegate:** `code-reviewer` subagent.
 - **Output:** Pattern usage, anti-patterns, consistency across codebase
 
 ### 3. Dependency Architecture
-- **Skill:** `@skills/dependency-audit/SKILL.md`
-- **Subagent:** `dependency-manager`
+- **Load:** `dependency-audit` skill
+- **Delegate:** `dependency-manager` subagent.
 - **Output:** Coupling metrics, circular dependencies, DI effectiveness
 
 ### 4. Data Flow
-- **Skill:** `@skills/observability-and-instrumentation/SKILL.md`
-- **Subagent:** `software-architect`
+- **Load:** `observability-and-instrumentation` skill
+- **Delegate:** `platform-engineer` subagent
 - **Output:** Traceability, state management, persistence strategies
 
 ### 5. Scalability and Performance
-- **Skill:** `@skills/performance-analysis/SKILL.md`
-- **Subagent:** `web-performance-auditor` (or domain-specific)
+- **Load:** `performance-analysis` skill
+- **Delegate:** `performance-benchmarker` and domain-specific subagents in parallel.
 - **Output:** Bottlenecks, caching strategies, resource management
 
 ### 6. Security
-- **Skill:** `@skills/security-and-hardening/SKILL.md`
-- **Subagent:** `security-auditor`
+- **Load:** `security-and-hardening` skill
+- **Delegate:** `security-auditor`, `penetration-tester`, `security-architect` and `security-compliance-auditor` subagents in parallel.
 - **Output:** Trust boundaries, auth/authz patterns, data protection
 
 ### 7. Testability
-- **Skill:** `@skills/test-driven-development/SKILL.md`
-- **Subagent:** `test-engineer`
+- **Load:** `test-driven-development` skill
+- **Delegate:** `test-engineer` subagent.
 - **Output:** Coverage, test quality, untested areas
 
 ### 8. Documentation
-- **Skill:** `@skills/documentation-and-adrs/SKILL.md`
-- **Subagent:** `technical-writer`
+- **Load:** `documentation-and-adrs` skill
+- **Delegate:** `technical-writer` subagent.
 - **Output:** Comment quality, API docs completeness, ADR coverage
+
+Before finalizing, use the `question` tool to resolve ambiguities:
+- Flag findings that could be **false positives** — ask the user to confirm
+- Ask if any observation is **intentional** — the user may have a valid reason
+- Let the user dismiss, accept, or modify each disputed finding
 
 For each dimension, the subagent returns findings categorized as:
 - **Critical** — must fix immediately (blocks production)
@@ -69,89 +74,16 @@ For each dimension, the subagent returns findings categorized as:
 
 ## Phase 2: Generate `TECH_DEBT.md`
 
-Create or update `docs/TECH_DEBT.md`:
+Create or update entries in @docs/TECH_DEBT.md with this content:
 
-```markdown
-# Technical Debt — [Project Name]
-
-**Last analyzed:** YYYY-MM-DD
-**Analysis depth:** [Quick scan | Standard | Deep audit]
-**Total findings:** N (Critical: X, High: Y, Medium: Z, Low: W)
-
----
-
-## Critical (must fix immediately)
-
-### [TD-001] [Short title]
-- **Dimension:** [System Structure | Design Patterns | etc.]
-- **Location:** [file:line]
-- **Description:** [What is the issue]
-- **Impact:** [What happens if not fixed]
-- **Recommendation:** [How to fix]
-- **Effort:** [XS | S | M | L | XL]
-
-[Repeat for each critical finding]
-
-## High (should fix soon)
-
-[Same structure]
-
-## Medium (should fix eventually)
-
-[Same structure]
-
-## Low (backlog)
-
-[Same structure]
-
-## Methodology
-
-This document was generated by `/analyze` using the 8-dimension
-architectural analysis framework. For each finding:
-- **Location** references specific files and line numbers
-- **Impact** describes the consequences of leaving the debt unaddressed
-- **Recommendation** provides actionable remediation steps
-- **Effort** estimates the time required to fix
-
-## Next Steps
-
-1. Triage critical findings with the team
-2. Create diagnosis documents for complex issues (`/diagnosis`)
-3. Create implementation plans for fixes (`/plan`)
-4. Re-run `/analyze` after major refactors to track progress
-```
-
-## Phase 3: Integrate with `/diagnosis`
-
-The generated `TECH_DEBT.md` becomes an input for `/diagnosis`. Update diagnosis to:
-
-1. Read `docs/TECH_DEBT.md` if it exists
-2. Use TECH_DEBT findings as additional context for the diagnosis
-3. Reference specific TECH_DEBT entries (e.g., TD-001) in the diagnosis document
-
-This is the FEV-24-D integration: the diagnosis command learns to consider `TECH_DEBT.md` as an authoritative source of known issues.
-
-## Rules
-
-1. **All 8 dimensions must be analyzed** — even if briefly. Skipping dimensions produces incomplete results.
-2. **Findings must be actionable** — every entry has a `Recommendation` and `Effort` estimate.
-3. **Prioritize ruthlessly** — Critical findings should be truly critical (production blockers), not "would be nice".
-4. **Re-run after major changes** — TECH_DEBT is a living document.
-5. **Never modify code** — `/analyze` is read-only except for `docs/TECH_DEBT.md`.
-6. **Respect existing debt entries** — preserve historical findings, add new ones, mark resolved ones.
-
-## Skills Used
-
-- `@skills/clean-ddd-hexagonal/SKILL.md` — for system structure
-- `@skills/design-patterns/SKILL.md` — for design analysis
-- `@skills/dependency-audit/SKILL.md` — for dependency architecture
-- `@skills/observability-and-instrumentation/SKILL.md` — for data flow
-- `@skills/performance-analysis/SKILL.md` — for scalability
-- `@skills/security-and-hardening/SKILL.md` — for security
-- `@skills/test-driven-development/SKILL.md` — for testability
-- `@skills/documentation-and-adrs/SKILL.md` — for documentation
-- `@skills/code-review-and-quality/SKILL.md` — for overall review
+- TD-XXX identifier
+- Analysis date
+- Type of scan (quick, standard, deep)
+- Total findings by severity
+- Summary of findings by severity
+- Detailed findings for each issue
+- Methodology used
 
 ## Suggested Next Step
 
-> Analysis complete. `TECH_DEBT.md` updated with prioritized findings. Run `/diagnosis` on critical findings to create diagnostic documents, then `/plan` to create implementation plans for the fixes.
+> Analysis complete. Run `/diagnosis` on critical findings to create diagnostic documents, then `/plan` to create implementation plans for the fixes.

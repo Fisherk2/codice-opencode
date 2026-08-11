@@ -1,23 +1,16 @@
 ---
-description: Analyze problems and document technical diagnoses
+description: Analyze problems and document technical diagnoses.
 agent: quetzalcoatl
 ---
 
 ## Pre-Flight: Identify the Problem
 
-Detect input type:
+**Delegate** `error-coordinator` subagent to detect input type:
 
 - **Remote issue** — user provided a GitHub/GitLab URL or issue number → fetch and summarize
 - **Local bug** — user describes symptoms or error messages → use as-is
+- **Technical debt** - TD findings in @docs/TECH_DEBT.md are likely related to the problem
 - **Vague report** — load `interview-me` skill to extract: symptoms, when it started, expected vs actual behavior.
-
-**Also check for `docs/TECH_DEBT.md` (if it exists):**
-
-If `docs/TECH_DEBT.md` exists, read it and consider its findings as additional context:
-
-- Critical/High findings in TECH_DEBT are likely related to the problem
-- Reference specific TECH_DEBT entries (e.g., TD-001) in the diagnosis document
-- Use TECH_DEBT findings to inform the severity assessment
 
 **Always use the `question` tool to let the user confirm what problem they want to analyze — never decide automatically, even if the issue or symptoms seem clear or trivial.** The user must answer doubts, suggestions, and ambiguities before proceeding.
 
@@ -35,16 +28,16 @@ Do not proceed without a clear target.
 
 **Delegate** to analysis subagents based on problem type. **No implementation — analysis only.**
 
+For problems spanning multiple domains, invoke subagents **in parallel** and load skills **on demand**. Synthesize findings before documenting.
+
 | Problem type | Subagent | Skill |
 |-------------|----------|-------|
 | Error / crash / stack trace | `error-detective` | `debugging-and-error-recovery` |
 | Code quality / logic bug | `code-reviewer` | `code-review-and-quality` |
 | Security vulnerability | `security-auditor` | `security-and-hardening` |
-| Performance issue | `web-performance-auditor` | `performance-analysis` |
-| Database / query problem | `database-optimizer` | — |
-| Dependency issue (CVE, license) | — | `dependency-audit` |
-
-For problems spanning multiple domains, invoke subagents **sequentially** and load skills **on demand**. Synthesize findings before documenting.
+| Performance issue | `performance-benchmarker` or/and `web-performance-auditor` | `performance-analysis` |
+| Database / query problem | `database-optimizer` | `performance-analysis` |
+| Dependency issue (CVE, license) | `dependency-manager` | `dependency-audit` |
 
 Use terminal tools to investigate: check logs, inspect config, test components, run diagnostics.
 
