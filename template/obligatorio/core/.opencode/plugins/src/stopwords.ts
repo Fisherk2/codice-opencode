@@ -1,0 +1,188 @@
+// ---------------------------------------------------------------------------
+// STOPWORDS — Common function words excluded from intent keywords
+//
+// Description-derived keywords are matched as whole words against user
+// messages; function words would fire on almost every sentence, so they are
+// filtered out before keyword lists are built.
+//
+// English and Spanish sets are merged because command descriptions (and the
+// user messages they match against) can be authored in either language.
+//
+// The Spanish keywords for built-in commands (especificar, probar, revisar,
+// ...) are NOT stopwords — they live in spanishIntents.ts and are layered
+// onto the discovered patterns without filtering.
+// ---------------------------------------------------------------------------
+
+/**
+ * Common English function words plus generic verbs/nouns that would steal
+ * intent from the command that actually owns the phrase (e.g. "new", "code").
+ */
+const ENGLISH_STOPWORDS: readonly string[] = [
+	"a",
+	"an",
+	"and",
+	"are",
+	"as",
+	"at",
+	"be",
+	"by",
+	"for",
+	"from",
+	"in",
+	"into",
+	"is",
+	"it",
+	"of",
+	"on",
+	"or",
+	"the",
+	"to",
+	"with",
+	"your",
+	"you",
+	"do",
+	"does",
+	"did",
+	"not",
+	"no",
+	"that",
+	"this",
+	"these",
+	"those",
+	"they",
+	"we",
+	"our",
+	"their",
+	"then",
+	"than",
+	"so",
+	"if",
+	"but",
+	"was",
+	"were",
+	"will",
+	"would",
+	// Generic action verbs that appear in many descriptions and would steal
+	// intent from the command that actually owns the phrase.
+	"new",
+	"run",
+	"get",
+	"use",
+	// Generic nouns spanning multiple command domains; the command name
+	// (e.g. "code-simplify") remains the anchor keyword for those commands.
+	"code",
+	// Question/auxiliary words — add no intent value on their own.
+	"how",
+	"what",
+	"when",
+	"where",
+	"who",
+	"why",
+	"which",
+	"can",
+	"has",
+	"had",
+	"have",
+	"been",
+	"being",
+	"about",
+	"after",
+	"before",
+	"between",
+	"under",
+	"over",
+	"again",
+	"once",
+	"here",
+	"there",
+	"every",
+	"each",
+	"both",
+	"few",
+	"more",
+	"most",
+	"must",
+	"should",
+	"could",
+	"may",
+	"might",
+	"shall",
+	"all",
+	"any",
+	"some",
+	"such",
+	"only",
+	"own",
+	"same",
+	"too",
+	"very",
+	"just",
+	"also",
+	"nor",
+	"ever",
+	"even",
+	"still",
+	"much",
+];
+
+/**
+ * Common Spanish function words — user-authored command descriptions are not
+ * guaranteed to be English, and stopword filtering must not leak Spanish
+ * articles/prepositions into keyword lists.
+ */
+const SPANISH_STOPWORDS: readonly string[] = [
+	"que",
+	"para",
+	"con",
+	"por",
+	"una",
+	"los",
+	"las",
+	"del",
+	"como",
+	"más",
+	"mas",
+	"son",
+	"fue",
+	"era",
+	"este",
+	"esta",
+	"estos",
+	"estas",
+	"ese",
+	"esa",
+	"eso",
+	"ser",
+	"pero",
+	"sin",
+	"sobre",
+	"entre",
+	"hacia",
+	"desde",
+	"hasta",
+	"también",
+	"tambien",
+	"solo",
+	"sólo",
+	"muy",
+	"bien",
+	"cada",
+	"todo",
+	"toda",
+	"todos",
+	"todas",
+	"otro",
+	"otra",
+	"otros",
+	"otras",
+	"mismo",
+	"misma",
+	"nuevo",
+	"nueva",
+	"nuevos",
+	"nuestro",
+	"nuestra",
+];
+
+/** Merged stopword set used to filter derived intent keywords. */
+export const STOPWORDS: ReadonlySet<string> = new Set([...ENGLISH_STOPWORDS, ...SPANISH_STOPWORDS]);

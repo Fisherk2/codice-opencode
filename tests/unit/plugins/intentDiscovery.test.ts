@@ -14,6 +14,7 @@ import { join } from "node:path";
 import {
 	deriveIntentKeywords,
 	discoverIntentPatterns,
+	mergeIntentKeywordLayers,
 } from "../../../template/obligatorio/core/.opencode/plugins/src/intentDiscovery";
 import { cleanupTestDir, createTestDir } from "./helpers";
 
@@ -157,7 +158,7 @@ describe("deriveIntentKeywords", () => {
 	});
 
 	test("duplicate words are deduplicated preserving first occurrence", () => {
-		expect(deriveIntentKeywords("sync", "sync sync sync again")).toEqual(["sync", "again"]);
+		expect(deriveIntentKeywords("sync", "sync sync sync twice")).toEqual(["sync", "twice"]);
 	});
 
 	test("Unicode words stay intact (accented chars are not split)", () => {
@@ -168,6 +169,20 @@ describe("deriveIntentKeywords", () => {
 			"explain",
 			"códice",
 		]);
+	});
+
+	test("Spanish stopwords are filtered from Spanish descriptions", () => {
+		expect(
+			deriveIntentKeywords(
+				"deploy",
+				"Desplegar la aplicación a producción con el nuevo despliegue",
+			),
+		).toEqual(["deploy", "desplegar", "aplicación", "producción", "despliegue"]);
+	});
+
+	test("empty and whitespace-only descriptions yield just the command name", () => {
+		expect(deriveIntentKeywords("sync", "")).toEqual(["sync"]);
+		expect(deriveIntentKeywords("sync", "   ")).toEqual(["sync"]);
 	});
 });
 
@@ -234,5 +249,41 @@ describe("discoverIntentPatterns — real template commands", () => {
 				}
 			}
 		}
+	});
+});
+
+describe("mergeIntentKeywordLayers", () => {
+	test("extensions append to existing commands, dedupe preserving first occurrence", () => {
+		const result = mergeIntentKeywordLayers(
+			{ "/test": ["test", "verify"], "/build": ["build"] },
+			{ "/test": ["probar", "test"] },
+			{},
+		);
+		expect(result["/test"]).toEqual(["test", "verify", "probar"]);
+		expect(result["/build"]).toEqual(["build"]);
+	});
+
+	test("extensions ignore commands not in the discovered map (no orphan intents)", () => {
+		const result = mergeIntentKeywordLayers({}, { "/ghost": ["fantasma"] }, {});
+		expect(result["/ghost"]).toBeUndefined();
+	});
+
+	test("overrides replace the entire keyword list per key", () => {
+		const result = mergeIntentKeywordLayers(
+			{ "/test": ["test", "write"] },
+			{ "/test": ["probar"] },
+			{ "/test": ["mi keyword"] },
+		);
+		expect(result["/test"]).toEqual(["mi keyword"]);
+	});
+
+	test("does not mutate the input maps", () => {
+		const discovered = { "/test": ["test"] };
+		const extensions = { "/test": ["probar"] };
+		const overrides = { "/test": ["mi keyword"] };
+		mergeIntentKeywordLayers(discovered, extensions, overrides);
+		expect(discovered["/test"]).toEqual(["test"]);
+		expect(extensions["/test"]).toEqual(["probar"]);
+		expect(overrides["/test"]).toEqual(["mi keyword"]);
 	});
 });

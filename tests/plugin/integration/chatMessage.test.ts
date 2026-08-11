@@ -27,7 +27,9 @@ import {
 import {
 	deriveIntentKeywords,
 	discoverIntentPatterns,
+	mergeIntentKeywordLayers,
 } from "../../../template/obligatorio/core/.opencode/plugins/src/intentDiscovery";
+import { SPANISH_INTENT_KEYWORDS } from "../../../template/obligatorio/core/.opencode/plugins/src/spanishIntents";
 
 // ---------------------------------------------------------------------------
 // Fixture commands directory (mirrors the commandMap unit-test helper pattern,
@@ -37,6 +39,19 @@ import {
 
 let fixtureDir: string;
 let fixturePatterns: Record<string, readonly string[]>;
+
+/** Real template commands dir — shared by the canonical and Spanish suites. */
+const templateCommandsDir = join(
+	import.meta.dir,
+	"..",
+	"..",
+	"..",
+	"template",
+	"obligatorio",
+	"core",
+	"commands",
+);
+let templatePatterns: Record<string, readonly string[]>;
 
 beforeAll(() => {
 	fixtureDir = mkdtempSync(join(tmpdir(), "chat-message-intent-"));
@@ -52,6 +67,7 @@ beforeAll(() => {
 	// at module load, so it must be computed in a hook rather than at describe
 	// registration time.
 	fixturePatterns = discoverIntentPatterns(fixtureDir);
+	templatePatterns = discoverIntentPatterns(templateCommandsDir);
 });
 
 afterAll(() => {
@@ -321,21 +337,6 @@ describe("chat.message — canonical intent mappings against the real template",
 	// Guards the quality of description-derived intent detection. If a
 	// description change breaks a canonical mapping, this test fails —
 	// better than silently mis-suggesting a command to the user.
-	const templateCommandsDir = join(
-		import.meta.dir,
-		"..",
-		"..",
-		"..",
-		"template",
-		"obligatorio",
-		"core",
-		"commands",
-	);
-	let templatePatterns: Record<string, readonly string[]>;
-
-	beforeAll(() => {
-		templatePatterns = discoverIntentPatterns(templateCommandsDir);
-	});
 
 	test("natural-language phrases route to the canonical command", () => {
 		const cases: ReadonlyArray<readonly [string, string]> = [
@@ -359,6 +360,58 @@ describe("chat.message — canonical intent mappings against the real template",
 			for (const keyword of keywords) {
 				if (allNames.has(keyword)) {
 					expect(keyword).toBe(ownName);
+				}
+			}
+		}
+	});
+});
+
+describe("chat.message — Spanish intent detection (SPANISH_INTENT_KEYWORDS)", () => {
+	// Replicates the sdd-pipeline.ts merge: Spanish keywords APPEND to the
+	// discovered list for existing commands (English keywords are preserved),
+	// so both languages route correctly. Computed in a hook (not at describe
+	// registration) because templatePatterns is populated in beforeAll.
+	let mergedPatterns: Record<string, readonly string[]>;
+
+	beforeAll(() => {
+		mergedPatterns = mergeIntentKeywordLayers(templatePatterns, SPANISH_INTENT_KEYWORDS, {});
+	});
+
+	test("natural-language Spanish phrases route to the canonical command", () => {
+		const cases: ReadonlyArray<readonly [string, string]> = [
+			["especificar los requisitos", "/spec"],
+			["planificar las tareas", "/plan"],
+			["construir la feature", "/build"],
+			["probar este código", "/test"],
+			["revisar mi código", "/review"],
+			["lanzar la release", "/ship"],
+			["desplegar a producción", "/deploy"],
+		];
+		for (const [message, expected] of cases) {
+			expect(detectIntent(message, mergedPatterns)).toBe(expected);
+		}
+	});
+
+	test("English intent still works after the Spanish merge (keywords preserved)", () => {
+		// Regression guard: the Spanish layer must APPEND, never replace — an
+		// English phrase must still route after the merge.
+		expect(detectIntent("implement this feature", mergedPatterns)).toBe("/build");
+		expect(detectIntent("test this code", mergedPatterns)).toBe("/test");
+		expect(detectIntent("update the documentation", mergedPatterns)).toBe("/docs-update");
+	});
+
+	test("a Spanish word in the middle of an English message still matches", () => {
+		expect(detectIntent("please desplegar the app now", mergedPatterns)).toBe("/deploy");
+	});
+
+	test("Spanish keywords do not collide with English command names", () => {
+		// E.g. "planificar" must never match another command's name or English
+		// keyword space — each Spanish keyword is unique to its owning command.
+		for (const [command, keywords] of Object.entries(mergedPatterns)) {
+			for (const keyword of keywords) {
+				if (SPANISH_INTENT_KEYWORDS[command]?.includes(keyword)) {
+					const owners = Object.entries(mergedPatterns).filter(([, kws]) => kws.includes(keyword));
+					expect(owners.map(([c]) => c)).toEqual([command]);
 				}
 			}
 		}

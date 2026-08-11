@@ -9,8 +9,9 @@ import {
 import { loadSddConfig } from "./src/configLoader";
 import { DEFAULTS, DESTRUCTIVE_PATTERNS } from "./src/defaults";
 import { escapeRegExp } from "./src/escapeRegExp";
-import { discoverIntentPatterns } from "./src/intentDiscovery";
+import { discoverIntentPatterns, mergeIntentKeywordLayers } from "./src/intentDiscovery";
 import { normalizeBash } from "./src/normalizeBash";
+import { SPANISH_INTENT_KEYWORDS } from "./src/spanishIntents";
 import { PRIMARY_AGENTS } from "./src/validSubagents";
 
 // ---------------------------------------------------------------------------
@@ -73,8 +74,15 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 	// the ?? fallback only narrows the optional type — values are complete.
 	const sddConfig = loadSddConfig(projectDir);
 	const commandPhaseMap = sddConfig.commandPhaseMap ?? DEFAULTS.COMMAND_PHASE_MAP;
-	// User overrides from opencode.json layer on top of discovered patterns.
-	const intentPatterns = { ...discoveredIntentPatterns, ...(sddConfig.intentPatterns ?? {}) };
+	// Spanish translations APPEND to each discovered command's keyword list
+	// (restoring bilingual intent detection); user overrides come last and
+	// REPLACE the keyword list for a command key — they do not merge keywords
+	// (to extend a list, copy the discovered keywords and append, see types.ts).
+	const intentPatterns = mergeIntentKeywordLayers(
+		discoveredIntentPatterns,
+		SPANISH_INTENT_KEYWORDS,
+		sddConfig.intentPatterns ?? {},
+	);
 	const phaseSuggestions = sddConfig.phaseSuggestions ?? DEFAULTS.PHASE_SUGGESTIONS;
 	const pluginsDir = join(projectDir, ".opencode", "plugins");
 	const auditLogPath = join(pluginsDir, ".sdd-audit.log");

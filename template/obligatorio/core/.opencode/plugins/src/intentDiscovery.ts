@@ -5,11 +5,15 @@
 // `description:` frontmatter, replacing the hardcoded INTENT_PATTERNS map.
 // Contributors no longer maintain a keyword map when adding commands, and
 // end-user commands get intent detection without manual registration.
+//
+// mergeIntentKeywordLayers() composes the three keyword layers in order:
+// discovered baseline → static extensions (Spanish) → user overrides.
 // ---------------------------------------------------------------------------
 
 import { readFileSync } from "node:fs";
 import { scanMarkdownFiles } from "./directoryScanner";
 import { parseFieldFromFrontmatter } from "./frontmatter";
+import { STOPWORDS } from "./stopwords";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -19,67 +23,43 @@ import { parseFieldFromFrontmatter } from "./frontmatter";
 const DESCRIPTION_FIELD_REGEX = /^description:\s*(.+)$/m;
 
 /**
- * Common English function words excluded from intent keywords.
+ * Composes the intent keyword layers in precedence order.
  *
- * Description-derived keywords are matched as whole words against user
- * messages; function words would fire on almost every sentence, so they
- * are filtered out before keyword lists are built.
+ * 1. `discovered` — the baseline derived from command descriptions.
+ * 2. `extensions` — static keywords (e.g. Spanish translations) that APPEND
+ *    to an existing command's list, deduplicated preserving order. Commands
+ *    absent from the discovered map are ignored — no orphan intents.
+ * 3. `overrides` — user-provided keywords that REPLACE the entire list for a
+ *    command key (per-key override, not keyword merge; see types.ts JSDoc).
+ *
+ * @param discovered - Baseline keyword map (from discoverIntentPatterns).
+ * @param extensions - Keyword lists appended to matching commands.
+ * @param overrides - Keyword lists that replace matching commands entirely.
+ * @returns A new keyword map with all three layers applied.
  */
-const STOPWORDS: ReadonlySet<string> = new Set([
-	"a",
-	"an",
-	"and",
-	"are",
-	"as",
-	"at",
-	"be",
-	"by",
-	"for",
-	"from",
-	"in",
-	"into",
-	"is",
-	"it",
-	"of",
-	"on",
-	"or",
-	"the",
-	"to",
-	"with",
-	"your",
-	"you",
-	"do",
-	"does",
-	"did",
-	"not",
-	"no",
-	"that",
-	"this",
-	"these",
-	"those",
-	"they",
-	"we",
-	"our",
-	"their",
-	"then",
-	"than",
-	"so",
-	"if",
-	"but",
-	"was",
-	"were",
-	"will",
-	"would",
-	// Generic action verbs that appear in many descriptions and would steal
-	// intent from the command that actually owns the phrase.
-	"new",
-	"run",
-	"get",
-	"use",
-	// Generic nouns spanning multiple command domains; the command name
-	// (e.g. "code-simplify") remains the anchor keyword for those commands.
-	"code",
-]);
+export function mergeIntentKeywordLayers(
+	discovered: Record<string, readonly string[]>,
+	extensions: Record<string, readonly string[]>,
+	overrides: Record<string, readonly string[]>,
+): Record<string, readonly string[]> {
+	const merged: Record<string, readonly string[]> = { ...discovered };
+
+	// Extensions append to an existing command's keywords (dedupe preserving
+	// first occurrence) and never introduce a command that was not discovered.
+	for (const [command, keywords] of Object.entries(extensions)) {
+		const existing = merged[command];
+		if (existing !== undefined) {
+			merged[command] = [...new Set([...existing, ...keywords])];
+		}
+	}
+
+	// Overrides replace the entire keyword list for a command key.
+	for (const [command, keywords] of Object.entries(overrides)) {
+		merged[command] = keywords;
+	}
+
+	return merged;
+}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -133,17 +113,20 @@ export function discoverIntentPatterns(commandsDir: string): Record<string, read
  * The command name is always the first keyword (lowercased). The description
  * is tokenized on non-alphanumeric characters (Unicode-aware so accented
  * words stay intact); tokens shorter than 3 characters and common function
- * words (STOPWORDS) are dropped. Duplicates are removed preserving first
- * occurrence.
+ * words (STOPWORDS, English and Spanish) are dropped. Duplicates are removed
+ * preserving first occurrence.
  *
  * @param commandName - The command basename (e.g., `"sync"`).
- * @param description - The `description:` frontmatter value, or `null`.
+ * @param description - The `description:` frontmatter value, `null` when the
+ *                      field is absent, or an empty/whitespace-only string.
  * @returns A deduplicated keyword list; always contains the command name.
  */
 export function deriveIntentKeywords(commandName: string, description: string | null): string[] {
 	const keywords = [commandName.toLowerCase()];
 
-	if (description !== null) {
+	// A null, empty, or whitespace-only description contributes no keywords —
+	// skip the tokenize/filter pass entirely instead of processing a no-op.
+	if (description !== null && description.trim().length > 0) {
 		const tokens = description
 			.toLowerCase()
 			// \p{L}/\p{N} (Unicode letters/numbers) keep accented words intact
