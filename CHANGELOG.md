@@ -33,6 +33,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **E2E Smoke Test:** New `tests/e2e/31-commands-fe24-smoke.sh` validates
   frontmatter schema, body structure, and cross-command integration (e.g.,
   diagnosis → TECH_DEBT).
+- **Agent Delegation Protocol (FEV-25, Issue #69):** The six primary agents now
+  analyze before acting — mapping the available subagents in `agents/` and the
+  relevant skills in `skills/` before executing any instruction.
+  - The four delegating agents (`huitzilopochtli`, `quetzalcoatl`, `tlaloc`,
+    `mictlantecuhtli`) gained `## DELEGATION PROTOCOL`: every `task()` call must
+    carry deterministic instructions, the skills the subagent must load, and a goal
+    checklist the primary agent grades the returned work against.
+  - The two non-delegating agents (`moctezuma`, `tezcatlipoca`) gained
+    `## SKILL ANALYSIS PROTOCOL`: the same up-front analysis without delegation,
+    plus a self-review checklist.
+  - Canonical contract documented in `specs/spec-agent-format-v2.md` §8.
 
 ### Changed
 - **Command count:** 13 → 17 (4 new commands added to `template/obligatorio/core/commands/`)

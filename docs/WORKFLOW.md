@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-11 (FEV-24 completo, FEV-25 listo para planificar) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-11 (FEV-24 completo, FEV-25 completo) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -17,7 +17,7 @@
 | F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth, TECH_DEBT.md | ✅ Completo |
 | FEV-1 a FEV-23 | Ver sección 3 | Issues críticos, SDD refactor, CI/CD, docs, agent packs, installer UX | ✅ Completo |
 | FEV-24 | Nuevos comandos v2.1: `/sync`, `/migrate`, `/deploy`, `/analyze` + SDD plugin refactor | #68, #67, #64, #57 | ✅ Completo (2026-08-11) |
-| FEV-25 | Reglas de delegación en agentes principales | #69 | 📋 Listo para planificar |
+| FEV-25 | Reglas de delegación en agentes principales | #69 | ✅ Completo (2026-08-11) |
 
 ## 2. Fases Iniciales (F0 – F6.5)
 
@@ -89,12 +89,12 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 **Métricas v2.0.0:** ~41h implementación, ~9h overhead (code reviews, wiki sync, release)
 
-### v2.1.0 (FEV-24 completo · FEV-25 listo para planificar)
+### v2.1.0 (FEV-24 y FEV-25 completos)
 
 | FEV | Objetivo | Issues | Estado |
 |-----|----------|--------|--------|
 | **FEV-24** | Nuevos comandos: `/sync`, `/migrate` (opcional), `/deploy`, `/analyze` | #68, #67, #64, #57 | ✅ Completo (2026-08-07) |
-| **FEV-25** | Reglas de delegación en agentes principales | #69 | 📋 Listo para planificar |
+| **FEV-25** | Reglas de delegación en agentes principales | #69 | ✅ Completo (2026-08-11) |
 
 **Diagnósticos:** `docs/diagnosis/fix09` a `fix13`
 
@@ -131,13 +131,13 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 - **FEV-17 a FEV-23:** Todos completos
 - **Esfuerzo total v2.0.0:** ~41h implementación + ~9h overhead (code reviews, wiki sync, release)
 
-### v2.1.0 (FEV-24 completo — 2026-08-11)
+### v2.1.0 (FEV-24 y FEV-25 completos — 2026-08-11)
 
 - **Tests totales:** 2048 tests, 0 fail
 - **Tests E2E:** 30/30 pasando
 - **`just check`:** 0 errores (145 archivos)
 - **FEV-24:** Completo (8 sub-fases: 4 commands + docs + plugin + integration + review)
-- **FEV-25:** 📋 Listo para planificar (Issue #69)
+- **FEV-25:** Completo — delegation protocol en 6 agentes principales (Issue #69)
 - **SDD plugin:** INTENT_PATTERNS eliminado → auto-discovery + SPANISH_INTENT_KEYWORDS overlay
 
 ### Histórico de releases
