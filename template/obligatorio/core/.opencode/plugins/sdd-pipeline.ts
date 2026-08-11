@@ -71,16 +71,6 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 	const commandPhaseMap = sddConfig.commandPhaseMap ?? DEFAULTS.COMMAND_PHASE_MAP;
 	const intentPatterns = sddConfig.intentPatterns ?? DEFAULTS.INTENT_PATTERNS;
 	const phaseSuggestions = sddConfig.phaseSuggestions ?? DEFAULTS.PHASE_SUGGESTIONS;
-
-	// OQ-3: warn when a commands/ file has no commandPhaseMap entry
-	for (const command of Object.keys(commandAgentMap)) {
-		if (!commandPhaseMap[command]) {
-			// biome-ignore lint/suspicious/noConsole: intentional plugin telemetry log
-			console.debug(
-				`[sdd-pipeline] Command "${command}" has no commandPhaseMap entry, defaulting to "idle"`,
-			);
-		}
-	}
 	const pluginsDir = join(projectDir, ".opencode", "plugins");
 	const auditLogPath = join(pluginsDir, ".sdd-audit.log");
 
