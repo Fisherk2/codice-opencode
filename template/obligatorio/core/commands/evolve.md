@@ -1,11 +1,11 @@
 ---
-description: Establish new specs or modify existing ones for mature projects
+description: Establish new specs or modify existing ones for mature projects.
 agent: quetzalcoatl
 ---
 
 ## Pre-Flight: Detect Project Maturity
 
-Determine whether the project is mature enough for `/evolve`. A mature project must have all of:
+**Delegate** `codebase-onboarding-engineer` subagent to understand the project's structure and determine whether it is mature enough. A mature project must have all of:
 
 1. **`package.json` (or equivalent)** — project metadata and dependencies
 2. **Version history** — at least one published release or tag
@@ -32,33 +32,33 @@ PROJECT STATE DETECTED:
 
 **If the project IS mature**, proceed to the goal determination phase.
 
-## Phase 0: Determine Goal
+## Phase 0: Refine specs and user stories
 
-If the user's request is vague or missing key details, load `interview-me` skill to extract the full intent before proceeding.
+Use the `question` tool to clarify interactively:
 
-**Always use the `question` tool to let the user choose a route — never decide automatically.** Present these options:
+- **New specs** — Add new features, respond to new requirements, or add new constraints.
+- **Modified specs** — Change existing behavior, respond to new requirements or improve existing ones.
+- **Something else** — Let the user describe a different goal
 
-- **A) New or modified specs** — Add new features, change existing behavior, respond to new requirements
-- **B) Something else** — Let the user describe a different goal
+If the user's request is vague or missing key functional and non-functional requirements, **Load** the `interview-me` skill to extract intent before proceeding.
+
+If the user has a rough idea but needs to explore alternatives or variations, **Load** `idea-refine` skill to generate and evaluate options.
+
+**Always use the `question` tool to let the user confirm what specs or requirements they needs include in the project — never decide automatically, even if the specifications or user histories seem clear or trivial.** The user must answer doubts, suggestions, and ambiguities before proceeding.
 
 ## Phase 1: Execute — New or Modified Specs
 
-1. **Clarify intent** — what's the new requirement? Why is it changing?
-2. If requirements are vague, load `interview-me` skill to extract intent, then load `idea-refine` skill to explore variations
-3. **Select subagent** — inspect available subagents for requirement analysis and `docs-writer` for spec drafting.
-4. **Delegate** — invoke appropriate subagents to analyze requirements and refine specs.
-5. **Generate specs** — `docs-writer` should load @skills/spec-driven-development/SKILL.md to generate structured specs for the new or changed requirements in `specs/` using @specs/spec-template.md as a template.
+1. **Select subagents** — inspect available subagents for requirement analysis and `docs-writer` for spec drafting.
+4. **Delegate** — invoke in parallel appropriate subagents to analyze requirements and refine specs.
+5. **Generate specs** — subagent `docs-writer` should **Load** @skills/spec-driven-development/SKILL.md to generate structured specs for the new or changed requirements in `specs/` using @specs/spec-template.md as a template.
 6. **Determine scope** — does this change existing specs or create new ones?
    - New feature → create `specs/spec-<feature>.md`
    - Modify existing → update relevant spec files
 7. **Document architecture impact** — update or add ADRs using @specs/adr/adr-template.md in `specs/adr/` if the change affects architecture
 8. Include updated architecture diagrams using @skills/architecture-diagrams/SKILL.md
-9. For non-trivial decisions, load @skills/doubt-driven-development/SKILL.md
-10. If @SPEC.md or @AGENTS.md exceeds **200 lines**, load `agent-md-refactor`skill to modularize into @specs/
-11. **Spec update done — do NOT touch code files.** Now hand off implementation:
-   - If the change is simple (single file, limited scope): tell the user to run `/build`
-   - If the change is complex (multi-file, needs planning): tell the user to run `/plan` then `/build`
-   - Do not invoke other primary agents (Tlaloc, Moctezuma, etc.) via `task()`
+9. For non-trivial decisions, **Load** @skills/doubt-driven-development/SKILL.md
+10. If @SPEC.md or @AGENTS.md exceeds **200 lines**, **Load** `agent-md-refactor`skill to modularize into @specs/
+11. **Spec update done — do NOT touch or implement code files.**
 12. Use the `question` tool to confirm with the user before proceeding.
 13. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
@@ -74,10 +74,9 @@ If the user's request is vague or missing key details, load `interview-me` skill
    - Do NOT implement code (exclusive to `/build`).
    - Do NOT update documentation (use `/docs-update` for that).
    - Do NOT resolve issues (use `/diagnosis` for that).
-7. If the user asks for documentation updates or issue resolution, redirect them to the appropriate command instead of attempting it yourself.
 
 ## Suggested Next Step
 
 After completing the spec update:
 
-> Your spec is ready. Run `/plan` to create an execution plan, or run `/build` to start implementing directly for simple changes.
+> Your specs are ready. Run `/plan` to create an execution plan, and run `/build` to start implementing specs.

@@ -1,5 +1,5 @@
 ---
-description: Welcome the user, explain Códice, and guide them through workspace usage, project status, and customization
+description: Welcome the user, explain Códice, and guide them through workspace.
 agent: huitzilopochtli
 ---
 
@@ -12,7 +12,7 @@ agent: huitzilopochtli
    - Where to find more information:
      - 📖 Wiki: https://github.com/Fisherk2/codice-opencode/wiki
      - 📦 Official Repo: https://github.com/Fisherk2/codice-opencode
-     - 📧 Dev Email: mailto:dev@fisherk2.com
+     - 📧 Dev Email: dev@fisherk2.com
 4. Detect project state by reading the project's documentation (`SPEC.md`, `AGENTS.md`, `docs/`).
 
 ## Phase 1: Interactive Help Menu
@@ -25,15 +25,14 @@ Explain how to configure and use the Códice workspace:
 - Explain the basic workflow: install → configure → run commands → iterate
 
 ### B) Give me a summary of this project's status
-Read the user's project documentation and provide a human-readable summary:
-- If `SPEC.md`, `AGENTS.md`, or `docs/` exist with real content → summarize the project's purpose, architecture, and current state
-- If files exist but contain only placeholders → explain that the project is in an early placeholder state
-- If no documentation exists → try reading `package.json`, source files in `src/`, or key config files to infer the project's purpose
-- If the project is empty → inform the user that no project has been initialized yet and suggest running `/spec`
+**Delegate** `codebase-onboarding-engineer` subagent (if exist) to read the user's project documentation and provide a human-readable summary
+
 - Always communicate in clear, non-technical language suitable for a person
+- Always explain the project's purpose, current state, and next steps
+- Never mention technical details like file structure or code snippets
 
 ### C) What is the next step for this project?
-Read the user's project and provide a step-by-step recommendation guide:
+**Delegate** `codebase-onboarding-engineer` subagent (if exist) to read the user's project and provide a step-by-step recommendation guide:
 - Analyze the current project state (same detection logic as option B)
 - Provide concrete next steps using [Códice Commands](https://github.com/Fisherk2/codice-opencode/wiki/Commands) as the primary guide, each suggestion must reference a specific Códice command
 
