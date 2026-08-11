@@ -59,7 +59,11 @@ export const COMMAND_PHASE_MAP: Readonly<Record<string, string>> = {
 	"/ship": "ship",
 	"/code-simplify": "review",
 	"/webperf": "review",
-	"/help": "idle", // FEV-14 — informational command
+	"/help": "idle", // FEV-14 — onboarding command
+	"/sync": "idle", // FEV-24 — wildcard utility command
+	"/migrate": "plan", // FEV-24 — before /diagnosis
+	"/deploy": "ship", // FEV-24 — after /ship
+	"/analyze": "plan", // FEV-24 — after /migrate, before /diagnosis
 } as const;
 
 /**
