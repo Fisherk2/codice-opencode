@@ -161,7 +161,82 @@ and legacy subagents (`template/obligatorio/packs/sin-clasificar/typescript-pro.
 | `template/obligatorio/packs/main/huitzilopochtli.md` | Primary agent reference |
 | `template/obligatorio/packs/sin-clasificar/backend-developer.md` | Legacy subagent reference |
 
-## 8. Out of Scope
+## 8. Delegation Protocol
+
+Primary agents delegate implicitly today: their RULES say "always delegate via
+`task()`" but there is no contract for how. This section is the canonical
+source of truth (SSOT) for delegation — the six primary agents in
+`template/obligatorio/packs/main/` are instances of these blocks.
+
+### Block selection rule
+
+| Agent capability | Block | Agents |
+|------------------|-------|--------|
+| `permission.task` contains `allow` entries | **A — DELEGATION PROTOCOL** | `huitzilopochtli`, `quetzalcoatl`, `tlaloc`, `mictlantecuhtli` |
+| `permission.task` is `"*": deny` | **B — SKILL ANALYSIS PROTOCOL** | `moctezuma`, `tezcatlipoca` |
+
+### Block A — DELEGATION PROTOCOL (delegating agents)
+
+```markdown
+## DELEGATION PROTOCOL
+
+Before executing ANY instruction — analyze first, act second:
+
+1. **Understand** the requested outcome, its constraints, and what "done" means.
+2. **Map subagents** — which specialists in `agents/` cover this work?
+3. **Map skills** — scan `skills/` and select every skill that raises the quality of
+   this task. Two or ten: the count is your judgement, the relevance is the rule.
+4. **Decide** — delegate (default) or execute yourself (last resort, only when no
+   specialist exists). <HOOK>
+
+Every `task()` you send MUST carry these three blocks:
+
+- **Deterministic instructions** — context (why + constraints) plus small, verifiable
+  steps with explicit deliverables: paths, names, formats. Never an open-ended ask.
+- **Skills to load** — name the `skills/` the subagent must load, in priority order,
+  with one line of justification each.
+- **Goal checklist** — the acceptance rubric you will grade the returned work against,
+  including what counts as rework.
+
+When the subagent returns, grade its output against that checklist. Any unmet item goes
+back to the subagent with the specific gap named — you do not silently fix it yourself.
+```
+
+The `<HOOK>` placeholder is replaced per role by the agent file:
+
+| Agent | Hook (replaces `<HOOK>` in step 4) |
+|-------|-------------------------------------|
+| `huitzilopochtli` | You never execute: if no specialist exists, report it and stop. |
+| `quetzalcoatl` | You delegate documentation only — never code, never tasks. |
+| `tlaloc` | Execute directly only when no specialist in `agents/` covers the stack. |
+| `mictlantecuhtli` | Delegate the audit, retain the verdict — the ruling is never delegated. |
+
+### Block B — SKILL ANALYSIS PROTOCOL (non-delegating agents)
+
+```markdown
+## SKILL ANALYSIS PROTOCOL
+
+You do not delegate (`task` is denied). Before executing ANY instruction — analyze
+first, act second:
+
+1. **Understand** the requested outcome, its constraints, and what "done" means.
+2. **Map skills** — scan `skills/` and load every skill that raises the quality of this
+   task. Two or ten: the count is your judgement, the relevance is the rule.
+3. **Define the goal checklist** — the acceptance criteria your own output must satisfy.
+4. **Self-review** against that checklist before returning; state any item you could not meet.
+
+If the work needs a specialist or write access you do not hold, name the agent or command
+that should take it instead of improvising.
+```
+
+### Line budget
+
+Primary agent bodies must stay ≤100 lines (excluding YAML frontmatter) and ≤150 lines
+total. Block A ≈ 20 lines, Block B ≈ 12 lines — both fit within the existing budgets.
+
+---
+
+## 9. Out of Scope
 
 - **Legacy agents** (95 in `sin-clasificar/`) keep their v1.x format — hybrid decision (user, 2026-08-04).
 - **Primary agents** (`packs/main/`) keep their format — not converted.
