@@ -2,21 +2,61 @@
 // Integration tests for chat.message hook behavior
 //
 // Tests the three data structures that power the chat.message hook:
-//   AGENT_MENTION_PATTERNS — RegExp patterns for @mention detection
-//   COMMAND_AGENT_MAP     — slash command → agent routing
-//   INTENT_PATTERNS       — keyword → command detection
+//   AGENT_MENTION_PATTERNS  — RegExp patterns for @mention detection
+//   COMMAND_AGENT_MAP       — slash command → agent routing
+//   discoverIntentPatterns  — description-derived keyword → command detection
 //
 // The hook itself lives inside the SddPipelinePlugin factory (requires
 // @opencode-ai/plugin at runtime), so we test the pure maps and replicate
 // the decision logic here.
+//
+// Intent patterns are no longer hardcoded — they are derived from each
+// command file's `description:` frontmatter at runtime, so the intent tests
+// build fixture command files in a temp dir and run the real discovery
+// functions against them.
 // ---------------------------------------------------------------------------
 
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
 	AGENT_MENTION_PATTERNS,
 	COMMAND_AGENT_MAP,
-	INTENT_PATTERNS,
 } from "../../../template/obligatorio/core/.opencode/plugins/src/defaults";
+import {
+	deriveIntentKeywords,
+	discoverIntentPatterns,
+} from "../../../template/obligatorio/core/.opencode/plugins/src/intentDiscovery";
+
+// ---------------------------------------------------------------------------
+// Fixture commands directory (mirrors the commandMap unit-test helper pattern,
+// but chatMessage.test.ts lives under tests/plugin/integration/ so the helpers
+// are written inline here rather than imported from tests/unit/plugins/helpers).
+// ---------------------------------------------------------------------------
+
+let fixtureDir: string;
+let fixturePatterns: Record<string, readonly string[]>;
+
+beforeAll(() => {
+	fixtureDir = mkdtempSync(join(tmpdir(), "chat-message-intent-"));
+	writeFileSync(
+		join(fixtureDir, "sync.md"),
+		"---\ndescription: Bidirectional git sync with intelligent conflict resolution strategies.\n---\n",
+	);
+	writeFileSync(
+		join(fixtureDir, "build.md"),
+		"---\ndescription: Implement the next task incrementally.\n---\n",
+	);
+	// Discover AFTER the fixture files exist — discovery runs at runtime, not
+	// at module load, so it must be computed in a hook rather than at describe
+	// registration time.
+	fixturePatterns = discoverIntentPatterns(fixtureDir);
+});
+
+afterAll(() => {
+	rmSync(fixtureDir, { recursive: true, force: true });
+});
 
 // ---------------------------------------------------------------------------
 // Replicated logic from the chat.message hook
@@ -54,9 +94,14 @@ function routeSlashCommand(content: string): string | null {
 	return cmd ? (COMMAND_AGENT_MAP[cmd] ?? null) : null;
 }
 
-/** Mimics the hook's intent keyword detection. Returns the matching command or null. */
-function detectIntent(content: string): string | null {
-	for (const [command, keywords] of Object.entries(INTENT_PATTERNS)) {
+/**
+ * Mimics the hook's intent keyword detection. Returns the matching command or null.
+ *
+ * @param patterns — The intent pattern record to match against (fixture-derived
+ *                   or hand-built for deterministic assertions).
+ */
+function detectIntent(content: string, patterns: Record<string, readonly string[]>): string | null {
+	for (const [command, keywords] of Object.entries(patterns)) {
 		if (
 			keywords.some((kw) => {
 				const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -157,44 +202,46 @@ describe("chat.message — slash command routing", () => {
 	});
 });
 
-describe("chat.message — intent keyword detection", () => {
-	test("Scenario 3: 'implementa' should trigger /build", () => {
-		const command = detectIntent("implementa");
+describe("chat.message — intent keyword detection (auto-discovered patterns)", () => {
+	test("discoverIntentPatterns returns {} for a missing directory", () => {
+		expect(discoverIntentPatterns(join(fixtureDir, "missing-dir"))).toEqual({});
+	});
+
+	test("Scenario 3: 'implement' triggers /build (description-derived)", () => {
+		// build.md description "Implement the next task incrementally." yields
+		// "implement" as a keyword — no hardcoded keyword map required.
+		const command = detectIntent("implement this feature", fixturePatterns);
 		expect(command).toBe("/build");
 	});
 
-	test("'build' keyword triggers /build", () => {
-		const command = detectIntent("I need to build this feature");
-		expect(command).toBe("/build");
+	test("'sync' triggers /sync (command name always a keyword)", () => {
+		const command = detectIntent("please sync with remote", fixturePatterns);
+		expect(command).toBe("/sync");
 	});
 
-	test("'test' keyword triggers /test", () => {
-		const command = detectIntent("test this module");
-		expect(command).toBe("/test");
+	test("deriveIntentKeywords includes the command name first, then description tokens", () => {
+		expect(
+			deriveIntentKeywords(
+				"sync",
+				"Bidirectional git sync with intelligent conflict resolution strategies.",
+			),
+		).toEqual([
+			"sync",
+			"bidirectional",
+			"git",
+			"intelligent",
+			"conflict",
+			"resolution",
+			"strategies",
+		]);
 	});
 
-	test("'deploy' keyword triggers /ship", () => {
-		const command = detectIntent("deploy to production");
-		expect(command).toBe("/ship");
+	test("deriveIntentKeywords always includes the command name even with a null description", () => {
+		expect(deriveIntentKeywords("sync", null)).toEqual(["sync"]);
 	});
 
-	test("'review' keyword triggers /review when no earlier pattern matches", () => {
-		// "review this" — no earlier INTENT_PATTERNS key has "review" as a keyword
-		const command = detectIntent("review this");
-		expect(command).toBe("/review");
-	});
-
-	test("'refactor' keyword triggers /code-simplify", () => {
-		const command = detectIntent("refactor this function");
-		expect(command).toBe("/code-simplify");
-	});
-
-	test("INTENT_PATTERNS./build includes 'implementa'", () => {
-		expect(INTENT_PATTERNS["/build"]).toContain("implementa");
-	});
-
-	test("INTENT_PATTERNS./build includes 'build'", () => {
-		expect(INTENT_PATTERNS["/build"]).toContain("build");
+	test("deriveIntentKeywords filters stopwords and short words, and dedupes", () => {
+		expect(deriveIntentKeywords("foo", "the and of an at foo bar a")).toEqual(["foo", "bar"]);
 	});
 });
 
@@ -204,7 +251,7 @@ describe("chat.message — edge cases", () => {
 		expect(isEmptyMessage(undefined as unknown as string)).toBe(true);
 		expect(detectAgentMention("")).toBeNull();
 		expect(detectSlashCommand("")).toBeNull();
-		expect(detectIntent("")).toBeNull();
+		expect(detectIntent("", {})).toBeNull();
 	});
 
 	test("Scenario 5: multiple @mentions — first match wins (preserves insertion order)", () => {
@@ -235,36 +282,85 @@ describe("chat.message — edge cases", () => {
 	});
 });
 
-describe("chat.message — INTENT_PATTERNS word boundary correctness", () => {
-	test("'performance' does not match unrelated long words containing 'perform' as substring", () => {
-		// "performance" is its own keyword entry — so it DOES match /webperf
-		// But e.g. "specification" alone does NOT contain word-bounded "spec"
-		const result = detectIntent("specification");
-		// "spec" is a keyword in INTENT_PATTERNS["/spec"]
-		// With word boundary regex, "spec" matches inside "specification" since \b matches
-		// at word/non-word boundaries, and "spec" at the start of "specification" IS a word boundary.
-		// This tests that the INTENT_PATTERNS matching tolerates substrings at word boundaries.
-		// The actual /specification vs /spec distinction is handled in slash command detection (Scenario 6).
-		// For intent, "spec" matching "specification" is acceptable — it's fuzzy intent matching.
-		expect(result).toBe("/spec");
-	});
+describe("chat.message — intent keyword word boundary correctness", () => {
+	// Hand-built patterns keep these assertions deterministic — they verify
+	// the matching semantics, not the content of any particular command file.
+	const patterns: Record<string, readonly string[]> = {
+		"/ship": ["ship"],
+		"/spec": ["spec"],
+	};
 
 	test("'ship' in 'relationship' does NOT match /ship (word boundary)", () => {
-		// \b matches between 's' and 'h' in 'rela|tion|ship' — so 'ship' at end
-		// of a compound word IS at a word boundary. Actually, 'ship' is the suffix
-		// of 'relationship', and \b is between 't' and 's' (transition \w to \w = no
-		// boundary) but also between 'i' and 's' — let me check.
-		// Wait: "relationship" -> r e l a t i o n s h i p
-		// The transition 'n'->'s' is \w->\w, no boundary. 's'->'h' is \w->\w, no boundary.
-		// 'p' at end is \w->$ which IS a word boundary. So /\bship\b/i would match.
-		// This means the intent pattern IS fuzzy — this is expected behavior per the hook.
-		// The test acknowledges the regex behavior.
-		const result = detectIntent("relationship status");
-		expect(result).toBeNull();
+		// \b is between \w and \w inside "relationship" except at the string
+		// edges — "ship" at the end sits at a \w-to-end boundary, so /\bship\b/i
+		// would match. This documents that intent matching is intentionally fuzzy;
+		// the strict command/spec distinction lives in slash command detection.
+		expect(detectIntent("relationship status", patterns)).toBeNull();
 	});
 
-	test("'implementa' (Spanish) triggers /build (unique to /build patterns)", () => {
-		const result = detectIntent("implementa la funcion");
-		expect(result).toBe("/build");
+	test("'spec' inside 'specification' does NOT match the standalone keyword 'spec'", () => {
+		// \b requires a word→non-word transition on BOTH sides of the keyword;
+		// inside "specification" the 'c'→'i' transition is word→word, so there
+		// is no boundary. (The pre-refactor INTENT_PATTERNS matched because
+		// "specification" was an explicit keyword — with description-derived
+		// keywords only whole-word matches are intentional.)
+		expect(detectIntent("specification first", patterns)).toBeNull();
+	});
+
+	test("standalone 'spec' matches /spec (whole-word boundary)", () => {
+		expect(detectIntent("write the spec now", patterns)).toBe("/spec");
+	});
+
+	test("hand-built patterns only match their own keywords", () => {
+		expect(detectIntent("launch the rocket", patterns)).toBeNull();
+		expect(detectIntent("ship it", patterns)).toBe("/ship");
+	});
+});
+
+describe("chat.message — canonical intent mappings against the real template", () => {
+	// Guards the quality of description-derived intent detection. If a
+	// description change breaks a canonical mapping, this test fails —
+	// better than silently mis-suggesting a command to the user.
+	const templateCommandsDir = join(
+		import.meta.dir,
+		"..",
+		"..",
+		"..",
+		"template",
+		"obligatorio",
+		"core",
+		"commands",
+	);
+	let templatePatterns: Record<string, readonly string[]>;
+
+	beforeAll(() => {
+		templatePatterns = discoverIntentPatterns(templateCommandsDir);
+	});
+
+	test("natural-language phrases route to the canonical command", () => {
+		const cases: ReadonlyArray<readonly [string, string]> = [
+			["plan out the tasks", "/plan"],
+			["test this code", "/test"],
+			["review my code", "/review"],
+			["deploy to production", "/deploy"],
+			["performance audit my web page", "/webperf"],
+			["update the documentation", "/docs-update"],
+			["simplify this function", "/code-simplify"],
+		];
+		for (const [message, expected] of cases) {
+			expect(detectIntent(message, templatePatterns)).toBe(expected);
+		}
+	});
+
+	test("each command name is a keyword only under its own command", () => {
+		const allNames = new Set(Object.keys(templatePatterns).map((c) => c.slice(1)));
+		for (const [command, keywords] of Object.entries(templatePatterns)) {
+			const ownName = command.slice(1);
+			for (const keyword of keywords) {
+				if (allNames.has(keyword)) {
+					expect(keyword).toBe(ownName);
+				}
+			}
+		}
 	});
 });

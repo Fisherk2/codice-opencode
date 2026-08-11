@@ -15,11 +15,12 @@ describe("types.ts — DEFAULT_SDD_PIPELINE_CONFIG", () => {
 		expect(map!["/test"]).toBe("verify");
 	});
 
-	test("has intentPatterns with expected values", () => {
+	test("has intentPatterns as an empty overrides map", () => {
+		// Intent keywords come from auto-discovery at runtime; the config
+		// value only carries user overrides from opencode.json.
 		const patterns = DEFAULT_SDD_PIPELINE_CONFIG.intentPatterns;
 		expect(patterns).toBeDefined();
-		expect(patterns!["/build"]).toBeDefined();
-		expect(patterns!["/build"]!.includes("build")).toBe(true);
+		expect(Object.keys(patterns!)).toHaveLength(0);
 	});
 
 	test("has phaseSuggestions with expected values", () => {
