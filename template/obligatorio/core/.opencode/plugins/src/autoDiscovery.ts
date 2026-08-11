@@ -8,19 +8,18 @@
 //
 // All functions use only Node.js `fs` module — no Bun-specific APIs.
 // YAML frontmatter is parsed manually via regex (no external deps).
+// Intent keyword discovery lives in ./intentDiscovery.ts.
 // ---------------------------------------------------------------------------
 
 import { existsSync, readFileSync } from "node:fs";
 import { scanMarkdownFiles, scanMarkdownFilesRecursive } from "./directoryScanner";
+import { parseFieldFromFrontmatter } from "./frontmatter";
 import { mentionPatternsFor } from "./mentionPatterns";
 import { PRIMARY_AGENTS } from "./validSubagents";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-/** Regex to match the frontmatter block between `---` delimiters. */
-const FRONTMATTER_REGEX = /^---\s*\n([\s\S]*?)\n---\s*(?:\n|$)/;
 
 /** Regex to extract the `agent:` field value from raw YAML frontmatter text. */
 const AGENT_FIELD_REGEX = /^agent:\s*(.+)$/m;
@@ -57,7 +56,7 @@ export function discoverCommandAgentMap(commandsDir: string): Record<string, str
 			continue;
 		}
 
-		const agent = parseAgentFromFrontmatter(content);
+		const agent = parseFieldFromFrontmatter(content, AGENT_FIELD_REGEX);
 		if (agent !== null) {
 			map[`/${name}`] = agent;
 		}
@@ -120,46 +119,4 @@ export function discoverAgentMentionPatterns(agents: Set<string>): Record<string
 	}
 
 	return patterns;
-}
-
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Parses the `agent:` field from YAML frontmatter in a markdown file.
- *
- * Expects frontmatter to be delimited by `---` markers at the start of the
- * file. Returns `null` if no valid frontmatter is found or if the `agent:`
- * field is missing.
- *
- * @param content - The full text content of a `.md` file.
- * @returns The agent name if found, or `null` otherwise.
- */
-function parseAgentFromFrontmatter(content: string): string | null {
-	const match = content.match(FRONTMATTER_REGEX);
-	if (!match) {
-		return null;
-	}
-
-	const frontmatterText = match[1];
-	if (!frontmatterText) {
-		return null;
-	}
-
-	const agentMatch = frontmatterText.match(AGENT_FIELD_REGEX);
-	if (!agentMatch) {
-		return null;
-	}
-
-	// noUncheckedIndexedAccess (enabled in both the root and plugin tsconfigs)
-	// types regex groups as `string | undefined`, so the guard is required
-	// even though `(.+)` always captures ≥1 char.
-	const rawValue = agentMatch[1];
-	if (!rawValue) {
-		return null;
-	}
-
-	const value = rawValue.trim();
-	return value.length > 0 ? value : null;
 }
