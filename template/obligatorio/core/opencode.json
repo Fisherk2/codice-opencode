@@ -12,37 +12,37 @@
 
   "agent": {
     "huitzilopochtli": {
-      "model": "opencode/longcat-2.0-free",
+      "model": "opencode/laguna-s-2.1-free",
       "color": "#d3e22b",
       "temperature": 0.5,
       "steps": 30
     },
     "quetzalcoatl": {
-      "model": "opencode/big-pickle",
+      "model": "opencode/nemotron-3-ultra-free",
       "color": "#ffffff",
       "temperature": 0.2,
       "steps": 100
     },
     "moctezuma": {
-      "model": "opencode/nemotron-3-ultra-free",
+      "model": "opencode/big-pickle",
       "color": "#8B4513",
       "temperature": 0.1,
       "steps": 40
     },
     "tlaloc": {
-      "model": "opencode/deepseek-v4-flash-free",
+      "model": "opencode/longcat-2.0-free",
       "color": "#00ffff",
       "temperature": 0.2,
       "steps": 150
     },
     "mictlantecuhtli": {
-      "model": "opencode/laguna-s-2.1-free",
+      "model": "opencode/mimo-v2.5-free",
       "color": "#2d2d2d",
       "temperature": 0.2,
       "steps": 125
     },
     "tezcatlipoca": {
-      "model": "opencode/mimo-v2.5-free",
+      "model": "opencode/deepseek-v4-flash-free",
       "color": "#ff3134",
       "temperature": 0.1,
       "steps": 80
