@@ -8,7 +8,7 @@
 
 > **v2.0 Progress:** FEV-17 ✅ + FEV-18 ✅ (2026-08-04) + FEV-19 ✅ + FEV-20 ✅ (2026-08-05) + FEV-21 ✅ (2026-08-06) + FEV-22 ✅ (2026-08-06) + FEV-23 ✅ (2026-08-07) → **v2.0.0 released** (2026-08-07). FEV-23 (v2.0.0 Testing & Integration) is complete: 1920 tests, 30/30 E2E, coverage 95.68% overall / 99.12% production `src/`.
 >
-> **v2.1 Progress:** FEV-24 ✅ (2026-08-11) — 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD plugin intent auto-discovery, bilingual intent support. 2048 tests, 30/30 E2E. FEV-25 📋 ready to plan.
+> **v2.1 Progress:** FEV-24 ✅ (2026-08-11) — 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD plugin intent auto-discovery, bilingual intent support. 2048 tests, 30/30 E2E. FEV-25 ✅ complete.
 
 ---
 

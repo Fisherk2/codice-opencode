@@ -1,6 +1,6 @@
 # Implementation Plan: FEV-25 — Reglas de Delegación en Agentes Principales
 
-**Phase:** FEV-25 (v2.1.0) — 📋 Listo para implementar
+**Phase:** FEV-25 (v2.1.0) — ✅ Completo
 **Issue:** [#69](https://github.com/Fisherk2/codice-opencode/issues/69) — _Reglas de delegación en los agentes principales_
 **Diagnóstico:** [`docs/diagnosis/fix13-agent-delegation-rules.md`](../docs/diagnosis/fix13-agent-delegation-rules.md)
 **Date:** 2026-08-11
