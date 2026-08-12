@@ -58,7 +58,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Master of orchestration and strategic delegation</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/huitzilopochtli.md"><code>template/obligatorio/packs/main/huitzilopochtli.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/laguna-s-2.1-free</code></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/nemotron-3.5-lightning-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>MiniMax-M3</code> <code>Hy3</code> <code>Step 3.7</code> <code>GPT-5.6 Luna</code> <code>Gemini 3.5 Flash Lite</code> <code>Claude Sonnet 4.6</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> GPT-5.6 Luna as the cost-effective default (1M context). Hy3 or Gemini 3.5 Flash Lite for extreme speed/cost. Claude Sonnet 4.6 for critical routing with the full agent catalog.</td></tr>
 </table>
