@@ -352,7 +352,7 @@
       "env": {
         "MCP_JUPYTER_SESSION_MODE": "server",
         "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
-        "MCP_JUPYTER_TOKEN": "mcp-dev-token",
+        "MCP_JUPYTER_TOKEN": "{env:MCP_JUPYTER_TOKEN}",
         "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
       }
     },
