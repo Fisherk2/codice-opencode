@@ -28,7 +28,7 @@
     "test": "bun test tests/ --path-ignore-patterns=template/obligatorio/core/skills/**,skills/**",
     "test:unit": "bun test tests/unit/ --path-ignore-patterns=template/obligatorio/core/skills/**,skills/**",
     "test:integration": "bun test tests/integration/ --path-ignore-patterns=template/obligatorio/core/skills/**,skills/**",
-    "test:coverage": "bun test --coverage --path-ignore-patterns=template/obligatorio/core/skills/**,skills/**",
+    "test:coverage": "bun test tests/ --coverage --path-ignore-patterns=template/obligatorio/core/skills/**,skills/**",
     "lint": "bunx @biomejs/biome check src/ tests/",
     "format": "bunx @biomejs/biome format --write src/ tests/",
     "format:check": "bunx @biomejs/biome ci src/ tests/",
