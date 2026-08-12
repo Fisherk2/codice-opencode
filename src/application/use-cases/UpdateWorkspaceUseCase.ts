@@ -76,7 +76,7 @@ export class UpdateWorkspaceUseCase {
 
 		// Ask for confirmation if not forced. Defaults to Yes so unattended
 		// sessions can accept the update with a single keystroke (plan Phase 4).
-		if (!await this.maybeConfirmUpdate(localVersion, destinationPath, options)) {
+		if (!(await this.maybeConfirmUpdate(localVersion, destinationPath, options))) {
 			return success(undefined);
 		}
 
