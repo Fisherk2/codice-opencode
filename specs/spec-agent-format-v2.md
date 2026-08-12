@@ -166,19 +166,21 @@ and legacy subagents (`template/obligatorio/packs/sin-clasificar/typescript-pro.
 Primary agents delegate implicitly today: their RULES say "always delegate via
 `task()`" but there is no contract for how. This section is the canonical
 source of truth (SSOT) for delegation — the six primary agents in
-`template/obligatorio/packs/main/` are instances of these blocks.
+`template/obligatorio/packs/main/` carry these blocks. Within each group the
+instances are byte-identical; re-verify the spec against the agents when
+either side changes.
 
 ### Block selection rule
 
 | Agent capability | Block | Agents |
 |------------------|-------|--------|
 | `permission.task` contains `allow` entries | **A — DELEGATION PROTOCOL** | `huitzilopochtli`, `quetzalcoatl`, `tlaloc`, `mictlantecuhtli` |
-| `permission.task` is `"*": deny` | **B — SKILL ANALYSIS PROTOCOL** | `moctezuma`, `tezcatlipoca` |
+| `permission.task` is `"*": deny` | **B — SKILL LOADING PROTOCOL** | `moctezuma`, `tezcatlipoca` |
 
 ### Block A — DELEGATION PROTOCOL (delegating agents)
 
 ```markdown
-## DELEGATION PROTOCOL
+### DELEGATION PROTOCOL
 
 Before executing ANY instruction — analyze first, act second:
 
@@ -186,53 +188,50 @@ Before executing ANY instruction — analyze first, act second:
 2. **Map subagents** — which specialists in `agents/` cover this work?
 3. **Map skills** — scan `skills/` and select every skill that raises the quality of
    this task. Two or ten: the count is your judgement, the relevance is the rule.
-4. **Decide** — delegate (default) or execute yourself (last resort, only when no
-   specialist exists). <HOOK>
+4. **Decide** — delegate or execute yourself (last resort, only when no specialist exists).
 
 Every `task()` you send MUST carry these three blocks:
 
-- **Deterministic instructions** — context (why + constraints) plus small, verifiable
-  steps with explicit deliverables: paths, names, formats. Never an open-ended ask.
-- **Skills to load** — name the `skills/` the subagent must load, in priority order,
-  with one line of justification each.
-- **Goal checklist** — the acceptance rubric you will grade the returned work against,
-  including what counts as rework.
+- **Deterministic instructions** — context (why + constraints) plus small, verifiable steps with explicit deliverables: paths, names, formats. Never an open-ended ask.
+- **Skills to load** — name the `skills/` the subagent must load, in priority order, with one line of justification each.
+- **Goal checklist** — the acceptance rubric you will grade the returned work against, including what counts as rework.
 
 When the subagent returns, grade its output against that checklist. Any unmet item goes
-back to the subagent with the specific gap named — you do not silently fix it yourself.
+back to the subagent with the specific gap named.
 ```
 
-The `<HOOK>` placeholder is replaced per role by the agent file:
+Per-role constraints that originally replaced `<HOOK>` in step 4 now live in each
+agent's `### RULES` / `## COMPOSITION` sections:
 
-| Agent | Hook (replaces `<HOOK>` in step 4) |
-|-------|-------------------------------------|
-| `huitzilopochtli` | You never execute: if no specialist exists, report it and stop. |
-| `quetzalcoatl` | You delegate documentation only — never code, never tasks. |
-| `tlaloc` | Execute directly only when no specialist in `agents/` covers the stack. |
-| `mictlantecuhtli` | Delegate the audit, retain the verdict — the ruling is never delegated. |
+| Agent | Constraint location |
+|-------|---------------------|
+| `huitzilopochtli` | `### RULES` — last resort: inform the user, you cannot write directly |
+| `quetzalcoatl` | `## COMPOSITION` — you only delegate documentation — never code |
+| `tlaloc` | `### RULES` — only write directly if no specialized subagent exists |
+| `mictlantecuhtli` | `### RULES` — your verdicts are unappealable |
 
-### Block B — SKILL ANALYSIS PROTOCOL (non-delegating agents)
+### Block B — SKILL LOADING PROTOCOL (non-delegating agents)
 
 ```markdown
-## SKILL ANALYSIS PROTOCOL
+### SKILL LOADING PROTOCOL
 
-You do not delegate (`task` is denied). Before executing ANY instruction — analyze
+Before executing ANY instruction — analyze
 first, act second:
 
 1. **Understand** the requested outcome, its constraints, and what "done" means.
-2. **Map skills** — scan `skills/` and load every skill that raises the quality of this
-   task. Two or ten: the count is your judgement, the relevance is the rule.
+2. **Map skills** — scan `skills/` and load every skill that raises the quality of this task. The number of skills to load is your judgement, the relevance is the rule.
 3. **Define the goal checklist** — the acceptance criteria your own output must satisfy.
 4. **Self-review** against that checklist before returning; state any item you could not meet.
-
-If the work needs a specialist or write access you do not hold, name the agent or command
-that should take it instead of improvising.
 ```
+
+Non-delegation is enforced by `permission.task: "*": deny` in the frontmatter and
+the `### RULES` bullet "**NEVER** delegate to subagents" — not by prose in the block.
 
 ### Line budget
 
 Primary agent bodies must stay ≤100 lines (excluding YAML frontmatter) and ≤150 lines
-total. Block A ≈ 20 lines, Block B ≈ 12 lines — both fit within the existing budgets.
+total. Block A ≈ 18 lines, Block B ≈ 9 lines — both fit within the existing budgets.
+Bullets in the three-block list and Block B step 2 render as single long lines.
 
 ---
 
