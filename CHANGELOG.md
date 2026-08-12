@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.1.0] — 2026-08-07
+## [2.1.0] — 2026-08-12
 
 ### Added
 - **4 New Agent-Orchestration Commands:**
@@ -28,11 +28,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     architecture, data flow, scalability, security, testability, documentation).
     Generates prioritized `TECH_DEBT.md` with Critical/High/Medium/Low findings.
     Agent: `quetzalcoatl`.
+- **SDD Plugin Intent Auto-Discovery (FEV-24, Issue #53):** Filesystem-based
+  detection of command keywords replaces hardcoded `INTENT_PATTERNS` map.
+  Auto-discovers keywords from `commands/*.md` frontmatter, merges with
+  Spanish intent extensions and user overrides.
+- **Bilingual Intent Support:** Spanish-language intent keywords for all
+  17 commands. Keywords like "especificar" route to `/spec`, "sincronizar"
+  routes to `/sync`. Uses Unicode-aware tokenization with stopword filtering.
 - **FEV-24-D Integration:** `/diagnosis` now reads `docs/TECH_DEBT.md` as
   authoritative input for severity assessment and finding references.
-- **E2E Smoke Test:** New `tests/e2e/31-commands-fe24-smoke.sh` validates
-  frontmatter schema, body structure, and cross-command integration (e.g.,
-  diagnosis → TECH_DEBT).
+- **Command Frontmatter Validation:** Schema-validated YAML frontmatter for all commands. New `commandFrontmatterValidator` ensures `description`, `agent`, and optional fields are correct. Tests in `tests/unit/domain/command-frontmatter-validation.test.ts` and `tests/unit/plugins/intentDiscovery.test.ts`.
 - **Agent Delegation Protocol (FEV-25, Issue #69):** The six primary agents now
   analyze before acting — mapping the available subagents in `agents/` and the
   relevant skills in `skills/` before executing any instruction.
@@ -55,10 +60,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - N/A (no removals in v2.1.0)
 
 ### Fixed
-- N/A (no fixes in v2.1.0)
+- **Progress bar double-advance:** `createProgressCallback` now advances the progress bar once per staged file (on `stage_complete`) instead of twice (was advancing on both `stage_start` and `stage_complete`).
+- **Confirm prompt default alignment:** `ClackPromptsAdapter.confirm()` now defaults to `No` when `defaultYes` is unspecified, matching `confirmOverwrite()`'s defensive default. `UpdateWorkspaceUseCase` explicitly passes `true` to preserve the update confirmation UX.
+- **UpdateWorkspaceUseCase refactor:** Extracted `maybeConfirmUpdate` and `finishUpdate` to `updateHelpers.ts` for single-responsibility compliance.
 
 ### Security
-- N/A (no security changes in v2.1.0)
+- **Git-workflow-master permission tightening:** `write` and `edit` permissions changed from `allow` to `ask`. Bash allowlist restricted to safe read-only commands plus specific git operations.
+- **Confirm-default-No safety:** Destructive operations default to "No" confirmation, preventing accidental overwrites.
 
 ## [2.0.0] — 2026-08-07
 
