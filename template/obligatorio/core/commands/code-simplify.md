@@ -10,7 +10,7 @@ Simplify and refactory code to improve readability and maintainability on recent
 1. Read `AGENTS.md` or @docs/CODE_STYLE.md and check project conventions
 2. Identify the target code — recent changes unless a broader scope is specified
 3. Understand the code's purpose, callers, edge cases, and test coverage before touching it
-4. **Delegate** to `codebase-archaeologist` and appropriate subagents in parallel — pass the code scope, simplification goals, skills to load, and project conventions from `AGENTS.md` or @docs/CODE_STYLE.md
+4. **Delegate** to `code-reviewer`, `codebase-archaeologist` and appropriate subagents in parallel — pass the code scope, simplification goals, skills to load, and project conventions from `AGENTS.md` or @docs/CODE_STYLE.md
 5. Subagents should scan for simplification opportunities loading `clean-code` skill for readability principles and `refactoring-patterns` skill for named refactoring transformations:
    - Deep nesting → guard clauses or extracted helpers
    - Long functions → split by responsibility

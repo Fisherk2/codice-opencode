@@ -5,7 +5,7 @@ agent: quetzalcoatl
 
 ## Pre-Flight: Analyze Documentation State
 
-Scan the project for existing documentation and identify what's present, what's missing, and what may be outdated:
+**Delegate** `codebase-archaeologist` subagent to scan the project for existing documentation and identify what's present, what's missing, and what may be outdated respect to the current project state:
 
 1. Read @SPEC.md — does it reflect current project scope? exceeds >200 lines?
 2. Scan @docs/ — list all documents with last-modified dates
