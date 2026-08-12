@@ -76,16 +76,8 @@ export class UpdateWorkspaceUseCase {
 
 		// Ask for confirmation if not forced. Defaults to Yes so unattended
 		// sessions can accept the update with a single keystroke (plan Phase 4).
-		if (!options?.force) {
-			const confirmed = await confirmOverwrite(
-				this.fileSystem,
-				this.userPrompt,
-				`Update workspace in "${destinationPath}"? Packs: ${localVersion.installedPacks.join(", ") || "(none)"}. Continue?`,
-				"Update cancelled by user.",
-				undefined,
-				true,
-			);
-			if (!confirmed) return success(undefined);
+		if (!await this.maybeConfirmUpdate(localVersion, destinationPath, options)) {
+			return success(undefined);
 		}
 
 		// Informational GitHub check — never blocks the update
@@ -124,24 +116,7 @@ export class UpdateWorkspaceUseCase {
 		}
 
 		const safeVersion = this.resolveNewVersion(options);
-
-		// Update skips opcional entirely (spec §6.1): optionalSelections resets.
-		const versionResult = await writeVersionFileSafe(
-			this.fileSystem,
-			{
-				version: safeVersion,
-				installedPacks: [...finalPacks],
-				installedAt: new Date().toISOString(),
-				optionalSelections: [],
-			},
-			"Update",
-		);
-
-		if (versionResult.ok) {
-			this.userPrompt.showSuccess(
-				`Workspace updated to v${safeVersion}. Packs: ${finalPacks.join(", ")}`,
-			);
-		}
+		const versionResult = await this.finishUpdate(safeVersion, finalPacks);
 		return versionResult;
 	}
 
@@ -161,6 +136,58 @@ export class UpdateWorkspaceUseCase {
 			return null;
 		}
 		return localVersion;
+	}
+
+	/**
+	 * Ask the user for confirmation when the update is not forced.
+	 * Defaults to Yes so unattended sessions can accept the update
+	 * with a single keystroke (plan Phase 4).
+	 */
+	private async maybeConfirmUpdate(
+		localVersion: WorkspaceVersion,
+		destinationPath: string,
+		options?: UpdateWorkspaceOptions,
+	): Promise<boolean> {
+		if (!options?.force) {
+			const confirmed = await confirmOverwrite(
+				this.fileSystem,
+				this.userPrompt,
+				`Update workspace in "${destinationPath}"? Packs: ${localVersion.installedPacks.join(", ") || "(none)"}. Continue?`,
+				"Update cancelled by user.",
+				undefined,
+				true,
+			);
+			if (!confirmed) return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Write the version file and show success message after a successful update.
+	 * Updates the .codice-version with the new version and installed packs,
+	 * then skips optional files (optionalSelections resets per spec §6.1).
+	 */
+	private async finishUpdate(
+		safeVersion: string,
+		finalPacks: readonly string[],
+	): Promise<Result<void, Error>> {
+		const versionResult = await writeVersionFileSafe(
+			this.fileSystem,
+			{
+				version: safeVersion,
+				installedPacks: [...finalPacks],
+				installedAt: new Date().toISOString(),
+				optionalSelections: [],
+			},
+			"Update",
+		);
+
+		if (versionResult.ok) {
+			this.userPrompt.showSuccess(
+				`Workspace updated to v${safeVersion}. Packs: ${finalPacks.join(", ")}`,
+			);
+		}
+		return versionResult;
 	}
 
 	/** Collaborators for the status checks, derived from the injected deps. */
