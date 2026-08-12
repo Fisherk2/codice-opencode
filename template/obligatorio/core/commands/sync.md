@@ -43,8 +43,9 @@ For mode **full-sync**:
 
 For mode **incremental-sync**:
 1. Read `docs/.codice-sync-state.json` (if exists) to find the last synced commit (`lastCommit` field)
-2. Use `git diff <lastCommit>..HEAD` and `<lastCommit>..origin/main` to detect changes
-3. Show preview; apply strategy if approved
+2. **Validate** `lastCommit` matches `/^[0-9a-f]{7,40}$/`. If invalid or missing, fall back to `full-sync` mode with a warning.
+3. Use `git diff <lastCommit>..HEAD` and `<lastCommit>..origin/main` to detect changes
+4. Show preview; apply strategy if approved
 
 For mode **dry-run**:
 1. Run all `git fetch` / `git status` / `git diff` commands
