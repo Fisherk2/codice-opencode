@@ -6,16 +6,11 @@ import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
-import {
-	checkWritable,
-	confirmOverwrite,
-	createProgressCallback,
-	wrapMergeError,
-	writeVersionFileSafe,
-} from "../helpers";
+import { checkWritable, createProgressCallback, wrapMergeError } from "../helpers";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { isPreV2Version, parseVersionData, resolveUpdatePacks } from "./updateFlow";
+import { finishUpdate, maybeConfirmUpdate } from "./updateHelpers";
 import { notifyIfUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
 
 /**
@@ -76,7 +71,15 @@ export class UpdateWorkspaceUseCase {
 
 		// Ask for confirmation if not forced. Defaults to Yes so unattended
 		// sessions can accept the update with a single keystroke (plan Phase 4).
-		if (!(await this.maybeConfirmUpdate(localVersion, destinationPath, options))) {
+		if (
+			!(await maybeConfirmUpdate(
+				this.fileSystem,
+				this.userPrompt,
+				localVersion,
+				destinationPath,
+				options,
+			))
+		) {
 			return success(undefined);
 		}
 
@@ -116,7 +119,12 @@ export class UpdateWorkspaceUseCase {
 		}
 
 		const safeVersion = this.resolveNewVersion(options);
-		const versionResult = await this.finishUpdate(safeVersion, finalPacks);
+		const versionResult = await finishUpdate(
+			this.fileSystem,
+			this.userPrompt,
+			safeVersion,
+			finalPacks,
+		);
 		return versionResult;
 	}
 
@@ -136,58 +144,6 @@ export class UpdateWorkspaceUseCase {
 			return null;
 		}
 		return localVersion;
-	}
-
-	/**
-	 * Ask the user for confirmation when the update is not forced.
-	 * Defaults to Yes so unattended sessions can accept the update
-	 * with a single keystroke (plan Phase 4).
-	 */
-	private async maybeConfirmUpdate(
-		localVersion: WorkspaceVersion,
-		destinationPath: string,
-		options?: UpdateWorkspaceOptions,
-	): Promise<boolean> {
-		if (!options?.force) {
-			const confirmed = await confirmOverwrite(
-				this.fileSystem,
-				this.userPrompt,
-				`Update workspace in "${destinationPath}"? Packs: ${localVersion.installedPacks.join(", ") || "(none)"}. Continue?`,
-				"Update cancelled by user.",
-				undefined,
-				true,
-			);
-			if (!confirmed) return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Write the version file and show success message after a successful update.
-	 * Updates the .codice-version with the new version and installed packs,
-	 * then skips optional files (optionalSelections resets per spec §6.1).
-	 */
-	private async finishUpdate(
-		safeVersion: string,
-		finalPacks: readonly string[],
-	): Promise<Result<void, Error>> {
-		const versionResult = await writeVersionFileSafe(
-			this.fileSystem,
-			{
-				version: safeVersion,
-				installedPacks: [...finalPacks],
-				installedAt: new Date().toISOString(),
-				optionalSelections: [],
-			},
-			"Update",
-		);
-
-		if (versionResult.ok) {
-			this.userPrompt.showSuccess(
-				`Workspace updated to v${safeVersion}. Packs: ${finalPacks.join(", ")}`,
-			);
-		}
-		return versionResult;
 	}
 
 	/** Collaborators for the status checks, derived from the injected deps. */
