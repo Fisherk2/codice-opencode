@@ -148,8 +148,8 @@ describe("createProgressCallback", () => {
 
 		expect(prompt.stub.showProgressBar).toHaveBeenCalledTimes(1);
 		expect(prompt.stub.showProgressBar).toHaveBeenCalledWith(33, "Clean install...");
-		expect(prompt.stub.updateProgress).toHaveBeenCalledTimes(1);
-		expect(prompt.stub.updateProgress).toHaveBeenCalledWith(0, "file1.md");
+		// stage_start only initializes the bar; advancement happens on stage_complete
+		expect(prompt.stub.updateProgress).toHaveBeenCalledTimes(0);
 	});
 
 	test("does not re-setup progress bar on subsequent stage_start events", () => {
@@ -160,7 +160,7 @@ describe("createProgressCallback", () => {
 		callback({ type: "stage_start", current: 1, total: 33, filePath: "file2.md" });
 
 		expect(prompt.stub.showProgressBar).toHaveBeenCalledTimes(1);
-		expect(prompt.stub.updateProgress).toHaveBeenCalledTimes(2);
+		expect(prompt.stub.updateProgress).toHaveBeenCalledTimes(0);
 	});
 
 	test("updates progress on stage_complete event", () => {
@@ -230,7 +230,7 @@ describe("createProgressCallback", () => {
 
 		// Must not throw — the catch block intercepts and completes the bar
 		expect(() =>
-			callback({ type: "stage_start", current: 0, total: 33, filePath: "file1.md" }),
+			callback({ type: "stage_complete", current: 0, total: 33, filePath: "file1.md" }),
 		).not.toThrow();
 
 		expect(prompt.stub.completeProgress).toHaveBeenCalledTimes(1);
