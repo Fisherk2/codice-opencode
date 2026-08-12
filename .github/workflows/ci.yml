@@ -57,6 +57,9 @@ jobs:
       - name: Run tests (unit + integration)
         run: just test
 
+      - name: Run plugin unit tests
+        run: just test-plugin-unit
+
       - name: Run E2E tests (Linux only — bash scripts)
         if: runner.os == 'Linux'
         run: just test-e2e
