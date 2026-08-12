@@ -8,11 +8,37 @@ permission:
   write: ask
   edit: ask
   bash:
-    "git *": allow
+    "git status": allow
+    "git status *": allow
+    "git diff *": allow
+    "git log *": allow
+    "git branch": allow
+    "git branch -r": allow
+    "git branch -a": allow
+    "git branch -a *": allow
+    "git show *": allow
+    "git fetch *": allow
+    "git pull *": allow
+    "git rebase *": allow
+    "git merge *": allow
+    "git checkout *": allow
+    "git switch *": allow
+    "git stash *": allow
+    "git commit *": allow
+    "git add *": allow
+    "git reset *": allow
+    "git tag *": allow
+    "git remote *": allow
+    "git reflog": allow
+    "git shortlog *": allow
+    "git bisect *": allow
+    "git blame *": allow
+    "git cherry-pick *": allow
+    "git worktree *": allow
+    "git apply *": deny
+    "git am *": deny
     "less *": allow
     "more *": allow
-    "curl *": allow
-    "wget *": allow
   grep: allow
   glob: allow
   skill: allow
