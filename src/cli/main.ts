@@ -72,16 +72,18 @@ export async function runMode(
 	options: CliOptions,
 ): Promise<Result<void, Error>> {
 	const execOptions = { force: options.force, version: VERSION };
+	const packs = resolvePacks(options); // Compute packs once before branching
+
 	if (mode === "clean") {
 		return deps.cleanInstall.execute(destinationPath, {
 			...execOptions,
-			packs: resolvePacks(options),
+			packs,
 		});
 	}
 	if (mode === "project") {
 		return deps.projectInstall.execute(destinationPath, {
 			...execOptions,
-			packs: resolvePacks(options),
+			packs,
 		});
 	}
 	return deps.updateWorkspace.execute(destinationPath, {
