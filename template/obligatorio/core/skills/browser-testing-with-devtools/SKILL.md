@@ -32,7 +32,7 @@ Use Chrome DevTools MCP to give your agent eyes into the browser. This bridges t
   "mcpServers": {
     "chrome-devtools": {
       "command": "npx",
-      "args": ["@anthropic/chrome-devtools-mcp@latest"]
+      "args": ["chrome-devtools-mcp@1.7.0"]
     }
   }
 }
