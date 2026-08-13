@@ -269,19 +269,24 @@ describe("mergeIntentKeywordLayers", () => {
 	});
 
 	test("overrides replace the entire keyword list per key", () => {
+		const warnMessages: string[] = [];
 		const result = mergeIntentKeywordLayers(
 			{ "/test": ["test", "write"] },
 			{ "/test": ["probar"] },
 			{ "/test": ["mi keyword"] },
+			(msg) => warnMessages.push(msg),
 		);
 		expect(result["/test"]).toEqual(["mi keyword"]);
+		// The override dropped the command's own name keyword — the replace
+		// semantics warn about the footgun instead of silently regressing.
+		expect(warnMessages.some((m) => m.includes("/test") && m.includes("test"))).toBe(true);
 	});
 
 	test("does not mutate the input maps", () => {
 		const discovered = { "/test": ["test"] };
 		const extensions = { "/test": ["probar"] };
 		const overrides = { "/test": ["mi keyword"] };
-		mergeIntentKeywordLayers(discovered, extensions, overrides);
+		mergeIntentKeywordLayers(discovered, extensions, overrides, () => {});
 		expect(discovered["/test"]).toEqual(["test"]);
 		expect(extensions["/test"]).toEqual(["probar"]);
 		expect(overrides["/test"]).toEqual(["mi keyword"]);
