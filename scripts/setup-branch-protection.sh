@@ -37,9 +37,9 @@ protect_branch() {
   "required_status_checks": {
     "strict": true,
     "contexts": [
-      "CI / quality (ubuntu-latest)",
-      "CI / quality (macos-latest)",
-      "CI / quality (windows-latest)"
+      "quality (ubuntu-latest)",
+      "quality (macos-latest)",
+      "quality (windows-latest)"
     ]
   },
   "enforce_admins": false,
