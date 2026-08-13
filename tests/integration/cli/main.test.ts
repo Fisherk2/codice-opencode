@@ -365,58 +365,70 @@ describe("main() — SIGINT handling", () => {
 		return null;
 	}
 
-	it("registers SIGINT handler on process.on", async () => {
-		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
+	it(
+		"registers SIGINT handler on process.on",
+		async () => {
+			process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
 
-		try {
-			await main();
-		} catch {
-			// OK — main may reject if install finishes or fails
-		}
+			try {
+				await main();
+			} catch {
+				// OK — main may reject if install finishes or fails
+			}
 
-		expect(capturedHandlers.length).toBeGreaterThan(0);
-		// Verify the first exit was SUCCESS (install completed) or ERROR (install failed)
-		expect(sigintExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
-	});
+			expect(capturedHandlers.length).toBeGreaterThan(0);
+			// Verify the first exit was SUCCESS (install completed) or ERROR (install failed)
+			expect(sigintExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
+		},
+		15_000,
+	); // 15s timeout: Windows clean install is slower due to symlink/junction handling
 
-	it("calls process.exit with EXIT_INTERRUPT on SIGINT", async () => {
-		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
+	it(
+		"calls process.exit with EXIT_INTERRUPT on SIGINT",
+		async () => {
+			process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
 
-		try {
-			await main();
-		} catch {
-			// OK
-		}
+			try {
+				await main();
+			} catch {
+				// OK
+			}
 
-		const callCountBefore = sigintExitMock.mock.calls.length;
-		const handler = await findExitTriggeringHandler();
+			const callCountBefore = sigintExitMock.mock.calls.length;
+			const handler = await findExitTriggeringHandler();
 
-		expect(handler).not.toBeNull();
-		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
-		const lastCall = sigintExitMock.mock.calls[callCountBefore] as unknown[];
-		expect(lastCall[0]).toBe(EXIT_INTERRUPT);
-	});
+			expect(handler).not.toBeNull();
+			expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
+			const lastCall = sigintExitMock.mock.calls[callCountBefore] as unknown[];
+			expect(lastCall[0]).toBe(EXIT_INTERRUPT);
+		},
+		15_000,
+	);
 
-	it("double SIGINT is idempotent — only first triggers exit", async () => {
-		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
+	it(
+		"double SIGINT is idempotent — only first triggers exit",
+		async () => {
+			process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
 
-		try {
-			await main();
-		} catch {
-			// OK
-		}
+			try {
+				await main();
+			} catch {
+				// OK
+			}
 
-		const callCountBefore = sigintExitMock.mock.calls.length;
-		const handler = await findExitTriggeringHandler();
+			const callCountBefore = sigintExitMock.mock.calls.length;
+			const handler = await findExitTriggeringHandler();
 
-		// First SIGINT already fired inside the search — mock incremented once
-		expect(handler).not.toBeNull();
-		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
+			// First SIGINT already fired inside the search — mock incremented once
+			expect(handler).not.toBeNull();
+			expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
 
-		// Second SIGINT — same handler is idempotent
-		await handler!();
-		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
-	});
+			// Second SIGINT — same handler is idempotent
+			await handler!();
+			expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
+		},
+		15_000,
+	);
 });
 
 // ---------------------------------------------------------------------------
