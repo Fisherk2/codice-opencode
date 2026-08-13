@@ -68,6 +68,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Git-workflow-master permission tightening:** `write` and `edit` permissions changed from `allow` to `ask`. Bash allowlist restricted to safe read-only commands plus specific git operations.
 - **Confirm-default-No safety:** Destructive operations default to "No" confirmation, preventing accidental overwrites.
 
+## [2.1.0-beta.1] — 2026-08-12
+
+Pre-release for v2.1.0. Package: `@fisherk2-dev/codice`. Previous stable release: v2.0.0.
+
+This pre-release includes the full v2.1.0 feature set (4 new commands, SDD plugin intent auto-discovery, bilingual intents, agent delegation protocol) plus CI/CD hardening and security fixes: 2052 tests passing, 31/31 E2E scenarios.
+
+### Added
+
+- **4 New Agent-Orchestration Commands:** `/sync` (FEV-24-A), `/migrate` (FEV-24-B, OPTIONAL), `/deploy` (FEV-24-C), `/analyze` (FEV-24-D). Full details in the [2.1.0](#210--2026-08-12) section.
+- **SDD Plugin Intent Auto-Discovery (FEV-24, Issue #53):** Filesystem-based detection of command keywords replaces hardcoded `INTENT_PATTERNS` map.
+- **Bilingual Intent Support:** Spanish-language intent keywords for all 17 commands with Unicode-aware tokenization and stopword filtering.
+- **Agent Delegation Protocol (FEV-25, Issue #69):** Six primary agents now analyze before acting — mapping subagents and skills before executing, with `task()` calls carrying deterministic instructions, skills to load, and goal checklists.
+- **CI/CD Hardening:** Branch protection for `main` and `develop`, PR/Issue templates, pinned GitHub Actions by SHA, OIDC npm provenance, `just test-packaging` + `just check-plugin` + `just test-plugin-integration` wired into CI, `bun pm scan` security audit, reusable quality gate for releases, and post-publish smoke test verification.
+
+### Changed
+
+- **Command count:** 13 → 17 (4 new commands added to `template/obligatorio/core/commands/`).
+
+### Fixed
+
+- **Chrome DevTools MCP reference:** Broken `@anthropic/chrome-devtools-mcp@latest` reference replaced with pinned `chrome-devtools-mcp@1.7.0` (the `@anthropic/` scoped package returns 404 on npm).
+- **Git workflow agent permissions:** Explicit git command allowlists with `git apply *` / `git am *` denied in `git-workflow-master.md` and `git-workflow-manager.md`.
+- **Jupyter token handling:** `MCP_JUPYTER_TOKEN` moved to env indirection instead of a literal placeholder.
+- **Sync command `lastCommit` validation:** Malformed or missing `lastCommit` rejected with actionable error.
+
+### Security
+
+- **Branch protection enforced** on `main` and `develop` (required status checks, no force pushes, PR flow required).
+- **npm publish with provenance:** OIDC-based trusted publishing with `--provenance` replaces static token-only flow.
+
 ## [2.0.0] — 2026-08-07
 
 Final release of v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release: v1.2.0.
