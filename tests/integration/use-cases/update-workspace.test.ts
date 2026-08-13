@@ -464,7 +464,7 @@ describe("UpdateWorkspaceUseCase", () => {
 		});
 
 		it("should allow update when version >= 2.0.0", async () => {
-			const { useCase, calls } = createUpdateFixture();
+			const { useCase, calls, prompt } = createUpdateFixture();
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
@@ -473,6 +473,11 @@ describe("UpdateWorkspaceUseCase", () => {
 			const versionData = JSON.parse(calls.writeVersionFile[0]!);
 			expect(versionData.version).toBe(BUNDLED_TEST_VERSION);
 			expect(versionData.installedPacks).toEqual(["software-development"]);
+			// The completion message must report the new version and the packs
+			// applied, so users can confirm the update took effect (FEV-24).
+			expect(prompt.showSuccess).toHaveBeenCalledWith(
+				expect.stringMatching(/Workspace updated to v\d+\.\d+\.\d+.*Packs:/),
+			);
 		});
 
 		it("should update only installed packs on Option A", async () => {
