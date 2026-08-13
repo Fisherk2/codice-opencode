@@ -18,10 +18,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  quality:
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ github.ref }}
+
   release:
+    needs: quality
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -96,11 +103,11 @@ jobs:
           trap 'rm -f .npmrc' EXIT
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
           NPM_TAG="${{ steps.release_type.outputs.npm_tag }}"
-          PUBLISH_OUTPUT=$(npm publish --tag "${NPM_TAG}" 2>&1) && PUBLISH_EXIT=0 || PUBLISH_EXIT=$?
+          PUBLISH_OUTPUT=$(npm publish --tag "${NPM_TAG}" --provenance 2>&1) && PUBLISH_EXIT=0 || PUBLISH_EXIT=$?
           echo "$PUBLISH_OUTPUT"
           if [ $PUBLISH_EXIT -ne 0 ]; then
             if echo "$PUBLISH_OUTPUT" | grep -q "cannot publish over the previously published version"; then
-              echo "Version already published — skipping."
+              echo "Version already published -- skipping."
             else
               echo "npm publish failed with exit code $PUBLISH_EXIT"
               exit $PUBLISH_EXIT
