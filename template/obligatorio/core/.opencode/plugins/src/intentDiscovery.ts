@@ -15,6 +15,12 @@ import { scanMarkdownFiles } from "./directoryScanner";
 import { parseFieldFromFrontmatter } from "./frontmatter";
 import { STOPWORDS } from "./stopwords";
 
+/** Default warning sink for override footguns — non-intrusive debug channel. */
+const DEFAULT_WARN = (message: string): void => {
+	// biome-ignore lint/suspicious/noConsole: intentional plugin configuration warning
+	console.debug(`[intentDiscovery] ${message}`);
+};
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -32,15 +38,21 @@ const DESCRIPTION_FIELD_REGEX = /^description:\s*(.+)$/m;
  * 3. `overrides` — user-provided keywords that REPLACE the entire list for a
  *    command key (per-key override, not keyword merge; see types.ts JSDoc).
  *
+ * Overrides that omit the command's own name keyword emit a warning via
+ * `onWarn` (default: `console.debug`) — the replace semantics silently drop
+ * the most reliable trigger for the command otherwise.
+ *
  * @param discovered - Baseline keyword map (from discoverIntentPatterns).
  * @param extensions - Keyword lists appended to matching commands.
  * @param overrides - Keyword lists that replace matching commands entirely.
+ * @param onWarn - Warning sink for override footguns; defaults to console.debug.
  * @returns A new keyword map with all three layers applied.
  */
 export function mergeIntentKeywordLayers(
 	discovered: Record<string, readonly string[]>,
 	extensions: Record<string, readonly string[]>,
 	overrides: Record<string, readonly string[]>,
+	onWarn: (message: string) => void = DEFAULT_WARN,
 ): Record<string, readonly string[]> {
 	const merged: Record<string, readonly string[]> = { ...discovered };
 
@@ -56,6 +68,16 @@ export function mergeIntentKeywordLayers(
 	// Overrides replace the entire keyword list for a command key.
 	for (const [command, keywords] of Object.entries(overrides)) {
 		merged[command] = keywords;
+		// Replace semantics drop the discovered list — warn when the command's
+		// own name keyword disappears so intent detection for it does not
+		// regress silently (e.g. {"/spec": ["especificar"]} loses English "spec").
+		const ownName = command.replace(/^\//, "").toLowerCase();
+		if (ownName.length > 0 && !keywords.some((keyword) => keyword.toLowerCase() === ownName)) {
+			onWarn(
+				`Intent override for "${command}" omits its own name keyword "${ownName}" — ` +
+					`the command-name trigger is replaced by the override list.`,
+			);
+		}
 	}
 
 	return merged;
