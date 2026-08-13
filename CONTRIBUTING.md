@@ -55,14 +55,15 @@ just test           # All unit + integration tests
 just test-unit      # Domain logic only (pure functions, entities)
 just test-integration  # Adapters + use cases with mocked externals
 just test-packaging # npm tarball structure validation (5 scenarios)
-just test-e2e       # CLI against isolated directories (15 scenarios)
+just test-e2e       # CLI against isolated directories (30 scenarios)
 just test-watch     # Watch mode for development
 just test-coverage  # With coverage report
 ```
 
 - **Unit tests:** > 90% coverage target. Domain layer only.
 - **Integration tests:** Adapters with real temp dirs. No live network calls.
-- **E2E tests:** `bun run src/cli/main.ts`, isolated dirs, 15 scenarios. Bash scripts (Linux CI only).
+- **E2E tests:** `bun run src/cli/main.ts`, isolated dirs, 30 scenarios. Bash scripts (Linux CI only).
+- **Pack flags:** `--packs <list>` (comma-separated), `--packs-all` (all 8 selectable), `--update-add-packs <list>` (add packs during update).
 
 ---
 
@@ -83,11 +84,15 @@ This project follows a **3-stage pipeline**: `develop` (integration) → `main` 
 
 ### Critical Rules
 
-1. **🛑 Never work directly on `develop` or `main`.** All changes go through a branch and PR. Direct commits are forbidden.
-2. **✅ Always verify CI on every PR.** A failure on any platform blocks the merge — regardless of whether it is a pre-release (`beta`, `rc`) or production release. Fix pre-release CI failures before tagging production; they **will** recur.
+1. **🛑 Never work directly on `develop` or `main`.** All changes go through a branch and PR. Direct commits are forbidden. Branch protection rules block direct pushes and force pushes to both `main` and `develop`.
+2. **✅ Always verify CI on every PR.** Required status checks (`CI / quality (ubuntu-latest)`, `CI / quality (macos-latest)`, `CI / quality (windows-latest)`) must pass before merging. A failure on any platform blocks the merge — regardless of whether it is a pre-release (`beta`, `rc`) or production release. Fix pre-release CI failures before tagging production; they **will** recur.
 3. **🔄 Post-release sync `develop` ← `main` is mandatory.** Skipping it causes divergent branches and merge conflicts — even in single-contributor projects. Sync after EVERY merge to `main`:
    ```bash
    git checkout develop && git merge main && git push origin develop
+   ```
+4. **🔒 Automated Branch Protection.** To apply or refresh branch protection rules on `main` and `develop`, run:
+   ```bash
+   bash scripts/setup-branch-protection.sh
    ```
 
 ### Normal Flow (`feat/` · `fix/` · `chore/` · `docs/` · `refactor/`)
@@ -207,4 +212,4 @@ See [docs/wiki-source/README.md](docs/wiki-source/README.md) for the full proced
 
 ---
 
-*Last revised: 2026-07-30*
+*Last revised: 2026-08-07*

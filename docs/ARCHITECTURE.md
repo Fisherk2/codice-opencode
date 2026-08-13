@@ -51,6 +51,11 @@ graph TD
         TUI[ClackPromptsAdapter]
         BSC[BunSymlinkCreator]
         BGC[BunGitignoreCreator]
+        VL[VerboseLogger]
+        PPO[packPromptOptions]
+        VIM[versionInfoMessages]
+        DW[directoryWalker]
+        PR[pathResolver]
 
         FS -->|delegates| TR
         FS -->|delegates| AS
@@ -60,21 +65,35 @@ graph TD
         UC1[CleanInstallUseCase]
         UC2[ProjectInstallUseCase]
         UC3[UpdateWorkspaceUseCase]
+        IUCB[InstallUseCaseBase]
         ISP[ISymlinkCreator]
         IGC[IGitignoreCreator]
         IST[IStagingSystem]
         HLP[helpers.ts]
         PI[postInstall.ts]
+        ISUM[installSummary.ts]
+        PO[packOptions.ts]
+        UF[updateFlow.ts]
+        USC[updateStatusCheck.ts]
+
+        UC1 -->|extends| IUCB
+        UC2 -->|extends| IUCB
     end
 
     subgraph "Domain Layer"
         ENT1[FileRule Entity]
         ENT2[WorkspaceVersion Entity]
+        ENT3[FileRuleManifest]
+        ENT4[FileRuleManifestData]
         SRV1[FileMergeEngine Service]
         SRV2[VersionComparator Service]
+        SRV3[mergeRules]
+        SRV4[stagePlanner]
+        SRV5[treeDiff]
         ERR[SymlinkError]
         ERR2[GitignoreError]
         ERR3[MergeError]
+        PE[ProgressEvent]
     end
 
     TUI -->|User Input| UC1
@@ -83,8 +102,9 @@ graph TD
     
     UC1 -->|Execute| SRV1
     UC2 -->|Execute| SRV1
-    UC3 -->|Check Version| SRV2
-    UC3 -->|Execute| SRV1
+    UC3 -->|Check Version| USC
+    UC3 -->|Execute| UF
+    UF -->|Execute| SRV1
     
     UC1 -->|Post-install| ISP
     UC1 -->|Post-install| IGC
@@ -101,15 +121,18 @@ graph TD
 
 ### Domain Layer (`src/domain/`)
 - Pure business logic, zero external dependencies
-- Entities: FileRule, WorkspaceVersion
-- Services: FileMergeEngine, VersionComparator
-- Types: SymlinkError, GitignoreError, MergeError
+- Entities: FileRule, FileRuleManifest, FileRuleManifestData, WorkspaceVersion
+- Services: FileMergeEngine, VersionComparator, mergeRules, stagePlanner, treeDiff
+- Types: SymlinkError, GitignoreError, MergeError, ProgressEvent, errorTypeGuards
 - Error handling via Result<T, Error>
 
 ### Application Layer (`src/application/`)
 - Use cases orchestrate domain services
 - Port interfaces: IFileSystem, IStagingSystem, IGitHubClient, IUserPrompt, ISymlinkCreator, IGitignoreCreator
 - Shared helpers: helpers.ts (shared guard logic), postInstall.ts (post-installation orchestration)
+- Install summary: installSummary.ts (pre-merge summary computation), packOptions.ts (pack selection definitions)
+- Update flow: updateFlow.ts (merge execution), updateStatusCheck.ts (version classification)
+- Template Method: InstallUseCaseBase (shared skeleton for Clean/Project install)
 - No business rules, only coordination
 
 ### Infrastructure Layer (`src/infrastructure/`)
@@ -121,12 +144,22 @@ graph TD
 - ClackPromptsAdapter: TUI interactions via @clack/prompts
 - BunSymlinkCreator: Post-installation symlink generation implementing ISymlinkCreator
 - BunGitignoreCreator: Post-installation gitignore generation implementing IGitignoreCreator
+- VerboseLogger: Structured verbose logging adapter
+- packPromptOptions: Pack selection prompt option definitions
+- versionInfoMessages: Version info display messages
+- directoryWalker: Recursive directory traversal with symlink skipping
+- pathResolver: Path resolution and traversal prevention
 
 ### CLI Layer (`src/cli/`)
 - Entry point: main.ts
-- Dependency wiring
-- Signal handling (SIGINT)
-- Argument parsing
+- Dependency wiring: container.ts
+- Signal handling: signalHandlers.ts (SIGINT cleanup)
+- Argument parsing: parse-args.ts
+- Path validation: validateDestPath.ts
+- Pack validation: validatePackList.ts
+- Version context: versionContext.ts (update gating classification)
+- Output formatting: output.ts
+- Version constant: version.ts
 
 ## Key Patterns
 - **Strategy Pattern**: File merge rules (Obligatorio/Estándar/Opcional)

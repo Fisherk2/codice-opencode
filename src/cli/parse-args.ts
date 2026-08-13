@@ -57,6 +57,27 @@ const ALLOWED_FLAGS = new Set([
 
 // --- Parser ---
 
+/** Validate dest path and report error if invalid. Returns null on error. */
+function validateDestPathAndReport(raw: string): string | null {
+	const error = validateDestPath(raw);
+	if (error) {
+		// biome-ignore lint/suspicious/noConsole: CLI user-facing error
+		console.error(`[error] ${error}`);
+		return null;
+	}
+	return raw;
+}
+
+/** Validate pack list and report error if invalid. Returns null on error. */
+function validatePackListAndReport(raw: string): string | null {
+	if (validatePackList(raw) === null) {
+		// biome-ignore lint/suspicious/noConsole: CLI user-facing error
+		console.error(`[error] Invalid pack list: "${raw}". Use --help to list valid pack IDs.`);
+		return null;
+	}
+	return raw;
+}
+
 /**
  * Read and validate the value token following a value-flag.
  * Returns null when missing or invalid (prints CLI error for --dest).
@@ -68,24 +89,7 @@ function readFlagValue(
 ): string | null {
 	const raw = args[valueIndex];
 	if (raw === undefined) return null;
-	if (isDest) {
-		const error = validateDestPath(raw);
-		if (error) {
-			// biome-ignore lint/suspicious/noConsole: CLI user-facing error
-			console.error(`[error] ${error}`);
-			return null;
-		}
-		return raw;
-	}
-	// Pack lists must be non-empty and contain only known pack IDs.
-	// An unknown ID would silently install zero packs (filterByPacks drops
-	// unmatched rules), so reject it here with a usage error.
-	if (validatePackList(raw) === null) {
-		// biome-ignore lint/suspicious/noConsole: CLI user-facing error
-		console.error(`[error] Invalid pack list: "${raw}". Use --help to list valid pack IDs.`);
-		return null;
-	}
-	return raw;
+	return isDest ? validateDestPathAndReport(raw) : validatePackListAndReport(raw);
 }
 
 /** Split a raw comma-separated list into trimmed, non-empty pack IDs. */

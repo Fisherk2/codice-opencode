@@ -3,6 +3,16 @@ import type { IFileSystem } from "../ports/IFileSystem";
 import { diffTrees } from "./treeDiff";
 
 /**
+ * Result of pre-computing the staging plan: stage decisions, expanded dirs
+ * (tree-level diffs in update mode), and accurate progress total.
+ */
+export interface StagePlan {
+	readonly stageDecisions: Map<string, boolean>;
+	readonly expandedDirs: Map<string, readonly string[]>;
+	readonly total: number;
+}
+
+/**
  * Pre-compute staging plan: stage decisions, expanded dirs (tree-level diffs
  * in update mode), and accurate progress total. Extracted from FileMergeEngine
  * to keep the class under the 200-line convention.
@@ -12,11 +22,7 @@ export async function computeStagePlan(
 	rules: readonly FileRule[],
 	selected: ReadonlySet<string>,
 	isUpdateMode: boolean,
-): Promise<{
-	stageDecisions: Map<string, boolean>;
-	expandedDirs: Map<string, readonly string[]>;
-	total: number;
-}> {
+): Promise<StagePlan> {
 	const expandedDirs = new Map<string, readonly string[]>();
 	const stageDecisions = new Map<string, boolean>();
 	let total = 0;
@@ -59,12 +65,10 @@ async function shouldStage(
 	fileSystem: IFileSystem,
 	selected: ReadonlySet<string>,
 ): Promise<boolean> {
-	if (rule.category === "mandatory") return true;
-
-	// Pack rules behave like mandatory inside the merge engine: pack selection
+	// Mandatory and pack rules are staged unconditionally: pack selection
 	// happens earlier in the installer wizard (filterByPacks), so any pack rule
 	// that reaches the engine must be staged regardless of destination state.
-	if (rule.category === "pack") return true;
+	if (rule.category === "mandatory" || rule.category === "pack") return true;
 
 	if (rule.category === "standard") {
 		const exists = await fileSystem.destinationExists(rule.path);

@@ -140,7 +140,6 @@ export function createProgressCallback(userPrompt: IUserPrompt, label: string): 
 						userPrompt.showProgressBar(event.total, label);
 						barStarted = true;
 					}
-					userPrompt.updateProgress(event.current, event.filePath);
 					break;
 				case "stage_complete":
 					userPrompt.updateProgress(event.current, event.filePath);

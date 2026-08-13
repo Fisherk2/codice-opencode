@@ -13,7 +13,7 @@ import { getPackRules } from "../../domain/entities/FileRuleManifest";
 import { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
 import { stripVPrefix } from "../../domain/types/version";
 import { toPackOptions } from "../packOptions";
-import type { IUserPrompt } from "../ports/IUserPrompt";
+import type { IUserPrompt, UpdateOptionChoice } from "../ports/IUserPrompt";
 
 /**
  * Parse and validate the `.codice-version` payload.
@@ -54,6 +54,19 @@ export interface UpdatePacksOptions {
 	readonly addPacks?: readonly string[];
 }
 
+/** Build the update option choices for the interactive prompt. */
+function buildUpdateOptions(installedPacks: readonly string[]): UpdateOptionChoice[] {
+	return [
+		{
+			value: "current",
+			label: "A) Update current workspace",
+			hint: `Only installed packs (${installedPacks.join(", ") || "none"})`,
+		},
+		{ value: "add", label: "B) Update and add packs", hint: "Add new packs during update" },
+		{ value: "cancel", label: "Cancel", hint: "Return to menu" },
+	];
+}
+
 /**
  * Resolve which packs the update merges (Option A vs Option B).
  *
@@ -78,15 +91,7 @@ export async function resolveUpdatePacks(
 		return installedPacks;
 	}
 
-	const choice = await userPrompt.selectUpdateOption([
-		{
-			value: "current",
-			label: "A) Update current workspace",
-			hint: `Only installed packs (${installedPacks.join(", ") || "none"})`,
-		},
-		{ value: "add", label: "B) Update and add packs", hint: "Add new packs during update" },
-		{ value: "cancel", label: "Cancel", hint: "Return to menu" },
-	]);
+	const choice = await userPrompt.selectUpdateOption(buildUpdateOptions(installedPacks));
 	if (choice === null || choice === "cancel") {
 		await userPrompt.showCancel("Update cancelled by user.");
 		return null;

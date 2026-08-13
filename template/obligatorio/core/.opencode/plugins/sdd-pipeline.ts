@@ -6,10 +6,16 @@ import {
 	discoverCommandAgentMap,
 	discoverValidSubagents,
 } from "./src/autoDiscovery";
+import { detectChatMessageRouting } from "./src/chatMessage";
 import { loadSddConfig } from "./src/configLoader";
 import { DEFAULTS, DESTRUCTIVE_PATTERNS } from "./src/defaults";
-import { escapeRegExp } from "./src/escapeRegExp";
+import {
+	compileIntentPatterns,
+	discoverIntentPatterns,
+	mergeIntentKeywordLayers,
+} from "./src/intentDiscovery";
 import { normalizeBash } from "./src/normalizeBash";
+import { SPANISH_INTENT_KEYWORDS } from "./src/spanishIntents";
 import { PRIMARY_AGENTS } from "./src/validSubagents";
 
 // ---------------------------------------------------------------------------
@@ -57,6 +63,20 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 		Object.keys(discoveredCommandAgentMap).length > 0
 			? discoveredCommandAgentMap
 			: DEFAULTS.COMMAND_AGENT_MAP;
+	// Intent keywords are derived from each command's own description —
+	// no hardcoded keyword map to maintain when commands are added.
+	const discoveredIntentPatterns = discoverIntentPatterns(commandsDir);
+	// Fallback asymmetry (review finding): slash commands fall back to
+	// DEFAULTS.COMMAND_AGENT_MAP when commands/ is absent, but discovered
+	// intents have no such fallback — make the disable explicit instead of
+	// silent. User intentPatterns overrides still apply, so detection is not
+	// fully off when the user configured keywords.
+	if (Object.keys(discoveredIntentPatterns).length === 0) {
+		// biome-ignore lint/suspicious/noConsole: intentional plugin telemetry log
+		console.debug(
+			"[sdd-pipeline] No commands/ directory — auto-discovered intent detection disabled; slash commands still route via DEFAULTS and user intentPatterns overrides still apply",
+		);
+	}
 	// Fall back to PRIMARY_AGENTS (the 6 built-in agents) when no `agents/`
 	// directory exists — subagent names can only be registered via filesystem
 	// auto-discovery (ADR-013), so without it only primary agents are valid.
@@ -69,18 +89,25 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 	// the ?? fallback only narrows the optional type — values are complete.
 	const sddConfig = loadSddConfig(projectDir);
 	const commandPhaseMap = sddConfig.commandPhaseMap ?? DEFAULTS.COMMAND_PHASE_MAP;
-	const intentPatterns = sddConfig.intentPatterns ?? DEFAULTS.INTENT_PATTERNS;
-	const phaseSuggestions = sddConfig.phaseSuggestions ?? DEFAULTS.PHASE_SUGGESTIONS;
-
-	// OQ-3: warn when a commands/ file has no commandPhaseMap entry
-	for (const command of Object.keys(commandAgentMap)) {
-		if (!commandPhaseMap[command]) {
+	// Spanish translations APPEND to each discovered command's keyword list
+	// (restoring bilingual intent detection); user overrides come last and
+	// REPLACE the keyword list for a command key — they do not merge keywords
+	// (to extend a list, copy the discovered keywords and append, see types.ts).
+	const intentPatterns = mergeIntentKeywordLayers(
+		discoveredIntentPatterns,
+		SPANISH_INTENT_KEYWORDS,
+		sddConfig.intentPatterns ?? {},
+		// Warn when an override drops the command's own name keyword — the
+		// replace semantics would silently disable its most reliable trigger.
+		(message) => {
 			// biome-ignore lint/suspicious/noConsole: intentional plugin telemetry log
-			console.debug(
-				`[sdd-pipeline] Command "${command}" has no commandPhaseMap entry, defaulting to "idle"`,
-			);
-		}
-	}
+			console.debug(`[sdd-pipeline] ${message}`);
+		},
+	);
+	// Precompile keyword regexes ONCE at init — the hook matches against these
+	// instead of rebuilding a RegExp per keyword per message.
+	const compiledIntentPatterns = compileIntentPatterns(intentPatterns);
+	const phaseSuggestions = sddConfig.phaseSuggestions ?? DEFAULTS.PHASE_SUGGESTIONS;
 	const pluginsDir = join(projectDir, ".opencode", "plugins");
 	const auditLogPath = join(pluginsDir, ".sdd-audit.log");
 
@@ -227,57 +254,48 @@ export const SddPipelinePlugin: Plugin = async (ctx) => {
 				const content = out?.message?.content ?? "";
 				if (!content) return;
 
-				const lower = content.toLowerCase();
+				// Pure detection — ordering (mention → slash → intent) and the
+				// "slash shadows intent" rule live in src/chatMessage.ts so the
+				// real logic is unit-testable; this hook only applies state.
+				const routing = detectChatMessageRouting(content, {
+					agentMentionPatterns,
+					commandAgentMap,
+					intentPatterns: compiledIntentPatterns,
+				});
 
-				// --- Detect agent mentions (e.g., "@tlaloc", "agente tezcatlipoca") ---
-				for (const [agentType, patterns] of Object.entries(agentMentionPatterns)) {
-					if (patterns.some((p) => p.test(content))) {
-						if (sddState.agent_type !== agentType) {
-							sddState.agent_type = agentType;
-							audit("chat.message", `Agent switched via mention: ${agentType}`);
-						}
-						break;
-					}
+				// --- Agent mentions (e.g., "@tlaloc", "agente tezcatlipoca") ---
+				if (routing.agentMention !== null && sddState.agent_type !== routing.agentMention) {
+					sddState.agent_type = routing.agentMention;
+					audit("chat.message", `Agent switched via mention: ${routing.agentMention}`);
 				}
 
-				// --- Detect slash commands that load specific agents ---
+				// --- Slash commands that load specific agents ---
 				// Commands override EVERYTHING — they represent explicit user intent.
-				// Always set the agent, even if it's the same (ensures state is persisted
-				// on the first command after session start when agent is "unknown").
-				// Must be followed by space, EOL, or non-word char to avoid false matches
-				// like "/specification" matching "/spec".
-				for (const [command, agentType] of Object.entries(commandAgentMap)) {
-					if (lower.startsWith(command)) {
-						const nextChar = lower[command.length];
-						const isEnd = lower.length === command.length;
-						const hasBoundary = isEnd || !nextChar || /\s/.test(nextChar);
-						if (!hasBoundary) continue;
+				// Always set the agent, even if it's the same (ensures state is
+				// persisted on the first command after session start when agent is
+				// "unknown").
+				if (routing.slashCommand !== null) {
+					const agentType = commandAgentMap[routing.slashCommand];
+					if (agentType !== undefined) {
 						const prev = sddState.agent_type;
 						sddState.agent_type = agentType;
-						sddState.pipeline_phase = commandToPhase(command);
+						sddState.pipeline_phase = commandToPhase(routing.slashCommand);
 						if (prev !== agentType) {
-							audit("chat.message", `Agent switched via command ${command}: ${agentType}`);
+							audit(
+								"chat.message",
+								`Agent switched via command ${routing.slashCommand}: ${agentType}`,
+							);
 						}
-						break;
 					}
 				}
 
-				// --- Detect SDD intent keywords ---
+				// --- SDD intent keywords ---
 				// Store intent so system.transform can inject a visible suggestion.
-				// Uses word-boundary regex to avoid false positives on common English
-				// substrings (e.g., "relationship status" should NOT match /ship,
-				// "I protest this decision" should NOT match /test).
-				for (const [command, keywords] of Object.entries(intentPatterns)) {
-					if (
-						keywords.some((kw) => {
-							const escaped = escapeRegExp(kw);
-							return new RegExp(`\\b${escaped}\\b`, "i").test(content);
-						})
-					) {
-						sddState.last_intent = command;
-						audit("chat.message", `intent=${command}`);
-						break;
-					}
+				// Skipped entirely when a slash command matched — "/plan the deploy"
+				// must not also set last_intent="/deploy".
+				if (routing.slashCommand === null && routing.intent !== null) {
+					sddState.last_intent = routing.intent;
+					audit("chat.message", `intent=${routing.intent}`);
 				}
 			} catch (err: unknown) {
 				// biome-ignore lint/suspicious/noConsole: intentional plugin error log

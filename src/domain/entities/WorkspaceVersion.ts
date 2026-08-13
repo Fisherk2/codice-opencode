@@ -1,6 +1,11 @@
 import { eq, gt, lt, compare as semverCompare, valid } from "semver";
 import type { ComparisonResult } from "../types/version";
 
+/** Type guard: filters non-string entries from unknown arrays. */
+function isString(value: unknown): value is string {
+	return typeof value === "string";
+}
+
 /**
  * Value object representing a semantic version (vX.Y.Z).
  * Uses the semver library for version parsing and comparison.
@@ -98,18 +103,14 @@ export class WorkspaceVersion {
 					`Invalid .codice-version file: field 'installedPacks' must be an array of pack IDs (e.g. ["software-development"]), received ${typeof obj.installedPacks}`,
 				);
 			}
-			installedPacks = obj.installedPacks.filter(
-				(entry): entry is string => typeof entry === "string",
-			);
+			installedPacks = obj.installedPacks.filter(isString);
 		}
 
 		return new WorkspaceVersion(
 			versionField,
 			obj.installedAt,
 			installedPacks,
-			Array.isArray(obj.optionalSelections)
-				? obj.optionalSelections.filter((s): s is string => typeof s === "string")
-				: [],
+			Array.isArray(obj.optionalSelections) ? obj.optionalSelections.filter(isString) : [],
 		);
 	}
 

@@ -79,11 +79,11 @@ describe("configLoader.ts — loadSddConfig()", () => {
 		expect(result.commandPhaseMap!["/build"]).toBe("build"); // default preserved
 		expect(result.commandPhaseMap!["/test"]).toBe("verify"); // default preserved
 
-		// intentPatterns: default keys preserved, user overrides applied, new keys added
+		// intentPatterns: only validated user overrides are returned — the
+		// auto-discovered baseline is applied at runtime, not merged here.
 		expect(result.intentPatterns!["/custom-cmd"]).toEqual(["custom keyword", "otro keyword"]);
 		expect(result.intentPatterns!["/spec"]).toEqual(["override spec keyword"]);
-		expect(result.intentPatterns!["/build"]).toBeDefined(); // default preserved
-		expect(result.intentPatterns!["/build"]!.includes("build")).toBe(true);
+		expect(result.intentPatterns!["/build"]).toBeUndefined(); // no default keywords merged
 
 		// phaseSuggestions: default keys preserved, user overrides applied at agent level
 		expect(result.phaseSuggestions!.build!.tlaloc).toBe("Custom build suggestion for tlaloc.");
@@ -109,9 +109,8 @@ describe("configLoader.ts — loadSddConfig()", () => {
 		expect(result.commandPhaseMap!["/build"]).toBe("build");
 		expect(result.commandPhaseMap!["/ship"]).toBe("ship");
 
-		// intentPatterns = full defaults
-		expect(result.intentPatterns!["/spec"]).toBeDefined();
-		expect(result.intentPatterns!["/build"]!.includes("build")).toBe(true);
+		// intentPatterns = empty overrides map (auto-discovery supplies the baseline)
+		expect(Object.keys(result.intentPatterns!)).toHaveLength(0);
 
 		// phaseSuggestions = full defaults
 		expect(result.phaseSuggestions!.define).toBeDefined();
@@ -196,8 +195,8 @@ describe("configLoader.ts — loadSddConfig()", () => {
 		// Invalid entries skipped
 		expect(result.intentPatterns!["bad-key-no-slash"]).toBeUndefined();
 		expect(result.intentPatterns!.another_bad).toBeUndefined();
-		// Defaults preserved
-		expect(result.intentPatterns!["/spec"]).toBeDefined();
+		// No defaults merged — only user overrides are returned
+		expect(result.intentPatterns!["/spec"]).toBeUndefined();
 		// Warnings logged
 		expect(warnMessages.length).toBeGreaterThanOrEqual(2);
 		expect(warnMessages.some((m) => m.includes("bad-key-no-slash"))).toBe(true);

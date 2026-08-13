@@ -377,7 +377,7 @@ describe("main() — SIGINT handling", () => {
 		expect(capturedHandlers.length).toBeGreaterThan(0);
 		// Verify the first exit was SUCCESS (install completed) or ERROR (install failed)
 		expect(sigintExitMock.mock.calls.length).toBeGreaterThanOrEqual(1);
-	});
+	}, 15_000); // 15s timeout: Windows clean install is slower due to symlink/junction handling
 
 	it("calls process.exit with EXIT_INTERRUPT on SIGINT", async () => {
 		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
@@ -395,7 +395,7 @@ describe("main() — SIGINT handling", () => {
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
 		const lastCall = sigintExitMock.mock.calls[callCountBefore] as unknown[];
 		expect(lastCall[0]).toBe(EXIT_INTERRUPT);
-	});
+	}, 15_000);
 
 	it("double SIGINT is idempotent — only first triggers exit", async () => {
 		process.argv = ["bun", "main.ts", "--clean", "--force", "--dest", testDir];
@@ -416,7 +416,7 @@ describe("main() — SIGINT handling", () => {
 		// Second SIGINT — same handler is idempotent
 		await handler!();
 		expect(sigintExitMock.mock.calls.length).toBe(callCountBefore + 1);
-	});
+	}, 15_000);
 });
 
 // ---------------------------------------------------------------------------

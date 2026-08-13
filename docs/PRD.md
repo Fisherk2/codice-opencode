@@ -1,5 +1,5 @@
-# Product Requirements Document – Códice: Opencode Workspace Installer v1.2.0
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-03 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Product Requirements Document – Códice: Opencode Workspace Installer v2.0.0
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-07 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 0. Descripción General
 Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñada para instalar, configurar y actualizar plantillas de espacios de trabajo de OpenCode (`opencode`). Su objetivo es proporcionar una experiencia de instalación "a prueba de tontos", rápida, segura y con fusión inteligente de archivos, preservando las personalizaciones del usuario.
@@ -22,6 +22,11 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - 9 MCP servers pre-configurados (3 habilitados por defecto: context7, vercel-grep, gitmcp).
   - Subagente obsidian-vault-writer + 3 skills de Obsidian para administración de vaults.
   - ISP split: `IFileSystem` (6 métodos) + `IStagingSystem` (4 métodos) para segregación de interfaces.
+  - Sistema de packs: 8 packs seleccionables + 2 directorios obligatorios (main, writers). 355 agentes distribuidos en 10 packs.
+  - Installer UX v2: wizard de selección de packs, resumen pre-instalación con conteos de agentes, actualizaciones version-gated (solo v2.0+).
+  - Flags CLI adicionales: `--packs <list>`, `--packs-all`, `--update-add-packs <list>`, `--clean`, `--project`, `--update`.
+  - Formato `.codice-version` v2.0: incluye `installedPacks`, `installedAt`, `optionalSelections?`.
+  - Update modes: Option A (solo packs actuales) y Option B (agregar packs con instalados bloqueados).
 - **Alcance del MVP (Out):** 
   - Instalación de dependencias de terceros fuera del template.
   - Soporte para múltiples fuentes de plantillas (solo se soporta el template empaquetado en el binario).
@@ -41,6 +46,8 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | HU-03 | Dev Experimentado | Ejecutar "Actualizar Workspace" | Saber si hay una nueva versión en GitHub y aplicar solo los cambios necesarios. | Alta | El CLI consulta la API de GitHub. Si hay update, aplica fusión granular. Si no, muestra mensaje de "versión más reciente". |
 | HU-04 | Mantenedor | Ejecutar `just test` o `make test` | Verificar que la lógica de fusión y la TUI funcionen correctamente antes de hacer un release. | Alta | Las pruebas unitarias (Bun/Vitest) y E2E (scripts de shell) pasan con >80% de cobertura. |
 | HU-05 | Cualquiera | Que el instalador falle a mitad de proceso | Que mi proyecto no quede en un estado corrupto o a medias. | Alta | Si falla, el directorio `.codice-staging/` se elimina y el proyecto original queda intacto (Atomicidad). |
+| HU-06 | Dev Experimentado | Seleccionar qué packs de agentes instalar | Tener solo los agentes relevantes para mi tipo de proyecto, sin instalar los 355 agentes. | Media | El instalador presenta un wizard de selección. Se instalan solo los packs elegidos. |
+| HU-07 | Dev Experimentado | Agregar packs en una actualización | Expandir mi workspace con nuevos packs sin reinstalar desde cero. | Baja | Update mode ofrece Option B para agregar packs. Los packs ya instalados quedan bloqueados. |
 
 ## 4. Requisitos Funcionales
 | REQ-ID | Descripción | Reglas de Negocio | Estado | Trazabilidad (TRD/Flow) |
@@ -50,6 +57,9 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | RF-03 | Atomicidad de Operaciones | Toda escritura debe ocurrir primero en un directorio temporal (`.codice-staging`). Solo al finalizar con éxito, se mueve a la ubicación final. | Implementado | HU-05 |
 | RF-04 | Gestión de Versiones Local | Crear/actualizar `.codice-version` con el tag de la versión instalada (ej: "v1.0.0"). | Implementado | HU-01, HU-03 |
 | RF-05 | Consulta de Versión Remota | Consultar `GET https://api.github.com/repos/{owner}/{repo}/releases/latest`. Comparar con versión local usando semver. | Implementado | HU-03 |
+| RF-06 | Sistema de Packs | Organizar agentes en 10 packs (2 obligatorios + 8 seleccionables). El usuario elige qué packs instalar via wizard interactivo o flags CLI. | Implementado | HU-06, ADR-014 |
+| RF-07 | Installer UX v2 | Wizard de selección de packs, resumen pre-instalación con conteos de agentes/archivos, y actualización version-gated (solo v2.0+). | Implementado | HU-06, HU-07, ADR-015 |
+| RF-08 | Update Version-Gated | Bloquear Update Workspace para instalaciones < v2.0.0 con mensaje de guía migración. | Implementado | HU-03, ADR-015 |
 
 ## 5. Requisitos No Funcionales
 - **Rendimiento:** La consulta de versión remota debe tomar < 2 segundos. La extracción del template empaquetado debe tomar < 5 segundos.
@@ -72,5 +82,6 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | 0.1.0 | 2026-06-13 | Fisherk2 | Creación inicial del PRD basado en cuestionario de clarificación. | ✅ Aprobado |
 | 1.1.3 | 2026-07-27 | Fisherk2 | Sincronizado con v1.1.3: gobernanza de agentes, restricciones de comandos, 9 MCP servers, Obsidian subagent, ISP split. | ✅ Aprobado |
 | 1.2.0 | 2026-08-03 | Fisherk2 | Sincronizado con v1.2.0: binarios removidos (ADR-011), .devin removido, progress bar, /help, /test, /ship, ADR-011 a ADR-013. | ✅ Aprobado |
+| 2.0.0 | 2026-08-07 | Fisherk2 | Sincronizado con v2.0.0: sistema de packs (ADR-014), installer UX v2 (ADR-015), 355 agentes en 10 packs, version-gated updates, 30 E2E scenarios, 1920 tests. | ✅ Aprobado |
 
 ---
