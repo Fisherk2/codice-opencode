@@ -60,7 +60,7 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 
 ### Agent File Pattern
 
-Every agent file follows the same structure: YAML frontmatter, markdown body, and a `## COMPOSITION` block at the end. The complete specification — including field mapping, canonical permission blocks, and transformation rules — is documented in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md).
+Every agent file follows the same structure: YAML frontmatter, markdown body, and a `## COMPOSITION` block at the end. The complete specification — including field mapping, canonical permission blocks, and transformation rules — is documented in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md). Primary agents additionally carry a protocol section between `### CAPABILITIES` and `### RULES` — `### DELEGATION PROTOCOL` when they can invoke `task()`, `### SKILL LOADING PROTOCOL` when they cannot (see §8 of the spec).
 
 ## Subagents
 

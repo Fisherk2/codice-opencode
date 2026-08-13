@@ -7,6 +7,8 @@
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
 > **v2.0 Progress:** FEV-17 ✅ + FEV-18 ✅ (2026-08-04) + FEV-19 ✅ + FEV-20 ✅ (2026-08-05) + FEV-21 ✅ (2026-08-06) + FEV-22 ✅ (2026-08-06) + FEV-23 ✅ (2026-08-07) → **v2.0.0 released** (2026-08-07). FEV-23 (v2.0.0 Testing & Integration) is complete: 1920 tests, 30/30 E2E, coverage 95.68% overall / 99.12% production `src/`.
+>
+> **v2.1 Progress:** FEV-24 ✅ (2026-08-11) — 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD plugin intent auto-discovery, bilingual intent support. 2048 tests, 30/30 E2E. FEV-25 ✅ complete.
 
 ---
 
@@ -94,6 +96,12 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 | `codice --dest <path>` | Destination directory | Specify the target directory for installation (default: current working directory) |
 | `codice --force` | Skip confirmations | Skip confirmation prompts and include all optional files without interactive selection |
 | `codice --mode <mode>` | Direct mode selection | Skip interactive menu and go directly to the specified mode (`clean`, `project`, or `update`) |
+| `codice --clean` | Direct clean install | Skip interactive menu and run Clean Install mode directly |
+| `codice --project` | Direct project install | Skip interactive menu and run Project Install mode directly |
+| `codice --update` | Direct update | Skip interactive menu and run Update Workspace mode directly |
+| `codice --packs <list>` | Select packs | Install only the specified packs (comma-separated, e.g. `software-development,business`) |
+| `codice --packs-all` | All packs | Install all 8 selectable packs without interactive selection |
+| `codice --update-add-packs <list>` | Add packs on update | Add packs to an existing installation during update mode |
 
 ---
 
@@ -117,19 +125,29 @@ codice-opencode/
 │   │   │   └── IVersionComparator.ts # Abstract version comparison interface
 │   │   ├── services/
 │   │   │   ├── FileMergeEngine.ts # Strategy-based merge orchestrator
+│   │   │   ├── mergeRules.ts      # Rule strategy implementations per category
+│   │   │   ├── stagePlanner.ts    # Pre-merge staging decision computation
+│   │   │   ├── treeDiff.ts        # Tree-level diff for standard directory updates
 │   │   │   └── VersionComparator.ts # Semantic version comparison logic
 │   │   └── types/
+│   │       ├── errorTypeGuards.ts # Type guards for domain error discrimination
 │   │       ├── GitignoreError.ts  # Gitignore generation error types
 │   │       ├── MergeError.ts      # File merge error types
+│   │       ├── ProgressEvent.ts   # Discriminated union for progress bar events
 │   │       ├── Result.ts          # Result/Either type for explicit error handling
 │   │       ├── SymlinkError.ts    # Symlink creation error types
 │   │       └── version.ts         # Version constants and utilities
 │   ├── application/               # Use cases, orchestrates domain via ports
 │   │   ├── helpers.ts             # Shared use-case utilities
+│   │   ├── installSummary.ts      # Install summary screen computation
+│   │   ├── packOptions.ts         # Pack selection option definitions
 │   │   ├── postInstall.ts         # Post-installation orchestration (gitignore, symlinks, version file)
 │   │   ├── use-cases/
 │   │   │   ├── CleanInstallUseCase.ts      # Mode 1: Overwrite everything
+│   │   │   ├── InstallUseCaseBase.ts       # Template Method base class for install use cases
 │   │   │   ├── ProjectInstallUseCase.ts    # Mode 2: Selective merge with prompts
+│   │   │   ├── updateFlow.ts              # Update merge execution logic (extracted)
+│   │   │   ├── updateStatusCheck.ts       # Update version status check (extracted)
 │   │   │   └── UpdateWorkspaceUseCase.ts   # Mode 3: Standard + Obligatorio with version check
 │   │   └── ports/
 │   │       ├── IGitHubClient.ts   # Abstract GitHub API client (releases/latest)
@@ -145,8 +163,11 @@ codice-opencode/
 │   │   │   ├── ClackPromptsAdapter.ts # @clack/prompts wrapper implementing IUserPrompt
 │   │   │   ├── directoryWalker.ts # Recursive directory traversal with symlink skipping
 │   │   │   ├── GitHubRestClient.ts # Fetch-based GitHub API client with timeout
+│   │   │   ├── packPromptOptions.ts # Pack selection prompt option definitions
 │   │   │   ├── pathResolver.ts    # Path resolution and traversal prevention
-│   │   │   └── TemplateResolver.ts # Template path resolution with category search
+│   │   │   ├── TemplateResolver.ts # Template path resolution with category search
+│   │   │   ├── VerboseLogger.ts   # Structured verbose logging adapter
+│   │   │   └── versionInfoMessages.ts # Version info display messages
 │   │   └── config/
 │   │       ├── constants.ts       # Repository URL, API endpoints, timeout values
 │   │       └── symlinks.ts        # Symlink definitions and configuration
@@ -155,27 +176,38 @@ codice-opencode/
 │       ├── container.ts           # Dependency injection container
 │       ├── main.ts                # Entry point: orchestrates mode selection and execution
 │       ├── output.ts              # TUI output formatting and logging
-│       └── parse-args.ts          # CLI argument parsing (--dest, --force, --mode, etc.)
+│       ├── parse-args.ts          # CLI argument parsing (--dest, --force, --mode, etc.)
+│       ├── signalHandlers.ts      # SIGINT cleanup handlers (extracted from main.ts)
+│       ├── validateDestPath.ts    # Destination path validation (extracted from parse-args.ts)
+│       ├── validatePackList.ts    # Pack list validation for --packs flag
+│       ├── version.ts             # Package version constant
+│       └── versionContext.ts      # Version context classification for update gating
 ├── tests/
 │   ├── unit/                      # Domain logic tests (pure functions, entities)
 │   ├── integration/               # Adapter tests with mocked external systems
-│   ├── e2e/                       # Shell scripts and fixtures for CLI validation
+│   ├── e2e/                       # Shell scripts and fixtures for CLI validation (30 scenarios)
 │   └── fixtures/                  # Predefined directory trees for merge scenarios
 ├── template/                      # The actual OpenCode workspace template files
 │   ├── obligatorio/               # Files always copied/overwritten
 │   │   ├── core/                  # Workspace infrastructure (opencode.json, commands/, skills/, .opencode/)
-│   │   └── packs/                 # Agent packs (main, writers, sin-clasificar, +8 selectable empty)
+│   │   └── packs/                 # Agent packs (main, writers, +8 selectable packs)
 │   ├── estandar/                  # Files copied only if missing in destination
 │   └── opcional/                  # Files presented as checklist; copied only if selected and missing
-├── docs/                          # Architecture decisions, workflow, PRD, TRD
+├── docs/                          # Architecture decisions, workflow, PRD, TRD, MIGRATION
 ├── specs/                         # Modular specification documents
-│   ├── adr/                       # Architecture Decision Records
-│   ├── spec-file-rules.md
-│   └── spec-cli-commands.md
+│   ├── adr/                       # Architecture Decision Records (ADR-001 to ADR-015)
+│   ├── spec-agent-format-v2.md    # Agent format specification v2
+│   ├── spec-agent-packs.md        # Agent pack system specification
+│   ├── spec-cli-commands.md       # CLI commands and modes specification
+│   ├── spec-file-rules.md         # File classification rules
+│   ├── spec-installer-ux-v2.md    # Installer UX v2 specification
+│   ├── spec-sdd-plugin-decoupling.md # SDD plugin decoupling specification
+│   └── spec-template.md           # Template specification
 ├── Justfile                       # Task definitions
 ├── package.json                   # Bun dependencies and scripts
 ├── tsconfig.json                  # Strict TypeScript configuration
 ├── biome.json                     # Linting and formatting rules
+├── CODE_OF_CONDUCT.md             # Contributor Covenant v2.1
 └── README.md                      # User-facing installation and usage guide
 ```
 
@@ -298,6 +330,7 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 13. **Clean Install Optional Menu:** Run clean install. Assert optional files menu is presented to the user before copying.
 14. **Project Install Optional Selection:** Run project install with optional files. Assert only selected optional files are copied.
 15. **Update Workspace Existing Project:** Pre-populate destination with standard files. Run update mode. Assert standard files are NOT overwritten (only mandatory files are).
+16–30. **Additional E2E scenarios (v2.0.0):** Update blocked pre-1.2.0, update Option B, flat agents destination, non-interactive packs, project install packs, pack-aware project install, clean-install summary passthrough, version-context classification, and related pack system integration scenarios. Total: 30 E2E scenarios.
 
 **Success Criteria:**
 - All E2E scenarios pass in CI on Ubuntu runner.
@@ -390,6 +423,10 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 - **[Agent Pack System](specs/spec-agent-packs.md)** — Pack-based agent classification with 8 selectable packs and 2 mandatory directories (main, writers). Defines permission unification, subagent table removal, and plugin changes for v2.0.0.
 
 - **[Installer UX v2](specs/spec-installer-ux-v2.md)** — Installer UX with pack selection wizard, version-gated updates, metadata-driven update scoping, and `.codice-version` format extension for v2.0.0.
+
+- **[Agent Format v2](specs/spec-agent-format-v2.md)** — Agent definition format specification for v2.0.0 with YAML frontmatter schema and pack metadata.
+
+- **[Template Specification](specs/spec-template.md)** — Template directory structure, file organization, and category conventions.
 
 Resolved decisions are documented in the respective ADRs (see `specs/adr/`).
 

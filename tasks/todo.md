@@ -1,404 +1,196 @@
-# FEV-23 Todo List — v2.0.0 Testing & Integration
+# FEV-25 Todo List — Reglas de Delegación en Agentes Principales
 
-**Phase:** FEV-23 (v2.0.0 Final Phase) — 🔲 Listo para implementar
-**Scope:** Cerrar el ciclo de v2.0.0 con: (1) **5 nuevos E2E scripts** (26-30) cubriendo SC-UX7, SC-UX9, SC-UX10, SC-UX12 + Project Install con pack selection, (2) **~13 nuevos unit/integration tests** (Option B execution, Project Install pack flow, Clean Install summary, version detection edge cases), (3) **Version bump** `package.json` 1.2.0 → 2.0.0 + rewrite E2E #23 (remove transitional no-op), (4) **Release documentation** (CHANGELOG v2.0.0 + README + NEW `docs/MIGRATION.md` + WORKFLOW + TECH_DEBT). NO incluye el release real (PR merge, tag, npm publish) — eso es proceso separado del maintainer.
-**Spec:** [specs/spec-installer-ux-v2.md §9](../specs/spec-installer-ux-v2.md), [specs/spec-agent-packs.md §9](../specs/spec-agent-packs.md)
-**Tech Debt:** TD-V2-6 (sigue abierto — no pack removal, deferred a v2.2.0)
-**Date:** 2026-08-06
-**Author:** Moctezuma (Strategic Planner)
+> **✅ COMPLETO** (2026-08-11). 4 commits atómicos + verificación final. Ver `docs/WORKFLOW.md` para estado actual.
+
+**Phase:** FEV-25 (v2.1.0) — ✅ Completo
+**Issue:** [#69](https://github.com/Fisherk2/codice-opencode/issues/69)
+**Diagnóstico:** [`docs/diagnosis/fix13-agent-delegation-rules.md`](../docs/diagnosis/fix13-agent-delegation-rules.md)
 **Full plan:** [plan.md](./plan.md)
-**Branch:** `feat/new-agents` (continúa de FEV-17 a FEV-22)
-**Total effort:** ~5.5-6h wall-clock (1-2 días calendario con review)
+**Date:** 2026-08-11
+**Author:** Moctezuma (Strategic Planner)
+**Branch:** `feature/new-commands`
+**Total effort:** ~3-4.5h · 4 commits atómicos + 1 verificación sin commit
+**Commits:** `2b5cf02` (spec) · `20f7733` (4 delegantes) · `a96ba82` (2 no-delegantes) · `213f10b` (docs)
 
 ---
 
-## Decisiones Confirmadas (vía question tool, 2026-08-06)
+## Scope Guard (leer antes de empezar)
 
-| # | Pregunta | Decisión |
-|---|----------|----------|
-| 1 | Alcance FEV-23 (tests vs version bump vs release) | **Tests + Version Bump + Docs** (NO release real) |
-| 2 | E2E #23 (transitional no-op) handling | **Reescribir E2E #23** con v2.0.0 (verify real Option A) |
-
----
-
-## Pre-Audit Snapshot (2026-08-06)
-
-### Current Test State (post-FEV-22)
-
-| Metric | Value |
-|--------|------:|
-| Tests (pass/fail) | 1872 / 0 |
-| E2E scenarios | 25 / 25 |
-| `just check` errors | 0 |
-| Coverage (lines) | ≥95% |
-| `package.json` version | 1.2.0 |
-| Branch | `feat/new-agents` |
-
-### E2E Coverage Matrix (current → target)
-
-| SC | Current | Status | Phase |
-|----|---------|--------|-------|
-| SC-UX1 (pack selection w/ default) | E2E 17 | ✅ | — |
-| SC-UX2 (min 1 pack) | E2E 19 + unit | ✅ | — |
-| SC-UX3 (install summary) | E2E 24, 25 | ✅ | — |
-| SC-UX4 (.codice-version format) | E2E 20 | ✅ | — |
-| SC-UX5 (update blocked) | E2E 21, 22 | 🟡 | **Phase 1** (26-pre-1.2.0) |
-| SC-UX6 (Option A scope) | E2E 23 (transitional) | 🟡 | **Phase 3** (rewrite) |
-| SC-UX7 (Option B adds packs) | none | ❌ | **Phase 1** (27) |
-| SC-UX8 (Option B cancel no new) | unit (FEV-21) | ✅ | — |
-| SC-UX9 (--packs non-interactive) | none | ❌ | **Phase 1** (29) |
-| SC-UX10 (flat agents/) | none | ❌ | **Phase 1** (28) |
-| SC-UX11 (legacy v1.x message) | E2E 22 | ✅ | — |
-| SC-UX12 (pre-1.2.0 cleanup) | none | ❌ | **Phase 1** (26) |
-| **Project Install + packs** | none | ❌ | **Phase 1** (30) |
-
-**Score:** 7/12 ✅ + 3 🟡 + 3 ❌ → FEV-23 → 12/12 ✅
-
-### Files requiring modification (13) + new (6) = 19 total
-
-| Layer | Files | Action |
-|-------|-------|--------|
-| **E2E new** | 5 | 26, 27, 28, 29, 30 |
-| **E2E rewrite** | 1 | 23 (remove transitional) |
-| **E2E verify** | 3 | 04, 15, 16 (BUNDLED env check) |
-| **Test unit/integration** | 4 | update-workspace, project-install, clean-install, version-context |
-| **Build** | 1 | package.json (1.2.0→2.0.0) |
-| **Docs** | 5 | CHANGELOG, README, MIGRATION (NEW), WORKFLOW, TECH_DEBT |
-
-### Baseline metrics (post-FEV-22)
-
-- **Tests:** 1872 (0 fail)
-- **E2E:** 25 (all pass)
-- **Coverage:** ≥95%
-- **`FileRule` fields:** 7
-- **`IUserPrompt` methods:** 16
-- **CLI flags:** 10
-- **Version:** 1.2.0
-
----
-
-## Dependency Order (Critical Path)
+**SOLO se tocan 10 archivos:**
 
 ```
-FEV-22 ✅ (feat/new-agents base)
-    ↓
-Phase 1: Missing E2E Tests (1.5-2h, 1 commit)
-    ├── T1.1 26-update-blocked-pre-1.2.0.sh (SC-UX12)
-    ├── T1.2 27-update-option-b.sh (SC-UX7)
-    ├── T1.3 28-flat-agents-destination.sh (SC-UX10)
-    ├── T1.4 29-non-interactive-packs.sh (SC-UX9)
-    └── T1.5 30-project-install-packs.sh (Project Install + packs)
-    ↓
-Phase 2: Unit/Integration Tests (1.5h, 1 commit)
-    ├── T2.1 update-workspace.test.ts (3 Option B tests)
-    ├── T2.2 project-install.test.ts (3 pack selection tests)
-    ├── T2.3 clean-install.test.ts (3 install summary tests)
-    └── T2.4 version-context.test.ts (4 edge case tests)
-    ↓
-Phase 3: Version Bump (0.5h, 1 commit)
-    ├── T3.1 package.json 1.2.0 → 2.0.0
-    ├── T3.2 Rewrite E2E 23 (real Option A verification)
-    └── T3.3 Verify E2E 04, 15, 16 (BUNDLED env cleanup)
-    ↓
-Phase 4: Release Documentation (1h, 1 commit)
-    ├── T4.1 CHANGELOG.md (v2.0.0 entry)
-    ├── T4.2 README.md (pack system prominent)
-    ├── T4.3 docs/MIGRATION.md (NEW, v1.x → v2.0.0)
-    ├── T4.4 docs/WORKFLOW.md (FEV-23 ✅)
-    └── T4.5 docs/TECH_DEBT.md (v2.0.0 closure)
-    ↓
-Phase 5: Verification (0.5h, gates release coordination)
-    ├── T5.1 just check + just test + just test-e2e
-    ├── T5.2 Coverage ≥95% verification
-    ├── T5.3 npm pack --dry-run
-    └── T5.4 Manual CLI smoke test
-    ↓
-FEV-23 ✅ Complete → Release coordination (separate)
+specs/spec-agent-format-v2.md                          ← Fase 1
+template/obligatorio/packs/main/huitzilopochtli.md     ← Fase 2
+template/obligatorio/packs/main/quetzalcoatl.md        ← Fase 2
+template/obligatorio/packs/main/tlaloc.md              ← Fase 2
+template/obligatorio/packs/main/mictlantecuhtli.md     ← Fase 2
+template/obligatorio/packs/main/moctezuma.md           ← Fase 3
+template/obligatorio/packs/main/tezcatlipoca.md        ← Fase 3
+CHANGELOG.md                                           ← Fase 4
+docs/WORKFLOW.md                                       ← Fase 4
+docs/wiki-source/Agents.md                             ← Fase 4
 ```
 
-**Critical path:** T1.1-T1.5 → T2.1-T2.4 → T3.1-T3.3 → T4.1-T4.5 → T5.1-T5.4 (~5.5-6h total)
-**Atomic commits:** 4 (1 per phase) + 1 verification (no commit)
+**PROHIBIDO en FEV-25:**
+
+- ❌ Crear o modificar **tests** (decisión del usuario — la suite existente ya cubre los 6 agentes)
+- ❌ Tocar `src/**`
+- ❌ Tocar el **frontmatter YAML** de cualquier agente (rompe *FEV-19 permission invariants*)
+- ❌ Enumerar catálogos de subagentes o skills en el prompt (rompe *No subagent index in primary agents*)
+- ❌ Bump de `package.json`, tag o npm publish
+
+**Presupuesto por agente:** body ≤100 líneas (sin frontmatter) · total ≤150 líneas.
 
 ---
 
-## Phase 1: Missing E2E Scenarios
+## Fase 1 — Contrato canónico (~0.5-1h) · Commit C1
 
-- [ ] **Task 1.1:** Create `tests/e2e/26-update-blocked-pre-1.2.0.sh` (SC-UX12). Seed v1.1.0, run `--update --force`. Verify output contains "Pre-1.2.0 Installation Detected" + "references/" + ".devin/". Verify no merge (opencode.json absent). Commit (bundled): `test(e2e): cover remaining SC-UX criteria and project install with pack selection`
-- [ ] **Task 1.2:** Create `tests/e2e/27-update-option-b.sh` (SC-UX7). Seed v2.0.0 with `[software-development]`, run `--update --force --update-add-packs creative,business`. Verify `.codice-version` now includes all 3 packs (lock + addPacks). Commit (bundled): Same as T1.1
-- [ ] **Task 1.3:** Create `tests/e2e/28-flat-agents-destination.sh` (SC-UX10). Run `--clean --force --packs software-development,business`. Verify agents at `agents/` root (no `agents/software-development/` or `agents/business/` subdirs). Commit (bundled): Same as T1.1
-- [ ] **Task 1.4:** Create `tests/e2e/29-non-interactive-packs.sh` (SC-UX9). Run `--clean --force --packs business,creative` (no default). Verify `.codice-version` = [business, creative], no software-development agents, business + creative agents present. Commit (bundled): Same as T1.1
-- [ ] **Task 1.5:** Create `tests/e2e/30-project-install-packs.sh` (Project Install + packs). Pre-populate README.md, run `--project --force --packs business`. Verify README preserved (Project Install selective merge), business pack installed, no software-development. Commit (bundled): Same as T1.1
+- [ ] **T1.1** Añadir §8 "Delegation Protocol" a `specs/spec-agent-format-v2.md`
+  - [ ] Regla de selección: bloque A si `permission.task` tiene `allow`, bloque B si es `"*": deny`
+  - [ ] Texto canónico literal del **bloque A** (`## DELEGATION PROTOCOL`, ~20 líneas)
+  - [ ] Texto canónico literal del **bloque B** (`## SKILL ANALYSIS PROTOCOL`, ~12 líneas)
+  - [ ] Tabla de hooks por rol (huitzilopochtli / quetzalcoatl / tlaloc / mictlantecuhtli)
+  - [ ] Presupuesto de líneas documentado (≤100 body · ≤150 total)
+  - [ ] Renumerar la §8 "Out of Scope" actual a §9 sin perder contenido
+- [ ] `just check` → 0 errores
+- [ ] `bun test` → 2048 / 0
+- [ ] **Commit C1:** `docs(spec): define delegation protocol contract for primary agents`
 
-**Checkpoint:**
-- [ ] 5 new E2E scripts created (26, 27, 28, 29, 30)
-- [ ] All 30 E2E scenarios pass (`just test-e2e` shows 30/30)
-- [ ] SC-UX7, SC-UX9, SC-UX10, SC-UX12 verified end-to-end
-- [ ] Project Install + pack selection verified
-- [ ] **Review con humano antes de Phase 2**
+### ✅ Checkpoint CP1 (gate a Fase 2)
 
----
-
-## Phase 2: Unit/Integration Test Gaps
-
-- [ ] **Task 2.1:** Add 3 tests to `tests/integration/use-cases/update-workspace.test.ts`. (1) Option B merges installed + new packs, (2) Option B with only installed → null + skip, (3) Option B preserves installed (hard lock). Commit (bundled): `test(integration): cover Option B execution and pack-aware use cases`
-- [ ] **Task 2.2:** Add 3 tests to `tests/integration/use-cases/project-install.test.ts`. (1) Project Install respects --packs, (2) preserves standard files with different pack, (3) default software-development when no --packs. Commit (bundled): Same as T2.1
-- [ ] **Task 2.3:** Add 3 tests to `tests/integration/use-cases/clean-install.test.ts`. (1) summary shows packs with counts, (2) summary shows mandatory dirs, (3) summary shows selected optionals. Commit (bundled): Same as T2.1
-- [ ] **Task 2.4:** Add 4 tests to `tests/unit/cli/version-context.test.ts`. (1) v-prefix stripped, (2) 1.2.0 exactly is pre-2.0.0, (3) 1.1.999 is pre-1.2.0, (4) 0.9.0 is pre-1.2.0. Commit (bundled): Same as T2.1
-
-**Checkpoint:**
-- [ ] 13 new tests added (3 + 3 + 3 + 4)
-- [ ] `just test-integration` shows 100% pass
-- [ ] `just test-unit` shows 1885+ tests pass (1872 baseline + 13 new)
-- [ ] Coverage of `UpdateWorkspaceUseCase`, `ProjectInstallUseCase`, `installSummary.ts` ≥90%
-- [ ] No regression in existing 1872 tests
-- [ ] **Review con humano antes de Phase 3**
+- [ ] §8 existe con ambos bloques y la tabla de hooks
+- [ ] `git diff --name-only` NO lista ningún archivo de `template/obligatorio/packs/main/`
+- [ ] `just check` 0 · `bun test` 2048/0
+- [ ] **Review humano del texto canónico antes de replicarlo ×6**
 
 ---
 
-## Phase 3: Version Bump to v2.0.0
+## Fase 2 — 4 agentes delegantes (~1-1.5h) · Commit C2
 
-- [ ] **Task 3.1:** Update `package.json`: `"version": "1.2.0"` → `"version": "2.0.0"`. Verify `bun run src/cli/main.ts --version` outputs "2.0.0". Commit (bundled): `feat(release): bump version to 2.0.0 and rewrite Option A E2E`
-- [ ] **Task 3.2:** Rewrite `tests/e2e/23-update-option-a.sh`. Remove "transitional no-op" comments. Verify real Option A merge: business pack NOT copied, software-development updated, .codice-version unchanged. Commit (bundled): Same as T3.1
-- [ ] **Task 3.3:** Verify `tests/e2e/04-update-workspace.sh`, `15-update-workspace-existing-project.sh`, `16-update-granularity.sh`. Remove `BUNDLED_TEST_VERSION` env var references if present. Commit (bundled): Same as T3.1
+**Procedimiento para cada agente:** insertar bloque A entre el final de `### RULES` y `## KNOWLEDGE` → aplicar hook de rol en el paso 4 → recortar el bullet redundante de RULES a un puntero → verificar líneas.
 
-**Checkpoint:**
-- [ ] `package.json` version is 2.0.0
-- [ ] `--version` flag outputs 2.0.0
-- [ ] E2E 23 rewritten (no transitional comments)
-- [ ] All 30 E2E pass with v2.0.0
-- [ ] No regression in 1885+ unit/integration tests
-- [ ] **Review con humano antes de Phase 4**
+- [ ] **T2.1** `huitzilopochtli.md` — hook: *"You never execute: if no specialist exists, report it and stop."*
+  - [ ] `## DELEGATION PROTOCOL` insertado en la posición correcta
+  - [ ] 4 pasos de análisis previo + 3 bloques obligatorios de `task()` presentes
+  - [ ] Bullet `✅ Always delegate...` de RULES recortado a puntero
+  - [ ] Frontmatter byte-idéntico (`git diff` sin cambios antes de la línea 34)
+  - [ ] Body ≤100 · total ≤150 (proyectado: 60 / 94)
+- [ ] **T2.2** `quetzalcoatl.md` — hook: *"You delegate documentation only — never code, never tasks."*
+  - [ ] Mismos 5 checks que T2.1
+  - [ ] ⚠️ Agente con menos margen: proyectado **59/100 body · 101/150 total** — contar explícitamente
+- [ ] **T2.3** `tlaloc.md` — hook: *"Execute directly only when no specialist in `agents/` covers the stack."*
+  - [ ] Mismos 5 checks que T2.1 (proyectado: 58 / 81)
+- [ ] **T2.4** `mictlantecuhtli.md` — hook: *"Delegate the audit, retain the verdict — the ruling is never delegated."*
+  - [ ] Mismos 5 checks que T2.1 (proyectado: 59 / 82)
+- [ ] `bun test tests/unit/domain/agent-frontmatter-validation.test.ts` → verde
+- [ ] **Commit C2:** `feat(agents): add delegation protocol to delegating primary agents`
 
----
+### ✅ Checkpoint CP2 (gate a Fase 3)
 
-## Phase 4: Release Documentation
-
-- [ ] **Task 4.1:** Update `CHANGELOG.md`. Add `## [2.0.0] - 2026-08-XX` section with all Keep a Changelog categories (Added, Changed, Removed, Deprecated, Fixed, Security). Reference FEV-17 to FEV-23. Commit (bundled): `docs: v2.0.0 release documentation (CHANGELOG, README, MIGRATION)`
-- [ ] **Task 4.2:** Update `README.md`. Add "What's New in v2.0" section. Mention pack system prominently. Update install modes. Add `--packs` examples. Commit (bundled): Same as T4.1
-- [ ] **Task 4.3:** NEW `docs/MIGRATION.md`. Guide for v1.x → v2.0.0 users. Sections: Breaking Change, What Preserved, Step-by-step, Pre-1.2.0 cleanup, FAQ, Related. Commit (bundled): Same as T4.1
-- [ ] **Task 4.4:** Update `docs/WORKFLOW.md`. FEV-23 row: `🔲 Planificado` → `✅ Completo (2026-08-XX)`. Expand FEV-23 section with detailed bullets. Add v2.0.0 ready note. Commit (bundled): Same as T4.1
-- [ ] **Task 4.5:** Update `docs/TECH_DEBT.md`. Add FEV-23 closure note to v2.0.0 section. TD-V2-6 still OPEN (deferred v2.2.0). Commit (bundled): Same as T4.1
-
-**Checkpoint:**
-- [ ] CHANGELOG has v2.0.0 entry
-- [ ] README updated for v2.0.0
-- [ ] docs/MIGRATION.md created (≥150 lines, ≥6 sections)
-- [ ] docs/WORKFLOW.md FEV-23 marked ✅
-- [ ] docs/TECH_DEBT.md FEV-23 closure documented
-- [ ] 4 atomic commits total (1 per phase)
-- [ ] Branch `feat/new-agents` ready para PR a `develop`
-- [ ] **FEV-23 cierra; release coordination (separate)**
+- [ ] Los 4 delegantes tienen `## DELEGATION PROTOCOL`
+- [ ] Suite de agentes verde: *FEV-19 permission invariants* · *No subagent index in primary agents* · *Agents directory reference* · *Structural rules*
+- [ ] Conteo de líneas registrado para los 4 (body ≤100 · total ≤150)
+- [ ] `git diff` confirma: cero cambios de frontmatter
+- [ ] Ningún agente contiene `## AVAILABLE SUBAGENTS` ni `the catalog` dentro de RULES
+- [ ] `just check` → 0 errores
+- [ ] **Review humano antes de Fase 3**
 
 ---
 
-## Phase 5: Verification (CRITICAL — gates release coordination)
+## Fase 3 — 2 agentes no delegantes (~0.5h) · Commit C3
 
-- [ ] **Task 5.1:** Run full verification suite:
-  - [ ] `just check` (0 errors)
-  - [ ] `just test` (1885+ tests pass, 0 fail)
-  - [ ] `just test-e2e` (30/30 scenarios)
-  - [ ] `just check-plugin` (0 errors)
-- [ ] **Task 5.2:** Run coverage check:
-  - [ ] `just test-coverage`
-  - [ ] `just coverage-check 95` (≥95% line coverage)
-- [ ] **Task 5.3:** Verify npm packaging:
-  - [ ] `npm pack --dry-run`
-  - [ ] Tarball name is `fisherk2-dev-codice-2.0.0.tgz`
-  - [ ] Document size (~8.0MB, deviation from SC-15 already accepted)
-- [ ] **Task 5.4:** Manual CLI smoke test in `/tmp/codice-smoke-test`:
-  - [ ] `bun run src/cli/main.ts --version` → 2.0.0
-  - [ ] `bun run src/cli/main.ts --help` → shows 10 flags including `--packs`
-  - [ ] `bun run src/cli/main.ts --clean --force --packs software-development,business` → ~238 agents
-  - [ ] `cat .codice-version` → has correct v2.0.0 format
+- [ ] **T3.1** `moctezuma.md` — `## SKILL ANALYSIS PROTOCOL`
+  - [ ] Insertado entre `### RULES` y `## KNOWLEDGE`
+  - [ ] Declara explícitamente que `task` está denegado
+  - [ ] 4 pasos: entender → mapear skills → definir checklist → auto-revisar
+  - [ ] Regla de escalado (nombrar agente/comando correcto si excede permisos)
+  - [ ] Frontmatter byte-idéntico · body ≤100 · total ≤150 (proyectado: 49 / 84)
+- [ ] **T3.2** `tezcatlipoca.md` — `## SKILL ANALYSIS PROTOCOL`
+  - [ ] Mismos 5 checks que T3.1 (proyectado: 52 / 81)
+- [ ] `bun test tests/unit/domain/agent-frontmatter-validation.test.ts` → verde
+- [ ] **Commit C3:** `feat(agents): add skill analysis protocol to non-delegating primary agents`
 
-**Checkpoint:**
-- [ ] `just check` 0 errors
-- [ ] `just test` 1885+ tests pass
-- [ ] `just test-e2e` 30/30 pass
-- [ ] `just check-plugin` 0 errors
-- [ ] Coverage overall ≥ 95% line
-- [ ] npm pack successful, version 2.0.0
-- [ ] Manual smoke test passes
-- [ ] **FEV-23 ✅ COMPLETO; release coordination (separate)**
+### ✅ Checkpoint CP3 (gate a Fase 4)
+
+- [ ] Los **6** agentes principales tienen su protocolo (4× bloque A · 2× bloque B)
+- [ ] `bun test` → 2048 / 0
+- [ ] `just check` → 0 errores
+- [ ] `bash tests/e2e/01-clean-install.sh` → exit 0
+- [ ] Verificación cruzada: ningún agente con `task: deny` menciona delegar
+- [ ] **Review humano antes de Fase 4**
 
 ---
 
-## DoD Checklist — FEV-23
+## Fase 4 — Documentación de cierre (~0.5-0.75h) · Commit C4
 
-### Funcional (SC-UX criteria, 12/12)
+- [ ] **T4.1** `CHANGELOG.md` — entrada FEV-25 bajo `## [2.1.0]` › `### Added`
+  - [ ] ⚠️ NO usar `[Unreleased]`: v2.1.0 no tiene tag y `package.json` sigue en 2.0.0
+  - [ ] Referencia a FEV-25 + Issue #69
+  - [ ] Distingue los dos bloques y qué agentes reciben cada uno
+  - [ ] Enlaza el contrato canónico (`specs/spec-agent-format-v2.md` §8)
+- [ ] **T4.2** `docs/WORKFLOW.md` — FEV-25 ✅ en 3 ubicaciones
+  - [ ] Tabla §1 "Visión de Fases" (línea ~20)
+  - [ ] Tabla §3 "v2.1.0" (línea ~97)
+  - [ ] §5 "Métricas de Progreso" (bloque v2.1.0, línea ~140)
+  - [ ] Cabecera "Última actualización" con la fecha real
+  - [ ] Sin contradicciones entre las 3 tablas
+- [ ] **T4.3** `docs/wiki-source/Agents.md` — §"Agent File Pattern"
+  - [ ] Menciona el bloque de protocolo (A o B según `permission.task`)
+  - [ ] Enlaza a `specs/spec-agent-format-v2.md` sin duplicar el texto canónico
+  - [ ] Coherente con la columna "Permission Model" de la tabla §Primary Agents
+- [ ] **Commit C4:** `docs: sync FEV-25 delegation protocol across changelog, workflow and wiki`
 
-- [x] SC-UX1: Pack selection w/ default (E2E 17, FEV-21)
-- [x] SC-UX2: Min 1 pack validation (E2E 19, FEV-21)
-- [x] SC-UX3: Install summary (E2E 24, 25, FEV-22)
-- [x] SC-UX4: .codice-version format (E2E 20, FEV-21)
-- [x] SC-UX5: Update blocked missing/pre-2.0.0 (E2E 21, 22, 26)
-- [x] SC-UX6: Option A scope (E2E 23 rewritten)
-- [x] SC-UX7: Option B adds new packs (E2E 27)
-- [x] SC-UX8: Option B cancel no new (unit, FEV-21)
-- [x] SC-UX9: --packs non-interactive (E2E 29)
-- [x] SC-UX10: Flat agents/ (E2E 28)
-- [x] SC-UX11: Legacy v1.x message (E2E 22, FEV-21)
-- [x] SC-UX12: Pre-1.2.0 cleanup (E2E 26)
+### ✅ Checkpoint CP4 (gate a Fase 5)
 
-### Tests
-
-- [x] 5 new E2E scripts (26-30)
-- [x] E2E 23 rewritten (no transitional)
-- [x] 13 new unit/integration tests
-- [x] 1885+ tests pass, 0 fail
-- [x] 30/30 E2E pass
-- [x] Coverage ≥95%
-
-### Docs
-
-- [x] CHANGELOG v2.0.0 entry
-- [x] README updated for v2.0.0
-- [x] docs/MIGRATION.md (NEW)
-- [x] docs/WORKFLOW.md FEV-23 ✅
-- [x] docs/TECH_DEBT.md FEV-23 closure
-
-### Release
-
-- [x] Version bumped to 2.0.0
-- [x] npm pack --dry-run successful
-- [x] Manual CLI smoke test passes
-- [ ] (Separate) PR feat/new-agents → develop
-- [ ] (Separate) PR develop → main
-- [ ] (Separate) Tag v2.0.0
-- [ ] (Separate) npm publish
-- [ ] (Separate) Sync develop ← main
-
-### Calidad
-
-- [x] `just check`: 0 errors
-- [x] `just test`: 1885+ tests, 0 fail
-- [x] `just test-e2e`: 30/30 scenarios
-- [x] Coverage overall ≥95%
-- [x] No `any` types introducidos
-- [x] No nuevos dependencies
-
-### Proceso
-
-- [x] 4 atomic commits con Conventional Commits format
-- [x] Todos los commits con `Co-Authored-By: Moctezuma <dev@fisherk2.com>` trailer
-- [x] Branch `feat/new-agents` (continúa de FEV-17/18/19/20/21/22)
-- [x] No version bump conflicts
-- [x] Release coordination (separate) documented
+- [ ] CHANGELOG + WORKFLOW + wiki consistentes entre sí
+- [ ] `just check` → 0 errores
+- [ ] Ninguna referencia a FEV-25 como "pendiente" sobrevive en `docs/`
+- [ ] **Review humano antes de Fase 5**
 
 ---
 
-## Resumen de Archivos a Crear/Modificar
+## Fase 5 — Verificación (~0.5h) · Sin commit
 
-### Archivos modificados (13)
+- [x] **T5.1** `just test` → **2048 tests, 0 fail** (mismo número que el baseline: no se añadieron tests)
+- [x] **T5.2** `just check` → 0 errores (biome ci + tsc --noEmit)
+- [x] **T5.3** `bash tests/e2e/01-clean-install.sh` → exit 0 · `just test-e2e` → 30/30
+- [x] **T5.4** `npm pack --dry-run` → los 6 agentes presentes (818 archivos), sin regresión de tamaño
+- [x] **T5.5** Conteo final de líneas de los 6 agentes anotado abajo
+- [x] **T5.6** Carga manual en el harness de OpenCode: la sección nueva aparece en el system prompt (sección visible entre RULES y KNOWLEDGE en cada agente)
 
-**E2E (4):**
-1. `tests/e2e/04-update-workspace.sh` (verify BUNDLED env cleanup)
-2. `tests/e2e/15-update-workspace-existing-project.sh` (verify)
-3. `tests/e2e/16-update-granularity.sh` (verify)
-4. `tests/e2e/23-update-option-a.sh` (REWRITE: remove transitional)
+### Conteo final de líneas (T5.5)
 
-**Tests unit/integration (4):**
-5. `tests/integration/use-cases/update-workspace.test.ts` (+80)
-6. `tests/integration/use-cases/project-install.test.ts` (+60)
-7. `tests/integration/use-cases/clean-install.test.ts` (+40)
-8. `tests/unit/cli/version-context.test.ts` (+30)
+| Agente | Body (≤100) | Total (≤150) | ✓ |
+|--------|------------:|-------------:|:-:|
+| `huitzilopochtli` | 63 | 97 | ✅ |
+| `quetzalcoatl` | 62 | 104 | ✅ |
+| `tlaloc` | 61 | 84 | ✅ |
+| `mictlantecuhtli` | 62 | 85 | ✅ |
+| `moctezuma` | 51 | 86 | ✅ |
+| `tezcatlipoca` | 54 | 83 | ✅ |
 
-**Build (1):**
-9. `package.json` (1.2.0 → 2.0.0)
+Comando: `for f in template/obligatorio/packs/main/*.md; do echo "$f $(awk 'f{n++} /^---$/{c++; if(c==2) f=1} END{print n}' "$f") $(wc -l < "$f")"; done`
 
-**Docs (5):**
-10. `CHANGELOG.md` (+60)
-11. `README.md` (+40 / -20)
-12. `docs/WORKFLOW.md` (+20 / -5)
-13. `docs/TECH_DEBT.md` (+15)
+### ✅ Checkpoint CP5 — FEV-25 Completo
 
-### Archivos nuevos (6)
-
-**E2E (5):**
-14. `tests/e2e/26-update-blocked-pre-1.2.0.sh` (NEW, +85)
-15. `tests/e2e/27-update-option-b.sh` (NEW, +110)
-16. `tests/e2e/28-flat-agents-destination.sh` (NEW, +90)
-17. `tests/e2e/29-non-interactive-packs.sh` (NEW, +95)
-18. `tests/e2e/30-project-install-packs.sh` (NEW, +110)
-
-**Docs (1):**
-19. `docs/MIGRATION.md` (NEW, +180)
-
-### Total changes
-
-- **13 files modified + 6 new = 19 files total**
-- **+1076 lines, -76 lines = +1000 lines net**
-- **4 atomic commits + 1 verification** (no commit)
+- [x] Los 5 criterios del DoD de `fix13` cumplidos
+- [x] `bun test` 2048/0 · `just check` 0 · E2E 30/30
+- [x] 4 commits atómicos en `feature/new-commands`
+- [x] Issue #69 listo para cerrar
 
 ---
 
-## Métricas Esperadas
+## Definition of Done
 
-| Métrica | Baseline (post-FEV-22) | Meta FEV-23 | Verificación |
-|---------|------------------------|-------------|--------------|
-| Tests (pass/fail) | 1872 / 0 | 1885+ / 0 (net +13: 3 update-workspace + 3 project-install + 3 clean-install + 4 version-context) | `just test` |
-| E2E scenarios | 25 / 25 | 30 / 30 (25 baseline + 5 new, 1 rewritten) | `just test-e2e` |
-| `just check` errors | 0 | 0 | `just check` |
-| `just check-plugin` errors | 0 | 0 | `just check-plugin` |
-| Coverage (lines) | ≥95% | ≥95% | `bun test --coverage` |
-| SC-UX criteria verified | 7/12 | 12/12 | spec §9 |
-| Files touched | — | 13 modified + 6 new = 19 | `git diff --stat` |
-| Atomic commits | — | 4 | `git log --oneline` |
-| Wall-clock | — | ~5.5-6h | Self-reported |
-| Version | 1.2.0 | 2.0.0 | `package.json` |
-| Tarball | ~8.0MB | ~8.0MB (unchanged, deviation accepted) | `npm pack --dry-run` |
+- [x] `specs/spec-agent-format-v2.md` documenta el protocolo de delegación (§8)
+- [x] 4 agentes delegantes con `## DELEGATION PROTOCOL` (contexto + skills + checklist)
+- [x] 2 agentes no delegantes con `## SKILL ANALYSIS PROTOCOL`
+- [x] Protocolo de análisis previo presente en los **6** agentes
+- [x] Priorización de skills documentada (descubrimiento dinámico de `skills/`)
+- [x] Límite <100 líneas de body respetado en los 6 (máx. 63/100)
+- [x] `bun test` 2048/0 · `just check` 0 · E2E 30/30
+- [x] CHANGELOG + WORKFLOW + wiki sincronizados
 
 ---
 
-## Dependency Graph (Mermaid)
-
-```mermaid
-graph TD
-    F22[FEV-22 ✅<br/>1872 tests, 25 E2E<br/>v1.2.0]:::done --> P1
-    P1[Phase 1: Missing E2E<br/>26-30 + 23 unchanged<br/>~1.5-2h]:::seq --> CP1
-    CP1{Phase 1<br/>30/30 E2E pass<br/>4 new SC-UX verified}:::gate --> P2
-    P2[Phase 2: Unit/Integration<br/>+13 tests<br/>~1.5h]:::seq --> CP2
-    CP2{Phase 2<br/>1885+ tests pass<br/>0 regressions}:::gate --> P3
-    P3[Phase 3: Version Bump<br/>1.2.0→2.0.0<br/>E2E 23 rewrite<br/>~0.5h]:::seq --> CP3
-    CP3{Phase 3<br/>VERSION=2.0.0<br/>transitional removed}:::gate --> P4
-    P4[Phase 4: Release Docs<br/>CHANGELOG+README<br/>+MIGRATION+W/TD<br/>~1h]:::seq --> CP4
-    CP4{Phase 4<br/>v2.0.0 release-ready}:::gate --> P5
-    P5[Phase 5: Verify<br/>check+test+e2e<br/>+coverage+pack<br/>~0.5h]:::seq --> DONE
-    DONE[FEV-23 ✅<br/>v2.0.0 ready for<br/>release coordination]:::done
-
-    classDef done fill:#51cf66,stroke:#2f9e44,color:#fff
-    classDef gate fill:#ffd43b,stroke:#f59f00,color:#000
-    classDef seq fill:#e7e7e7,stroke:#666,color:#000
-```
-
----
-
-## Open Questions (decidir durante ejecución)
-
-1. **¿Remover E2E 23 transitional workaround?** → **REESCRIBIR** (decisión del usuario).
-2. **¿Incluir MIGRATION.md?** → **SÍ** (parte de release docs).
-3. **¿Hacer release real (PR + tag + publish)?** → **NO** (alcance confirmado: tests + version bump + docs).
-4. **¿Abrir nuevo tech debt para v2.0.0遗留?** → Verificar durante execution.
-5. **¿Testear con BUNDLED_TEST_VERSION env var?** → **NO** (post-bump, ya no es necesario).
-6. **¿Actualizar Wiki durante FEV-23?** → **NO** (FEV-22 ya cubrió).
-7. **¿Incluir GitHub release notes?** → **NO** (parte de release coordination).
-
----
-
-## Próximo Paso
-
-Una vez aprobado el plan:
-1. **Phase 1** (1 commit, ~1.5-2h) — 5 nuevos E2E scripts (26-30)
-2. **Phase 2** (1 commit, ~1.5h) — 13 nuevos unit/integration tests
-3. **Phase 3** (1 commit, ~0.5h) — Version bump + E2E 23 rewrite
-4. **Phase 4** (1 commit, ~1h) — CHANGELOG + README + MIGRATION + WORKFLOW + TECH_DEBT
-5. **Phase 5** (verification, ~0.5h) — `just check` + `just test` + `just test-e2e` + coverage + npm pack
-6. **Total:** ~5.5-6h wall-clock, 1-2 días calendario con review cycles
-
-**Comando sugerido:** `> Run /build to start Phase 1 Task 1.1 (E2E: 26-update-blocked-pre-1.2.0.sh)`
-
----
-
-*Última actualización: 2026-08-06 — Moctezuma (Strategic Planner) — FEV-23 plan ready for human review*
-
-Co-Authored-By: Moctezuma <dev@fisherk2.com>
+*Checklist generado por `/plan` (FEV-25). Detalle completo en [plan.md](./plan.md).*

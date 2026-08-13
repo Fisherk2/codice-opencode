@@ -3,7 +3,7 @@
 **Last updated:** 2026-08-07
 **Status:** v2.0.0 released — 1920 tests, 30/30 E2E, coverage 95.68% overall / 99.12% production `src/`
 **Current version:** v2.0.0
-**Next version:** v2.3.0 (pack removal, i18n, alternative package managers)
+**Next version:** v2.1.0 (pack removal, i18n, alternative package managers)
 
 ---
 

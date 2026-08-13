@@ -1,17 +1,17 @@
 ---
-description: Write failing tests, implement guardrails, verify. For bugs, use the Prove-It pattern.
+description: Write failing tests, implement TDD, setup guardrails.
 agent: mictlantecuhtli
 ---
 
 ## Pre-Flight: Detect Project State
 
-Detect the project's quality infrastructure:
+**Delegate** `test-engineer` subagent to detect the project's quality infrastructure:
 
 1. **Test framework** — Check for test directories.
 2. **Linter** — Check for linter configs.
 3. **Formatter** — Check for formatter configs.
 4. **Typechecker** — Check for typechecker configs.
-5. **Test directory structure** — Ensure `test/` exists with `unit/`, `integration/`, `e2e/` subdirs (create missing); if `test/` exists but is not separated, use `question` to ask whether to refactor existing tests into those dirs (test-pyramid convention, @skills/test-driven-development/SKILL.md).
+5. **Test directory structure** — Ensure `test/` exists with `unit/`, `integration/`, `e2e/` subdirs (create missing); if `test/` exists but is not separated, use `question` to ask whether to refactor existing tests into those dirs following the [Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html).
 
 Output summary:
 
@@ -30,9 +30,7 @@ Use the `question` tool to report findings and ask user whether to:
 
 ## Phase 0: Guardrail Setup
 
-*Only runs if user chose option B in Pre-Flight.*
-
-For each missing tool, detect project language from `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml` `src/`, etc. and suggest the best and appropriate tools with `research-analyst` subagent. Use the `question` tool to confirm before installing.
+For each missing tool, detect project language from `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml` `src/`, etc. and **Delegate** `tooling-engineer` subagent to research and suggest the best and appropriate tools. Use the `question` tool to confirm before installing.
 
 For each confirmed tool:
 - Install tool (if not already installed)
@@ -42,43 +40,43 @@ For each confirmed tool:
 
 ## Phase 1: Audit & Analysis
 
-**Delegate** `test-engineer`subagent and scan recent changes to identify missing test coverage.
+**Delegate** `test-engineer` subagent and scan recent changes to identify missing test coverage.
 
 1. Run `git diff` against the integration branch to detect new/modified code.
 2. Cross-reference with existing test files to find gaps.
-3. Classify each gap by **category** (Feature / Bug Fix) and **pyramid level** (Unit / Integration / E2E).
+3. Classify each gap by **category** (Feature / Bug Fix) and **pyramid level** (Unit / Integration / E2E) in a table.
 4. Use the `question` tool to present the report and confirm which tests to implement in Phase 2.
 
 ## Phase 2: Test-Driven Development
 
-Load @skills/test-driven-development/SKILL.md skill and work on @test/ folder to follow the TDD process.
+**Load** @skills/test-driven-development/SKILL.md skill and work on @test/ folder to follow the TDD process.
 
-**Supporting skills (load as needed):**
+Write depending of phase 1 report:
+
+**For new features:**
+
+1. **Delegate**  `test-engineer` subagent and **Load** `error-handling-patterns` skill to write tests that describe expected behavior (must FAIL).
+2. Implement code to make them pass
+3.  **Load** `refactoring-patterns` skill to refactor while keeping tests green.
+
+**For bug fixes (Prove-It pattern):**
+
+1. **Delegate** `chaos-engineer` subagent and write test that reproduces the bug (must FAIL). **Load** `debugging-and-error-recovery` skill if hard to reproduce.
+2. Confirm test fails
+3. **Delegate** `debugger` subagent to analyze and implement fix, if is hard to debug **Delegate** `error-detective` subagent.
+4. Confirm test passes
+5. Run full test suite for regressions
+
+**Load** this supporting skills if needed:
 
 - `performance-analysis` — if tests reveal performance concerns
 - `security-and-hardening` — when testing security-sensitive features
 - `design-taste-frontend` — to verify visual consistency in frontend
 - `browser-testing-with-devtools` — for browser-related issues
 
-Write depending of phase 1 report:
-
-**For new features:**
-
-1. Load `error-handling-patterns` skill for error paths and resilience tests, then **delegate**  `test-engineer` subagent to write tests that describe expected behavior (must FAIL).
-2. Implement code to make them pass
-3. Refactor while keeping tests green. Load `refactoring-patterns` skill
-
-**For bug fixes (Prove-It pattern):**
-
-1. **Delegate** `chaos-engineer` subagent and write test that reproduces the bug (must FAIL). Load `debugging-and-error-recovery` skill if hard to reproduce.
-2. Confirm test fails
-3. **Delegate** `debugger` subagent to analyze and implement fix, if is hard to debug invoke `error-detective` subagent.
-4. Confirm test passes
-5. Run full test suite for regressions
-
 ## Phase 3: Final Quality Gate
 
-1. Invoke `code-reviewer` subagent with `code-review-and-quality` skill for multi-axis review (correctness, readability, architecture, security, performance) to review implemented tests.
+1. **Delegate** `code-reviewer` subagent and **Load** `code-review-and-quality` skill for multi-axis review (correctness, readability, architecture, security, performance) to review implemented tests.
 2. Apply suggested changes
 
 After ALL tests changes, run ALL quality checks AGAIN:
@@ -88,15 +86,16 @@ After ALL tests changes, run ALL quality checks AGAIN:
 4. Run formatter CHECK mode — must have 0 unformatted files
 5. Run typechecker — must have 0 type errors
 
-**If ANY check fails:**
+**If ANY check fails, revert and reconsider:**
 
-6. Revert and reconsider. Load `debugging-and-error-recovery` skill if stuck.
-7. Commit atomic changes following @skills/git-workflow-and-versioning/SKILL.md
+6. Fix any discrepancies found during testing before proceeding, and run the test after each change.
+7. If agents are stuck or the testing process fails, **Delegate** to `debugger` subagent and follow @skills/debugging-and-error-recovery/SKILL.md to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
+8. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
 ## Escalation to Incident Response
 
 If debugging detects a **production incident** (e.g., users affected, service degradation), escalate to:
-- Load `incident-response` skill and **delegate** to `error-coordinator` subagent — Incident triage, communication, and postmortem workflow 
+- **Load** `incident-response` skill and **Delegate** to `error-coordinator` subagent — Incident triage, communication, and postmortem workflow 
 
 ## Suggested Next Step
 

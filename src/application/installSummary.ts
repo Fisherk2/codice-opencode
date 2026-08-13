@@ -62,15 +62,12 @@ export function buildInstallSummary(
 
 /** Format InstallSummaryInfo as a multi-line string for clack.note(). */
 export function formatInstallSummary(info: InstallSummaryInfo): string {
-	const lines = [
+	return [
 		`Packs: ${info.packs.map((pack) => `${pack.id} (${pack.agentCount} agents)`).join(", ")}`,
-	];
-	if (info.mandatoryDirs.length > 0) {
-		lines.push(`Mandatory: ${info.mandatoryDirs.join(", ")}`);
-	}
-	if (info.optionalFiles.length > 0) {
-		lines.push(`Optional: ${info.optionalFiles.length} file(s)`);
-	}
-	lines.push(`Total: ~${info.totalAgents} agents | ~${info.totalFiles} files`);
-	return lines.join("\n");
+		info.mandatoryDirs.length > 0 ? `Mandatory: ${info.mandatoryDirs.join(", ")}` : null,
+		info.optionalFiles.length > 0 ? `Optional: ${info.optionalFiles.length} file(s)` : null,
+		`Total: ~${info.totalAgents} agents | ~${info.totalFiles} files`,
+	]
+		.filter(Boolean)
+		.join("\n");
 }

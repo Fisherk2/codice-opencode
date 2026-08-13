@@ -1,11 +1,24 @@
 ---
-description: Run a web performance audit via the web-performance-auditor persona
+description: Run a web performance audit.
 agent: mictlantecuhtli
 ---
 
-`/webperf` targets web applications specifically. **Do not use it for utility libraries, CLIs, or server-only code with no browser-facing output.**
+## Pre-flight: Detect UI/UX project
 
-## Determine the mode
+Before to continue, detect whether the project has UI components. Check for files matching:
+
+```
+**/*.{html,htm,jsx,tsx,vue,svelte,astro}
+**/*.{css,scss,less}
+**/components/**/*
+**/pages/**/*
+**/views/**/*
+```
+
+- **If UI files exist** → Continue to Phase 1
+- **If NO UI files** → stop and suggest using `/review` or `/design` instead.
+
+## Phase 1: Detect audit mode
 
 **Deep mode** — activate when any of these is available:
 - A Lighthouse JSON report file (e.g. `npx lighthouse <url> --output json --output-path ./report.json`, or `npx -p chrome-devtools-mcp chrome-devtools lighthouse_audit --output-format=json`)
@@ -13,13 +26,13 @@ agent: mictlantecuhtli
 - A CrUX API response (requires `CRUX_API_KEY` or `GOOGLE_API_KEY`)
 - A DevTools performance trace
 - A live URL plus the `chrome-devtools` MCP server configured in the harness
-- The Chrome DevTools MCP CLI invoked locally — use @skills/browser-testing-with-devtools/SKILL.md for setup and live capture guidance
+- The `Chrome-DevTools` MCP CLI invoked locally — use @skills/browser-testing-with-devtools/SKILL.md for setup and live capture guidance
 
-**Quick mode** — default when none of the above are available. The agent scans source code for structural anti-patterns. Use @skills/performance-analysis/SKILL.md to detect N+1 queries, algorithmic complexity, and memory allocation issues.
+**Quick mode** — default when none of the above are available. The agent scans source code for structural anti-patterns. **Load** @skills/performance-analysis/SKILL.md to detect N+1 queries, algorithmic complexity, and memory allocation issues.
 
-## Run the audit
+## Phase 2: Run the audit
 
-Invoke the `web-performance-auditor` subagent. Pass it explicitly:
+**Delegate** the `web-performance-auditor` subagent. Pass it explicitly:
 
 - The files, components, or diff under review
 - Any artifact paths (Lighthouse JSON, PSI JSON, CrUX response, trace) or pasted JSON content
@@ -28,10 +41,10 @@ Invoke the `web-performance-auditor` subagent. Pass it explicitly:
 
 The subagent returns a scorecard (only populated with sourced values), a ranked list of findings, positive observations, and proactive recommendations.
 
-## Output
+## Phase 3: Output
 
-Return the full audit report to the user. For remediation of findings, use @skills/performance-optimization/SKILL.md for granular optimization guidance and implementation steps.
+Return the full audit report to the user. For remediation of findings, **Load** @skills/performance-optimization/SKILL.md for granular optimization guidance and implementation steps.
 
 ## Suggested Next Step
 
-> Performance audit complete. Run `/code-simplify` to refactor and simplify the code with performance improvements applied.
+> Performance UI/UX audit complete. Switch to agent `tlaloc` to fix the observations, then run `/review` to review the latest implementations and ensure quality and correctness.

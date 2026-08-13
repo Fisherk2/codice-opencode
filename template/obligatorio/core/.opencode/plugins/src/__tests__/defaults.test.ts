@@ -5,20 +5,14 @@ import {
 	COMMAND_PHASE_MAP,
 	DEFAULTS,
 	DESTRUCTIVE_PATTERNS,
-	INTENT_PATTERNS,
 	PHASE_SUGGESTIONS,
 	PRIMARY_AGENTS,
 } from "../defaults";
 
-describe("defaults.ts — all 5 named exports exist and are non-empty", () => {
+describe("defaults.ts — all 4 named exports exist and are non-empty", () => {
 	test("COMMAND_AGENT_MAP is a non-empty Record<string, string>", () => {
 		expect(COMMAND_AGENT_MAP).toBeDefined();
 		expect(Object.keys(COMMAND_AGENT_MAP).length).toBeGreaterThan(0);
-	});
-
-	test("INTENT_PATTERNS is a non-empty Record<string, string[]>", () => {
-		expect(INTENT_PATTERNS).toBeDefined();
-		expect(Object.keys(INTENT_PATTERNS).length).toBeGreaterThan(0);
 	});
 
 	test("COMMAND_PHASE_MAP is a non-empty Record<string, string>", () => {
@@ -53,11 +47,10 @@ describe("defaults.ts — DESTRUCTIVE_PATTERNS is exported separately (not in DE
 	});
 });
 
-describe("defaults.ts — DEFAULTS object exposes all 5 canonical maps", () => {
+describe("defaults.ts — DEFAULTS object exposes all 4 canonical maps", () => {
 	test("DEFAULTS has exactly the expected keys", () => {
 		const expected = [
 			"COMMAND_AGENT_MAP",
-			"INTENT_PATTERNS",
 			"COMMAND_PHASE_MAP",
 			"PHASE_SUGGESTIONS",
 			"AGENT_MENTION_PATTERNS",
@@ -66,6 +59,23 @@ describe("defaults.ts — DEFAULTS object exposes all 5 canonical maps", () => {
 			expect(DEFAULTS).toHaveProperty(key);
 		}
 		expect(Object.keys(DEFAULTS)).toHaveLength(expected.length);
+	});
+});
+
+describe("defaults.ts — map key-set integrity", () => {
+	test("COMMAND_AGENT_MAP and COMMAND_PHASE_MAP have identical key sets", () => {
+		// Guards the routing invariant: every command routed to an agent must
+		// also have a phase, and vice versa — a mismatch would silently leave
+		// one of the two lookups at its fallback.
+		const agentKeys = Object.keys(COMMAND_AGENT_MAP);
+		const phaseKeys = Object.keys(COMMAND_PHASE_MAP);
+		expect(agentKeys).toHaveLength(phaseKeys.length);
+		for (const key of agentKeys) {
+			expect(COMMAND_PHASE_MAP).toHaveProperty(key);
+		}
+		for (const key of phaseKeys) {
+			expect(COMMAND_AGENT_MAP).toHaveProperty(key);
+		}
 	});
 });
 
@@ -91,11 +101,13 @@ describe("defaults.ts — spot-check known keys", () => {
 		expect(PRIMARY_AGENTS).toContain("tlaloc");
 	});
 
-	test("INTENT_PATTERNS contains expected commands", () => {
-		const buildKeywords = INTENT_PATTERNS["/build"];
-		expect(buildKeywords?.length).toBeGreaterThan(0);
-		expect(buildKeywords?.includes("build")).toBe(true);
-		expect(INTENT_PATTERNS["/test"]?.includes("test")).toBe(true);
+	test("COMMAND_AGENT_MAP routes the FEV-24 commands", () => {
+		// FEV-24 commands were added to COMMAND_PHASE_MAP in v2.0.0; their
+		// agent routing must exist too or the fallback path would drop them.
+		expect(COMMAND_AGENT_MAP["/sync"]).toBe("tlaloc");
+		expect(COMMAND_AGENT_MAP["/migrate"]).toBe("quetzalcoatl");
+		expect(COMMAND_AGENT_MAP["/deploy"]).toBe("mictlantecuhtli");
+		expect(COMMAND_AGENT_MAP["/analyze"]).toBe("quetzalcoatl");
 	});
 
 	test("AGENT_MENTION_PATTERNS contains expected agent keys", () => {

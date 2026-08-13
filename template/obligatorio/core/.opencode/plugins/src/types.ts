@@ -1,11 +1,12 @@
-import { COMMAND_PHASE_MAP, INTENT_PATTERNS, PHASE_SUGGESTIONS } from "./defaults";
+import { COMMAND_PHASE_MAP, PHASE_SUGGESTIONS } from "./defaults";
 
 /**
  * Partial configuration interface for the SDD Pipeline plugin.
  *
  * All fields are optional — when omitted, the plugin falls back to the
- * hardcoded defaults from ./defaults.ts. This allows users to override
- * specific maps without needing to redefine the entire configuration.
+ * hardcoded defaults from ./defaults.ts (except intentPatterns, which layers
+ * on top of auto-discovered patterns at runtime). This allows users to
+ * override specific maps without needing to redefine the entire configuration.
  *
  * @example
  * ```ts
@@ -25,17 +26,16 @@ export interface SddPipelineConfig {
 	readonly commandPhaseMap?: Readonly<Record<string, string>>;
 
 	/**
-	 * Override for the intent keyword → command mapping.
+	 * User overrides for the intent keyword → command mapping.
 	 *
-	 * Maps natural-language keywords (e.g., "implement", "test") to
-	 * their corresponding slash commands. When omitted, uses
-	 * INTENT_PATTERNS from defaults.
+	 * This map layers on top of the auto-discovered patterns (derived from
+	 * each command file's own `description:` frontmatter at runtime).
 	 *
 	 * NOTE: PER-KEY OVERRIDE — providing `{ "/spec": ["my keyword"] }`
-	 * replaces ALL keywords for `/spec`, losing defaults like
-	 * "requirement", "idea", etc. Other commands (e.g., "/build")
-	 * retain their default keywords. To extend without losing defaults,
-	 * copy the existing defaults into your config and append to them.
+	 * replaces the discovered keyword list for `/spec`. Keys not present
+	 * in this map fall back to their discovered keywords. To extend a
+	 * command's keywords without losing the discovered ones, copy the
+	 * discovered list into your config and append to it.
 	 */
 	readonly intentPatterns?: Readonly<Record<string, readonly string[]>>;
 
@@ -52,9 +52,13 @@ export interface SddPipelineConfig {
  * Default SDD Pipeline configuration — all fields populated from the
  * canonical defaults. Use this as the default value when no user
  * configuration is provided.
+ *
+ * `intentPatterns` is intentionally `{}` — intent keywords are derived from
+ * command descriptions via auto-discovery at runtime, not from hardcoded
+ * defaults. The config value only carries user overrides.
  */
 export const DEFAULT_SDD_PIPELINE_CONFIG: SddPipelineConfig = {
 	commandPhaseMap: COMMAND_PHASE_MAP,
-	intentPatterns: INTENT_PATTERNS,
+	intentPatterns: {},
 	phaseSuggestions: PHASE_SUGGESTIONS,
 } as const;

@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v2.0.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-07 (v2.0.0 released) | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v2.1.0
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-11 (FEV-24 completo, FEV-25 completo) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -16,6 +16,8 @@
 | F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
 | F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth, TECH_DEBT.md | ✅ Completo |
 | FEV-1 a FEV-23 | Ver sección 3 | Issues críticos, SDD refactor, CI/CD, docs, agent packs, installer UX | ✅ Completo |
+| FEV-24 | Nuevos comandos v2.1: `/sync`, `/migrate`, `/deploy`, `/analyze` + SDD plugin refactor | #68, #67, #64, #57 | ✅ Completo (2026-08-11) |
+| FEV-25 | Reglas de delegación en agentes principales | #69 | ✅ Completo (2026-08-11) |
 
 ## 2. Fases Iniciales (F0 – F6.5)
 
@@ -87,33 +89,65 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 **Métricas v2.0.0:** ~41h implementación, ~9h overhead (code reviews, wiki sync, release)
 
+### v2.1.0 (FEV-24 y FEV-25 completos)
+
+| FEV | Objetivo | Issues | Estado |
+|-----|----------|--------|--------|
+| **FEV-24** | Nuevos comandos: `/sync`, `/migrate` (opcional), `/deploy`, `/analyze` | #68, #67, #64, #57 | ✅ Completo (2026-08-07) |
+| **FEV-25** | Reglas de delegación en agentes principales | #69 | ✅ Completo (2026-08-11) |
+
+**Diagnósticos:** `docs/diagnosis/fix09` a `fix13`
+
+**FEV-24 sub-fases:**
+- **FEV-24-A /sync** — Bidirectional git sync (tlaloc) | Issue #68 | ✅ 2026-08-07
+- **FEV-24-B /migrate** — Stack migration planner (quetzalcoatl, optional) | Issue #67 | ✅ 2026-08-07
+- **FEV-24-C /deploy** — Git workflow + CI/CD (mictlantecuhtli) | Issue #64 | ✅ 2026-08-07
+- **FEV-24-D /analyze** — Architectural analysis (quetzalcoatl) | Issue #57 | ✅ 2026-08-07
+- **FEV-24 Docs** — CHANGELOG v2.1.0 + WORKFLOW + Wiki sync | — | ✅ 2026-08-07
+- **FEV-24 Plugin** — COMMAND_PHASE_MAP + OQ-3 removal + SDD pipeline refactor | — | ✅ 2026-08-08
+- **FEV-24 Integration** — Intent auto-discovery, command reference fixes, test consolidation | — | ✅ 2026-08-10
+- **FEV-24 Review** — Bilingual intents (SPANISH_INTENT_KEYWORDS), stopwords extraction, spec update | — | ✅ 2026-08-11
+
+**FEV-24 métricas finales:** 4 comandos nuevos, 17→17 commands, SDD plugin simplificado (INTENT_PATTERNS eliminado, auto-discovery), 2048 tests / 0 fail, 30/30 E2E, just check 0 errores
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
 |------|---------|-------------|-------------------|
 | Unitarias | Dominio (entities, services, types) | Bun test | 100% func lines |
-| Integración | Adaptadores, Use Cases, CLI | Bun test | > 90% func/lines |
-| E2E | 6 escenarios binario compilado | bash + mock server | 6/6 pasando |
-| Coverage | Cobertura general | bun test --coverage | > 88% lines, > 89% funcs |
+| Integración | Adaptadores, Use Cases, CLI | Bun test | > 95% func/lines |
+| E2E | 30 escenarios CLI en directorios aislados | bash + fixtures | 30/30 pasando |
+| Packaging | Estructura del tarball npm | Bun test | 5/5 escenarios |
+| Coverage | Cobertura general | bun test --coverage | ≥95% lines, ≥95% funcs |
 
 ## 5. Métricas de Progreso
 
-- **Tests unit+int:** 844 tests, 0 fail, 1806 expects
-- **Tests E2E:** 20/20 pasando
-- **Coverage:** 98.90% functions / 98.10% lines (domain: 100% lines)
+### v2.0.0 (release final — 2026-08-07)
+
+- **Tests totales:** 1920 tests, 0 fail
+- **Tests E2E:** 30/30 pasando
+- **Coverage:** 95.68% overall / 99.12% production `src/`
 - **`just check`:** 0 errores
-- **Fix rate:** 10+ bugs encontrados y corregidos durante desarrollo E2E
-- **Release ready:** v1.0.11 – 476/0 tests, 15/15 E2E, 0 Biome/tsc errors
-- **Release ready:** v1.0.13 – 481/0 tests, 15/15 E2E, 12 SDD commands
-- **Release ready:** v1.0.14 – 487/0 tests, 15/15 E2E, 98.13% coverage
-- **v1.1.0 completado:** FEV-6, FEV-7, FEV-8, FEV-9, FEV-10 completados
-- **v1.1.2 completado:** Pre-release verified, production release published
-- **v1.1.3 completado:** Hotfix — EPERM on Windows CI, CONTRIBUTING.md simplified
-- **FEV-11:** ✅ Completo — Binary Removal (Issue #46, npm-only distribution)
-- **FEV-12:** ✅ Completado — References Restructuring (Issues #54, #52)
-- **FEV-13:** ✅ Completo — Documentation Overhaul + SDD Decoupling (Issues #51, #53)
-- **FEV-14:** ✅ Completo — UX Enhancements (Issues #47, #56) — 809 tests, 0 fail
-- **FEV-15:** ✅ Completo — Community Standards (Issue #55) — 810 tests, 0 fail
-- **FEV-16:** ✅ Completo — Pre-release Tech Debt Closure — 844 tests, 0 fail
-- **v2.0.0 completo:** FEV-17 ✅, FEV-18 ✅, FEV-19 ✅ (2026-08-05), FEV-20 ✅ (2026-08-05), FEV-21 ✅ (2026-08-06), FEV-22 ✅ (2026-08-06), FEV-23 ✅ (2026-08-07) — **v2.0.0 released** (2026-08-07) (1920 tests, 30/30 E2E, coverage 95.68%)
-- **Esfuerzo estimado v2.0.0:** ~50h (FEV-17: 7h ✅, FEV-18: 8h ✅, FEV-19: 3h ✅, FEV-20: 3h ✅, FEV-21: 8h ✅, FEV-22: 6h ✅, FEV-23: 6h ✅ = 41h de implementación + ~9h de overhead: code reviews 5-axis, wiki sync, release coordination)
+- **FEV-17 a FEV-23:** Todos completos
+- **Esfuerzo total v2.0.0:** ~41h implementación + ~9h overhead (code reviews, wiki sync, release)
+
+### v2.1.0 (FEV-24 y FEV-25 completos — 2026-08-11)
+
+- **Tests totales:** 2048 tests, 0 fail
+- **Tests E2E:** 30/30 pasando
+- **`just check`:** 0 errores (145 archivos)
+- **FEV-24:** Completo (8 sub-fases: 4 commands + docs + plugin + integration + review)
+- **FEV-25:** Completo — delegation protocol en 6 agentes principales (Issue #69)
+- **SDD plugin:** INTENT_PATTERNS eliminado → auto-discovery + SPANISH_INTENT_KEYWORDS overlay
+
+### Histórico de releases
+
+| Release | Tests | E2E | Coverage | Fecha |
+|---------|-------|-----|----------|-------|
+| v1.0.3 | 343 | 6/6 | ~89% | 2026-06-16 |
+| v1.0.11 | 476 | 15/15 | ~89% | 2026-06-26 |
+| v1.0.14 | 487 | 15/15 | 98.13% | 2026-07-09 |
+| v1.1.0 | 581 | 15/15 | 98.13% | 2026-07-10 |
+| v1.2.0 | 844 | 15/15 | 98.1% | 2026-08-03 |
+| v2.0.0 | 1920 | 30/30 | 95.68% | 2026-08-07 |
+| v2.1.0 | 2048 | 30/30 | ~96% | 2026-08-11 |

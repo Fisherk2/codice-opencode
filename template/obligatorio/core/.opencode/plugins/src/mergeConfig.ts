@@ -81,19 +81,21 @@ function mergeCommandPhaseMap(userValue: unknown): Record<string, string> {
 }
 
 /**
- * Merges a user-provided intent pattern map with the default map.
+ * Merges a user-provided intent pattern map into a validated overrides-only map.
  *
  * - Keys that do not start with `"/"` are skipped with a `logWarning()`.
- * - Valid entries override defaults on conflict.
- * - New entries (keys not in defaults) are added.
+ * - Values are normalised to a readonly array of strings.
+ *
+ * The baseline (auto-discovered keywords) is NOT seeded here — intent
+ * patterns come from command descriptions at runtime (autoDiscovery.ts);
+ * this function only surfaces validated user overrides from `opencode.json`.
  *
  * @param userValue — The user-provided value from `opencode.json`.
- * @returns A complete `Record<string, readonly string[]>` with all expected entries.
+ * @returns A `Record<string, readonly string[]>` containing only validated
+ *          user overrides.
  */
 function mergeIntentPatterns(userValue: unknown): Record<string, readonly string[]> {
-	const merged: Record<string, readonly string[]> = {
-		...DEFAULTS.INTENT_PATTERNS,
-	};
+	const merged: Record<string, readonly string[]> = {};
 
 	if (!isRecord(userValue)) return merged;
 

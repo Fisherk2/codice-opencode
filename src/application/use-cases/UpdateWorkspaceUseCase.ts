@@ -6,16 +6,11 @@ import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
-import {
-	checkWritable,
-	confirmOverwrite,
-	createProgressCallback,
-	wrapMergeError,
-	writeVersionFileSafe,
-} from "../helpers";
+import { checkWritable, createProgressCallback, wrapMergeError } from "../helpers";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { isPreV2Version, parseVersionData, resolveUpdatePacks } from "./updateFlow";
+import { finishUpdate, maybeConfirmUpdate } from "./updateHelpers";
 import { notifyIfUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
 
 /**
@@ -76,16 +71,16 @@ export class UpdateWorkspaceUseCase {
 
 		// Ask for confirmation if not forced. Defaults to Yes so unattended
 		// sessions can accept the update with a single keystroke (plan Phase 4).
-		if (!options?.force) {
-			const confirmed = await confirmOverwrite(
+		if (
+			!(await maybeConfirmUpdate(
 				this.fileSystem,
 				this.userPrompt,
-				`Update workspace in "${destinationPath}"? Packs: ${localVersion.installedPacks.join(", ") || "(none)"}. Continue?`,
-				"Update cancelled by user.",
-				undefined,
-				true,
-			);
-			if (!confirmed) return success(undefined);
+				localVersion,
+				destinationPath,
+				options,
+			))
+		) {
+			return success(undefined);
 		}
 
 		// Informational GitHub check — never blocks the update
@@ -124,24 +119,12 @@ export class UpdateWorkspaceUseCase {
 		}
 
 		const safeVersion = this.resolveNewVersion(options);
-
-		// Update skips opcional entirely (spec §6.1): optionalSelections resets.
-		const versionResult = await writeVersionFileSafe(
+		const versionResult = await finishUpdate(
 			this.fileSystem,
-			{
-				version: safeVersion,
-				installedPacks: [...finalPacks],
-				installedAt: new Date().toISOString(),
-				optionalSelections: [],
-			},
-			"Update",
+			this.userPrompt,
+			safeVersion,
+			finalPacks,
 		);
-
-		if (versionResult.ok) {
-			this.userPrompt.showSuccess(
-				`Workspace updated to v${safeVersion}. Packs: ${finalPacks.join(", ")}`,
-			);
-		}
 		return versionResult;
 	}
 

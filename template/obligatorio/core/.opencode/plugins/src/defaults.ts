@@ -5,17 +5,17 @@
 // plugin. These are the canonical defaults that the plugin falls back to when
 // no overrides are provided in the opencode.json config.
 //
-// Data-heavy tables live in dedicated modules (intentPatterns.ts,
-// destructivePatterns.ts) to keep every file under the 200-line convention.
+// Data-heavy tables live in dedicated modules (destructivePatterns.ts) to keep
+// every file under the 200-line convention. Intent keywords are no longer
+// hardcoded here — they are auto-discovered from command descriptions at
+// runtime (see autoDiscovery.ts).
 // All exports are deeply readonly to prevent accidental mutation at runtime.
 // ---------------------------------------------------------------------------
 
-import { INTENT_PATTERNS } from "./intentPatterns";
 import { mentionPatternsFor } from "./mentionPatterns";
 import { PRIMARY_AGENTS } from "./validSubagents";
 
 export { DESTRUCTIVE_PATTERNS } from "./destructivePatterns";
-export { INTENT_PATTERNS } from "./intentPatterns";
 export { PRIMARY_AGENTS } from "./validSubagents";
 
 /**
@@ -38,6 +38,10 @@ export const COMMAND_AGENT_MAP: Readonly<Record<string, string>> = {
 	"/code-simplify": "tlaloc",
 	"/webperf": "mictlantecuhtli",
 	"/help": "huitzilopochtli", // FEV-14 — onboarding command
+	"/sync": "tlaloc", // FEV-24 — wildcard utility command
+	"/migrate": "quetzalcoatl", // FEV-24 — before /diagnosis
+	"/deploy": "mictlantecuhtli", // FEV-24 — after /ship
+	"/analyze": "quetzalcoatl", // FEV-24 — after /migrate, before /diagnosis
 } as const;
 
 /**
@@ -59,7 +63,11 @@ export const COMMAND_PHASE_MAP: Readonly<Record<string, string>> = {
 	"/ship": "ship",
 	"/code-simplify": "review",
 	"/webperf": "review",
-	"/help": "idle", // FEV-14 — informational command
+	"/help": "idle", // FEV-14 — onboarding command
+	"/sync": "idle", // FEV-24 — wildcard utility command
+	"/migrate": "plan", // FEV-24 — before /diagnosis
+	"/deploy": "ship", // FEV-24 — after /ship
+	"/analyze": "plan", // FEV-24 — after /migrate, before /diagnosis
 } as const;
 
 /**
@@ -128,23 +136,23 @@ export const AGENT_MENTION_PATTERNS: Readonly<Record<string, readonly RegExp[]>>
 	Object.fromEntries(PRIMARY_AGENTS.map((agent) => [agent, mentionPatternsFor(agent)]));
 
 /**
- * Aggregated DEFAULTS object containing all 5 configuration maps.
+ * Aggregated DEFAULTS object containing all 4 configuration maps.
  *
  * This is the canonical defaults object used by the SDD pipeline plugin.
  * Consumers can import individual named exports or the entire DEFAULTS object.
  *
  * NOTE: DESTRUCTIVE_PATTERNS is intentionally omitted from this object —
  * it is a safety boundary and must remain hardcoded per OQ-4.
+ * Intent keyword patterns are also omitted — they are auto-discovered from
+ * command descriptions at runtime (autoDiscovery.ts) rather than hardcoded.
  */
 export const DEFAULTS: Readonly<{
 	COMMAND_AGENT_MAP: typeof COMMAND_AGENT_MAP;
-	INTENT_PATTERNS: typeof INTENT_PATTERNS;
 	COMMAND_PHASE_MAP: typeof COMMAND_PHASE_MAP;
 	PHASE_SUGGESTIONS: typeof PHASE_SUGGESTIONS;
 	AGENT_MENTION_PATTERNS: typeof AGENT_MENTION_PATTERNS;
 }> = {
 	COMMAND_AGENT_MAP,
-	INTENT_PATTERNS,
 	COMMAND_PHASE_MAP,
 	PHASE_SUGGESTIONS,
 	AGENT_MENTION_PATTERNS,

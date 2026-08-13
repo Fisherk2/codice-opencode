@@ -1,47 +1,40 @@
 ---
-description: Update and sync documentation with code changes
+description: Update and sync documentation with code changes.
 agent: quetzalcoatl
 ---
 
 ## Pre-Flight: Analyze Documentation State
 
-Scan the project for existing documentation and identify what's present, what's missing, and what may be outdated:
+**Delegate** `codebase-archaeologist` subagent to scan the project for existing documentation and identify what's present, what's missing, and what may be outdated respect to the current project state:
 
-1. Read @SPEC.md — does it reflect current project scope?
+1. Read @SPEC.md — does it reflect current project scope? exceeds >200 lines?
 2. Scan @docs/ — list all documents with last-modified dates
 3. Read @CHANGELOG.md — what recent changes might need documentation updates?
 4. Read @README.md — is it up to date with respect to the current project?
 5. Read @CONTRIBUTING.md — is it written with a workflow appropriate for contributors with respect @skills/git-workflow-and-versioning/SKILL.md conventions?
 6. Check @specs/ and @specs/adr/ — any ADRs that should be created or updated?
-7. Read @AGENTS.md — does it reference files or conventions that no longer exist?
+7. Read @AGENTS.md — exceeds >200 lines? Has dead links? Is it up to date with respect to the current project?
 
 Output a summary:
 
 ```
 DOCUMENTATION STATE DETECTED:
-- SPEC.md: [up to date / outdated / missing]
+- SPEC.md: [up to date / has >200 lines or outdated / missing]
 - docs/: [list with N docs, M potentially outdated]
 - CHANGELOG.md: [up to date / outdated / missing]
 - README.md: [up to date / outdated / missing]
 - CONTRIBUTING.md: [up to date / outdated / missing]
 - specs/: [N spec files, M ADRs]
-- AGENTS.md: [references correct / has dead links / missing]
+- AGENTS.md: [references correct / has >200 lines or outdated / missing]
 ```
 
-Use the `question` tool to let the user choose the scope — never decide automatically:
+## Phase 0: Resolve Contradictions
+
+**Before writing anything**, use the `question` tool to resolve any contradictions found between code/configuration and current documentation. Let the user choose the scope — never decide automatically:
 
 - Which documents to update?
 - Which documents to create?
 - Which contradictions to resolve first?
-
-## Phase 0: Resolve Contradictions
-
-**Before writing anything**, use the `question` tool to resolve any contradictions found between code/configuration and current documentation:
-
-1. Does @docs/ARCHITECTURE.md reflect the actual architecture?
-2. Does @SPEC.md match the current project scope?
-3. Are there code changes that need corresponding documentation?
-4. Are there specs or tech debt that need documenting?
 
 ## Phase 1: Synchronize Documentation
 
@@ -56,8 +49,8 @@ Use the `question` tool to let the user choose the scope — never decide automa
    - @docs/CODE_STYLE.md if missing
    - @specs/ if missing specs to document
    - @specs/adr/ ADRs for significant decisions
-3. **Create ADRs** for significant decisions (load @skills/documentation-and-adrs/SKILL.md)
-4. If @SPEC.md or @AGENTS.md exceeds **200 lines**, load `agent-md-refactor` skill to modularize into @specs/
+3. **Create ADRs** for significant decisions (**Load** @skills/documentation-and-adrs/SKILL.md)
+4. If @SPEC.md or/and @AGENTS.md exceeds **200 lines**, **Load** `agent-md-refactor` skill to modularize into @specs/
 5. Use the `question` tool to confirm changes with the user before writing
 6. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
 
@@ -73,4 +66,4 @@ Use the `question` tool to let the user choose the scope — never decide automa
 
 ## Suggested Next Step
 
-> Documentation is up to date. Run `/evolve` to create new specs, or run `/plan` if code changes are needed based on updated documentation.
+> Documentation is up to date. Run `/evolve` to create new specs. Run `/plan` to create an execution plan for new implementation specs.

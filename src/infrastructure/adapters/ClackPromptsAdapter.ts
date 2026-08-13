@@ -64,7 +64,7 @@ export class ClackPromptsAdapter implements IUserPrompt {
 	 * @returns true if user confirmed.
 	 */
 	async confirm(message: string, defaultYes?: boolean): Promise<boolean> {
-		const result = await clack.confirm({ message, initialValue: defaultYes ?? true });
+		const result = await clack.confirm({ message, initialValue: defaultYes ?? false });
 		if (clack.isCancel(result)) return false;
 		return result;
 	}

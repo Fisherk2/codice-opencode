@@ -161,7 +161,81 @@ and legacy subagents (`template/obligatorio/packs/sin-clasificar/typescript-pro.
 | `template/obligatorio/packs/main/huitzilopochtli.md` | Primary agent reference |
 | `template/obligatorio/packs/sin-clasificar/backend-developer.md` | Legacy subagent reference |
 
-## 8. Out of Scope
+## 8. Delegation Protocol
+
+Primary agents delegate implicitly today: their RULES say "always delegate via
+`task()`" but there is no contract for how. This section is the canonical
+source of truth (SSOT) for delegation — the six primary agents in
+`template/obligatorio/packs/main/` carry these blocks. Within each group the
+instances are byte-identical; re-verify the spec against the agents when
+either side changes.
+
+### Block selection rule
+
+| Agent capability | Block | Agents |
+|------------------|-------|--------|
+| `permission.task` contains `allow` entries | **A — DELEGATION PROTOCOL** | `huitzilopochtli`, `quetzalcoatl`, `tlaloc`, `mictlantecuhtli` |
+| `permission.task` is `"*": deny` | **B — SKILL LOADING PROTOCOL** | `moctezuma`, `tezcatlipoca` |
+
+### Block A — DELEGATION PROTOCOL (delegating agents)
+
+```markdown
+### DELEGATION PROTOCOL
+
+Before executing ANY instruction — analyze first, act second:
+
+1. **Understand** the requested outcome, its constraints, and what "done" means.
+2. **Map subagents** — which specialists in `agents/` cover this work?
+3. **Map skills** — scan `skills/` and select every skill that raises the quality of
+   this task. Two or ten: the count is your judgement, the relevance is the rule.
+4. **Decide** — delegate or execute yourself (last resort, only when no specialist exists).
+
+Every `task()` you send MUST carry these three blocks:
+
+- **Deterministic instructions** — context (why + constraints) plus small, verifiable steps with explicit deliverables: paths, names, formats. Never an open-ended ask.
+- **Skills to load** — name the `skills/` the subagent must load, in priority order, with one line of justification each.
+- **Goal checklist** — the acceptance rubric you will grade the returned work against, including what counts as rework.
+
+When the subagent returns, grade its output against that checklist. Any unmet item goes
+back to the subagent with the specific gap named.
+```
+
+Per-role constraints that originally replaced `<HOOK>` in step 4 now live in each
+agent's `### RULES` / `## COMPOSITION` sections:
+
+| Agent | Constraint location |
+|-------|---------------------|
+| `huitzilopochtli` | `### RULES` — last resort: inform the user, you cannot write directly |
+| `quetzalcoatl` | `## COMPOSITION` — you only delegate documentation — never code |
+| `tlaloc` | `### RULES` — only write directly if no specialized subagent exists |
+| `mictlantecuhtli` | `### RULES` — your verdicts are unappealable |
+
+### Block B — SKILL LOADING PROTOCOL (non-delegating agents)
+
+```markdown
+### SKILL LOADING PROTOCOL
+
+Before executing ANY instruction — analyze
+first, act second:
+
+1. **Understand** the requested outcome, its constraints, and what "done" means.
+2. **Map skills** — scan `skills/` and load every skill that raises the quality of this task. The number of skills to load is your judgement, the relevance is the rule.
+3. **Define the goal checklist** — the acceptance criteria your own output must satisfy.
+4. **Self-review** against that checklist before returning; state any item you could not meet.
+```
+
+Non-delegation is enforced by `permission.task: "*": deny` in the frontmatter and
+the `### RULES` bullet "**NEVER** delegate to subagents" — not by prose in the block.
+
+### Line budget
+
+Primary agent bodies must stay ≤100 lines (excluding YAML frontmatter) and ≤150 lines
+total. Block A ≈ 18 lines, Block B ≈ 9 lines — both fit within the existing budgets.
+Bullets in the three-block list and Block B step 2 render as single long lines.
+
+---
+
+## 9. Out of Scope
 
 - **Legacy agents** (95 in `sin-clasificar/`) keep their v1.x format — hybrid decision (user, 2026-08-04).
 - **Primary agents** (`packs/main/`) keep their format — not converted.

@@ -133,14 +133,14 @@ describe("ClackPromptsAdapter", () => {
 			expect(result).toBe(false);
 		});
 
-		it("should default to true when defaultYes is not provided", async () => {
+		it("should default to false when defaultYes is not provided", async () => {
 			mockConfirm.mockResolvedValue(true);
 
 			const result = await adapter.confirm("Continue?");
 			expect(result).toBe(true);
 			expect(mockConfirm).toHaveBeenCalledWith({
 				message: "Continue?",
-				initialValue: true,
+				initialValue: false,
 			});
 		});
 	});

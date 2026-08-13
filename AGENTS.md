@@ -7,7 +7,7 @@
 
 ## 🎯 Contexto del Proyecto
 
-**Códice** es un instalador/actualizador CLI compilado con Bun para desplegar plantillas de workspace de OpenCode de forma atómica y segura.
+**Códice** es un instalador/actualizador CLI distribuido vía npm para desplegar plantillas de workspace de OpenCode de forma atómica y segura.
 
 - **In-Scope:** Instalación/actualización del template, gestión de versiones local/remota.
 - **Out-of-Scope:** Instalación de dependencias externas, modificación de archivos del usuario.
@@ -64,6 +64,12 @@
 | [spec-file-rules.md](specs/spec-file-rules.md) | Reglas de clasificación de archivos |
 | [spec-cli-commands.md](specs/spec-cli-commands.md) | Especificación de modos y comandos CLI |
 | [adr/](specs/adr/) | Architecture Decision Records (ADR-001 al ADR-015) |
+| [MIGRATION.md](docs/MIGRATION.md) | Guía de migración v1.x → v2.0.0 |
+| [spec-agent-packs.md](specs/spec-agent-packs.md) | Sistema de packs de agentes |
+| [spec-installer-ux-v2.md](specs/spec-installer-ux-v2.md) | UX del instalador v2 |
+| [spec-agent-format-v2.md](specs/spec-agent-format-v2.md) | Formato de agentes v2 |
+| [spec-template.md](specs/spec-template.md) | Especificación del template |
+| [spec-sdd-plugin-decoupling.md](specs/spec-sdd-plugin-decoupling.md) | Desacoplamiento del plugin SDD |
 
 ### Codebase Memory MCP
 
