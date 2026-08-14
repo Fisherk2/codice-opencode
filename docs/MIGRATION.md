@@ -189,6 +189,62 @@ Nada. Códice usa staging + rename atómicos: una interrupción (Ctrl+C, kill) d
 
 ---
 
+## 7. Migración v2.0.0 → v2.1.0-beta.1
+
+**Aplica a:** instalaciones de Códice v2.0.0+ (`bunx @fisherk2-dev/codice`)
+**Fecha:** 2026-08-13
+**Versión de destino:** v2.1.0-beta.1
+
+### 7.1 Qué cambia
+
+v2.1.0 es una **actualización sin breaking changes** que añade funcionalidad:
+
+| Cambio | v2.0.0 | v2.1.0 |
+|--------|--------|--------|
+| **4 nuevos slash commands** | No existían | `/sync`, `/migrate`, `/deploy`, `/analyze` |
+| **Intent auto-discovery** | `INTENT_PATTERNS` hardcoded en el plugin | Detección basada en filesystem de `template/obligatorio/core/commands/*.md` |
+| **Bilingual intents** | Solo inglés | Soporte inglés + español (SPANISH_INTENT_KEYWORDS overlay) |
+| **Agent delegation protocol** | Sin protocolo formal | Analyze → Plan → Execute en 6 agentes principales; `task()` con instrucciones determinísticas, skills a cargar, checklist de aceptación |
+| **CI/CD hardening** | SHA-pins antiguos | Actions SHA-pined a majors Node 24, branch protection real, PR/issue templates |
+| **npm provenance** | Sin provenance | SLSA v1 generado automáticamente por npm con `--provenance` |
+
+### 7.2 Cómo migrar
+
+1. **Ejecuta la actualización normal:**
+   ```bash
+   bunx --fresh @fisherk2-dev/codice --update
+   ```
+   El instalador descarga la versión más reciente (v2.1.0-beta.1 o posterior) y aplica los cambios obligatorios.
+
+2. **Verifica la versión:**
+   ```bash
+   cat .codice-version
+   # Debe mostrar "version": "2.1.0-beta.1" o superior
+   ```
+
+3. **Prueba los nuevos comandos (opcional):**
+   ```bash
+   # Sincronizar con git:
+   /sync
+
+   # Analizar arquitectura:
+   /analyze
+   ```
+
+### 7.3 Qué NO cambia
+
+- Tus archivos personalizados (`agents/`, `skills/`, `commands/`) **no se modifican**.
+- Los packs instalados en v2.0.0 **se preservan**.
+- `.codice-version` mantiene tu historial de packs e `installedAt`.
+- El sistema de archivos atomico y el rollback por SIGINT siguen intactos.
+
+### 7.4 Problemas conocidos
+
+- **npm auto-correction del bin name:** El campo `bin[codice]` fue corregido automáticamente por npm al publicar v2.1.0-beta.1 (nombre "was cleaned"). Sin impacto en el usuario final — se resolvió declarando `repository.url` en `package.json`.
+- **Node 20 deprecation warnings:** Las actions de GitHub (`actions/cache`, `actions/checkout`, `extractions/setup-just`) fuerzan ejecución en Node 24 a pesar de los SHA-pins antiguos. Se resolverá actualizando a majors recientes en v2.1.1.
+
+---
+
 ## 7. Relacionado
 
 - **[SPEC.md](../SPEC.md)** — Especificación central del proyecto (v2.0.0).
