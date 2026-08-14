@@ -192,7 +192,7 @@ Códice presents an interactive menu with three installation modes:
 | **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
 | **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing v2.0+ installation current |
 
-> **Version-gated updates:** Update Workspace only runs on v2.0+ installations. v1.x installations must reinstall with Clean or Project Install; pre-1.2.0 installs receive a cleanup suggestion. See [docs/MIGRATION.md](docs/MIGRATION.md) for the upgrade guide.
+> **Version-gated updates:** Update Workspace only runs on v2.1+ installations. v1.x installations must reinstall with Clean or Project Install; <1.2.0 installs receive a cleanup suggestion. See [docs/MIGRATION.md](docs/MIGRATION.md) for the upgrade guide.
 
 ```bash
 # Interactive menu (default):
@@ -205,7 +205,7 @@ bunx @fisherk2-dev/codice --version
 bunx @fisherk2-dev/codice --help
 ```
 
-Códice v2.0 lets you select which agent packs to install. Install specific packs non-interactively, or add packs later during an update:
+Códice lets you select which agent packs to install. Install specific packs non-interactively, or add packs later during an update:
 
 ```bash
 # Install only software-development and business packs:
