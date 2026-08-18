@@ -62,6 +62,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **TD-V2-6** | No pack removal mechanism | 4-6h | Medium | Once installed, agents from a pack persist in destination. Users cannot remove a pack without reinstalling from scratch. Requires `--remove-pack <id>` flag or new installer mode. |
 | **TD-V2-7** | Action SHA-pins force Node 24 (deprecated) | 1-2h | Low | `actions/cache`, `actions/checkout`, `extractions/setup-just` pins target Node 20; GitHub forces Node 24. Update to latest majors that support Node 24 to suppress deprecation warnings. |
 | **TD-V2-8** | SPEC modularization (ADR-020) | 0h (done) | None | SPEC.md split into 8 sub-specs + index. Completed in v2.1.0-beta.1. |
+| **TD-V2-9** | SIGINT mid-commit backup overwrite | 2-4h | Low | `AtomicStager.commitStaging()` overwrites `.codice-backup` originals if interrupted mid-commit; next run's backups hold the mixed state, losing true pre-interrupt originals. Deliberate and documented; consider persisting rollback intent across runs. |
 
 ### Planned Features (v2.1.1+)
 
@@ -82,7 +83,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | v1.x debt | ✅ All resolved |
 | v2.0.0 debt | ✅ All resolved |
 | v2.1.0-beta.1 debt | ✅ All resolved (8 items including SPEC modularization) |
-| Open items | 1 (TD-V2-6: pack removal) |
+| Open items | 2 (TD-V2-6: pack removal, TD-V2-9: SIGINT backup overwrite) |
 | Pending fixes | 1 (TD-V2-7: action SHA-pins for Node 24) |
 | Planned features | 5 (alternative managers, i18n, pack removal, update diff, action pin update) |
 
