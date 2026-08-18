@@ -1,11 +1,11 @@
 {
     "schema_version": 2,
-    "commit": "0d1ad7beb85bd7facbf9bca10f462c8bd4c2209f",
-    "indexed_at": "2026-08-08T01:04:44Z",
-    "project": "codice-opencode",
-    "nodes": 13925,
-    "edges": 14973,
-    "original_size": 17825792,
-    "compressed_size": 2653645,
-    "compression_level": 3
+    "commit": "61dedc665f32dddd6e18f2c6cb6ecb42897437d1",
+    "indexed_at": "2026-08-18T23:30:48Z",
+    "project": "mnt-HDDFish-Documents-Programacion-PROYECTOS-11-codice-opencode",
+    "nodes": 15853,
+    "edges": 20533,
+    "original_size": 20250624,
+    "compressed_size": 2843249,
+    "compression_level": 9
 }
