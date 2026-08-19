@@ -36,7 +36,7 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
 - Agent delegation protocol for 6 primary agents (FEV-25)
 - CI/CD hardening: SHA-pinned actions, branch protection, PR/issue templates
 - npm provenance SLSA v1 on publish
-- SPEC.md modularized (441 → 44 lines + 8 sub-specs, ADR-020)
+- SPEC.md modularized (441 → 44 lines + 8 sub-specs, ADR-020) (TD-V2-8)
 - 2052 tests / 0 fail, 31/31 E2E
 
 ---
@@ -55,16 +55,27 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 
 ---
 
-## Open Debt for v2.1.1
+## Open Debt by Version
+
+### v2.1.1
 
 | ID | Item | Effort | Risk | Description |
 |----|------|--------|------|-------------|
 | **TD-V2-6** | No pack removal mechanism | 4-6h | Medium | Once installed, agents from a pack persist in destination. Users cannot remove a pack without reinstalling from scratch. Requires `--remove-pack <id>` flag or new installer mode. |
 | **TD-V2-7** | Action SHA-pins force Node 24 (deprecated) | 1-2h | Low | `actions/cache`, `actions/checkout`, `extractions/setup-just` pins target Node 20; GitHub forces Node 24. Update to latest majors that support Node 24 to suppress deprecation warnings. |
-| **TD-V2-8** | SPEC modularization (ADR-020) | 0h (done) | None | SPEC.md split into 8 sub-specs + index. Completed in v2.1.0-beta.1. |
 | **TD-V2-9** | SIGINT mid-commit backup overwrite | 2-4h | Low | `AtomicStager.commitStaging()` overwrites `.codice-backup` originals if interrupted mid-commit; next run's backups hold the mixed state, losing true pre-interrupt originals. Deliberate and documented; consider persisting rollback intent across runs. |
 
-### Planned Features (v2.1.1+)
+### v2.1.2
+
+_No items planned yet._
+
+### v2.1.3
+
+_No items planned yet._
+
+## Planned Features by Version
+
+### v2.1.1
 
 | Feature | Issue | Effort | Description |
 |---------|-------|--------|-------------|
@@ -74,6 +85,14 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **Pack Update Diff** | — | 3-4h | Show changelog for user's installed packs during update |
 | **Action SHA-pins Update** | TD-V2-7 | 1-2h | Pin to latest Node 24-compatible majors |
 
+### v2.1.2
+
+_No features planned yet._
+
+### v2.1.3
+
+_No features planned yet._
+
 ---
 
 ## Summary
@@ -82,10 +101,10 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 |----------|--------|
 | v1.x debt | ✅ All resolved |
 | v2.0.0 debt | ✅ All resolved |
-| v2.1.0-beta.1 debt | ✅ All resolved (8 items including SPEC modularization) |
-| Open items | 2 (TD-V2-6: pack removal, TD-V2-9: SIGINT backup overwrite) |
-| Pending fixes | 1 (TD-V2-7: action SHA-pins for Node 24) |
-| Planned features | 5 (alternative managers, i18n, pack removal, update diff, action pin update) |
+| v2.1.0 debt | ✅ All resolved (4 new commands, SDD intent auto-discovery, bilingual intents, agent delegation, CI/CD hardening) |
+| v2.1.1 open debt | 3 items (TD-V2-6, TD-V2-7, TD-V2-9) |
+| v2.1.1 planned features | 5 items (alternative managers, i18n, pack removal, update diff, action pin update) |
+| v2.1.2+ | No items planned yet |
 
 ---
 
