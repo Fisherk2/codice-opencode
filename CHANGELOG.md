@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0-beta.2] — 2026-08-18
+
+### Fixed
+- **Review hardening (beta.1 → beta.2):** `BunSymlinkCreator.createLink` now guards `mkdir({recursive:true})` with try/catch returning `SymlinkError` so a parent-dir creation failure degrades gracefully as a warning (was an unhandled rejection → fatal crash). Added unit test for nested parent-dir creation (10 scenarios, 1692 pass). Added missing ADR-016..ADR-020 (new-commands, sdd-intent-auto-discovery, agent-delegation, cicd-hardening, spec-modularization) so `docs/ARCHITECTURE.md` links resolve.
+
 ## [2.1.0] — 2026-08-12
 
 ### Added

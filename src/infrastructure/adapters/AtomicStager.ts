@@ -5,6 +5,8 @@ import { walkDirectory } from "./directoryWalker";
 import { resolveWithinRoot } from "./pathResolver";
 import { VerboseLogger } from "./VerboseLogger";
 
+const BACKUP_SUFFIX = ".codice-backup";
+
 /**
  * Performs atomic file staging, commit, and rollback operations.
  *
@@ -180,7 +182,7 @@ export class AtomicStager {
 		// Back up original destination file if it exists
 		try {
 			await fs.access(destPath);
-			const backupPath = `${destPath}.codice-backup`;
+			const backupPath = `${destPath}${BACKUP_SUFFIX}`;
 			await fs.copyFile(destPath, backupPath);
 			backups.set(destPath, backupPath);
 		} catch {

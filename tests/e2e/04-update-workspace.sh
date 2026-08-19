@@ -45,10 +45,10 @@ mkdir -p "$TEMP_DIR/scripts"
 echo "# OLD SCRIPT — This should be preserved" > "$TEMP_DIR/scripts/build.sh"
 
 # Write version file in the v2.0 format with a version EQUAL to the
-# bundled template (2.1.0-beta.1) so the bundled comparison reports "up to date".
-echo '{"version":"2.1.0-beta.1","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":["scripts/build.sh"]}' > "$TEMP_DIR/.codice-version"
+# bundled template (2.1.0-beta.2) so the bundled comparison reports "up to date".
+echo '{"version":"2.1.0-beta.2","installedPacks":["software-development"],"installedAt":"2026-01-01T00:00:00.000Z","optionalSelections":["scripts/build.sh"]}' > "$TEMP_DIR/.codice-version"
 
-log_info "Pre-populated project with version 2.1.0-beta.1 (v2.0 format) files"
+log_info "Pre-populated project with version 2.1.0-beta.2 (v2.0 format) files"
 
 # Start mock server (returns tag_name: "v1.0.0" by default)
 start_mock_server
