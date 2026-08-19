@@ -1,5 +1,5 @@
 # Technical Requirements Document – Códice: Opencode Workspace Installer v2.1.0
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-13 | **Autor:** Fisherk2 | **Estado:** Aprobado
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-19 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Arquitectura de Referencia
 Se aplicará **Clean Architecture** adaptada a una aplicación de línea de comandos (CLI). Esto garantiza que la lógica de negocio (reglas de fusión, comparación de versiones) esté completamente desacoplada de los detalles de implementación (sistema de archivos, red, librería de TUI).

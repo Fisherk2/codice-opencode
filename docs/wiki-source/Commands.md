@@ -37,6 +37,10 @@ flowchart LR
 | **Maintain** | `/docs-update` | quetzalcoatl | Update, migrate, and synchronize documentation with the current codebase state. Creates ADRs for significant decisions. |
 | **Analyze** | `/diagnosis` | quetzalcoatl | Analyze issues (remote or local), run diagnostics, and document technical findings in `docs/diagnosis/`. Does not implement fixes — only documents. |
 | **Evolve** | `/evolve` | quetzalcoatl | Create new specs or modify existing ones for mature projects with established versions and documentation. |
+| **Sync** | `/sync` | tlaloc | Bidirectional git sync with 4 modes and 4 conflict resolution strategies. Can be invoked at any SDD phase. |
+| **Migrate** (optional) | `/migrate` | quetzalcoatl | Detects current tech stack, evaluates breaking changes, generates a structured migration plan with phases, steps, and rollback procedures. |
+| **Deploy** | `/deploy` | mictlantecuhtli | Post-`/ship` deployment automation. 3 modes: no workflow, betterable, established. Generates branch protection, PR templates, CI pipelines. |
+| **Analyze** | `/analyze` | quetzalcoatl | 8-dimension architecture analysis generating prioritized `TECH_DEBT.md`. Findings feed `/diagnosis`. |
 
 ### Flow Through the Cycle
 
@@ -226,7 +230,6 @@ Restart your OpenCode session so it recognizes the new command file.
 | 1 | `commands/<name>.md` | Create command file with frontmatter + numbered steps (auto-discovered) |
 | 2 | (Auto-Discovery) | Plugin detects `commands/<name>.md` automatically — no registration needed |
 | 3 | `opencode.json` `sddPipeline.intentPatterns` | (Optional) Add intent keywords for auto-detection |
-| 4 | [GitHub Wiki → Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) | (If SDD phase is new) Update phase suggestions |
 | 5 | Various command files | Update `## Suggested Next Step` blocks |
 | 6 | User guide + README | Add command to reference tables |
 

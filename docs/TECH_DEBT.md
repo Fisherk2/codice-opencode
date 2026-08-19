@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-08-13
-**Status:** v2.1.0-beta.1 released — 2052 tests, 31/31 E2E, coverage ≥95% production `src/`
-**Current version:** v2.1.0-beta.1
+**Last updated:** 2026-08-19
+**Status:** v2.1.0 released — 2052 tests, 31/31 E2E, coverage ≥95% production `src/`
+**Current version:** v2.1.0
 **Next version:** v2.1.1 (action pins, pack removal, i18n)
 
 ---

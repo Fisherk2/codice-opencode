@@ -9,9 +9,9 @@ Códice is a pre-configured OpenCode workspace — a curated collection of agent
 The template includes:
 
 - **6 primary agents** — specialist personas that orchestrate the SDD cycle (spec writing, planning, building, testing, reviewing, shipping)
-- **~360 agents in 10 packs** — 6 primary agents + 4 writer agents + 352 domain subagents across 8 selectable packs
-- **12 slash commands** — `/spec`, `/plan`, `/build`, `/test`, `/review`, `/ship`, and more — each wired to the right agent with a defined workflow
-- **52 engineering skills** — reusable workflow instructions for TDD, code review, security hardening, performance optimization, UI/UX design, and more
+- **~360 agents in 10 packs** — 6 primary agents + 4 writer agents + 355 subagents across 8 selectable packs
+- **17 slash commands** — `/spec`, `/plan`, `/build`, `/test`, `/review`, `/ship`, `/sync`, `/migrate`, `/deploy`, `/analyze`, and more — each wired to the right agent with a defined workflow
+- **51 engineering skills** — reusable workflow instructions for TDD, code review, security hardening, performance optimization, UI/UX design, and more
 - **Pre-configured permissions** — read/write/bash access rules tuned for safe AI-assisted development
 - **Multi-model provider configuration** — ready-to-use settings for Anthropic, DeepSeek, Google, OpenAI, MiniMax, Moonshot, and Z-AI models
 

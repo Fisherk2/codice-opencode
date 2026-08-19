@@ -49,7 +49,7 @@ Commands are normalized before pattern matching: comments are stripped and white
 
 ### 2. Subagent Name Validation
 
-When an agent uses `task()` to delegate to a subagent, the plugin validates that the subagent name exists in the catalog (**~360 agents**: ~352 subagents discovered from the `agents/` directory + 6 primary + 4 writer agents). If the LLM invents a name, it receives an error:
+When an agent uses `task()` to delegate to a subagent, the plugin validates that the subagent name exists in the catalog (**~360 agents**: ~355 subagents discovered from the `agents/` directory + 6 primary + 4 writer agents). If the LLM invents a name, it receives an error:
 
 ```
 Unknown subagent: "python-wizard". Create an .md file in /path/to/project/agents/ or use a primary agent.
@@ -105,6 +105,10 @@ Slash commands are mapped to their corresponding primary agent:
 | `/ship` | mictlantecuhtli |
 | `/review` | tezcatlipoca |
 | `/help` | huitzilopochtli |
+| `/sync` | tlaloc |
+| `/migrate` | quetzalcoatl |
+| `/deploy` | mictlantecuhtli |
+| `/analyze` | quetzalcoatl |
 
 **Complete detection flow:**
 
@@ -141,6 +145,8 @@ The plugin uses a 3-pillar architecture to minimize hardcoded configuration:
 Scans `commands/*.md` frontmatter and `agents/*.md` filenames to derive configuration. Falls back to `DEFAULTS` when directories do not exist.
 
 > **Note (FEV-20):** The `agents/` scan is **recursive** — subdirectories (e.g., `agents/packs/<pack-name>/`) are also scanned, and hidden entries (`.git`, `.opencode`, dot-files) are skipped. The 6 primary agents (`PRIMARY_AGENTS`) are the only hardcoded names; when no `agents/` directory exists, validation falls back to just those 6.
+
+> **Note (v2.1):** Intent keywords are now **auto-discovered** from `commands/*.md` frontmatter, replacing the previously hardcoded `INTENT_PATTERNS` map. The plugin also supports **bilingual intent detection** (EN/ES) — Spanish keywords like "especificar" route to `/spec`, "sincronizar" routes to `/sync`. Unicode-aware tokenization with stopword filtering handles the translation.
 
 ### Pillar 2: Config-driven (`configLoader.ts` + `defaults.ts`)
 

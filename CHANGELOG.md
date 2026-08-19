@@ -446,7 +446,8 @@ Pre-release for v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release
 
 - Path traversal prevention; symlink skipping in directory walk; SHA-256 checksums.
 
-[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0-beta.1...v2.0.0
 [2.0.0-beta.1]: https://github.com/fisherk2/codice-opencode/compare/v1.2.0...v2.0.0-beta.1
 [1.2.0]: https://github.com/fisherk2/codice-opencode/compare/v1.1.3...v1.2.0
