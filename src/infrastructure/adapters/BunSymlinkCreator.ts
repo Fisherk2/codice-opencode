@@ -164,7 +164,19 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 		}
 
 		// Ensure parent directory exists (idempotent — no existence check needed)
-		await fsPromises.mkdir(linkParentDir, { recursive: true });
+		try {
+			await fsPromises.mkdir(linkParentDir, { recursive: true });
+		} catch (error) {
+			const nodeError = isErrnoException(error) ? error : undefined;
+			return failure(
+				symlinkError(
+					target,
+					linkPath,
+					`Failed to create parent directory: ${nodeError?.message ?? String(error)}`,
+					nodeError?.code,
+				),
+			);
+		}
 
 		try {
 			// Determine the target type for Windows compatibility:

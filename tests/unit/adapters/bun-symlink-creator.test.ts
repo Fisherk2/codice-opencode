@@ -1,7 +1,7 @@
 /**
  * BunSymlinkCreator — symlink creation adapter tests
  *
- * Covers 9 scenarios:
+ * Covers 10 scenarios:
  * 1. Creates a new symlink with correct target
  * 2. Idempotent: existing symlink is not overwritten
  * 3. Idempotent: broken symlink at link path is handled without error
@@ -11,6 +11,7 @@
  * 7. Batch createSymlinks creates all symlinks independently
  * 8. Batch processes remaining symlinks when one fails
  * 9. Rejects symlink paths that escape workspace root
+ * 10. Creates parent directories recursively when link parent does not exist
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -225,6 +226,27 @@ describe("BunSymlinkCreator — single createSymlink", () => {
 				"Workspace root does not exist",
 			);
 		});
+	});
+
+	test("creates parent directories recursively when link parent does not exist", async () => {
+		const { BunSymlinkCreator } = await import(modulePath);
+		const creator = new BunSymlinkCreator(workspaceDir);
+
+		const nestedLinkPath = ".opencode/nested/deep/agents";
+		const nestedParentDir = path.join(workspaceDir, ".opencode/nested/deep");
+		const absLinkPath = path.join(workspaceDir, nestedLinkPath);
+		const relativeTarget = "../../../agents";
+
+		// Ensure parent chain does not exist at test start
+		fs.rmSync(path.join(workspaceDir, ".opencode/nested"), { recursive: true, force: true });
+		expect(fs.existsSync(nestedParentDir)).toBe(false);
+
+		const result = await creator.createSymlink(relativeTarget, nestedLinkPath);
+
+		expect(result.ok).toBe(true);
+		expect(fs.lstatSync(absLinkPath).isSymbolicLink()).toBe(true);
+		expect(normalizeSlash(fs.readlinkSync(absLinkPath))).toBe(relativeTarget);
+		expect(fs.existsSync(nestedParentDir)).toBe(true);
 	});
 });
 
