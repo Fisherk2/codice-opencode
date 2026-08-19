@@ -10,7 +10,7 @@
 
 ## Objective
 
-Códice is a command-line interface (CLI) tool built with Bun that installs and updates OpenCode workspace templates atomically, safely, and intelligently. It resolves the fragmentation and customization-loss problem that occurs when users manually merge template updates into existing projects. Códice automates three installation modes (Clean Install, Project Install, Update Workspace) with guaranteed atomic file operations and zero external runtime dependencies beyond Bun.
+Códice is a command-line interface (CLI) tool built with Bun that installs and updates OpenCode workspace templates atomically, safely, and intelligently. It resolves the fragmentation and customization-loss problem that occurs when users manually merge template updates into existing projects. Códice automates three installation modes (Clean Install, Project Install, Update Workspace) with guaranteed atomic file operations and minimal runtime dependencies (`@clack/prompts` for TUI, `semver` for version comparison — both bundled with the npm package).
 
 ## Modular Specs
 
