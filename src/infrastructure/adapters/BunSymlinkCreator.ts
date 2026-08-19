@@ -163,12 +163,8 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 			);
 		}
 
-		// Create parent directory if needed (linkParentDir is already computed above)
-		try {
-			await fsPromises.access(linkParentDir, fs.constants.F_OK);
-		} catch {
-			await fsPromises.mkdir(linkParentDir, { recursive: true });
-		}
+		// Ensure parent directory exists (idempotent — no existence check needed)
+		await fsPromises.mkdir(linkParentDir, { recursive: true });
 
 		try {
 			// Determine the target type for Windows compatibility:
