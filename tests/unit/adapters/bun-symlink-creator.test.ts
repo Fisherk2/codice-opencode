@@ -12,6 +12,7 @@
  * 8. Batch processes remaining symlinks when one fails
  * 9. Rejects symlink paths that escape workspace root
  * 10. Creates parent directories recursively when link parent does not exist
+ * 11. Returns SymlinkError when mkdir fails (ENOTDIR — file blocks parent path)
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -247,6 +248,23 @@ describe("BunSymlinkCreator — single createSymlink", () => {
 		expect(fs.lstatSync(absLinkPath).isSymbolicLink()).toBe(true);
 		expect(normalizeSlash(fs.readlinkSync(absLinkPath))).toBe(relativeTarget);
 		expect(fs.existsSync(nestedParentDir)).toBe(true);
+	});
+
+	test("returns SymlinkError when mkdir fails (file blocks parent path)", async () => {
+		const { BunSymlinkCreator } = await import(modulePath);
+		const creator = new BunSymlinkCreator(workspaceDir);
+
+		// Place a regular file where a directory is needed — mkdir({recursive:true})
+		// will fail with ENOTDIR because it cannot traverse through a file.
+		const blockerPath = path.join(workspaceDir, ".opencode", "blocker");
+		fs.writeFileSync(blockerPath, "I am a file, not a directory");
+
+		const result = await creator.createSymlink("../agents", ".opencode/blocker/agents");
+
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.code).toBe("ENOTDIR");
+		}
 	});
 });
 
