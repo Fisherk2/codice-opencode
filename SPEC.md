@@ -3,10 +3,10 @@
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v2.1.0-beta.1  
+**Current Version:** v2.1.0-beta.2  
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
-> **v2.1.0 Released** (2026-08-12): FEV-24 ✅ (4 new commands, SDD intent auto-discovery, bilingual intents) + FEV-25 ✅ (agent delegation protocol). 2052 tests, 31/31 E2E scenarios, coverage ≥ 95% production src/. v2.1.0-beta.1 published to npm (`@fisherk2-dev/codice@2.1.0-beta.1`, dist-tag beta).
+> **v2.1.0 Released** (2026-08-12): FEV-24 ✅ (4 new commands, SDD intent auto-discovery, bilingual intents) + FEV-25 ✅ (agent delegation protocol). 2052 tests, 31/31 E2E scenarios, coverage ≥ 95% production src/. v2.1.0-beta.2 published to npm (`@fisherk2-dev/codice@2.1.0-beta.2`, dist-tag beta).
 
 ## Objective
 

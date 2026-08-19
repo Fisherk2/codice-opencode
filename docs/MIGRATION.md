@@ -189,11 +189,11 @@ Nada. Códice usa staging + rename atómicos: una interrupción (Ctrl+C, kill) d
 
 ---
 
-## 7. Migración v2.0.0 → v2.1.0-beta.1
+## 7. Migración v2.0.0 → v2.1.0-beta.2
 
 **Aplica a:** instalaciones de Códice v2.0.0+ (`bunx @fisherk2-dev/codice`)
 **Fecha:** 2026-08-13
-**Versión de destino:** v2.1.0-beta.1
+**Versión de destino:** v2.1.0-beta.2
 
 ### 7.1 Qué cambia
 
@@ -214,12 +214,12 @@ v2.1.0 es una **actualización sin breaking changes** que añade funcionalidad:
    ```bash
    bunx --fresh @fisherk2-dev/codice --update
    ```
-   El instalador descarga la versión más reciente (v2.1.0-beta.1 o posterior) y aplica los cambios obligatorios.
+   El instalador descarga la versión más reciente (v2.1.0-beta.2 o posterior) y aplica los cambios obligatorios.
 
 2. **Verifica la versión:**
    ```bash
    cat .codice-version
-   # Debe mostrar "version": "2.1.0-beta.1" o superior
+   # Debe mostrar "version": "2.1.0-beta.2" o superior
    ```
 
 3. **Prueba los nuevos comandos (opcional):**
