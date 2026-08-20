@@ -32,7 +32,7 @@ describe("Release Workflow Configuration", () => {
 
 	test("has version validation step comparing tag vs package.json", () => {
 		expect(releaseYaml).toContain("Validate version");
-		expect(releaseYaml).toContain("github.ref_name");
+		expect(releaseYaml).toContain("GITHUB_REF_NAME");
 		expect(releaseYaml).toContain("package.json");
 	});
 
