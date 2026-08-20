@@ -31,7 +31,6 @@ export class FileMergeEngine implements IFileMergeEngine {
 		const selected = new Set(options?.selectedOptionals ?? []);
 		const isUpdateMode = options?.updateMode ?? false;
 		const onProgress = options?.onProgress;
-		// Pre-computed by stagePlanner.ts.
 		const { stageDecisions, expandedDirs, total } = await computeStagePlan(
 			this.fileSystem,
 			rules,
@@ -64,7 +63,6 @@ export class FileMergeEngine implements IFileMergeEngine {
 				continue;
 			}
 
-			// Handle expanded directories (tree-level diff in update mode)
 			const expanded = expandedDirs.get(rule.path);
 			if (expanded) {
 				for (const file of expanded) {
@@ -94,7 +92,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 		return await this.commitPhase(onProgress, total);
 	}
 
-	/** Normalize an unknown thrown value to a message string with a fallback. */
+	/** Avoid crashing on non-Error throws (e.g., string or undefined). */
 	private errorMessage(err: unknown, fallback: string): string {
 		return err instanceof Error ? err.message : fallback;
 	}
@@ -128,7 +126,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 		return success(undefined);
 	}
 
-	/** Emit event via optional callback, swallowing listener exceptions. */
+	/** A faulty progress listener must never interrupt the merge. */
 	private safeEmit(onProgress: ProgressCallback | undefined, event: ProgressEvent): void {
 		if (!onProgress) return;
 		try {
