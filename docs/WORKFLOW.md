@@ -115,7 +115,9 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 ---
 
-### FEV-26: Quick Wins — Bug fixes + Security patches + Documentation
+### v2.1.1
+
+#### FEV-26: Quick Wins — Bug fixes + Security patches + Documentation
 
 **Objetivo:** Resolver el bug crítico #79, parches de seguridad, y correcciones de metadata.
 **Effort total:** 4-6h | **Riesgo:** Bajo | **Estado:** ✅ Completo (2026-08-20)
@@ -139,7 +141,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 ---
 
-### FEV-27: Security & Observability — Plugin cleanup + Permissions + Backup safety
+#### FEV-27: Security & Observability — Plugin cleanup + Permissions + Backup safety
 
 **Objetivo:** Simplificar plugin SDD, gobernanza de directorios externos, mejorar seguridad de backups.
 **Effort total:** 6-8h | **Riesgo:** Medio | **Estado:** ⏳ Pendiente
@@ -162,7 +164,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 ---
 
-### FEV-28: Infrastructure & Performance — CI/CD updates + Caching
+#### FEV-28: Infrastructure & Performance — CI/CD updates + Caching
 
 **Objetivo:** Actualizar SHA-pins de GitHub Actions para Node 24, optimizar comparación de versiones.
 **Effort total:** 2-3h | **Riesgo:** Bajo | **Estado:** ⏳ Pendiente
@@ -182,7 +184,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 ---
 
-### Resumen de Fases v2.1.1
+#### Resumen de Fases v2.1.1
 
 | Fase | Items | Effort Total | Risk | Prioridad |
 |------|-------|--------------|------|-----------|
