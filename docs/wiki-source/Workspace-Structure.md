@@ -47,7 +47,7 @@ This is the largest directory, containing **~360 agent files across 10 packs** t
 | `mictlantecuhtli.md` | Guardian of the Underworld | Reviews code, runs audits, enforces quality gates |
 | `tezcatlipoca.md` | Mirror of Truth | Provides adversarial review and critical analysis |
 
-The remaining **~352 subagents (8 selectable packs)** are domain specialists — frontend developers, database administrators, security auditors, Rust engineers, and so on. Each subagent is an expert in one area and is invoked from primary agents via `task()` delegation.
+The remaining **~355 subagents (8 selectable packs)** are domain specialists — frontend developers, database administrators, security auditors, Rust engineers, and so on. Each subagent is an expert in one area and is invoked from primary agents via `task()` delegation.
 
 The template keeps pack source under `template/obligatorio/packs/` (10 packs: 2 mandatory — main + writers — and 8 selectable); the installer copies selected packs into the flat `agents/` directory. The install wizard lets you choose packs and shows a summary with per-pack agent counts.
 
@@ -69,7 +69,7 @@ permission:
 
 ### `commands/` — Slash Command Workflows
 
-The **12 slash commands** map to the Source-Driven Development (SDD) lifecycle. Each is a Markdown file defining a workflow that a primary agent executes when the user types `/command-name`.
+The **17 slash commands** map to the Source-Driven Development (SDD) lifecycle. Each is a Markdown file defining a workflow that a primary agent executes when the user types `/command-name`.
 
 | Command | Agent | Phase |
 |---------|-------|-------|

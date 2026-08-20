@@ -67,6 +67,9 @@ temp/
 *.backup
 *.old
 
+# ─── Codebase Memory MCP (generated artifact, re-indexes on every session) ────
+/.codebase-memory/
+
 # ─── Testing / Coverage ──────────────────────────────────────────────────────
 .nyc_output/
 coverage/

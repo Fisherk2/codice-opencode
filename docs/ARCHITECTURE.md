@@ -22,6 +22,11 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 | [ADR-013](../specs/adr/adr-013-plugin-auto-discovery.md) | SDD Plugin Auto-Discovery & Configuration | Accepted | Three-pillar approach: filesystem auto-discovery + JSON config + quality infra |
 | [ADR-014](../specs/adr/adr-014-agent-pack-system.md) | Agent Pack System | Accepted | Pack-based agent classification with 8 selectable packs + 2 mandatory |
 | [ADR-015](../specs/adr/adr-015-installer-ux-v2.md) | Installer UX v2 | Accepted | Metadata-driven installer with pack selection and version-gated updates |
+| [ADR-016](../specs/adr/adr-016-new-commands.md) | Slash Commands v2.1 | Accepted | 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`) with skill delegation |
+| [ADR-017](../specs/adr/adr-017-sdd-intent-auto-discovery.md) | SDD Intent Auto-Discovery | Accepted | Filesystem-based command keyword detection + bilingual EN/ES support |
+| [ADR-018](../specs/adr/adr-018-agent-delegation.md) | Agent Delegation Protocol | Accepted | Analyze → Plan → Execute protocol for primary agents via `task()` |
+| [ADR-019](../specs/adr/adr-019-cicd-hardening.md) | CI/CD Hardening | Accepted | SHA-pinned actions, branch protection, PR/issue templates, npm provenance |
+| [ADR-020](../specs/adr/adr-020-spec-modularization.md) | SPEC Modularization | Accepted | 441-line SPEC.md → 44-line index + 8 sub-specs |
 
 > **Note:** `TemplateResolver` and `AtomicStager` are extracted classes (not full ADRs). They are SRP-based refactorings of `BunFileSystem` that follow the existing ADR-003 (atomic staging) pattern.
 
@@ -160,6 +165,18 @@ graph TD
 - Version context: versionContext.ts (update gating classification)
 - Output formatting: output.ts
 - Version constant: version.ts
+
+### v2.1 Components
+
+| Component | Layer | Responsibility | Key Interfaces |
+|-----------|-------|----------------|----------------|
+| `/sync` command | CLI + Skill | Bidirectional git sync with 4 modes and 4 conflict strategies | `git-workflow-and-versioning` skill |
+| `/migrate` command | CLI + Skill | Tech stack migration analysis with phases and rollback | `dependency-audit`, `deprecation-and-migration` skills |
+| `/deploy` command | CLI + Skill | Post-`/ship` deployment automation (3 modes) | `ci-cd-and-automation` skill |
+| `/analyze` command | CLI + Skill | 8-dimension architecture analysis → `TECH_DEBT.md` | `clean-ddd-hexagonal`, `design-patterns` skills |
+| Intent Auto-Discovery | Plugin (SDD) | Filesystem scan of `template/obligatorio/core/commands/*.md` for command keywords | `discoverIntents()` |
+| Bilingual Intents | Plugin (SDD) | EN/ES keyword translation via static overlay map | `translateIntent(keyword, locale)` |
+| Agent Delegation Protocol | Agent (6 primary) | Analyze → Plan → Execute before `task()` calls | `delegateToSubagent(task)` |
 
 ## Key Patterns
 - **Strategy Pattern**: File merge rules (Obligatorio/Estándar/Opcional)

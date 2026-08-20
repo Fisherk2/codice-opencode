@@ -41,7 +41,7 @@
 
 ### Pre-Commit
 - [ ] `just check` — 0 errores (biome ci + tsc --noEmit).
-- [ ] `bun test` — 0 fallos.
+- [ ] `just test` — 0 fallos.
 - [ ] Sin tipos `any` en código de producción.
 - [ ] Documentación actualizada si cambió API pública.
 
@@ -63,12 +63,20 @@
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Guía de contribución, CI/CD, releases |
 | [spec-file-rules.md](specs/spec-file-rules.md) | Reglas de clasificación de archivos |
 | [spec-cli-commands.md](specs/spec-cli-commands.md) | Especificación de modos y comandos CLI |
-| [adr/](specs/adr/) | Architecture Decision Records (ADR-001 al ADR-015) |
+| [adr/](specs/adr/) | Architecture Decision Records (ADR-001 al ADR-020) |
 | [MIGRATION.md](docs/MIGRATION.md) | Guía de migración v1.x → v2.0.0 |
 | [spec-agent-packs.md](specs/spec-agent-packs.md) | Sistema de packs de agentes |
 | [spec-installer-ux-v2.md](specs/spec-installer-ux-v2.md) | UX del instalador v2 |
 | [spec-agent-format-v2.md](specs/spec-agent-format-v2.md) | Formato de agentes v2 |
 | [spec-template.md](specs/spec-template.md) | Especificación del template |
+| [spec-overview.md](specs/spec-overview.md) | Objetivo, Problem Statement, User Stories, progreso v2.0/v2.1 |
+| [spec-tech-stack.md](specs/spec-tech-stack.md) | Tech Stack y restricciones de runtime |
+| [spec-commands.md](specs/spec-commands.md) | Comandos de desarrollo, testing, build, release y CLI runtime |
+| [spec-project-structure.md](specs/spec-project-structure.md) | Árbol de directorios y reglas de dependencias |
+| [spec-testing-strategy.md](specs/spec-testing-strategy.md) | Estrategia de testing en 3 fases con 31 escenarios E2E |
+| [spec-success-criteria.md](specs/spec-success-criteria.md) | Criterios de éxito funcionales, de rendimiento y calidad |
+| [spec-code-style-summary.md](specs/spec-code-style-summary.md) | Resumen de reglas de estilo de código |
+| [spec-boundaries.md](specs/spec-boundaries.md) | Reglas Always/Ask First/Never e protocolo de delegación |
 | [spec-sdd-plugin-decoupling.md](specs/spec-sdd-plugin-decoupling.md) | Desacoplamiento del plugin SDD |
 
 ### Codebase Memory MCP
@@ -90,7 +98,7 @@ Este proyecto utiliza **codebase-memory-mcp** para indexado y búsqueda de eleme
 
 #### Indexación
 
-- Grafo persistido en `.codebase-memory/graph.db.zst` — commitear para team sharing.
+- Grafo persistido en `.codebase-memory/graph.db.zst`
 - Para re-indexar: `codebase-memory-mcp_index_repository` con `persistence=true`.
 
 ---

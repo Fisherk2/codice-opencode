@@ -23,13 +23,13 @@
 
 **OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
 
-A production-grade workspace integrating 52 engineering skills organized in 10 SDD cycle phases (3 optional) + Extra, slash commands, and specialized agents to accelerate AI-assisted development. Designed for teams and developers who want consistent quality in AI-assisted projects.
+A production-grade workspace integrating 51 engineering skills organized in 10 SDD cycle phases (3 optional) + Extra, slash commands, and specialized agents to accelerate AI-assisted development. Designed for teams and developers who want consistent quality in AI-assisted projects.
 
 ---
 
 ## Features
 
-- **52 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, Obsidian vault management, and more, organized in 10 SDD phases (3 optional) + Extra
+- **51 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, Obsidian vault management, and more, organized in 10 SDD phases (3 optional) + Extra
 - **17 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`, `/sync`, `/migrate`, `/deploy`, `/analyze`
 - **6 Main Agents + 355 Subagents (10 packs)** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and 355 subagents organized in 10 packs (2 mandatory + 8 selectable) specialized in frontend, backend, DevOps, testing, security, and more. Install only the packs you need via `--packs`, or everything with `--packs-all`.
 - **Install summary screen** — Before merging, Códice shows the selected packs with agent counts, mandatory directories, and optional files so you know exactly what's being installed.
@@ -192,7 +192,7 @@ Códice presents an interactive menu with three installation modes:
 | **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
 | **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing v2.0+ installation current |
 
-> **Version-gated updates:** Update Workspace only runs on v2.0+ installations. v1.x installations must reinstall with Clean or Project Install; pre-1.2.0 installs receive a cleanup suggestion. See [docs/MIGRATION.md](docs/MIGRATION.md) for the upgrade guide.
+> **Version-gated updates:** Update Workspace only runs on v2.1+ installations. v1.x installations must reinstall with Clean or Project Install; <1.2.0 installs receive a cleanup suggestion. See [docs/MIGRATION.md](docs/MIGRATION.md) for the upgrade guide.
 
 ```bash
 # Interactive menu (default):
@@ -205,7 +205,7 @@ bunx @fisherk2-dev/codice --version
 bunx @fisherk2-dev/codice --help
 ```
 
-Códice v2.0 lets you select which agent packs to install. Install specific packs non-interactively, or add packs later during an update:
+Códice lets you select which agent packs to install. Install specific packs non-interactively, or add packs later during an update:
 
 ```bash
 # Install only software-development and business packs:

@@ -1,5 +1,5 @@
-# Technical Requirements Document – Códice: Opencode Workspace Installer v2.0.0
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-07 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Technical Requirements Document – Códice: Opencode Workspace Installer v2.1.0
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-19 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Arquitectura de Referencia
 Se aplicará **Clean Architecture** adaptada a una aplicación de línea de comandos (CLI). Esto garantiza que la lógica de negocio (reglas de fusión, comparación de versiones) esté completamente desacoplada de los detalles de implementación (sistema de archivos, red, librería de TUI).
@@ -106,6 +106,18 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | `updateFlow.ts` | Lógica de merge para update mode: Option A (packs actuales) y Option B (agregar packs). | `executeUpdateFlow()` | `IFileSystem`, `FileMergeEngine` | **SRP**: Solo ejecuta el flujo de update. |
 | `VerboseLogger` | Adapter para logging estructurado en modo verbose. | `log()`, `logProgress()` | `output.ts` | **SRP**: Solo maneja logging verbose. |
 
+### 3.3 Componentes v2.1.0 (Slash Commands, Intent Auto-Discovery, Agent Delegation)
+
+| Componente | Responsabilidad | Interfaces Expuestas | Dependencias | Principio SOLID Aplicado |
+|------------|-----------------|----------------------|--------------|--------------------------|
+| `/sync` Slash Command | Sincronización bidireccional de git con 4 modos (full-sync, incremental-sync, dry-run, conflict-resolution) y 4 estrategias (NEWER_WINS, GITHUB_WINS, LOCAL_WINS, INTELLIGENT_MERGE). | CLI command + skill invocation | `git-workflow-and-versioning` skill, `IGitClient` port (planned) | **OCP**: Nuevas estrategias de resolución se agregan sin modificar el comando. |
+| `/migrate` Slash Command | Detección de stack técnico desde lock files, evaluación de breaking changes, generación de plan de migración estructurado con fases y rollback. | CLI command + skill invocation | `dependency-audit`, `deprecation-and-migration` skills | **SRP**: Solo genera el plan, no ejecuta la migración. |
+| `/deploy` Slash Command | Post-`/ship` automation. 3 modos: no-workflow (generar desde cero), betterable (analizar+optimizar), established (ejecutar workflow documentado). Genera branch protection, PR templates, CI pipelines. | CLI command + skill invocation | `ci-cd-and-automation`, `bash-defensive-patterns` skills | **SRP**: Solo genera configuración, no la ejecuta. |
+| `/analyze` Slash Command | Análisis arquitectónico de 8 dimensiones (system structure, design patterns, dependency architecture, data flow, scalability, security, testability, documentation). Genera `docs/TECH_DEBT.md` con hallazgos priorizados. | CLI command + skill invocation | `clean-ddd-hexagonal`, `design-patterns`, `dependency-audit` skills | **SRP**: Solo analiza y reporta, no modifica código. |
+| SDD Intent Auto-Discovery | Detección basada en filesystem de palabras clave de comandos. Reemplaza el mapa hardcodeado `INTENT_PATTERNS` con un escaneo dinámico de `template/obligatorio/core/commands/*.md`. | `discoverIntents()` | filesystem reads | **OCP**: Nuevos comandos se descubren automáticamente sin modificar el plugin. |
+| Bilingual Intent Support | Las palabras clave de comandos funcionan en inglés y español mediante un mapa de traducción que se aplica tras el auto-discovery. | `translateIntent(keyword, locale)` | static map | **OCP**: Nuevos idiomas se agregan como mapas independientes. |
+| Agent Delegation Protocol | Los seis agentes primarios siguen un protocolo de tres fases (Analyze → Plan → Execute) antes de invocar subagentes. Cada `task()` incluye instrucciones determinísticas, skills a cargar y checklist de aceptación. | `delegateToSubagent(task)` | `task()` from opencode | **DIP**: Protocolo independiente del subagente concreto invocado. |
+
 ## 4. Contratos de API / Integraciones
 | Endpoint | Método | Request | Response | Autenticación | Rate Limit |
 |----------|--------|---------|----------|---------------|------------|
@@ -121,13 +133,20 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 
 ## 6. Estrategia de Despliegue & CI/CD
 - **Entornos**: Local (desarrollo), CI (GitHub Actions), Release (GitHub Releases).
-- **Pipeline (GitHub Actions)**:
-  1. `checkout`
-  2. `setup-bun`
-  3. `just install` (dependencias)
-  4. `just test` (unitarias + E2E)
-  5. `just release` (si el commit es un tag, publica en npm como @fisherk2-dev/codice).
+- **Pipeline (GitHub Actions)** — **v2.1 Hardening**:
+  1. `checkout` (SHA-pined)
+  2. `setup-bun` (SHA-pined) + `setup-just` (SHA-pined)
+  3. `bun install`
+  4. **Matrix job `quality`** (Ubuntu, macOS, Windows): `just check` (lint+format+typecheck) → `just test` (unit+integration) → `just test-e2e` (Linux only) → `just coverage-check 95` (Linux only).
+  5. **Job `qa-plugin`** (Ubuntu): `just test-plugin-unit` + `just check-plugin` + `just test-plugin-integration`.
+  6. **Job `packaging`** (Ubuntu): `just test-packaging` para validar estructura del tarball npm.
+  7. **Branch Protection** (rama `main` y `develop`): required status checks strict = true; contexts = `quality (ubuntu-latest)`, `quality (macos-latest)`, `quality (windows-latest)`; required approving reviews = 0 (single-contributor); dismiss stale reviews = true; enforce admins = false; allow force pushes = false; allow deletions = false; required conversation resolution = true. Aplicado vía `scripts/setup-branch-protection.sh` (idempotente, JSON body via `--input`).
+  8. **Release workflow** (tag `v*`): reusable `quality` job (`uses: ./.github/workflows/ci.yml`) → validación de tag format (`^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$`) → extracción de CHANGELOG section → validación de version match con `package.json` → detección de tipo (prerelease vs release) → `npm publish --provenance` (requiere `repository.url` en package.json) → `softprops/action-gh-release` con `make_latest` y `prerelease` flags.
+  9. **PR templates + Issue templates**: `bug_report.md`, `feature_request.md` en `.github/ISSUE_TEMPLATE/`; `PULL_REQUEST_TEMPLATE.md` en `.github/`.
+  10. **Permissions**: CI `contents: read`; release `contents: write + id-token: write` (para npm provenance OIDC).
 - **Rollback**: Al ser un cliente, el "rollback" es que el usuario use la release anterior con bunx/npx. La atomicidad local protege contra rollbacks de instalación fallida.
+- **paths-ignore** (push only, nunca en PR): `docs/**`, `CHANGELOG.md` — los cambios de documentación no rompen el CI.
+- **npm provenance**: SLSA v1 generado automáticamente por npm al publicar con `--provenance`. Verificable en https://www.npmjs.com/package/@fisherk2-dev/codice.
 
 ## 7. Matriz de Trazabilidad
 | PRD REQ-ID | TRD Componente | API/DB | Estado |
@@ -156,5 +175,10 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | **ADR-013** | SDD Plugin Auto-Discovery | Auto-descubrimiento filesystem + configuración JSON + quality infra | Plugin desacoplado de documentación, extensible | Maps hardcoded en sdd-pipeline.ts |
 | **ADR-014** | Sistema de packs | Clasificación de agentes en packs: 8 seleccionables + 2 obligatorios (main, writers) | Instalación selectiva de agentes, wizard de selección, tarball 8MB | Todos los agentes siempre (sin selección) |
 | **ADR-015** | Installer UX v2 | UX metadata-driven con selección de packs, resumen pre-instalación, y actualizaciones version-gated | Mejor UX para gestión de packs, bloqueo de update en v1.x | UX plana sin selección de packs |
+| **ADR-016** | Slash Commands v2.1 | Adición de 4 comandos (`/sync`, `/migrate`, `/deploy`, `/analyze`) con flujos definidos y delegación a skills | Cubre sync bidireccional, migración, deploy y análisis arquitectónico sin código nuevo en el template | Comandos implementados como bash scripts (frágil), CLI extension points (demasiado complejo) |
+| **ADR-017** | SDD Intent Auto-Discovery & Bilingual | Detección filesystem-based de palabras clave + mapa de traducción EN/ES reemplaza `INTENT_PATTERNS` hardcoded | Nuevos comandos se descubren automáticamente; soporte bilingüe sin duplicar lógica | Mapa hardcoded en código (acoplamiento, requiere recompilar para agregar comandos) |
+| **ADR-018** | Agent Delegation Protocol | Protocolo Analyze → Plan → Execute para agentes primarios; `task()` con instrucciones determinísticas, skills a cargar y checklist de aceptación | Trazabilidad y calidad consistente en delegaciones; verificado por 2052 tests y 31 E2E scenarios | Free-form task() sin estructura (resultados inconsistentes entre agentes) |
+| **ADR-019** | CI/CD Hardening | SHA-pins en actions, branch protection real, PR/issue templates, npm provenance OIDC, workflow_call reuse | Pipeline seguro y reproducible; ataques de supply chain mitigados por pinning | Tags movibles (vulnerable a tag hijacking), sin protection (cualquiera pushea a main) |
+| **ADR-020** | SPEC Modularization | SPEC.md monolítico (441 líneas) dividido en 8 sub-specs + índice reducido (44 líneas) | Cumple CODE_STYLE.md (max 200 líneas); carga selectiva por agente via skills/progressive disclosure | Mantener SPEC.md monolítico (excede límite, carga todo en cada sesión) |
 
 ---

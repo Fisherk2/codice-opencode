@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-11 (FEV-24 completo, FEV-25 completo) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-19 (v2.1.0 released) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -108,7 +108,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 - **FEV-24 Integration** — Intent auto-discovery, command reference fixes, test consolidation | — | ✅ 2026-08-10
 - **FEV-24 Review** — Bilingual intents (SPANISH_INTENT_KEYWORDS), stopwords extraction, spec update | — | ✅ 2026-08-11
 
-**FEV-24 métricas finales:** 4 comandos nuevos, 17→17 commands, SDD plugin simplificado (INTENT_PATTERNS eliminado, auto-discovery), 2048 tests / 0 fail, 30/30 E2E, just check 0 errores
+**FEV-24 métricas finales:** 4 comandos nuevos, 17→17 commands, SDD plugin simplificado (INTENT_PATTERNS eliminado, auto-discovery), 2052 tests / 0 fail, 31/31 E2E, just check 0 errores
 
 ## 4. Estrategia de Pruebas por Fase
 
@@ -116,7 +116,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 |------|---------|-------------|-------------------|
 | Unitarias | Dominio (entities, services, types) | Bun test | 100% func lines |
 | Integración | Adaptadores, Use Cases, CLI | Bun test | > 95% func/lines |
-| E2E | 30 escenarios CLI en directorios aislados | bash + fixtures | 30/30 pasando |
+| E2E | 31 escenarios CLI en directorios aislados | bash + fixtures | 31/31 pasando |
 | Packaging | Estructura del tarball npm | Bun test | 5/5 escenarios |
 | Coverage | Cobertura general | bun test --coverage | ≥95% lines, ≥95% funcs |
 
@@ -131,14 +131,17 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 - **FEV-17 a FEV-23:** Todos completos
 - **Esfuerzo total v2.0.0:** ~41h implementación + ~9h overhead (code reviews, wiki sync, release)
 
-### v2.1.0 (FEV-24 y FEV-25 completos — 2026-08-11)
+### v2.1.0 (FEV-24 y FEV-25 completos — 2026-08-12)
 
-- **Tests totales:** 2048 tests, 0 fail
-- **Tests E2E:** 30/30 pasando
-- **`just check`:** 0 errores (145 archivos)
+- **Tests totales:** 2052 tests, 0 fail
+- **Tests E2E:** 31/31 pasando (v2.1 añadió escenario 31)
+- **`just check`:** 0 errores (146 archivos)
+- **Coverage:** ≥95% lines, ≥95% funcs (production `src/`)
 - **FEV-24:** Completo (8 sub-fases: 4 commands + docs + plugin + integration + review)
 - **FEV-25:** Completo — delegation protocol en 6 agentes principales (Issue #69)
 - **SDD plugin:** INTENT_PATTERNS eliminado → auto-discovery + SPANISH_INTENT_KEYWORDS overlay
+- **CI/CD:** Branch protection real (main/develop), SHA-pinned actions, PR/issue templates, npm provenance SLSA v1
+- **Release:** v2.1.0-beta.1 publicado a npm (dist-tag beta), tag v2.1.0-beta.1
 
 ### Histórico de releases
 
@@ -150,4 +153,4 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | v1.1.0 | 581 | 15/15 | 98.13% | 2026-07-10 |
 | v1.2.0 | 844 | 15/15 | 98.1% | 2026-08-03 |
 | v2.0.0 | 1920 | 30/30 | 95.68% | 2026-08-07 |
-| v2.1.0 | 2048 | 30/30 | ~96% | 2026-08-11 |
+| v2.1.0-beta.1 | 2052 | 31/31 | ≥95% | 2026-08-12 |
