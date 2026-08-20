@@ -50,7 +50,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		category: "mandatory",
 		isDirectory: true,
 		description:
-			"2 writer agents (docs-writer, obsidian-vault-writer) — scientific-literature-researcher moved to science-research pack in FEV-18",
+			"4 writer agents (docs-writer, obsidian-vault-writer, technical-writer, document-generator)",
 	},
 	// v2.0 (FEV-18/FEV-21): 8 selectable agent packs. Category "pack" marks
 	// them as wizard-selectable: the installer asks the user which packs to
@@ -63,8 +63,8 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	),
 	pack(
 		"packs/business",
-		"Business pack (92 agents: marketing, sales, product, project management, operations)",
-		92,
+		"Business pack (91 agents: marketing, sales, product, project management, operations)",
+		91,
 	),
 	pack(
 		"packs/hardware-emerging",

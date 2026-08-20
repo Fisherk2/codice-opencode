@@ -35,7 +35,7 @@ jobs:
 
       - name: Validate tag format (prevent injection)
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="$GITHUB_REF_NAME"
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
             echo "ERROR: Invalid tag format: $TAG"
             exit 1
@@ -44,7 +44,7 @@ jobs:
 
       - name: Extract release body from CHANGELOG
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="$GITHUB_REF_NAME"
           VERSION="${TAG#v}"
           awk -v ver="$VERSION" \
             'index($0, "## [" ver "]") == 1 { found=1; next }
@@ -60,7 +60,7 @@ jobs:
 
       - name: Validate version
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="$GITHUB_REF_NAME"
           TAG_VERSION="${TAG#v}"
           # Strip pre-release suffix from both tag and package.json for comparison
           # e.g., 1.1.0-beta.2 -> 1.1.0 (both tag and package.json)
@@ -79,7 +79,7 @@ jobs:
         id: release_type
         shell: bash
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="$GITHUB_REF_NAME"
           if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-(beta|rc)\.[0-9]+$ ]]; then
             SUFFIX="${BASH_REMATCH[1]}"
             echo "type=prerelease" >> "$GITHUB_OUTPUT"
