@@ -40,7 +40,7 @@ describe("Release Workflow Configuration", () => {
 		// GitHub Actions interpolates ${{ }} BEFORE the shell runs, so a crafted
 		// tag could execute arbitrary commands. Env vars ($GITHUB_REF_NAME) are
 		// safe because they are expanded by the shell AFTER the script starts.
-		expect(releaseYaml).not.toContain(`\${ { github.ref_name }}`);
+		expect(releaseYaml).not.toContain("${" + "{ github.ref_name }}");
 	});
 
 	test("version validation uses jq for robust JSON parsing", () => {
