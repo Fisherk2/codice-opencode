@@ -118,14 +118,17 @@ export class UpdateWorkspaceUseCase {
 			return failure(wrapMergeError(mergeResult.error));
 		}
 
-		const safeVersion = this.resolveNewVersion(options);
-		const versionResult = await finishUpdate(
+		const versionResult = this.resolveNewVersion(options);
+		if (!versionResult.ok) {
+			return failure(versionResult.error);
+		}
+		const finishResult = await finishUpdate(
 			this.fileSystem,
 			this.userPrompt,
-			safeVersion,
+			versionResult.value,
 			finalPacks,
 		);
-		return versionResult;
+		return finishResult;
 	}
 
 	/** Read .codice-version and enforce the v2.0+ gate; null means "abort gracefully". */
@@ -157,12 +160,21 @@ export class UpdateWorkspaceUseCase {
 	}
 
 	/**
-	 * Version to write: explicit flag > bundled template > "0.0.0" fallback.
-	 * The fallback IS reachable when the bundled template version is not valid
-	 * semver (e.g. a malformed package.json) — a runtime-safety net.
+	 * Version to write: explicit flag > bundled template.
+	 * Returns Failure if neither source is valid semver — the caller
+	 * must not proceed with an invalid version (bug #79: "0.0.0" broke
+	 * Update detection; a missing/invalid version should fail loudly).
 	 */
-	private resolveNewVersion(options: UpdateWorkspaceOptions | undefined): string {
+	private resolveNewVersion(options: UpdateWorkspaceOptions | undefined): Result<string, Error> {
 		const resolved = options?.version ?? this.bundledVersion;
-		return valid(resolved) ? resolved : "0.0.0";
+		if (valid(resolved)) {
+			return success(resolved);
+		}
+		return failure(
+			new Error(
+				`Cannot resolve version: neither explicit flag ("${options?.version ?? "undefined"}") ` +
+					`nor bundled template ("${this.bundledVersion}") is valid semver.`,
+			),
+		);
 	}
 }

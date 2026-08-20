@@ -85,7 +85,7 @@ describe("ProjectInstallUseCase", () => {
 		it("should copy all files respecting category rules when destination is empty", async () => {
 			const { useCase, calls } = createProjectFixture();
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// Default pack selection stages manifest minus unselected packs (8 packs, only 1 selected)
@@ -100,7 +100,7 @@ describe("ProjectInstallUseCase", () => {
 			const { useCase, calls, prompt } = createProjectFixture();
 			// fs.isEmpty already returns true by default
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// Should NOT have asked for confirmation (isEmpty short-circuits)
@@ -114,7 +114,7 @@ describe("ProjectInstallUseCase", () => {
 			const { useCase, fs, calls } = createProjectFixture();
 			fs.isWritable.mockResolvedValue(false);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(false);
 			if (result.ok) return;
@@ -128,7 +128,7 @@ describe("ProjectInstallUseCase", () => {
 			fs.isEmpty.mockResolvedValue(false);
 			prompt.confirm.mockResolvedValue(true);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			expect(prompt.confirm).toHaveBeenCalledTimes(1);
@@ -140,7 +140,7 @@ describe("ProjectInstallUseCase", () => {
 			fs.isEmpty.mockResolvedValue(false);
 			prompt.confirm.mockResolvedValue(false);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			expect(prompt.confirm).toHaveBeenCalledTimes(1);
@@ -151,7 +151,7 @@ describe("ProjectInstallUseCase", () => {
 			const { useCase, fs, calls, prompt } = createProjectFixture();
 			fs.isEmpty.mockResolvedValue(false);
 
-			const result = await useCase.execute("/tmp/project", { force: true });
+			const result = await useCase.execute("/tmp/project", { force: true, version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			expect(prompt.confirm).not.toHaveBeenCalled();
@@ -166,7 +166,7 @@ describe("ProjectInstallUseCase", () => {
 			const stageableOptional = optionalRules.find((r) => !r.noTemplateCopy)!;
 			prompt.selectOptional.mockResolvedValue([stageableOptional.path]);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// selectOptional should have been called with optional rules
@@ -182,7 +182,7 @@ describe("ProjectInstallUseCase", () => {
 			const { useCase, calls, prompt } = createProjectFixture();
 			prompt.selectOptional.mockResolvedValue([]);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// Only mandatory + standard files should be staged (default pack, no optionals)
@@ -197,7 +197,7 @@ describe("ProjectInstallUseCase", () => {
 				async (path: string) => path === standardRules[0]?.path,
 			);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// Standard file that existed should NOT be staged
@@ -210,7 +210,7 @@ describe("ProjectInstallUseCase", () => {
 			const selectedPaths = [optionalRules[0]!.path];
 			prompt.selectOptional.mockResolvedValue(selectedPaths);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			const versionData = JSON.parse(calls.writeVersionFile[0]!);
@@ -226,7 +226,7 @@ describe("ProjectInstallUseCase", () => {
 			// But that file already exists in the destination
 			fs.destinationExists.mockImplementation(async (path: string) => path === firstOptional.path);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// The selected optional file should NOT be staged because it already exists
@@ -243,7 +243,7 @@ describe("ProjectInstallUseCase", () => {
 			// Make stageFile throw to trigger a merge engine failure
 			fs.stageFile.mockRejectedValue(new Error("Disk full during staging"));
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(false);
 			if (result.ok) return;
@@ -266,7 +266,7 @@ describe("ProjectInstallUseCase", () => {
 				},
 			} as Result<void, GitignoreError>);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			// Gitignore failure should NOT cause the install to fail
 			expect(result.ok).toBe(true);
@@ -279,7 +279,7 @@ describe("ProjectInstallUseCase", () => {
 			const { useCase, fs, calls } = createProjectFixture();
 			fs.writeVersionFile.mockRejectedValue(new Error("Permission denied"));
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(false);
 			if (result.ok) return;
@@ -290,7 +290,7 @@ describe("ProjectInstallUseCase", () => {
 		it("should create .opencode symlinks when optional files are selected", async () => {
 			const { useCase, symlinkCreator } = createProjectFixture();
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// createSymlinks called once (opencode only)
@@ -301,7 +301,7 @@ describe("ProjectInstallUseCase", () => {
 			const { useCase, prompt, symlinkCreator } = createProjectFixture();
 			prompt.selectOptional.mockResolvedValue([]);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// createSymlinks called only once (opencode only)
@@ -321,7 +321,7 @@ describe("ProjectInstallUseCase", () => {
 				error: [symlinkErrorData],
 			} as Result<void, SymlinkError[]>);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			expect(prompt.showWarning).toHaveBeenCalledTimes(1);
@@ -335,7 +335,7 @@ describe("ProjectInstallUseCase", () => {
 		it("should emit progress events during merge", async () => {
 			const { useCase, prompt } = createProjectFixture();
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// Progress bar should have been initialized with the correct label
@@ -355,7 +355,7 @@ describe("ProjectInstallUseCase", () => {
 		it("should emit symlink and gitignore log events after merge", async () => {
 			const { useCase, prompt } = createProjectFixture();
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			expect(prompt.logProgressEvent).toHaveBeenCalledWith("symlink: Created .opencode/agents");
@@ -367,7 +367,7 @@ describe("ProjectInstallUseCase", () => {
 		it("should persist default pack to version file when force=true", async () => {
 			const { useCase, calls, prompt } = createProjectFixture();
 
-			const result = await useCase.execute("/tmp/project", { force: true });
+			const result = await useCase.execute("/tmp/project", { force: true, version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// Project force=true uses ONLY the default pack — no interactive pack menu
@@ -383,7 +383,7 @@ describe("ProjectInstallUseCase", () => {
 			const { useCase, calls, prompt } = createProjectFixture();
 			prompt.selectPacks.mockResolvedValueOnce(["software-development", "business"]);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			const versionData = JSON.parse(calls.writeVersionFile[0]!);
@@ -394,7 +394,7 @@ describe("ProjectInstallUseCase", () => {
 			const { useCase, calls, prompt } = createProjectFixture();
 			prompt.selectPacks.mockResolvedValueOnce([]);
 
-			const result = await useCase.execute("/tmp/project");
+			const result = await useCase.execute("/tmp/project", { version: "2.1.0" });
 
 			expect(result.ok).toBe(true);
 			// Cancel aborts before merging — nothing staged, no version file written
@@ -406,7 +406,7 @@ describe("ProjectInstallUseCase", () => {
 		it("shows install summary before merge", async () => {
 			const { useCase, prompt } = createProjectFixture();
 
-			await useCase.execute("/tmp/project", { force: true });
+			await useCase.execute("/tmp/project", { force: true, version: "2.1.0" });
 
 			// force=true uses only DEFAULT_PACKS (software-development, 146 agents)
 			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
@@ -422,6 +422,7 @@ describe("ProjectInstallUseCase", () => {
 
 			const result = await useCase.execute("/tmp/project", {
 				force: true,
+				version: "2.1.0",
 				packs: ["business"],
 			});
 
@@ -448,6 +449,7 @@ describe("ProjectInstallUseCase", () => {
 
 			const result = await useCase.execute("/tmp/project", {
 				force: true,
+				version: "2.1.0",
 				packs: ["business"],
 			});
 

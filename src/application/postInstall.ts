@@ -13,7 +13,7 @@
 
 import type { IFileSystem } from "../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../domain/ports/IStagingSystem";
-import type { Result } from "../domain/types/Result";
+import { failure, type Result, success } from "../domain/types/Result";
 import { writeVersionFileSafe } from "./helpers";
 import type { IGitignoreCreator } from "./ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "./ports/ISymlinkCreator";
@@ -144,20 +144,30 @@ export async function runPostInstallSteps(
 
 	// Step 3: Write version file in v2.0 format (version + installedPacks).
 	// The v2.0 reader keeps accepting the legacy field name for backward compatibility.
-	const versionResult = await writeVersionFileSafe(
-		fileSystem,
-		{
-			version: version ?? "0.0.0",
-			installedPacks: [...selectedPacks],
-			installedAt: new Date().toISOString(),
-			optionalSelections: selectedOptionals,
-		},
-		operationLabel,
-	);
+	// Guard: skip writing if version is undefined — never write "0.0.0" which
+	// silently breaks Update detection (bug #79).
+	if (version) {
+		const versionResult = await writeVersionFileSafe(
+			fileSystem,
+			{
+				version,
+				installedPacks: [...selectedPacks],
+				installedAt: new Date().toISOString(),
+				optionalSelections: selectedOptionals,
+			},
+			operationLabel,
+		);
 
-	if (versionResult.ok) {
-		userPrompt.showSuccess(successMessage);
+		if (versionResult.ok) {
+			userPrompt.showSuccess(successMessage);
+		}
+
+		return versionResult;
 	}
 
-	return versionResult;
+	// No version provided — complete without writing version file.
+	// Production callers (main.ts) always provide VERSION, so this path
+	// is only reached in test scenarios that don't exercise version writing.
+	userPrompt.showSuccess(successMessage);
+	return success(undefined);
 }
