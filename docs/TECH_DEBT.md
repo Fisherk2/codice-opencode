@@ -1,9 +1,9 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-08-19
-**Status:** v2.1.0 released — 2052 tests, 31/31 E2E, coverage ≥95% production `src/`
+**Last updated:** 2026-08-20
+**Status:** v2.1.1 in progress (FEV-26 ✅, FEV-27/28 pending) — 2054 tests, 31/31 E2E, coverage ≥95% production `src/`
 **Current version:** v2.1.0
-**Next version:** v2.1.1 (action pins, pack removal)
+**Next version:** v2.1.1 (FEV-26 done, pending release)
 
 ---
 
@@ -18,10 +18,11 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
 | **v1.2.0** | Binary removal (ADR-011), references restructuring, documentation overhaul, UX enhancements (progress bar, /help), community standards (Code of Conduct) |
 | **v2.0.0** | Agent pack system (FEV-17/18), permission unification (FEV-19), plugin auto-discovery (FEV-20), installer UX v2 (FEV-21/22), testing closure (FEV-23) |
 | **v2.1.0-beta.1** | 4 slash commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD intent auto-discovery, bilingual intents, agent delegation protocol (FEV-25), CI/CD hardening (SHA-pins, branch protection, PR/issue templates, npm provenance), SPEC.md modularization (ADR-020) |
+| **v2.1.1** | Bug #79 regression test, shell injection fix (TD-V2-70), manifest count corrections (TD-V2-90/91), FileMergeEngine comment refresh (TD-V2-93), injection guard hardening |
 
 **Resolved in v2.0.0 (FEV-17 to FEV-23):**
 - Template directory restructuring → pack-based organization
-- 352 agents across 10 packs (8 selectable + 2 mandatory)
+- 351 agents across 10 packs (8 selectable + 2 mandatory)
 - Permission unification (106 allow-list entries removed)
 - VALID_SUBAGENTS hardcoded set removed (auto-discovery)
 - Pack selection wizard + version-gated updates
@@ -38,6 +39,16 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
 - npm provenance SLSA v1 on publish
 - SPEC.md modularized (441 → 44 lines + 8 sub-specs, ADR-020) (TD-V2-8)
 - 2052 tests / 0 fail, 31/31 E2E
+
+**Resolved in v2.1.1 (FEV-26):**
+- Bug #79: regression test guards `.codice-version` version passthrough (integration + E2E)
+- TD-V2-70: shell injection via `github.ref_name` → `$GITHUB_REF_NAME` in release.yml
+- TD-V2-90: business pack agent count 92→91 (manifest + tests)
+- TD-V2-91: writers pack agent count 2→4 (manifest + tests)
+- TD-V2-93: FileMergeEngine comments refreshed (WHAT→WHY)
+- Injection guard test hardened (asserts against actual `${{ }}` pattern)
+- Doc sync: wiki, specs, TECH_DEBT counts corrected
+- 2054 tests / 0 fail, 31/31 E2E
 
 ---
 
@@ -57,17 +68,17 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 
 ## Backlog by Version
 
-### v2.1.1 (FEV-26 to FEV-28 — 11 items, 12-17h total)
+### v2.1.1 (FEV-26 ✅ → FEV-27/28 pending — 6 items remaining, 8-11h total)
 
-#### FEV-26: Quick Wins (4-6h)
+#### FEV-26: Quick Wins ✅ Resuelto (2026-08-20)
 
 | ID | Item | Type | Effort | Risk | Diagnóstico |
 |----|------|------|--------|------|-------------|
-| **#79** | `.codice-version` no escrito tras Clean Install | Bug | 2-3h | High | `fix14-clean-install-version-file.md` |
-| **TD-V2-70** | Shell injection via `github.ref_name` | Debt | 0.5h | Medium | `fix17-shell-injection-github-ref-name.md` |
-| **TD-V2-90** | Business pack agent count mismatch (92→91) | Debt | 0.5h | Low | `fix25-business-pack-agent-count.md` |
-| **TD-V2-91** | Writers pack agent count mismatch (2→4) | Debt | 0.5h | Low | `fix20-writers-pack-agent-count.md` |
-| **TD-V2-93** | Outdated comments in FileMergeEngine | Debt | 1h | Low | `fix24-outdated-comments-file-merge-engine.md` |
+| **#79** | `.codice-version` regression test | Bug | 2-3h | High | `fix14-clean-install-version-file.md` |
+| **TD-V2-70** | Shell injection → `$GITHUB_REF_NAME` | Debt | 0.5h | Medium | `fix17-shell-injection-github-ref-name.md` |
+| **TD-V2-90** | Business pack count 92→91 | Debt | 0.5h | Low | `fix25-business-pack-agent-count.md` |
+| **TD-V2-91** | Writers pack count 2→4 | Debt | 0.5h | Low | `fix20-writers-pack-agent-count.md` |
+| **TD-V2-93** | FileMergeEngine comments | Debt | 1h | Low | `fix24-outdated-comments-file-merge-engine.md` |
 
 #### FEV-27: Security & Observability (6-8h)
 
@@ -125,7 +136,8 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | v1.x debt | ✅ All resolved |
 | v2.0.0 debt | ✅ All resolved |
 | v2.1.0 debt | ✅ All resolved (4 new commands, SDD intent auto-discovery, bilingual intents, agent delegation, CI/CD hardening) |
-| v2.1.1 backlog | 11 items (8 debt + 2 features + 1 bug) — FEV-26 to FEV-28, 12-17h |
+| v2.1.1 debt | ✅ FEV-26 resolved (5 items: bug #79, TD-V2-70/90/91/93, doc sync) — 2054 tests |
+| v2.1.1 backlog | 6 items (4 debt + 2 features) — FEV-27/28, 8-11h |
 | v2.1.2 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.1.3 backlog | 4 items (4 debt) — 12-16h |
 | v2.3 backlog | 3 items (1 debt + 2 features) — 18-28h |
