@@ -199,6 +199,20 @@ describe("CleanInstallUseCase", () => {
 			expect(typeof versionData.installedAt).toBe("string");
 		});
 
+		// Regression: #79 — .codice-version must contain the package version,
+		// not "0.0.0", so Update Workspace can compare versions correctly.
+		it("should write the provided version to .codice-version (not 0.0.0)", async () => {
+			const { useCase, calls } = createCleanInstallFixture();
+
+			const result = await useCase.execute("/tmp/project", { force: true, version: "2.1.0" });
+
+			expect(result.ok).toBe(true);
+			expect(calls.writeVersionFile.length).toBe(1);
+			const versionData = JSON.parse(calls.writeVersionFile[0]!);
+			expect(versionData.version).toBe("2.1.0");
+			expect(versionData.version).not.toBe("0.0.0");
+		});
+
 		it("should call selectOptional when force is not set", async () => {
 			const { useCase, prompt } = createCleanInstallFixture();
 
