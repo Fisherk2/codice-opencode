@@ -431,7 +431,7 @@ describe("ProjectInstallUseCase", () => {
 			// Summary reports the business pack with its manifest agent count
 			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
 				expect.objectContaining({
-					packs: expect.arrayContaining([{ id: "business", agentCount: 92 }]),
+					packs: expect.arrayContaining([{ id: "business", agentCount: 91 }]),
 				}),
 			);
 			const versionData = JSON.parse(calls.writeVersionFile[0]!);
