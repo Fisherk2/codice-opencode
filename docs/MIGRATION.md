@@ -252,5 +252,5 @@ v2.1.0 es una **actualización sin breaking changes** que añade funcionalidad:
 - **[spec-installer-ux-v2.md](../specs/spec-installer-ux-v2.md)** — UX del instalador v2: wizard, version gating, metadata, resumen.
 - **[ADR-014](../specs/adr/adr-014-agent-pack-system.md)** — Decisión de arquitectura del sistema de packs.
 - **[ADR-015](../specs/adr/adr-015-installer-ux-v2.md)** — Decisión de arquitectura de la UX v2 del instalador.
-- **[TECH_DEBT.md](./TECH_DEBT.md)** — TD-V2-6 (eliminación de packs, v2.1.0) y desviaciones conocidas.
+- **[TECH_DEBT.md](./TECH_DEBT.md)** — TD-V2-6 (eliminación de packs, v2.3) y desviaciones conocidas.
 - **[CHANGELOG.md](../CHANGELOG.md)** — Notas de release [2.0.0].

@@ -3,7 +3,7 @@
 **Last updated:** 2026-08-19
 **Status:** v2.1.0 released — 2052 tests, 31/31 E2E, coverage ≥95% production `src/`
 **Current version:** v2.1.0
-**Next version:** v2.1.1 (action pins, pack removal, i18n)
+**Next version:** v2.1.1 (action pins, pack removal)
 
 ---
 
@@ -99,9 +99,6 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 
 | Feature | Issue | Effort | Description |
 |---------|-------|--------|-------------|
-| **Alternative Package Managers** | [#24](https://github.com/fisherk2/codice-opencode/issues/24) | 8-12h | uv, cargo, composer, pnpm, yarn support |
-| **Internationalization (i18n)** | [#22](https://github.com/fisherk2/codice-opencode/issues/22) | 6-10h | Language selection (English, Spanish, +3 more) — partial progress in bilingual intents |
-| **Pack Removal** | TD-V2-6 | 4-6h | `--remove-pack <id>` flag |
 | **Pack Update Diff** | — | 3-4h | Show changelog for user's installed packs during update |
 | **Action SHA-pins Update** | TD-V2-7 | 1-2h | Pin to latest Node 24-compatible majors |
 | **Shell Injection Fix** | TD-V2-70 | 0.5h | Use environment variables instead of direct interpolation in GitHub Actions |
@@ -132,6 +129,14 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **Async Directory Walking** | TD-V2-60 | 4-6h | Convert directoryWalker to async operations |
 | **Use Case Testability** | TD-V2-80 | 3-4h | Refactor use cases for easier mocking |
 
+### v2.3
+
+| Feature | Issue | Effort | Description |
+|---------|-------|--------|-------------|
+| **Pack Removal** | TD-V2-6 | 4-6h | `--remove-pack <id>` flag |
+| **Alternative Package Managers** | [#24](https://github.com/fisherk2/codice-opencode/issues/24) | 8-12h | uv, cargo, composer, pnpm, yarn support |
+| **Internationalization (i18n)** | [#22](https://github.com/fisherk2/codice-opencode/issues/22) | 6-10h | Language selection (English, Spanish, +3 more) — partial progress in bilingual intents |
+
 ---
 
 ## Summary
@@ -144,9 +149,10 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | v2.1.1 open debt | 9 items (3 legacy + 6 from deep audit) — quick fixes < 2h each |
 | v2.1.2 open debt | 8 items — medium effort 2-4h each |
 | v2.1.3 open debt | 4 items — larger refactoring 4-6h each |
-| v2.1.1 planned features | 10 items (5 legacy + 5 from deep audit) |
+| v2.1.1 planned features | 7 items (2 legacy + 5 from deep audit) |
 | v2.1.2 planned features | 8 items (from deep audit) |
 | v2.1.3 planned features | 4 items (from deep audit) |
+| v2.3 planned features | 3 items (1 legacy + 2 from GitHub issues #22, #24) |
 
 ---
 
