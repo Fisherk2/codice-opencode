@@ -24,11 +24,6 @@ const mandatoryPackRules = FILE_RULE_MANIFEST.filter(
 );
 
 /** Strip the "packs/" prefix to get the on-disk directory name (e.g. "packs/writers" → "writers"). */
-function packIdOf(rule: { path: string }): string {
-	return rule.path.replace(/^packs\//, "");
-}
-
-/** Count .md files in a pack directory (single level). */
 function countAgents(packId: string): number {
 	return readdirSync(resolve(PACKS_ROOT, packId)).filter((f) => f.endsWith(".md")).length;
 }
@@ -36,8 +31,9 @@ function countAgents(packId: string): number {
 describe("pack agent counts (manifest vs filesystem)", () => {
 	describe("selectable packs", () => {
 		for (const rule of packRules) {
-			it(`pack '${packIdOf(rule)}' has exactly ${rule.agentCount} agents`, () => {
-				expect(countAgents(packIdOf(rule))).toBe(rule.agentCount);
+			const packId = rule.path.replace(/^packs\//, "");
+			it(`pack '${packId}' has exactly ${rule.agentCount} agents`, () => {
+				expect(countAgents(packId)).toBe(rule.agentCount);
 			});
 		}
 	});
@@ -45,22 +41,15 @@ describe("pack agent counts (manifest vs filesystem)", () => {
 	describe("mandatory packs", () => {
 		it("descriptions state the actual agent count", () => {
 			for (const rule of mandatoryPackRules) {
-				expect(rule.description).toContain(String(countAgents(packIdOf(rule))));
+				const packId = rule.path.replace(/^packs\//, "");
+				expect(rule.description).toContain(String(countAgents(packId)));
 			}
 		});
 
 		it("writers pack description states 4 writer agents", () => {
-			const writers = mandatoryPackRules.find((rule) => packIdOf(rule) === "writers");
+			const writers = mandatoryPackRules.find((rule) => rule.path === "packs/writers");
 			expect(writers).toBeDefined();
 			expect(writers?.description).toContain("4 writer agents");
 		});
-
-		it("writers pack has exactly 4 agents", () => {
-			expect(countAgents("writers")).toBe(4);
-		});
-	});
-
-	it("business pack has exactly 91 agents", () => {
-		expect(countAgents("business")).toBe(91);
 	});
 });
