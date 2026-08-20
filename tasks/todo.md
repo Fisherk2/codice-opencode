@@ -1,196 +1,195 @@
-# FEV-25 Todo List — Reglas de Delegación en Agentes Principales
+# FEV-26 Todo List — Quick Wins (Bug fixes + Security patches + Documentation)
 
-> **✅ COMPLETO** (2026-08-11). 4 commits atómicos + verificación final. Ver `docs/WORKFLOW.md` para estado actual.
+> **⏳ PENDIENTE** (inicio 2026-08-20) — 5 items · ~4-6h estimada
 
-**Phase:** FEV-25 (v2.1.0) — ✅ Completo
-**Issue:** [#69](https://github.com/Fisherk2/codice-opencode/issues/69)
-**Diagnóstico:** [`docs/diagnosis/fix13-agent-delegation-rules.md`](../docs/diagnosis/fix13-agent-delegation-rules.md)
+**Phase:** FEV-26 (v2.1.1) — ⏳ Pendiente
+**Issues/TD:** #79, TD-V2-70, TD-V2-90, TD-V2-91, TD-V2-93
 **Full plan:** [plan.md](./plan.md)
-**Date:** 2026-08-11
-**Author:** Moctezuma (Strategic Planner)
-**Branch:** `feature/new-commands`
-**Total effort:** ~3-4.5h · 4 commits atómicos + 1 verificación sin commit
-**Commits:** `2b5cf02` (spec) · `20f7733` (4 delegantes) · `a96ba82` (2 no-delegantes) · `213f10b` (docs)
+**Branch:** `fix/tech-debt-2.1.1`
+**Total effort:** ~4-6h · 5 commits atómicos + 1 cierre docs
+**Methodology:** Vertical slicing · commits atómicos · TDD donde aplique
 
 ---
 
 ## Scope Guard (leer antes de empezar)
 
-**SOLO se tocan 10 archivos:**
+**SOLO se tocan estos archivos:**
 
 ```
-specs/spec-agent-format-v2.md                          ← Fase 1
-template/obligatorio/packs/main/huitzilopochtli.md     ← Fase 2
-template/obligatorio/packs/main/quetzalcoatl.md        ← Fase 2
-template/obligatorio/packs/main/tlaloc.md              ← Fase 2
-template/obligatorio/packs/main/mictlantecuhtli.md     ← Fase 2
-template/obligatorio/packs/main/moctezuma.md           ← Fase 3
-template/obligatorio/packs/main/tezcatlipoca.md        ← Fase 3
-CHANGELOG.md                                           ← Fase 4
-docs/WORKFLOW.md                                       ← Fase 4
-docs/wiki-source/Agents.md                             ← Fase 4
+src/domain/entities/FileRuleManifestData.ts             ← Task 1, 2
+src/domain/services/FileMergeEngine.ts                  ← Task 5
+src/application/postInstall.ts                          ← Task 4 (verificar propagación)
+src/application/use-cases/InstallUseCaseBase.ts        ← Task 4 (verificar firma)
+src/cli/main.ts                                         ← Task 4
+.github/workflows/release.yml                           ← Task 3
+tests/unit/domain/entities/FileRuleManifestData.test.ts ← Task 1, 2
+tests/integration/use-cases/CleanInstallUseCase.test.ts ← Task 4
+tests/e2e/scripts/test-clean-install-version.sh         ← Task 4 (nuevo escenario 32)
+CHANGELOG.md                                            ← Checkpoint C
+docs/TECH_DEBT.md                                       ← Checkpoint C
+docs/WORKFLOW.md                                        ← Checkpoint C
 ```
 
-**PROHIBIDO en FEV-25:**
+**PROHIBIDO en FEV-26:**
 
-- ❌ Crear o modificar **tests** (decisión del usuario — la suite existente ya cubre los 6 agentes)
-- ❌ Tocar `src/**`
-- ❌ Tocar el **frontmatter YAML** de cualquier agente (rompe *FEV-19 permission invariants*)
-- ❌ Enumerar catálogos de subagentes o skills en el prompt (rompe *No subagent index in primary agents*)
-- ❌ Bump de `package.json`, tag o npm publish
-
-**Presupuesto por agente:** body ≤100 líneas (sin frontmatter) · total ≤150 líneas.
-
----
-
-## Fase 1 — Contrato canónico (~0.5-1h) · Commit C1
-
-- [ ] **T1.1** Añadir §8 "Delegation Protocol" a `specs/spec-agent-format-v2.md`
-  - [ ] Regla de selección: bloque A si `permission.task` tiene `allow`, bloque B si es `"*": deny`
-  - [ ] Texto canónico literal del **bloque A** (`## DELEGATION PROTOCOL`, ~20 líneas)
-  - [ ] Texto canónico literal del **bloque B** (`## SKILL ANALYSIS PROTOCOL`, ~12 líneas)
-  - [ ] Tabla de hooks por rol (huitzilopochtli / quetzalcoatl / tlaloc / mictlantecuhtli)
-  - [ ] Presupuesto de líneas documentado (≤100 body · ≤150 total)
-  - [ ] Renumerar la §8 "Out of Scope" actual a §9 sin perder contenido
-- [ ] `just check` → 0 errores
-- [ ] `bun test` → 2048 / 0
-- [ ] **Commit C1:** `docs(spec): define delegation protocol contract for primary agents`
-
-### ✅ Checkpoint CP1 (gate a Fase 2)
-
-- [ ] §8 existe con ambos bloques y la tabla de hooks
-- [ ] `git diff --name-only` NO lista ningún archivo de `template/obligatorio/packs/main/`
-- [ ] `just check` 0 · `bun test` 2048/0
-- [ ] **Review humano del texto canónico antes de replicarlo ×6**
+- ❌ Tocar lógica de staging o atomicidad (solo comentarios en Task 5)
+- ❌ Refactorizar `FileMergeEngine` (solo docs)
+- ❌ Cambiar la firma de `runPostInstallSteps()` salvo que sea estrictamente necesario para Task 4
+- ❌ Incluir FEV-27 o FEV-28 (fases separadas)
+- ❌ Publicar release o cambiar `dist-tag` (lo hace el release workflow post-merge)
+- ❌ Romper Project Install (debe seguir funcionando como antes)
+- ❌ Hardcodear rutas absolutas o ejecutar código del template
+- ❌ Usar `any` en código de producción
 
 ---
 
-## Fase 2 — 4 agentes delegantes (~1-1.5h) · Commit C2
+## Phase 1: Documentación & Seguridad
 
-**Procedimiento para cada agente:** insertar bloque A entre el final de `### RULES` y `## KNOWLEDGE` → aplicar hook de rol en el paso 4 → recortar el bullet redundante de RULES a un puntero → verificar líneas.
+### Task 1 — TD-V2-90: business pack count 92→91
 
-- [ ] **T2.1** `huitzilopochtli.md` — hook: *"You never execute: if no specialist exists, report it and stop."*
-  - [ ] `## DELEGATION PROTOCOL` insertado en la posición correcta
-  - [ ] 4 pasos de análisis previo + 3 bloques obligatorios de `task()` presentes
-  - [ ] Bullet `✅ Always delegate...` de RULES recortado a puntero
-  - [ ] Frontmatter byte-idéntico (`git diff` sin cambios antes de la línea 34)
-  - [ ] Body ≤100 · total ≤150 (proyectado: 60 / 94)
-- [ ] **T2.2** `quetzalcoatl.md` — hook: *"You delegate documentation only — never code, never tasks."*
-  - [ ] Mismos 5 checks que T2.1
-  - [ ] ⚠️ Agente con menos margen: proyectado **59/100 body · 101/150 total** — contar explícitamente
-- [ ] **T2.3** `tlaloc.md` — hook: *"Execute directly only when no specialist in `agents/` covers the stack."*
-  - [ ] Mismos 5 checks que T2.1 (proyectado: 58 / 81)
-- [ ] **T2.4** `mictlantecuhtli.md` — hook: *"Delegate the audit, retain the verdict — the ruling is never delegated."*
-  - [ ] Mismos 5 checks que T2.1 (proyectado: 59 / 82)
-- [ ] `bun test tests/unit/domain/agent-frontmatter-validation.test.ts` → verde
-- [ ] **Commit C2:** `feat(agents): add delegation protocol to delegating primary agents`
+- [ ] Abrir `src/domain/entities/FileRuleManifestData.ts` línea 66
+- [ ] Cambiar `"Business pack (92 agents...)"` → `"Business pack (91 agents...)"`
+- [ ] Abrir `tests/unit/domain/entities/FileRuleManifestData.test.ts`
+- [ ] Añadir test parametrizado que cuenta `template/obligatorio/packs/business/*.md` y compara con el manifest
+- [ ] `just test-unit --test-name-pattern="business.*pack.*count"` — verde
+- [ ] **Commit:** `docs(manifest): correct business pack agent count (92→91)`
+- [ ] **Commit trailer:** `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
 
-### ✅ Checkpoint CP2 (gate a Fase 3)
+### Task 2 — TD-V2-91: writers pack count 2→4
 
-- [ ] Los 4 delegantes tienen `## DELEGATION PROTOCOL`
-- [ ] Suite de agentes verde: *FEV-19 permission invariants* · *No subagent index in primary agents* · *Agents directory reference* · *Structural rules*
-- [ ] Conteo de líneas registrado para los 4 (body ≤100 · total ≤150)
-- [ ] `git diff` confirma: cero cambios de frontmatter
-- [ ] Ningún agente contiene `## AVAILABLE SUBAGENTS` ni `the catalog` dentro de RULES
-- [ ] `just check` → 0 errores
-- [ ] **Review humano antes de Fase 3**
+- [ ] Abrir `src/domain/entities/FileRuleManifestData.ts` línea 53
+- [ ] Cambiar `"2 writer agents"` → `"4 writer agents"`
+- [ ] Extender el test de Task 1 para incluir writers pack
+- [ ] `just test-unit --test-name-pattern="pack.*count"` — verde
+- [ ] **Commit:** `docs(manifest): correct writers pack agent count (2→4)` *(o unirlo al commit de Task 1)*
 
----
+### Task 3 — TD-V2-70: shell injection release.yml
 
-## Fase 3 — 2 agentes no delegantes (~0.5h) · Commit C3
+- [ ] Abrir `.github/workflows/release.yml`
+- [ ] Reemplazar `${{ github.ref_name }}` por `$GITHUB_REF_NAME` en líneas 38, 47, 63, 82
+- [ ] Mantener la validación regex `^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$` DESPUÉS de la env var
+- [ ] `grep -rn '\${{ github\.ref_name }}' .github/workflows/` → 0 hits
+- [ ] Validar sintaxis YAML: `just ci-lint-workflows` o `act --dryrun` si está disponible
+- [ ] **Commit:** `fix(security): prevent shell injection in release.yml via $GITHUB_REF_NAME`
+- [ ] **Commit trailer:** `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
 
-- [ ] **T3.1** `moctezuma.md` — `## SKILL ANALYSIS PROTOCOL`
-  - [ ] Insertado entre `### RULES` y `## KNOWLEDGE`
-  - [ ] Declara explícitamente que `task` está denegado
-  - [ ] 4 pasos: entender → mapear skills → definir checklist → auto-revisar
-  - [ ] Regla de escalado (nombrar agente/comando correcto si excede permisos)
-  - [ ] Frontmatter byte-idéntico · body ≤100 · total ≤150 (proyectado: 49 / 84)
-- [ ] **T3.2** `tezcatlipoca.md` — `## SKILL ANALYSIS PROTOCOL`
-  - [ ] Mismos 5 checks que T3.1 (proyectado: 52 / 81)
-- [ ] `bun test tests/unit/domain/agent-frontmatter-validation.test.ts` → verde
-- [ ] **Commit C3:** `feat(agents): add skill analysis protocol to non-delegating primary agents`
+### Checkpoint A — Phase 1 done
 
-### ✅ Checkpoint CP3 (gate a Fase 4)
-
-- [ ] Los **6** agentes principales tienen su protocolo (4× bloque A · 2× bloque B)
-- [ ] `bun test` → 2048 / 0
-- [ ] `just check` → 0 errores
-- [ ] `bash tests/e2e/01-clean-install.sh` → exit 0
-- [ ] Verificación cruzada: ningún agente con `task: deny` menciona delegar
-- [ ] **Review humano antes de Fase 4**
+- [ ] `just check` — 0 errores
+- [ ] `just test-unit` — 2052+ tests passing
+- [ ] Manifest counts verificados manualmente (91 business, 4 writers)
+- [ ] Shell injection grep returns 0
+- [ ] 2-3 commits subidos a `fix/tech-debt-2.1.1`
+- [ ] **🔄 PAUSA — Review con humano antes de Phase 2**
 
 ---
 
-## Fase 4 — Documentación de cierre (~0.5-0.75h) · Commit C4
+## Phase 2: Critical Bug Fix
 
-- [ ] **T4.1** `CHANGELOG.md` — entrada FEV-25 bajo `## [2.1.0]` › `### Added`
-  - [ ] ⚠️ NO usar `[Unreleased]`: v2.1.0 no tiene tag y `package.json` sigue en 2.0.0
-  - [ ] Referencia a FEV-25 + Issue #69
-  - [ ] Distingue los dos bloques y qué agentes reciben cada uno
-  - [ ] Enlaza el contrato canónico (`specs/spec-agent-format-v2.md` §8)
-- [ ] **T4.2** `docs/WORKFLOW.md` — FEV-25 ✅ en 3 ubicaciones
-  - [ ] Tabla §1 "Visión de Fases" (línea ~20)
-  - [ ] Tabla §3 "v2.1.0" (línea ~97)
-  - [ ] §5 "Métricas de Progreso" (bloque v2.1.0, línea ~140)
-  - [ ] Cabecera "Última actualización" con la fecha real
-  - [ ] Sin contradicciones entre las 3 tablas
-- [ ] **T4.3** `docs/wiki-source/Agents.md` — §"Agent File Pattern"
-  - [ ] Menciona el bloque de protocolo (A o B según `permission.task`)
-  - [ ] Enlaza a `specs/spec-agent-format-v2.md` sin duplicar el texto canónico
-  - [ ] Coherente con la columna "Permission Model" de la tabla §Primary Agents
-- [ ] **Commit C4:** `docs: sync FEV-25 delegation protocol across changelog, workflow and wiki`
+### Task 4 — #79: .codice-version no escrito tras Clean Install
 
-### ✅ Checkpoint CP4 (gate a Fase 5)
+- [ ] **Diagnóstico:** leer [`docs/diagnosis/fix14-clean-install-version-file.md`](../docs/diagnosis/fix14-clean-install-version-file.md) si no lo has hecho
+- [ ] Leer firma actual de `BaseInstallOptions` en `src/application/use-cases/InstallUseCaseBase.ts`
+- [ ] Leer `src/cli/main.ts` para localizar dónde se construyen las options de Clean/Project install
+- [ ] Leer `src/application/postInstall.ts` para entender el fallback `version ?? "0.0.0"`
+- [ ] **Plan de inyección:**
+  - Importar `VERSION` (o constante equivalente) desde `src/cli/version.ts` en `main.ts`
+  - Pasar `version: VERSION` en el objeto `options` que se pasa a CleanInstallUseCase y ProjectInstallUseCase
+- [ ] Editar `src/cli/main.ts`:
+  - Añadir import: `import { VERSION } from "./version.js"` (verificar extensión .js para Bun)
+  - Localizar la construcción de options para Clean Install (buscar `mode === "clean-install"` o similar)
+  - Localizar la construcción de options para Project Install
+  - Añadir `version: VERSION` en ambos sitios
+- [ ] Verificar que `runPostInstallSteps()` ahora recibe `version` no-undefined
+- [ ] **Test integración:**
+  - Crear/editar `tests/integration/use-cases/CleanInstallUseCase.test.ts`
+  - Añadir test: tras Clean Install, leer `.codice-version` y verificar que contiene `VERSION` (no `"0.0.0"`)
+  - Añadir test análogo para Project Install (regression: no debe romperse)
+- [ ] **Test E2E (escenario 32):**
+  - Crear `tests/e2e/scripts/test-clean-install-version.sh`
+  - El script debe: ejecutar Clean Install en directorio temporal, leer `.codice-version`, hacer grep del patrón `"version":"<actual>"`, exit 0 si pasa
+  - Registrar el escenario en `tests/e2e/run-all.sh` (o equivalente — verificar estructura existente)
+- [ ] **Verificación:**
+  - [ ] `just test-unit` — verde
+  - [ ] `just test-integration` — verde, nuevo test incluido
+  - [ ] `just test-e2e` — 32/32 pasando (31 existentes + 1 nuevo)
+  - [ ] `just test-packaging` — 5/5 verde
+  - [ ] Manual: `bunx . --mode clean-install --dest /tmp/codice-version-test && cat /tmp/codice-version-test/.codice-version` → versión correcta
+- [ ] **Commit:** `fix(installer): write .codice-version after Clean Install (closes #79)`
+- [ ] **Commit trailer:** `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
+- [ ] **Commit body:** Referenciar issue #79 + diagnóstico fix14
 
-- [ ] CHANGELOG + WORKFLOW + wiki consistentes entre sí
-- [ ] `just check` → 0 errores
-- [ ] Ninguna referencia a FEV-25 como "pendiente" sobrevive en `docs/`
-- [ ] **Review humano antes de Fase 5**
+### Checkpoint B — Phase 2 done
 
----
-
-## Fase 5 — Verificación (~0.5h) · Sin commit
-
-- [x] **T5.1** `just test` → **2048 tests, 0 fail** (mismo número que el baseline: no se añadieron tests)
-- [x] **T5.2** `just check` → 0 errores (biome ci + tsc --noEmit)
-- [x] **T5.3** `bash tests/e2e/01-clean-install.sh` → exit 0 · `just test-e2e` → 30/30
-- [x] **T5.4** `npm pack --dry-run` → los 6 agentes presentes (818 archivos), sin regresión de tamaño
-- [x] **T5.5** Conteo final de líneas de los 6 agentes anotado abajo
-- [x] **T5.6** Carga manual en el harness de OpenCode: la sección nueva aparece en el system prompt (sección visible entre RULES y KNOWLEDGE en cada agente)
-
-### Conteo final de líneas (T5.5)
-
-| Agente | Body (≤100) | Total (≤150) | ✓ |
-|--------|------------:|-------------:|:-:|
-| `huitzilopochtli` | 63 | 97 | ✅ |
-| `quetzalcoatl` | 62 | 104 | ✅ |
-| `tlaloc` | 61 | 84 | ✅ |
-| `mictlantecuhtli` | 62 | 85 | ✅ |
-| `moctezuma` | 51 | 86 | ✅ |
-| `tezcatlipoca` | 54 | 83 | ✅ |
-
-Comando: `for f in template/obligatorio/packs/main/*.md; do echo "$f $(awk 'f{n++} /^---$/{c++; if(c==2) f=1} END{print n}' "$f") $(wc -l < "$f")"; done`
-
-### ✅ Checkpoint CP5 — FEV-25 Completo
-
-- [x] Los 5 criterios del DoD de `fix13` cumplidos
-- [x] `bun test` 2048/0 · `just check` 0 · E2E 30/30
-- [x] 4 commits atómicos en `feature/new-commands`
-- [x] Issue #69 listo para cerrar
+- [ ] `just check` — 0 errores
+- [ ] `just test-unit` — 2053+ tests passing
+- [ ] `just test-integration` — verde, test CleanInstall.version incluido
+- [ ] `just test-e2e` — 32/32 escenarios (nuevo escenario 32 incluido)
+- [ ] `just test-packaging` — 5/5 verde
+- [ ] Coverage ≥95% production `src/`
+- [ ] Manual smoke test: Clean Install + read `.codice-version` → versión correcta
+- [ ] Project Install NO roto (regression check)
+- [ ] **🔄 PAUSA — Review con humano antes de Phase 3**
 
 ---
 
-## Definition of Done
+## Phase 3: Polish
 
-- [x] `specs/spec-agent-format-v2.md` documenta el protocolo de delegación (§8)
-- [x] 4 agentes delegantes con `## DELEGATION PROTOCOL` (contexto + skills + checklist)
-- [x] 2 agentes no delegantes con `## SKILL ANALYSIS PROTOCOL`
-- [x] Protocolo de análisis previo presente en los **6** agentes
-- [x] Priorización de skills documentada (descubrimiento dinámico de `skills/`)
-- [x] Límite <100 líneas de body respetado en los 6 (máx. 63/100)
-- [x] `bun test` 2048/0 · `just check` 0 · E2E 30/30
-- [x] CHANGELOG + WORKFLOW + wiki sincronizados
+### Task 5 — TD-V2-93: outdated comments FileMergeEngine
+
+- [ ] Leer `src/domain/services/FileMergeEngine.ts` completo
+- [ ] Identificar comentarios que referencian:
+  - [ ] Staging paths (ahora en `AtomicStager`)
+  - [ ] Comportamiento cambiado por refactor de F4.6 (TemplateResolver + AtomicStager extraction)
+  - [ ] Funciones o clases inexistentes
+  - [ ] Comentarios que dicen *what* en vez de *why*
+- [ ] Actualizar o eliminar cada comentario obsoleto
+- [ ] Si hay JSDoc público, verificar que describe el comportamiento actual
+- [ ] **NO tocar lógica** — solo comments y JSDoc
+- [ ] **Verificación:**
+  - [ ] `git diff src/domain/services/FileMergeEngine.ts` muestra solo cambios en comments/JSDoc
+  - [ ] `just test-unit` — verde (zero behavior change)
+  - [ ] `just check` — 0 errores
+- [ ] **Commit:** `docs(domain): refresh outdated comments in FileMergeEngine`
+- [ ] **Commit trailer:** `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
+
+### Checkpoint C — Phase 3 done
+
+- [ ] `just check` — 0 errores
+- [ ] `just test-unit` — 2053+ tests passing
+- [ ] `just test-integration` — verde
+- [ ] `just test-e2e` — 32/32 escenarios
+- [ ] Coverage ≥95% production `src/`
+- [ ] **Actualizar documentación de cierre:**
+  - [ ] `CHANGELOG.md` — Añadir entradas por cada item (Security, Fixes, Documentation sections)
+  - [ ] `docs/TECH_DEBT.md` — Marcar TD-V2-90, TD-V2-91, TD-V2-93 como resolved en v2.1.1; TD-V2-70 también
+  - [ ] `docs/WORKFLOW.md` — Marcar FEV-26 como ✅ Completo en línea 21
+  - [ ] **Commit:** `docs: close FEV-26 (changelog + tech debt + workflow)`
 
 ---
 
-*Checklist generado por `/plan` (FEV-25). Detalle completo en [plan.md](./plan.md).*
+## Definition of Done (final)
+
+- [ ] Todos los items marcados como completados arriba
+- [ ] Branch `fix/tech-debt-2.1.1` con 5-6 commits limpios
+- [ ] `git log --oneline fix/tech-debt-2.1.1 ^develop` muestra todos los commits
+- [ ] PR abierto a `develop` con título `fix(tech-debt): resolve FEV-26 quick wins (#79, TD-V2-70/90/91/93)`
+- [ ] PR description lista los 5 items + link a `tasks/plan.md`
+- [ ] CI pasa en Linux, macOS, Windows (3 checks required)
+- [ ] Code review aprobado
+- [ ] Squash merge a `develop`
+- [ ] Post-merge: `git checkout develop && git pull && git checkout fix/tech-debt-2.1.1 && git branch -d` para limpiar local
+
+---
+
+## Notas operacionales
+
+- **No tocar** el branch protection — los required checks ya están configurados para 3 OS.
+- **Si un test falla**, NO deshabilitar el test. Diagnosticar root cause y arreglar.
+- **Si Task 4 requiere cambiar la firma de `BaseInstallOptions`**, coordinar: pasar `version` como parte del `BaseInstallOptions` (no añadir param nuevo) para mantener ISP limpio.
+- **Si el escenario E2E 32 falla en Windows pero pasa en Linux/macOS**, puede ser un issue de path handling — abrir issue separado, no bloquear FEV-26.
+
+---
+
+*Prepared by Moctezuma · 2026-08-20*
+*Co-Authored-By: Moctezuma <dev@fisherk2.com>*
