@@ -189,11 +189,11 @@ Nada. Códice usa staging + rename atómicos: una interrupción (Ctrl+C, kill) d
 
 ---
 
-## 7. Migración v2.0.0 → v2.1.0-beta.2
+## 7. Migración v2.0.0 → v2.1.0
 
 **Aplica a:** instalaciones de Códice v2.0.0+ (`bunx @fisherk2-dev/codice`)
-**Fecha:** 2026-08-13
-**Versión de destino:** v2.1.0-beta.2
+**Fecha:** 2026-08-19
+**Versión de destino:** v2.1.0
 
 ### 7.1 Qué cambia
 
@@ -214,12 +214,12 @@ v2.1.0 es una **actualización sin breaking changes** que añade funcionalidad:
    ```bash
    bunx --fresh @fisherk2-dev/codice --update
    ```
-   El instalador descarga la versión más reciente (v2.1.0-beta.2 o posterior) y aplica los cambios obligatorios.
+   El instalador descarga la versión más reciente (v2.1.0 o posterior) y aplica los cambios obligatorios.
 
 2. **Verifica la versión:**
    ```bash
    cat .codice-version
-   # Debe mostrar "version": "2.1.0-beta.2" o superior
+   # Debe mostrar "version": "2.1.0" o superior
    ```
 
 3. **Prueba los nuevos comandos (opcional):**
@@ -252,5 +252,5 @@ v2.1.0 es una **actualización sin breaking changes** que añade funcionalidad:
 - **[spec-installer-ux-v2.md](../specs/spec-installer-ux-v2.md)** — UX del instalador v2: wizard, version gating, metadata, resumen.
 - **[ADR-014](../specs/adr/adr-014-agent-pack-system.md)** — Decisión de arquitectura del sistema de packs.
 - **[ADR-015](../specs/adr/adr-015-installer-ux-v2.md)** — Decisión de arquitectura de la UX v2 del instalador.
-- **[TECH_DEBT.md](./TECH_DEBT.md)** — TD-V2-6 (eliminación de packs, v2.1.0) y desviaciones conocidas.
+- **[TECH_DEBT.md](./TECH_DEBT.md)** — TD-V2-6 (eliminación de packs, v2.3) y desviaciones conocidas.
 - **[CHANGELOG.md](../CHANGELOG.md)** — Notas de release [2.0.0].

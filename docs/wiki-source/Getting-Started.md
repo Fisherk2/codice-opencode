@@ -74,9 +74,9 @@ your-project/
 ├── .opencode/
 │   ├── plugins/               # SDD pipeline and orchestrator plugins
 │   └── agents/ → agents/      # Symlink to agents directory
-├── agents/                    # 6 primary + 4 writer agents + your selected pack subagents (~352 across 8 packs)
-├── commands/                  # 12 SDD slash commands
-└── skills/                    # 52 engineering skills
+├── agents/                    # 6 primary + 4 writer agents + your selected pack subagents (~355 across 8 packs)
+├── commands/                  # 17 SDD slash commands
+└── skills/                    # 51 engineering skills
 ```
 
 For a detailed breakdown of every file and directory, see [Workspace Structure](Workspace-Structure).
@@ -170,7 +170,7 @@ Each command suggests the next logical step when it finishes, guiding you throug
 - [SDD Pipeline](SDD-Pipeline) — How the orchestration plugin works
 - [MCP Servers](MCP-Servers) — Activate pre-configured servers and add new ones
 - [Workspace Structure](Workspace-Structure) — Learn what each file and directory does
-- [Commands](Commands) — Detailed reference for all 12 slash commands
+- [Commands](Commands) — Detailed reference for all 17 slash commands
 - [Agents](Agents) — Understand each agent's role, permissions, and recommended models
 - [Configuration](Configuration) — Configure models, agents, permissions, MCP, and more
 
