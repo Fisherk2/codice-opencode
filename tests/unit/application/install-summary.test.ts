@@ -26,7 +26,7 @@ const BUSINESS_RULE: FileRule = {
 	category: "pack",
 	isDirectory: true,
 	description: "Business pack",
-	agentCount: 92,
+	agentCount: 91,
 };
 
 const NO_COUNT_RULE: FileRule = {
@@ -74,10 +74,10 @@ describe("buildInstallSummary", () => {
 			[],
 		);
 
-		expect(info.totalAgents).toBe(238);
+		expect(info.totalAgents).toBe(237);
 		expect(info.packs).toEqual([
 			{ id: "software-development", agentCount: 146 },
-			{ id: "business", agentCount: 92 },
+			{ id: "business", agentCount: 91 },
 		]);
 	});
 
@@ -93,7 +93,7 @@ describe("buildInstallSummary", () => {
 
 		expect(info.packs).toHaveLength(1);
 		expect(info.packs[0]?.id).toBe("business");
-		expect(info.totalAgents).toBe(92);
+		expect(info.totalAgents).toBe(91);
 	});
 
 	test("dedupes duplicate pack ids so agent counts are not double-counted", () => {
@@ -106,9 +106,9 @@ describe("buildInstallSummary", () => {
 
 		expect(info.packs).toEqual([
 			{ id: "software-development", agentCount: 146 },
-			{ id: "business", agentCount: 92 },
+			{ id: "business", agentCount: 91 },
 		]);
-		expect(info.totalAgents).toBe(238);
+		expect(info.totalAgents).toBe(237);
 	});
 
 	test("defaults agent count to 0 when rule has no agentCount", () => {

@@ -57,6 +57,15 @@ if ! echo "$VERSION_DATA" | grep -q '"version"'; then
 fi
 log_pass "Version file contains 'version'"
 
+# FEV-26 (#79): the written version must be the real Códice version, not the
+# "0.0.0" fallback that broke Update detection after Clean Install.
+if echo "$VERSION_DATA" | grep -q '"version"[[:space:]]*:[[:space:]]*"0\.0\.0"'; then
+    log_fail "Version file contains the '0.0.0' fallback instead of the real version"
+    echo "    Version data: $VERSION_DATA" >&2
+    exit 1
+fi
+log_pass "Version file does NOT contain '0.0.0' fallback"
+
 if ! echo "$VERSION_DATA" | grep -q '"installedPacks"'; then
     log_fail "Version file is missing the v2.0 'installedPacks' key"
     echo "    Version data: $VERSION_DATA" >&2
