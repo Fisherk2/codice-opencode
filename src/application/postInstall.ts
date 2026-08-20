@@ -13,7 +13,7 @@
 
 import type { IFileSystem } from "../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../domain/ports/IStagingSystem";
-import { failure, type Result, success } from "../domain/types/Result";
+import { type Result, success } from "../domain/types/Result";
 import { writeVersionFileSafe } from "./helpers";
 import type { IGitignoreCreator } from "./ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "./ports/ISymlinkCreator";
