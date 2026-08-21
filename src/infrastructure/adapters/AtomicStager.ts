@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { STAGING_DIR_NAME } from "../config/constants";
+import { BACKUP_INTENT_FILE, STAGING_DIR_NAME } from "../config/constants";
 import { walkDirectory } from "./directoryWalker";
 import { resolveWithinRoot } from "./pathResolver";
 import { VerboseLogger } from "./VerboseLogger";
@@ -96,12 +96,34 @@ export class AtomicStager {
 	async commitStaging(): Promise<void> {
 		const stagingDir = this.stagingRoot;
 		const backups = new Map<string, string>();
+		const intentPath = path.join(this.destinationRoot, BACKUP_INTENT_FILE);
 
 		try {
+			// Fail-fast: refuse if previous commit was interrupted
+			try {
+				await fs.access(intentPath);
+				const intentContent = await fs.readFile(intentPath, "utf-8");
+				throw new Error(
+					`Previous commit was interrupted (intent recorded at ${intentContent}). ` +
+						`Inspect .codice-backup manually before retrying. ` +
+						`Remove ${BACKUP_INTENT_FILE} to force a retry.`,
+				);
+			} catch (err) {
+				if (err instanceof Error && err.message.includes("Previous commit was interrupted")) {
+					throw err;
+				}
+				// Intent file doesn't exist — proceed normally
+			}
+
+			// Write intent marker before commit starts
+			await fs.writeFile(intentPath, new Date().toISOString(), "utf-8");
+
 			// Check if staging directory exists (fs.access works for dirs; Bun.file does not)
 			try {
 				await fs.access(stagingDir);
 			} catch {
+				// Clean up intent marker since we're aborting before any file renames
+				await fs.unlink(intentPath).catch(() => {});
 				throw new Error("No staged files found. Call stageFile() before commitStaging().");
 			}
 
@@ -123,6 +145,9 @@ export class AtomicStager {
 					// Ignore cleanup errors for backup files
 				}
 			}
+
+			// Remove intent marker on successful commit
+			await fs.unlink(intentPath).catch(() => {});
 		} catch (error) {
 			this.logger.log("rollback", `restoring ${backups.size} backup(s) after failed commit`);
 			await this.restoreBackups(backups);
