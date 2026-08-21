@@ -45,7 +45,12 @@ cp "$CODICE_ROOT/biome.json" "$TEMP_DIR/biome.json"
 log_info "Running Biome lint on installed plugin..."
 
 LINT_EXIT=0
-bunx @biomejs/biome check --vcs-enabled=false "$TEMP_DIR/.opencode/plugins/sdd-pipeline.ts" || LINT_EXIT=$?
+bunx @biomejs/biome check --vcs-enabled=false \
+	"$TEMP_DIR/.opencode/plugins/sdd-pipeline.ts" \
+	"$TEMP_DIR/.opencode/plugins/src/destructivePatterns.ts" \
+	"$TEMP_DIR/.opencode/plugins/src/normalizeBash.ts" \
+	"$TEMP_DIR/.opencode/plugins/src/escapeRegExp.ts" \
+	|| LINT_EXIT=$?
 
 if [[ "$LINT_EXIT" -ne 0 ]]; then
 	log_fail "Biome lint failed with exit code $LINT_EXIT"

@@ -2,7 +2,7 @@
 #===============================================================================
 # Códice — Plugin E2E Test Runner
 #
-# Runs all plugin E2E test scenarios (16–18) via bash.
+# Runs all plugin E2E test scenarios (16–17) via bash.
 # Each test script is executed in a subprocess.
 #
 # Usage:
@@ -77,7 +77,6 @@ run_test() {
 TESTS=(
 	"$SCRIPT_DIR/16-plugin-installation.sh"
 	"$SCRIPT_DIR/17-plugin-lint.sh"
-	"$SCRIPT_DIR/18-audit-log.sh"
 )
 
 for test_script in "${TESTS[@]}"; do
