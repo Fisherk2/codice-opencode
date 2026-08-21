@@ -183,7 +183,7 @@ describe("createDependencies (DI container)", () => {
 				expect(warnSpy).toHaveBeenCalled();
 				const [firstLine] = warnSpy.mock.calls[0]!;
 				expect(String(firstLine)).toMatch(
-					/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] clean:/,
+					/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] staging_cleanup:/,
 				);
 			} finally {
 				await fs.rm(tmpDir, { recursive: true, force: true });

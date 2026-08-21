@@ -1,9 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, expect, it, spyOn } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { AtomicStager } from "../../../src/infrastructure/adapters/AtomicStager";
 import { walkDirectory } from "../../../src/infrastructure/adapters/directoryWalker";
+import { VerboseLogger } from "../../../src/infrastructure/adapters/VerboseLogger";
 import { STAGING_DIR_NAME } from "../../../src/infrastructure/config/constants";
 
 /** fs.access works for dirs; Bun.file().exists() does not. */
@@ -44,6 +45,12 @@ describe("AtomicStager", () => {
 
 	afterAll(async () => {
 		await fs.rm(tmpDir, { recursive: true, force: true });
+	});
+
+	let warnSpy: ReturnType<typeof spyOn>;
+
+	afterEach(() => {
+		warnSpy?.mockRestore();
 	});
 
 	it("rejects commitStaging when nothing was staged", async () => {
@@ -118,5 +125,19 @@ describe("AtomicStager", () => {
 		expect(await Bun.file(path.join(destDir, "pkg", "node_modules", "dep.txt")).exists()).toBe(
 			false,
 		);
+	});
+
+	it("emits staging_cleanup event on verbose logger during cleanStaging", async () => {
+		const verboseStager = new AtomicStager(destDir, new VerboseLogger(true));
+		warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+
+		const src = path.join(templateDir, "verbose.txt");
+		await fs.writeFile(src, "VERBOSE");
+
+		await verboseStager.stageFile(src, "verbose.txt");
+		await verboseStager.commitStaging();
+
+		const calls = warnSpy.mock.calls.map((call: readonly unknown[]) => String(call[0]));
+		expect(calls.some((line: string) => line.includes("staging_cleanup"))).toBe(true);
 	});
 });

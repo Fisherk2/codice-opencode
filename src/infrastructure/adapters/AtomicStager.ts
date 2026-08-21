@@ -137,7 +137,7 @@ export class AtomicStager {
 	 * Remove the staging directory recursively.
 	 */
 	async cleanStaging(): Promise<void> {
-		this.logger.log("clean", `removing ${this.stagingRoot}`);
+		this.logger.log("staging_cleanup", this.stagingRoot);
 		try {
 			await fs.rm(this.stagingRoot, { recursive: true, force: true });
 		} catch {

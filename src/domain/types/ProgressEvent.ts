@@ -18,7 +18,8 @@ export type ProgressEvent =
 	  }
 	| { readonly type: "commit_start"; readonly total: number }
 	| { readonly type: "commit_complete"; readonly total: number }
-	| { readonly type: "error"; readonly filePath: string; readonly message: string };
+	| { readonly type: "error"; readonly filePath: string; readonly message: string }
+	| { readonly type: "staging_cleanup"; readonly stagingPath: string };
 
 /**
  * Callback invoked by FileMergeEngine to report progress.
