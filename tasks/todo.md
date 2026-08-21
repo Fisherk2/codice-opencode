@@ -1,13 +1,13 @@
-# FEV-26 Todo List — Quick Wins (Bug fixes + Security patches + Documentation)
+# FEV-27 Todo List — Security & Observability
 
-> **✅ COMPLETO** (2026-08-20) — 5 items · ~4-6h estimada
+> **⏳ PENDIENTE** — 4 items · ~6-8h estimada · 12 commits atómicos
 
-**Phase:** FEV-26 (v2.1.1) — ✅ Completo
-**Issues/TD:** #79, TD-V2-70, TD-V2-90, TD-V2-91, TD-V2-93
+**Phase:** FEV-27 (v2.1.1) — Pendiente
+**Issues/TD:** [#80](https://github.com/Fisherk2/codice-opencode/issues/80), [#81](https://github.com/Fisherk2/codice-opencode/issues/81), TD-V2-9, TD-V2-51
 **Full plan:** [plan.md](./plan.md)
-**Branch:** `fix/tech-debt-2.1.1`
-**Total effort:** ~4-6h · 5 commits atómicos + 1 cierre docs
-**Methodology:** Vertical slicing · commits atómicos · TDD donde aplique
+**Branch:** `fix/fev-27-security-observability`
+**Total effort:** ~6-8h · 12 commits atómicos (1 por task + 1 audit + 1 release prep batch)
+**Methodology:** Vertical slicing · commits atómicos · TDD donde aplique · checkpoints entre fases
 
 ---
 
@@ -16,180 +16,309 @@
 **SOLO se tocan estos archivos:**
 
 ```
-src/domain/entities/FileRuleManifestData.ts             ← Task 1, 2
-src/domain/services/FileMergeEngine.ts                  ← Task 5
-src/application/postInstall.ts                          ← Task 4 (verificar propagación)
-src/application/use-cases/InstallUseCaseBase.ts        ← Task 4 (verificar firma)
-src/cli/main.ts                                         ← Task 4
-.github/workflows/release.yml                           ← Task 3
-tests/unit/domain/entities/FileRuleManifestData.test.ts ← Task 1, 2
-tests/integration/use-cases/CleanInstallUseCase.test.ts ← Task 4
-tests/e2e/scripts/test-clean-install-version.sh         ← Task 4 (nuevo escenario 32)
-CHANGELOG.md                                            ← Checkpoint C
-docs/TECH_DEBT.md                                       ← Checkpoint C
-docs/WORKFLOW.md                                        ← Checkpoint C
+src/domain/types/ProgressEvent.ts                                    ← Phase 1
+src/infrastructure/adapters/AtomicStager.ts                          ← Phase 1, Phase 3
+src/infrastructure/config/constants.ts                               ← Phase 3
+template/obligatorio/core/opencode.json                              ← Phase 2
+template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts          ← Phase 4
+template/obligatorio/core/.opencode/plugins/src/*                    ← Phase 4 (delete 12, keep 3)
+template/obligatorio/core/.opencode/plugins/src/__tests__/*          ← Phase 4 (delete obsolete)
+tests/integration/adapters/atomic-stager.test.ts                     ← Phase 1, Phase 3
+tests/plugin/integration/*.ts                                        ← Phase 4
+tests/plugin/e2e/*.sh                                                ← Phase 4
+docs/wiki-source/Configuration.md                                    ← Phase 2
+docs/diagnosis/fix19-sigint-backup-overwrite.md                      ← Phase 3
+CHANGELOG.md                                                         ← Checkpoint 5
+docs/TECH_DEBT.md                                                    ← Checkpoint 5
+docs/WORKFLOW.md                                                     ← Checkpoint 5
+docs/wiki-source/.wiki/*                                             ← Checkpoint 5
 ```
 
-**PROHIBIDO en FEV-26:**
+**PROHIBIDO en FEV-27:**
 
-- ❌ Tocar lógica de staging o atomicidad (solo comentarios en Task 5)
-- ❌ Refactorizar `FileMergeEngine` (solo docs)
-- ❌ Cambiar la firma de `runPostInstallSteps()` salvo que sea estrictamente necesario para Task 4
-- ❌ Incluir FEV-27 o FEV-28 (fases separadas)
-- ❌ Publicar release o cambiar `dist-tag` (lo hace el release workflow post-merge)
-- ❌ Romper Project Install (debe seguir funcionando como antes)
-- ❌ Hardcodear rutas absolutas o ejecutar código del template
+- ❌ Tocar lógica de FileMergeEngine o VersionComparator (out of scope)
+- ❌ Cambiar firma de métodos públicos (mantener backward compatibility)
+- ❌ Incluir FEV-26 (ya merged) o FEV-28 (fase separada)
+- ❌ Publicar release v2.1.1 (esperar FEV-28 según decisión del usuario)
+- ❌ Modificar ADR-003 o agregar ADR-021 sin discusión arquitectónica previa
 - ❌ Usar `any` en código de producción
+- ❌ Romper los 31/31 escenarios E2E existentes
+- ❌ Cambiar schema de ProgressEvent sin actualizar consumers (VerboseLogger, etc.)
 
 ---
 
-## Phase 1: Documentación & Seguridad
+## Estado por Task
 
-### Task 1 — TD-V2-90: business pack count 92→91
+### Phase 1: Observability Foundation (TD-V2-51) — 1h
 
-- [x] Abrir `src/domain/entities/FileRuleManifestData.ts` línea 66
-- [x] Cambiar `"Business pack (92 agents...)"` → `"Business pack (91 agents...)"`
-- [x] Abrir `tests/unit/domain/entities/FileRuleManifestData.test.ts`
-- [x] Añadir test parametrizado que cuenta `template/obligatorio/packs/business/*.md` y compara con el manifest
-- [x] `just test-unit --test-name-pattern="business.*pack.*count"` — verde
-- [x] **Commit:** `docs(manifest): correct business pack agent count (92→91)`
-- [x] **Commit trailer:** `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
+- [ ] **Task 1.1** — Add `staging_cleanup` event variant
+  - [ ] Editar `src/domain/types/ProgressEvent.ts` — añadir variant `{ type: "staging_cleanup", stagingPath: string }`
+  - [ ] Editar `src/infrastructure/adapters/AtomicStager.ts::cleanStaging()` — añadir `this.logger.log("staging_cleanup", this.stagingRoot)` antes de `fs.rm`
+  - [ ] Editar `tests/integration/adapters/atomic-stager.test.ts` — añadir test que verifica emisión del evento
+  - [ ] Ejecutar `just check` — 0 errores
+  - [ ] Ejecutar `just test-integration tests/integration/adapters/atomic-stager.test.ts` — 0 fallos
+  - [ ] **Commit:** `feat(observability): emit staging_cleanup event in --verbose mode`
 
-### Task 2 — TD-V2-91: writers pack count 2→4
+### Checkpoint 1 — Phase 1 complete
 
-- [x] Abrir `src/domain/entities/FileRuleManifestData.ts` línea 53
-- [x] Cambiar `"2 writer agents"` → `"4 writer agents"`
-- [x] Extender el test de Task 1 para incluir writers pack
-- [x] `just test-unit --test-name-pattern="pack.*count"` — verde
-- [x] **Commit:** `docs(manifest): correct writers pack agent count (2→4)` *(o unirlo al commit de Task 1)*
-
-### Task 3 — TD-V2-70: shell injection release.yml
-
-- [x] Abrir `.github/workflows/release.yml`
-- [x] Reemplazar `${{ github.ref_name }}` por `$GITHUB_REF_NAME` en líneas 38, 47, 63, 82
-- [x] Mantener la validación regex `^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$` DESPUÉS de la env var
-- [x] `grep -rn '\${{ github\.ref_name }}' .github/workflows/` → 0 hits
-- [x] Validar sintaxis YAML: `just ci-lint-workflows` o `act --dryrun` si está disponible
-- [x] **Commit:** `fix(security): prevent shell injection in release.yml via $GITHUB_REF_NAME`
-- [x] **Commit trailer:** `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
-
-### Checkpoint A — Phase 1 done
-
-- [x] `just check` — 0 errores
-- [x] `just test-unit` — 2052+ tests passing
-- [x] Manifest counts verificados manualmente (91 business, 4 writers)
-- [x] Shell injection grep returns 0
-- [x] 2-3 commits subidos a `fix/tech-debt-2.1.1`
-- [x] **🔄 PAUSA — Review con humano antes de Phase 2**
+- [ ] `just check` — 0 errores
+- [ ] `just test-integration` — 0 fallos
+- [ ] Coverage ≥95% production `src/`
+- [ ] **Review humano** — confirmar shape del evento antes de Phase 2
 
 ---
 
-## Phase 2: Critical Bug Fix
+### Phase 2: External Directory Governance (#81) — 1-2h
 
-### Task 4 — #79: .codice-version no escrito tras Clean Install
+- [ ] **Task 2.1** — Add `external_directory` permission block
+  - [ ] Editar `template/obligatorio/core/opencode.json` — añadir bloque `"external_directory"` después de `"read"` (línea 326)
+  - [ ] Configurar deny-by-default: `"*": "deny"` primero
+  - [ ] Añadir allowlist: `~/.agents/*`, `~/.bun/*`, `~/.cargo/*`, `~/go/*`, `~/.local/*`, `~/.cache/*`, `~/Projects/*`, `/tmp/*` (todos `allow`)
+  - [ ] Validar JSON: `bun -e "JSON.parse(await Bun.file('template/obligatorio/core/opencode.json').text())"`
+  - [ ] Editar `docs/wiki-source/Configuration.md` — documentar nuevo bloque de permission
+  - [ ] Ejecutar `just check` — 0 errores
+  - [ ] **Commit:** `feat(security): add external_directory permission block to template`
 
-- [x] **Diagnóstico:** leer [`docs/diagnosis/fix14-clean-install-version-file.md`](../docs/diagnosis/fix14-clean-install-version-file.md) si no lo has hecho
-- [x] Leer firma actual de `BaseInstallOptions` en `src/application/use-cases/InstallUseCaseBase.ts`
-- [x] Leer `src/cli/main.ts` para localizar dónde se construyen las options de Clean/Project install
-- [x] Leer `src/application/postInstall.ts` para entender el fallback `version ?? "0.0.0"`
-- [x] **Plan de inyección:**
-  - Importar `VERSION` (o constante equivalente) desde `src/cli/version.ts` en `main.ts`
-  - Pasar `version: VERSION` en el objeto `options` que se pasa a CleanInstallUseCase y ProjectInstallUseCase
-- [x] Editar `src/cli/main.ts`:
-  - Añadir import: `import { VERSION } from "./version.js"` (verificar extensión .js para Bun)
-  - Localizar la construcción de options para Clean Install (buscar `mode === "clean-install"` o similar)
-  - Localizar la construcción de options para Project Install
-  - Añadir `version: VERSION` en ambos sitios
-- [x] Verificar que `runPostInstallSteps()` ahora recibe `version` no-undefined
-- [x] **Test integración:**
-  - Crear/editar `tests/integration/use-cases/CleanInstallUseCase.test.ts`
-  - Añadir test: tras Clean Install, leer `.codice-version` y verificar que contiene `VERSION` (no `"0.0.0"`)
-  - Añadir test análogo para Project Install (regression: no debe romperse)
-- [x] **Test E2E (escenario 32):**
-  - Crear `tests/e2e/scripts/test-clean-install-version.sh`
-  - El script debe: ejecutar Clean Install en directorio temporal, leer `.codice-version`, hacer grep del patrón `"version":"<actual>"`, exit 0 si pasa
-  - Registrar el escenario en `tests/e2e/run-all.sh` (o equivalente — verificar estructura existente)
-- [x] **Verificación:**
-  - [x] `just test-unit` — verde
-  - [x] `just test-integration` — verde, nuevo test incluido
-  - [x] `just test-e2e` — 32/32 pasando (31 existentes + 1 nuevo)
-  - [x] `just test-packaging` — 5/5 verde
-  - [x] Manual: `bunx . --mode clean-install --dest /tmp/codice-version-test && cat /tmp/codice-version-test/.codice-version` → versión correcta
-- [x] **Commit:** `fix(installer): write .codice-version after Clean Install (closes #79)`
-- [x] **Commit trailer:** `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
-- [x] **Commit body:** Referenciar issue #79 + diagnóstico fix14
+### Checkpoint 2 — Phase 2 complete
 
-### Checkpoint B — Phase 2 done
-
-- [x] `just check` — 0 errores
-- [x] `just test-unit` — 2053+ tests passing
-- [x] `just test-integration` — verde, test CleanInstall.version incluido
-- [x] `just test-e2e` — 32/32 escenarios (nuevo escenario 32 incluido)
-- [x] `just test-packaging` — 5/5 verde
-- [x] Coverage ≥95% production `src/`
-- [x] Manual smoke test: Clean Install + read `.codice-version` → versión correcta
-- [x] Project Install NO roto (regression check)
-- [x] **🔄 PAUSA — Review con humano antes de Phase 3**
+- [ ] `just check` — 0 errores
+- [ ] JSON validado manualmente
+- [ ] Wiki documentada
+- [ ] **Review humano** — confirmar alcance de allowlist antes de Phase 3
 
 ---
 
-## Phase 3: Polish
+### Phase 3: Backup Safety (TD-V2-9) — 2-3h
 
-### Task 5 — TD-V2-93: outdated comments FileMergeEngine
+- [ ] **Task 3.1** — Define `BACKUP_INTENT_FILE` constant
+  - [ ] Editar `src/infrastructure/config/constants.ts` — añadir `export const BACKUP_INTENT_FILE = ".codice-backup-intent";`
+  - [ ] Ejecutar `just check` — 0 errores
+  - [ ] **Commit:** `chore(infra): define BACKUP_INTENT_FILE constant`
 
-- [x] Leer `src/domain/services/FileMergeEngine.ts` completo
-- [x] Identificar comentarios que referencian:
-  - [x] Staging paths (ahora en `AtomicStager`)
-  - [x] Comportamiento cambiado por refactor de F4.6 (TemplateResolver + AtomicStager extraction)
-  - [x] Funciones o clases inexistentes
-  - [x] Comentarios que dicen *what* en vez de *why*
-- [x] Actualizar o eliminar cada comentario obsoleto
-- [x] Si hay JSDoc público, verificar que describe el comportamiento actual
-- [x] **NO tocar lógica** — solo comments y JSDoc
-- [x] **Verificación:**
-  - [x] `git diff src/domain/services/FileMergeEngine.ts` muestra solo cambios en comments/JSDoc
-  - [x] `just test-unit` — verde (zero behavior change)
-  - [x] `just check` — 0 errores
-- [x] **Commit:** `docs(domain): refresh outdated comments in FileMergeEngine`
-- [x] **Commit trailer:** `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
+- [ ] **Task 3.2** — Implement backup intent marker in `commitStaging()`
+  - [ ] Editar `src/infrastructure/adapters/AtomicStager.ts::commitStaging()`:
+    - [ ] Importar `BACKUP_INTENT_FILE` desde `constants.ts`
+    - [ ] Fail-fast check: `if (await fs.access(intentPath).catch(() => null)) throw new Error("Previous commit was interrupted...")`
+    - [ ] Escribir intent marker: `await fs.writeFile(intentPath, new Date().toISOString())`
+    - [ ] Cleanup intent marker en éxito: `await fs.unlink(intentPath).catch(() => {})`
+  - [ ] Editar `tests/integration/adapters/atomic-stager.test.ts`:
+    - [ ] Test: interrupted commit preserves intent marker
+    - [ ] Test: next commit refuses with clear error when orphan marker exists
+    - [ ] Test: successful commit cleans up intent marker
+  - [ ] Ejecutar `just test-integration tests/integration/adapters/atomic-stager.test.ts` — 0 fallos
+  - [ ] Ejecutar `just check` — 0 errores
+  - [ ] **Commit:** `feat(security): protect backup integrity with .codice-backup-intent marker`
 
-### Checkpoint C — Phase 3 done
+- [ ] **Task 3.3** — Update diagnosis document
+  - [ ] Editar `docs/diagnosis/fix19-sigint-backup-overwrite.md`:
+    - [ ] Cambiar "Proposed Solution" → "Implemented Solution"
+    - [ ] Cambiar status de `diagnosed` a `resolved (FEV-27)`
+    - [ ] Añadir referencia al commit de Task 3.2
+  - [ ] **Commit:** `docs(diagnosis): mark TD-V2-9 backup overwrite as resolved in FEV-27`
 
-- [x] `just check` — 0 errores
-- [x] `just test-unit` — 2053+ tests passing
-- [x] `just test-integration` — verde
-- [x] `just test-e2e` — 32/32 escenarios
-- [x] Coverage ≥95% production `src/`
-- [x] **Actualizar documentación de cierre:**
-  - [x] `CHANGELOG.md` — Añadir entradas por cada item (Security, Fixes, Documentation sections)
-  - [x] `docs/TECH_DEBT.md` — Marcar TD-V2-90, TD-V2-91, TD-V2-93 como resolved en v2.1.1; TD-V2-70 también
-  - [x] `docs/WORKFLOW.md` — Marcar FEV-26 como ✅ Completo en línea 21
-  - [x] **Commit:** `docs: close FEV-26 (changelog + tech debt + workflow)`
+### Checkpoint 3 — Phase 3 complete
 
----
-
-## Definition of Done (final)
-
-- [x] Todos los items marcados como completados arriba
-- [x] Branch `fix/tech-debt-2.1.1` con 5-6 commits limpios
-- [x] `git log --oneline fix/tech-debt-2.1.1 ^develop` muestra todos los commits
-- [x] PR abierto a `develop` con título `fix(tech-debt): resolve FEV-26 quick wins (#79, TD-V2-70/90/91/93)`
-- [x] PR description lista los 5 items + link a `tasks/plan.md`
-- [x] CI pasa en Linux, macOS, Windows (3 checks required)
-- [x] Code review aprobado
-- [x] Squash merge a `develop`
-- [x] Post-merge: `git checkout develop && git pull && git checkout fix/tech-debt-2.1.1 && git branch -d` para limpiar local
+- [ ] `just check` — 0 errores
+- [ ] `just test-integration` — atomic-stager suite 0 fallos
+- [ ] Verificación manual: SIGINT simulado preserva backups correctamente
+- [ ] **Review humano** — confirmar wording del mensaje de error antes de Phase 4
 
 ---
 
-## Notas operacionales
+### Phase 4: Plugin Reduction (#80) — 3-4h
 
-- **No tocar** el branch protection — los required checks ya están configurados para 3 OS.
-- **Si un test falla**, NO deshabilitar el test. Diagnosticar root cause y arreglar.
-- **Si Task 4 requiere cambiar la firma de `BaseInstallOptions`**, coordinar: pasar `version` como parte del `BaseInstallOptions` (no añadir param nuevo) para mantener ISP limpio.
-- **Si el escenario E2E 32 falla en Windows pero pasa en Linux/macOS**, puede ser un issue de path handling — abrir issue separado, no bloquear FEV-26.
+- [ ] **Task 4.1** — Audit plugin dependencies (read-only)
+  - [ ] Ejecutar `grep -rn "from.*autoDiscovery\|from.*chatMessage\|from.*configLoader\|from.*defaults\|from.*directoryScanner\|from.*frontmatter\|from.*intentDiscovery\|from.*mentionPatterns\|from.*mergeConfig\|from.*spanishIntents\|from.*stopwords\|from.*validSubagents" template/ tests/ skills/`
+  - [ ] Confirmar 0 consumidores externos inesperados
+  - [ ] Marcar `chatMessage.test.ts`, `systemTransform.test.ts`, `help-command-discovery.test.ts` para borrado
+  - [ ] **Sin commit** (audit-only)
+
+- [ ] **Task 4.2** — Delete obsolete plugin modules
+  - [ ] Eliminar 12 archivos en `template/obligatorio/core/.opencode/plugins/src/`:
+    - [ ] `autoDiscovery.ts`
+    - [ ] `chatMessage.ts`
+    - [ ] `configLoader.ts`
+    - [ ] `defaults.ts`
+    - [ ] `directoryScanner.ts`
+    - [ ] `frontmatter.ts`
+    - [ ] `intentDiscovery.ts`
+    - [ ] `mentionPatterns.ts`
+    - [ ] `mergeConfig.ts`
+    - [ ] `spanishIntents.ts`
+    - [ ] `stopwords.ts`
+    - [ ] `validSubagents.ts`
+  - [ ] Eliminar archivos de test obsoletos en `template/obligatorio/core/.opencode/plugins/src/__tests__/`
+  - [ ] Verificar: `ls template/obligatorio/core/.opencode/plugins/src/ | wc -l` = 3
+  - [ ] Ejecutar `just check` — 0 errores
+  - [ ] **Commit:** `refactor(plugin): reduce SDD plugin to destructive command block only`
+
+- [ ] **Task 4.3** — Rewrite `sdd-pipeline.ts` to minimal form
+  - [ ] Editar `template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts`:
+    - [ ] Eliminar imports de módulos borrados
+    - [ ] Eliminar hooks `experimental.chat.system.transform` y `chat.message`
+    - [ ] Eliminar audit log helpers
+    - [ ] Eliminar SddState, pipeline_phase logic
+    - [ ] Renombrar `SddError` → `DestructiveCommandError`
+    - [ ] Renombrar export `SddPipelinePlugin` → `DestructiveCommandBlockPlugin`
+    - [ ] Preservar: `tool.execute.before` hook con DESTRUCTIVE_PATTERNS + normalizeBash
+  - [ ] Verificar: `wc -l template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts` < 50 líneas
+  - [ ] Ejecutar `bun test tests/plugin/integration/toolExecuteBefore.test.ts` — 0 fallos
+  - [ ] **Commit:** `refactor(plugin): rewrite sdd-pipeline.ts as minimal destructive gate`
+
+- [ ] **Task 4.4** — Update plugin integration tests
+  - [ ] Eliminar `tests/plugin/integration/chatMessage.test.ts`
+  - [ ] Eliminar `tests/plugin/integration/systemTransform.test.ts`
+  - [ ] Verificar si `tests/plugin/integration/help-command-discovery.test.ts` es obsoleto → eliminar si sí
+  - [ ] Reescribir `tests/plugin/integration/toolExecuteBefore.test.ts`:
+    - [ ] Eliminar imports de `PRIMARY_AGENTS`, `discoverValidSubagents`, etc.
+    - [ ] Mantener solo tests de `DESTRUCTIVE_PATTERNS` + `normalizeBash`
+    - [ ] Añadir tests para el nuevo `DestructiveCommandBlockPlugin` (mock input/output)
+  - [ ] Ejecutar `just test-plugin-integration` — 0 fallos
+  - [ ] **Commit:** `test(plugin): update integration tests for minimal destructive gate`
+
+- [ ] **Task 4.5** — Update plugin E2E scenarios
+  - [ ] Eliminar `tests/plugin/e2e/18-audit-log.sh`
+  - [ ] Simplificar `tests/plugin/e2e/16-plugin-installation.sh`:
+    - [ ] Eliminar assertions sobre audit log
+    - [ ] Mantener: plugin loads, command block works
+  - [ ] Simplificar `tests/plugin/e2e/17-plugin-lint.sh`:
+    - [ ] Eliminar checks sobre archivos borrados
+    - [ ] Mantener: biome + tsc sobre los 3 archivos restantes
+  - [ ] Ejecutar `bash tests/plugin/e2e/run-plugin-e2e.sh` — 2/2 passing
+  - [ ] **Commit:** `test(plugin): update E2E scenarios for minimal plugin`
+
+### Checkpoint 4 — Phase 4 complete
+
+- [ ] `just check` — 0 errores
+- [ ] `just test-unit` — 0 fallos
+- [ ] `just test-integration` — 0 fallos
+- [ ] `just test-plugin-integration` — 0 fallos (suite reducida)
+- [ ] `just test-plugin-e2e` — 2/2 passing
+- [ ] `just test-e2e` — 31/31 passing (no regresión)
+- [ ] Coverage ≥95% production `src/`
+- [ ] Plugin reducido: 4 archivos (sdd-pipeline.ts + 3 src/ modules + __tests__)
+- [ ] **Review humano** — confirmar alcance de reducción antes de Release Prep
 
 ---
 
-*Prepared by Moctezuma · 2026-08-20*
-*Co-Authored-By: Moctezuma <dev@fisherk2.com>*
+### Phase 5: Release Prep
+
+- [ ] **Task 5.1** — Update `CHANGELOG.md`
+  - [ ] Añadir entrada `## [2.1.1] - YYYY-MM-DD` (con fecha del día)
+  - [ ] Sección `### Security`:
+    - [ ] Plugin SDD reducido a bloqueante de comandos destructivos (#80)
+    - [ ] Permisos `external_directory` con deny-by-default (#81)
+    - [ ] Marcador `.codice-backup-intent` protege integridad de backups (TD-V2-9)
+  - [ ] Sección `### Added`:
+    - [ ] Evento `staging_cleanup` para observabilidad (TD-V2-51)
+  - [ ] Ejecutar `git diff CHANGELOG.md | head -50` — verificar formato
+  - [ ] **Commit:** `docs(changelog): add v2.1.1 entry with FEV-27 items`
+
+- [ ] **Task 5.2** — Update `docs/TECH_DEBT.md`
+  - [ ] Añadir nueva sección `### Resolved in v2.1.1 (FEV-26+FEV-27)` después de FEV-26
+  - [ ] Listar 4 items de FEV-27 con issue/TD IDs y diagnóstico
+  - [ ] Actualizar fila FEV-27 en tabla `### v2.1.1` → marcar `✅ Resuelto (YYYY-MM-DD)`
+  - [ ] Actualizar fila v2.1.1 en `## Summary` → contar items resueltos
+  - [ ] Actualizar `Last updated:` a fecha del día
+  - [ ] **Commit:** `docs(tech-debt): mark FEV-27 4 items as resolved in v2.1.1`
+
+- [ ] **Task 5.3** — Update `docs/WORKFLOW.md`
+  - [ ] Actualizar fila FEV-27 en tabla de fases (línea 22):
+    - [ ] Estado: `⏳ Pendiente` → `✅ Completo (YYYY-MM-DD)`
+  - [ ] Actualizar bloque de FEV-27 (líneas 144-163):
+    - [ ] Estado: `⏳ Pendiente` → `✅ Completo (YYYY-MM-DD)`
+    - [ ] Effort real vs estimado (si difiere)
+    - [ ] Métricas: tests añadidos, líneas eliminadas (plugin reduction)
+  - [ ] Actualizar `Resumen de Fases v2.1.1` (líneas 189-194):
+    - [ ] FEV-27 → ✅ Completo
+  - [ ] **Commit:** `docs(workflow): mark FEV-27 as completed with metrics summary`
+
+- [ ] **Task 5.4** — Sync GitHub Wiki
+  - [ ] Ejecutar: `rsync -a --delete --exclude='README.md' docs/wiki-source/*.md docs/wiki-source/.wiki/`
+  - [ ] Verificar que `docs/wiki-source/.wiki/` tiene cambios (Configuration.md principalmente)
+  - [ ] `cd docs/wiki-source/.wiki && git add . && git commit -m "Sync wiki v2.1.1 with FEV-27 changes"`
+  - [ ] `git push origin main` (rama del wiki)
+  - [ ] Volver al directorio raíz
+  - [ ] **Commit:** `docs(wiki): record wiki sync in repo state` (si aplica tracking)
+
+### Checkpoint 5 — Phase 5 complete (FINAL)
+
+- [ ] Toda la documentación consistente con el código
+- [ ] Wiki sincronizado y pusheado
+- [ ] `just check` + `just test` (todos los suites) pasan
+- [ ] Coverage ≥95% production `src/`
+- [ ] **NO publicar release v2.1.1** (esperar FEV-28 según decisión del usuario)
+- [ ] **Review humano** — aprobar merge a develop
+
+---
+
+## Definition of Done (Validación Final)
+
+- [ ] 12 tasks completadas con criterios de aceptación cumplidos
+- [ ] 12 commits atómicos con conventional commit messages
+- [ ] `just check` — 0 errores
+- [ ] `just test-unit` — 0 fallos
+- [ ] `just test-integration` — 0 fallos
+- [ ] `just test-plugin-integration` — 0 fallos (suite reducida)
+- [ ] `just test-plugin-e2e` — 2/2 passing
+- [ ] `just test-e2e` — 31/31 passing (sin regresión)
+- [ ] `just test-packaging` — 5/5 passing
+- [ ] Coverage ≥95% production `src/`
+- [ ] Plugin file count: 4 archivos en `plugins/src/` (3 módulos + `__tests__/`)
+- [ ] Plugin main file: < 50 líneas
+- [ ] CHANGELOG.md actualizado
+- [ ] docs/TECH_DEBT.md actualizado
+- [ ] docs/WORKFLOW.md actualizado
+- [ ] GitHub Wiki sincronizado
+- [ ] Branch `fix/fev-27-security-observability` lista para PR a `develop`
+- [ ] PR abierto con título `fix(security+observability): resolve FEV-27 (#80, #81, TD-V2-9, TD-V2-51)`
+- [ ] **Esperar FEV-28 antes de merge final a develop**
+
+---
+
+## Comandos Útiles (referencia rápida)
+
+```bash
+# Antes de empezar Phase 1
+git checkout develop
+git pull origin develop
+git checkout -b fix/fev-27-security-observability
+
+# Validación continua
+just check                           # biome ci + tsc --noEmit
+just test-unit                       # Solo dominio
+just test-integration                # Adaptadores + use cases
+just test-plugin-integration         # Tests del plugin
+just test-plugin-e2e                 # E2E del plugin (bash)
+just test-e2e                        # 31 escenarios CLI
+just test-packaging                  # Tarball npm
+
+# Validación específica
+bun test tests/integration/adapters/atomic-stager.test.ts -- --grep "staging_cleanup"
+bun test tests/integration/adapters/atomic-stager.test.ts -- --grep "backup.intent"
+bun test tests/plugin/integration/toolExecuteBefore.test.ts
+bash tests/plugin/e2e/run-plugin-e2e.sh
+
+# Validación JSON manual
+bun -e "JSON.parse(await Bun.file('template/obligatorio/core/opencode.json').text())"
+
+# Wiki sync
+rsync -a --delete --exclude='README.md' docs/wiki-source/*.md docs/wiki-source/.wiki/
+```
+
+---
+
+## Tracking de Tiempo
+
+| Phase | Estimado | Real | Notas |
+|-------|----------|------|-------|
+| Phase 1 (TD-V2-51) | 1h | — | — |
+| Phase 2 (#81) | 1-2h | — | — |
+| Phase 3 (TD-V2-9) | 2-3h | — | — |
+| Phase 4 (#80) | 3-4h | — | — |
+| Phase 5 (Release Prep) | 0.5h | — | — |
+| **Total** | **6-8h** | — | — |
+
+---
+
+Co-Authored-By: Moctezuma <dev@fisherk2.com>
