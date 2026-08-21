@@ -19,7 +19,7 @@
 | FEV-24 | Nuevos comandos v2.1: `/sync`, `/migrate`, `/deploy`, `/analyze` + SDD plugin refactor | #68, #67, #64, #57 | ✅ Completo (2026-08-11) |
 | FEV-25 | Reglas de delegación en agentes principales | #69 | ✅ Completo (2026-08-11) |
 | FEV-26 | Quick Wins: Bug fixes + Security patches + Documentation | #79, TD-V2-70, TD-V2-90, TD-V2-91, TD-V2-93 | ✅ Completo (2026-08-20) |
-| FEV-27 | Security & Observability: Plugin cleanup + Permissions + Backup safety | #80, #81, TD-V2-9, TD-V2-51 | ⏳ Pendiente |
+| FEV-27 | Security & Observability: Plugin cleanup + Permissions + Backup safety | #80, #81, TD-V2-9, TD-V2-51 | ✅ Completo (2026-08-20) |
 | FEV-28 | Infrastructure & Performance: CI/CD updates + Caching | TD-V2-7, TD-V2-61 | ⏳ Pendiente |
 
 ## 2. Fases Iniciales (F0 – F6.5)
@@ -144,7 +144,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 #### FEV-27: Security & Observability — Plugin cleanup + Permissions + Backup safety
 
 **Objetivo:** Simplificar plugin SDD, gobernanza de directorios externos, mejorar seguridad de backups.
-**Effort total:** 6-8h | **Riesgo:** Medio | **Estado:** ⏳ Pendiente
+**Effort total:** 6-8h | **Riesgo:** Medio | **Estado:** ✅ Completo (2026-08-20)
 
 | ID | Item | Effort | Risk | Diagnóstico |
 |----|------|--------|------|-------------|
@@ -189,7 +189,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | Fase | Items | Effort Total | Risk | Prioridad |
 |------|-------|--------------|------|-----------|
 | FEV-26 | 5 items (1 bug + 4 TD) | 4-6h | Bajo | ✅ Completo |
-| FEV-27 | 4 items (2 issues + 2 TD) | 6-8h | Medio | Media |
+| FEV-27 | 4 items (2 issues + 2 TD) | 6-8h | Medio | ✅ Completo |
 | FEV-28 | 2 items (2 TD) | 2-3h | Bajo | Baja |
 | **Total** | **6 items restantes** | **8-11h** | — | — |
 
