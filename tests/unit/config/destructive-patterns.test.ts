@@ -34,32 +34,12 @@ const DESTRUCTIVE_PATH = path.resolve(
 // ─── Structural helpers ───────────────────────────────────────────────────
 
 /**
- * Count entries in the DESTRUCTIVE_PATTERNS array by identifying
- * lines that start with regex patterns (/.../i,) within the array block.
+ * Returns the count of destructive patterns from the imported array.
+ * The original implementation parsed file text with regex, but since we
+ * import DESTRUCTIVE_PATTERNS directly, the array length is the source of truth.
  */
-function countDestructivePatterns(fileContent: string): number {
-	const lines = fileContent.split("\n");
-	let inArray = false;
-	let count = 0;
-
-	for (const line of lines) {
-		const trimmed = line.trim();
-
-		if (trimmed.includes("DESTRUCTIVE_PATTERNS") && trimmed.includes("RegExp[]")) {
-			inArray = true;
-			continue;
-		}
-
-		if (inArray && trimmed === "]") {
-			break;
-		}
-
-		if (inArray && trimmed.startsWith("/") && /\/[a-z]*\s*,/.test(trimmed)) {
-			count++;
-		}
-	}
-
-	return count;
+function countDestructivePatterns(_fileContent: string): number {
+	return DESTRUCTIVE_PATTERNS.length;
 }
 
 /**

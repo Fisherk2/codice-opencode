@@ -1,15 +1,8 @@
 // ---------------------------------------------------------------------------
-// DESTRUCTIVE_PATTERNS — Safety boundary for bash command execution
-//
-// SAFETY BOUNDARY — NOT configurable per OQ-4.
-// These patterns block destructive commands (rm -rf, git push --force,
-// DROP TABLE, etc.) from being executed via the Bash tool. They are
-// hardcoded and NOT part of the SddPipelineConfig to prevent accidental
-// bypass of the safety net.
-//
-// NOTE: This is a safety net, not a security boundary. Advanced bypasses
-// (variable expansion, command substitution) are not covered. Use proper
-// sandboxing for untrusted code.
+// DESTRUCTIVE_PATTERNS — Safety boundary for bash command execution.
+// Hardcoded (NOT configurable) to prevent accidental bypass. This is a
+// safety net, not a security boundary — advanced bypasses (variable
+// expansion, command substitution) require proper sandboxing.
 // ---------------------------------------------------------------------------
 
 export const DESTRUCTIVE_PATTERNS: readonly RegExp[] = [

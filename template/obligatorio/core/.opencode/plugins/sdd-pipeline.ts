@@ -11,26 +11,24 @@ import { normalizeBash } from "./src/normalizeBash";
  * is handled by opencode.json permissions.
  */
 
-interface BashArgs {
-	command?: unknown;
-}
-
 /**
- * Narrow type guard for the tool.execute.before args. Returns the raw
- * command string, or an empty string when no bash command is present.
+ * Extracts the bash command string from the tool output args.
+ * Returns empty string when no bash command is present.
  */
-function argsToCommand(value: unknown): string {
-	const args = value as BashArgs | undefined;
-	if (typeof args?.command !== "string") return "";
-	return args.command;
+function extractBashCommand(value: unknown): string {
+	if (typeof value !== "object" || value === null) return "";
+	const obj = value as Record<string, unknown>;
+	if (typeof obj.command !== "string") return "";
+	return obj.command;
 }
 
 export const DestructiveCommandBlockPlugin: Plugin = async () => ({
 	"tool.execute.before": async (input: unknown, output: unknown) => {
-		const inp = input as { tool?: unknown } | undefined;
-		if (typeof inp?.tool !== "string" || inp.tool.toLowerCase() !== "bash") return;
+		if (typeof input !== "object" || input === null) return;
+		const obj = input as Record<string, unknown>;
+		if (typeof obj.tool !== "string" || obj.tool.toLowerCase() !== "bash") return;
 
-		const cmd = normalizeBash(argsToCommand(output));
+		const cmd = normalizeBash(extractBashCommand(output));
 		for (const pattern of DESTRUCTIVE_PATTERNS) {
 			if (pattern.test(cmd)) {
 				throw new Error("Destructive command blocked. Use safe alternatives.");
