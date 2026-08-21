@@ -323,6 +323,17 @@
       ".docker/config.json": "deny",
       "*.gpg": "deny",
       "*.ovpn": "deny"
+    },
+    "external_directory": {
+      "*": "deny",
+      "~/.agents/*": "allow",
+      "~/.bun/*": "allow",
+      "~/.cargo/*": "allow",
+      "~/go/*": "allow",
+      "~/.local/*": "allow",
+      "~/.cache/*": "allow",
+      "~/Projects/*": "allow",
+      "/tmp/*": "allow"
     }
   },
 
