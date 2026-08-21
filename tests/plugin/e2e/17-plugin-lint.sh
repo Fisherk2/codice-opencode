@@ -49,7 +49,6 @@ bunx @biomejs/biome check --vcs-enabled=false \
 	"$TEMP_DIR/.opencode/plugins/sdd-pipeline.ts" \
 	"$TEMP_DIR/.opencode/plugins/src/destructivePatterns.ts" \
 	"$TEMP_DIR/.opencode/plugins/src/normalizeBash.ts" \
-	"$TEMP_DIR/.opencode/plugins/src/escapeRegExp.ts" \
 	|| LINT_EXIT=$?
 
 if [[ "$LINT_EXIT" -ne 0 ]]; then

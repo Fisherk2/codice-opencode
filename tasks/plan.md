@@ -89,9 +89,9 @@ FEV-27 cierra el ciclo de Security & Observability antes del release v2.1.1. Res
 │    └─ Delete: autoDiscovery, chatMessage, configLoader,    │
 │       defaults, directoryScanner, frontmatter,             │
 │       intentDiscovery, mentionPatterns, mergeConfig,       │
-│       spanishIntents, stopwords, validSubagents           │
-│    └─ Keep: destructivePatterns, escapeRegExp,             │
-│       normalizeBash                                        │
+│       spanishIntents, stopwords, validSubagents,           │
+│       escapeRegExp (dead code)                             │
+│    └─ Keep: destructivePatterns, normalizeBash             │
 │  template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts│
 │    └─ Reduce to: bash destructive-command block only       │
 │  template/obligatorio/core/.opencode/plugins/src/          │
@@ -364,7 +364,7 @@ docs(diagnosis): mark TD-V2-9 backup overwrite as resolved in FEV-27
 
 #### Task 4.2: Delete obsolete plugin modules
 
-**Description:** Removes the 12 obsolete modules from `template/obligatorio/core/.opencode/plugins/src/`. Keeps only `destructivePatterns.ts`, `escapeRegExp.ts`, `normalizeBash.ts`. Also deletes the now-empty `__tests__/` directory contents that test the deleted modules.
+**Description:** Removes the 12 obsolete modules from `template/obligatorio/core/.opencode/plugins/src/`. Keeps only `destructivePatterns.ts`, `normalizeBash.ts`. Also deletes the now-empty `__tests__/` directory contents that test the deleted modules. (`escapeRegExp.ts` was later removed as dead code — neither `destructivePatterns` nor `sdd-pipeline` imports it.)
 
 **Modules to delete:**
 - `autoDiscovery.ts` (122 lines)
@@ -382,7 +382,6 @@ docs(diagnosis): mark TD-V2-9 backup overwrite as resolved in FEV-27
 
 **Modules to KEEP:**
 - `destructivePatterns.ts` (95 lines) — core of the safety net
-- `escapeRegExp.ts` (18 lines) — utility used by destructivePatterns
 - `normalizeBash.ts` (30 lines) — bypass prevention
 
 **Acceptance criteria:**

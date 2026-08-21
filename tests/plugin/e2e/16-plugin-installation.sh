@@ -44,7 +44,6 @@ log_info "Verifying plugin files..."
 assert_file_exists "$TEMP_DIR/.opencode/plugins/sdd-pipeline.ts"
 assert_file_exists "$TEMP_DIR/.opencode/plugins/src/destructivePatterns.ts"
 assert_file_exists "$TEMP_DIR/.opencode/plugins/src/normalizeBash.ts"
-assert_file_exists "$TEMP_DIR/.opencode/plugins/src/escapeRegExp.ts"
 
 # ---------------------------------------------------------------------------
 # Done
