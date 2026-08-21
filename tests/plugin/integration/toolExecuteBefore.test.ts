@@ -1,7 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-	DESTRUCTIVE_PATTERNS,
-} from "../../../template/obligatorio/core/.opencode/plugins/src/destructivePatterns";
+import { DESTRUCTIVE_PATTERNS } from "../../../template/obligatorio/core/.opencode/plugins/src/destructivePatterns";
 import { normalizeBash } from "../../../template/obligatorio/core/.opencode/plugins/src/normalizeBash";
 
 /** Returns true if the command matches any destructive pattern after normalization. */

@@ -20,9 +20,7 @@ export const DestructiveCommandBlockPlugin: Plugin = async () => ({
 		const cmd = normalizeBash((out?.args?.command as string) ?? "");
 		for (const pattern of DESTRUCTIVE_PATTERNS) {
 			if (pattern.test(cmd)) {
-				throw new Error(
-					"Destructive command blocked. Use safe alternatives.",
-				);
+				throw new Error("Destructive command blocked. Use safe alternatives.");
 			}
 		}
 	},
