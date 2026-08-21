@@ -15,37 +15,37 @@
       "model": "opencode/deepseek-v4-flash-free",
       "color": "#d3e22b",
       "temperature": 0.5,
-      "steps": 30
+      "steps": 50
     },
     "quetzalcoatl": {
       "model": "opencode/nemotron-3-ultra-free",
       "color": "#ffffff",
       "temperature": 0.2,
-      "steps": 100
+      "steps": 120
     },
     "moctezuma": {
       "model": "opencode/big-pickle",
       "color": "#8B4513",
       "temperature": 0.1,
-      "steps": 40
+      "steps": 100
     },
     "tlaloc": {
       "model": "opencode/nemotron-3.5-lightning-free",
       "color": "#00ffff",
       "temperature": 0.2,
-      "steps": 150
+      "steps": 200
     },
     "mictlantecuhtli": {
       "model": "opencode/mimo-v2.5-free",
       "color": "#2d2d2d",
       "temperature": 0.2,
-      "steps": 125
+      "steps": 150
     },
     "tezcatlipoca": {
       "model": "opencode/deepseek-v4-flash-free",
       "color": "#ff3134",
       "temperature": 0.1,
-      "steps": 80
+      "steps": 100
     },
     "build": {
       "disable": true
@@ -82,6 +82,64 @@
       "repository": "anomalyco/opencode",
       "branch": "dev",
       "description": "Official OpenCode repository — CLI, API, and configuration reference"
+    }
+  },
+
+  "mcp": {
+    "codebase-memory-mcp": {
+      "enabled": false
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
+      "enabled": false
+    },
+    "excel": {
+      "type": "local",
+      "command": ["uvx", "excel-mcp-server", "stdio"],
+      "enabled": false
+    },
+    "jupyter": {
+      "type": "local",
+      "command": ["uvx", "mcp-jupyter-notebook"],
+      "enabled": false,
+      "env": {
+        "MCP_JUPYTER_SESSION_MODE": "server",
+        "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
+        "MCP_JUPYTER_TOKEN": "{env:MCP_JUPYTER_TOKEN}",
+        "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
+      }
+    },
+    "tavily": {
+      "type": "remote",
+      "url": "https://mcp.tavily.com/mcp",
+      "headers": {
+        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+      },
+      "enabled": false
+    },
+    "firecrawl": {
+      "type": "remote",
+      "url": "https://mcp.firecrawl.dev/v2/mcp",
+      "headers": {
+        "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
+      },
+      "enabled": false
+    },
+    "vercel-grep": {
+      "type": "remote",
+      "url": "https://mcp.grep.app",
+      "enabled": true
+    },
+    "gitmcp": {
+      "type": "remote",
+      "url": "https://gitmcp.io/docs",
+      "enabled": true
     }
   },
 
@@ -326,72 +384,11 @@
     },
     "external_directory": {
       "*": "deny",
-      "~/.agents/*": "allow",
       "~/.bun/*": "allow",
       "~/.cargo/*": "allow",
       "~/go/*": "allow",
-      "~/.local/*": "allow",
       "~/.cache/*": "allow",
-      "~/Projects/*": "allow",
       "/tmp/*": "allow"
-    }
-  },
-
-  "mcp": {
-    "codebase-memory-mcp": {
-      "enabled": false
-    },
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp",
-      "enabled": true
-    },
-    "chrome-devtools": {
-      "type": "local",
-      "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
-      "enabled": false
-    },
-    "excel": {
-      "type": "local",
-      "command": ["uvx", "excel-mcp-server", "stdio"],
-      "enabled": false
-    },
-    "jupyter": {
-      "type": "local",
-      "command": ["uvx", "mcp-jupyter-notebook"],
-      "enabled": false,
-      "env": {
-        "MCP_JUPYTER_SESSION_MODE": "server",
-        "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
-        "MCP_JUPYTER_TOKEN": "{env:MCP_JUPYTER_TOKEN}",
-        "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
-      }
-    },
-    "tavily": {
-      "type": "remote",
-      "url": "https://mcp.tavily.com/mcp",
-      "headers": {
-        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
-      },
-      "enabled": false
-    },
-    "firecrawl": {
-      "type": "remote",
-      "url": "https://mcp.firecrawl.dev/v2/mcp",
-      "headers": {
-        "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
-      },
-      "enabled": false
-    },
-    "vercel-grep": {
-      "type": "remote",
-      "url": "https://mcp.grep.app",
-      "enabled": true
-    },
-    "gitmcp": {
-      "type": "remote",
-      "url": "https://gitmcp.io/docs",
-      "enabled": true
     }
   }
 }
