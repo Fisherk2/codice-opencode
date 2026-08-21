@@ -90,7 +90,7 @@ FEV-27 cierra el ciclo de Security & Observability antes del release v2.1.1. Res
 │       defaults, directoryScanner, frontmatter,             │
 │       intentDiscovery, mentionPatterns, mergeConfig,       │
 │       spanishIntents, stopwords, validSubagents,           │
-│       escapeRegExp (dead code)                             │
+│       escapeRegExp                                         │
 │    └─ Keep: destructivePatterns, normalizeBash             │
 │  template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts│
 │    └─ Reduce to: bash destructive-command block only       │

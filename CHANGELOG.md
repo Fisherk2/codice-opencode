@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SDD plugin reduced to minimal destructive-command block** (#80): Plugin now only blocks destructive bash commands (rm -rf, git push --force, DROP TABLE, etc.) via `tool.execute.before` hook. Removed 13 obsolete modules (~1200 lines) that duplicated `opencode.json` permissions.
 - **External directory permissions** (#81): Added `external_directory` permission block to template with deny-by-default strategy. Explicit allowlist for known-safe paths (~/.agents/, ~/.bun/, ~/.cargo/, ~/go/, ~/.local/, ~/.cache/, ~/Projects/, /tmp/).
 - **Backup integrity protection** (TD-V2-9): `AtomicStager.commitStaging()` now writes `.codice-backup-intent` marker before commit. If a previous commit was interrupted, the marker is detected and the overwrite is refused with an actionable error message.
+- **Hardened permission denies** (review): Extended `read` deny-list with `.cargo/credentials`, `.s3cfg`, `.config/gh/hosts.yml`, `*.mobileprovision`; narrowed `export PATH=*` to total-replacement only; added git deny entries for `--force-with-lease`, `checkout -- .`, `checkout -f`, `restore`, `reset --mixed`, `clean -fdx/-fxd`; added `rm -r -f`, `rm -f -r`, `rm -rfv` variants.
+- **Plugin pattern gaps closed** (review): Added `git push --force-with-lease`, `git reset --mixed`, `git clean -fdx/-fxd`, `git checkout -- .`, `git checkout -f`, `git restore`, and SQL `DELETE ... WHERE 1=1/true` tautology patterns. `normalizeBash` now strips comments only at token start, preserving in-word/in-URL `#`.
+- **Removed dead `escapeRegExp` module** (dead code, no longer imported; `destructivePatterns` uses literal regex).
 
 ### Added
 
