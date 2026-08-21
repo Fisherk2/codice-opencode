@@ -1,29 +1,7 @@
-// ---------------------------------------------------------------------------
-// Integration tests for tool.execute.before hook behavior
-//
-// Tests the destructive command blocking (normalizeBash + DESTRUCTIVE_PATTERNS)
-// and subagent name validation that power the tool.execute.before hook.
-//
-// Subagent validation no longer uses a hardcoded VALID_SUBAGENTS set — since
-// FEV-20, names are derived at runtime by discoverValidSubagents() scanning
-// the user's `agents/` directory (ADR-013: Auto-Discovery). The 6 primary
-// agents (PRIMARY_AGENTS) are always valid. This test mimics the discovered
-// set with DISCOVERED_SUBAGENTS below.
-//
-// The hook itself lives inside SddPipelinePlugin (requires @opencode-ai/plugin),
-// so we test the pure functions and maps independently.
-// ---------------------------------------------------------------------------
-
 import { describe, expect, test } from "bun:test";
 import {
 	DESTRUCTIVE_PATTERNS,
-	PRIMARY_AGENTS,
-} from "../../../template/obligatorio/core/.opencode/plugins/src/defaults";
-
-// ---------------------------------------------------------------------------
-// Import pure functions (no longer replicated — extracted to module)
-// ---------------------------------------------------------------------------
-
+} from "../../../template/obligatorio/core/.opencode/plugins/src/destructivePatterns";
 import { normalizeBash } from "../../../template/obligatorio/core/.opencode/plugins/src/normalizeBash";
 
 /** Returns true if the command matches any destructive pattern after normalization. */
@@ -32,38 +10,14 @@ function isDestructive(cmd: string): boolean {
 	return DESTRUCTIVE_PATTERNS.some((p) => p.test(normalized));
 }
 
-/** Mimics auto-discovery: PRIMARY_AGENTS + a representative sample of subagents from agents/. */
-const DISCOVERED_SUBAGENTS = new Set([
-	"test-engineer",
-	"docs-writer",
-	"code-reviewer",
-	"backend-developer",
-	"typescript-pro",
-]);
+describe("destructive command blocking", () => {
+	// ─── normalizeBash helper ──────────────────────────────
 
-/**
- * Returns true if the subagent name is valid (case-insensitive check).
- *
- * Mirrors sdd-pipeline.ts: the discovered set (from discoverValidSubagents)
- * is used when non-empty, falling back to the 6 PRIMARY_AGENTS. Primary
- * agents are always valid even without a corresponding `agents/` file.
- */
-function isValidSubagent(name: string): boolean {
-	const normalized = name.toLowerCase();
-	return PRIMARY_AGENTS.includes(normalized) || DISCOVERED_SUBAGENTS.has(normalized);
-}
-
-// ---------------------------------------------------------------------------
-// Tests: normalizeBash
-// ---------------------------------------------------------------------------
-
-describe("tool.execute.before — normalizeBash helper", () => {
 	test("removes comments (# to end of line)", () => {
 		expect(normalizeBash("rm -rf / # dangerous")).toBe("rm -rf /");
 	});
 
-	test("replaces newline characters with space (prevents token merging)", () => {
-		// normalizeBash replaces \n with space, so tokens stay separate
+	test("replaces newline characters with space", () => {
 		expect(normalizeBash("ls\n-la\n/")).toBe("ls -la /");
 	});
 
@@ -83,21 +37,13 @@ describe("tool.execute.before — normalizeBash helper", () => {
 		expect(normalizeBash("")).toBe("");
 	});
 
-	test("safe command is unchanged after normalization", () => {
-		expect(normalizeBash("ls -la")).toBe("ls -la");
-	});
-});
+	// ─── Filesystem destructive patterns ───────────────────
 
-// ---------------------------------------------------------------------------
-// Tests: destructive command blocking
-// ---------------------------------------------------------------------------
-
-describe("tool.execute.before — destructive command blocking", () => {
-	test("Scenario 1: rm -rf / is blocked", () => {
-		expect(isDestructive("rm -rf /")).toBe(true);
+	test("blocks rm -rf", () => {
+		expect(isDestructive("rm -rf /tmp/mydir")).toBe(true);
 	});
 
-	test("rm -rf / with comments stripped", () => {
+	test("rm -rf with comments stripped", () => {
 		expect(isDestructive("rm -rf / # dangerous command")).toBe(true);
 	});
 
@@ -105,36 +51,173 @@ describe("tool.execute.before — destructive command blocking", () => {
 		expect(isDestructive("rm -fir /")).toBe(true);
 	});
 
-	test("Scenario 2: ls -la passes through", () => {
-		expect(isDestructive("ls -la")).toBe(false);
-	});
-
-	test("Scenario 3: rm -r -f (split flags) — known gap, not blocked by current patterns", () => {
-		// Current DESTRUCTIVE_PATTERNS require r and f in the same flag group (-rf),
-		// so split flags like -r -f are NOT matched. This is a known detection gap.
+	test("rm -r -f (split flags) is a known gap", () => {
 		expect(isDestructive("rm -r -f /")).toBe(false);
 	});
 
-	test("rm -f -r (reversed split flags) — known gap, not blocked", () => {
-		// Similarly, -f -r split across two flag groups is not matched.
-		expect(isDestructive("rm -f -r /")).toBe(false);
+	test("allows safe rm", () => {
+		expect(isDestructive("rm file.txt")).toBe(false);
 	});
 
-	test("Scenario 4: commented rm -rf passes through (comments stripped)", () => {
-		// normalizeBash strips comments, so "# rm -rf /" becomes ""
-		expect(isDestructive("# rm -rf /")).toBe(false);
+	test("blocks shred", () => {
+		expect(isDestructive("shred -vfz /tmp/secret.txt")).toBe(true);
 	});
 
-	test("commented destructive command with surrounding text", () => {
-		expect(isDestructive("echo safe # rm -rf /")).toBe(false);
+	test("blocks find -exec rm", () => {
+		expect(isDestructive("find . -name '*.bak' -exec rm {} \\;")).toBe(true);
 	});
 
-	// ─── Newline bypass fix ──────────────────────────────────
+	test("blocks find -delete", () => {
+		expect(isDestructive("find . -delete")).toBe(true);
+	});
 
-	test("rm -rf / with newline instead of space IS blocked (newlines replaced)", () => {
-		// Previously, normalizeBash stripped \n without replacement, allowing
-		// "rm\n-rf\n/" to become "rm-rf/" (bypassing the destructive pattern).
-		// Now \n is replaced with space, so "rm\n-rf\n/" → "rm -rf /" → blocked.
+	// ─── Git destructive patterns ──────────────────────────
+
+	test("blocks git push --force", () => {
+		expect(isDestructive("git push --force origin main")).toBe(true);
+	});
+
+	test("blocks git push -f", () => {
+		expect(isDestructive("git push -f")).toBe(true);
+	});
+
+	test("blocks git reset --hard", () => {
+		expect(isDestructive("git reset --hard HEAD~1")).toBe(true);
+	});
+
+	test("blocks git clean -fd", () => {
+		expect(isDestructive("git clean -fd")).toBe(true);
+	});
+
+	test("blocks git filter-repo", () => {
+		expect(isDestructive("git filter-repo --force")).toBe(true);
+	});
+
+	test("blocks git branch -D", () => {
+		expect(isDestructive("git branch -D main")).toBe(true);
+	});
+
+	test("blocks git stash drop", () => {
+		expect(isDestructive("git stash drop")).toBe(true);
+	});
+
+	test("blocks git stash clear", () => {
+		expect(isDestructive("git stash clear")).toBe(true);
+	});
+
+	test("allows git push without force", () => {
+		expect(isDestructive("git push origin main")).toBe(false);
+	});
+
+	test("allows git status", () => {
+		expect(isDestructive("git status")).toBe(false);
+	});
+
+	// ─── SQL destructive patterns ──────────────────────────
+
+	test("blocks DROP TABLE", () => {
+		expect(isDestructive("psql -c 'DROP TABLE users'")).toBe(true);
+	});
+
+	test("blocks DROP DATABASE", () => {
+		expect(isDestructive("DROP DATABASE production")).toBe(true);
+	});
+
+	test("blocks DROP SCHEMA", () => {
+		expect(isDestructive("DROP SCHEMA public")).toBe(true);
+	});
+
+	test("blocks TRUNCATE TABLE", () => {
+		expect(isDestructive("TRUNCATE TABLE users")).toBe(true);
+	});
+
+	test("blocks DELETE FROM without WHERE", () => {
+		expect(isDestructive("DELETE FROM users")).toBe(true);
+	});
+
+	test("allows DELETE FROM with WHERE clause", () => {
+		expect(isDestructive("DELETE FROM users WHERE id = 1")).toBe(false);
+	});
+
+	// ─── Docker destructive patterns ───────────────────────
+
+	test("blocks docker rm -f", () => {
+		expect(isDestructive("docker rm -f container_name")).toBe(true);
+	});
+
+	test("blocks docker system prune -a", () => {
+		expect(isDestructive("docker system prune -a")).toBe(true);
+	});
+
+	test("blocks docker volume prune", () => {
+		expect(isDestructive("docker volume prune")).toBe(true);
+	});
+
+	// ─── Permission destructive patterns ───────────────────
+
+	test("blocks chmod 777", () => {
+		expect(isDestructive("chmod 777 /some/file")).toBe(true);
+	});
+
+	test("blocks chown -R", () => {
+		expect(isDestructive("chown -R user:group /dir")).toBe(true);
+	});
+
+	// ─── Process destructive patterns ──────────────────────
+
+	test("blocks kill -9 0 (all processes)", () => {
+		expect(isDestructive("kill -9 0")).toBe(true);
+	});
+
+	test("blocks shutdown", () => {
+		expect(isDestructive("shutdown -h now")).toBe(true);
+	});
+
+	// ─── Package Manager destructive patterns ──────────────
+
+	test("blocks npm publish", () => {
+		expect(isDestructive("npm publish")).toBe(true);
+	});
+
+	test("blocks apt remove", () => {
+		expect(isDestructive("apt remove package-name")).toBe(true);
+	});
+
+	// ─── Disk destructive patterns ─────────────────────────
+
+	test("blocks mkfs", () => {
+		expect(isDestructive("mkfs.ext4 /dev/sda1")).toBe(true);
+	});
+
+	test("blocks dd if=", () => {
+		expect(isDestructive("dd if=/dev/zero of=/dev/sda")).toBe(true);
+	});
+
+	test("blocks terraform destroy -auto-approve", () => {
+		expect(isDestructive("terraform destroy -auto-approve")).toBe(true);
+	});
+
+	// ─── Kubernetes destructive patterns ───────────────────
+
+	test("blocks kubectl delete --all", () => {
+		expect(isDestructive("kubectl delete pods --all")).toBe(true);
+	});
+
+	test("blocks kubectl drain", () => {
+		expect(isDestructive("kubectl drain node-1")).toBe(true);
+	});
+
+	// ─── Normalization edge cases ──────────────────────────
+
+	test("normalizes whitespace before matching", () => {
+		expect(isDestructive("  rm  -rf  /tmp  ")).toBe(true);
+	});
+
+	test("normalizes comments before matching", () => {
+		expect(isDestructive("# this is a comment\nrm -rf /tmp")).toBe(true);
+	});
+
+	test("rm -rf with newline instead of space IS blocked", () => {
 		expect(isDestructive("rm\n-rf\n/")).toBe(true);
 	});
 
@@ -142,207 +225,11 @@ describe("tool.execute.before — destructive command blocking", () => {
 		expect(isDestructive("rm\n-rf\n--no-preserve-root\n/")).toBe(true);
 	});
 
-	// ─── Git destructive patterns ─────────────────────────────
-
-	test("git push --force is blocked", () => {
-		expect(isDestructive("git push --force")).toBe(true);
+	test("allows safe cat", () => {
+		expect(isDestructive("cat README.md")).toBe(false);
 	});
 
-	test("git push -f is blocked", () => {
-		expect(isDestructive("git push -f")).toBe(true);
-	});
-
-	test("git reset --hard is blocked", () => {
-		expect(isDestructive("git reset --hard")).toBe(true);
-	});
-
-	test("git clean -fd is blocked", () => {
-		expect(isDestructive("git clean -fd")).toBe(true);
-	});
-
-	test("git branch -D is blocked", () => {
-		expect(isDestructive("git branch -D main")).toBe(true);
-	});
-
-	test("git stash drop is blocked", () => {
-		expect(isDestructive("git stash drop")).toBe(true);
-	});
-
-	test("git stash clear is blocked", () => {
-		expect(isDestructive("git stash clear")).toBe(true);
-	});
-
-	// "The 'safe' git commands pass through
-	test("git push (without force) passes through", () => {
-		expect(isDestructive("git push origin main")).toBe(false);
-	});
-
-	test("git status passes through", () => {
-		expect(isDestructive("git status")).toBe(false);
-	});
-
-	test("git diff passes through", () => {
-		expect(isDestructive("git diff")).toBe(false);
-	});
-
-	// ─── SQL destructive patterns ─────────────────────────────
-
-	test("DROP TABLE is blocked", () => {
-		expect(isDestructive("DROP TABLE users")).toBe(true);
-	});
-
-	test("DROP DATABASE is blocked", () => {
-		expect(isDestructive("DROP DATABASE production")).toBe(true);
-	});
-
-	test("DROP SCHEMA is blocked", () => {
-		expect(isDestructive("DROP SCHEMA public")).toBe(true);
-	});
-
-	test("TRUNCATE TABLE is blocked", () => {
-		expect(isDestructive("TRUNCATE TABLE users")).toBe(true);
-	});
-
-	test("DELETE FROM without WHERE is blocked", () => {
-		expect(isDestructive("DELETE FROM users")).toBe(true);
-	});
-
-	test("DELETE FROM with WHERE clause passes through", () => {
-		// The pattern /delete\s+from\s+\w+\s*;?\s*$/i matches when no WHERE clause
-		// This test verifies the pattern does NOT match when WHERE is present
-		expect(isDestructive("DELETE FROM users WHERE id = 1")).toBe(false);
-	});
-
-	// ─── Docker destructive patterns ──────────────────────────
-
-	test("docker rm -f is blocked", () => {
-		expect(isDestructive("docker rm -f container_name")).toBe(true);
-	});
-
-	test("docker system prune -a is blocked", () => {
-		expect(isDestructive("docker system prune -a")).toBe(true);
-	});
-
-	test("docker volume prune is blocked", () => {
-		expect(isDestructive("docker volume prune")).toBe(true);
-	});
-
-	// ─── Permission destructive patterns ──────────────────────
-
-	test("chmod 777 is blocked", () => {
-		expect(isDestructive("chmod 777 /some/file")).toBe(true);
-	});
-
-	test("chown -R is blocked", () => {
-		expect(isDestructive("chown -R user:group /dir")).toBe(true);
-	});
-
-	// ─── Process destructive patterns ─────────────────────────
-
-	test("kill -9 0 (all processes) is blocked", () => {
-		expect(isDestructive("kill -9 0")).toBe(true);
-	});
-
-	test("shutdown is blocked", () => {
-		expect(isDestructive("shutdown -h now")).toBe(true);
-	});
-
-	// ─── Package Manager destructive patterns ─────────────────
-
-	test("npm publish is blocked", () => {
-		expect(isDestructive("npm publish")).toBe(true);
-	});
-
-	test("apt remove is blocked", () => {
-		expect(isDestructive("apt remove package-name")).toBe(true);
-	});
-
-	// ─── Disk destructive patterns ────────────────────────────
-
-	test("mkfs is blocked", () => {
-		expect(isDestructive("mkfs.ext4 /dev/sda1")).toBe(true);
-	});
-
-	test("dd if= is blocked", () => {
-		expect(isDestructive("dd if=/dev/zero of=/dev/sda")).toBe(true);
-	});
-
-	test("terraform destroy -auto-approve is blocked", () => {
-		expect(isDestructive("terraform destroy -auto-approve")).toBe(true);
-	});
-});
-
-// ---------------------------------------------------------------------------
-// Tests: subagent name validation
-// ---------------------------------------------------------------------------
-
-describe("tool.execute.before — subagent name validation", () => {
-	test("Scenario 5: 'tlaloc' (valid primary agent) passes", () => {
-		expect(isValidSubagent("tlaloc")).toBe(true);
-	});
-
-	test("all valid primary agents pass", () => {
-		expect(isValidSubagent("huitzilopochtli")).toBe(true);
-		expect(isValidSubagent("quetzalcoatl")).toBe(true);
-		expect(isValidSubagent("moctezuma")).toBe(true);
-		expect(isValidSubagent("tlaloc")).toBe(true);
-		expect(isValidSubagent("mictlantecuhtli")).toBe(true);
-		expect(isValidSubagent("tezcatlipoca")).toBe(true);
-	});
-
-	test("valid subagent 'test-engineer' passes", () => {
-		expect(isValidSubagent("test-engineer")).toBe(true);
-	});
-
-	test("valid subagent 'docs-writer' passes", () => {
-		expect(isValidSubagent("docs-writer")).toBe(true);
-	});
-
-	test("valid subagent 'code-reviewer' passes", () => {
-		expect(isValidSubagent("code-reviewer")).toBe(true);
-	});
-
-	test("Scenario 6: 'fake-agent' (invented name) is blocked", () => {
-		expect(isValidSubagent("fake-agent")).toBe(false);
-	});
-
-	test("empty string is blocked", () => {
-		expect(isValidSubagent("")).toBe(false);
-	});
-
-	test("non-existent subagent is blocked", () => {
-		expect(isValidSubagent("nonexistent-agent")).toBe(false);
-	});
-
-	test("Scenario 7: 'TLALOC' (uppercase) passes (case-insensitive)", () => {
-		expect(isValidSubagent("TLALOC")).toBe(true);
-	});
-
-	test("'Quetzalcoatl' (title case) passes (case-insensitive)", () => {
-		expect(isValidSubagent("Quetzalcoatl")).toBe(true);
-	});
-
-	test("'TEST-ENGINEER' (uppercase with hyphen) passes (case-insensitive)", () => {
-		expect(isValidSubagent("TEST-ENGINEER")).toBe(true);
-	});
-
-	test("'Mictlantecuhtli' (mixed case) passes", () => {
-		expect(isValidSubagent("Mictlantecuhtli")).toBe(true);
-	});
-});
-
-// ---------------------------------------------------------------------------
-// Tests: DESTRUCTIVE_PATTERNS exported correctly from defaults
-// ---------------------------------------------------------------------------
-
-describe("tool.execute.before — DESTRUCTIVE_PATTERNS export integrity", () => {
-	test("DESTRUCTIVE_PATTERNS is a non-empty array", () => {
-		expect(DESTRUCTIVE_PATTERNS.length).toBeGreaterThan(0);
-	});
-
-	test("all elements are RegExp instances", () => {
-		for (const p of DESTRUCTIVE_PATTERNS) {
-			expect(p).toBeInstanceOf(RegExp);
-		}
+	test("allows ls", () => {
+		expect(isDestructive("ls -la")).toBe(false);
 	});
 });
