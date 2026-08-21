@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-08-20
+
+### Security
+
+- **SDD plugin reduced to minimal destructive-command block** (#80): Plugin now only blocks destructive bash commands (rm -rf, git push --force, DROP TABLE, etc.) via `tool.execute.before` hook. Removed 13 obsolete modules (~1200 lines) that duplicated `opencode.json` permissions.
+- **External directory permissions** (#81): Added `external_directory` permission block to template with deny-by-default strategy. Explicit allowlist for known-safe paths (~/.agents/, ~/.bun/, ~/.cargo/, ~/go/, ~/.local/, ~/.cache/, ~/Projects/, /tmp/).
+- **Backup integrity protection** (TD-V2-9): `AtomicStager.commitStaging()` now writes `.codice-backup-intent` marker before commit. If a previous commit was interrupted, the marker is detected and the overwrite is refused with an actionable error message.
+
+### Added
+
+- **Staging cleanup observability** (TD-V2-51): New `staging_cleanup` event in `ProgressEvent` discriminated union. Emitted by `AtomicStager.cleanStaging()` and visible in `--verbose` mode.
+
+### Changed
+
+- Plugin export renamed from `SddPipelinePlugin` to `DestructiveCommandBlockPlugin`
+- Plugin integration test suite reduced from 4 test files to 1 (destructive patterns only)
+- Plugin E2E scenarios reduced from 3 to 2 (installation + lint only)
+
 ## [2.1.0] — 2026-08-19
 
 ### Added
