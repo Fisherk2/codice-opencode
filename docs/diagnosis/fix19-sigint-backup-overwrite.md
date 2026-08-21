@@ -3,7 +3,7 @@
 **ID:** TD-V2-9
 **Date:** 2026-08-19
 **Severity:** low
-**Status:** diagnosed
+**Status:** resolved (FEV-27)
 
 ---
 
@@ -43,22 +43,25 @@
 
 ## Proposed Solution
 
-1. **Persist rollback intent.** Write a `.codice-rollback-intent` file before starting the commit. If the file exists on the next run, restore from `.codice-backup` before proceeding.
+1. **`.codice-backup-intent` marker file** — Before starting the commit loop, `AtomicStager.commitStaging()` writes a `.codice-backup-intent` file containing the ISO timestamp of the commit start. On successful commit, the marker is removed. If interrupted, the marker persists.
 
-2. **Make commit atomic at the file level.** Use a two-phase commit: (a) copy all files to a temporary "commit staging" area, (b) rename all files from "commit staging" to destination. If interrupted, the rollback intent file triggers restoration.
+2. **Fail-fast detection** — On the next run, `commitStaging()` checks for an orphan `.codice-backup-intent` file. If found, it throws an actionable error: *"Previous commit was interrupted (intent recorded at ...). Inspect .codice-backup manually before retrying. Remove .codice-backup-intent to force a retry."*
 
-3. **Document the limitation.** Add a warning in the installer UX that interrupting mid-commit may compromise backup integrity.
+3. **Preservation on failure** — The intent marker is intentionally NOT removed when `commitStaging()` fails (rollback restores originals). This preserves the diagnostic information for the user.
 
-## Workarounds
+**Implementation:** `BACKUP_INTENT_FILE` constant in `constants.ts`, imported by `AtomicStager.ts`. Two integration tests verify: (a) successful commit cleans up marker, (b) orphan marker causes error with clear message.
 
-> ⚠️ **WORKAROUND**
-> Do not interrupt the installer during the commit phase. Wait for the progress bar to complete before pressing Ctrl+C.
+## Workarounds (resolved in FEV-27)
+
+> ✅ **RESOLVED**
+> The `.codice-backup-intent` marker file now prevents backup overwrite across interrupted commits. Users who interrupted mid-commit will see an actionable error on next run with instructions to inspect backups manually.
 
 ## Recurrences
 
 | Date | Similar Issue | Variation |
 |------|---------------|-----------|
 | 2026-08-19 | Initial report | SIGINT mid-commit backup overwrite |
+| 2026-08-20 | Resolved in FEV-27 | `.codice-backup-intent` marker prevents overwrite |
 
 ## References
 
