@@ -1,7 +1,7 @@
 # Technical Debt — Códice
 
 **Last updated:** 2026-08-20
-**Status:** v2.1.1 in progress (FEV-26 ✅, FEV-27/28 pending) — 2054 tests, 31/31 E2E, coverage ≥95% production `src/`
+**Status:** v2.1.1 in progress (FEV-26 ✅ + FEV-27 ✅, FEV-28 pending) — 2054 tests, 31/31 E2E, coverage ≥95% production `src/`
 **Current version:** v2.1.0
 **Next version:** v2.1.1 (FEV-26 done, pending release)
 
@@ -50,6 +50,13 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
 - Doc sync: wiki, specs, TECH_DEBT counts corrected
 - 2054 tests / 0 fail, 31/31 E2E
 
+**Resolved in v2.1.1 (FEV-27):**
+- TD-V2-51: staging_cleanup event emitted in --verbose mode (ProgressEvent + AtomicStager)
+- #81: External directory permissions — deny-by-default + allowlist in opencode.json
+- TD-V2-9: Backup integrity — .codice-backup-intent marker prevents overwrite on interrupted commits
+- #80: SDD plugin reduced to destructive-command block only (13 modules deleted, ~1200 lines removed)
+- 2054+ tests / 0 fail, 31/31 E2E, plugin E2E 2/2, coverage ≥95%
+
 ---
 
 ## Known Limitations
@@ -80,14 +87,14 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **TD-V2-91** | Writers pack count 2→4 | Debt | 0.5h | Low | `fix20-writers-pack-agent-count.md` |
 | **TD-V2-93** | FileMergeEngine comments | Debt | 1h | Low | `fix24-outdated-comments-file-merge-engine.md` |
 
-#### FEV-27: Security & Observability (6-8h)
+#### FEV-27: Security & Observability ✅ Resuelto (2026-08-20)
 
 | ID | Item | Type | Effort | Risk | Diagnóstico |
 |----|------|------|--------|------|-------------|
-| **#80** | Limpieza del plugin (solo bloqueo destructivo) | Feature | 3-4h | Medium | `fix15-plugin-cleanup.md` |
-| **#81** | Permisos directorios externos (deny-by-default) | Feature | 1-2h | Medium | `fix16-external-directory-permissions.md` |
-| **TD-V2-9** | SIGINT mid-commit backup overwrite | Debt | 2-3h | Low | `fix19-sigint-backup-overwrite.md` |
-| **TD-V2-51** | Missing staging_cleanup event | Debt | 1h | Low | `fix21-missing-staging-cleanup-event.md` |
+| **#80** | Limpieza del plugin (solo bloqueo destructivo) | Feature | 3-4h → 2h | Medium | `fix15-plugin-cleanup.md` |
+| **#81** | Permisos directorios externos (deny-by-default) | Feature | 1-2h → 0.5h | Medium | `fix16-external-directory-permissions.md` |
+| **TD-V2-9** | SIGINT mid-commit backup overwrite | Debt | 2-3h → 1h | Low | `fix19-sigint-backup-overwrite.md` |
+| **TD-V2-51** | Missing staging_cleanup event | Debt | 1h → 0.5h | Low | `fix21-missing-staging-cleanup-event.md` |
 
 #### FEV-28: Infrastructure & Performance (2-3h)
 
@@ -136,8 +143,8 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | v1.x debt | ✅ All resolved |
 | v2.0.0 debt | ✅ All resolved |
 | v2.1.0 debt | ✅ All resolved (4 new commands, SDD intent auto-discovery, bilingual intents, agent delegation, CI/CD hardening) |
-| v2.1.1 debt | ✅ FEV-26 resolved (5 items: bug #79, TD-V2-70/90/91/93, doc sync) — 2054 tests |
-| v2.1.1 backlog | 6 items (4 debt + 2 features) — FEV-27/28, 8-11h |
+| v2.1.1 debt | ✅ FEV-26 + FEV-27 resolved (9 items: bug #79, TD-V2-70/90/91/93, #80, #81, TD-V2-9, TD-V2-51) — 2054 tests |
+| v2.1.1 backlog | 2 items (2 TD) — FEV-28, 2-3h |
 | v2.1.2 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.1.3 backlog | 4 items (4 debt) — 12-16h |
 | v2.3 backlog | 3 items (1 debt + 2 features) — 18-28h |
@@ -166,5 +173,5 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 ---
 
 *Maintained by Códice team. Update when tech debt items are added or resolved.*
-*Last updated: 2026-08-19*
+*Last updated: 2026-08-20*
 *Next deep audit: after v2.1.3 release*
