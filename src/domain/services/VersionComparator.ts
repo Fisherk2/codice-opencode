@@ -34,14 +34,9 @@ export function validateVersions(
 	return success({ localValid: localResult.value, remoteValid: remoteResult.value });
 }
 
-/**
- * Compares semantic versions for the Update mode workflow.
- * All methods are pure — no I/O, no side effects.
- *
- * Uses the `semver` library for parsing and comparison.
- */
+/** Pure service for the Update mode workflow — no I/O, no side effects. */
 export class VersionComparator implements IVersionComparator {
-	/** Maps raw input version string → normalized valid string from semver.valid(). */
+	/** Caches normalized semver strings to avoid repeated valid() normalization. */
 	private readonly parsedCache = new Map<string, string>();
 
 	/**

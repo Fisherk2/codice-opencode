@@ -1,9 +1,3 @@
-/**
- * Unit tests for VersionComparator service.
- *
- * Tests version comparison and validation using the semver library.
- */
-
 import { describe, expect, test } from "bun:test";
 import {
 	VersionComparator,
