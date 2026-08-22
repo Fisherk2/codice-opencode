@@ -41,6 +41,9 @@ export function validateVersions(
  * Uses the `semver` library for parsing and comparison.
  */
 export class VersionComparator implements IVersionComparator {
+	/** Maps raw input version string → normalized valid string from semver.valid(). */
+	private readonly parsedCache = new Map<string, string>();
+
 	/**
 	 * Explicit empty constructor.
 	 * Present to avoid Bun's coverage tool counting an implicit constructor
@@ -63,10 +66,19 @@ export class VersionComparator implements IVersionComparator {
 	 * - Failure  → invalid version format
 	 */
 	compare(local: string, remote: string): Result<RemoteVersionStatus, Error> {
-		const validated = validateVersions(local, remote);
-		if (!validated.ok) return validated;
+		let localValid = this.parsedCache.get(local);
+		let remoteValid = this.parsedCache.get(remote);
 
-		const result = compare(validated.value.localValid, validated.value.remoteValid);
+		if (localValid === undefined || remoteValid === undefined) {
+			const validated = validateVersions(local, remote);
+			if (!validated.ok) return validated;
+			this.parsedCache.set(local, validated.value.localValid);
+			this.parsedCache.set(remote, validated.value.remoteValid);
+			localValid = validated.value.localValid;
+			remoteValid = validated.value.remoteValid;
+		}
+
+		const result = compare(localValid, remoteValid);
 		if (result < 0) return success("ahead");
 		if (result > 0) return success("behind");
 		return success("equal");

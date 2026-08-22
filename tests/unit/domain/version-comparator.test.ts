@@ -145,3 +145,23 @@ describe("VersionComparator.compare", () => {
 		}
 	});
 });
+
+describe("VersionComparator cache", () => {
+	test("sequential calls with identical arguments return the same result", () => {
+		const cmp = new VersionComparator();
+		const first = cmp.compare("1.0.0", "1.0.0");
+		const second = cmp.compare("1.0.0", "1.0.0");
+		expect(first.ok).toBe(true);
+		expect(second.ok).toBe(true);
+		if (first.ok && second.ok) {
+			expect(first.value).toBe(second.value);
+		}
+	});
+
+	test("deterministic result for a specific input pair across repeated calls", () => {
+		const cmp = new VersionComparator();
+		const r1 = cmp.compare("v2.3.4", "v2.3.5");
+		const r2 = cmp.compare("v2.3.4", "v2.3.5");
+		expect(r1).toEqual(r2);
+	});
+});
