@@ -1,770 +1,258 @@
-# Implementation Plan: FEV-27 — Security & Observability
+# Implementation Plan: FEV-28 — Infrastructure & Performance
 
-**Phase:** FEV-27 (v2.1.1) — ⏳ Pendiente
-**Issues/TD:** [#80](https://github.com/Fisherk2/codice-opencode/issues/80), [#81](https://github.com/Fisherk2/codice-opencode/issues/81), TD-V2-9, TD-V2-51
-**Diagnósticos:** [`docs/diagnosis/fix15`](../docs/diagnosis/fix15-plugin-cleanup.md), [`fix16`](../docs/diagnosis/fix16-external-directory-permissions.md), [`fix19`](../docs/diagnosis/fix19-sigint-backup-overwrite.md), [`fix21`](../docs/diagnosis/fix21-missing-staging-cleanup-event.md)
-**Date:** 2026-08-20
+**Phase:** FEV-28 (v2.1.1) — ⏳ Pendiente
+**Issues/TD:** [TD-V2-7](https://github.com/Fisherk2/codice-opencode/blob/main/docs/TECH_DEBT.md), [TD-V2-61](https://github.com/Fisherk2/codice-opencode/blob/main/docs/TECH_DEBT.md)
+**Diagnósticos:** [`docs/diagnosis/fix23`](../docs/diagnosis/fix23-action-sha-pins-node24.md), [`docs/diagnosis/fix22`](../docs/diagnosis/fix22-no-caching-version-comparison.md)
+**Date:** 2026-08-21
 **Author:** Moctezuma (Strategic Planner)
-**Branch:** `fix/fev-27-security-observability` (continúa de v2.1.1 post-FEV-26)
+**Branch:** `fix/fev-28-infrastructure-performance` (from `develop`)
 **Todo list:** [todo.md](./todo.md)
 **Methodology:** Vertical slicing (1 item = 1 slice completo) · commits atómicos por fase · TDD donde aplique · checkpoint quality gates
-**Wall-clock estimate:** ~6-8h (Phase 1: 2h · Phase 2: 2-3h · Phase 3: 3-4h)
+**Wall-clock estimate:** ~2-3h (Phase 1: 1-1.5h · Phase 2: 1h)
 
 ---
 
 ## Overview
 
-FEV-27 cierra el ciclo de Security & Observability antes del release v2.1.1. Resuelve 4 items identificados en el deep audit (2026-08-19): simplificación del plugin SDD (elimina deuda de mantenimiento), gobernanza de directorios externos (mitigación de seguridad), protección contra overwrite de backups durante SIGINT (data integrity), y observabilidad del cleanup de staging (debugging aid).
+FEV-28 cierra el ciclo de **Infrastructure & Performance** antes del release v2.1.1. Resuelve los 2 items restantes del backlog v2.1.1 identificados en el deep audit (2026-08-19):
 
-**Lo que FEV-27 hace:**
-1. Reduce el plugin SDD de 403 líneas a un módulo mínimo que solo bloquea comandos destructivos vía `tool.execute.before` (preserva la red de seguridad, elimina duplicación con `opencode.json` permissions).
-2. Añade `external_directory` con deny-by-default + allowlist explícita en `template/obligatorio/core/opencode.json` (mitigación de acceso no controlado a `~/.ssh/`, `~/.aws/`, etc.).
-3. Implementa marcador `.codice-backup-intent` en `AtomicStager` para preservar originales cuando un commit previo fue interrumpido por SIGINT.
-4. Emite evento `staging_cleanup` en `ProgressEvent` para observabilidad del cleanup post-commit (visible en `--verbose`).
+1. **TD-V2-7** — Actualizar SHA-pins de GitHub Actions (`actions/checkout`, `actions/cache`, `extractions/setup-just`, `oven-sh/setup-bun`) a las últimas majors compatibles con Node 24, eliminando los warnings de deprecación "Node.js 20 actions are deprecated" en los logs de CI/CD.
+2. **TD-V2-61** — Añadir caché de objetos semver parseados dentro de `VersionComparator` para evitar re-parsear los mismos strings en comparaciones repetidas (mismo uso en tests y operaciones batch).
 
-**Decisiones del usuario (confirmadas vía question tool 2026-08-20):**
-- **#81 external_directory:** Deny-by-default + allowlist explícita (~/.agents/, ~/.bun/, ~/.cargo/, ~/go/, /tmp/, ~/.local/, ~/.cache/, ~/Projects/).
-- **#80 plugin scope:** Solo bloqueo destructivo + normalizeBash (eliminar audit log, system.transform, intentDiscovery, chatMessage, mentionPatterns, validSubagents, stopwords, spanishIntents, frontmatter, defaults, configLoader, mergeConfig, directoryScanner, autoDiscovery).
-- **TD-V2-9 backup safety:** Marcador `.codice-backup-intent` con timestamp + commit intent; abortar si existe al inicio del run.
-- **TD-V2-51 event metadata:** Solo `{ type: "staging_cleanup", stagingPath: string }`.
-- **Orden de ejecución:** TD-V2-51 → #81 → TD-V2-9 → #80 (fail-fast en tareas chicas primero).
-- **Release:** Esperar FEV-27+28 antes de publicar v2.1.1 estable (no RC intermedio).
+**Lo que FEV-28 hace:**
 
----
+1. Bumpa los SHA-pins en `.github/workflows/ci.yml` y `.github/workflows/release.yml` a las últimas majors Node 24-compatible (checkout v7, cache v6, setup-just v4, oven-sh/setup-bun v2.2 ya está al día).
+2. Introduce un `Map<string, SemVer>` privado dentro de `VersionComparator` que cachea el resultado de `semver.valid()` por string de versión. Sin estado global, sin nuevas dependencias, sin cambios en el port `IVersionComparator`.
 
-## Architecture Decisions
+**Lo que FEV-28 NO hace (out-of-scope):**
 
-| Decisión | Rationale | ADR Reference |
-|----------|-----------|---------------|
-| Plugin reducido a un solo hook (`tool.execute.before`) | `opencode.json` ya maneja agent/command/intent permissions; el plugin debe ser solo el "safety net" para comandos destructivos que el usuario podría quitar accidentalmente. | ADR-013 (plugin auto-discovery) implícito; crear ADR-021 si el cambio es significativo. |
-| Marcador `.codice-backup-intent` (no `.lock`) | Lock file requiere estado interactivo; marcador con timestamp es fail-safe y automático. El archivo `.codice-backup-intent` se elimina al commit exitoso. | ADR-003 (atomic staging) extendido. |
-| `external_directory` con esquema Rule estándar | OpenCode schema (`packages/core/src/v1/config/permission.ts:26`) define `external_directory: Schema.optional(Rule)` con misma semántica `allow`/`deny`/`ask` + globs. | Ninguno nuevo — usa schema existente. |
-| Evento `staging_cleanup` con payload mínimo | Spec rule "WHY not WHAT" + logs verbosos ya tienen timestamp; metadata extra (duration, filesRemoved) no aporta valor diagnóstico real. | Discriminated union extension in `ProgressEvent.ts`. |
+- No toca `WorkspaceVersion` (que también usa `semver.valid()` directamente) — está fuera del alcance del diagnóstico y agregar acoplamiento.
+- No toca `GitHubRestClient` por la misma razón.
+- No introduce un módulo de caché compartido ni WeakMap.
+- No cambia los tags mutables — se mantiene SHA-pinning por ADR-019.
+- No hace release v2.1.1 — eso ocurre después de merge a `develop`.
 
 ---
 
 ## Dependency Graph
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ Phase 1: Observability Foundation (TD-V2-51)               │
-│  src/domain/types/ProgressEvent.ts                         │
-│    └─ Add "staging_cleanup" variant                        │
-│  src/infrastructure/adapters/AtomicStager.ts               │
-│    └─ Emit staging_cleanup event in cleanStaging()         │
-│  tests/integration/adapters/atomic-stager.test.ts          │
-│    └─ Verify event emission via verbose logger             │
-└─────────────────────────────────────────────────────────────┘
-                              │
+                    ┌──────────────────────────────────────────┐
+                    │  develop (clean, post-FEV-27 merged)     │
+                    └─────────────┬────────────────────────────┘
+                                  │
+                  checkout branch fix/fev-28-infrastructure-performance
+                                  │
+        ┌─────────────────────────┴─────────────────────────┐
+        │                                                   │
+        ▼                                                   ▼
+ ┌──────────────────────────────┐            ┌──────────────────────────────┐
+ │ Phase 1 — TD-V2-7            │            │ Phase 2 — TD-V2-61           │
+ │ Bump SHA-pins (Node 24)      │  ── indep ──▶ │ Add semver cache in          │
+ │                              │            │ VersionComparator           │
+ │ ci.yml + release.yml (2)     │            │ + unit test                  │
+ │ Acceptance: CI 3 OS green,   │            │ Acceptance: cache hit on 2nd │
+ │ no Node 20 deprecation warn  │            │ call, parsing once           │
+ └──────────────┬───────────────┘            └──────────────┬───────────────┘
+                │                                           │
+                └─────────────┬─────────────────────────────┘
                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Phase 2: External Directory Governance (#81)               │
-│  template/obligatorio/core/opencode.json                   │
-│    └─ Add "external_directory" block with deny + allowlist │
-│  docs/wiki-source/Configuration.md                         │
-│    └─ Document new permission block                        │
-│  tests/e2e (no new scenario — config validation only)      │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Phase 3: Backup Safety (TD-V2-9)                           │
-│  src/infrastructure/config/constants.ts                    │
-│    └─ Add BACKUP_INTENT_FILE constant                      │
-│  src/infrastructure/adapters/AtomicStager.ts               │
-│    └─ Check intent marker in commitStaging() pre-check     │
-│    └─ Write intent marker at start of commitStaging()      │
-│    └─ Remove intent marker on successful commit            │
-│  src/application/use-cases/InstallUseCaseBase.ts           │
-│    └─ Detect orphan intent marker at install start         │
-│  tests/integration/adapters/atomic-stager.test.ts          │
-│    └─ Test backup preservation across interrupted commits  │
-│  docs/diagnosis/fix19-sigint-backup-overwrite.md (update)  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Phase 4: Plugin Reduction (#80)                            │
-│  template/obligatorio/core/.opencode/plugins/              │
-│    └─ Delete: autoDiscovery, chatMessage, configLoader,    │
-│       defaults, directoryScanner, frontmatter,             │
-│       intentDiscovery, mentionPatterns, mergeConfig,       │
-│       spanishIntents, stopwords, validSubagents,           │
-│       escapeRegExp                                         │
-│    └─ Keep: destructivePatterns, normalizeBash             │
-│  template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts│
-│    └─ Reduce to: bash destructive-command block only       │
-│  template/obligatorio/core/.opencode/plugins/src/          │
-│    └─ Delete obsolete tests in __tests__/                  │
-│  tests/plugin/integration/                                 │
-│    └─ Delete obsolete test files                           │
-│    └─ Create new test file for minimal plugin              │
-│  tests/plugin/e2e/                                         │
-│    └─ Update bash scenarios for reduced surface area       │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Release Prep                                                │
-│  CHANGELOG.md — Add v2.1.1 entry with 4 items             │
-│  docs/TECH_DEBT.md — Mark 4 items as resolved              │
-│  docs/WORKFLOW.md — Mark FEV-27 as ✅ Completo             │
-│  docs/wiki-source/ — Sync to GitHub Wiki                   │
-│  package.json — Bump version to v2.1.1                     │
-└─────────────────────────────────────────────────────────────┘
+                   ┌──────────────────────────┐
+                   │ Quality Gate Checkpoint  │
+                   │ just check · just test   │
+                   │ just test-e2e · coverage │
+                   └──────────────┬───────────┘
+                                  ▼
+                   ┌──────────────────────────┐
+                   │ Commit + push + PR to    │
+                   │ develop → post-FEV-28    │
+                   │ docs sync (CHANGELOG,    │
+                   │ TECH_DEBT, WORKFLOW)     │
+                   └──────────────────────────┘
 ```
+
+**Why independent:** Las dos fases no comparten archivos. Se pueden implementar y commitear por separado (una fase = un commit atómico). Sin embargo, ambas se ejecutan en la misma rama para mantener una única PR pequeña y revisable.
 
 ---
 
-## Task List
+## Identified SHAs (validados contra `/git/commits/` API)
 
-### Phase 1: Observability Foundation (TD-V2-51) — 1h
+| Acción | Repo | Tag | Commit SHA (validado) | Estado actual | Acción |
+|--------|------|-----|----------------------|---------------|--------|
+| `actions/checkout` | actions/checkout | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` | `11d5960a326750d5838078e36cf38b85af677262` (v4) | **bump** |
+| `actions/cache` | actions/cache | v6.1.0 | `55cc8345863c7cc4c66a329aec7e433d2d1c52a9` | `0057852bfaa89a56745cba8c7296529d2fc39830` (v4) | **bump** |
+| `extractions/setup-just` | extractions/setup-just | v4 | `53165ef7e734c5c07cb06b3c8e7b647c5aa16db3` | `dd310ad5a97d8e7b41793f8ef055398d51ad4de6` (v3) | **bump** |
+| `oven-sh/setup-bun` | oven-sh/setup-bun | v2.2.0 | `0c5077e51419868618aeaa5fe8019c62421857d6` | `0c5077e51419868618aeaa5fe8019c62421857d6` (v2.2.0) | **no change** (ya actualizado) |
 
-#### Task 1.1: Add `staging_cleanup` event variant
+> **Validación:** Cada SHA fue confirmado vía `GET /repos/{owner}/{repo}/git/commits/{sha}` retornando HTTP 200 (commit SHA real, no SHA de annotated tag). Fuente: GitHub REST API, 2026-08-21.
 
-**Description:** Extends `ProgressEvent` discriminated union with a new variant `{ type: "staging_cleanup", stagingPath: string }`. `AtomicStager.cleanStaging()` emits the event via `VerboseLogger.log("staging_cleanup", stagingPath)`. This surfaces the cleanup operation in `--verbose` mode for debugging installation failures.
+---
+
+## Phase 1 — TD-V2-7: SHA-pins → Node 24-compatible
+
+### Task 1.1: Bump SHA-pins in ci.yml and release.yml
+
+**Description:** Reemplazar los 3 SHA-pins obsoletos (checkout v4 → v7.0.1, cache v4 → v6.1.0, setup-just v3 → v4) en ambos workflows. `oven-sh/setup-bun` ya está al día (v2.2.0) y no requiere cambio. Después del bump, los warnings "Node.js 20 actions are deprecated" deben desaparecer en los logs de CI/CD.
 
 **Acceptance criteria:**
-- [ ] `ProgressEvent` union includes `staging_cleanup` variant (S task: 1 file).
-- [ ] `AtomicStager.cleanStaging()` calls `this.logger.log("staging_cleanup", this.stagingRoot)` before `fs.rm()`.
-- [ ] Integration test asserts `verboseLogSpy` is called with operation `"staging_cleanup"` and detail equal to staging root.
-- [ ] `just check` + `just test-integration` pass.
+- [ ] `ci.yml` línea 38: `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1`
+- [ ] `ci.yml` línea 49: `actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9`
+- [ ] `ci.yml` línea 46: `extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3`
+- [ ] `release.yml` línea 32: `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1`
+- [ ] `oven-sh/setup-bun` se mantiene sin cambios (ya está en v2.2.0)
+- [ ] Workflow syntax válido (GitHub Actions parser no rechaza)
 
 **Verification:**
-- [ ] `bun test tests/integration/adapters/atomic-stager.test.ts -- --grep "staging_cleanup"`
-- [ ] Manual: run `bun run src/cli/main.ts --dest /tmp/test --verbose` and verify log entry.
+- [ ] Push a la rama activa dispara CI; el job `quality` corre en ubuntu/macos/windows sin warnings de Node 20.
+- [ ] `grep -n "Node.js 20 actions" <(gh run view --log)` retorna 0 líneas en el último run.
+- [ ] `just check` y `just test` siguen verdes localmente (workflows no afectan código).
 
 **Dependencies:** None.
 
 **Files likely touched:**
-- `src/domain/types/ProgressEvent.ts` (add variant, ~3 lines)
-- `src/infrastructure/adapters/AtomicStager.ts` (add log call in `cleanStaging()`, ~2 lines)
-- `tests/integration/adapters/atomic-stager.test.ts` (add 1 test case, ~15 lines)
+- `.github/workflows/ci.yml` (3 líneas modificadas)
+- `.github/workflows/release.yml` (1 línea modificada)
 
-**Estimated scope:** XS (~3 files, ~20 lines total)
+**Estimated scope:** XS (1 commit, 4 líneas modificadas, sin código).
 
-**Commit message:**
+**Commit message (Conventional Commits):**
 ```
-feat(observability): emit staging_cleanup event in --verbose mode
+chore(ci): bump GitHub Actions SHA-pins to Node 24-compatible majors
 
-Adds a new ProgressEvent variant to surface staging directory cleanup
-operations. Helps debugging installation failures where cleanup phase
-is suspected.
+- actions/checkout v4 → v7.0.1 (SHA 3d3c42e5...)
+- actions/cache v4 → v6.1.0 (SHA 55cc8345863c...)
+- extractions/setup-just v3 → v4 (SHA 53165ef7e734...)
+- oven-sh/setup-bun ya está en v2.2.0 (no change)
 
-Closes TD-V2-51
+Resuelve warnings "Node.js 20 actions are deprecated" en CI logs.
+Verificado vía curl /repos/{owner}/{repo}/git/commits/{sha} → HTTP 200.
+
+Refs: TD-V2-7, fix23
+Co-Authored-By: Moctezuma <dev@fisherk2.com>
 ```
 
 ---
 
-### Checkpoint 1: After Task 1.1
-- [ ] `just check` — 0 errores
-- [ ] `just test-integration` — 0 fallos (atomic-stager suite)
-- [ ] Coverage ≥95% production `src/`
-- [ ] Human review: confirm event variant shape before Phase 2
+## Phase 2 — TD-V2-61: VersionComparator semi-cache
 
----
+### Task 2.1: Add parsed-semver cache + unit test (TDD)
 
-### Phase 2: External Directory Governance (#81) — 1-2h
+**Description:** Añadir un `Map<string, SemVer>` privado dentro de `VersionComparator` que cachea el resultado de `semver.valid(version)` por string de versión. Esto evita re-parsear los mismos strings en comparaciones repetidas (escenario común en tests y en operaciones batch que comparan versiones múltiples veces).
 
-#### Task 2.1: Add `external_directory` permission block to template
-
-**Description:** Adds the `external_directory` permission block to `template/obligatorio/core/opencode.json` after the `read` permission block (line 326). Uses deny-by-default with explicit allowlist for known-safe paths (skill/agent caches, build tools, project locations).
+**Decisión de diseño:**
+- **Alcance:** Cache solo dentro de `VersionComparator`. `WorkspaceVersion` y `GitHubRestClient` también usan `semver.valid()` pero están fuera del alcance (acoplamiento no justificado).
+- **Invalidación:** No es necesaria — el cache crece con la cantidad de versiones distintas vistas, acotado al cardinal del input (no hay leak unbounded porque los strings son inmutables y el cache muere con la instancia).
+- **No cambia el port `IVersionComparator`:** La interfaz pública `compare()` mantiene el mismo contrato. El cache es detalle de implementación.
+- **No afecta cobertura:** Tests existentes siguen pasando. Test nuevo cubre el comportamiento.
 
 **Acceptance criteria:**
-- [ ] `opencode.json` has `"external_directory"` block with `"*": "deny"` first.
-- [ ] Allowlist includes: `~/.agents/*`, `~/.bun/*`, `~/.cargo/*`, `~/go/*`, `~/.local/*`, `~/.cache/*`, `~/Projects/*`, `/tmp/*`.
-- [ ] JSON schema validation passes (no trailing commas, valid structure).
-- [ ] `just check` passes.
-- [ ] Documentation updated in `docs/wiki-source/Configuration.md`.
+- [ ] `VersionComparator` tiene un campo privado `readonly cache: Map<string, SemVer>` inicializado en el constructor.
+- [ ] `compare()` consulta el cache antes de llamar a `semver.valid()`; si está, reutiliza; si no, parsea y cachea.
+- [ ] Test nuevo: `tests/unit/domain/version-comparator.test.ts` — describe `VersionComparator cache` valida que 2 llamadas con el mismo string no invocan `semver.valid()` dos veces (verificable mockeando o con spy). Alternativa: assert que el cache se llena con la entrada esperada.
+- [ ] `validateVersion()` (función pura exportada) NO usa cache — se mantiene determinista y side-effect-free como función pura del módulo. (Solo la clase lo usa.)
+- [ ] Tests existentes (147 líneas en `version-comparator.test.ts`) siguen pasando.
 
 **Verification:**
-- [ ] `bun run jsonlint template/obligatorio/core/opencode.json` (if available) or `bun -e "JSON.parse(await Bun.file(...).text())"`.
-- [ ] Manual: copy `opencode.json` to a test workspace, verify `~/.ssh/*` is denied and `~/.bun/*` is allowed (requires OpenCode runtime).
+- [ ] `just check` 0 errores.
+- [ ] `just test` 1931+ tests pasando (1931 base + al menos 2 nuevos del cache).
+- [ ] Coverage de `VersionComparator.ts` ≥ 95% (ya lo es; nuevo código cubierto).
+- [ ] `just test-coverage` overall ≥ 95%.
 
-**Dependencies:** None (independent config change).
+**Dependencies:** None (independiente de Phase 1).
 
 **Files likely touched:**
-- `template/obligatorio/core/opencode.json` (add block after line 326, ~15 lines)
-- `docs/wiki-source/Configuration.md` (document new permission, ~30 lines)
+- `src/domain/services/VersionComparator.ts` (modificar clase, ~10 líneas añadidas)
+- `tests/unit/domain/version-comparator.test.ts` (nuevo `describe` block, ~25 líneas)
 
-**Estimated scope:** S (~2 files, ~45 lines)
+**Estimated scope:** S (1 commit, 2 archivos).
 
-**Commit message:**
+**Commit message (Conventional Commits):**
 ```
-feat(security): add external_directory permission block to template
+perf(domain): cache parsed semver objects in VersionComparator
 
-Implements deny-by-default + allowlist strategy for files outside the
-project directory. Agents can still access known-safe paths (skill
-caches, build toolchains, project locations) but sensitive paths
-(~/.ssh, ~/.aws, ~/.kube) are blocked by default.
+VersionComparator re-parseaba los mismos strings en cada llamada
+a compare()/validateVersions(). Añade Map<string, SemVer> privado
+a la clase para memoizar el resultado de semver.valid().
 
-Closes #81
+- Sin cambios en port IVersionComparator (detalle de implementación)
+- validateVersion() (función pura) no usa cache — side-effect-free
+- Sin tocar WorkspaceVersion ni GitHubRestClient (fuera de alcance)
+
+Test nuevo: describe block valida cache hit en 2da llamada idéntica.
+Refs: TD-V2-61, fix22
+Co-Authored-By: Moctezuma <dev@fisherk2.com>
 ```
 
 ---
 
-### Checkpoint 2: After Task 2.1
+## Quality Gate Checkpoint (post Phase 2)
+
 - [ ] `just check` — 0 errores (biome ci + tsc --noEmit)
-- [ ] Manual JSON validation passes
-- [ ] Wiki sync confirmed
-- [ ] Human review: confirm allowlist scope before Phase 3
+- [ ] `just test` — 1931+ tests, 0 fail
+- [ ] `just test-e2e` — 31/31 escenarios (Linux)
+- [ ] `just test-packaging` — 5/5 escenarios
+- [ ] `just test-coverage` — ≥95% lines, ≥95% funcs en production `src/`
+- [ ] CI matrix (ubuntu + macos + windows) sin warnings de Node 20 deprecation
+- [ ] `just lint` y `just format` limpios
+- [ ] Sin tipos `any` introducidos en código de producción
+- [ ] Comentarios explican el *porqué* (no el *qué*)
 
 ---
 
-### Phase 3: Backup Safety (TD-V2-9) — 2-3h
+## Post-FEV-28 (no parte del plan, solo contexto)
 
-#### Task 3.1: Define `BACKUP_INTENT_FILE` constant
+Una vez ambas fases mergeadas a `develop`:
 
-**Description:** Adds the constant `BACKUP_INTENT_FILE = ".codice-backup-intent"` to `src/infrastructure/config/constants.ts` (next to `STAGING_DIR_NAME`). Centralizes the filename so future code can reference it without hardcoding strings.
+1. `docs/WORKFLOW.md` → mover FEV-28 de "⏳ Pendiente" a "✅ Completo" con fecha.
+2. `docs/TECH_DEBT.md` → marcar TD-V2-7 y TD-V2-61 como resueltos en sección v2.1.1.
+3. `CHANGELOG.md` → entrada v2.1.1 con los 2 items de FEV-28.
+4. PR `develop` → `main` → tag → `bun publish` con dist-tag `beta`.
 
-**Acceptance criteria:**
-- [ ] Constant exported from `constants.ts` with `SCREAMING_SNAKE_CASE` naming.
-- [ ] No other constants changed.
-
-**Verification:**
-- [ ] `grep -rn "BACKUP_INTENT_FILE" src/` returns the export + usage.
-- [ ] `just check` passes.
-
-**Dependencies:** None.
-
-**Files likely touched:**
-- `src/infrastructure/config/constants.ts` (add 1 line)
-
-**Estimated scope:** XS (~1 file, ~1 line)
-
-**Commit message:**
-```
-chore(infra): define BACKUP_INTENT_FILE constant
-
-Centralizes the .codice-backup-intent filename used by the backup
-safety mechanism introduced for TD-V2-9.
-```
-
----
-
-#### Task 3.2: Implement backup intent marker in `AtomicStager.commitStaging()`
-
-**Description:** Modifies `commitStaging()` to write the intent marker before the commit loop starts, and remove it on success. If interrupted, the marker persists. The next run detects it and refuses to overwrite the true originals.
-
-**Algorithm:**
-```
-commitStaging() {
-  intentPath = path.join(destinationRoot, BACKUP_INTENT_FILE)
-  // 1. Fail-fast: refuse if orphan intent exists
-  if (await fs.access(intentPath).catch(() => null)) {
-    throw new Error("Previous commit was interrupted. Backup integrity preserved. Inspect .codice-backup manually before retrying.")
-  }
-  // 2. Write intent marker
-  await fs.writeFile(intentPath, new Date().toISOString())
-  // 3. Existing commit logic (backups, renames, rollback)
-  try {
-    // ... existing code ...
-    // 4. Cleanup intent marker on success
-    await fs.unlink(intentPath).catch(() => {})  // Ignore errors
-  } catch (error) {
-    // Rollback restores originals; leave intent marker for diagnosis
-    throw error
-  }
-}
-```
-
-**Acceptance criteria:**
-- [ ] `commitStaging()` writes `BACKUP_INTENT_FILE` with ISO timestamp before commit loop.
-- [ ] `commitStaging()` removes `BACKUP_INTENT_FILE` on successful commit.
-- [ ] `commitStaging()` leaves `BACKUP_INTENT_FILE` on failure (for diagnosis).
-- [ ] `commitStaging()` throws explicit error if `BACKUP_INTENT_FILE` exists at start.
-- [ ] Integration test: simulate interrupted commit (delete staging mid-loop), verify intent persists, verify next commit refuses with clear error.
-- [ ] Existing integration tests still pass (intent marker cleanup works).
-
-**Verification:**
-- [ ] `bun test tests/integration/adapters/atomic-stager.test.ts -- --grep "backup.intent"`
-- [ ] Manual: create mock scenario with orphan intent, verify error message.
-
-**Dependencies:** Task 3.1.
-
-**Files likely touched:**
-- `src/infrastructure/adapters/AtomicStager.ts` (modify `commitStaging()`, ~15 lines added)
-- `tests/integration/adapters/atomic-stager.test.ts` (add 2-3 test cases, ~50 lines)
-
-**Estimated scope:** M (~2 files, ~65 lines)
-
-**Commit message:**
-```
-feat(security): protect backup integrity with .codice-backup-intent marker
-
-Prevents AtomicStager from overwriting true original files when a
-previous commit was interrupted by SIGINT. The intent marker is
-written before commit, removed on success, and detected on next run
-to refuse the overwrite.
-
-Closes TD-V2-9
-```
-
----
-
-#### Task 3.3: Update diagnosis document
-
-**Description:** Updates `docs/diagnosis/fix19-sigint-backup-overwrite.md` to reflect the implemented solution instead of the "documented limitation" proposed in the original diagnosis.
-
-**Acceptance criteria:**
-- [ ] "Proposed Solution" section replaced with "Implemented Solution".
-- [ ] Status changed from `diagnosed` to `resolved (FEV-27)`.
-- [ ] Reference to PR/commit added.
-
-**Verification:**
-- [ ] `grep "Implemented Solution\|resolved" docs/diagnosis/fix19-sigint-backup-overwrite.md` returns expected matches.
-
-**Dependencies:** Task 3.2.
-
-**Files likely touched:**
-- `docs/diagnosis/fix19-sigint-backup-overwrite.md` (rewrite solution section, ~10 lines)
-
-**Estimated scope:** XS (~1 file, ~10 lines)
-
-**Commit message:**
-```
-docs(diagnosis): mark TD-V2-9 backup overwrite as resolved in FEV-27
-```
-
----
-
-### Checkpoint 3: After Tasks 3.1-3.3
-- [ ] `just check` — 0 errores
-- [ ] `just test-integration` — atomic-stager suite 0 fallos
-- [ ] Manual verification: SIGINT simulation preserves backups correctly
-- [ ] Human review: confirm error message wording before Phase 4
-
----
-
-### Phase 4: Plugin Reduction (#80) — 3-4h
-
-#### Task 4.1: Audit plugin dependencies
-
-**Description:** Before deletion, confirm the only remaining consumer of each plugin module. Some modules might be referenced by skills, agents, or tests outside the plugin folder.
-
-**Acceptance criteria:**
-- [ ] `grep -rn "from.*autoDiscovery\|from.*chatMessage\|from.*configLoader\|from.*defaults\|from.*directoryScanner\|from.*frontmatter\|from.*intentDiscovery\|from.*mentionPatterns\|from.*mergeConfig\|from.*spanishIntents\|from.*stopwords\|from.*validSubagents" template/ tests/ skills/` returns no unexpected consumers.
-- [ ] `chatMessage.test.ts`, `systemTransform.test.ts` marked for deletion.
-- [ ] `help-command-discovery.test.ts` purpose verified — keep if tests external behavior, delete if tests deleted module.
-
-**Verification:**
-- [ ] Manual grep audit.
-- [ ] Identify all obsolete test files.
-
-**Dependencies:** None (read-only audit).
-
-**Files likely touched:**
-- None (audit only).
-
-**Estimated scope:** XS (audit, no code changes)
-
-**Commit message:** (no commit — audit-only step)
-
----
-
-#### Task 4.2: Delete obsolete plugin modules
-
-**Description:** Removes the 12 obsolete modules from `template/obligatorio/core/.opencode/plugins/src/`. Keeps only `destructivePatterns.ts`, `normalizeBash.ts`. Also deletes the now-empty `__tests__/` directory contents that test the deleted modules. (`escapeRegExp.ts` was later removed as dead code — neither `destructivePatterns` nor `sdd-pipeline` imports it.)
-
-**Modules to delete:**
-- `autoDiscovery.ts` (122 lines)
-- `chatMessage.ts` (186 lines)
-- `configLoader.ts` (88 lines)
-- `defaults.ts` (159 lines) — **NOTE:** PRIMARY_AGENTS lives here. Extract to a new minimal `validSubagents.ts` that only exports the 6 primary agents for the bash gate? **Decision:** PRIMARY_AGENTS is no longer needed if we delete the subagent validation logic from the hook. Delete entire file.
-- `directoryScanner.ts` (99 lines)
-- `frontmatter.ts` (50 lines)
-- `intentDiscovery.ts` (163 lines)
-- `mentionPatterns.ts` (24 lines)
-- `mergeConfig.ts` (165 lines)
-- `spanishIntents.ts` (31 lines)
-- `stopwords.ts` (188 lines)
-- `validSubagents.ts` (50 lines)
-
-**Modules to KEEP:**
-- `destructivePatterns.ts` (95 lines) — core of the safety net
-- `normalizeBash.ts` (30 lines) — bypass prevention
-
-**Acceptance criteria:**
-- [ ] Only 3 files remain in `template/obligatorio/core/.opencode/plugins/src/`.
-- [ ] `__tests__/` only contains tests for the 3 kept modules.
-- [ ] `just check` passes (no dangling imports).
-- [ ] All existing plugin integration tests updated (Phase 4.3).
-
-**Verification:**
-- [ ] `ls template/obligatorio/core/.opencode/plugins/src/ | wc -l` returns 3.
-- [ ] `just check` — 0 errores.
-- [ ] `just test-plugin-integration` — 0 fallos (after Task 4.3).
-
-**Dependencies:** Task 4.1.
-
-**Files likely touched:**
-- `template/obligatorio/core/.opencode/plugins/src/*` (delete 12 files)
-- `template/obligatorio/core/.opencode/plugins/src/__tests__/*` (delete obsolete test files)
-
-**Estimated scope:** S (~15 file deletions, ~1300 lines removed)
-
-**Commit message:**
-```
-refactor(plugin): reduce SDD plugin to destructive command block only
-
-Deletes 12 modules (~1300 lines) that duplicated functionality now
-provided by opencode.json permissions. The plugin is now minimal:
-it only blocks destructive bash commands as a safety net.
-
-Closes #80
-```
-
----
-
-#### Task 4.3: Rewrite `sdd-pipeline.ts` to minimal form
-
-**Description:** Reduces `sdd-pipeline.ts` from 403 lines to a minimal plugin that exports a single `DestructiveCommandBlockPlugin` with only the `tool.execute.before` hook. Preserves `DESTRUCTIVE_PATTERNS` check + `normalizeBash` preprocessing + `SddError` class.
-
-**Minimal shape:**
-```typescript
-import type { Plugin } from "@opencode-ai/plugin";
-import { DESTRUCTIVE_PATTERNS } from "./src/destructivePatterns";
-import { normalizeBash } from "./src/normalizeBash";
-
-class DestructiveCommandError extends Error {
-  constructor() {
-    super("Destructive command blocked. Use safe alternatives.");
-    this.name = "DestructiveCommandError";
-  }
-}
-
-export const DestructiveCommandBlockPlugin: Plugin = async () => ({
-  "tool.execute.before": async (input, output) => {
-    const inp = input as { tool?: string } | undefined;
-    const out = output as { args?: Record<string, unknown> } | undefined;
-    if (inp?.tool?.toLowerCase() !== "bash") return;
-    const cmd = normalizeBash((out?.args?.command as string) ?? "");
-    if (DESTRUCTIVE_PATTERNS.some((p) => p.test(cmd))) {
-      throw new DestructiveCommandError();
-    }
-  },
-};
-```
-
-**Acceptance criteria:**
-- [ ] `sdd-pipeline.ts` is < 50 lines (down from 403).
-- [ ] Plugin only exports `DestructiveCommandBlockPlugin`.
-- [ ] `tool.execute.before` hook preserves all 21 destructive patterns.
-- [ ] `normalizeBash` preprocessing applied before pattern matching.
-- [ ] Error message preserved verbatim from original.
-- [ ] `just check` passes.
-
-**Verification:**
-- [ ] `wc -l template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts` returns < 50.
-- [ ] `bun test tests/plugin/integration/toolExecuteBefore.test.ts` — 0 fallos.
-- [ ] Manual: verify `rm -rf /tmp/test` is blocked, `rm file.txt` is allowed.
-
-**Dependencies:** Task 4.2.
-
-**Files likely touched:**
-- `template/obligatorio/core/.opencode/plugins/sdd-pipeline.ts` (rewrite, ~40 lines net)
-
-**Estimated scope:** S (~1 file, ~360 lines removed)
-
-**Commit message:**
-```
-refactor(plugin): rewrite sdd-pipeline.ts as minimal destructive gate
-
-The plugin is now a single-responsibility safety net: it blocks
-destructive bash commands and nothing else. Agent/command/intent
-governance is handled by opencode.json permissions.
-```
-
----
-
-#### Task 4.4: Update plugin integration tests
-
-**Description:** Updates `tests/plugin/integration/` to match the reduced plugin surface. Deletes obsolete test files (`chatMessage.test.ts`, `systemTransform.test.ts`, possibly `help-command-discovery.test.ts` if it tested deleted modules). Updates `toolExecuteBefore.test.ts` to import only from the minimal modules.
-
-**Files to UPDATE:**
-- `toolExecuteBefore.test.ts` — remove imports of `PRIMARY_AGENTS`, `discoverValidSubagents`, etc. Keep only `DESTRUCTIVE_PATTERNS` + `normalizeBash` tests.
-
-**Files to DELETE:**
-- `chatMessage.test.ts` — tests deleted `chatMessage.ts`
-- `systemTransform.test.ts` — tests deleted system.transform hook
-- `help-command-discovery.test.ts` — verify if still relevant; delete if not
-
-**Files to CREATE:**
-- New `destructiveCommandBlock.test.ts` covering the minimal plugin shape (if not covered by existing tests).
-
-**Acceptance criteria:**
-- [ ] All obsolete test files deleted.
-- [ ] `toolExecuteBefore.test.ts` updated to only test kept modules.
-- [ ] `just test-plugin-integration` — 0 fallos.
-- [ ] Coverage ≥95% on kept plugin code.
-
-**Verification:**
-- [ ] `bun test tests/plugin/integration/` — 0 fallos.
-- [ ] `just check` — 0 errores.
-
-**Dependencies:** Task 4.3.
-
-**Files likely touched:**
-- `tests/plugin/integration/chatMessage.test.ts` (delete)
-- `tests/plugin/integration/systemTransform.test.ts` (delete)
-- `tests/plugin/integration/help-command-discovery.test.ts` (delete or update)
-- `tests/plugin/integration/toolExecuteBefore.test.ts` (rewrite)
-
-**Estimated scope:** M (~4 files, ~300 lines removed)
-
-**Commit message:**
-```
-test(plugin): update integration tests for minimal destructive gate
-
-Removes tests for deleted modules and focuses the test suite on
-the plugin's new single responsibility: blocking destructive bash
-commands.
-```
-
----
-
-#### Task 4.5: Update plugin E2E scenarios
-
-**Description:** Updates `tests/plugin/e2e/*.sh` bash scenarios to match the reduced plugin. The 3 existing scenarios (16-plugin-installation, 17-plugin-lint, 18-audit-log) need adjustment: scenario 18-audit-log.sh must be deleted (no more audit log), scenarios 16 and 17 simplify to focus on installation + lint only.
-
-**Files to UPDATE:**
-- `16-plugin-installation.sh` — verify plugin loads, command block works.
-- `17-plugin-lint.sh` — verify biome/tsc on reduced plugin code.
-
-**Files to DELETE:**
-- `18-audit-log.sh` — audit log no longer exists.
-
-**Acceptance criteria:**
-- [ ] Scenario 18 deleted.
-- [ ] Scenarios 16 + 17 pass with reduced plugin.
-- [ ] `just test-plugin-e2e` — 2/2 passing.
-
-**Verification:**
-- [ ] `bash tests/plugin/e2e/run-plugin-e2e.sh` — all passing.
-
-**Dependencies:** Task 4.4.
-
-**Files likely touched:**
-- `tests/plugin/e2e/16-plugin-installation.sh` (simplify)
-- `tests/plugin/e2e/17-plugin-lint.sh` (simplify)
-- `tests/plugin/e2e/18-audit-log.sh` (delete)
-
-**Estimated scope:** S (~3 files)
-
-**Commit message:**
-```
-test(plugin): update E2E scenarios for minimal plugin
-
-Removes audit-log scenario (no longer applicable) and simplifies
-installation + lint scenarios to match the reduced plugin surface.
-```
-
----
-
-### Checkpoint 4: After Tasks 4.1-4.5
-- [ ] `just check` — 0 errores
-- [ ] `just test-unit` — 0 fallos
-- [ ] `just test-integration` — 0 fallos
-- [ ] `just test-plugin-integration` — 0 fallos (reduced suite)
-- [ ] `just test-plugin-e2e` — 2/2 passing
-- [ ] `just test-e2e` — 31/31 passing (no regression)
-- [ ] Coverage ≥95% production `src/`
-- [ ] Plugin file count: 4 files (sdd-pipeline.ts + 3 src/ modules + __tests__)
-- [ ] Human review: confirm plugin reduction scope before Release Prep
-
----
-
-### Phase 5: Release Prep
-
-#### Task 5.1: Update `CHANGELOG.md`
-
-**Description:** Adds v2.1.1 entry with 4 FEV-27 items + 5 FEV-26 items (since v2.1.1 will publish after FEV-26+27). Follows Keep a Changelog format with `Added`, `Changed`, `Fixed`, `Security` sections.
-
-**Acceptance criteria:**
-- [ ] Entry added under `## [2.1.1] - YYYY-MM-DD`.
-- [ ] 4 FEV-27 items documented with issue/TD IDs.
-- [ ] 5 FEV-26 items documented (already merged but part of same release).
-
-**Verification:**
-- [ ] `head -50 CHANGELOG.md` shows v2.1.1 entry.
-
-**Dependencies:** All Phase 1-4 tasks.
-
-**Files likely touched:**
-- `CHANGELOG.md` (add ~30 lines)
-
-**Estimated scope:** XS (~1 file, ~30 lines)
-
-**Commit message:**
-```
-docs(changelog): add v2.1.1 entry with FEV-26+FEV-27 items
-```
-
----
-
-#### Task 5.2: Update `docs/TECH_DEBT.md`
-
-**Description:** Adds a new section "Resolved in v2.1.1 (FEV-26+27)" listing all 9 items (5 from FEV-26 already merged + 4 from FEV-27). Updates the v2.1.1 backlog table to mark FEV-27 as ✅.
-
-**Acceptance criteria:**
-- [ ] New "Resolved in v2.1.1 (FEV-26+27)" section with all 9 items.
-- [ ] FEV-27 row in backlog table marked ✅.
-- [ ] v2.1.1 row in "Summary" table updated.
-
-**Verification:**
-- [ ] `grep "FEV-27.*Resolved\|FEV-27.*✅" docs/TECH_DEBT.md` returns matches.
-
-**Dependencies:** Task 5.1.
-
-**Files likely touched:**
-- `docs/TECH_DEBT.md` (add ~15 lines, update 2 rows)
-
-**Estimated scope:** XS (~1 file, ~15 lines)
-
-**Commit message:**
-```
-docs(tech-debt): mark FEV-27 4 items as resolved in v2.1.1
-```
-
----
-
-#### Task 5.3: Update `docs/WORKFLOW.md`
-
-**Description:** Marks FEV-27 as ✅ Completo in the phases table. Adds summary metrics (lines removed, test count, coverage). Does NOT bump version (that's `package.json`).
-
-**Acceptance criteria:**
-- [ ] FEV-27 row in phases table marked ✅ Completo.
-- [ ] Metrics summary section added under FEV-27.
-- [ ] Date updated to completion date.
-
-**Verification:**
-- [ ] `grep "FEV-27.*✅" docs/WORKFLOW.md` returns match.
-
-**Dependencies:** Task 5.2.
-
-**Files likely touched:**
-- `docs/WORKFLOW.md` (update 1 row + add ~10 lines)
-
-**Estimated scope:** XS (~1 file, ~15 lines)
-
-**Commit message:**
-```
-docs(workflow): mark FEV-27 as completed with metrics summary
-```
-
----
-
-#### Task 5.4: Sync GitHub Wiki
-
-**Description:** Runs the wiki sync procedure per `CONTRIBUTING.md` to update the GitHub Wiki with the new permission block (#81) and the plugin changes (#80).
-
-**Acceptance criteria:**
-- [ ] `rsync -a --delete --exclude='README.md' docs/wiki-source/*.md docs/wiki-source/.wiki/` executed.
-- [ ] Wiki commit pushed with message referencing v2.1.1.
-
-**Verification:**
-- [ ] `git -C docs/wiki-source/.wiki log --oneline -3` shows new commit.
-
-**Dependencies:** Task 5.3.
-
-**Files likely touched:**
-- `docs/wiki-source/.wiki/*` (synced from `docs/wiki-source/*.md`)
-
-**Estimated scope:** XS (script execution)
-
-**Commit message:**
-```
-docs(wiki): sync v2.1.1 changes to GitHub Wiki
-
-Updates Configuration page (external_directory block) and removes
-references to deleted plugin modules.
-```
-
----
-
-### Checkpoint 5: After Tasks 5.1-5.4
-- [ ] All documentation consistent with code
-- [ ] Wiki synced and pushed
-- [ ] `just check` + `just test` (all suites) pass
-- [ ] Coverage ≥95% production `src/`
-- [ ] Human review: approve release v2.1.1 to be published after FEV-28 completes
+Esos pasos los cubre el release manager con `/plan` + `/ship` posterior, NO FEV-28.
 
 ---
 
 ## Risks and Mitigations
 
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| Plugin deletion breaks external skills/agents that imported from deleted modules | High | Low | Task 4.1 audit identifies all consumers before deletion; if found, refactor consumers or keep module as compat shim. |
-| Backup intent marker creates false positives on legitimate concurrent runs | Medium | Low | Document that Códice must not be run concurrently against the same destination; error message guides user to inspect `.codice-backup`. |
-| `external_directory` allowlist too restrictive breaks valid workflows | Medium | Medium | Start with conservative allowlist based on common toolchains; document customization in `Configuration.md` wiki page. |
-| Plugin reduction removes features users depend on | High | Low | The diagnosis explicitly states agent/command governance is duplicated by `opencode.json`; verify with 1 week of user feedback after release. |
-| Staging cleanup event pollutes verbose logs | Low | Low | Event only emitted once per commit (not per file); minimal payload. |
-| Release delays from FEV-28 dependencies | Medium | Medium | FEV-27 release is independent; can publish v2.1.1 immediately after FEV-28 if needed. |
-
----
-
-## Parallelization Opportunities
-
-| Phase | Tasks | Safe to parallelize? |
-|-------|-------|----------------------|
-| Phase 1 | 1.1 | No (foundation) |
-| Phase 2 | 2.1 | Yes (independent config) |
-| Phase 3 | 3.1, 3.2, 3.3 | Sequential (3.2 depends on 3.1, 3.3 depends on 3.2) |
-| Phase 4 | 4.1, 4.2, 4.3, 4.4, 4.5 | Sequential (4.2-4.5 depend on 4.1; 4.4-4.5 depend on 4.3) |
-| Phase 5 | 5.1, 5.2, 5.3, 5.4 | Mostly sequential (CHANGELOG → TECH_DEBT → WORKFLOW → wiki) |
-
-**Recommended:** Single agent works sequentially through Phases 1-5. Estimated wall-clock: 6-8h.
+| Risk | Impact | Likelihood | Mitigation |
+|------|--------|------------|------------|
+| GitHub Action v7/v6 introduce breaking change no documentado | Medium | Low | Phase 1 solo toca ci.yml/release.yml, reversible con un revert. CI matrix cubre los 3 OS antes de merge. |
+| Cache rompe determinismo en tests (orden de inserción, map iteration) | Low | Low | Cache es detalle privado; compare() retorna el mismo valor. Tests assertan comportamiento, no orden interno. |
+| Múltiples instancias de `VersionComparator` crean caches duplicados | Low | High | Aceptado: el proyecto instancia 1 sola vez por CLI run (vía DI container). No hay caso de uso de instancias múltiples. Si surge, refactorizar a WeakMap (futuro). |
+| `oven-sh/setup-bun` SHA-pinning podría no estar al día | Low | Low | Verificado vía API: v2.2.0 ya coincide con el SHA actual. No requiere cambio. |
 
 ---
 
 ## Open Questions
 
-- **Q1:** Should we add an E2E scenario for #81 (external_directory permission) or rely on manual verification + integration test? → **Decision:** Manual verification + integration test only. E2E scenarios require OpenCode runtime; permission blocks are JSON-config validated.
-- **Q2:** Should TD-V2-9 use a separate `.codice-backup-intent` file or piggyback on `.codice-version` metadata? → **Decision:** Separate file (clearer semantics, easier to detect, no version-file coupling).
-- **Q3:** Should the reduced plugin keep the `SddError` class name or rename to `DestructiveCommandError`? → **Decision:** Rename to reflect new single responsibility (consistent with reduced scope).
-- **Q4:** Should we extract `DESTRUCTIVE_PATTERNS` from the plugin into a shared template file (e.g., `template/obligatorio/core/.opencode/destructive-patterns.json`) so `opencode.json` permissions and the plugin can share the same source of truth? → **Decision:** Defer to future FEV. For FEV-27, keep duplication; the audit confirmed both lists already match (last verified FEV-26).
+Ninguna pendiente — todas las decisiones fueron confirmadas vía `question` tool:
+- Alcance del caché: solo `VersionComparator` (no módulo compartido).
+- Estrategia SHA: investigar y actualizar a últimas Node 24-compatible majors.
 
 ---
 
-## Definition of Done
+## Architecture Diagram (Mermaid)
 
-- [ ] All 12 tasks completed with acceptance criteria met
-- [ ] `just check` — 0 errores (biome ci + tsc --noEmit)
-- [ ] `just test-unit` — 0 fallos
-- [ ] `just test-integration` — 0 fallos
-- [ ] `just test-plugin-integration` — 0 fallos (reduced suite)
-- [ ] `just test-plugin-e2e` — 2/2 passing
-- [ ] `just test-e2e` — 31/31 passing (no regression)
-- [ ] `just test-packaging` — 5/5 passing
-- [ ] Coverage ≥95% production `src/`
-- [ ] `CHANGELOG.md` updated with v2.1.1 entry (4 FEV-27 items)
-- [ ] `docs/TECH_DEBT.md` updated (4 items marked as resolved in v2.1.1)
-- [ ] `docs/WORKFLOW.md` updated — FEV-27 marcado como ✅ Completo
-- [ ] GitHub Wiki synced via `docs/wiki-source/` rsync procedure
-- [ ] Branch `fix/fev-27-security-observability` lista para PR a `develop`
-- [ ] PR abierto con título `fix(security+observability): resolve FEV-27 (#80, #81, TD-V2-9, TD-V2-51)`
+```mermaid
+graph LR
+    subgraph "Phase 1 — Infra (TD-V2-7)"
+        A1[ci.yml] --> A2[release.yml]
+        A2 --> A3{CI matrix<br/>ubuntu + macos + windows}
+        A3 --> A4{Node 20 warning<br/>gone?}
+    end
 
----
+    subgraph "Phase 2 — Performance (TD-V2-61)"
+        B1[VersionComparator<br/>+cache Map] --> B2[unit test<br/>cache hit]
+        B2 --> B3[just test 1931+ green]
+    end
 
-## References
-
-- [SPEC.md](../SPEC.md) — Especificación central del proyecto
-- [docs/WORKFLOW.md](../docs/WORKFLOW.md) §FEV-27 — Descripción original de la fase
-- [docs/TECH_DEBT.md](../docs/TECH_DEBT.md) — Backlog v2.1.1
-- [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) — Clean Architecture & ADRs
-- [docs/CODE_STYLE.md](../docs/CODE_STYLE.md) — Convenciones TypeScript
-- [docs/diagnosis/fix15](../docs/diagnosis/fix15-plugin-cleanup.md) — Diagnóstico #80
-- [docs/diagnosis/fix16](../docs/diagnosis/fix16-external-directory-permissions.md) — Diagnóstico #81
-- [docs/diagnosis/fix19](../docs/diagnosis/fix19-sigint-backup-overwrite.md) — Diagnóstico TD-V2-9
-- [docs/diagnosis/fix21](../docs/diagnosis/fix21-missing-staging-cleanup-event.md) — Diagnóstico TD-V2-51
-- [OpenCode config schema](../home/fisherk2/.local/share/opencode/repos/github.com/anomalyco/opencode@dev/packages/core/src/v1/config/permission.ts) — `external_directory: Schema.optional(Rule)`
-- [AGENTS.md](../AGENTS.md) §Reglas estrictas — Clean Architecture, no `any`, pre-commit checklist
-- [CONTRIBUTING.md](../CONTRIBUTING.md) §Git Workflow — Conventional Commits, branch naming
+    A4 --> C[Quality Gate<br/>just check · just test<br/>just test-e2e · coverage]
+    B3 --> C
+    C --> D[PR to develop]
+    D --> E[Post-FEV-28 docs sync<br/>WORKFLOW · TECH_DEBT · CHANGELOG]
+```
 
 ---
 
-**Plan Status:** ⏳ Pendiente de aprobación por usuario
-**Next Step:** Confirm plan con usuario → commit a `tasks/plan.md` → ejecutar `/build` para Task 1.1
-
-Co-Authored-By: Moctezuma <dev@fisherk2.com>
+*Plan created by Moctezuma. Update when phases complete or scope changes.*
+*Last revised: 2026-08-21*
