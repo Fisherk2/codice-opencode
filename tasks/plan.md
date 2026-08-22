@@ -1,14 +1,13 @@
 # Implementation Plan: FEV-28 — Infrastructure & Performance
 
-**Phase:** FEV-28 (v2.1.1) — ⏳ Pendiente
+**Phase:** FEV-28 (v2.1.1) — ✅ Completo
 **Issues/TD:** [TD-V2-7](https://github.com/Fisherk2/codice-opencode/blob/main/docs/TECH_DEBT.md), [TD-V2-61](https://github.com/Fisherk2/codice-opencode/blob/main/docs/TECH_DEBT.md)
 **Diagnósticos:** [`docs/diagnosis/fix23`](../docs/diagnosis/fix23-action-sha-pins-node24.md), [`docs/diagnosis/fix22`](../docs/diagnosis/fix22-no-caching-version-comparison.md)
 **Date:** 2026-08-21
 **Author:** Moctezuma (Strategic Planner)
-**Branch:** `fix/fev-28-infrastructure-performance` (from `develop`)
+**Branch:** `fix/tech-debt-2.1.1`
 **Todo list:** [todo.md](./todo.md)
 **Methodology:** Vertical slicing (1 item = 1 slice completo) · commits atómicos por fase · TDD donde aplique · checkpoint quality gates
-**Wall-clock estimate:** ~2-3h (Phase 1: 1-1.5h · Phase 2: 1h)
 
 ---
 
