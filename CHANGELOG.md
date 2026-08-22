@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.1.1] - 2026-08-20
+## [2.1.1] - 2026-08-21
 
 ### Security
 
@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hardened permission denies** (review): Extended `read` deny-list with `.cargo/credentials`, `.s3cfg`, `.config/gh/hosts.yml`, `*.mobileprovision`; narrowed `export PATH=*` to total-replacement only; added git deny entries for `--force-with-lease`, `checkout -- .`, `checkout -f`, `restore`, `reset --mixed`, `clean -fdx/-fxd`; added `rm -r -f`, `rm -f -r`, `rm -rfv` variants.
 - **Plugin pattern gaps closed** (review): Added `git push --force-with-lease`, `git reset --mixed`, `git clean -fdx/-fxd`, `git checkout -- .`, `git checkout -f`, `git restore`, and SQL `DELETE ... WHERE 1=1/true` tautology patterns. `normalizeBash` now strips comments only at token start, preserving in-word/in-URL `#`.
 - **Removed dead `escapeRegExp` module** (dead code, no longer imported; `destructivePatterns` uses literal regex).
+- **Destructive command gate fix** (code review C1): `extractBashCommand` now reads `output.args.command` — plugin gate was non-functional before this fix.
+- **Backup marker cleanup on handled failure** (code review I2): `AtomicStager` removes `.codice-backup-intent` marker when failure is handled; only hard-kill leaves an orphan marker.
+- **Split-flag rm pattern coverage** (code review I3): Added `rm -r -f` and `rm -f -r` to destructive patterns.
+- **Flag-based orphan detection** (code review I4): Replaced fragile string-matching with flag-based guard for backup marker orphan detection.
+- **Staging/backup gitignore entries** (code review S2): Added staging and backup patterns to `template/estandar/gitignore`.
+
+Final metrics: 1931 tests, 31/31 E2E, 55/55 plugin integration, `just check` 0 errors.
 
 ### Added
 

@@ -6,7 +6,7 @@
 **Current Version:** v2.1.0
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
-> **v2.1.1 in progress** (FEV-26 ✅ 2026-08-20): Bug #79 regression test, shell injection fix (TD-V2-70), manifest count corrections (TD-V2-90/91), FileMergeEngine comment refresh (TD-V2-93). 2054 tests, 31/31 E2E, coverage ≥ 95% production src/. FEV-27 (Security & Observability) and FEV-28 (Infrastructure) pending.
+> **v2.1.1 in progress** (FEV-26 ✅ 2026-08-20 + FEV-27 ✅ 2026-08-21 code review hardened): Bug #79 regression test, shell injection fix (TD-V2-70), manifest count corrections (TD-V2-90/91), FileMergeEngine comment refresh (TD-V2-93). Plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup event (TD-V2-51). Code review: 1 Critical + 4 Important + 3 Suggestions all applied (commit `a2964fd`). 1931 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥ 95% production src/. FEV-28 (Infrastructure) ready to plan.
 >
 > **v2.1.0 Released** (2026-08-12): FEV-24 ✅ (4 new commands, SDD intent auto-discovery, bilingual intents) + FEV-25 ✅ (agent delegation protocol). 2052 tests, 31/31 E2E scenarios, coverage ≥ 95% production src/. v2.1.0-beta.2 published to npm (`@fisherk2-dev/codice@2.1.0-beta.2`, dist-tag beta).
 

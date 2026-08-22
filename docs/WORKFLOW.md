@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-20 (FEV-26 ✅) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-21 (FEV-27 ✅) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -144,7 +144,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 #### FEV-27: Security & Observability — Plugin cleanup + Permissions + Backup safety
 
 **Objetivo:** Simplificar plugin SDD, gobernanza de directorios externos, mejorar seguridad de backups.
-**Effort total:** 6-8h | **Riesgo:** Medio | **Estado:** ✅ Completo (2026-08-20)
+**Effort total:** 6-8h + code review | **Riesgo:** Medio | **Estado:** ✅ Completo (2026-08-21, code review hardened)
 
 | ID | Item | Effort | Risk | Diagnóstico |
 |----|------|--------|------|-------------|
@@ -158,7 +158,20 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 - `opencode.json` incluye `external_directory` con deny-by-default
 - Backup safety: `AtomicStager` persiste rollback intent o documenta limitación
 - Evento `staging_cleanup` emitido y visible en verbose mode
-- Tests: 2052+ pasando, coverage ≥95%
+- Code review hardening: 1 Critical + 4 Important + 3 Suggestions aplicados
+- Tests: 1931 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors
+
+##### Resultados de code review (commit `a2964fd`)
+
+| ID | Severidad | Hallazgo | Resolución |
+|----|-----------|----------|------------|
+| C1 | Critical | Plugin gate no leía `output.args.command` correctamente | `extractBashCommand` ahora lee `output.args.command` |
+| I1 | Important | Tests no invocaban el hook real del plugin | 5 integration tests nuevos con `output.args.command` correcto |
+| I2 | Important | Marker de backup no se limpiaba en fallo manejado | `AtomicStager` remueve marker en fallo manejado |
+| I3 | Important | Patrones `rm -r -f` y `rm -f -r` no cubiertos | Añadidos a destructivePatterns |
+| I4 | Important | Detección de huérfanos frágil (string matching) | Flag-based guard reemplaza string matching |
+| S1 | Suggestion | Variante `staging_cleanup` muerta en ProgressCallback | Eliminada (evento se emite via VerboseLogger, no ProgressCallback) |
+| S2 | Suggestion | Faltaban patrones staging/backup en gitignore | Añadidos a `template/estandar/gitignore` |
 
 **Diagnósticos:** `fix15`, `fix16`, `fix19`, `fix21`
 
@@ -167,17 +180,19 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 #### FEV-28: Infrastructure & Performance — CI/CD updates + Caching
 
 **Objetivo:** Actualizar SHA-pins de GitHub Actions para Node 24, optimizar comparación de versiones.
-**Effort total:** 2-3h | **Riesgo:** Bajo | **Estado:** ⏳ Pendiente
+**Effort total:** 2-3h | **Riesgo:** Bajo | **Estado:** ⏳ Pendiente (listo para planificar)
 
 | ID | Item | Effort | Risk | Diagnóstico |
 |----|------|--------|------|-------------|
 | **TD-V2-7** | Action SHA-pins force Node 24 (deprecated) | 1-2h | Low | `fix10-action-sha-pins-node24.md` |
 | **TD-V2-61** | No caching for version comparison | 1h | Low | `fix09-no-caching-version-comparison.md` |
 
+**Dependencias:** Ninguna — inicio limpio tras FEV-27 completo.
+
 **Criterios de éxito:**
 - CI/CD: SHA-pins actualizados a últimas versiones compatibles con Node 24
 - `VersionComparator` cachea parsed semver objects
-- Tests: 2052+ pasando, coverage ≥95%
+- Tests: 1931+ pasando, coverage ≥95%
 - CI matrix (Linux, macOS, Windows) sin warnings de Node 24 deprecation
 
 **Diagnósticos:** `fix23`, `fix22`
@@ -189,11 +204,11 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | Fase | Items | Effort Total | Risk | Prioridad |
 |------|-------|--------------|------|-----------|
 | FEV-26 | 5 items (1 bug + 4 TD) | 4-6h | Bajo | ✅ Completo |
-| FEV-27 | 4 items (2 issues + 2 TD) | 6-8h | Medio | ✅ Completo |
-| FEV-28 | 2 items (2 TD) | 2-3h | Bajo | Baja |
-| **Total** | **6 items restantes** | **8-11h** | — | — |
+| FEV-27 | 4 items (2 issues + 2 TD) + code review | 6-8h | Medio | ✅ Completo (code review hardened) |
+| FEV-28 | 2 items (2 TD) | 2-3h | Bajo | ⏳ Pendiente (listo para planificar) |
+| **Total** | **6 items** | **8-11h** | — | — |
 
-**Estrategia:** FEV-26 completado. Restan FEV-27 (security) y FEV-28 (infrastructure) antes del release v2.1.1.
+**Estrategia:** FEV-26 ✅ + FEV-27 ✅ (code review hardened) completados. Resta FEV-28 (infrastructure) antes del release v2.1.1.
 
 **Release v2.1.1:** Después de las 3 fases, ejecutar `/plan` → CHANGELOG.md → npm publish con dist-tag `beta`.
 

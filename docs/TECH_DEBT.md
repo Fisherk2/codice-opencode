@@ -1,9 +1,9 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-08-20
-**Status:** v2.1.1 in progress (FEV-26 ✅ + FEV-27 ✅, FEV-28 pending) — 2054 tests, 31/31 E2E, coverage ≥95% production `src/`
+**Last updated:** 2026-08-21
+**Status:** v2.1.1 in progress (FEV-26 ✅ + FEV-27 ✅ with code review hardened, FEV-28 ready to plan) — 1931 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production `src/`
 **Current version:** v2.1.0
-**Next version:** v2.1.1 (FEV-26 done, pending release)
+**Next version:** v2.1.1 (FEV-26+27 done, FEV-28 pending)
 
 ---
 
@@ -48,14 +48,22 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
 - TD-V2-93: FileMergeEngine comments refreshed (WHAT→WHY)
 - Injection guard test hardened (asserts against actual `${{ }}` pattern)
 - Doc sync: wiki, specs, TECH_DEBT counts corrected
-- 2054 tests / 0 fail, 31/31 E2E
+- 1931 tests / 0 fail, 31/31 E2E
 
-**Resolved in v2.1.1 (FEV-27):**
+**Resolved in v2.1.1 (FEV-27 + code review):**
 - TD-V2-51: staging_cleanup event emitted in --verbose mode (ProgressEvent + AtomicStager)
 - #81: External directory permissions — deny-by-default + allowlist in opencode.json
 - TD-V2-9: Backup integrity — .codice-backup-intent marker prevents overwrite on interrupted commits
 - #80: SDD plugin reduced to destructive-command block only (13 modules deleted, ~1200 lines removed)
-- 2054+ tests / 0 fail, 31/31 E2E, plugin E2E 2/2, coverage ≥95%
+- **Code review hardening (commit `a2964fd`):**
+  - C1: `extractBashCommand` reads `output.args.command` (plugin gate was non-functional)
+  - I1: 5 new integration tests invoking actual plugin hook with correct shape
+  - I2: AtomicStager removes marker on handled failure (only hard-kill leaves orphan)
+  - I3: Added `rm -r -f` and `rm -f -r` split-flag patterns
+  - I4: Flag-based guard replaces fragile string-matching for orphan detection
+  - S1: Removed dead `staging_cleanup` variant from ProgressCallback
+  - S2: Added staging/backup patterns to `template/estandar/gitignore`
+- 1931 tests / 0 fail, 31/31 E2E, 55/55 plugin integration, coverage ≥95%
 
 ---
 
@@ -75,7 +83,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 
 ## Backlog by Version
 
-### v2.1.1 (FEV-26 ✅ → FEV-27/28 pending — 6 items remaining, 8-11h total)
+### v2.1.1 (FEV-26 ✅ + FEV-27 ✅ (code review hardened) → FEV-28 pending — 2 items remaining)
 
 #### FEV-26: Quick Wins ✅ Resuelto (2026-08-20)
 
@@ -87,7 +95,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **TD-V2-91** | Writers pack count 2→4 | Debt | 0.5h | Low | `fix20-writers-pack-agent-count.md` |
 | **TD-V2-93** | FileMergeEngine comments | Debt | 1h | Low | `fix24-outdated-comments-file-merge-engine.md` |
 
-#### FEV-27: Security & Observability ✅ Resuelto (2026-08-20)
+#### FEV-27: Security & Observability ✅ Resuelto (2026-08-21, code review hardened)
 
 | ID | Item | Type | Effort | Risk | Diagnóstico |
 |----|------|------|--------|------|-------------|
@@ -96,7 +104,10 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **TD-V2-9** | SIGINT mid-commit backup overwrite | Debt | 2-3h → 1h | Low | `fix19-sigint-backup-overwrite.md` |
 | **TD-V2-51** | Missing staging_cleanup event | Debt | 1h → 0.5h | Low | `fix21-missing-staging-cleanup-event.md` |
 
-#### FEV-28: Infrastructure & Performance (2-3h)
+**Code review (commit `a2964fd`):** 1 Critical + 4 Important + 3 Suggestions — todos aplicados.
+**Metrics finales:** 1931 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors.
+
+#### FEV-28: Infrastructure & Performance ⏳ Ready to plan (2-3h)
 
 | ID | Item | Type | Effort | Risk | Diagnóstico |
 |----|------|------|--------|------|-------------|
@@ -143,7 +154,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | v1.x debt | ✅ All resolved |
 | v2.0.0 debt | ✅ All resolved |
 | v2.1.0 debt | ✅ All resolved (4 new commands, SDD intent auto-discovery, bilingual intents, agent delegation, CI/CD hardening) |
-| v2.1.1 debt | ✅ FEV-26 + FEV-27 resolved (9 items: bug #79, TD-V2-70/90/91/93, #80, #81, TD-V2-9, TD-V2-51) — 2054 tests |
+| v2.1.1 debt | ✅ FEV-26 + FEV-27 resolved (9 items + code review: bug #79, TD-V2-70/90/91/93, #80, #81, TD-V2-9, TD-V2-51) — 1931 tests, 55/55 plugin integration |
 | v2.1.1 backlog | 2 items (2 TD) — FEV-28, 2-3h |
 | v2.1.2 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.1.3 backlog | 4 items (4 debt) — 12-16h |
