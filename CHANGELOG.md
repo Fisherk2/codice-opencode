@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1-beta.1] - 2026-08-21
+
+### Changed
+
+- **CI/CD SHA-pins bumped to Node 24** (TD-V2-7): Updated `actions/checkout` to v7.0.1, `actions/cache` to v6.1.0, `extractions/setup-just` to v4.0.0, and `softprops/action-gh-release` to v3.0.2. All SHA-pinned actions now target Node 24 runtimes, eliminating CI deprecation warnings.
+- **VersionComparator cache** (TD-V2-61): Added instance-level `Map<string, string>` cache to `VersionComparator.compare()` that avoids redundant `semver.valid()` normalization on repeated calls. `validateVersion`/`validateVersions` remain pure functions.
+- **VersionComparator constructor refactored** for testability: accepts optional `validateFn` parameter (backward-compatible, no interface change). Removed stale `biome-ignore` suppression.
+
+### Added
+
+- **Spy-based cache verification test**: Proves cache hit by counting `validateVersion` calls — second identical `compare()` call triggers zero additional validation.
+
+### Fixed
+
+- **Class JSDoc accuracy**: Updated `VersionComparator` class comment from "no side effects" to "memoized; no I/O" to reflect internal cache state.
+
 ## [2.1.1] - 2026-08-21
 
 ### Security

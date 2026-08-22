@@ -1,9 +1,9 @@
 # Technical Debt — Códice
 
 **Last updated:** 2026-08-21
-**Status:** v2.1.1 in progress (FEV-26 ✅ + FEV-27 ✅ with code review hardened, FEV-28 ready to plan) — 1931 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production `src/`
-**Current version:** v2.1.0
-**Next version:** v2.1.1 (FEV-26+27 done, FEV-28 pending)
+**Status:** v2.1.1-beta.1 ready for launch (FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅ with code review hardened) — 1934 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production `src/`
+**Current version:** v2.1.1-beta.1
+**Next version:** v2.1.2 (planned)
 
 ---
 
@@ -18,7 +18,7 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
 | **v1.2.0** | Binary removal (ADR-011), references restructuring, documentation overhaul, UX enhancements (progress bar, /help), community standards (Code of Conduct) |
 | **v2.0.0** | Agent pack system (FEV-17/18), permission unification (FEV-19), plugin auto-discovery (FEV-20), installer UX v2 (FEV-21/22), testing closure (FEV-23) |
 | **v2.1.0-beta.1** | 4 slash commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD intent auto-discovery, bilingual intents, agent delegation protocol (FEV-25), CI/CD hardening (SHA-pins, branch protection, PR/issue templates, npm provenance), SPEC.md modularization (ADR-020) |
-| **v2.1.1** | Bug #79 regression test, shell injection fix (TD-V2-70), manifest count corrections (TD-V2-90/91), FileMergeEngine comment refresh (TD-V2-93), injection guard hardening |
+| **v2.1.1-beta.1** | Bug #79 regression test, shell injection fix (TD-V2-70), manifest count corrections (TD-V2-90/91), FileMergeEngine comment refresh (TD-V2-93), injection guard hardening, plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup event (TD-V2-51), CI/CD SHA-pin bumps to Node 24 (TD-V2-7), parsed-semver cache in VersionComparator (TD-V2-61), code review findings resolved |
 
 **Resolved in v2.0.0 (FEV-17 to FEV-23):**
 - Template directory restructuring → pack-based organization
@@ -105,9 +105,9 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **TD-V2-51** | Missing staging_cleanup event | Debt | 1h → 0.5h | Low | `fix21-missing-staging-cleanup-event.md` |
 
 **Code review (commit `a2964fd`):** 1 Critical + 4 Important + 3 Suggestions — todos aplicados.
-**Metrics finales:** 1931 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors.
+**Metrics finales:** 1934 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors.
 
-#### FEV-28: Infrastructure & Performance ⏳ Ready to plan (2-3h)
+#### FEV-28: Infrastructure & Performance ✅ Completo (2026-08-21)
 
 | ID | Item | Type | Effort | Risk | Diagnóstico |
 |----|------|------|--------|------|-------------|
