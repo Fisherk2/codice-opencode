@@ -158,4 +158,23 @@ describe("VersionComparator cache", () => {
 		const r2 = cmp.compare("v2.3.4", "v2.3.5");
 		expect(r1).toEqual(r2);
 	});
+
+	test("caches validation — validateVersion not re-invoked on cache hit", () => {
+		let validationCalls = 0;
+		const wrapped = (v: string) => {
+			validationCalls++;
+			return validateVersion(v);
+		};
+
+		const cmp = new VersionComparator(wrapped);
+
+		const first = cmp.compare("1.0.0", "1.1.0");
+		expect(first.ok).toBe(true);
+		expect(validationCalls).toBe(2); // local + remote
+
+		const second = cmp.compare("1.0.0", "1.1.0");
+		expect(second.ok).toBe(true);
+		expect(validationCalls).toBe(2); // cache hit — no additional validation
+		expect(first.ok && second.ok && first.value === second.value).toBe(true);
+	});
 });

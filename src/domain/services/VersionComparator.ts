@@ -34,18 +34,20 @@ export function validateVersions(
 	return success({ localValid: localResult.value, remoteValid: remoteResult.value });
 }
 
-/** Pure service for the Update mode workflow — no I/O, no side effects. */
+/** Service for the Update mode workflow — memoized; no I/O. */
 export class VersionComparator implements IVersionComparator {
 	/** Caches normalized semver strings to avoid repeated valid() normalization. */
 	private readonly parsedCache = new Map<string, string>();
 
 	/**
-	 * Explicit empty constructor.
-	 * Present to avoid Bun's coverage tool counting an implicit constructor
-	 * as an uncovered function. (REF: TECH_DEBT.md TD-1.2)
+	 * Explicit constructor for dependency injection (testability).
+	 * Without arguments, uses the default semver-based validation.
+	 * (REF: TECH_DEBT.md TD-1.2 — also avoids Bun coverage artifact.)
 	 */
-	// biome-ignore lint/complexity/noUselessConstructor: Needed to fix Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
-	constructor() {}
+	constructor(
+		private readonly validateFn: (v: string) => Result<string, Error> = validateVersion,
+	) {}
+
 	/**
 	 * Compare a local version against a remote version.
 	 *
@@ -65,12 +67,14 @@ export class VersionComparator implements IVersionComparator {
 		let remoteValid = this.parsedCache.get(remote);
 
 		if (localValid === undefined || remoteValid === undefined) {
-			const validated = validateVersions(local, remote);
-			if (!validated.ok) return validated;
-			this.parsedCache.set(local, validated.value.localValid);
-			this.parsedCache.set(remote, validated.value.remoteValid);
-			localValid = validated.value.localValid;
-			remoteValid = validated.value.remoteValid;
+			const localResult = this.validateFn(local);
+			if (!localResult.ok) return localResult;
+			const remoteResult = this.validateFn(remote);
+			if (!remoteResult.ok) return remoteResult;
+			this.parsedCache.set(local, localResult.value);
+			this.parsedCache.set(remote, remoteResult.value);
+			localValid = localResult.value;
+			remoteValid = remoteResult.value;
 		}
 
 		const result = compare(localValid, remoteValid);
