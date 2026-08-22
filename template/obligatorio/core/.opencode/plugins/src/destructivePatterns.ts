@@ -9,6 +9,8 @@ export const DESTRUCTIVE_PATTERNS: readonly RegExp[] = [
 	// ─── Filesystem ─────────────────────────────────────
 	/rm\s+-[a-z]*r[a-z]*f\b/i, // [existing] rm -r -f, rm -rf, rm -fir
 	/rm\s+-[a-z]*f[a-z]*r\b/i, // [existing] rm -f -r (reversed flags)
+	/rm\s+-r\s+-f\b/i, // rm -r -f (split flags — separate flag groups)
+	/rm\s+-f\s+-r\b/i, // rm -f -r (split flags — reversed)
 	/shred\s+/i, // shred — secure file deletion
 	/find\s+.*-exec(dir)?\b/i, // find -exec / find -execdir — blocks both variants
 	/find\s+.*-delete\b/i, // find -delete

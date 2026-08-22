@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { DestructiveCommandBlockPlugin } from "../../../template/obligatorio/core/.opencode/plugins/sdd-pipeline";
 import { DESTRUCTIVE_PATTERNS } from "../../../template/obligatorio/core/.opencode/plugins/src/destructivePatterns";
 import { normalizeBash } from "../../../template/obligatorio/core/.opencode/plugins/src/normalizeBash";
 
@@ -49,8 +50,8 @@ describe("destructive command blocking", () => {
 		expect(isDestructive("rm -fir /")).toBe(true);
 	});
 
-	test("rm -r -f (split flags) is a known gap", () => {
-		expect(isDestructive("rm -r -f /")).toBe(false);
+	test("blocks rm -r -f (split flags)", () => {
+		expect(isDestructive("rm -r -f /")).toBe(true);
 	});
 
 	test("allows safe rm", () => {
@@ -229,5 +230,44 @@ describe("destructive command blocking", () => {
 
 	test("allows ls", () => {
 		expect(isDestructive("ls -la")).toBe(false);
+	});
+});
+
+// ─── Plugin hook integration (C1 regression guard) ──────────────────────
+// Verifies the actual tool.execute.before hook reads output.args.command
+// (NOT output.command). This test would have caught the C1 regression
+// where the gate silently passed every command.
+
+describe("DestructiveCommandBlockPlugin tool.execute.before hook", async () => {
+	const plugin = await DestructiveCommandBlockPlugin({} as never);
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- hook is guaranteed to exist by the plugin contract
+	const hook = plugin["tool.execute.before"]!;
+
+	const bashInput = { tool: "bash", sessionID: "test", callID: "hook-1" };
+	const safeInput = { tool: "read", sessionID: "test", callID: "hook-2" };
+
+	test("blocks destructive bash command via real hook", async () => {
+		const output = { args: { command: "rm -rf /" } };
+		await expect(hook(bashInput, output)).rejects.toThrow("Destructive command blocked");
+	});
+
+	test("allows safe bash command via real hook", async () => {
+		const output = { args: { command: "ls -la" } };
+		await expect(hook(bashInput, output)).resolves.toBeUndefined();
+	});
+
+	test("blocks git push --force via real hook", async () => {
+		const output = { args: { command: "git push --force origin main" } };
+		await expect(hook(bashInput, output)).rejects.toThrow("Destructive command blocked");
+	});
+
+	test("allows non-bash tool (no-op)", async () => {
+		const output = { args: { command: "rm -rf /" } };
+		await expect(hook(safeInput, output)).resolves.toBeUndefined();
+	});
+
+	test("handles missing args gracefully", async () => {
+		const output = {};
+		await expect(hook(bashInput, output)).resolves.toBeUndefined();
 	});
 });

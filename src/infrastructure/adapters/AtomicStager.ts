@@ -98,23 +98,23 @@ export class AtomicStager {
 		const backups = new Map<string, string>();
 		const intentPath = path.join(this.destinationRoot, BACKUP_INTENT_FILE);
 
+		// Fail-fast: refuse if previous commit was interrupted (hard-kill left orphan).
+		// Flag-based guard — avoids throw/catch string-matching anti-pattern.
+		let orphanIntent: string | null = null;
 		try {
-			// Fail-fast: refuse if previous commit was interrupted
-			try {
-				await fs.access(intentPath);
-				const intentContent = await fs.readFile(intentPath, "utf-8");
-				throw new Error(
-					`Previous commit was interrupted (intent recorded at ${intentContent}). ` +
-						`Inspect .codice-backup manually before retrying. ` +
-						`Remove ${BACKUP_INTENT_FILE} to force a retry.`,
-				);
-			} catch (err) {
-				if (err instanceof Error && err.message.includes("Previous commit was interrupted")) {
-					throw err;
-				}
-				// Intent file doesn't exist — proceed normally
-			}
+			orphanIntent = await fs.readFile(intentPath, "utf-8");
+		} catch {
+			// Marker absent or unreadable — proceed normally.
+		}
+		if (orphanIntent !== null) {
+			throw new Error(
+				`Previous commit was interrupted (intent recorded at ${orphanIntent}). ` +
+					`Inspect .codice-backup manually before retrying. ` +
+					`Remove ${BACKUP_INTENT_FILE} to force a retry.`,
+			);
+		}
 
+		try {
 			// Write intent marker before commit starts
 			await fs.writeFile(intentPath, new Date().toISOString(), "utf-8");
 
@@ -149,9 +149,13 @@ export class AtomicStager {
 			// Remove intent marker on successful commit
 			await fs.unlink(intentPath).catch(() => {});
 		} catch (error) {
+			// Rollback on failure. Remove intent marker after handled rollback —
+			// only a hard-kill (SIGKILL/power loss) leaves an orphan marker that
+			// blocks the next run. A normal exception + rollback should not block.
 			this.logger.log("rollback", `restoring ${backups.size} backup(s) after failed commit`);
 			await this.restoreBackups(backups);
 			await this.cleanStaging();
+			await fs.unlink(intentPath).catch(() => {});
 
 			const message = error instanceof Error ? error.message : String(error);
 			throw new Error(`Failed to commit staged files: ${message}`);

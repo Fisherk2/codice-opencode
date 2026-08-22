@@ -14,12 +14,19 @@ import { normalizeBash } from "./src/normalizeBash";
 /**
  * Extracts the bash command string from the tool output args.
  * Returns empty string when no bash command is present.
+ *
+ * WHY: opencode's `tool.execute.before` hook passes the full args as
+ * `{ args: { command: string, workdir?: string } }`, not a flat `{ command }`.
+ * Reading the wrong path causes the entire safety gate to be non-functional.
  */
 function extractBashCommand(value: unknown): string {
 	if (typeof value !== "object" || value === null) return "";
 	const obj = value as Record<string, unknown>;
-	if (typeof obj.command !== "string") return "";
-	return obj.command;
+	const args = obj.args;
+	if (typeof args !== "object" || args === null) return "";
+	const argsObj = args as Record<string, unknown>;
+	if (typeof argsObj.command !== "string") return "";
+	return argsObj.command;
 }
 
 export const DestructiveCommandBlockPlugin: Plugin = async () => ({
