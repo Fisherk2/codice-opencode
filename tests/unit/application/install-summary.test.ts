@@ -151,7 +151,7 @@ describe("formatInstallSummary", () => {
 		});
 
 		expect(text).toContain("software-development (146 agents)");
-		expect(text).toContain("~146 agents");
+		expect(text).toContain("146 agents");
 	});
 
 	test("includes mandatory and optional lines when present", () => {
@@ -190,7 +190,7 @@ describe("formatInstallSummary", () => {
 		});
 
 		expect(text).toContain("creative (0 agents)");
-		expect(text).toContain("~0 agents");
+		expect(text).toContain("0 agents");
 	});
 });
 

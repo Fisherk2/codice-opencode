@@ -3,9 +3,18 @@ import type { FileRule } from "./FileRule";
 /**
  * Build a selectable pack rule. All packs share the same destination
  * mapping and category; only the path, description, and agent count vary.
+ * The agent count is appended to the description automatically to avoid
+ * duplicating the numeric literal (DRY — validated by pack-agent-counts.test).
  */
 function pack(path: string, description: string, agentCount: number): FileRule {
-	return { path, destPath: "agents", category: "pack", isDirectory: true, description, agentCount };
+	return {
+		path,
+		destPath: "agents",
+		category: "pack",
+		isDirectory: true,
+		description: `${description} (${agentCount} agents)`,
+		agentCount,
+	};
 }
 
 /** Build a standard rule (copied only if missing). */
@@ -68,38 +77,34 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// They live under obligatorio/ so TemplateResolver can still discover them.
 	pack(
 		"packs/software-development",
-		"Software development pack (default ON, 146 agents: backend, frontend, mobile, DevOps, databases, AI/ML, security, testing)",
+		"Software development pack (default ON: backend, frontend, mobile, DevOps, databases, AI/ML, security, testing)",
 		146,
 	),
 	pack(
 		"packs/business",
-		"Business pack (91 agents: marketing, sales, product, project management, operations)",
+		"Business pack (marketing, sales, product, project management, operations)",
 		91,
 	),
 	pack(
 		"packs/hardware-emerging",
-		"Hardware-emerging pack (36 agents: IoT, embedded, blockchain, XR/spatial, game development)",
+		"Hardware-emerging pack (IoT, embedded, blockchain, XR/spatial, game development)",
 		36,
 	),
 	pack(
 		"packs/science-research",
-		"Science-research pack (31 agents: academic, GIS, healthcare, research, scientific-literature-researcher)",
+		"Science-research pack (academic, GIS, healthcare, research, scientific-literature-researcher)",
 		31,
 	),
 	pack(
 		"packs/operations-support",
-		"Operations-support pack (18 agents: customer support, IT ops, HR, translation)",
+		"Operations-support pack (customer support, IT ops, HR, translation)",
 		18,
 	),
-	pack(
-		"packs/finance",
-		"Finance pack (11 agents: financial analysis, fintech, payments, accounting)",
-		11,
-	),
-	pack("packs/creative", "Creative pack (10 agents: design, UI/UX, brand, motion)", 10),
+	pack("packs/finance", "Finance pack (financial analysis, fintech, payments, accounting)", 11),
+	pack("packs/creative", "Creative pack (design, UI/UX, brand, motion)", 10),
 	pack(
 		"packs/government-legal",
-		"Government-legal pack (8 agents: legal, compliance, privacy, regulatory)",
+		"Government-legal pack (legal, compliance, privacy, regulatory)",
 		8,
 	),
 

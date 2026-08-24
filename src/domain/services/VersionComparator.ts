@@ -22,6 +22,9 @@ export function validateVersion(version: string): Result<string, Error> {
 /**
  * Validate both version strings and return normalized valid forms.
  * Returns Failure with actionable message if either is invalid.
+ *
+ * Pure utility — no side effects. Used by tests and available as a
+ * reusable domain helper for callers that need dual-validation in one call.
  */
 export function validateVersions(
 	local: string,

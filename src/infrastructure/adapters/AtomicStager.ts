@@ -22,7 +22,7 @@ export class AtomicStager {
 	constructor(destinationRoot: string, logger?: VerboseLogger) {
 		this.destinationRoot = destinationRoot;
 		this.stagingRoot = path.join(destinationRoot, STAGING_DIR_NAME);
-		this.logger = logger ?? new VerboseLogger(false);
+		this.logger = VerboseLogger.from(logger);
 	}
 
 	/** Resolve a relative path against destinationRoot, preventing path traversal. */
