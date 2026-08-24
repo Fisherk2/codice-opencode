@@ -8,63 +8,36 @@ import { VerboseLogger } from "./VerboseLogger";
 const BACKUP_SUFFIX = ".codice-backup";
 
 /**
- * Performs atomic file staging, commit, and rollback operations.
+ * Atomic file staging, commit, and rollback operations.
  *
- * Files are first written to a staging directory, then atomically renamed
- * to their destination paths. On failure, all backed-up original files
- * are restored to guarantee project consistency.
- *
- * This class is a single-responsibility extraction from BunFileSystem.
- * It handles ONLY the staging/destination filesystem concerns — it does
- * NOT know about template resolution or category directory structure.
+ * Files are staged to a staging directory, then atomically renamed to the
+ * destination. On failure, backed-up originals are restored for consistency.
  */
 export class AtomicStager {
 	private readonly destinationRoot: string;
 	private readonly stagingRoot: string;
 	private readonly logger: VerboseLogger;
 
-	/**
-	 * @param destinationRoot - Absolute path to the destination directory.
-	 * @param logger - Optional verbose logger; disabled when omitted.
-	 */
+	/** @param destinationRoot - Absolute path to the destination directory. */
 	constructor(destinationRoot: string, logger?: VerboseLogger) {
 		this.destinationRoot = destinationRoot;
 		this.stagingRoot = path.join(destinationRoot, STAGING_DIR_NAME);
 		this.logger = logger ?? new VerboseLogger(false);
 	}
 
-	// ---------------------------------------------------------------------------
-	// Public API — called by BunFileSystem delegates
-	// ---------------------------------------------------------------------------
-
-	/**
-	 * Resolve a relative path against the destination root and prevent
-	 * path traversal attacks. The resolved path must stay within the
-	 * destinationRoot boundary.
-	 */
+	/** Resolve a relative path against destinationRoot, preventing path traversal. */
 	resolveDestinationPath(relativePath: string): string {
 		return resolveWithinRoot(this.destinationRoot, relativePath, "destination");
 	}
 
-	/**
-	 * Compute the staging path for a given relative destination path.
-	 * Mirrors the destination directory structure under the staging root.
-	 * Validates that the resolved path stays within the staging directory.
-	 */
+	/** Compute the staging path for a relative destination path, preventing traversal. */
 	resolveStagingPath(relativePath: string): string {
 		return resolveWithinRoot(this.stagingRoot, relativePath, "staging");
 	}
 
 	/**
-	 * Stage a file by copying from the resolved template path to the staging
-	 * directory. If the resolved path is a directory, all files within it
-	 * are staged recursively. Creates intermediate directories as needed.
-	 *
-	 * @param resolvedTemplatePath - Already-resolved absolute path within the template directory.
-	 * @param relativeDestPath - The relative destination path (used to build staging path).
-	 * @param excludeSubDirs - Optional set of subdirectory names to exclude when
-	 *                         walking a directory (e.g. Set("node_modules") to exclude
-	 *                         node_modules/ when staging a directory).
+	 * Stage a file or directory by copying to the staging area.
+	 * Directories are walked recursively; excludeSubDirs skips named subdirs.
 	 */
 	async stageFile(
 		resolvedTemplatePath: string,
@@ -87,11 +60,8 @@ export class AtomicStager {
 	}
 
 	/**
-	 * Atomic rename: promote all staged files to the destination.
-	 * Walks the staging directory tree and renames each file to its
-	 * corresponding destination path. Before each rename, the original
-	 * destination file (if it exists) is backed up. On failure, all
-	 * backed-up files are restored to guarantee project consistency.
+	 * Promote staged files to the destination. Backs up originals first;
+	 * on failure restores all backups to guarantee consistency.
 	 */
 	async commitStaging(): Promise<void> {
 		const stagingDir = this.stagingRoot;
@@ -99,7 +69,6 @@ export class AtomicStager {
 		const intentPath = path.join(this.destinationRoot, BACKUP_INTENT_FILE);
 
 		// Fail-fast: refuse if previous commit was interrupted (hard-kill left orphan).
-		// Flag-based guard — avoids throw/catch string-matching anti-pattern.
 		let orphanIntent: string | null = null;
 		try {
 			orphanIntent = await fs.readFile(intentPath, "utf-8");
@@ -115,29 +84,24 @@ export class AtomicStager {
 		}
 
 		try {
-			// Write intent marker before commit starts
 			await fs.writeFile(intentPath, new Date().toISOString(), "utf-8");
 
-			// Check if staging directory exists (fs.access works for dirs; Bun.file does not)
+			// fs.access works for dirs; Bun.file does not.
 			try {
 				await fs.access(stagingDir);
 			} catch {
-				// Clean up intent marker since we're aborting before any file renames
 				await fs.unlink(intentPath).catch(() => {});
 				throw new Error("No staged files found. Call stageFile() before commitStaging().");
 			}
 
-			// Walk and rename each staged file atomically
 			const stagedFiles = await walkDirectory(stagingDir);
 			this.logger.log("commit", `promoting ${stagedFiles.length} staged file(s)`);
 			for (const stagingFilePath of stagedFiles) {
 				await this.renameStagedFile(stagingFilePath, stagingDir, backups);
 			}
 
-			// Clean up staging directory after successful commit
 			await this.cleanStaging();
 
-			// Clean up backup files on success
 			for (const backupPath of backups.values()) {
 				try {
 					await fs.unlink(backupPath);
@@ -146,12 +110,10 @@ export class AtomicStager {
 				}
 			}
 
-			// Remove intent marker on successful commit
 			await fs.unlink(intentPath).catch(() => {});
 		} catch (error) {
 			// Rollback on failure. Remove intent marker after handled rollback —
-			// only a hard-kill (SIGKILL/power loss) leaves an orphan marker that
-			// blocks the next run. A normal exception + rollback should not block.
+			// only a hard-kill leaves an orphan marker that blocks the next run.
 			this.logger.log("rollback", `restoring ${backups.size} backup(s) after failed commit`);
 			await this.restoreBackups(backups);
 			await this.cleanStaging();
@@ -162,9 +124,7 @@ export class AtomicStager {
 		}
 	}
 
-	/**
-	 * Remove the staging directory recursively.
-	 */
+	/** Remove the staging directory recursively. */
 	async cleanStaging(): Promise<void> {
 		this.logger.log("staging_cleanup", this.stagingRoot);
 		try {
@@ -174,28 +134,16 @@ export class AtomicStager {
 		}
 	}
 
-	// ---------------------------------------------------------------------------
-	// Private helpers
-	// ---------------------------------------------------------------------------
-
-	/**
-	 * Read a source file and write its content to the staging directory.
-	 * Creates intermediate directories in the staging path as needed.
-	 */
+	/** Copy a source file to the staging directory, creating parent dirs as needed. */
 	private async writeFileToStaging(sourcePath: string, stagingRelativePath: string): Promise<void> {
 		const stagingPath = this.resolveStagingPath(stagingRelativePath);
 		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
-		// Use copyFile for cross-device-safe copy (avoids loading entire file into RAM).
-		// Bun.write() would also work but loads the full content into memory.
+		// copyFile is cross-device-safe (unlike rename) and avoids loading into RAM.
 		await fs.copyFile(sourcePath, stagingPath);
 		this.logger.log("stage_file", `${sourcePath} → ${stagingPath}`);
 	}
 
-	/**
-	 * Atomically rename a single staged file to its destination path.
-	 * Before the rename, the original destination file (if it exists) is backed
-	 * up to allow rollback. Creates intermediate directories as needed.
-	 */
+	/** Atomically rename a staged file to its destination, backing up the original first. */
 	private async renameStagedFile(
 		stagingFilePath: string,
 		stagingDir: string,
@@ -205,33 +153,24 @@ export class AtomicStager {
 		const destPath = this.resolveDestinationPath(relativePath);
 		this.logger.log("commit_file", `${relativePath} → ${destPath}`);
 
-		// Ensure destination parent directory exists
 		await fs.mkdir(path.dirname(destPath), { recursive: true });
 
-		// Back up original destination file if it exists
 		try {
 			await fs.access(destPath);
 			const backupPath = `${destPath}${BACKUP_SUFFIX}`;
 			await fs.copyFile(destPath, backupPath);
 			backups.set(destPath, backupPath);
 		} catch {
-			// If destPath doesn't exist or can't be read, skip backup — proceed anyway
+			// destPath doesn't exist or can't be read — skip backup, proceed anyway
 		}
 
-		// Atomic rename: staging → destination
 		await fs.rename(stagingFilePath, destPath);
 	}
 
 	/**
-	 * Restore backed-up destination files and clean up backup files.
-	 * On any individual failure, continues with the remaining backups.
-	 *
-	 * A final sweep removes backup files whose unlink failed during the
-	 * restore loop (e.g. transient EBUSY on Windows), so interrupted or
-	 * failed commits never leave `.codice-backup` orphans behind. Only
-	 * backups whose destination was successfully restored are swept —
-	 * a backup whose copyFile failed may be the only copy of the
-	 * original content and must be preserved.
+	 * Restore backed-up destination files. Continues with remaining files
+	 * on individual failure. Sweeps only successfully-restored backups to
+	 * avoid discarding the only copy of original content.
 	 */
 	private async restoreBackups(backups: Map<string, string>): Promise<void> {
 		const restored = new Set<string>();
@@ -241,11 +180,11 @@ export class AtomicStager {
 				await fs.copyFile(backupPath, destPath);
 				restored.add(backupPath);
 			} catch {
-				// If rollback fails for a specific file, continue with others
+				// Continue restoring remaining files
 			}
 		}
-		// Final sweep: remove backups whose restore succeeded but whose unlink
-		// was skipped (the loop above never reached it) or failed transiently.
+		// Sweep only successfully-restored backups — a failed copyFile may be the
+		// only copy of original content and must be preserved.
 		for (const backupPath of restored) {
 			try {
 				await fs.unlink(backupPath);
