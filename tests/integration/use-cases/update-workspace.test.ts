@@ -400,6 +400,24 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(result.error.message).toContain("Cannot resolve version");
 		});
 
+		it("should return Failure when explicit version flag is invalid despite valid bundledVersion (fail-loud, no silent fallback)", async () => {
+			const { useCase } = createUpdateFixture({
+				gitHubTag: "v0.5.0",
+				// Valid bundled version NEWER than the seeded v2.0.0 install so the
+				// update proceeds past the up-to-date gate and reaches resolveNewVersion.
+				bundledVersion: "3.0.0",
+			});
+
+			const result = await useCase.execute("/tmp/project", {
+				force: true,
+				version: "not-a-version",
+			});
+
+			expect(result.ok).toBe(false);
+			if (result.ok) return;
+			expect(result.error.message).toContain("Cannot resolve version");
+		});
+
 		it("should handle version file write failure gracefully", async () => {
 			const { useCase, fs, calls } = createUpdateFixture();
 			fs.writeVersionFile.mockRejectedValue(new Error("Disk full"));

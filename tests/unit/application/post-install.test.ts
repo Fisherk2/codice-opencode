@@ -229,15 +229,23 @@ describe("runPostInstallSteps", () => {
 	test("skips version file write when version is undefined (no silent 0.0.0)", async () => {
 		const fs = createMockFileSystem(false);
 		const writeVersionFile = fs.writeVersionFile as ReturnType<typeof mockFn>;
+		const prompt = createMockPrompt();
 		const options = createDefaultPostInstallOptions({
 			fileSystem: fs,
+			userPrompt: prompt.stub,
 			version: undefined,
 		});
 
 		const result = await runPostInstallSteps(options);
 
 		expect(result.ok).toBe(true);
+		// Primary guard for bug #79: the undefined-version path must never
+		// fall back to writing a "0.0.0" version file.
 		expect(writeVersionFile).not.toHaveBeenCalled();
+		// Defense-in-depth: the branch completes loudly (showSuccess), not with
+		// a silent early return — pins the no-version completion contract.
+		expect(prompt.successes).toHaveLength(1);
+		expect(prompt.successes[0]).toBe("Installation complete.");
 	});
 
 	test("calls showSuccess when version file write succeeds", async () => {
