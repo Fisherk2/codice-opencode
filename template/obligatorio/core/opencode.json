@@ -172,7 +172,6 @@
       "comm *": "allow",
       "paste *": "allow",
       "join *": "allow",
-      "tee *": "allow",
       "xargs *": "allow",
       "nl *": "allow",
       "column *": "allow",
