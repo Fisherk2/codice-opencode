@@ -57,6 +57,17 @@ if ! echo "$VERSION_DATA" | grep -q '"version"'; then
 fi
 log_pass "Version file contains 'version'"
 
+# FEV-26 (#79): the written version must match the real Códice version,
+# not the "0.0.0" fallback that broke Update detection after Clean Install.
+EXPECTED_VERSION="$(jq -r '.version' "$CODICE_ROOT/package.json")"
+ACTUAL_VERSION="$(echo "$VERSION_DATA" | jq -r '.version')"
+if [[ "$ACTUAL_VERSION" != "$EXPECTED_VERSION" ]]; then
+    log_fail "Version file contains '$ACTUAL_VERSION' instead of expected '$EXPECTED_VERSION'"
+    echo "    Version data: $VERSION_DATA" >&2
+    exit 1
+fi
+log_pass "Version file contains expected version: $EXPECTED_VERSION"
+
 if ! echo "$VERSION_DATA" | grep -q '"installedPacks"'; then
     log_fail "Version file is missing the v2.0 'installedPacks' key"
     echo "    Version data: $VERSION_DATA" >&2

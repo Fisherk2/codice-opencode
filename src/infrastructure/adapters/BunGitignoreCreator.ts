@@ -44,8 +44,8 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 	 */
 	constructor(workspaceRoot: string, templatePath: string, verbose?: VerboseLogger | boolean) {
 		this.workspaceRoot = path.resolve(workspaceRoot);
-		this.templatePath = templatePath;
-		this.logger = verbose instanceof VerboseLogger ? verbose : new VerboseLogger(verbose ?? false);
+		this.templatePath = path.resolve(templatePath);
+		this.logger = VerboseLogger.from(verbose);
 	}
 
 	/**

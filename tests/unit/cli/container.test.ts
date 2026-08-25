@@ -127,11 +127,11 @@ describe("createDependencies (DI container)", () => {
 			expect(() => createDependencies()).not.toThrow();
 		});
 
-		it("should not throw when called with a custom destination path that exists (/tmp)", () => {
-			// /tmp exists on all Unix systems and is a safe test target.
-			// BunSymlinkCreator validates fs.existsSync(workspaceRoot),
-			// BunFileSystem creates AtomicStager which only stores the path.
-			expect(() => createDependencies("/tmp")).not.toThrow();
+		it("should not throw when called with a custom destination path that exists", () => {
+			// Use the OS temp dir so the test passes on Windows too
+			// (/tmp does not exist there). BunSymlinkCreator validates
+			// fs.existsSync(workspaceRoot); AtomicStager only stores the path.
+			expect(() => createDependencies(os.tmpdir())).not.toThrow();
 		});
 
 		it("should not throw when called with verbose=true", () => {
@@ -141,7 +141,7 @@ describe("createDependencies (DI container)", () => {
 		});
 
 		it("should not throw when called with custom destination and verbose=true", () => {
-			expect(() => createDependencies("/tmp", true)).not.toThrow();
+			expect(() => createDependencies(os.tmpdir(), true)).not.toThrow();
 		});
 	});
 
@@ -183,7 +183,7 @@ describe("createDependencies (DI container)", () => {
 				expect(warnSpy).toHaveBeenCalled();
 				const [firstLine] = warnSpy.mock.calls[0]!;
 				expect(String(firstLine)).toMatch(
-					/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] clean:/,
+					/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] staging_cleanup:/,
 				);
 			} finally {
 				await fs.rm(tmpDir, { recursive: true, force: true });

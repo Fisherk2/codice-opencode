@@ -9,7 +9,7 @@ The workspace ships with **~360 agents in 10 packs** organized into two levels:
 | Level | Count | Role | How They're Invoked |
 |-------|-------|------|---------------------|
 | **Primary Agents** | 6 | Entry points for slash commands | Via `/command` from the user |
-| **Subagents** | ~352 | Domain specialists in 8 selectable packs | Via `task()` from a primary agent |
+| **Subagents** | ~351 | Domain specialists in 8 selectable packs | Via `task()` from a primary agent |
 
 ### Two-Tier Model
 
@@ -32,7 +32,7 @@ packs/
 ├── main/                  (6 primary agents — MANDATORY)
 ├── writers/               (4 writer agents — MANDATORY)
 ├── software-development/  (146 agents — DEFAULT selected)
-├── business/              (92 agents)
+├── business/              (91 agents)
 ├── science-research/      (31 agents)
 ├── hardware-emerging/     (36 agents)
 ├── operations-support/    (18 agents)
@@ -41,7 +41,7 @@ packs/
 └── government-legal/      (8 agents)
 ```
 
-8 selectable packs = 352 agents; +6 primary + 4 writers = ~360 total.
+8 selectable packs = 351 agents; +6 primary + 4 writers = ~361 total.
 
 At install time, agents are copied to the flat `agents/` directory (pack is an installer concept — selected packs are chosen via the installer wizard; at runtime all agents are peers). Each agent file follows the same structure (see [Agent File Pattern](#agent-file-pattern) below).
 

@@ -7,7 +7,7 @@
  * 3. createSymlinksWithWarning — success → no warning
  * 4. createSymlinksWithWarning — failure without retryHint → no re-run hint
  * 5. createSymlinksWithWarning — failure with retryHint → re-run hint present
- * 6. runPostInstallSteps — version defaults to "0.0.0" when undefined
+ * 6. runPostInstallSteps — version undefined → skips version file write
  * 7. runPostInstallSteps — version file success → showSuccess called
  * 8. runPostInstallSteps — version file failure → returns Failure, no success
  * 9. runPostInstallSteps — gitignore fails → continues to symlinks + version file
@@ -226,20 +226,26 @@ describe("createSymlinksWithWarning", () => {
 // ── runPostInstallSteps tests ─────────────────────────────────────
 
 describe("runPostInstallSteps", () => {
-	test("uses '0.0.0' as default version when version is undefined", async () => {
+	test("skips version file write when version is undefined (no silent 0.0.0)", async () => {
 		const fs = createMockFileSystem(false);
 		const writeVersionFile = fs.writeVersionFile as ReturnType<typeof mockFn>;
+		const prompt = createMockPrompt();
 		const options = createDefaultPostInstallOptions({
 			fileSystem: fs,
+			userPrompt: prompt.stub,
 			version: undefined,
 		});
 
-		await runPostInstallSteps(options);
+		const result = await runPostInstallSteps(options);
 
-		expect(writeVersionFile).toHaveBeenCalledTimes(1);
-		const writtenData = JSON.parse(writeVersionFile.mock.calls[0]?.[0] ?? "{}");
-		expect(writtenData.version).toBe("0.0.0");
-		expect(writtenData.installedPacks).toEqual([]);
+		expect(result.ok).toBe(true);
+		// Primary guard for bug #79: the undefined-version path must never
+		// fall back to writing a "0.0.0" version file.
+		expect(writeVersionFile).not.toHaveBeenCalled();
+		// Defense-in-depth: the branch completes loudly (showSuccess), not with
+		// a silent early return — pins the no-version completion contract.
+		expect(prompt.successes).toHaveLength(1);
+		expect(prompt.successes[0]).toBe("Installation complete.");
 	});
 
 	test("calls showSuccess when version file write succeeds", async () => {

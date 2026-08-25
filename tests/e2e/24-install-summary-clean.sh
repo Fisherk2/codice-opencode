@@ -9,8 +9,8 @@
 #   - output contains the note title "📋 Installation Summary"
 #   - output contains per-pack agent counts from the manifest:
 #       "software-development (146 agents)"
-#       "business (92 agents)"
-#   - output contains the total: 146 + 92 = "Total: ~238 agents"
+#       "business (91 agents)"
+#   - output contains the total: 146 + 91 = "Total: 237 agents" (agent count is exact — no "~" prefix)
 #   - output contains the mandatory dirs: "Mandatory: core, packs/main, packs/writers"
 #   - agents/backend-developer.md EXISTS (software-development pack installed)
 #
@@ -64,11 +64,11 @@ log_info "Checking software-development agent count shown..."
 assert_contains "$CLI_OUTPUT" "software-development (146 agents)"
 
 log_info "Checking business agent count shown..."
-assert_contains "$CLI_OUTPUT" "business (92 agents)"
+assert_contains "$CLI_OUTPUT" "business (91 agents)"
 
-# 3. Total agents = 146 + 92 = 238
+# 3. Total agents = 146 + 91 = 237
 log_info "Checking total agent count shown..."
-assert_contains "$CLI_OUTPUT" "Total: ~238 agents"
+assert_contains "$CLI_OUTPUT" "Total: 237 agents"
 
 # 4. Mandatory directories include main + writers (spec §3.3)
 log_info "Checking mandatory directories shown..."

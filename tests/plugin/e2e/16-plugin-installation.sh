@@ -3,7 +3,7 @@
 # F6-T1: Plugin Installation E2E
 #
 # Scenario: Run clean install and verify SDD plugin files exist
-# Expected: Plugin .ts source and src/defaults.ts are installed
+# Expected: Plugin .ts source and src/destructivePatterns.ts are installed
 #===============================================================================
 
 set -Eeuo pipefail
@@ -42,7 +42,8 @@ log_pass "CLI exited with code 0"
 log_info "Verifying plugin files..."
 
 assert_file_exists "$TEMP_DIR/.opencode/plugins/sdd-pipeline.ts"
-assert_file_exists "$TEMP_DIR/.opencode/plugins/src/defaults.ts"
+assert_file_exists "$TEMP_DIR/.opencode/plugins/src/destructivePatterns.ts"
+assert_file_exists "$TEMP_DIR/.opencode/plugins/src/normalizeBash.ts"
 
 # ---------------------------------------------------------------------------
 # Done

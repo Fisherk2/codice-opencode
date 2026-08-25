@@ -38,6 +38,11 @@
 # /opencode.json
 # /.codice-version
 
+# Codice transient artifacts (left on interrupted installs)
+.codice-staging/
+.codice-backup*
+.codice-backup-intent
+
 # System - Excludes OS temporary files
 .DS_Store
 .DS_Store?

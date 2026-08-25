@@ -1,9 +1,3 @@
-/**
- * Unit tests for VersionComparator service.
- *
- * Tests version comparison and validation using the semver library.
- */
-
 import { describe, expect, test } from "bun:test";
 import {
 	VersionComparator,
@@ -143,5 +137,44 @@ describe("VersionComparator.compare", () => {
 		if (result.ok) {
 			expect(result.value).toBe("ahead");
 		}
+	});
+});
+
+describe("VersionComparator cache", () => {
+	test("sequential calls with identical arguments return the same result", () => {
+		const cmp = new VersionComparator();
+		const first = cmp.compare("1.0.0", "1.0.0");
+		const second = cmp.compare("1.0.0", "1.0.0");
+		expect(first.ok).toBe(true);
+		expect(second.ok).toBe(true);
+		if (first.ok && second.ok) {
+			expect(first.value).toBe(second.value);
+		}
+	});
+
+	test("deterministic result for a specific input pair across repeated calls", () => {
+		const cmp = new VersionComparator();
+		const r1 = cmp.compare("v2.3.4", "v2.3.5");
+		const r2 = cmp.compare("v2.3.4", "v2.3.5");
+		expect(r1).toEqual(r2);
+	});
+
+	test("caches validation — validateVersion not re-invoked on cache hit", () => {
+		let validationCalls = 0;
+		const wrapped = (v: string) => {
+			validationCalls++;
+			return validateVersion(v);
+		};
+
+		const cmp = new VersionComparator(wrapped);
+
+		const first = cmp.compare("1.0.0", "1.1.0");
+		expect(first.ok).toBe(true);
+		expect(validationCalls).toBe(2); // local + remote
+
+		const second = cmp.compare("1.0.0", "1.1.0");
+		expect(second.ok).toBe(true);
+		expect(validationCalls).toBe(2); // cache hit — no additional validation
+		expect(first.ok && second.ok && first.value === second.value).toBe(true);
 	});
 });

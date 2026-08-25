@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.1.0
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-19 (v2.1.0 released) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-21 (FEV-28 ✅) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -18,6 +18,9 @@
 | FEV-1 a FEV-23 | Ver sección 3 | Issues críticos, SDD refactor, CI/CD, docs, agent packs, installer UX | ✅ Completo |
 | FEV-24 | Nuevos comandos v2.1: `/sync`, `/migrate`, `/deploy`, `/analyze` + SDD plugin refactor | #68, #67, #64, #57 | ✅ Completo (2026-08-11) |
 | FEV-25 | Reglas de delegación en agentes principales | #69 | ✅ Completo (2026-08-11) |
+| FEV-26 | Quick Wins: Bug fixes + Security patches + Documentation | #79, TD-V2-70, TD-V2-90, TD-V2-91, TD-V2-93 | ✅ Completo (2026-08-20) |
+| FEV-27 | Security & Observability: Plugin cleanup + Permissions + Backup safety | #80, #81, TD-V2-9, TD-V2-51 | ✅ Completo (2026-08-20) |
+| FEV-28 | Infrastructure & Performance: CI/CD updates + Caching | TD-V2-7, TD-V2-61 | ✅ Completo (2026-08-21) |
 
 ## 2. Fases Iniciales (F0 – F6.5)
 
@@ -110,6 +113,105 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 **FEV-24 métricas finales:** 4 comandos nuevos, 17→17 commands, SDD plugin simplificado (INTENT_PATTERNS eliminado, auto-discovery), 2052 tests / 0 fail, 31/31 E2E, just check 0 errores
 
+---
+
+### v2.1.1
+
+#### FEV-26: Quick Wins — Bug fixes + Security patches + Documentation
+
+**Objetivo:** Resolver el bug crítico #79, parches de seguridad, y correcciones de metadata.
+**Effort total:** 4-6h | **Riesgo:** Bajo | **Estado:** ✅ Completo (2026-08-20)
+
+| ID | Item | Effort | Risk | Diagnóstico |
+|----|------|--------|------|-------------|
+| **#79** | `.codice-version` no escrito tras Clean Install | 2-3h | High | `fix14-clean-install-version-file.md` |
+| **TD-V2-70** | Shell injection via `github.ref_name` | 0.5h | Medium | `fix17-shell-injection-github-ref-name.md` |
+| **TD-V2-90** | Business pack agent count mismatch (92→91) | 0.5h | Low | `fix06-business-pack-agent-count.md` |
+| **TD-V2-91** | Writers pack agent count mismatch (2→4) | 0.5h | Low | `fix07-writers-pack-agent-count.md` |
+| **TD-V2-93** | Outdated comments in FileMergeEngine | 1h | Low | `fix10-outdated-comments-file-merge-engine.md` |
+
+**Criterios de éxito:**
+- Bug #79 resuelto: Clean Install escribe `.codice-version` con versión correcta
+- Shell injection corregido: `release.yml` usa `$GITHUB_REF_NAME` en lugar de `${{ github.ref_name }}`
+- Manifest actualizado: business pack (91 agentes), writers pack (4 agentes)
+- Comentarios actualizados en `FileMergeEngine.ts`
+- Tests: 2052+ pasando, coverage ≥95%
+
+**Diagnósticos:** `fix14`, `fix17`, `fix20`, `fix24`, `fix23`
+
+---
+
+#### FEV-27: Security & Observability — Plugin cleanup + Permissions + Backup safety
+
+**Objetivo:** Simplificar plugin SDD, gobernanza de directorios externos, mejorar seguridad de backups.
+**Effort total:** 6-8h + code review | **Riesgo:** Medio | **Estado:** ✅ Completo (2026-08-21, code review hardened)
+
+| ID | Item | Effort | Risk | Diagnóstico |
+|----|------|--------|------|-------------|
+| **#80** | Limpieza del plugin (solo bloqueo destructivo) | 3-4h | Medium | `fix15-plugin-cleanup.md` |
+| **#81** | Permisos directorios externos (deny-by-default) | 1-2h | Medium | `fix16-external-directory-permissions.md` |
+| **TD-V2-9** | SIGINT mid-commit backup overwrite | 2-3h | Low | `fix05-sigint-backup-overwrite.md` |
+| **TD-V2-51** | Missing staging_cleanup event | 1h | Low | `fix09-missing-staging-cleanup-event.md` |
+
+**Criterios de éxito:**
+- Plugin simplificado: solo bloquea comandos destructivos
+- `opencode.json` incluye `external_directory` con deny-by-default
+- Backup safety: `AtomicStager` persiste rollback intent o documenta limitación
+- Evento `staging_cleanup` emitido y visible en verbose mode
+- Code review hardening: 1 Critical + 4 Important + 3 Suggestions aplicados
+- Tests: 1934 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors
+
+##### Resultados de code review (commit `a2964fd`)
+
+| ID | Severidad | Hallazgo | Resolución |
+|----|-----------|----------|------------|
+| C1 | Critical | Plugin gate no leía `output.args.command` correctamente | `extractBashCommand` ahora lee `output.args.command` |
+| I1 | Important | Tests no invocaban el hook real del plugin | 5 integration tests nuevos con `output.args.command` correcto |
+| I2 | Important | Marker de backup no se limpiaba en fallo manejado | `AtomicStager` remueve marker en fallo manejado |
+| I3 | Important | Patrones `rm -r -f` y `rm -f -r` no cubiertos | Añadidos a destructivePatterns |
+| I4 | Important | Detección de huérfanos frágil (string matching) | Flag-based guard reemplaza string matching |
+| S1 | Suggestion | Variante `staging_cleanup` muerta en ProgressCallback | Eliminada (evento se emite via VerboseLogger, no ProgressCallback) |
+| S2 | Suggestion | Faltaban patrones staging/backup en gitignore | Añadidos a `template/estandar/gitignore` |
+
+**Diagnósticos:** `fix15`, `fix16`, `fix19`, `fix21`
+
+---
+
+#### FEV-28: Infrastructure & Performance — CI/CD updates + Caching
+
+**Objetivo:** Actualizar SHA-pins de GitHub Actions para Node 24, optimizar comparación de versiones.
+**Effort total:** 2-3h | **Riesgo:** Bajo | **Estado:** ✅ Completo (2026-08-21)
+
+| ID | Item | Effort | Risk | Diagnóstico |
+|----|------|--------|------|-------------|
+| **TD-V2-7** | Action SHA-pins force Node 24 (deprecated) | 1-2h | Low | `fix10-action-sha-pins-node24.md` |
+| **TD-V2-61** | No caching for version comparison | 1h | Low | `fix09-no-caching-version-comparison.md` |
+
+**Dependencias:** Ninguna — inicio limpio tras FEV-27 completo.
+
+**Criterios de éxito:**
+- CI/CD: SHA-pins actualizados a últimas versiones compatibles con Node 24
+- `VersionComparator` cachea parsed semver objects
+- Tests: 1934 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors
+- CI matrix (Linux, macOS, Windows) sin warnings de Node 24 deprecation
+
+**Diagnósticos:** `fix23`, `fix22`
+
+---
+
+#### Resumen de Fases v2.1.1
+
+| Fase | Items | Effort Total | Risk | Prioridad |
+|------|-------|--------------|------|-----------|
+| FEV-26 | 5 items (1 bug + 4 TD) | 4-6h | Bajo | ✅ Completo |
+| FEV-27 | 4 items (2 issues + 2 TD) + code review | 6-8h | Medio | ✅ Completo (code review hardened) |
+| FEV-28 | 2 items (2 TD) | 2-3h | Bajo | ✅ Completo (2026-08-21) |
+| **Total** | **11 items** | **12-17h** | — | — |
+
+**Estrategia:** FEV-26 ✅ + FEV-27 ✅ (code review hardened) + FEV-28 ✅ completados. v2.1.1-beta.1 lista para release.
+
+**Release v2.1.1-beta.1:** Todas las fases completadas. Publish con dist-tag `beta` → `@fisherk2-dev/codice@2.1.1-beta.1`.
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -154,3 +256,4 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | v1.2.0 | 844 | 15/15 | 98.1% | 2026-08-03 |
 | v2.0.0 | 1920 | 30/30 | 95.68% | 2026-08-07 |
 | v2.1.0-beta.1 | 2052 | 31/31 | ≥95% | 2026-08-12 |
+| v2.1.1-beta.1 | 1934 | 31/31 | ≥95% | 2026-08-21 |

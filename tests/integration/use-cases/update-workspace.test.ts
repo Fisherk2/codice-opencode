@@ -386,19 +386,36 @@ describe("UpdateWorkspaceUseCase", () => {
 			expect(gitignoreWarnings.length).toBe(0);
 		});
 
-		it("should fall back to '0.0.0' when bundledVersion is invalid semver", async () => {
-			const { useCase, calls } = createUpdateFixture({
+		it("should return Failure when bundledVersion is invalid semver (fail-loud, no silent 0.0.0)", async () => {
+			const { useCase } = createUpdateFixture({
 				gitHubTag: "v0.5.0",
-				// Pass invalid semver as bundledVersion to trigger fallback
+				// Pass invalid semver as bundledVersion to trigger failure
 				bundledVersion: "not-a-valid-version",
 			});
 
 			const result = await useCase.execute("/tmp/project", { force: true });
 
-			expect(result.ok).toBe(true);
-			// Version file should contain the fallback "0.0.0"
-			const versionData = JSON.parse(calls.writeVersionFile[0]!);
-			expect(versionData.version).toBe("0.0.0");
+			expect(result.ok).toBe(false);
+			if (result.ok) return;
+			expect(result.error.message).toContain("Cannot resolve version");
+		});
+
+		it("should return Failure when explicit version flag is invalid despite valid bundledVersion (fail-loud, no silent fallback)", async () => {
+			const { useCase } = createUpdateFixture({
+				gitHubTag: "v0.5.0",
+				// Valid bundled version NEWER than the seeded v2.0.0 install so the
+				// update proceeds past the up-to-date gate and reaches resolveNewVersion.
+				bundledVersion: "3.0.0",
+			});
+
+			const result = await useCase.execute("/tmp/project", {
+				force: true,
+				version: "not-a-version",
+			});
+
+			expect(result.ok).toBe(false);
+			if (result.ok) return;
+			expect(result.error.message).toContain("Cannot resolve version");
 		});
 
 		it("should handle version file write failure gracefully", async () => {

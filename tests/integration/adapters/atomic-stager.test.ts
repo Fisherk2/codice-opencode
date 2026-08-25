@@ -1,10 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, expect, it, spyOn } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { AtomicStager } from "../../../src/infrastructure/adapters/AtomicStager";
 import { walkDirectory } from "../../../src/infrastructure/adapters/directoryWalker";
-import { STAGING_DIR_NAME } from "../../../src/infrastructure/config/constants";
+import { VerboseLogger } from "../../../src/infrastructure/adapters/VerboseLogger";
+import { BACKUP_INTENT_FILE, STAGING_DIR_NAME } from "../../../src/infrastructure/config/constants";
 
 /** fs.access works for dirs; Bun.file().exists() does not. */
 async function dirExists(dirPath: string): Promise<boolean> {
@@ -44,6 +45,14 @@ describe("AtomicStager", () => {
 
 	afterAll(async () => {
 		await fs.rm(tmpDir, { recursive: true, force: true });
+	});
+
+	let warnSpy: ReturnType<typeof spyOn>;
+
+	afterEach(async () => {
+		warnSpy?.mockRestore();
+		// Clean up intent marker left by failed commits so subsequent tests start clean
+		await fs.unlink(path.join(destDir, BACKUP_INTENT_FILE)).catch(() => {});
 	});
 
 	it("rejects commitStaging when nothing was staged", async () => {
@@ -118,5 +127,48 @@ describe("AtomicStager", () => {
 		expect(await Bun.file(path.join(destDir, "pkg", "node_modules", "dep.txt")).exists()).toBe(
 			false,
 		);
+	});
+
+	it("emits staging_cleanup event on verbose logger during cleanStaging", async () => {
+		const verboseStager = new AtomicStager(destDir, new VerboseLogger(true));
+		warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+
+		const src = path.join(templateDir, "verbose.txt");
+		await fs.writeFile(src, "VERBOSE");
+
+		await verboseStager.stageFile(src, "verbose.txt");
+		await verboseStager.commitStaging();
+
+		const calls = warnSpy.mock.calls.map((call: readonly unknown[]) => String(call[0]));
+		expect(calls.some((line: string) => line.includes("staging_cleanup"))).toBe(true);
+	});
+
+	it("writes .codice-backup-intent marker during commitStaging and removes it on success", async () => {
+		const src = path.join(templateDir, "intent.txt");
+		await fs.writeFile(src, "INTENT");
+
+		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+
+		// Intent marker should not exist before commit
+		expect(await Bun.file(intentPath).exists()).toBe(false);
+
+		await stager.stageFile(src, "intent.txt");
+		await stager.commitStaging();
+
+		// Intent marker should be removed after successful commit
+		expect(await Bun.file(intentPath).exists()).toBe(false);
+		expect(await Bun.file(path.join(destDir, "intent.txt")).text()).toBe("INTENT");
+	});
+
+	it("throws when .codice-backup-intent exists from interrupted commit", async () => {
+		// Simulate interrupted commit by creating intent marker
+		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+		await fs.writeFile(intentPath, "2026-08-20T12:00:00.000Z", "utf-8");
+
+		const src = path.join(templateDir, "retry.txt");
+		await fs.writeFile(src, "RETRY");
+		await stager.stageFile(src, "retry.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/Previous commit was interrupted/);
 	});
 });

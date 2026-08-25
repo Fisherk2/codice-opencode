@@ -1,39 +1,37 @@
 // ---------------------------------------------------------------------------
-// DESTRUCTIVE_PATTERNS — Safety boundary for bash command execution
-//
-// SAFETY BOUNDARY — NOT configurable per OQ-4.
-// These patterns block destructive commands (rm -rf, git push --force,
-// DROP TABLE, etc.) from being executed via the Bash tool. They are
-// hardcoded and NOT part of the SddPipelineConfig to prevent accidental
-// bypass of the safety net.
-//
-// NOTE: This is a safety net, not a security boundary. Advanced bypasses
-// (variable expansion, command substitution) are not covered. Use proper
-// sandboxing for untrusted code.
+// DESTRUCTIVE_PATTERNS — Safety boundary for bash command execution.
+// Hardcoded (NOT configurable) to prevent accidental bypass. This is a
+// safety net, not a security boundary — advanced bypasses (variable
+// expansion, command substitution) require proper sandboxing.
 // ---------------------------------------------------------------------------
 
 export const DESTRUCTIVE_PATTERNS: readonly RegExp[] = [
 	// ─── Filesystem ─────────────────────────────────────
 	/rm\s+-[a-z]*r[a-z]*f\b/i, // [existing] rm -r -f, rm -rf, rm -fir
 	/rm\s+-[a-z]*f[a-z]*r\b/i, // [existing] rm -f -r (reversed flags)
+	/rm\s+-r\s+-f\b/i, // rm -r -f (split flags — separate flag groups)
+	/rm\s+-f\s+-r\b/i, // rm -f -r (split flags — reversed)
 	/shred\s+/i, // shred — secure file deletion
 	/find\s+.*-exec(dir)?\b/i, // find -exec / find -execdir — blocks both variants
 	/find\s+.*-delete\b/i, // find -delete
 
 	// ─── Git ────────────────────────────────────────────
-	/git\s+push\s+(-f|--force)\b/i, // [existing] git push --force
-	/git\s+reset\s+--hard\b/i, // git reset --hard
-	/git\s+clean\s+-fd\b/i, // git clean -fd
+	/git\s+push\s+(-f|--force|--force-with-lease)\b/i, // git push --force / --force-with-lease
+	/git\s+reset\s+--(hard|mixed)\b/i, // git reset --hard / --mixed
+	/git\s+clean\s+-f[d-x]+\b/i, // git clean -fd / -fdx / -fxd etc.
 	/git\s+filter-repo\b/i, // git filter-repo
 	/git\s+branch\s+-D\b/i, // git branch -D
 	/git\s+stash\s+(drop|clear)\b/i, // git stash drop / clear
+	/git\s+checkout\s+(--\s*\.|-f\b)/i, // git checkout -- . / git checkout -f (discard working tree) — no trailing \b: `-- .` at end of input needs no word boundary
+	/git\s+restore\b/i, // git restore (discard changes)
 
 	// ─── SQL ────────────────────────────────────────────
 	/drop\s+table\b/i, // [existing] DROP TABLE
 	/drop\s+database\b/i, // [existing] DROP DATABASE
 	/drop\s+schema\b/i, // DROP SCHEMA
 	/truncate\s+(table\s+)?\w+/i, // TRUNCATE TABLE
-	/delete\s+from\s+\w+\s*;?\s*$/i, // DELETE FROM (no WHERE clause)
+	/delete\s+from\s+\w+\s*(?:;\s*)?$/i, // DELETE FROM (no WHERE clause)
+	/delete\s+from\s+\w+\s+where\s+(1|true|1\s*=\s*1)\b/i, // DELETE ... WHERE 1=1 / true / 1 (tautology)
 
 	// ─── Docker ─────────────────────────────────────────
 	/docker\s+(rm|rmi|container\s+rm|image\s+rm)\s+.*-f/i, // docker rm / rmi -f

@@ -3,9 +3,30 @@ import type { FileRule } from "./FileRule";
 /**
  * Build a selectable pack rule. All packs share the same destination
  * mapping and category; only the path, description, and agent count vary.
+ * agentCount is the single source of truth for the wizard label and install
+ * summary — the description stays clean (no count suffix) to avoid
+ * duplicating the count in the pack wizard (label already shows it).
+ * Validated by pack-agent-counts.test.
  */
 function pack(path: string, description: string, agentCount: number): FileRule {
-	return { path, destPath: "agents", category: "pack", isDirectory: true, description, agentCount };
+	return {
+		path,
+		destPath: "agents",
+		category: "pack",
+		isDirectory: true,
+		description,
+		agentCount,
+	};
+}
+
+/** Build a standard rule (copied only if missing). */
+function file(path: string, description: string, isDirectory = false): FileRule {
+	return { path, category: "standard", isDirectory, description };
+}
+
+/** Build an optional rule (copied only if user opts in). */
+function optional(path: string, description: string, isDirectory = false): FileRule {
+	return { path, category: "optional", isDirectory, description };
 }
 
 /**
@@ -50,7 +71,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		category: "mandatory",
 		isDirectory: true,
 		description:
-			"2 writer agents (docs-writer, obsidian-vault-writer) — scientific-literature-researcher moved to science-research pack in FEV-18",
+			"4 writer agents (docs-writer, obsidian-vault-writer, technical-writer, document-generator)",
 	},
 	// v2.0 (FEV-18/FEV-21): 8 selectable agent packs. Category "pack" marks
 	// them as wizard-selectable: the installer asks the user which packs to
@@ -58,180 +79,72 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// They live under obligatorio/ so TemplateResolver can still discover them.
 	pack(
 		"packs/software-development",
-		"Software development pack (default ON, 146 agents: backend, frontend, mobile, DevOps, databases, AI/ML, security, testing)",
+		"Software development pack (default ON: backend, frontend, mobile, DevOps, databases, AI/ML, security, testing)",
 		146,
 	),
 	pack(
 		"packs/business",
-		"Business pack (92 agents: marketing, sales, product, project management, operations)",
-		92,
+		"Business pack (marketing, sales, product, project management, operations)",
+		91,
 	),
 	pack(
 		"packs/hardware-emerging",
-		"Hardware-emerging pack (36 agents: IoT, embedded, blockchain, XR/spatial, game development)",
+		"Hardware-emerging pack (IoT, embedded, blockchain, XR/spatial, game development)",
 		36,
 	),
 	pack(
 		"packs/science-research",
-		"Science-research pack (31 agents: academic, GIS, healthcare, research, scientific-literature-researcher)",
+		"Science-research pack (academic, GIS, healthcare, research, scientific-literature-researcher)",
 		31,
 	),
 	pack(
 		"packs/operations-support",
-		"Operations-support pack (18 agents: customer support, IT ops, HR, translation)",
+		"Operations-support pack (customer support, IT ops, HR, translation)",
 		18,
 	),
-	pack(
-		"packs/finance",
-		"Finance pack (11 agents: financial analysis, fintech, payments, accounting)",
-		11,
-	),
-	pack("packs/creative", "Creative pack (10 agents: design, UI/UX, brand, motion)", 10),
+	pack("packs/finance", "Finance pack (financial analysis, fintech, payments, accounting)", 11),
+	pack("packs/creative", "Creative pack (design, UI/UX, brand, motion)", 10),
 	pack(
 		"packs/government-legal",
-		"Government-legal pack (8 agents: legal, compliance, privacy, regulatory)",
+		"Government-legal pack (legal, compliance, privacy, regulatory)",
 		8,
 	),
 
 	// =============================================
 	// ESTANDAR (Standard) — copied only if missing
 	// =============================================
-	{
-		path: "AGENTS.md",
-		category: "standard",
-		isDirectory: false,
-		description: "Project-specific agent instructions; user may customize",
-	},
-	{
-		path: "CHANGELOG.md",
-		category: "standard",
-		isDirectory: false,
-		description: "Project changelog; user owns content",
-	},
-	{
-		path: "CONTRIBUTING.md",
-		category: "standard",
-		isDirectory: false,
-		description: "Contribution guidelines; user may tailor",
-	},
-	{
-		path: "CODE_OF_CONDUCT.md",
-		category: "standard",
-		isDirectory: false,
-		description: "Code of conduct for contributors (placeholder, customize for your project)",
-	},
-	{
-		path: "LICENSE",
-		category: "standard",
-		isDirectory: false,
-		description: "License text; user may replace",
-	},
-	{
-		path: "README.md",
-		category: "standard",
-		isDirectory: false,
-		description: "Project readme; user will overwrite with project content",
-	},
-	{
-		path: "SPEC.md",
-		category: "standard",
-		isDirectory: false,
-		description: "Specification document; user may extend",
-	},
-	{
-		path: ".env.example",
-		category: "standard",
-		isDirectory: false,
-		description: "Environment variable template; user may expand",
-	},
+	file("AGENTS.md", "Project-specific agent instructions; user may customize"),
+	file("CHANGELOG.md", "Project changelog; user owns content"),
+	file("CONTRIBUTING.md", "Contribution guidelines; user may tailor"),
+	file(
+		"CODE_OF_CONDUCT.md",
+		"Code of conduct for contributors (placeholder, customize for your project)",
+	),
+	file("LICENSE", "License text; user may replace"),
+	file("README.md", "Project readme; user will overwrite with project content"),
+	file("SPEC.md", "Specification document; user may extend"),
+	file(".env.example", "Environment variable template; user may expand"),
 	// NOTE: .gitignore renamed to gitignore (no dot). npm excludes .gitignore
 	// from packages. Generated post-install by BunGitignoreCreator (ADR-009).
-	{
-		path: "docs",
-		category: "standard",
-		isDirectory: true,
-		description: "Documentation directory — standard by default, with optional exceptions",
-	},
-	{
-		path: "specs",
-		category: "standard",
-		isDirectory: true,
-		description: "Specifications directory — standard by default, with optional exceptions",
-	},
-	{
-		path: "tasks",
-		category: "standard",
-		isDirectory: true,
-		description: "Task tracking directory; user may extend",
-	},
+	file("docs", "Documentation directory — standard by default, with optional exceptions", true),
+	file("specs", "Specifications directory — standard by default, with optional exceptions", true),
+	file("tasks", "Task tracking directory; user may extend", true),
 
 	// =============================================
 	// OPCIONAL (Optional) — only if user opts in
 	// =============================================
-	{
-		path: ".gitmessage",
-		category: "optional",
-		isDirectory: false,
-		description: "Git commit message template; team-specific customization",
-	},
-	{
-		path: ".opencode/plugins/sdd-workflow-test.md",
-		category: "optional",
-		isDirectory: false,
-		description: "SDD pipeline workflow test specs; only needed for plugin validation",
-	},
-	{
-		path: "Justfile",
-		category: "optional",
-		isDirectory: false,
-		description: "Just task runner; not all users need it",
-	},
-	{
-		path: "Makefile",
-		category: "optional",
-		isDirectory: false,
-		description: "Alternative task runner; mutually exclusive with Justfile for many teams",
-	},
-	{
-		path: "requirements.txt",
-		category: "optional",
-		isDirectory: false,
-		description: "Python dependencies; only relevant for Python-based workspaces",
-	},
-	{
-		path: "scripts",
-		category: "optional",
-		isDirectory: true,
-		description: "Utility scripts; user may add their own",
-	},
-	{
-		path: "Dockerfile",
-		category: "optional",
-		isDirectory: false,
-		description: "Docker container definition; only needed for containerized workflows",
-	},
-	{
-		path: "docker-compose.yml",
-		category: "optional",
-		isDirectory: false,
-		description: "Docker Compose service definitions",
-	},
-	{
-		path: "docs/DESIGN.md",
-		category: "optional",
-		isDirectory: false,
-		description: "Design documentation; user may prefer own format",
-	},
-	{
-		path: "docs/SCHEMA.md",
-		category: "optional",
-		isDirectory: false,
-		description: "Schema reference; user may generate from code",
-	},
-	{
-		path: "specs/design",
-		category: "optional",
-		isDirectory: true,
-		description: "Design-specific specs; user may manage design elsewhere",
-	},
+	optional(".gitmessage", "Git commit message template; team-specific customization"),
+	optional(
+		".opencode/plugins/sdd-workflow-test.md",
+		"SDD pipeline workflow test specs; only needed for plugin validation",
+	),
+	optional("Justfile", "Just task runner; not all users need it"),
+	optional("Makefile", "Alternative task runner; mutually exclusive with Justfile for many teams"),
+	optional("requirements.txt", "Python dependencies; only relevant for Python-based workspaces"),
+	optional("scripts", "Utility scripts; user may add their own", true),
+	optional("Dockerfile", "Docker container definition; only needed for containerized workflows"),
+	optional("docker-compose.yml", "Docker Compose service definitions"),
+	optional("docs/DESIGN.md", "Design documentation; user may prefer own format"),
+	optional("docs/SCHEMA.md", "Schema reference; user may generate from code"),
+	optional("specs/design", "Design-specific specs; user may manage design elsewhere", true),
 ];

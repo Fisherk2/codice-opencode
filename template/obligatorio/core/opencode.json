@@ -15,37 +15,37 @@
       "model": "opencode/deepseek-v4-flash-free",
       "color": "#d3e22b",
       "temperature": 0.5,
-      "steps": 30
+      "steps": 50
     },
     "quetzalcoatl": {
       "model": "opencode/nemotron-3-ultra-free",
       "color": "#ffffff",
       "temperature": 0.2,
-      "steps": 100
+      "steps": 120
     },
     "moctezuma": {
       "model": "opencode/big-pickle",
       "color": "#8B4513",
       "temperature": 0.1,
-      "steps": 40
+      "steps": 100
     },
     "tlaloc": {
       "model": "opencode/nemotron-3.5-lightning-free",
       "color": "#00ffff",
       "temperature": 0.2,
-      "steps": 150
+      "steps": 200
     },
     "mictlantecuhtli": {
       "model": "opencode/mimo-v2.5-free",
       "color": "#2d2d2d",
       "temperature": 0.2,
-      "steps": 125
+      "steps": 150
     },
     "tezcatlipoca": {
       "model": "opencode/deepseek-v4-flash-free",
       "color": "#ff3134",
       "temperature": 0.1,
-      "steps": 80
+      "steps": 100
     },
     "build": {
       "disable": true
@@ -85,6 +85,64 @@
     }
   },
 
+  "mcp": {
+    "codebase-memory-mcp": {
+      "enabled": false
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
+      "enabled": false
+    },
+    "excel": {
+      "type": "local",
+      "command": ["uvx", "excel-mcp-server", "stdio"],
+      "enabled": false
+    },
+    "jupyter": {
+      "type": "local",
+      "command": ["uvx", "mcp-jupyter-notebook"],
+      "enabled": false,
+      "env": {
+        "MCP_JUPYTER_SESSION_MODE": "server",
+        "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
+        "MCP_JUPYTER_TOKEN": "{env:MCP_JUPYTER_TOKEN}",
+        "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
+      }
+    },
+    "tavily": {
+      "type": "remote",
+      "url": "https://mcp.tavily.com/mcp",
+      "headers": {
+        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+      },
+      "enabled": false
+    },
+    "firecrawl": {
+      "type": "remote",
+      "url": "https://mcp.firecrawl.dev/v2/mcp",
+      "headers": {
+        "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
+      },
+      "enabled": false
+    },
+    "vercel-grep": {
+      "type": "remote",
+      "url": "https://mcp.grep.app",
+      "enabled": true
+    },
+    "gitmcp": {
+      "type": "remote",
+      "url": "https://gitmcp.io/docs",
+      "enabled": true
+    }
+  },
+
   "permission": {
     "task": {
       "*": "deny"
@@ -114,7 +172,6 @@
       "comm *": "allow",
       "paste *": "allow",
       "join *": "allow",
-      "tee *": "allow",
       "xargs *": "allow",
       "nl *": "allow",
       "column *": "allow",
@@ -229,13 +286,28 @@
       "* .ovpn *": "deny",
       "rm -rf *": "deny",
       "rm -fr *": "deny",
+      "rm -r -f *": "deny",
+      "rm -f -r *": "deny",
+      "rm -rfv *": "deny",
+      "rm -rfv/*": "deny",
       "shred *": "deny",
       "find * -exec rm *": "deny",
       "find * -delete": "deny",
+      "tee *": "deny",
+      "sed -i *": "deny",
+      "xargs rm *": "deny",
+      "xargs rmdir *": "deny",
       "git push -f *": "deny",
       "git push --force *": "deny",
+      "git push --force-with-lease *": "deny",
       "git reset --hard *": "deny",
+      "git reset --mixed *": "deny",
       "git clean -fd *": "deny",
+      "git clean -fdx *": "deny",
+      "git clean -fxd *": "deny",
+      "git checkout -- *": "deny",
+      "git checkout -f *": "deny",
+      "git restore *": "deny",
       "git filter-repo *": "deny",
       "git branch -D *": "deny",
       "git stash drop": "deny",
@@ -278,7 +350,7 @@
       "yum remove *": "deny",
       "dnf remove *": "deny",
       "unset PATH": "deny",
-      "export PATH=*": "deny",
+      "export PATH=[^$]*": "deny",
       "mkfs *": "deny",
       "dd if=*": "deny",
       "fdisk /dev/*": "deny",
@@ -312,6 +384,7 @@
       "*.p12": "deny",
       "*.pfx": "deny",
       "credentials.json": "deny",
+      ".cargo/credentials": "deny",
       "service-account*.json": "deny",
       ".ssh/id_*": "deny",
       ".ssh/config": "deny",
@@ -320,67 +393,20 @@
       ".netrc": "deny",
       ".pgpass": "deny",
       ".git-credentials": "deny",
+      ".s3cfg": "deny",
+      ".config/gh/hosts.yml": "deny",
       ".docker/config.json": "deny",
       "*.gpg": "deny",
-      "*.ovpn": "deny"
-    }
+      "*.ovpn": "deny",
+      "*.mobileprovision": "deny"
   },
-
-  "mcp": {
-    "codebase-memory-mcp": {
-      "enabled": false
-    },
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp",
-      "enabled": true
-    },
-    "chrome-devtools": {
-      "type": "local",
-      "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
-      "enabled": false
-    },
-    "excel": {
-      "type": "local",
-      "command": ["uvx", "excel-mcp-server", "stdio"],
-      "enabled": false
-    },
-    "jupyter": {
-      "type": "local",
-      "command": ["uvx", "mcp-jupyter-notebook"],
-      "enabled": false,
-      "env": {
-        "MCP_JUPYTER_SESSION_MODE": "server",
-        "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
-        "MCP_JUPYTER_TOKEN": "{env:MCP_JUPYTER_TOKEN}",
-        "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
-      }
-    },
-    "tavily": {
-      "type": "remote",
-      "url": "https://mcp.tavily.com/mcp",
-      "headers": {
-        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
-      },
-      "enabled": false
-    },
-    "firecrawl": {
-      "type": "remote",
-      "url": "https://mcp.firecrawl.dev/v2/mcp",
-      "headers": {
-        "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
-      },
-      "enabled": false
-    },
-    "vercel-grep": {
-      "type": "remote",
-      "url": "https://mcp.grep.app",
-      "enabled": true
-    },
-    "gitmcp": {
-      "type": "remote",
-      "url": "https://gitmcp.io/docs",
-      "enabled": true
+    "external_directory": {
+      "*": "deny",
+      "~/.bun/*": "allow",
+      "~/.cargo/*": "allow",
+      "~/go/*": "allow",
+      "~/.cache/*": "allow",
+      "/tmp/*": "allow"
     }
   }
 }

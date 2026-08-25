@@ -177,8 +177,8 @@ export interface InstallSummaryInfo {
 	readonly mandatoryDirs: readonly string[];
 	/** Optional files the user selected (empty if none) */
 	readonly optionalFiles: readonly string[];
-	/** Total estimated agents (sum of pack agentCount) */
+	/** Total exact agents (sum of pack agentCount, verified by pack-agent-counts.test) */
 	readonly totalAgents: number;
-	/** Total estimated files (packs + mandatory + optionals) */
+	/** Total files (packs + mandatory + optionals) */
 	readonly totalFiles: number;
 }
