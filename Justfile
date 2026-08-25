@@ -64,8 +64,10 @@ check-plugin:
     bunx @biomejs/biome check template/obligatorio/core/.opencode/plugins/ template/opcional/.opencode/plugins/ && bunx tsc -p template/obligatorio/core/.opencode/plugins/tsconfig.json
 
 # Run plugin unit tests
+# FEV-27 reduced the shipped template plugin to a minimal stub and moved the
+# full plugin (with its unit tests) to the dev copy at .opencode/plugins/.
 test-plugin-unit:
-    bun test ./template/obligatorio/core/.opencode/plugins/src/__tests__/*.test.ts
+    bun test ./.opencode/plugins/src/__tests__/*.test.ts
 
 # Run plugin integration tests
 test-plugin-integration:
