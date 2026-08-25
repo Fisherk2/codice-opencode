@@ -17,6 +17,18 @@ export class VerboseLogger {
 	constructor(private readonly enabled: boolean) {}
 
 	/**
+	 * Create a VerboseLogger from the union type used across adapters.
+	 *
+	 * Adapters accept `VerboseLogger | boolean` for backward compatibility.
+	 * This factory centralizes the instanceof check so callers write one line.
+	 *
+	 * @param verbose - VerboseLogger instance, boolean flag, or undefined (disabled).
+	 */
+	static from(verbose?: VerboseLogger | boolean): VerboseLogger {
+		return verbose instanceof VerboseLogger ? verbose : new VerboseLogger(verbose ?? false);
+	}
+
+	/**
 	 * Emit a timestamped, structured line to stderr when verbose is enabled.
 	 *
 	 * Format: `[ISO-8601] operation: detail`. Every call site in the adapters

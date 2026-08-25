@@ -12,9 +12,9 @@ import type { InstallSummaryInfo } from "./ports/IUserPrompt";
  *
  * Derivation: mandatory directories (core/, packs/) each contain a handful of
  * top-level entries — opencode.json, commands/, skills/, .opencode/, agents/
- * — so 5 approximates the non-agent file count. The summary is labeled "~"
- * and informational only (spec §3.3); exact counts would require walking the
- * template, which the pre-install summary intentionally avoids.
+ * — so 5 approximates the non-agent file count. The file count is labeled "~"
+ * (approximate) while agent counts are exact (verified by pack-agent-counts.test).
+ * The summary is informational only (spec §3.3).
  */
 const ESTIMATED_FILES_PER_MANDATORY_DIR = 5;
 
@@ -66,7 +66,7 @@ export function formatInstallSummary(info: InstallSummaryInfo): string {
 		`Packs: ${info.packs.map((pack) => `${pack.id} (${pack.agentCount} agents)`).join(", ")}`,
 		info.mandatoryDirs.length > 0 ? `Mandatory: ${info.mandatoryDirs.join(", ")}` : null,
 		info.optionalFiles.length > 0 ? `Optional: ${info.optionalFiles.length} file(s)` : null,
-		`Total: ~${info.totalAgents} agents | ~${info.totalFiles} files`,
+		`Total: ${info.totalAgents} agents | ~${info.totalFiles} files`,
 	]
 		.filter(Boolean)
 		.join("\n");

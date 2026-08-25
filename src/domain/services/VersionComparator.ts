@@ -22,6 +22,9 @@ export function validateVersion(version: string): Result<string, Error> {
 /**
  * Validate both version strings and return normalized valid forms.
  * Returns Failure with actionable message if either is invalid.
+ *
+ * Pure utility — no side effects. Used by tests and available as a
+ * reusable domain helper for callers that need dual-validation in one call.
  */
 export function validateVersions(
 	local: string,
@@ -34,20 +37,20 @@ export function validateVersions(
 	return success({ localValid: localResult.value, remoteValid: remoteResult.value });
 }
 
-/**
- * Compares semantic versions for the Update mode workflow.
- * All methods are pure — no I/O, no side effects.
- *
- * Uses the `semver` library for parsing and comparison.
- */
+/** Service for the Update mode workflow — memoized; no I/O. */
 export class VersionComparator implements IVersionComparator {
+	/** Caches normalized semver strings to avoid repeated valid() normalization. */
+	private readonly parsedCache = new Map<string, string>();
+
 	/**
-	 * Explicit empty constructor.
-	 * Present to avoid Bun's coverage tool counting an implicit constructor
-	 * as an uncovered function. (REF: TECH_DEBT.md TD-1.2)
+	 * Explicit constructor for dependency injection (testability).
+	 * Without arguments, uses the default semver-based validation.
+	 * (REF: TECH_DEBT.md TD-1.2 — also avoids Bun coverage artifact.)
 	 */
-	// biome-ignore lint/complexity/noUselessConstructor: Needed to fix Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
-	constructor() {}
+	constructor(
+		private readonly validateFn: (v: string) => Result<string, Error> = validateVersion,
+	) {}
+
 	/**
 	 * Compare a local version against a remote version.
 	 *
@@ -63,10 +66,21 @@ export class VersionComparator implements IVersionComparator {
 	 * - Failure  → invalid version format
 	 */
 	compare(local: string, remote: string): Result<RemoteVersionStatus, Error> {
-		const validated = validateVersions(local, remote);
-		if (!validated.ok) return validated;
+		let localValid = this.parsedCache.get(local);
+		let remoteValid = this.parsedCache.get(remote);
 
-		const result = compare(validated.value.localValid, validated.value.remoteValid);
+		if (localValid === undefined || remoteValid === undefined) {
+			const localResult = this.validateFn(local);
+			if (!localResult.ok) return localResult;
+			const remoteResult = this.validateFn(remote);
+			if (!remoteResult.ok) return remoteResult;
+			this.parsedCache.set(local, localResult.value);
+			this.parsedCache.set(remote, remoteResult.value);
+			localValid = localResult.value;
+			remoteValid = remoteResult.value;
+		}
+
+		const result = compare(localValid, remoteValid);
 		if (result < 0) return success("ahead");
 		if (result > 0) return success("behind");
 		return success("equal");

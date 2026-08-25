@@ -9,7 +9,7 @@
 # Expected:
 #   - exit code 0
 #   - output contains "software-development (146 agents)" (manifest count)
-#   - output contains "Total: ~146 agents" (single pack → total = its count)
+#   - output contains "Total: 146 agents" (single pack → total = its count; agent count is exact — no "~" prefix)
 #   - filesystem cross-check: number of *.md files in
 #     template/obligatorio/packs/software-development/ equals 146
 #     (verified exact during development — no tolerance band needed)
@@ -59,7 +59,7 @@ assert_contains "$CLI_OUTPUT" "software-development (146 agents)"
 
 # 2. Total equals the single pack count
 log_info "Checking total agent count shown..."
-assert_contains "$CLI_OUTPUT" "Total: ~146 agents"
+assert_contains "$CLI_OUTPUT" "Total: 146 agents"
 
 # 3. Filesystem cross-check: manifest count == actual agent files in pack dir
 log_info "Counting actual agent files in software-development pack..."

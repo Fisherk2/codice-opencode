@@ -62,6 +62,9 @@ export const GITHUB_API_TIMEOUT_MS = 3_000;
 /** Name of the staging directory used for atomic writes */
 export const STAGING_DIR_NAME = ".codice-staging";
 
+/** Marker file written during commitStaging() to detect interrupted commits. */
+export const BACKUP_INTENT_FILE = ".codice-backup-intent";
+
 /** Name of the version file written to the destination root */
 export const VERSION_FILE_NAME = ".codice-version";
 

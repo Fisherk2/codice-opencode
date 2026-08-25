@@ -31,7 +31,7 @@ export class BunSymlinkCreator implements ISymlinkCreator {
 	 */
 	constructor(workspaceRoot: string, verbose?: VerboseLogger | boolean) {
 		this.workspaceRoot = path.resolve(workspaceRoot);
-		this.logger = verbose instanceof VerboseLogger ? verbose : new VerboseLogger(verbose ?? false);
+		this.logger = VerboseLogger.from(verbose);
 
 		// Verify the workspace root exists — fail early with a clear message
 		if (!fs.existsSync(this.workspaceRoot)) {

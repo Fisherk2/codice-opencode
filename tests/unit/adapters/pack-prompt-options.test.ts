@@ -15,7 +15,7 @@ describe("toPackPromptOption", () => {
 
 		expect(result).toEqual({
 			value: "software-development",
-			label: "Software Development (~4 agents)",
+			label: "Software Development (4 agents)",
 			hint: "Core development agents",
 		});
 	});

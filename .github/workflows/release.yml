@@ -29,13 +29,13 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
 
       - name: Validate tag format (prevent injection)
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="$GITHUB_REF_NAME"
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
             echo "ERROR: Invalid tag format: $TAG"
             exit 1
@@ -44,7 +44,7 @@ jobs:
 
       - name: Extract release body from CHANGELOG
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="$GITHUB_REF_NAME"
           VERSION="${TAG#v}"
           awk -v ver="$VERSION" \
             'index($0, "## [" ver "]") == 1 { found=1; next }
@@ -60,7 +60,7 @@ jobs:
 
       - name: Validate version
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="$GITHUB_REF_NAME"
           TAG_VERSION="${TAG#v}"
           # Strip pre-release suffix from both tag and package.json for comparison
           # e.g., 1.1.0-beta.2 -> 1.1.0 (both tag and package.json)
@@ -79,7 +79,7 @@ jobs:
         id: release_type
         shell: bash
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="$GITHUB_REF_NAME"
           if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-(beta|rc)\.[0-9]+$ ]]; then
             SUFFIX="${BASH_REMATCH[1]}"
             echo "type=prerelease" >> "$GITHUB_OUTPUT"
@@ -113,7 +113,7 @@ jobs:
           fi
 
       - name: Create Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           body_path: release-body.md
           make_latest: ${{ steps.release_type.outputs.make_latest == 'true' }}

@@ -171,7 +171,7 @@ OpenCode's internal configuration directory:
 └── .gitignore
 ```
 
-The `plugins/sdd-pipeline.ts` file is the SDD Pipeline plugin entry point — it orchestrates the development lifecycle by wiring together auto-discovery, configuration, and hook handlers. Supporting modules in `src/` handle auto-discovery (`autoDiscovery.ts`), config loading (`configLoader.ts`), and defaults (`defaults.ts`). This is an always-present file (obligatorio) that gets updated with template releases.
+The `plugins/sdd-pipeline.ts` file is the SDD Pipeline plugin entry point — a minimal safety-net plugin that blocks destructive bash commands (`tool.execute.before`). Supporting modules in `src/` hold the pattern list (`destructivePatterns.ts`) and command normalization (`normalizeBash.ts`). This is an always-present file (obligatorio) that gets updated with template releases.
 
 ---
 

@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1-beta.1] - 2026-08-21
+
+### Changed
+
+- **CI/CD SHA-pins bumped to Node 24** (TD-V2-7): Updated `actions/checkout` to v7.0.1, `actions/cache` to v6.1.0, `extractions/setup-just` to v4.0.0, and `softprops/action-gh-release` to v3.0.2. All SHA-pinned actions now target Node 24 runtimes, eliminating CI deprecation warnings.
+- **VersionComparator cache** (TD-V2-61): Added instance-level `Map<string, string>` cache to `VersionComparator.compare()` that avoids redundant `semver.valid()` normalization on repeated calls. `validateVersion`/`validateVersions` remain pure functions.
+- **VersionComparator constructor refactored** for testability: accepts optional `validateFn` parameter (backward-compatible, no interface change). Removed stale `biome-ignore` suppression.
+
+### Added
+
+- **Spy-based cache verification test**: Proves cache hit by counting `validateVersion` calls — second identical `compare()` call triggers zero additional validation.
+
+### Fixed
+
+- **Class JSDoc accuracy**: Updated `VersionComparator` class comment from "no side effects" to "memoized; no I/O" to reflect internal cache state.
+
+## [2.1.1] - 2026-08-21
+
+### Security
+
+- **SDD plugin reduced to minimal destructive-command block** (#80): Plugin now only blocks destructive bash commands (rm -rf, git push --force, DROP TABLE, etc.) via `tool.execute.before` hook. Removed 13 obsolete modules (~1200 lines) that duplicated `opencode.json` permissions.
+- **External directory permissions** (#81): Added `external_directory` permission block to template with deny-by-default strategy. Explicit allowlist for known-safe paths (~/.agents/, ~/.bun/, ~/.cargo/, ~/go/, ~/.local/, ~/.cache/, ~/Projects/, /tmp/).
+- **Backup integrity protection** (TD-V2-9): `AtomicStager.commitStaging()` now writes `.codice-backup-intent` marker before commit. If a previous commit was interrupted, the marker is detected and the overwrite is refused with an actionable error message.
+- **Hardened permission denies** (review): Extended `read` deny-list with `.cargo/credentials`, `.s3cfg`, `.config/gh/hosts.yml`, `*.mobileprovision`; narrowed `export PATH=*` to total-replacement only; added git deny entries for `--force-with-lease`, `checkout -- .`, `checkout -f`, `restore`, `reset --mixed`, `clean -fdx/-fxd`; added `rm -r -f`, `rm -f -r`, `rm -rfv` variants.
+- **Plugin pattern gaps closed** (review): Added `git push --force-with-lease`, `git reset --mixed`, `git clean -fdx/-fxd`, `git checkout -- .`, `git checkout -f`, `git restore`, and SQL `DELETE ... WHERE 1=1/true` tautology patterns. `normalizeBash` now strips comments only at token start, preserving in-word/in-URL `#`.
+- **Removed dead `escapeRegExp` module** (dead code, no longer imported; `destructivePatterns` uses literal regex).
+- **Destructive command gate fix** (code review C1): `extractBashCommand` now reads `output.args.command` — plugin gate was non-functional before this fix.
+- **Backup marker cleanup on handled failure** (code review I2): `AtomicStager` removes `.codice-backup-intent` marker when failure is handled; only hard-kill leaves an orphan marker.
+- **Split-flag rm pattern coverage** (code review I3): Added `rm -r -f` and `rm -f -r` to destructive patterns.
+- **Flag-based orphan detection** (code review I4): Replaced fragile string-matching with flag-based guard for backup marker orphan detection.
+- **Staging/backup gitignore entries** (code review S2): Added staging and backup patterns to `template/estandar/gitignore`.
+
+Final metrics: 1931 tests, 31/31 E2E, 55/55 plugin integration, `just check` 0 errors.
+
+### Added
+
+- **Staging cleanup observability** (TD-V2-51): New `staging_cleanup` event in `ProgressEvent` discriminated union. Emitted by `AtomicStager.cleanStaging()` and visible in `--verbose` mode.
+
+### Changed
+
+- Plugin export renamed from `SddPipelinePlugin` to `DestructiveCommandBlockPlugin`
+- Plugin integration test suite reduced from 4 test files to 1 (destructive patterns only)
+- Plugin E2E scenarios reduced from 3 to 2 (installation + lint only)
+
 ## [2.1.0] — 2026-08-19
 
 ### Added

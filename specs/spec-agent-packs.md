@@ -243,7 +243,7 @@ agents/ (or template/obligatorio/packs/)
 - **Every agent must belong to exactly one pack.** No agent exists outside a pack (except main/ and writers/ which are mandatory).
 - **Pack assignment must be purpose-based.** An agent's pack is determined by its primary domain, not by secondary capabilities.
 - **Primary agents are always installed.** The 6 primary agents in `packs/main/` are non-negotiable.
-- **Writer agents are always installed.** The 3 writers in `packs/writers/` are cross-domain essentials.
+- **Writer agents are always installed.** The 4 writers in `packs/writers/` are cross-domain essentials.
 
 ### Ask First
 

@@ -32,8 +32,15 @@ describe("Release Workflow Configuration", () => {
 
 	test("has version validation step comparing tag vs package.json", () => {
 		expect(releaseYaml).toContain("Validate version");
-		expect(releaseYaml).toContain("github.ref_name");
+		expect(releaseYaml).toContain("GITHUB_REF_NAME");
 		expect(releaseYaml).toContain("package.json");
+	});
+
+	test("does not interpolate untrusted github context into shell scripts (injection guard)", () => {
+		// GitHub Actions interpolates ${{ }} BEFORE the shell runs, so a crafted
+		// tag could execute arbitrary commands. Env vars ($GITHUB_REF_NAME) are
+		// safe because they are expanded by the shell AFTER the script starts.
+		expect(releaseYaml).not.toContain("${" + "{ github.ref_name }}");
 	});
 
 	test("version validation uses jq for robust JSON parsing", () => {

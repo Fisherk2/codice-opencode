@@ -13,7 +13,7 @@ export function toPackPromptOption(opt: PackOption): {
 	const lockedSuffix = opt.locked ? " [INSTALLED, LOCKED]" : "";
 	return {
 		value: opt.id,
-		label: `${opt.name} (~${opt.agentCount} agents)${lockedSuffix}`,
+		label: `${opt.name} (${opt.agentCount} agents)${lockedSuffix}`,
 		hint: opt.locked ? "Already installed — cannot be removed" : opt.description,
 	};
 }
