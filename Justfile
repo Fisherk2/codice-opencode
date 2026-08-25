@@ -63,11 +63,13 @@ clean:
 check-plugin:
     bunx @biomejs/biome check template/obligatorio/core/.opencode/plugins/ template/opcional/.opencode/plugins/ && bunx tsc -p template/obligatorio/core/.opencode/plugins/tsconfig.json
 
-# Run plugin unit tests
-# FEV-27 reduced the shipped template plugin to a minimal stub and moved the
-# full plugin (with its unit tests) to the dev copy at .opencode/plugins/.
+# Run plugin unit tests. These live in tests/unit/ (committed) and import the
+# real DESTRUCTIVE_PATTERNS + normalizeBash modules from the template plugin
+# source, so they cannot drift from the safety net they verify. The
+# .opencode/plugins dev copy is gitignored and must never be referenced by a
+# CI recipe (it does not exist in the CI checkout).
 test-plugin-unit:
-    bun test ./.opencode/plugins/src/__tests__/*.test.ts
+    bun test tests/unit/config/destructive-patterns.test.ts
 
 # Run plugin integration tests
 test-plugin-integration:
