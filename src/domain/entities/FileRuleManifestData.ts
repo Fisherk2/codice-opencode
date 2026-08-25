@@ -3,8 +3,10 @@ import type { FileRule } from "./FileRule";
 /**
  * Build a selectable pack rule. All packs share the same destination
  * mapping and category; only the path, description, and agent count vary.
- * The agent count is appended to the description automatically to avoid
- * duplicating the numeric literal (DRY — validated by pack-agent-counts.test).
+ * agentCount is the single source of truth for the wizard label and install
+ * summary — the description stays clean (no count suffix) to avoid
+ * duplicating the count in the pack wizard (label already shows it).
+ * Validated by pack-agent-counts.test.
  */
 function pack(path: string, description: string, agentCount: number): FileRule {
 	return {
@@ -12,7 +14,7 @@ function pack(path: string, description: string, agentCount: number): FileRule {
 		destPath: "agents",
 		category: "pack",
 		isDirectory: true,
-		description: `${description} (${agentCount} agents)`,
+		description,
 		agentCount,
 	};
 }
