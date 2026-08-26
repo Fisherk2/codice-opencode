@@ -23,6 +23,8 @@ The SDD Pipeline plugin (`sdd-pipeline.ts`, 665 lines) had 6 hardcoded maps that
 
 Every time a user added a command or agent to their workspace (a documented workflow in the Wiki), they had to edit a 665-line TypeScript plugin. This contradicted the Wiki's user-facing documentation, which said "Create `commands/my-command.md`" without mentioning the plugin update step.
 
+> **Note (v2.1.1):** Historical — since FEV-27 #80 the plugin is 27 lines (destructive-command block only); see CHANGELOG v2.1.1.
+
 Additionally, the plugin directory had zero quality infrastructure:
 
 | Dimension | `src/` + `tests/` | Plugin directory |
