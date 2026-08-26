@@ -12,7 +12,7 @@
 
   "agent": {
     "huitzilopochtli": {
-      "model": "opencode/deepseek-v4-flash-free",
+      "model": "opencode/mimo-v2.5-free",
       "color": "#d3e22b",
       "temperature": 0.5,
       "steps": 50
@@ -36,13 +36,13 @@
       "steps": 200
     },
     "mictlantecuhtli": {
-      "model": "opencode/mimo-v2.5-free",
+      "model": "opencode/hy3-free",
       "color": "#2d2d2d",
       "temperature": 0.2,
       "steps": 150
     },
     "tezcatlipoca": {
-      "model": "opencode/deepseek-v4-flash-free",
+      "model": "opencode/muse-spark-1.2-contributor-free",
       "color": "#ff3134",
       "temperature": 0.1,
       "steps": 100

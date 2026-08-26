@@ -32,7 +32,6 @@ A production-grade workspace integrating 51 engineering skills organized in 10 S
 - **51 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, Obsidian vault management, and more, organized in 10 SDD phases (3 optional) + Extra
 - **17 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`, `/sync`, `/migrate`, `/deploy`, `/analyze`
 - **6 Main Agents + ~360 Agents in 10 Packs (6 primary + 4 writers + ~350 subagents across 8 selectable packs)** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review), and ~350 subagents organized across 8 selectable packs (2 mandatory packs always installed) specialized in frontend, backend, DevOps, testing, security, and more. Install only the packs you need via `--packs`, or everything with `--packs-all`.
-- **Install summary screen** — Before merging, Códice shows the selected packs with agent counts, mandatory directories, and optional files so you know exactly what's being installed.
 - **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
 - **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
 
@@ -58,7 +57,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Master of orchestration and strategic delegation</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/huitzilopochtli.md"><code>template/obligatorio/packs/main/huitzilopochtli.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/deepseek-v4-flash-free</code></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/mimo-v2.5-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>MiniMax-M3</code> <code>Hy3</code> <code>Step 3.7</code> <code>GPT-5.6 Luna</code> <code>Gemini 3.5 Flash Lite</code> <code>Claude Sonnet 4.6</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> GPT-5.6 Luna as the cost-effective default (1M context). Hy3 or Gemini 3.5 Flash Lite for extreme speed/cost. Claude Sonnet 4.6 for critical routing with the full agent catalog.</td></tr>
 </table>
@@ -134,7 +133,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Quality validator and deployment guardian</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/mictlantecuhtli.md"><code>template/obligatorio/packs/main/mictlantecuhtli.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/mimo-v2.5-free</code></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/hy3-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Flash</code> <code>MiMo V2.5</code> <code>Laguna S 2.1</code> <code>Claude Haiku 4.5</code> <code>GPT-5.4 Mini</code> <code>Gemini 3.5 Flash Lite</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Flash / MiMo V2.5 for cheap test+patch loops (100 steps). Claude Haiku 4.5 for the final deployment gate. Gemini 3.5 Flash Lite for huge CI/log dumps.</td></tr>
 </table>
@@ -153,7 +152,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Code critic and quality auditor</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/tezcatlipoca.md"><code>template/obligatorio/packs/main/tezcatlipoca.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/deepseek-v4-flash-free</code></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/muse-spark-1.2-contributor-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Pro</code> <code>GLM-5.2</code> <code>Kimi K3</code> <code>Claude Opus 4.6</code> <code>GPT-5.6 Sol</code> <code>Gemini 3.1 Pro</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Pro for deep 5-axis audit (384k report, <$1/M). Claude Opus 4.6 for pre-merge/security audit. Gemini 3.1 Pro for recurring full-repo audit.</td></tr>
 </table>
