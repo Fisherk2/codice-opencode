@@ -4,27 +4,115 @@ The Códice workspace is built around **Spec-driven Development (SDD)**, a struc
 
 ## The SDD Cycle
 
-SDD organizes development into a repeatable cycle of phases. Each phase has a dedicated command that handles that phase's work and then suggests the next logical step.
+SDD organizes development into 4 workflow types depending on your project stage. All share the same iterative core (`plan → build → test → webperf → code-simplify → review`) which loops until requirements are satisfied, then exits to `/ship` → `/deploy`. The `/help` and `/sync` commands are wildcards — invoke them at any point in any flow.
+
+### Initial Flow — MVPs & New Projects
+
+Start here when building from scratch. `/spec` defines the project, `/design` establishes UI/UX if needed, then the iterative loop builds, tests, and refines until `/ship` + `/deploy`.
 
 ```mermaid
 flowchart LR
-    A[/spec/] --> B[/design/]
-    B --> C[/plan/]
-    C --> D[/build/]
-    D --> E[/test/]
-    E --> F[/code-simplify/]
-    F --> G[/review/]
-    G --> H[/ship/]
-    H --> I[/docs-update/]
-    H --> J[/diagnosis/]
-    H --> K[/evolve/]
-    K --> C
-    I --> K
-    J --> C
+    S[/spec/] --> P[/plan/]
+    S -.->|optional| D[/design/]
+    D -.-> P
+    P --> B[/build/]
+    B --> T[/test/]
+    T --> CS[/code-simplify/]
+    T -.->|optional| W[/webperf/]
+    W -.-> CS
+    CS --> R[/review/]
+    R -->|"🔄 iterate"| P
+    R -->|"✅ ship"| SH[/ship/]
+    SH --> DEP[/deploy/]
+    H0[/help/] -.-> S
+    SYN[/sync/] -.-> S
+
+    style D stroke-dasharray: 5 5
+    style W stroke-dasharray: 5 5
+    style H0 stroke-dasharray: 5 5
+    style SYN stroke-dasharray: 5 5
+```
+
+### Evolutionary Flow — Established Projects
+
+Use this for projects with existing code and docs. `/docs-update` syncs documentation with the codebase, `/evolve` creates or modifies specs, then enters the iterative loop.
+
+```mermaid
+flowchart LR
+    DU[/docs-update/] --> EV[/evolve/]
+    EV --> P[/plan/]
+    EV -.->|optional| D[/design/]
+    D -.-> P
+    P --> B[/build/]
+    B --> T[/test/]
+    T --> CS[/code-simplify/]
+    T -.->|optional| W[/webperf/]
+    W -.-> CS
+    CS --> R[/review/]
+    R -->|"🔄 iterate"| P
+    R -->|"✅ ship"| SH[/ship/]
+    SH --> DEP[/deploy/]
+    H0[/help/] -.-> DU
+    SYN[/sync/] -.-> DU
+
+    style D stroke-dasharray: 5 5
+    style W stroke-dasharray: 5 5
+    style H0 stroke-dasharray: 5 5
+    style SYN stroke-dasharray: 5 5
+```
+
+### Issues Flow — Bug Fixes & Tech Debt
+
+Use this when addressing bugs, security issues, or tech debt. `/analyze` performs 8-dimension architecture analysis, `/diagnosis` documents root causes, then the iterative loop fixes and validates.
+
+```mermaid
+flowchart LR
+    AN[/analyze/] --> DG[/diagnosis/]
+    DG --> P[/plan/]
+    P --> B[/build/]
+    B --> T[/test/]
+    T --> CS[/code-simplify/]
+    T -.->|optional| W[/webperf/]
+    W -.-> CS
+    CS --> R[/review/]
+    R -->|"🔄 iterate"| P
+    R -->|"✅ ship"| SH[/ship/]
+    SH --> DEP[/deploy/]
+    H0[/help/] -.-> AN
+    SYN[/sync/] -.-> AN
+
+    style W stroke-dasharray: 5 5
+    style H0 stroke-dasharray: 5 5
+    style SYN stroke-dasharray: 5 5
+```
+
+### Migration Flow — Technology Migration
+
+Use this when migrating tech stacks, updating dependencies, or upgrading systems. `/migrate` detects the current stack, evaluates breaking changes, and generates a migration plan, then the iterative loop executes and validates.
+
+```mermaid
+flowchart LR
+    MG[/migrate/] --> P[/plan/]
+    P --> B[/build/]
+    B --> T[/test/]
+    T --> CS[/code-simplify/]
+    T -.->|optional| W[/webperf/]
+    W -.-> CS
+    CS --> R[/review/]
+    R -->|"🔄 iterate"| P
+    R -->|"✅ ship"| SH[/ship/]
+    SH --> DEP[/deploy/]
+    H0[/help/] -.-> MG
+    SYN[/sync/] -.-> MG
+
+    style W stroke-dasharray: 5 5
+    style H0 stroke-dasharray: 5 5
+    style SYN stroke-dasharray: 5 5
 ```
 
 | Phase | Command | Agent | Description |
 |-------|---------|-------|-------------|
+| **Onboarding** | `/help` | huitzilopochtli | Welcome the user, explain Códice, guide through workspace, and detect project state. Entry point for new users. |
 | **Define** | `/spec` | quetzalcoatl | Create project specifications, documentation, and conventions from scratch. For new projects or features. |
 | **Design** | `/design` | quetzalcoatl | Establish UI/UX specifications — design systems, user flows, component architecture, and accessibility requirements. |
 | **Plan** | `/plan` | moctezuma | Break down specifications into small, verifiable tasks with acceptance criteria and dependency graphs. |
@@ -42,29 +130,20 @@ flowchart LR
 | **Deploy** | `/deploy` | mictlantecuhtli | Post-`/ship` deployment automation. 3 modes: no workflow, betterable, established. Generates branch protection, PR templates, CI pipelines. |
 | **Analyze** | `/analyze` | quetzalcoatl | 8-dimension architecture analysis generating prioritized `TECH_DEBT.md`. Findings feed `/diagnosis`. |
 
-### Flow Through the Cycle
+### Recommended Workflows
 
-The SDD cycle is designed to be followed sequentially, but you can enter at any point:
+Each flow type is designed for a specific project situation. You can enter at any point and skip optional phases. The next-step suggestions within each command are advisory, not enforced.
 
-1. **Start with `/spec`** to define what you are building. After `/spec`, the command suggests: *"Run `/plan` to create an execution plan, or run `/design` to establish the UI/UX design of the project."*
+| Flow | Entry Point | Use Case | Key Difference |
+|------|-------------|----------|----------------|
+| **Initial** | `/spec` | MVPs, new projects, greenfield | Starts from scratch — defines specs before building |
+| **Evolutionary** | `/docs-update` | Established projects, feature additions | Syncs docs first, evolves existing specs |
+| **Issues** | `/analyze` | Bug fixes, security patches, tech debt | Analyzes first, diagnoses, then fixes iteratively |
+| **Migration** | `/migrate` | Tech stack changes, dependency upgrades | Plans migration, then executes and validates |
 
-2. **Use `/design`** to create design specifications. After `/design`, it suggests: *"Run `/plan` to create an execution plan for the implementation."*
+**All 4 flows converge** at the iterative core: `plan → build → test → webperf [opt] → code-simplify → review`. This loop repeats until the user is satisfied, then exits to `/ship` → `/deploy`.
 
-3. **Run `/plan`** to break the spec into tasks. After `/plan`, it suggests: *"Run `/build` to start implementing the first task from the plan."*
-
-4. **Execute `/build`** to implement tasks incrementally. After `/build`, it suggests: *"Run `/test` to validate the implementation and check for regressions."*
-
-5. **Validate with `/test`** — write tests, fix bugs. After `/test`, it suggests: *"Run `/code-simplify` to refactor and simplify the code, or run `/webperf` if you want to optimize web performance."*
-
-6. **Polish with `/code-simplify`** or **`/webperf`** . After `/code-simplify`: *"Run `/review` to review the latest implementations."* After `/webperf`: *"Run `/code-simplify` to refactor and simplify the code with performance improvements applied."*
-
-7. **Review with `/review`** . After `/review`: *"Switch to agent tlaloc to fix the observations, then run `/ship` to prepare for launch."*
-
-8. **Ship with `/ship`** . After `/ship`: *"Run `/docs-update`, `/diagnosis`, or `/evolve` for maintenance. If you are not ready to launch, run `/ship` again when ready."*
-
-9. **Maintain with `/docs-update`** , **`/diagnosis`** , or **`/evolve`** . After `/docs-update`: *"Run `/evolve` to create new specs."* After `/diagnosis`: *"Run `/plan` to create an execution plan for implementing the fix."* After `/evolve`: *"Run `/plan` to create an execution plan, or run `/build` to start implementing directly."*
-
-This flow is not rigid — you can skip phases, repeat them, or jump between them as your project demands. The next-step suggestions are advisory, not enforced.
+**Wildcard commands:** `/help` (onboarding & help menu) and `/sync` (bidirectional git sync) can be invoked at any point in any flow.
 
 ## Command File Pattern
 
@@ -190,114 +269,13 @@ Invoke @skills/shipping-and-launch/SKILL.md.
 > Deployment complete. Run `/diagnosis` to monitor for issues, or run `/docs-update` to update deployment documentation.
 ```
 
-### Step 2: (Skipped — Auto-Discovery)
-
-Previous versions of Códice required registering commands in a hardcoded `COMMAND_AGENT_MAP` inside the SDD plugin. This is no longer necessary — the plugin auto-discovers commands by scanning `commands/*.md` files at session start and reads the `agent:` field from YAML frontmatter. Simply creating the command file with the correct frontmatter is sufficient.
-
-### Step 3: Register Intent Patterns (Optional)
-
-If you want the SDD plugin to auto-detect when a user's question should trigger `/deploy`, add intent keywords by creating or editing the `sddPipeline.intentPatterns` section in your `opencode.json`:
-
-```json
-{
-  "sddPipeline": {
-    "intentPatterns": {
-      "/deploy": [
-        "deploy", "desplegar", "release", "lanzar", "push to production",
-        "go live", "production deploy", "roll out", "ship to production"
-      ]
-    }
-  }
-}
-```
-
-### Step 4: Update SDD Phase Suggestions
-
-If `/deploy` introduces a new SDD phase (e.g., a "Deploy" phase between Ship and Maintain), update the `PHASE_SUGGESTIONS` and orchestration patterns documentation. For a command that fits an existing phase, you may skip this — `/deploy` would logically fit in the "Ship" phase.
-
-### Step 5: Update Next-Step Suggestions
+### Step 2: Update Next-Step Suggestions
 
 Review the `## Suggested Next Step` blocks in existing commands to see if any should add `/deploy` as a suggestion. For example, `/ship` could suggest: *"Run `/deploy` to push to production, or run `/docs-update` for documentation maintenance."*
 
-### Step 6: Restart OpenCode
+### Step 3: Restart OpenCode
 
 Restart your OpenCode session so it recognizes the new command file.
-
-## Command Registration Summary
-
-| Step | File | Change |
-|------|------|--------|
-| 1 | `commands/<name>.md` | Create command file with frontmatter + numbered steps (auto-discovered) |
-| 2 | (Auto-Discovery) | Plugin detects `commands/<name>.md` automatically — no registration needed |
-| 3 | `opencode.json` `sddPipeline.intentPatterns` | (Optional) Add intent keywords for auto-detection |
-| 5 | Various command files | Update `## Suggested Next Step` blocks |
-| 6 | User guide + README | Add command to reference tables |
-
-## Command Details
-
-### `/spec` — Project Specification
-
-Invokes quetzalcoatl to establish the full specification foundation for a new project: AGENTS.md, SPEC.md, docs/ architecture, specs/ modules, and ADRs. Detects project state first — if the project already has stable code and versions, redirects to `/evolve`.
-
-### `/design` — Design Specification
-
-Invokes quetzalcoatl to create a comprehensive design specification. Fans out to ux-researcher, frontend-developer, and accessibility-tester in parallel, then merges their reports into docs/DESIGN.md and specs/design/.
-
-### `/plan` — Task Breakdown
-
-Invokes moctezuma to break specifications into small, verifiable tasks with acceptance criteria. Outputs tasks/plan.md and tasks/todo.md. Uses the `question` tool to present the plan for human review before saving.
-
-### `/build` — Incremental Implementation
-
-Invokes tlaloc to implement the next pending task from the plan. Uses TDD (Red-Green-Refactor), invoking supporting skills (clean-ddd-hexagonal, error-handling-patterns, security-and-hardening, etc.) as needed. Commits each task with a descriptive message.
-
-### `/test` — TDD and Verification
-
-Invokes mictlantecuhtli to run the TDD workflow. For new features: write failing tests, implement, refactor. For bug fixes: use the Prove-It pattern (write a test that reproduces the bug, confirm it fails, implement the fix, confirm it passes).
-
-### `/code-simplify` — Code Refactoring
-
-Invokes tlaloc to simplify code for clarity without changing behavior. Applies guard clauses, function extraction, dead code removal, and other named refactoring transformations. Runs tests after each change.
-
-### `/review` — Five-Axis Code Review
-
-Invokes tezcatlipoca to review changes across correctness, readability, architecture, security, and performance. Categorizes findings as Critical, Important, or Suggestion. Uses the `question` tool to resolve ambiguities before finalizing.
-
-### `/ship` — Pre-Launch Checklist
-
-Invokes mictlantecuhtli to run a parallel fan-out across 4-5 subagents (code-reviewer, security-auditor, test-engineer, dependency-manager, and optionally accessibility-tester). Merges their reports into a single go/no-go decision with a mandatory rollback plan.
-
-### `/webperf` — Web Performance Audit
-
-Invokes mictlantecuhtli to delegate to the web-performance-auditor subagent. Supports deep mode (Lighthouse reports, PageSpeed Insights, CrUX) and quick mode (source code scanning for structural anti-patterns).
-
-### `/docs-update` — Documentation Synchronization
-
-Invokes quetzalcoatl to update, migrate, and synchronize documentation with the current codebase. Scans for outdated docs, resolves contradictions, creates missing ADRs, and never touches tasks/ or code.
-
-### `/diagnosis` — Issue Analysis
-
-Invokes quetzalcoatl to analyze problems (remote issues or local bugs), run diagnostics via analysis subagents, and document findings in docs/diagnosis/. Does not implement fixes — only documents root cause and proposed solutions.
-
-### `/evolve` — Spec Evolution
-
-Invokes quetzalcoatl to create or modify specs for mature projects. Detects project maturity first — if the project is new, redirects to `/spec`. Never writes to tasks/ or implements code.
-
-### `/sync` — Bidirectional Git Sync
-
-Invokes tlaloc to perform bidirectional git sync with intelligent conflict resolution. 4 modes (full-sync, incremental-sync, dry-run, conflict-resolution) and 4 strategies (NEWER_WINS, GITHUB_WINS, LOCAL_WINS, INTELLIGENT_MERGE). Wildcard — can be invoked at any SDD phase. Pre-flight verifies git + remote. Issue #68. [Diagnosis](../diagnosis/fix09-sync-command.md)
-
-### `/migrate` (Optional) — Stack Migration Planning
-
-Invokes quetzalcoatl (optional, like `/design`) to generate a complete technology stack migration plan with impact analysis. Detects current stack from lock files, evaluates breaking changes, and generates `docs/MIGRATION.md` with rollback procedures. SDD position: before `/diagnosis`, `/docs-update`, `/evolve`. Issue #67. [Diagnosis](../diagnosis/fix10-migrate-command.md)
-
-### `/deploy` — Git Workflow and CI/CD Configuration
-
-Invokes mictlantecuhtli to configure and execute git workflow + CI/CD pipelines. SDD position: after `/ship`. 3 modes (no workflow, betterable, established) + analyze-only. Generates branch protection rules, PR templates, pipeline YAML, and updates `CONTRIBUTING.md`. Issue #64. [Diagnosis](../diagnosis/fix11-deploy-command.md)
-
-### `/analyze` — Architectural Analysis
-
-Invokes quetzalcoatl to perform multi-dimensional architectural analysis across 8 dimensions (system structure, design patterns, dependency architecture, data flow, scalability, security, testability, documentation). Generates prioritized `docs/TECH_DEBT.md` with Critical/High/Medium/Low findings. SDD position: after `/migrate`, before `/diagnosis` (findings feed the diagnosis process). Issue #57. [Diagnosis](../diagnosis/fix12-analyze-command.md)
 
 ## Links
 

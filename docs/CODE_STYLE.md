@@ -108,12 +108,12 @@ export class Merger {           // ❌ Too vague
 
 Before every commit, verify the following:
 
-- [ ] `just lint` passes with zero errors and zero warnings.
-- [ ] `just test:unit` passes with > 80% coverage.
+- [ ] `just check` passes with zero errors (biome ci + tsc --noEmit).
+- [ ] `just test` passes with 0 failures (1935 tests; use `just test-unit` / `just test-integration` for subsets).
 - [ ] No `any` types introduced in production code.
 - [ ] Names are descriptive and follow the convention.
 - [ ] Documentation updated if a public API changed.
 
 ---
 
-*Last updated: 2026-07-11*
+*Last updated: 2026-08-25*

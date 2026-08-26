@@ -206,31 +206,6 @@ Skills should contain only what is necessary to guide the agent correctly. Avoid
 
 ---
 
-## Lifecycle Sequence
-
-For a complete feature, the typical skill invocation sequence across the SDD cycle is:
-
-```
-1.  interview-me                 → Extract user intent
-2.  idea-refine                  → Refine vague ideas
-3.  spec-driven-development      → Define what to build
-4.  planning-and-task-breakdown  → Break into tasks
-5.  context-engineering          → Load the right context
-6.  source-driven-development    → Verify against official docs
-7.  doubt-driven-development     → Adversarial review
-8.  incremental-implementation   → Build slice by slice
-9.  test-driven-development      → Prove each slice works
-10. observability-and-instrumentation → Instrument as you build
-11. code-review-and-quality      → Review before merge
-12. git-workflow-and-versioning  → Clean commit history
-13. documentation-and-adrs       → Document decisions
-14. shipping-and-launch          → Deploy safely
-```
-
-Not every task needs every skill. A bug fix might only use `debugging-and-error-recovery` → `test-driven-development` → `code-review-and-quality`. The agent chooses which skills to invoke based on the task at hand.
-
----
-
 ## Links
 
 - [OpenCode Skills Documentation](https://opencode.ai/docs/skills) — Official OpenCode skills reference and configuration guide.

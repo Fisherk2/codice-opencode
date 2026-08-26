@@ -42,7 +42,9 @@ For non-interactive use (scripts, CI), the installer supports these flags:
 | Flag | Description |
 |------|-------------|
 | `--dest <path>` | Target directory (default: current directory) |
-| `--mode <mode>` | Skip the menu — `clean`, `project`, or `update` |
+| `--clean` | Run Clean Install (empty directory), skip menu |
+| `--project` | Run Project Install (merge into existing project), skip menu |
+| `--update` | Run Update Workspace (refresh mandatory files), skip menu |
 | `--packs <ids>` | Comma-separated pack ids; skips the pack selection wizard |
 | `--packs-all` | Select all 8 agent packs non-interactively |
 | `--update-add-packs <ids>` | Update mode: add new packs to an existing installation |
@@ -54,7 +56,7 @@ For non-interactive use (scripts, CI), the installer supports these flags:
 Example — clean install in a specific directory without interactive prompts:
 
 ```bash
-bunx @fisherk2-dev/codice --dest ./my-project --mode clean --force
+bunx @fisherk2-dev/codice --dest ./my-project --clean --force
 ```
 
 ## What Gets Installed
@@ -74,7 +76,7 @@ your-project/
 ├── .opencode/
 │   ├── plugins/               # SDD pipeline and orchestrator plugins
 │   └── agents/ → agents/      # Symlink to agents directory
-├── agents/                    # 6 primary + 4 writer agents + your selected pack subagents (~355 across 8 packs)
+├── agents/                    # ~360 agents: 6 primary + 4 writer + ~350 subagents across 8 selectable packs
 ├── commands/                  # 17 SDD slash commands
 └── skills/                    # 51 engineering skills
 ```

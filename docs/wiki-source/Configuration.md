@@ -19,19 +19,10 @@ The workspace template ships with a pre-configured `opencode.json` that you can 
 ### `model` — Default AI Model
 
 ```json
-"model": "nvidia/stepfun-ai/step-3.7-flash"
+"model": "openrouter/openrouter/free"
 ```
 
 The `model` field sets the main AI model used for general chat and tasks. It uses the format `<provider>/<model-id>`. This model is the default for all interactions unless an agent or command overrides it.
-
-**Common values:**
-
-| Value | Description |
-|-------|-------------|
-| `nvidia/stepfun-ai/step-3.7-flash` | Default: NVIDIA-hosted StepFun Flash |
-| `openrouter/anthropic/claude-sonnet-4` | Anthropic Claude via OpenRouter |
-| `openrouter/openai/gpt-5` | OpenAI GPT-5 via OpenRouter |
-| `openrouter/deepseek/deepseek-v4-flash` | DeepSeek V4 Flash via OpenRouter |
 
 ### `small_model` — Lightweight Model
 
@@ -61,9 +52,9 @@ Increasing `reserved` gives the model more room for long responses but triggers 
 
 ---
 
-## Provider Configuration
+## Provider Configuration (Not configurated)
 
-The `provider` section defines available AI model providers and their per-model options. The template ships with **7 pre-configured providers**:
+The `provider` section defines available AI model providers and their per-model options:
 
 | Provider | Models | Official Docs |
 |----------|--------|---------------|
@@ -111,49 +102,6 @@ Each model can have its own options and **variants** — named configurations op
 | `deep-think` | Complex reasoning, architecture decisions, code review |
 | `economy` | Quick responses, simple lookups, cost-sensitive tasks |
 | *(default)* | Balanced behavior with the model's standard options |
-
-### Example: Switch to Anthropic Claude
-
-If you want to use Claude as your primary model, replace the `model` value and ensure the Anthropic provider is configured:
-
-```json
-{
-  "model": "openrouter/anthropic/claude-sonnet-4",
-
-  "provider": {
-    "anthropic": {
-      "models": {
-        "claude-sonnet-4": {
-          "options": {
-            "thinking": {
-              "type": "adaptive",
-              "budgetTokens": 8000,
-              "display": "summarized"
-            }
-          },
-          "variants": {
-            "deep-think": {
-              "thinking": {
-                "type": "enabled",
-                "budgetTokens": 16000
-              }
-            },
-            "economy": {
-              "thinking": {
-                "type": "adaptive",
-                "budgetTokens": 4000,
-                "display": "none"
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-The `budgetTokens` field controls how much the model can think before responding. Higher values produce better reasoning at the cost of latency.
 
 ---
 
@@ -227,16 +175,6 @@ Each agent's configuration reflects its role in the SDD pipeline:
 | **Tlaloc** | deepseek-v4-flash (fast) | 0.2 | 90 | 🔵 Cyan | Rain God Builder — code implementation. Low temperature for correct code, highest step limit because building is multi-step (test→code→refactor). |
 | **Mictlantecuhtli** | mimo-v2.5 (balanced) | 0.2 | 60 | ⚫ Dark | Underworld Judge — testing and validation. Low temperature for thorough verification. High step limit for complex test suites and ship checklist. |
 | **Tezcatlipoca** | glm-5.2 (powerful) | 0.1 | 50 | 🔴 Red | Smoking Mirror Critic — code review. Near-deterministic for objective analysis. Moderate step count for thorough five-axis review. |
-
-### Disabled Agents
-
-The template disables three built-in OpenCode agents:
-
-| Agent | Why Disabled |
-|-------|-------------|
-| `build` | Replaced by SDD pipeline's custom `/build` command (tlaloc) |
-| `plan` | Replaced by SDD pipeline's custom `/plan` command (moctezuma) |
-| `general` | No specific role — agents huitzilopochtli or tlaloc handle general-purpose tasks better |
 
 ---
 
@@ -401,6 +339,54 @@ This means **no agent can delegate by default**. Primary agents that need delega
 
 > **Official docs:** [opencode.ai/docs/permissions](https://opencode.ai/docs/permissions) — Full reference for the permission system.
 
+### `permission.external_directory` — External Directory Access
+
+The `external_directory` permission controls which paths **outside the current working directory** agents can access. This applies to any tool that takes a path as input — `read`, `edit`, `glob`, `grep`, and `bash` commands that reference external paths.
+
+Without explicit `external_directory` rules, agents cannot access any external directories. The template uses a **deny-by-default** model with an explicit allowlist of safe, well-known paths:
+
+```json
+"external_directory": {
+  "*": "deny",
+  "~/.bun/*": "allow",
+  "~/.cargo/*": "allow",
+  "~/go/*": "allow",
+  "~/.cache/*": "allow",
+  "/tmp/*": "allow"
+}
+```
+
+#### How It Works
+
+1. **Default deny** — The `"*": "deny"` rule blocks all external directory access.
+2. **Explicit allowlist** — Only the listed paths are permitted. Each entry uses glob patterns:
+   - `~` expands to the user's home directory (e.g., `~/.bun/*` matches `~/.bun/install/cache/...`)
+   - `*` matches a single path level (e.g., `~/.bun/*` matches `~/.bun/something` but not `~/.bun/a/b`)
+   - `**` matches multiple levels recursively (e.g., `~/projects/**` matches `~/projects/a/b/c`)
+   - `{a,b}` matches alternation (e.g., `~/projects/{personal,work}/**`)
+3. **Layered rules** — Tool-specific permissions (e.g., `edit`, `read`) inherit from `external_directory`. You can further restrict access within an allowed directory:
+
+```json
+"permission": {
+  "external_directory": {
+    "~/projects/personal/**": "allow"
+  },
+  "edit": {
+    "~/projects/personal/**": "deny"
+  }
+}
+```
+
+In this example, agents can `read` files in `~/projects/personal/` but cannot `edit` them.
+
+> **⚠️ Security note:** Only allow paths you trust. Agents with external directory access can read and write files in those paths (subject to `read`/`edit`/`bash` permission rules). Avoid allowing broad paths like `~/` or `/` — use specific subdirectories instead.
+
+#### Deny-by-Default Behavior
+
+When an agent attempts to access a path outside the working directory that is not in the allowlist, OpenCode blocks the operation. If `enableExternalDirectoryDialog` is set to `true` in your OpenCode config, a UI dialog appears asking for approval. Otherwise, the operation is silently denied.
+
+> **Official docs:** [opencode.ai/docs/permissions#external-directories](https://opencode.ai/docs/permissions#external-directories) — Full reference for external directory permission patterns.
+
 ---
 
 ## MCP Servers — Tool Connectivity
@@ -426,62 +412,6 @@ Three servers are enabled by default (`context7`, `vercel-grep`, `gitmcp`). To a
 3. **Restart OpenCode**
 
 > **Full guide:** [MCP Servers](MCP-Servers) covers activation steps, per-agent control, prerequisites, and which template features require which MCP server.
-
----
-
-## Common Customizations
-
-### Change the Default Model
-
-To switch from the default NVIDIA model to Claude Sonnet:
-
-1. Change `"model"` to `"openrouter/anthropic/claude-sonnet-4"`
-2. Ensure the `anthropic` provider section is present (it ships with the template)
-3. Optionally set agent-specific models in the `agent` section
-
-### Adjust Token Budgets
-
-If agents are running out of thinking capacity:
-
-```json
-"claude-sonnet-4": {
-  "options": {
-    "thinking": {
-      "type": "adaptive",
-      "budgetTokens": 16000,   // Increase from default 8000
-      "display": "summarized"
-    }
-  }
-}
-```
-
-### Add a Custom Provider
-
-To add a provider not shipped with the template, add a new entry to `provider`:
-
-```json
-"provider": {
-  "my-provider": {
-    "models": {
-      "my-model": {
-        "options": { "temperature": 0.7 }
-      }
-    }
-  }
-}
-```
-
-### Disable a Default Agent
-
-If you don't use a particular primary agent:
-
-```json
-"agent": {
-  "tezcatlipoca": {
-    "disable": true
-  }
-}
-```
 
 ---
 

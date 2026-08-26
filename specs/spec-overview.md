@@ -4,7 +4,7 @@
 
 > **v2.0 Progress:** FEV-17 ✅ + FEV-18 ✅ (2026-08-04) + FEV-19 ✅ + FEV-20 ✅ (2026-08-05) + FEV-21 ✅ (2026-08-06) + FEV-22 ✅ (2026-08-06) + FEV-23 ✅ (2026-08-07) → **v2.0.0 released** (2026-08-07). FEV-23 (v2.0.0 Testing & Integration) is complete: 1920 tests, 30/30 E2E, coverage 95.68% overall / 99.12% production `src/`.
 >
-> **v2.1 Progress:** FEV-24 ✅ (2026-08-11) — 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD plugin intent auto-discovery, bilingual intent support. 2048 tests, 30/30 E2E. FEV-25 ✅ complete (agent delegation protocol). 2052 tests, 31/31 E2E. FEV-26 ✅ (2026-08-20) — Quick Wins: bug fixes + security patches + documentation. FEV-27 ✅ (2026-08-21) — Security & Observability: plugin cleanup, external directory permissions, backup integrity, staging cleanup event. Code review hardened (1 Critical + 4 Important + 3 Suggestions applied). 1931 tests, 31/31 E2E, 55/55 plugin integration.
+> **v2.1 Progress:** FEV-24 ✅ (2026-08-11) — 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD plugin intent auto-discovery, bilingual intent support. 2048 tests, 30/30 E2E. FEV-25 ✅ complete (agent delegation protocol). 2052 tests, 31/31 E2E. FEV-26 ✅ (2026-08-20) — Quick Wins: bug fixes + security patches + documentation. FEV-27 ✅ (2026-08-21) — Security & Observability: plugin cleanup, external directory permissions, backup integrity, staging cleanup event. Code review hardened (1 Critical + 4 Important + 3 Suggestions applied). FEV-28 ✅ (2026-08-21) — Infrastructure & Performance: CI SHA-pins Node 24 + VersionComparator cache. 1935 tests, 31/31 E2E, 55/55 plugin integration. **v2.1.1 Released (2026-08-25).**
 
 ---
 
