@@ -62,27 +62,6 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 
 Every agent file follows the same structure: YAML frontmatter, markdown body, and a `## COMPOSITION` block at the end. The complete specification — including field mapping, canonical permission blocks, and transformation rules — is documented in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md). Primary agents additionally carry a protocol section between `### CAPABILITIES` and `### RULES` — `### DELEGATION PROTOCOL` when they can invoke `task()`, `### SKILL LOADING PROTOCOL` when they cannot (see §8 of the spec).
 
-## Subagents
-
-Subagents cover 100+ domain specialties organized into categories:
-
-| Category | Example Agents | Count |
-|----------|---------------|-------|
-| Backend & APIs | backend-developer, typescript-pro, python-pro, golang-pro, rust-engineer, java-architect, fastapi-developer, graphql-architect, django-developer | ~20 |
-| Frontend & Mobile | frontend-developer, react-specialist, vue-expert, angular-architect, flutter-expert, swift-expert, mobile-developer | ~9 |
-| Database & Data | postgres-pro, sql-pro, data-analyst, data-engineer, data-scientist, database-optimizer | ~7 |
-| DevOps & Infra | docker-expert, kubernetes-specialist, terraform-engineer, devops-engineer, sre-engineer, cloud-architect, platform-engineer | ~12 |
-| Security | security-auditor, dependency-manager, legal-advisor | ~3 |
-| Testing & QA | test-engineer, code-reviewer, accessibility-tester, chaos-engineer, web-performance-auditor | ~7 |
-| AI / ML | ai-engineer, llm-architect, mlops-engineer, machine-learning-engineer, nlp-engineer, prompt-engineer | ~6 |
-| DX & Tooling | cli-developer, tooling-engineer, mcp-developer, dx-optimizer, context-manager | ~5 |
-| Documentation & Research | docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, obsidian-vault-writer | ~5 |
-| Product & Business | product-manager, business-analyst, competitive-analyst, content-marketer, seo-specialist, ux-researcher | ~9 |
-| Specialized Domains | fintech-engineer, payment-integration, blockchain-developer, game-developer, iot-engineer, embedded-systems | ~6 |
-| Processes | git-workflow-manager, incident-responder, project-manager, scrum-master, legacy-modernizer | ~5 |
-
-Subagents are auto-discovered from the `agents/` directory. The SDD plugin scans this directory at session start and registers every `.md` file's basename as a valid subagent. No plugin edits are required.
-
 ## How to Add a New Subagent
 
 Adding a new agent only requires creating a single markdown file. The SDD plugin detects it automatically on the next session start.
@@ -143,19 +122,11 @@ to the development process. When invoked, you:
 - **Do not invoke from:** Another persona. This agent works standalone.
 ```
 
-### Step 3: (Skipped — Auto-Discovery)
-
-Previous versions of Códice required registering agents in a hardcoded `VALID_SUBAGENTS` set inside the SDD plugin. This is no longer necessary — the plugin auto-discovers agents by scanning the `agents/` directory at session start. Simply creating `agents/joke-teller.md` is sufficient.
-
-### Step 4: Restart OpenCode
+### Step 3: Restart OpenCode
 
 Restart your OpenCode session so it recognizes the new agent. Without a restart, `task("joke-teller")` will fail because OpenCode only loads agent files at startup.
 
 No delegation-table updates are needed: primary agents use a unified `task: "*": allow` permission (with a deny-list of other primaries), so any new subagent in `agents/` is automatically delegatable.
-
-## Composition Block Reference
-
-The `## COMPOSITION` block format and invocation rules are defined in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md).
 
 ## Links
 

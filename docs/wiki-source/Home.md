@@ -37,24 +37,6 @@ Códice solves this by providing a **versioned, atomic installer** that:
 - Updates your existing workspace without overwriting your customizations
 - Rolls back cleanly if an installation is interrupted
 
-## The SDD Cycle at a Glance
-
-Códice organizes development into a structured cycle of six core phases and three optional ones:
-
-| Phase | Command | What Happens |
-|-------|---------|--------------|
-| Specify | `/spec` | Define requirements, architecture, and project conventions |
-| Design | `/design` | Create UI/UX specifications (optional) |
-| Plan | `/plan` | Break specs into ordered, verifiable tasks |
-| Build | `/build` | Implement tasks using TDD (RED → GREEN → refactor) |
-| Validate | `/test` | Write tests, fix bugs, prove correctness |
-| Simplify | `/code-simplify` | Refactor for clarity (optional) |
-| Optimize | `/webperf` | Audit and improve web performance (optional) |
-| Review | `/review` | Five-axis code review (correctness, readability, architecture, security, performance) |
-| Ship | `/ship` | Pre-launch checklist, parallel audits, go/no-go decision |
-
-Each command suggests the next logical step when it finishes, guiding you through the cycle without needing to consult documentation.
-
 ## Quick Links
 
 - [Getting Started](Getting-Started) — Install Códice and run your first SDD cycle
