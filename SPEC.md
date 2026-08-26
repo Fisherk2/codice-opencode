@@ -3,12 +3,10 @@
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v2.1.0
+**Current Version:** v2.1.1
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
-> **v2.1.1-beta.1 ready** (FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅): Bug #79 regression test, shell injection fix (TD-V2-70), manifest count corrections (TD-V2-90/91), FileMergeEngine comment refresh (TD-V2-93). Plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup event (TD-V2-51). CI/CD SHA-pins bumped to Node 24 (TD-V2-7), parsed-semver cache added to VersionComparator (TD-V2-61). Code review: 1 Critical + 4 Important + 3 Suggestions applied. DI-enabled cache verification test added. 1934 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥ 95% production src/. v2.1.1-beta.1 ready to publish.
->
-> **v2.1.0 Released** (2026-08-12): FEV-24 ✅ (4 new commands, SDD intent auto-discovery, bilingual intents) + FEV-25 ✅ (agent delegation protocol). 2052 tests, 31/31 E2E scenarios, coverage ≥ 95% production src/. v2.1.0-beta.2 published to npm (`@fisherk2-dev/codice@2.1.0-beta.2`, dist-tag beta).
+> **v2.1.1 Released** (2026-08-25): FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅ — Bug #79, shell injection fix (TD-V2-70), manifest corrections (TD-V2-90/91), FileMergeEngine refresh (TD-V2-93), plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup (TD-V2-51), CI SHA-pins Node 24 (TD-V2-7), VersionComparator cache (TD-V2-61). Code review hardened (1 Critical + 4 Important + 3 Suggestions). 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production src/.
 
 ## Objective
 
