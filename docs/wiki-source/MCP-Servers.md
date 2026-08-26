@@ -619,23 +619,6 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 
 ---
 
-## Which Template Features Need Which MCP
-
-| Feature | MCP Required | Without MCP |
-|---------|--------------|-------------|
-| Documentation queries (`find-docs` skill) | `context7` | Falls back to training data |
-| Codebase intelligence (search, trace, architecture) | `codebase-memory-mcp` | File-by-file exploration (slow, token-heavy) |
-| Real-time web search (API key) | `tavily` | Falls back to training data |
-| Web scraping and crawling (API key) | `firecrawl` | Not available |
-| GitHub code search | `vercel-grep` | Manual GitHub browsing |
-| GitHub repository docs | `gitmcp` | Manual GitHub browsing |
-| `/webperf` Deep mode | `chrome-devtools` | Quick mode (static analysis only) |
-| Browser testing (`browser-testing-with-devtools` skill) | `chrome-devtools` | No runtime browser verification |
-| Spreadsheet manipulation (`xlsx` skill) | `excel` | Manual CSV editing |
-| Jupyter notebook automation | `jupyter` | Not available |
-
----
-
 ## Best Practices
 
 1. **Enable only what you need** — Each active MCP server adds tokens to every conversation. Disable servers you're not actively using.

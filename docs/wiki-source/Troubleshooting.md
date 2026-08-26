@@ -193,10 +193,10 @@ The affected symlinks are:
 **Solution:** Re-run the installer in force mode to regenerate all symlinks without overwriting your existing template files:
 
 ```bash
-bunx @fisherk2-dev/codice --force --mode clean
+bunx @fisherk2-dev/codice --force --clean
 ```
 
-The `--force` flag skips confirmation prompts, and `--mode clean` ensures the full post-installation generation step runs. This will:
+The `--force` flag skips confirmation prompts, and `--clean` ensures the full post-installation generation step runs. This will:
 
 1. Re-copy mandatory files (safe — they always match the current template)
 2. Re-generate all symlinks in `.opencode/`

@@ -4,6 +4,7 @@
 
 | Version | Supported |
 |---------|-----------|
+| 2.1.x   | ✅ Supported |
 | 2.0.x   | ✅ Supported |
 | 1.2.x   | ✅ Supported |
 | 1.1.x   | ✅ Supported |
@@ -58,13 +59,10 @@ The following are not blockers for v2.0.0 but are tracked as hardening work:
 
 1. **SBOM generation** — publish a CycloneDX SBOM (e.g. `@cyclonedx/bun-plugin`)
    with each release to make the dependency graph machine-verifiable.
-2. **npm provenance/signing** — enable npm package provenance (requires an
-   npm org with paid tier) so consumers can verify the published tarball was
-   built from the GitHub release workflow.
-3. **Automated CVE scanning in CI** — configure a security scanner plugin
+2. **Automated CVE scanning in CI** — configure a security scanner plugin
    (`bunfig.toml`) so `bun pm scan` runs on every PR, catching advisories
    before release rather than at audit time.
-4. **2FA on publish account** — already required for `fisherk2-dev`; kept here
+3. **2FA on publish account** — already required for `fisherk2-dev`; kept here
    as a checklist item for continuity.
 
 ### Security boundary summary

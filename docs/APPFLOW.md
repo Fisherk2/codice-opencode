@@ -1,4 +1,4 @@
-# Flujo de Navegación (TUI) – Códice: Opencode Workspace Installer v2.1.0
+# Flujo de Navegación (TUI) – Códice: Opencode Workspace Installer v2.1.1
 **Fecha:** 2026-07-11 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 1. Actores y Roles
@@ -150,7 +150,7 @@ graph TD
     C -- Start new project --> E[Guía de instalación]
     C -- Update workspace --> F[Guía de actualización]
     C -- Learn SDD cycle --> G[Explicar fases SDD]
-    C -- List commands --> H[Listar 13 comandos]
+    C -- List commands --> H[Listar 17 comandos]
     C -- Troubleshoot --> I[Tabla de problemas comunes]
 ```
 

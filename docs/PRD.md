@@ -1,5 +1,5 @@
-# Product Requirements Document – Códice: Opencode Workspace Installer v2.1.0
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-19 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Product Requirements Document – Códice: Opencode Workspace Installer v2.1.1
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-25 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 0. Descripción General
 Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñada para instalar, configurar y actualizar plantillas de espacios de trabajo de OpenCode (`opencode`). Su objetivo es proporcionar una experiencia de instalación "a prueba de tontos", rápida, segura y con fusión inteligente de archivos, preservando las personalizaciones del usuario.
@@ -22,7 +22,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - 9 MCP servers pre-configurados (3 habilitados por defecto: context7, vercel-grep, gitmcp).
   - Subagente obsidian-vault-writer + 3 skills de Obsidian para administración de vaults.
   - ISP split: `IFileSystem` (6 métodos) + `IStagingSystem` (4 métodos) para segregación de interfaces.
-  - Sistema de packs: 8 packs seleccionables + 2 directorios obligatorios (main, writers). 355 agentes distribuidos en 10 packs.
+  - Sistema de packs: 8 packs seleccionables + 2 directorios obligatorios (main, writers). ~360 agentes distribuidos en 10 packs (6 primary + 4 writers + ~350 subagents).
   - Installer UX v2: wizard de selección de packs, resumen pre-instalación con conteos de agentes, actualizaciones version-gated (solo v2.0+).
   - Flags CLI adicionales: `--packs <list>`, `--packs-all`, `--update-add-packs <list>`, `--clean`, `--project`, `--update`.
   - Formato `.codice-version` v2.0: incluye `installedPacks`, `installedAt`, `optionalSelections?`.
@@ -50,7 +50,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | HU-03 | Dev Experimentado | Ejecutar "Actualizar Workspace" | Saber si hay una nueva versión en GitHub y aplicar solo los cambios necesarios. | Alta | El CLI consulta la API de GitHub. Si hay update, aplica fusión granular. Si no, muestra mensaje de "versión más reciente". |
 | HU-04 | Mantenedor | Ejecutar `just test` o `make test` | Verificar que la lógica de fusión y la TUI funcionen correctamente antes de hacer un release. | Alta | Las pruebas unitarias (Bun/Vitest) y E2E (scripts de shell) pasan con >80% de cobertura. |
 | HU-05 | Cualquiera | Que el instalador falle a mitad de proceso | Que mi proyecto no quede en un estado corrupto o a medias. | Alta | Si falla, el directorio `.codice-staging/` se elimina y el proyecto original queda intacto (Atomicidad). |
-| HU-06 | Dev Experimentado | Seleccionar qué packs de agentes instalar | Tener solo los agentes relevantes para mi tipo de proyecto, sin instalar los 355 agentes. | Media | El instalador presenta un wizard de selección. Se instalan solo los packs elegidos. |
+| HU-06 | Dev Experimentado | Seleccionar qué packs de agentes instalar | Tener solo los agentes relevantes para mi tipo de proyecto, sin instalar los ~360 agentes. | Media | El instalador presenta un wizard de selección. Se instalan solo los packs elegidos. |
 | HU-07 | Dev Experimentado | Agregar packs en una actualización | Expandir mi workspace con nuevos packs sin reinstalar desde cero. | Baja | Update mode ofrece Option B para agregar packs. Los packs ya instalados quedan bloqueados. |
 | HU-08 | Dev Experimentado | Sincronizar el workspace con git de forma bidireccional (`/sync`) | Mantener el repositorio alineado con el remoto y resolver conflictos de manera controlada. | Media | `/sync` detecta modo (full-sync, incremental-sync, dry-run, conflict-resolution). Aplica estrategias NEWER_WINS, GITHUB_WINS, LOCAL_WINS o INTELLIGENT_MERGE. |
 | HU-09 | Dev Experimentado | Analizar la migración de stack técnico (`/migrate`) | Planear actualizaciones de dependencias con breaking changes sin afectar la estabilidad. | Baja | `/migrate` detecta stack desde lock files, evalúa breaking changes, y genera plan estructurado con fases y rollback en `docs/MIGRATION.md`. |
@@ -101,5 +101,6 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | 1.2.0 | 2026-08-03 | Fisherk2 | Sincronizado con v1.2.0: binarios removidos (ADR-011), .devin removido, progress bar, /help, /test, /ship, ADR-011 a ADR-013. | ✅ Aprobado |
 | 2.0.0 | 2026-08-07 | Fisherk2 | Sincronizado con v2.0.0: sistema de packs (ADR-014), installer UX v2 (ADR-015), 355 agentes en 10 packs, version-gated updates, 30 E2E scenarios, 1920 tests. | ✅ Aprobado |
 | 2.1.0-beta.1 | 2026-08-12 | Fisherk2 | Sincronizado con v2.1.0-beta.1: 4 nuevos comandos (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD plugin intent auto-discovery, bilingual intents, agent delegation protocol (FEV-25), CI/CD hardening, npm provenance SLSA v1, 31 E2E scenarios, 2052 tests. ADRs 016-020. | ✅ Aprobado |
+| 2.1.1 | 2026-08-25 | Fisherk2 | Sincronizado con v2.1.1: FEV-26+27+28 (bug #79, shell injection, manifest corrections, plugin cleanup #80, external dir permissions #81, backup integrity, staging cleanup, CI SHA-pins Node 24 + VersionComparator cache), code review hardened, 1935 tests, 31/31 E2E, 55/55 plugin integration, ~360 agents in 10 packs. | ✅ Aprobado |
 
 ---

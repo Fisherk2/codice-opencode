@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.1.1-beta.1] - 2026-08-21
+## [2.1.1] - 2026-08-25
 
 ### Changed
 
@@ -23,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Class JSDoc accuracy**: Updated `VersionComparator` class comment from "no side effects" to "memoized; no I/O" to reflect internal cache state.
 
-## [2.1.1] - 2026-08-21
 
 ### Security
 
@@ -39,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Flag-based orphan detection** (code review I4): Replaced fragile string-matching with flag-based guard for backup marker orphan detection.
 - **Staging/backup gitignore entries** (code review S2): Added staging and backup patterns to `template/estandar/gitignore`.
 
-Final metrics: 1931 tests, 31/31 E2E, 55/55 plugin integration, `just check` 0 errors.
+Final metrics: 1935 tests, 31/31 E2E, 55/55 plugin integration, `just check` 0 errors.
 
 ### Added
 
@@ -476,7 +475,8 @@ Pre-release for v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release
 
 - Path traversal prevention; symlink skipping in directory walk; SHA-256 checksums.
 
-[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/fisherk2/codice-opencode/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0-beta.1...v2.0.0
 [2.0.0-beta.1]: https://github.com/fisherk2/codice-opencode/compare/v1.2.0...v2.0.0-beta.1

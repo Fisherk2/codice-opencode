@@ -232,7 +232,7 @@ agents/ (or template/obligatorio/packs/)
 | "Step 4: Update Delegation Tables" | **REMOVE** — unified permissions make this unnecessary |
 | Permission model examples | Update to show `task: "*": allow` + deny-list pattern |
 | Primary agent table | Update permission model column |
-| Agent count | Update from "104 agents" to "~355 agents in 10 packs" (implemented in FEV-19) |
+| Agent count | Update from "104 agents" to "~360 agents in 10 packs" (6 primary + 4 writers + ~350 subagents — implemented in FEV-19, framing updated for v2.1.1) |
 
 ---
 

@@ -19,8 +19,8 @@ workspace/
 ├── opencode.json         # OpenCode configuration
 ├── .env.example          # Environment template
 ├── agents/               # AI agent definitions (~360 across 10 packs)
-├── commands/             # Slash command workflows (12 files)
-├── skills/               # Specialized knowledge domains (52 dirs)
+├── commands/             # Slash command workflows (17 files)
+├── skills/               # Specialized knowledge domains (51 dirs)
 ├── docs/                 # Project documentation
 ├── specs/                # Modular specifications + ADRs
 ├── tasks/                # Execution tasks (SDD pipeline)
@@ -47,7 +47,7 @@ This is the largest directory, containing **~360 agent files across 10 packs** t
 | `mictlantecuhtli.md` | Guardian of the Underworld | Reviews code, runs audits, enforces quality gates |
 | `tezcatlipoca.md` | Mirror of Truth | Provides adversarial review and critical analysis |
 
-The remaining **~355 subagents (8 selectable packs)** are domain specialists — frontend developers, database administrators, security auditors, Rust engineers, and so on. Each subagent is an expert in one area and is invoked from primary agents via `task()` delegation.
+The remaining **~350 subagents (8 selectable packs)** are domain specialists — frontend developers, database administrators, security auditors, Rust engineers, and so on. Each subagent is an expert in one area and is invoked from primary agents via `task()` delegation.
 
 The template keeps pack source under `template/obligatorio/packs/` (10 packs: 2 mandatory — main + writers — and 8 selectable); the installer copies selected packs into the flat `agents/` directory. The install wizard lets you choose packs and shows a summary with per-pack agent counts.
 
@@ -73,15 +73,20 @@ The **17 slash commands** map to the Source-Driven Development (SDD) lifecycle. 
 
 | Command | Agent | Phase |
 |---------|-------|-------|
+| `help.md` | huitzilopochtli | Onboarding — welcome, guide, and explain Códice |
 | `spec.md` | quetzalcoatl | Define project specification |
 | `design.md` | quetzalcoatl | Establish UI/UX and architecture |
 | `plan.md` | moctezuma | Break spec into executable tasks |
 | `build.md` | tlaloc | Implement the plan |
-| `test.md` | tlaloc | Validate implementation |
+| `sync.md` | tlaloc | Bidirectional git sync with conflict resolution |
+| `migrate.md` | quetzalcoatl | Generate technology stack migration plans |
+| `test.md` | mictlantecuhtli | Validate implementation (TDD) |
 | `code-simplify.md` | tlaloc | Refactor and simplify code |
-| `webperf.md` | tlaloc | Optimize web performance |
-| `review.md` | mictlantecuhtli | Review and audit code quality |
-| `ship.md` | tezcatlipoca | Prepare for launch |
+| `webperf.md` | mictlantecuhtli | Optimize web performance |
+| `review.md` | tezcatlipoca | Five-axis code review |
+| `ship.md` | mictlantecuhtli | Pre-launch checklist and release preparation |
+| `deploy.md` | mictlantecuhtli | Git workflow and CI/CD execution (post-ship) |
+| `analyze.md` | quetzalcoatl | Multi-dimensional architectural analysis |
 | `docs-update.md` | quetzalcoatl | Synchronize documentation with code |
 | `diagnosis.md` | quetzalcoatl | Analyze issues and document technical findings |
 | `evolve.md` | quetzalcoatl | Define new specs for mature projects |
@@ -90,7 +95,7 @@ Each command file contains numbered steps, `question` tool prompts at decision p
 
 ### `skills/` — Specialized Knowledge Domains
 
-Skills are the workspace's knowledge base — **52 skill directories**, each containing a `SKILL.md` file that teaches an agent how to perform a specific task domain. Many skills also include a `references/` subdirectory with extended reference material co-located with the skill:
+Skills are the workspace's knowledge base — **51 skill directories**, each containing a `SKILL.md` file that teaches an agent how to perform a specific task domain. 18 of those include a `references/` subdirectory with extended reference material co-located with the skill:
 
 | Skill | Purpose |
 |-------|---------|
@@ -102,7 +107,7 @@ Skills are the workspace's knowledge base — **52 skill directories**, each con
 | `security-and-hardening/references/` | Security checklist |
 | `architecture-diagrams/` | Create Mermaid and C4 diagrams |
 | `architecture-diagrams/references/` | 10 diagram reference documents |
-| ... | *(52 total skills, 18 with references/ subdirectories)* |
+| ... | *(51 total skills, 18 with references/ subdirectories)* |
 
 Skills are referenced inline by commands and agents using the `@skills/skill-name/SKILL.md` path. This keeps workflows composable — a single command may invoke multiple skills at different steps. Reference material within `skills/<name>/references/` is loaded by agents via the `reference` section in `opencode.json` and accessed with `@<skill-name>` in the OpenCode TUI.
 

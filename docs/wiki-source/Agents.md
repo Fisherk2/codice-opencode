@@ -51,37 +51,16 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 
 | Agent | Role | Domain | Permission Model | Key Commands |
 |-------|------|--------|-----------------|--------------|
-| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Read-only (writes denied). Delegates via `task()` with unified `"*": allow` + deny 5 other primaries. | `/ship` |
-| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. Delegates via unified `task()` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis` |
+| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Read-only (writes denied). Delegates via `task()` with unified `"*": allow` + deny 5 other primaries. | `/help` |
+| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. Delegates via unified `task()` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/migrate`, `/analyze` |
 | **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. Does not delegate (`task: "*": deny`). | `/plan` |
-| **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via unified `task()` pattern. | `/build`, `/code-simplify` |
-| **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates via unified `task()` pattern. | `/test`, `/ship`, `/webperf` |
+| **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via unified `task()` pattern. | `/build`, `/sync`, `/code-simplify` |
+| **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates via unified `task()` pattern. | `/test`, `/ship`, `/deploy`, `/webperf` |
 | **tezcatlipoca** | Mirror of Truth | Reflection & analysis | Purely read-only + analysis tools. Cannot write or edit any file. Does not delegate (`task: "*": deny`). | `/review` |
 
 ### Agent File Pattern
 
 Every agent file follows the same structure: YAML frontmatter, markdown body, and a `## COMPOSITION` block at the end. The complete specification — including field mapping, canonical permission blocks, and transformation rules — is documented in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md). Primary agents additionally carry a protocol section between `### CAPABILITIES` and `### RULES` — `### DELEGATION PROTOCOL` when they can invoke `task()`, `### SKILL LOADING PROTOCOL` when they cannot (see §8 of the spec).
-
-## Subagents
-
-Subagents cover 100+ domain specialties organized into categories:
-
-| Category | Example Agents | Count |
-|----------|---------------|-------|
-| Backend & APIs | backend-developer, typescript-pro, python-pro, golang-pro, rust-engineer, java-architect, fastapi-developer, graphql-architect, django-developer | ~20 |
-| Frontend & Mobile | frontend-developer, react-specialist, vue-expert, angular-architect, flutter-expert, swift-expert, mobile-developer | ~9 |
-| Database & Data | postgres-pro, sql-pro, data-analyst, data-engineer, data-scientist, database-optimizer | ~7 |
-| DevOps & Infra | docker-expert, kubernetes-specialist, terraform-engineer, devops-engineer, sre-engineer, cloud-architect, platform-engineer | ~12 |
-| Security | security-auditor, dependency-manager, legal-advisor | ~3 |
-| Testing & QA | test-engineer, code-reviewer, accessibility-tester, chaos-engineer, web-performance-auditor | ~7 |
-| AI / ML | ai-engineer, llm-architect, mlops-engineer, machine-learning-engineer, nlp-engineer, prompt-engineer | ~6 |
-| DX & Tooling | cli-developer, tooling-engineer, mcp-developer, dx-optimizer, context-manager | ~5 |
-| Documentation & Research | docs-writer, research-analyst, knowledge-synthesizer, scientific-literature-researcher, obsidian-vault-writer | ~5 |
-| Product & Business | product-manager, business-analyst, competitive-analyst, content-marketer, seo-specialist, ux-researcher | ~9 |
-| Specialized Domains | fintech-engineer, payment-integration, blockchain-developer, game-developer, iot-engineer, embedded-systems | ~6 |
-| Processes | git-workflow-manager, incident-responder, project-manager, scrum-master, legacy-modernizer | ~5 |
-
-Subagents are auto-discovered from the `agents/` directory. The SDD plugin scans this directory at session start and registers every `.md` file's basename as a valid subagent. No plugin edits are required.
 
 ## How to Add a New Subagent
 
@@ -143,19 +122,11 @@ to the development process. When invoked, you:
 - **Do not invoke from:** Another persona. This agent works standalone.
 ```
 
-### Step 3: (Skipped — Auto-Discovery)
-
-Previous versions of Códice required registering agents in a hardcoded `VALID_SUBAGENTS` set inside the SDD plugin. This is no longer necessary — the plugin auto-discovers agents by scanning the `agents/` directory at session start. Simply creating `agents/joke-teller.md` is sufficient.
-
-### Step 4: Restart OpenCode
+### Step 3: Restart OpenCode
 
 Restart your OpenCode session so it recognizes the new agent. Without a restart, `task("joke-teller")` will fail because OpenCode only loads agent files at startup.
 
 No delegation-table updates are needed: primary agents use a unified `task: "*": allow` permission (with a deny-list of other primaries), so any new subagent in `agents/` is automatically delegatable.
-
-## Composition Block Reference
-
-The `## COMPOSITION` block format and invocation rules are defined in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md).
 
 ## Links
 
