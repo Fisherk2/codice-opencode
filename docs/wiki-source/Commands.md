@@ -8,6 +8,7 @@ SDD organizes development into a repeatable cycle of phases. Each phase has a de
 
 ```mermaid
 flowchart LR
+    H0[/help/] -. onboarding .-> A
     A[/spec/] --> B[/design/]
     B --> C[/plan/]
     C --> D[/build/]
@@ -15,16 +16,28 @@ flowchart LR
     E --> F[/code-simplify/]
     F --> G[/review/]
     G --> H[/ship/]
+    H --> DEP[/deploy/]
     H --> I[/docs-update/]
     H --> J[/diagnosis/]
     H --> K[/evolve/]
     K --> C
     I --> K
     J --> C
+    ANA[/analyze/] -. pre-diagnosis .-> J
+    SYN[/sync/] -. wildcard .-> A & C & D
+    MIG[/migrate/] -. optional .-> A & I & J
+    WEB[/webperf/] -. after test/build .-> E & D
+
+    style H0 stroke-dasharray: 5 5
+    style ANA stroke-dasharray: 5 5
+    style SYN stroke-dasharray: 5 5
+    style MIG stroke-dasharray: 5 5
+    style WEB stroke-dasharray: 5 5
 ```
 
 | Phase | Command | Agent | Description |
 |-------|---------|-------|-------------|
+| **Onboarding** | `/help` | huitzilopochtli | Welcome the user, explain Códice, guide through workspace, and detect project state. Entry point for new users. |
 | **Define** | `/spec` | quetzalcoatl | Create project specifications, documentation, and conventions from scratch. For new projects or features. |
 | **Design** | `/design` | quetzalcoatl | Establish UI/UX specifications — design systems, user flows, component architecture, and accessibility requirements. |
 | **Plan** | `/plan` | moctezuma | Break down specifications into small, verifiable tasks with acceptance criteria and dependency graphs. |

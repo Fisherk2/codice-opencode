@@ -51,11 +51,11 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 
 | Agent | Role | Domain | Permission Model | Key Commands |
 |-------|------|--------|-----------------|--------------|
-| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Read-only (writes denied). Delegates via `task()` with unified `"*": allow` + deny 5 other primaries. | `/ship` |
-| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. Delegates via unified `task()` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis` |
+| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Read-only (writes denied). Delegates via `task()` with unified `"*": allow` + deny 5 other primaries. | `/help` |
+| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. Delegates via unified `task()` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/migrate`, `/analyze` |
 | **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. Does not delegate (`task: "*": deny`). | `/plan` |
-| **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via unified `task()` pattern. | `/build`, `/code-simplify` |
-| **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates via unified `task()` pattern. | `/test`, `/ship`, `/webperf` |
+| **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via unified `task()` pattern. | `/build`, `/sync`, `/code-simplify` |
+| **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates via unified `task()` pattern. | `/test`, `/ship`, `/deploy`, `/webperf` |
 | **tezcatlipoca** | Mirror of Truth | Reflection & analysis | Purely read-only + analysis tools. Cannot write or edit any file. Does not delegate (`task: "*": deny`). | `/review` |
 
 ### Agent File Pattern
