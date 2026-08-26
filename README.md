@@ -241,55 +241,125 @@ bunx @fisherk2-dev/codice --update --update-add-packs creative
 
 ## Workflow
 
+Códice defines **4 workflow types** depending on your project stage. All share the same iterative core (`plan → build → test → webperf → code-simplify → review`) which loops until requirements are met, then exits to `/ship` → `/deploy`. The `/help` and `/sync` commands are wildcards — invoke them at any point in any flow.
+
+### Initial Flow — MVPs & New Projects
+
 ```mermaid
 flowchart LR
-    A["/spec<br/>DEFINE"] --> B["/plan<br/>PLAN"]
-    B --> C["/build<br/>BUILD"]
-    C --> D["/test<br/>VERIFY"]
-    D --> E["/webperf<br/>WEBPERF (optional)"]
-    E --> F["/code-simplify<br/>SIMPLIFY (recommended)"]
-    F --> G["/review<br/>REVIEW"]
-    G --> H["/ship<br/>SHIP"]
-    H --> I["Go Live"]
-    H --> J2["/deploy<br/>DEPLOY (post-ship)"]
+    S["/spec<br/>DEFINE"] --> P["/plan<br/>PLAN"]
+    S -.->|optional| D["/design<br/>DESIGN"]
+    D -.-> P
+    P --> B["/build<br/>BUILD"]
+    B --> T["/test<br/>TEST"]
+    T --> CS["/code-simplify<br/>SIMPLIFY"]
+    T -.->|optional| W["/webperf<br/>PERF"]
+    W -.-> CS
+    CS --> R["/review<br/>REVIEW"]
+    R -->|"🔄 iterate"| P
+    R -->|"✅ ship"| SH["/ship<br/>SHIP"]
+    SH --> DP["/deploy<br/>DEPLOY"]
+    HELP["/help"] -.-> S
+    SYNC["/sync"] -.-> S
 
-    J["/evolve<br/>EVOLVE (mature project)"] -.-> A
-    K["/design<br/>DESIGN (optional)"] -.-> A
-    K -.-> C
-    L["/docs-update<br/>DOCS"] -.-> A
-    M["/diagnosis<br/>DIAGNOSE"] -.-> C
-    N["/help<br/>HELP"] -.-> A
-    P["/sync<br/>SYNC (wildcard)"] -.-> A
-    P -.-> B
-    P -.-> C
-    Q["/migrate<br/>MIGRATE (optional)"] -.-> A
-    Q -.-> L
-    Q -.-> M
-    R["/analyze<br/>ANALYZE (pre-diagnose)"] -.-> Q
-    R -.-> M
+    style D stroke-dasharray: 5 5
+    style W stroke-dasharray: 5 5
+    style HELP stroke-dasharray: 5 5
+    style SYNC stroke-dasharray: 5 5
 ```
 
-### Full Cycle
+### Evolutionary Flow — Established Projects
+
+```mermaid
+flowchart LR
+    DU["/docs<br/>-update"] --> EV["/evolve<br/>EVOLVE"]
+    EV --> P["/plan<br/>PLAN"]
+    EV -.->|optional| D["/design<br/>DESIGN"]
+    D -.-> P
+    P --> B["/build<br/>BUILD"]
+    B --> T["/test<br/>TEST"]
+    T --> CS["/code-simplify<br/>SIMPLIFY"]
+    T -.->|optional| W["/webperf<br/>PERF"]
+    W -.-> CS
+    CS --> R["/review<br/>REVIEW"]
+    R -->|"🔄 iterate"| P
+    R -->|"✅ ship"| SH["/ship<br/>SHIP"]
+    SH --> DP["/deploy<br/>DEPLOY"]
+    HELP["/help"] -.-> DU
+    SYNC["/sync"] -.-> DU
+
+    style D stroke-dasharray: 5 5
+    style W stroke-dasharray: 5 5
+    style HELP stroke-dasharray: 5 5
+    style SYNC stroke-dasharray: 5 5
+```
+
+### Issues Flow — Bug Fixes & Tech Debt
+
+```mermaid
+flowchart LR
+    AN["/analyze<br/>ANALYZE"] --> DG["/diagnosis<br/>DIAGNOSIS"]
+    DG --> P["/plan<br/>PLAN"]
+    P --> B["/build<br/>BUILD"]
+    B --> T["/test<br/>TEST"]
+    T --> CS["/code-simplify<br/>SIMPLIFY"]
+    T -.->|optional| W["/webperf<br/>PERF"]
+    W -.-> CS
+    CS --> R["/review<br/>REVIEW"]
+    R -->|"🔄 iterate"| P
+    R -->|"✅ ship"| SH["/ship<br/>SHIP"]
+    SH --> DP["/deploy<br/>DEPLOY"]
+    HELP["/help"] -.-> AN
+    SYNC["/sync"] -.-> AN
+
+    style W stroke-dasharray: 5 5
+    style HELP stroke-dasharray: 5 5
+    style SYNC stroke-dasharray: 5 5
+```
+
+### Migration Flow — Technology Migration
+
+```mermaid
+flowchart LR
+    MG["/migrate<br/>MIGRATE"] --> P["/plan<br/>PLAN"]
+    P --> B["/build<br/>BUILD"]
+    B --> T["/test<br/>TEST"]
+    T --> CS["/code-simplify<br/>SIMPLIFY"]
+    T -.->|optional| W["/webperf<br/>PERF"]
+    W -.-> CS
+    CS --> R["/review<br/>REVIEW"]
+    R -->|"🔄 iterate"| P
+    R -->|"✅ ship"| SH["/ship<br/>SHIP"]
+    SH --> DP["/deploy<br/>DEPLOY"]
+    HELP["/help"] -.-> MG
+    SYNC["/sync"] -.-> MG
+
+    style W stroke-dasharray: 5 5
+    style HELP stroke-dasharray: 5 5
+    style SYNC stroke-dasharray: 5 5
+```
+
+### Full Commands
 
 | Phase | Command | Agent | What It Does | Main Skills |
 |------|---------|--------|--------------|-------------|
 | Onboarding | `/help` | huitzilopochtli | Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 17 commands, troubleshoot issues | |
 | Design (optional) | `/design` | quetzalcoatl | Parallel fan-out: UX research, technical feasibility, accessibility. Merges into design specification in `specs/design/` | ui-ux-design-pro, design-taste-frontend, frontend-ui-engineering |
-| Define (new) | `/spec` | quetzalcoatl | Detects project state (3 cases), clarifies requirements, generates docs (PRD, TRD, ARCHITECTURE, WORKFLOW) and synthesizes into SPEC.md | spec-driven-development, clean-ddd-hexagonal, architecture-diagrams, idea-refine, interview-me |
-| Evolve (mature) | `/evolve` | quetzalcoatl | Creates new specs or modifies existing ones for mature projects with version history. Redirects to `/spec` for new/immature projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
+| Define project | `/spec` | quetzalcoatl | Detects project state (3 cases), clarifies requirements, generates docs (PRD, TRD, ARCHITECTURE, WORKFLOW) and synthesizes into SPEC.md | spec-driven-development, clean-ddd-hexagonal, architecture-diagrams, idea-refine, interview-me |
+| Evolve project | `/evolve` | quetzalcoatl | Creates new specs or modifies existing ones for mature projects with version history. Redirects to `/spec` for new/immature projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
 | Sync documentation | `/docs-update` | quetzalcoatl | Pre-flight analyzes docs state, question-tool resolves contradictions, then synchronizes docs with current codebase | documentation-and-adrs, agent-md-refactor, architecture-diagrams |
 | Diagnose issues | `/diagnosis` | quetzalcoatl | Analyzes remote issues, executes diagnostic commands, documents root cause in `docs/diagnosis/` with structured template | interview-me, debugging-and-error-recovery |
 | Plan | `/plan` | moctezuma | Analyzes dependencies, cuts vertically, writes tasks with acceptance criteria in `tasks/plan.md` and `tasks/todo.md` | planning-and-task-breakdown, clean-ddd-hexagonal, architecture-diagrams |
 | Build | `/build` | tlaloc | Takes next pending task, applies RED-GREEN-REFACTOR with TDD, runs full suite, commits | incremental-implementation, test-driven-development, solid, error-handling-patterns |
 | Verify | `/test` | mictlantecuhtli | TDD for features (test → implement → refactor). Prove-It for bugs (reproduce → fix → verify). Escalates to incident-response if incident | test-driven-development, error-handling-patterns, browser-testing-with-devtools |
 | Audit performance (optional) | `/webperf` | mictlantecuhtli | Delegates to web-performance-auditor to audit Core Web Vitals, GPU animations, layout shifts, CSS efficiency. Findings for /review | observability-and-instrumentation, browser-testing-with-devtools |
-| Simplify (recommended) | `/code-simplify` | tlaloc | Scans code for simplification opportunities (nesting, long functions, ternaries, dead code). Applies incrementally with tests | code-simplification, refactoring-patterns, solid |
+| Simplify | `/code-simplify` | tlaloc | Scans code for simplification opportunities (nesting, long functions, ternaries, dead code). Applies incrementally with tests | code-simplification, refactoring-patterns, solid |
 | Review | `/review` | tezcatlipoca | 5-axis audit: Correctness, Readability, Architecture, Security, Performance. Incorporates /webperf findings. Findings categorized Critical/Important/Suggestion | code-review-and-quality, solid, security-and-hardening, performance-optimization |
 | Ship | `/ship` | mictlantecuhtli | Parallel fan-out: code-reviewer, security-auditor, test-engineer, dependency-manager, ±accessibility-tester. Produces GO/NO-GO decision + rollback plan | shipping-and-launch, crafting-effective-readmes, architecture-diagrams, bash-defensive-patterns |
 | Sync workspace | `/sync` | tlaloc | Bidirectional git sync with 4 modes (full-sync, incremental-sync, dry-run, conflict-resolution) and 4 conflict resolution strategies (NEWER_WINS, GITHUB_WINS, LOCAL_WINS, INTELLIGENT_MERGE). Pre-flight checks git + remote. Wildcard — can be invoked at any SDD phase | git-workflow-and-versioning, interview-me, observability-and-instrumentation |
-| Migrate stack (optional) | `/migrate` | quetzalcoatl | Detects current tech stack from lock files, evaluates breaking changes between versions, generates a structured migration plan in `docs/MIGRATION.md` with phases, steps, and rollback procedures. Updates `WORKFLOW.md` and `specs/` automatically | dependency-audit, interview-me, deprecation-and-migration, test-driven-development, changelog-generate |
+| Migrate stack | `/migrate` | quetzalcoatl | Detects current tech stack from lock files, evaluates breaking changes between versions, generates a structured migration plan in `docs/MIGRATION.md` with phases, steps, and rollback procedures. Updates `WORKFLOW.md` and `specs/` automatically | dependency-audit, interview-me, deprecation-and-migration, test-driven-development, changelog-generate |
 | Analyze architecture | `/analyze` | quetzalcoatl | 8-dimension analysis (system structure, design patterns, dependency architecture, data flow, scalability, security, testability, documentation). Generates prioritized `docs/TECH_DEBT.md` with Critical/High/Medium/Low findings. Findings feed `/diagnosis` | clean-ddd-hexagonal, design-patterns, dependency-audit, observability-and-instrumentation, performance-analysis, security-and-hardening, test-driven-development, documentation-and-adrs, code-review-and-quality |
-| Deploy | `/deploy` | mictlantecuhtli | Post-`/ship` deployment. 3 modes: no workflow (generate from scratch), betterable (analyze + optimize), established (execute documented workflow). Generates branch protection, PR templates, CI pipelines, and updates `CONTRIBUTING.md` | ci-cd-and-automation, git-workflow-and-versioning, bash-defensive-patterns, observability-and-instrumentation, interview-me |
+| Deploy | `/deploy` | mictlantecuhtli | Post-`/ship` review. 3 modes: no workflow (generate from scratch), betterable (analyze + optimize), established (execute documented workflow). Generates branch protection, PR templates, CI pipelines, and updates `CONTRIBUTING.md` | ci-cd-and-automation, git-workflow-and-versioning, bash-defensive-patterns, observability-and-instrumentation, interview-me |
 
 ---
 
