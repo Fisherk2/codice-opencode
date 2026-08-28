@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v2.1.1
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-25 (FEV-28 ✅) | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v2.1.2
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-28 (v2.1.2 Hotfix ✅) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -212,6 +212,15 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 **Release v2.1.1:** Todas las fases completadas. Publish con dist-tag `latest` → `@fisherk2-dev/codice@2.1.1`.
 
+#### Resumen v2.1.2 — Hotfix ✅ (2026-08-28)
+
+| Item | Type | Description |
+|------|------|-------------|
+| docs-update delegation fix | Fix | Explicit `docs-writer` and `technical-writer` subagent references |
+| Tech debt reorg | Chore | v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4 |
+
+**Release v2.1.2:** Hotfix released 2026-08-28. Publish con dist-tag `latest` → `@fisherk2-dev/codice@2.1.2`.
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -257,3 +266,4 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | v2.0.0 | 1920 | 30/30 | 95.68% | 2026-08-07 |
 | v2.1.0-beta.1 | 2052 | 31/31 | ≥95% | 2026-08-12 |
 | v2.1.1 | 1935 | 31/31 | ≥95% | 2026-08-25 |
+| v2.1.2 | 1935 | 31/31 | ≥95% | 2026-08-28 |

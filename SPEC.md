@@ -3,10 +3,12 @@
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v2.1.1
+**Current Version:** v2.1.2
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
-> **v2.1.1 Released** (2026-08-25): FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅ — Bug #79, shell injection fix (TD-V2-70), manifest corrections (TD-V2-90/91), FileMergeEngine refresh (TD-V2-93), plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup (TD-V2-51), CI SHA-pins Node 24 (TD-V2-7), VersionComparator cache (TD-V2-61). Code review hardened (1 Critical + 4 Important + 3 Suggestions). 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production src/.
+> **v2.1.2 Released** (2026-08-28): Hotfix — explicit docs-writer/technical-writer delegation in docs-update command; tech debt reorganization (v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4).
+>
+> **Previous: v2.1.1** (2026-08-25): FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅ — Bug #79, shell injection fix (TD-V2-70), manifest corrections (TD-V2-90/91), FileMergeEngine refresh (TD-V2-93), plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup (TD-V2-51), CI SHA-pins Node 24 (TD-V2-7), VersionComparator cache (TD-V2-61). Code review hardened (1 Critical + 4 Important + 3 Suggestions). 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production src/.
 
 ## Objective
 

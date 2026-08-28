@@ -38,7 +38,7 @@ DOCUMENTATION STATE DETECTED:
 
 ## Phase 1: Synchronize Documentation
 
-**Delegate** to appropriate subagents for each documentation area:
+**Delegate** to `docs-writer` and `technical-writer` subagents for each documentation area:
 
 1. **Update existing docs** — @docs/ARCHITECTURE.md, @docs/SCHEMA.md, @docs/DESIGN.md, @docs/APPFLOW.md, @docs/CODE_STYLE.md, @docs/SECURITY.md, @docs/TECH_DEBT.md, @docs/SECURITY.md
 2. **Create missing docs** if gaps were identified:
