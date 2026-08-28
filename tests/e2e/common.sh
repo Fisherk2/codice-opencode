@@ -31,6 +31,10 @@ readonly COLOR_RESET='\033[0m'
 # Root of the repository (assumes common.sh is at tests/e2e/common.sh)
 readonly CODICE_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
+# Bundled template version — read from package.json, the same source the CLI
+# uses (src/cli/version.ts). Keeps E2E version assertions in sync on every release.
+readonly BUNDLED_VERSION="$(node -p "require('${CODICE_ROOT}/package.json').version")"
+
 # CLI invocation — runs codice via `bun run src/cli/main.ts`
 # Replaces the compiled binary used in earlier versions.
 CODICE_CLI="bun run $CODICE_ROOT/src/cli/main.ts"
