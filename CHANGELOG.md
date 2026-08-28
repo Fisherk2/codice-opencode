@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.2] - 2026-08-28
+
+### Fixed
+
+- **Explicit subagent delegation in docs-update command**: Replaced vague "appropriate subagents" with specific `docs-writer` and `technical-writer` subagent references in Phase 1 of the docs-update command, ensuring correct agent routing for documentation synchronization tasks.
+
+### Changed
+
+- **Tech debt reorganization**: Moved v2.1.2 planned debt items (9 items, 18-24h) to v2.1.3. Created clean v2.1.2 hotfix scope with no debt items. Shifted v2.1.3 (Larger Refactoring) to v2.1.4.
+
 ## [2.1.1] - 2026-08-25
 
 ### Changed
@@ -475,7 +485,8 @@ Pre-release for v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release
 
 - Path traversal prevention; symlink skipping in directory walk; SHA-256 checksums.
 
-[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.1.2...HEAD
+[2.1.2]: https://github.com/fisherk2/codice-opencode/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/fisherk2/codice-opencode/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0-beta.1...v2.0.0
