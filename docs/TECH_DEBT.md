@@ -1,9 +1,9 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-28
 **Status:** v2.1.1 Released (2026-08-25) — FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅ + code review hardened — 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production `src/`
 **Current version:** v2.1.1
-**Next version:** v2.1.2 (planned)
+**Next version:** v2.1.3 (planned)
 
 ---
 
@@ -114,7 +114,17 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **TD-V2-7** | Action SHA-pins force Node 24 (deprecated) | Debt | 1-2h | Low | `fix23-action-sha-pins-node24.md` |
 | **TD-V2-61** | No caching for version comparison | Debt | 1h | Low | `fix22-no-caching-version-comparison.md` |
 
-### v2.1.2 (Medium Effort — 9 items, 18-24h total)
+### v2.1.2 (Hotfix — TBD)
+
+> **Scope:** Small, targeted fix. No tech debt items included.
+
+| ID | Item | Type | Effort | Risk | Description |
+|----|------|------|--------|------|-------------|
+| — | *TBD* | Fix | — | — | Awaiting hotfix change definition |
+
+**Metrics:** TBD after implementation.
+
+### v2.1.3 (Medium Effort — 9 items, 18-24h total)
 
 | ID | Item | Type | Effort | Risk | Description |
 |----|------|------|--------|------|-------------|
@@ -128,7 +138,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **TD-V2-81** | Missing integration tests for error paths | Debt | 2h | Low | Some error paths lack integration test coverage. |
 | **TD-V2-92** | Missing JSDoc for some public methods | Debt | 2h | Low | Some public methods in ports/services lack JSDoc. |
 
-### v2.1.3 (Larger Refactoring — 4 items, 12-16h total)
+### v2.1.4 (Larger Refactoring — 4 items, 12-16h total)
 
 | ID | Item | Type | Effort | Risk | Description |
 |----|------|------|--------|------|-------------|
@@ -155,8 +165,8 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | v2.0.0 debt | ✅ All resolved |
 | v2.1.0 debt | ✅ All resolved (4 new commands, SDD intent auto-discovery, bilingual intents, agent delegation, CI/CD hardening) |
 | v2.1.1 | ✅ Released — FEV-26+27+28 — 1935 tests, 55/55 plugin integration |
-| v2.1.2 backlog | 9 items (8 debt + 1 feature) — 18-24h |
-| v2.1.3 backlog | 4 items (4 debt) — 12-16h |
+| v2.1.3 backlog | 9 items (8 debt + 1 feature) — 18-24h |
+| v2.1.4 backlog | 4 items (4 debt) — 12-16h |
 | v2.3 backlog | 3 items (1 debt + 2 features) — 18-28h |
 
 ---
