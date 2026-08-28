@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
 **Last updated:** 2026-08-28
-**Status:** v2.1.1 Released (2026-08-25) — FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅ + code review hardened — 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production `src/`
-**Current version:** v2.1.1
+**Status:** v2.1.2 Released (2026-08-28) — Hotfix: docs-update delegation fix + tech debt reorg — 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production `src/`
+**Current version:** v2.1.2
 **Next version:** v2.1.3 (planned)
 
 ---
@@ -114,15 +114,16 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **TD-V2-7** | Action SHA-pins force Node 24 (deprecated) | Debt | 1-2h | Low | `fix23-action-sha-pins-node24.md` |
 | **TD-V2-61** | No caching for version comparison | Debt | 1h | Low | `fix22-no-caching-version-comparison.md` |
 
-### v2.1.2 (Hotfix — TBD)
+### v2.1.2 ✅ Released (2026-08-28)
 
-> **Scope:** Small, targeted fix. No tech debt items included.
+> **Scope:** Hotfix — docs-update delegation fix + tech debt reorganization.
 
 | ID | Item | Type | Effort | Risk | Description |
 |----|------|------|--------|------|-------------|
-| — | *TBD* | Fix | — | — | Awaiting hotfix change definition |
+| — | docs-update delegation fix | Fix | — | Low | Explicit `docs-writer` and `technical-writer` subagent references |
+| — | Tech debt reorg | Chore | — | Low | v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4 |
 
-**Metrics:** TBD after implementation.
+**Metrics:** 1935 tests, 31/31 E2E, 55/55 plugin integration.
 
 ### v2.1.3 (Medium Effort — 9 items, 18-24h total)
 
