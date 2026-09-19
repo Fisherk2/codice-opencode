@@ -1,9 +1,9 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-08-28
+**Last updated:** 2026-09-19
 **Status:** v2.1.2 Released (2026-08-28) — Hotfix: docs-update delegation fix + tech debt reorg — 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production `src/`
 **Current version:** v2.1.2
-**Next version:** v2.1.3 (planned)
+**Next version:** v2.1.3 (hotfix Opencode V2, planned)
 
 ---
 
@@ -125,7 +125,11 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 
 **Metrics:** 1935 tests, 31/31 E2E, 55/55 plugin integration.
 
-### v2.1.3 (Medium Effort — 9 items, 18-24h total)
+### v2.1.3 (Hotfix Opencode V2 — alcance en triaje)
+
+> **Alcance reservado:** issues surgidas con la llegada de Opencode V2 (migración `permission` → `tools` en packs, reasignación de comandos del ciclo de revisión a tezcatlipoca). La deuda 2.1.x previamente planificada se recorre una versión (v2.1.3 → v2.1.4, v2.1.4 → v2.1.5). Items concretos por definir.
+
+### v2.1.4 (Medium Effort — 9 items, 18-24h total)
 
 | ID | Item | Type | Effort | Risk | Description |
 |----|------|------|--------|------|-------------|
@@ -139,7 +143,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **TD-V2-81** | Missing integration tests for error paths | Debt | 2h | Low | Some error paths lack integration test coverage. |
 | **TD-V2-92** | Missing JSDoc for some public methods | Debt | 2h | Low | Some public methods in ports/services lack JSDoc. |
 
-### v2.1.4 (Larger Refactoring — 4 items, 12-16h total)
+### v2.1.5 (Larger Refactoring — 4 items, 12-16h total)
 
 | ID | Item | Type | Effort | Risk | Description |
 |----|------|------|--------|------|-------------|
@@ -166,8 +170,9 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | v2.0.0 debt | ✅ All resolved |
 | v2.1.0 debt | ✅ All resolved (4 new commands, SDD intent auto-discovery, bilingual intents, agent delegation, CI/CD hardening) |
 | v2.1.1 | ✅ Released — FEV-26+27+28 — 1935 tests, 55/55 plugin integration |
-| v2.1.3 backlog | 9 items (8 debt + 1 feature) — 18-24h |
-| v2.1.4 backlog | 4 items (4 debt) — 12-16h |
+| v2.1.3 backlog | Hotfix Opencode V2 — alcance en triaje |
+| v2.1.4 backlog | 9 items (8 debt + 1 feature) — 18-24h |
+| v2.1.5 backlog | 4 items (4 debt) — 12-16h |
 | v2.3 backlog | 3 items (1 debt + 2 features) — 18-28h |
 
 ---
@@ -194,5 +199,5 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 ---
 
 *Maintained by Códice team. Update when tech debt items are added or resolved.*
-*Last updated: 2026-08-25*
+*Last updated: 2026-09-19*
 *Next deep audit: after v2.1.3 release*
