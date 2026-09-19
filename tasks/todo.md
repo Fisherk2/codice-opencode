@@ -1,63 +1,52 @@
-# FEV-28 Todo List — Infrastructure & Performance
+# FEV-29 — Permission → Tools Migration — Todo
 
-**Phase:** FEV-28 (v2.1.1) — ✅ Completo
-**Branch:** `fix/tech-debt-2.1.1`
-**Base:** `develop`
-**Plan:** [plan.md](./plan.md)
+**Plan:** `tasks/plan.md`
+**Branch:** `hotfix/opencode-v2-migrate`
+**Target:** v2.1.3
 
----
+> Quality gate: `just check` 0 errors + `just test` 0 failures before any commit in this list.
+> Atomicity rule: one commit per task. Pack migrations (1.3-1.9) must not be batched.
 
-## Phase 1 — TD-V2-7: SHA-pins → Node 24-compatible ✅ Completo
+## Phase 1 — Migration script + 7 packs (F1)
 
-- [x] **Task 1.1** Bump SHA-pins en `.github/workflows/ci.yml` y `.github/workflows/release.yml`
-  - [x] `ci.yml`: `actions/checkout` → `@3d3c42e5aac5ba805825da76410c181273ba90b1` (v7.0.1)
-  - [x] `ci.yml`: `actions/cache` → `@55cc8345863c7cc4c66a329aec7e433d2d1c52a9` (v6.1.0)
-  - [x] `ci.yml`: `extractions/setup-just` → `@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3` (v4)
-  - [x] `release.yml`: `actions/checkout` → `@3d3c42e5aac5ba805825da76410c181273ba90b1` (v7.0.1)
-  - [x] `oven-sh/setup-bun` se mantiene (SHA `0c5077e5...` v2.2.0 ya es Node 24)
-  - [x] `softprops/action-gh-release` → `@3d0d9888cb7fd7b750713d6e236d1fcb99157228` (v3.0.2)
-  - [x] Commit: `0003316 chore(ci): bump GitHub Actions SHA-pins to Node 24-compatible majors`
+- [ ] **1.1** Create `scripts/migrate-permission-to-tools.ts` — codemod w/ guard rails (already-migrated/mixed-key/YAML-error fail-loud). Subagents: `backend-developer`, `code-reviewer`.
+- [ ] **1.2** Add `tests/unit/scripts/migrate-permission-to-tools.test.ts` — 6 cases (scalar, nested-map, already-migrated, mixed-keys, malformed-YAML, idempotency). Subagents: `qa-automation`.
+- [ ] **1.3** Run codemod on `business/` (91 files). Commit `refactor(agents): migrate business pack permission -> tools`.
+- [ ] **1.4** Run codemod on `creative/` (10 files). Commit `refactor(agents): migrate creative pack permission -> tools`.
+- [ ] **1.5** Run codemod on `finance/` (11 files). Commit `refactor(agents): migrate finance pack permission -> tools`.
+- [ ] **1.6** Run codemod on `government-legal/` (8 files). Commit `refactor(agents): migrate government-legal pack permission -> tools`.
+- [ ] **1.7** Run codemod on `hardware-emerging/` (36 files). Commit `refactor(agents): migrate hardware-emerging pack permission -> tools`.
+- [ ] **1.8** Run codemod on `operations-support/` (18 files). Commit `refactor(agents): migrate operations-support pack permission -> tools`.
+- [ ] **1.9** Run codemod on `science-research/` (31 files). Commit `refactor(agents): migrate science-research pack permission -> tools`.
 
-**Checkpoint Phase 1:**
-- [x] `just check` 0 errores, `just test` 1934 pass, 0 fail
-- [x] SHA-pins validados via GitHub API (HTTP 200)
+**Checkpoint F1**
+- [ ] `grep -rl '^permission:' template/obligatorio/packs/ | wc -l` returns `0`.
+- [ ] `just check` 0 errors.
 
----
+## Phase 2 — Validator + tests ported to `tools:` (F2)
 
-## Phase 2 — TD-V2-61: VersionComparator semver cache ✅ Completo
+- [ ] **2.1** Port `tests/unit/domain/helpers/agentFrontmatterValidator.ts`: `validatePermission` → `validateTools`, field `permission` → `tools`, extend object handling to cover `task:` deny-list map. Subagents: `typescript-pro`, `code-reviewer`.
+- [ ] **2.2** Update `tests/unit/domain/agent-frontmatter-validation.test.ts`: replace `parsed.permission` reads with `parsed.tools`; rename describe blocks ("permission value errors" → "tools value errors"); port the FEV-19 invariants suite to `tools.task` deny-list shape. Subagents: `typescript-pro`, `test-engineer`.
+- [ ] **2.3** Update `tests/unit/scripts/reformat-agent.test.ts`: change `expect(output).toContain("permission:")` → `expect(output).toContain("tools:")` (line 62). Subagents: `qa-automation`.
 
-- [x] **Task 2.1** Añadir cache + test (TDD)
-  - [x] `VersionComparator` class: `private readonly parsedCache = new Map<string, string>()`
-  - [x] `compare()` — cache lookup → on miss: `validateVersions()` → set cache
-  - [x] `validateVersion`/`validateVersions` remain pure (no cache)
-  - [x] Constructor refactored for DI (optional `validateFn` param, backward-compatible)
-  - [x] Class JSDoc updated to "memoized; no I/O"
-  - [x] Commit: `4a43f91 perf(domain): add parsed-semver cache to VersionComparator`
-  - [x] Commit: `61bce84 refactor(domain): simplify FEV-28 comments for clarity`
-  - [x] Commit: `bcd9884 fix(domain): add DI-enabled cache verification test + bump action-gh-release`
+**Checkpoint F2**
+- [ ] `just test` green; agent-frontmatter-validation suite covers all 211 files (205 migrated + 6 primary).
+- [ ] No leftover `permission` references in `tests/unit/domain/helpers/agentFrontmatterValidator.ts` and `tests/unit/domain/agent-frontmatter-validation.test.ts`.
 
-- [x] **Task 2.2** Code review + quality gates
-  - [x] `just check` 0 errores
-  - [x] `just test` — 1934 pass, 0 fail
-  - [x] Code review pass (5-axis: correctness, readability, architecture, security, performance)
-  - [x] Spy-based cache verification test added (proves cache hit skips validation)
+## Phase 3 — Generator + specs aligned (F3)
 
-**Checkpoint Phase 2:**
-- [x] `just check` 0 errores
-- [x] `just test` 1934 pass, 0 fail
-- [x] `git log --oneline -5` muestra los commits de FEV-28
+- [ ] **3.1** Port `scripts/reformat-agent.ts`: rename `SUBAGENT_PERMISSION` → `SUBAGENT_TOOLS`, emit top-level `tools:`. Subagents: `backend-developer`.
+- [ ] **3.2** Update `specs/spec-agent-format-v2.md` §3 (canonical block) and §8 (delegation references `permission.task` → `tools.task`). Subagents: `docs-writer`, `technical-writer`.
+- [ ] **3.3** Update `specs/spec-agent-packs.md` §4 (unified permission table): flip `task:` to `tools.task` with deny-list examples. Subagents: `docs-writer`.
+- [ ] **3.4** Verify + update `CONTRIBUTING.md` and `docs/wiki-source/` for any leftover `permission:` references. Subagents: `docs-writer`.
 
----
+**Checkpoint F3**
+- [ ] `just check && just test` green.
+- [ ] `grep -rln 'permission:' specs/ CONTRIBUTING.md docs/wiki-source/ scripts/` returns only matches in `fix26-*` diagnosis file (allowed) and the V1/V2 comparison prose (audit case-by-case).
+- [ ] No commit has bundled more than one pack change (atomicity check).
 
-## Code Review ✅ Completo
+## Notes
 
-- [x] Multi-axis review (correctness, readability, architecture, security, performance)
-- [x] All findings addressed (DI-enabled cache test, action-gh-release bump, JSDoc fix)
-
----
-
-## Release ✅ Completo
-
-- [x] v2.1.1-beta.1 docs actualizados (TECH_DEBT.md, WORKFLOW.md, SPEC.md, CHANGELOG.md)
-- [x] `package.json` → `2.1.1-beta.1`
-- [x] `git log --oneline -6` muestra el historial completo de FEV-28
+- Codemod script lives outside `src/` and is **not shipped** in the npm package; it is a contributor tool only.
+- The V2 `tools:` schema is identical in shape to V1 `permission:` — only the top-level key changes. No value rewrites are required.
+- Subagent delegation must list **subagents only** (e.g. `docs-writer`, `typescript-pro`, `qa-automation`). Main agents (`huitzilopochtli`, `quetzalcoatl`, `tlaloc`, `moctezuma`, `mictlantecuhtli`, `tezcatlipoca`) are NEVER invoked from `/plan`.
