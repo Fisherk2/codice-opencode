@@ -4,7 +4,7 @@ mode: subagent
 temperature: 0.1
 color: "#a9dc3b"
 hidden: true
-permission:
+tools:
   write:
     "*": ask
     ".github/*": allow

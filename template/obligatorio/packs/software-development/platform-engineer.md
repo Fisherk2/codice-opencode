@@ -4,7 +4,7 @@ mode: subagent
 temperature: 0.1
 color: "#3bdcbe"
 hidden: true
-permission:
+tools:
   write:
     "*": deny
     "platform/*": allow

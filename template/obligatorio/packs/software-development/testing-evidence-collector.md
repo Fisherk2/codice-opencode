@@ -1,10 +1,10 @@
 ---
-description: "Evidence Collector — Screenshot-obsessed, fantasy-allergic QA specialist - Default to finding 3-5 issues, requires visual proof for everything"
+description: "QA Evidence Collector — Screenshot-obsessed, fantasy-allergic QA specialist - Default to finding 3-5 issues, requires visual proof for everything"
 mode: subagent
 temperature: 0.1
 color: "#dcb03b"
 hidden: true
-permission:
+tools:
   write: deny
   edit: deny
   bash:

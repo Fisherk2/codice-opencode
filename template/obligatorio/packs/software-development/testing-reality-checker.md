@@ -1,10 +1,10 @@
 ---
-description: "Reality Checker — Stops fantasy approvals, evidence-based certification - Default to 'NEEDS WORK', requires overwhelming proof for production readiness"
+description: "QA Reality Checker — Stops fantasy approvals, evidence-based certification - Default to 'NEEDS WORK', requires overwhelming proof for production readiness"
 mode: subagent
 temperature: 0.1
 color: "#dcb03b"
 hidden: true
-permission:
+tools:
   write: deny
   edit: deny
   bash:

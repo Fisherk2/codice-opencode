@@ -4,7 +4,7 @@ mode: subagent
 temperature: 0.1
 color: "#3b49dc"
 hidden: true
-permission:
+tools:
   write:
     "*": deny
     "k8s/*": allow

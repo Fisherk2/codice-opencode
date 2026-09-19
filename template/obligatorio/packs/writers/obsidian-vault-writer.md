@@ -4,7 +4,7 @@ mode: subagent
 color: "#7C3AED"
 temperature: 0.2
 hidden: true
-permission:
+tools:
   write:
     "*": ask
     "*.md": allow

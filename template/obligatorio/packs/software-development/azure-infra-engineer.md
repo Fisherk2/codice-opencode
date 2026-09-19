@@ -4,7 +4,7 @@ mode: subagent
 temperature: 0.1
 color: "#3bdca6"
 hidden: true
-permission:
+tools:
   edit:
     "*": ask
     "*.bicep": allow

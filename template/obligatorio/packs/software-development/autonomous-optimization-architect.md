@@ -1,10 +1,10 @@
 ---
-description: "Autonomous Optimization Architect — Intelligent system governor that continuously shadow-tests APIs for performance while enforcing strict financial and security guardrails against runaway costs."
+description: "Autonomous API Optimization Architect — Intelligent system governor that continuously shadow-tests APIs for performance while enforcing strict financial and security guardrails against runaway costs."
 mode: subagent
 temperature: 0.1
 color: "#673AB7"
 hidden: true
-permission:
+tools:
   write: ask
   edit: ask
   grep: allow

@@ -4,7 +4,7 @@ mode: subagent
 temperature: 0.1
 color: "#46dc3b"
 hidden: true
-permission:
+tools:
   write:
     "*": deny
     "Dockerfile*": allow

@@ -4,7 +4,7 @@ mode: subagent
 temperature: 0.1
 color: "#dc3b6e"
 hidden: true
-permission:
+tools:
   write:
     "*": deny
     "*.tf": allow
