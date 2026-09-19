@@ -4,7 +4,7 @@ mode: subagent
 temperature: 0.2
 color: "#1B4F72"
 hidden: true
-permission:
+tools:
   write: ask
   edit: ask
   grep: allow
