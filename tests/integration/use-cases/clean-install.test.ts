@@ -385,7 +385,7 @@ describe("CleanInstallUseCase", () => {
 			// force=true auto-selects all 8 packs → 351 total agents
 			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
 				expect.objectContaining({
-					packs: expect.arrayContaining([{ id: "software-development", agentCount: 146 }]),
+					packs: expect.arrayContaining([{ id: "software-development", agentCount: 144 }]),
 					totalAgents: 351,
 					totalFiles: expect.any(Number),
 				}),

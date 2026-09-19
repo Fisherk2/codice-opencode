@@ -98,12 +98,12 @@ describe("toPackOptions", () => {
 			category: "pack",
 			isDirectory: true,
 			description: "Software development agents",
-			agentCount: 146,
+			agentCount: 144,
 		};
 
 		const result = toPackOptions([rule]);
 
-		expect(result[0]?.agentCount).toBe(146);
+		expect(result[0]?.agentCount).toBe(144);
 	});
 
 	test("defaults agentCount to 0 when absent (backward compat)", () => {
