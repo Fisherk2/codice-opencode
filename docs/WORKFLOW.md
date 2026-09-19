@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v2.1.2
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-28 (v2.1.2 Hotfix ✅) | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v2.1.3
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-09-19 (v2.1.3 Hotfix Opencode V2 🔧) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -21,6 +21,8 @@
 | FEV-26 | Quick Wins: Bug fixes + Security patches + Documentation | #79, TD-V2-70, TD-V2-90, TD-V2-91, TD-V2-93 | ✅ Completo (2026-08-20) |
 | FEV-27 | Security & Observability: Plugin cleanup + Permissions + Backup safety | #80, #81, TD-V2-9, TD-V2-51 | ✅ Completo (2026-08-20) |
 | FEV-28 | Infrastructure & Performance: CI SHA-pins Node 24 + VersionComparator cache | TD-V2-7, TD-V2-61 | ✅ 2026-08-21 (1935 tests) |
+| FEV-29 | Migración `permission:` → `tools:` en los packs restantes de agentes (Opencode V2) | #91 | 🔄 En progreso (main/, software-development/, writers/ migrados) |
+| FEV-30 | Remoción del plugin SDD + warnings de deprecación ≤ 2.1.2 (Opencode Legacy) | #90 | 🔄 En progreso (pendiente) |
 
 ## 2. Fases Iniciales (F0 – F6.5)
 
