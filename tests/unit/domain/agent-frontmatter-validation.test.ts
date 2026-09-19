@@ -173,6 +173,30 @@ describe("Agent Frontmatter Validation", () => {
 		});
 	});
 
+	describe("FEV-29 legacy permission: regression guard", () => {
+		it("rejects permission: as an invalid agent frontmatter field", () => {
+			const errors = validateAgentFrontmatter(
+				join(TEMPLATE_ROOT, "main", "moctezuma.md"),
+				{ description: "test", mode: "subagent", permission: { write: "deny" } },
+				TEMPLATE_ROOT,
+			);
+			const permissionErrors = errors.filter((e) => e.field === "permission");
+			expect(permissionErrors.length).toBeGreaterThan(0);
+		});
+
+		it("has no agent file using the legacy permission: key", () => {
+			const legacyUsers: string[] = [];
+			for (const filePath of agentFiles) {
+				const { parsed, error } = loadAgentFrontmatter(filePath);
+				if (error || !parsed) continue;
+				if (Object.hasOwn(parsed, "permission")) {
+					legacyUsers.push(relative(TEMPLATE_ROOT, filePath));
+				}
+			}
+			expect(legacyUsers).toEqual([]);
+		});
+	});
+
 	describe("FEV-19 tools invariants", () => {
 		const DELEGATING_PRIMARY_DENY_LIST = [...PRIMARY_AGENTS];
 

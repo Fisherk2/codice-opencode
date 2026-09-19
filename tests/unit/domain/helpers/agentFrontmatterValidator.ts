@@ -31,7 +31,9 @@ export const VALID_AGENT_FIELDS: ReadonlySet<string> = new Set([
 	"color",
 	"steps",
 	"maxSteps",
-	"permission",
+	// NOTE: `permission` is intentionally NOT a valid agent-file field.
+	// Opencode V2 uses `tools:` in agent .md frontmatter; `permission` only
+	// applies to opencode.json. Allowing it here masked issue #91 silently.
 	"name", // silently routed to options by OpenCode
 ]);
 
