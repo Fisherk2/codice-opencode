@@ -13,7 +13,7 @@ Then **Load** `planning-and-task-breakdown` skill.
 2. Identify the dependency graph between components. If the project uses DDD or Clean Architecture, **Load** `clean-ddd-hexagonal` skill for domain-driven module decomposition
 3. Slice work vertically (one complete path per task, not horizontal layers)
 4. Write tasks with acceptance criteria and verification steps. **Load** `design-patterns` skill when planning which GoF or enterprise patterns to apply in each task. **Load** `architecture-diagrams` skill to draw diagrams and components.
-5. Suggest what subagents should invoke the implementer agents to complete each task, analyze `agents/` directory to asign the most appropriate subagents and write them to `tasks/` files, can be multiple subagents per task (parallel/sequential) or none.
+5. Suggest what subagents should invoke the main agents to complete each task, analyze `agents/` directory to asign the most appropriate subagents and write them to `tasks/` files, can be multiple subagents per task (parallel/sequential) or none, **ONLY** subagents, **NOT** main agents (huitzilopochtli, quetzalcoatl, etc).
 6. Add checkpoints between phases within `tasks/plan.md` and `tasks/todo.md` — quality gates that must pass before moving to the next phase
 7. Present a brief summary of the plan for human review before saving.
 8. **Planification is done — do NOT touch or implement anything. Only plan and write to `tasks/` files.**
