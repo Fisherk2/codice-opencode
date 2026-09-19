@@ -221,6 +221,17 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 **Release v2.1.2:** Hotfix released 2026-08-28. Publish con dist-tag `latest` → `@fisherk2-dev/codice@2.1.2`.
 
+### v2.1.3 (Hotfix Opencode V2 — FEV-29 y FEV-30, en progreso)
+
+> Deuda 2.1.x previamente planificada para v2.1.3 se recorre a v2.1.4 (ver TECH_DEBT.md). Alcance reservado para issues surgidas con Opencode V2.
+
+| Item | Type | Issue | Description |
+|------|------|-------|-------------|
+| **FEV-29** | Fix | #91 | Migración completa `permission:` → `tools:` en los 202 agentes restantes de `template/obligatorio/packs/` (main/, software-development/ y writers/ ya migrados). Codemod en lote + specs (`spec-agent-packs.md`, `spec-agent-format-v2.md`) + tests de frontmatter. Diagnóstico: `docs/diagnosis/fix26-permission-tools-migration.md` |
+| **FEV-30** | Removal | #90 | Remoción completa del plugin SDD (template, `.opencode/plugins/`, tests, specs/ADRs — no se migra a V2). Warnings de deprecación: versiones ≤ 2.1.2 son solo Opencode Legacy (README, GitHub Releases, wizard de instalación). Diagnóstico: `docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md` |
+
+**Dependencias:** FEV-29 y FEV-30 son independientes entre sí. Trabajo parcial ya commiteado en `hotfix/opencode-v2-migrate` (migración `tools:` de primarios + reasignación de comandos).
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
