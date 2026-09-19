@@ -38,7 +38,8 @@ const PRIMARY_AGENTS = [
 	"tezcatlipoca",
 ] as const;
 
-const NON_DELEGATING = new Set(["moctezuma", "tezcatlipoca"]);
+// Non-delegating agents: task: "*": deny (per FEV-19, tezcatlipoca removed from this set in v2.1.3 hotfix)
+const NON_DELEGATING = new Set(["moctezuma"]);
 
 /** Fails the test with a formatted error summary when errors is non-empty. */
 function assertNoErrors(errors: readonly ValidationError[], label: string): void {
@@ -102,19 +103,19 @@ describe("Agent Frontmatter Validation", () => {
 		}
 	});
 
-	describe("Permission value correctness", () => {
-		const permErrors: ValidationError[] = [];
+	describe("Tools value correctness", () => {
+		const toolErrors: ValidationError[] = [];
 
 		for (const filePath of agentFiles) {
 			const { parsed, error } = loadAgentFrontmatter(filePath);
-			if (error || !parsed?.permission) continue;
-			permErrors.push(
-				...validatePermission(relative(TEMPLATE_ROOT, filePath), "permission", parsed.permission),
+			if (error || !parsed?.tools) continue;
+			toolErrors.push(
+				...validatePermission(relative(TEMPLATE_ROOT, filePath), "tools", parsed.tools),
 			);
 		}
 
-		it("has no permission value errors across all agent files", () => {
-			assertNoErrors(permErrors, "permission errors");
+		it("has no tools value errors across all agent files", () => {
+			assertNoErrors(toolErrors, "tools errors");
 		});
 	});
 
@@ -172,44 +173,45 @@ describe("Agent Frontmatter Validation", () => {
 		});
 	});
 
-	describe("FEV-19 permission invariants", () => {
+	describe("FEV-19 tools invariants", () => {
 		const DELEGATING_PRIMARY_DENY_LIST = [...PRIMARY_AGENTS];
 
 		for (const agentName of PRIMARY_AGENTS) {
 			const filePath = join(TEMPLATE_ROOT, "main", `${agentName}.md`);
 
-			it(`${agentName} has valid task permission structure`, () => {
+			it(`${agentName} has valid task tools structure`, () => {
 				const { parsed, error } = loadAgentFrontmatter(filePath);
 				expect(error).toBeNull();
 				expect(parsed).not.toBeNull();
-				const perm = (parsed as Record<string, unknown>).permission as
+				const tools = (parsed as Record<string, unknown>).tools as
 					| Record<string, unknown>
 					| undefined;
-				expect(perm?.task).toBeDefined();
+				expect(tools?.task).toBeDefined();
 			});
 
 			if (NON_DELEGATING.has(agentName)) {
 				it(`${agentName} has task: "*": deny (non-delegating)`, () => {
 					const { parsed } = loadAgentFrontmatter(filePath);
-					const perm = parsed as Record<string, unknown>;
-					const task = (perm.permission as Record<string, unknown>).task as Record<string, unknown>;
+					const tools = parsed as Record<string, unknown>;
+					const task = (tools.tools as Record<string, unknown>).task as Record<string, unknown>;
 					expect(task["*"]).toBe("deny");
 					expect(Object.values(task).filter((v) => v === "allow").length).toBe(0);
 				});
 			} else {
-				it(`${agentName} has task: "*": allow + 5 deny primaries (no self-deny)`, () => {
+				it(`${agentName} has task: "*": allow + deny all other primaries (no self-deny)`, () => {
 					const { parsed } = loadAgentFrontmatter(filePath);
-					const perm = parsed as Record<string, unknown>;
-					const task = (perm.permission as Record<string, unknown>).task as Record<string, unknown>;
+					const tools = parsed as Record<string, unknown>;
+					const task = (tools.tools as Record<string, unknown>).task as Record<string, unknown>;
 
 					expect(task["*"]).toBe("allow");
 
 					const denyEntries = Object.entries(task).filter(([k, v]) => k !== "*" && v === "deny");
 					expect(denyEntries.length).toBe(5);
 
+					// Agent must not deny itself
 					expect(task[agentName]).toBeUndefined();
-					expect(task.tezcatlipoca).toBe("deny");
 
+					// Must deny all other primaries
 					for (const deny of DELEGATING_PRIMARY_DENY_LIST.filter((n) => n !== agentName)) {
 						expect(task[deny]).toBe("deny");
 					}

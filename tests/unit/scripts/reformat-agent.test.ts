@@ -59,7 +59,7 @@ You are an **AI Engineer**, an expert AI/ML engineer.
 		expect(output).toContain("mode: subagent");
 		expect(output).toContain("hidden: true");
 		expect(output).toContain("temperature: 0.1");
-		expect(output).toContain("permission:");
+		expect(output).toContain("tools:");
 		expect(output).toContain("  write: allow");
 		expect(output).not.toContain("name: AI Engineer");
 		expect(output).not.toContain("emoji:");

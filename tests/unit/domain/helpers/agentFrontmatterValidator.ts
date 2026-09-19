@@ -175,10 +175,10 @@ export function validateAgentFrontmatter(
 		}
 	}
 
-	// 7. Validate permission structure
-	if (frontmatter.permission !== undefined) {
-		const permErrors = validatePermission(relPath, "permission", frontmatter.permission);
-		errors.push(...permErrors);
+	// 7. Validate tools structure (Opencode V2 agent key)
+	if (frontmatter.tools !== undefined) {
+		const toolErrors = validateTools(relPath, "tools", frontmatter.tools);
+		errors.push(...toolErrors);
 	}
 
 	// 8. Validate mode-specific rules
@@ -195,7 +195,16 @@ export function validateAgentFrontmatter(
 	return errors;
 }
 
-export function validatePermission(
+/**
+ * Validate the `tools:` frontmatter key in Opencode V2 agent files.
+ *
+ * Accepts both scalar values (`grep: allow`) and nested maps (`bash: {"*": "deny"}`).
+ * The `task:` key accepts a map with `"*": allow/deny` plus individual agent deny-lists.
+ *
+ * @deprecated validatePermission() — use validateTools() for Opencode V2 agent files.
+ *             The old function name is kept as a re-export for backward compatibility.
+ */
+export function validateTools(
 	filePath: string,
 	fieldPath: string,
 	value: unknown,
@@ -203,12 +212,12 @@ export function validatePermission(
 	const errors: ValidationError[] = [];
 
 	if (typeof value === "string") {
-		// Flat permission: "allow" | "ask" | "deny"
+		// Flat tool access: "allow" | "ask" | "deny"
 		if (!VALID_PERMISSION_ACTIONS.has(value)) {
 			errors.push({
 				file: filePath,
 				field: fieldPath,
-				message: `Invalid permission value "${value}". Must be "allow", "ask", or "deny"`,
+				message: `Invalid tools value "${value}". Must be "allow", "ask", or "deny"`,
 			});
 		}
 		return errors;
@@ -218,16 +227,15 @@ export function validatePermission(
 		errors.push({
 			file: filePath,
 			field: fieldPath,
-			message: `permission must be a string or object, got ${typeof value}`,
+			message: `tools must be a string or object, got ${typeof value}`,
 		});
 		return errors;
 	}
 
 	const obj = value as Record<string, unknown>;
 	for (const [key, val] of Object.entries(obj)) {
-		// Object keys can be either standard permission keys or custom tool patterns
-		// Standard permission keys must be in the valid set
-		// Custom tool patterns (like "bash" with sub-patterns) are allowed
+		// Object keys can be tool names or custom patterns
+		// "task:" accepts {"*": allow/deny, "agent-name": "deny"} for primaries
 
 		if (typeof val === "string") {
 			// Flat action for this tool
@@ -235,24 +243,24 @@ export function validatePermission(
 				errors.push({
 					file: filePath,
 					field: `${fieldPath}.${key}`,
-					message: `Invalid permission action "${val}". Must be "allow", "ask", or "deny"`,
+					message: `Invalid tools action "${val}". Must be "allow", "ask", or "deny"`,
 				});
 			}
 		} else if (typeof val === "object" && val !== null) {
-			// Object pattern: { "pattern": "action", ... }
+			// Object pattern: { "pattern": "action", ... } or { "*": "allow", "name": "deny" }
 			const patternObj = val as Record<string, unknown>;
 			for (const [pattern, action] of Object.entries(patternObj)) {
 				if (typeof action !== "string") {
 					errors.push({
 						file: filePath,
 						field: `${fieldPath}.${key}.${pattern}`,
-						message: `Permission pattern action must be a string, got ${typeof action}`,
+						message: `Tools pattern action must be a string, got ${typeof action}`,
 					});
 				} else if (!VALID_PERMISSION_ACTIONS.has(action)) {
 					errors.push({
 						file: filePath,
 						field: `${fieldPath}.${key}.${pattern}`,
-						message: `Invalid permission action "${action}". Must be "allow", "ask", or "deny"`,
+						message: `Invalid tools action "${action}". Must be "allow", "ask", or "deny"`,
 					});
 				}
 			}
@@ -260,13 +268,16 @@ export function validatePermission(
 			errors.push({
 				file: filePath,
 				field: `${fieldPath}.${key}`,
-				message: `Permission value must be a string or object, got ${typeof val}`,
+				message: `Tools value must be a string or object, got ${typeof val}`,
 			});
 		}
 	}
 
 	return errors;
 }
+
+/** Backward-compat alias for tests still importing the old name. */
+export const validatePermission = validateTools;
 
 /**
  * Read, extract, and parse an agent file's frontmatter in one step.

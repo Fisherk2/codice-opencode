@@ -4,7 +4,7 @@ import { dirname } from "node:path";
 /**
  * FEV-18 Phase 1 — v2.0 agent reformatting.
  * Converts external source files (name/description/color/emoji/vibe)
- * to the project standard subagent format (description/mode/permission)
+ * to the project standard subagent format (description/mode/tools)
  * with a trailing ## COMPOSITION block.
  */
 
@@ -34,8 +34,8 @@ const FRONTMATTER_FIELDS: Record<string, keyof SourceFrontmatter> = {
 	vibe: "vibe",
 };
 
-/** Standard subagent permission block (matches legacy convention). */
-const SUBAGENT_PERMISSION = `permission:
+/** Standard subagent tools block (Opencode V2 — replaces legacy `permission:`). */
+const SUBAGENT_TOOLS = `tools:
   write: allow
   edit: allow
   bash:
@@ -142,7 +142,7 @@ function buildV2Content(content: string): string {
 		"temperature: 0.1",
 		`color: "${color}"`,
 		"hidden: true",
-		SUBAGENT_PERMISSION,
+		SUBAGENT_TOOLS,
 		FRONTMATTER_DELIMITER,
 		"",
 	].join("\n");
