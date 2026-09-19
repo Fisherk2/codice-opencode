@@ -59,4 +59,4 @@ Research the [Códice Wiki Agents page](https://github.com/Fisherk2/codice-openc
 
 ## Suggested Next Step
 
-> You have explored the Códice help center. Run `/spec` to start a new project, or run `/plan` to break down an existing spec into tasks.
+> You have explored the Códice help center, anything else I can help with? If you have a specific question, please ask it.

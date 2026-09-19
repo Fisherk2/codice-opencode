@@ -1,9 +1,9 @@
 ---
 description: Run the pre-launch checklist.
-agent: mictlantecuhtli
+agent: tezcatlipoca
 ---
 
-Invoke @skills/shipping-and-launch/SKILL.md.
+**Load** `shipping-and-launch` skill.
 
 ## Phase 0 — Pre-flight: Detect project type
 
@@ -43,12 +43,17 @@ Once all reports are back, the main agent (not a sub-persona) synthesizes them:
 3. **Dependencies** — Promote any Critical/High `dependency-manager` findings (CVEs, outdated packages) to launch blockers. Flag license compliance issues.
 4. **Performance** — Pull from `code-reviewer`'s performance axis; cross-check Core Web Vitals if applicable.
 5. **Accessibility** *(only if `accessibility-tester` was spawned)* — Aggregate findings. Promote Critical WCAG violations to launch blockers.
-6. **Infrastructure** — Env vars, migrations, monitoring, feature flags. Load `observability-and-instrumentation` skill for logging, metrics, tracing, and alerting. Load `bash-defensive-patterns` for robust CI/CD deployment scripts.
-7. **Documentation** — README, ADRs, changelog. Load `crafting-effective-readmes` skill for README, `architecture-diagrams` skill for architecture diagrams, and `changelog-generate` skill for changelog updates.
+6. **Infrastructure** — Env vars, migrations, monitoring, feature flags. **Load** `observability-and-instrumentation` skill for logging, metrics, tracing, and alerting. **Load** `bash-defensive-patterns` for robust CI/CD deployment scripts.
+7. **Documentation** — README, ADRs, changelog. **Load** `crafting-effective-readmes` skill for README, `architecture-diagrams` skill for architecture diagrams, and `changelog-generate` skill for changelog updates.
 
 ## Phase C — Decision and rollback
 
-Produce a single output for user review:
+Before make output review, use the `question` tool to resolve ambiguities:
+- Flag findings that could be **false positives** — ask the user to confirm
+- Ask if any observation is **intentional** — the user may have a valid reason
+- Let the user dismiss, accept, or modify each disputed finding
+
+1. Produce a single output for user review:
 
 ```markdown
 ## Ship Decision: GO | NO-GO
@@ -75,17 +80,21 @@ Produce a single output for user review:
 - [accessibility-tester report] *(if UI detected)*
 ```
 
-**Pre-launch checklist is done — do NOT touch or implement code files.**
+2. Use the `question` tool to ask the user to confirm the reports before proceeding with fixes.
+3. If user confirms, **Delegate** `minimal-change-engineer` subagent and **Load** `incremental-implementation` skill to apply all observations incrementally, **Load** `solid` skill to maintain SOLID principles — run tests after each change, if tests fail after a change, revert that change and reconsider.
+4. **Delegate** `code-reviewer` subagent and **Load** `code-review-and-quality` skill to review the corrected code. For UI tasks, also verify **Loading** `browser-testing-with-devtools` skill
+5. Fix any discrepancies found during review before proceeding and run test after each change.
+6. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
+
+If agents are stuck or the corrections process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
 
 ## Rules
 
-1. The Phase A personas run in parallel — never sequentially.
-2. Personas do not call each other. The main agent merges in Phase B.
-3. The rollback plan is mandatory before any GO decision.
-4. If any persona returns a Critical finding, the default verdict is NO-GO unless the user explicitly accepts the risk.
-5. **Skip the fan-out only if all of the following are true:** the change touches 2 files or fewer, the diff is under 50 lines, and it does not touch auth, payments, data access, or config/env. Otherwise, default to fan-out. `/ship` is designed for production-bound changes — when the blast radius is non-trivial, run the parallel review even if the diff looks small.
-6. **Skip `accessibility-tester`** if Phase 0 detects no UI files. Do not spawn accessibility checks for CLI tools, APIs, libraries, or other non-UI projects.
+- The rollback plan is mandatory before any GO decision.
+- If any persona returns a Critical finding, the default verdict is NO-GO unless the user explicitly accepts the risk.
+- **Skip the fan-out only if all of the following are true:** the change touches 2 files or fewer, the diff is under 50 lines, and it does not touch auth, payments, data access, or config/env. Otherwise, default to fan-out. `/ship` is designed for production-bound changes — when the blast radius is non-trivial, run the parallel review even if the diff looks small.
+- **Skip `accessibility-tester`** if Phase 0 detects no UI files. Do not spawn accessibility checks for CLI tools, APIs, libraries, or other non-UI projects.
 
 ## Suggested Next Step
 
-> Ship evaluation complete. Switch to agent `tlaloc` to fix the observations, if you are not ready to launch, run `/ship` again when ready. Run `/deploy` to ship the change to production.
+> Ship evaluation and corrections are complete. if you are not ready to launch, run `/ship` again when ready. Run `/deploy` to deploy the changes to production.

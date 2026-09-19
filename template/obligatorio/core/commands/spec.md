@@ -5,22 +5,27 @@ agent: quetzalcoatl
 
 ## Pre-Flight: Detect Project State
 
-**Delegate** `codebase-onboarding-engineer` subagent to understand the project's structure and determine whether it is mature enough:
+**Delegate** `codebase-onboarding-engineer` subagent to understand the project's structure and determine whether it is mature enough. A mature project must have all of:
 
-1. Read `AGENTS.md` — real project-specific rules or placeholder?
-2. Read @SPEC.md — real content or missing?
-3. Scan @docs/ — real documentation or empty templates?
-4. Check @specs/ and @specs/adr/ — any existing modular files?
+1. **`package.json` (or equivalent)** — project metadata and dependencies
+2. **Version history** — at least one published release or tag
+3. **Existing documentation** — @SPEC.md, @docs/ or any other documentation with real content (not placeholders)
+4. **Active development** — recent commits, open issues, or ongoing work
 
 Output a summary:
 
 ```
 PROJECT STATE DETECTED:
-- AGENTS.md: [real content / placeholder / missing]
-- SPEC.md: [real content / placeholder / missing]
-- docs/: [real content / empty templates / missing]
-- specs/: [exists with N modules / missing]
-- specs/adr/: [exists with N ADRs / missing]
+- package.json: [exists / missing]
+- Version history: [N releases / tags]
+- SPEC.md: [exists with real content / exists but placeholder / missing]
+- README.md: [exists with real content / exists but placeholder / missing]
+- CHANGELOG.md: [exists with real content / exists but placeholder / missing]
+- CONTRIBUTING.md: [exists with real content / exists but placeholder / missing]
+- docs/SECURITY.md: [exists with real content / exists but placeholder / missing]
+- docs/: [list of docs with real content]
+- Recent activity: [summary of last N commits]
+- MATURITY: [MATURE / IMMATURE]
 ```
 
 **If the project IS mature**, stop and suggest using `/evolve` instead to create or modify existing specs.
@@ -47,16 +52,17 @@ Use the `question` tool to clarify interactively:
 
 ## Phase 2: Generate Initial Documentation
 
-**Delegate** `docs-writer` subagent and **Load** @skills/spec-driven-development/SKILL.md to scaffold the project's initial documentation, for non-trivial decisions, **Load** @skills/doubt-driven-development/SKILL.md.
+**Delegate** `docs-writer` subagent and **Load** `spec-driven-development` skill to scaffold the project's initial documentation, for non-trivial decisions, **Load** `doubt-driven-development` skill.
 
 Write the following files and directories:
 
 1. **AGENTS.md** — Project-level rules, standards, and metadata for AI agents working on this project
 2. **SPEC.md** — Central specification covering objective, commands, project structure, code style, testing strategy, and boundaries. References modular specs in @specs/
-3. **docs/** — Initial scaffold: `docs/ARCHITECTURE.md` (with ADR index), `docs/SCHEMA.md`, `docs/APPFLOW.md`, `docs/CODE_STYLE.md`, `docs/SECURITY.md`, `docs/TECH_DEBT.md`, `docs/CODE_OF_CONDUCT.md`
+3. **docs/** — Initial scaffold: `docs/ARCHITECTURE.md` (with ADR index), `docs/SCHEMA.md` (if applicable), `docs/APPFLOW.md`, `docs/CODE_STYLE.md`, `docs/SECURITY.md`, `docs/TECH_DEBT.md`, `docs/PRD.md`, `docs/TRD.md`.
 4. **specs/spec-<feature>.md** — One modular spec per feature or domain, use @specs/spec-template.md as template; `SPEC.md` references these
-5. **specs/adr/adr-<nnn>.md** — ADRs for key architecture decisions, linked from `docs/ARCHITECTURE.md`, use @specs/adr/adr-template.md as template, then, **Load** @skills/documentation-and-adrs/SKILL.md to generate ADRs.
+5. **specs/adr/adr-<nnn>.md** — ADRs for key architecture decisions, linked from `docs/ARCHITECTURE.md`, use @specs/adr/adr-template.md as template, then, **Load** `documentation-and-adrs` skill to generate ADRs.
 6. **docs/WORKFLOW.md** — Progress tracking divided into phases, with clear boundaries and dependencies between phases, metrics, objectives and completion criteria.
+7. **CODE_OF_CONDUCT.md** — Project-level code of conduct for contributors and maintainers
 
 During documentation drafting, **Load** the following supporting skills as needed:
 - `api-and-interface-design` skill when defining API contracts
@@ -65,19 +71,19 @@ During documentation drafting, **Load** the following supporting skills as neede
 - `design-patterns` skill when applying GoF or enterprise patterns
 - `api-spec-generation` skill for OpenAPI or AsyncAPI specs
 
-Do **not** touch `specs/design/` or `docs/DESIGN.md` — those belong to `/design`. Workspace documentation is managed separately.
+Do **not** touch `task/`, `specs/design/` or `docs/DESIGN.md` — those belong to `/plan` and `/design`. Workspace documentation is managed separately.
 
-7. If @AGENTS.md and/or @SPEC.md exceeds **200 lines**, **Load** `agent-md-refactor` skill to modularize into progressive disclosure files in @specs/
-8. **When Specs created — do NOT touch or implement code files.**
-9. Use the `question` tool to confirm with the user before proceeding.
-10. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
+8. If @AGENTS.md and/or @SPEC.md exceeds **200 lines**, **Load** `agent-md-refactor` skill to modularize into progressive disclosure files in @specs/
+9. **When Specs created — do NOT touch or implement code files.**
+10. Use the `question` tool to confirm with the user before proceeding.
+11. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 ## Rules
 
-1. `/spec` is for **projects in conception or design phase**. If the project already has stable code, active versions, or production commits, redirect to `/evolve`
-2. Never overwrite existing files without user confirmation — always show changes first
-3. `SPEC.md` is the single source of truth; modular specs in @specs/ extend it
-4. Use the `question` tool to confirm all changes with the user before writing any file
+- `/spec` is for **projects in conception or design phase**. If the project already has stable code, active versions, or production commits, redirect to `/evolve`
+- **Never** overwrite existing files without user confirmation — always show changes first
+- `SPEC.md` is the single source of truth; modular specs in @specs/ extend it
+- Use the `question` tool to confirm all changes with the user before writing any file
 
 ## Suggested Next Step
 

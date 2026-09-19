@@ -5,12 +5,13 @@ agent: mictlantecuhtli
 
 ## Pre-Flight: Detect Existing Workflow
 
-**Delegate** `deployment-engineer` subagent to detect the project's CI/CD infrastructure:
+**Delegate** `deployment-engineer` and `secret-credential-engineer` subagents in parallel to detect the project's CI/CD infrastructure:
 
 1. **Contributing Guidelines** - Check for @CONTRIBUTING.md in project root.
 2. **Configuration Files** - Check for `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `.travis.yml`, or other CI config directories.
 3. **Branch Protection** - Check for branch protection rules (via CLI if available).
 4. **PR/Issue conventions** - Check for existing PR/issue templates in CI config directories.
+5. **Secrets/Credentials** - Check for existing secrets in CI/CD config directories.
 
 Output summary:
 
@@ -20,8 +21,9 @@ PROJECT CI/CD STATE:
 - Configuration files: [exists at <path> / missing / can be improved]
 - Branch Protection: [exists at <path> / missing / can be improved]
 - PR/Issue Conventions: [exists at <path> / missing / can be improved]
+- Secrets/Credentials: [exists at <path> / missing / can be improved]
 ```
-
+11
 Use the `question` tool to report findings and ask user whether to:
 
 - **A) Generate, Upgrade or improve an existing CI/CD workflow** - Proceed with phase 0 to generate a new CI/CD workflow or improve an existing one, then proceed to phase 1.
@@ -41,7 +43,7 @@ A). Branching strategy (Trunk-based, Local Gitflow, Remote Gitflow, User-defined
 B). CI/CD platform (GitHub Actions, GitLab CI, CircleCI, Jenkins, etc.)
 C). Pipeline stages (Lint, Test, Build, Deploy, etc. — toggle per stage)
 
-3. **Load** @skills/ci-cd-and-automation/SKILL.md and **Delegate** `devops-engineer` subagent to generate or improve the following files:
+3. **Delegate** `devops-engineer` and `devops-automator` subagents in parallel and **Load** `ci-cd-and-automation` skill to generate or improve the following files:
 
 - Branch Protection Rules
 - PR Template file in CI/CD config directory.
@@ -64,17 +66,18 @@ C). Pipeline stages (Lint, Test, Build, Deploy, etc. — toggle per stage)
 
 ## Phase 1: Execute Deployment
 
-For established workflow, **Load** @skills/git-workflow-and-versioning/SKILL.md and **Delegate** `git-workflow-master` subagent to execute deployment with these steps:
+For established workflow, **Delegate** `git-workflow-master` subagent and **Load** `git-workflow-and-versioning` skill to execute deployment with these steps:
 
 1. Verify all tests pass on the latest commit
 2. Verify the deployment target is reachable
 3. Run the @CONTRIBUTING.md documented deployment procedure.
-4. **Delegate** `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues during deployment.
-5. Confirm health checks pass
+4. Confirm health checks pass
+5. Verify the deployment is successful
 6. Report deployment status
 
-If agents are stuck or the deployment fails, **Delegate** to `incident-responder` subagent and follow @skills/observability-and-instrumentation/SKILL.md to monitor errors and fix issues. 
-If the incident responder can't resolve the issue, **Delegate** to `incident-response-commander` subagent and follow @skills/incident-response/SKILL.md for triage, communication, and blameless postmortems.
+- If subagent finds issues during deployment, stop and **Delegate** `debugger` subagent, **Load** `debugging-and-error-recovery` skill to diagnose and fix finding issues, then, come back and **Delegate** `git-workflow-master` subagent again to continue deployment.
+- If agents are stuck or the deployment fails, **Delegate** to `incident-responder` subagent and **Load** `observability-and-instrumentation` skill to monitor errors and fix issues.
+- If the incident responder can't resolve the issue, **Delegate** to `incident-response-commander` subagent and **Load** `incident-response` skill for triage, communication, and blameless postmortems.
 
 ## Suggested Next Step
 

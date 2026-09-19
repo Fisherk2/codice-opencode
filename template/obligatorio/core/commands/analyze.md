@@ -1,6 +1,6 @@
 ---
 description: Perform multi-dimensional architectural analysis.
-agent: quetzalcoatl
+agent: tezcatlipoca
 ---
 
 ## Pre-Flight: Detect Project Type
@@ -19,7 +19,7 @@ Use `question` tool to ask: **"What analysis depth do you want?"**:
 - **B) Standard analysis** — All 8 dimensions, medium depth
 - **C) Deep audit** — All 8 dimensions, deep dive
 
-Then, analyze the project across 8 dimensions sequentially. For each dimension, load the relevant skill and delegate to the appropriate subagent.
+Then, analyze the project across 8 dimensions sequentially. For each dimension, load the relevant skill and delegate to the appropriate subagents:
 
 ### 1. System Structure
 - **Load:** `clean-ddd-hexagonal` skill
@@ -48,7 +48,7 @@ Then, analyze the project across 8 dimensions sequentially. For each dimension, 
 
 ### 6. Security
 - **Load:** `security-and-hardening` skill
-- **Delegate:** `security-auditor`, `penetration-tester`, `security-architect` and `security-compliance-auditor` subagents in parallel.
+- **Delegate:** `security-auditor`, `ai-generated-code-auditor`, `appsec-engineer`, `senior-secops`, `penetration-tester`, `security-architect` and `security-compliance-auditor` subagents in parallel.
 - **Output:** Trust boundaries, auth/authz patterns, data protection
 
 ### 7. Testability

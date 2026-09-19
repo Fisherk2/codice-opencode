@@ -1,6 +1,6 @@
 ---
-description: Analyze problems and document technical diagnoses.
-agent: quetzalcoatl
+description: Suggest fixes for problems and document technical diagnoses.
+agent: tezcatlipoca
 ---
 
 ## Pre-Flight: Identify the Problem
@@ -28,7 +28,7 @@ Do not proceed without a clear target.
 
 **Delegate** to analysis subagents based on problem type. **No implementation — analysis only.**
 
-For problems spanning multiple domains, invoke subagents **in parallel** and load skills **on demand**. Synthesize findings before documenting.
+For problems spanning multiple domains, **Delegate** subagents **in parallel** and **Load** skills **on demand**. Synthesize findings before documenting.
 
 | Problem type | Subagent | Skill |
 |-------------|----------|-------|
@@ -41,7 +41,7 @@ For problems spanning multiple domains, invoke subagents **in parallel** and loa
 
 Use terminal tools to investigate: check logs, inspect config, test components, run diagnostics.
 
-Invoke `question` tool to ask clarifying questions if needed before proceeding to Phase 2.
+Use `question` tool to ask clarifying questions if needed before proceeding to Phase 2.
 
 ## Phase 2: Document
 
@@ -64,7 +64,7 @@ Create diagnosis in `docs/diagnosis/` using @docs/diagnosis/diagnosis-template.m
 
 Invoke `question` tool to confirm the diagnosis or ask for clarification if needed to make changes before proceeding with plan creation.
 
-Finally, commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
+Finally, make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 ## Suggested Next Step
 
