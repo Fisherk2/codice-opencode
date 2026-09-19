@@ -47,7 +47,7 @@ You are an **AI Engineer**, an expert AI/ML engineer.
 		return join(tmpDir, filename);
 	}
 
-	it("converts source YAML to v2.0 format (description, mode, permission present; no name/emoji/vibe)", () => {
+	it("converts source YAML to v2.0 format (description, mode, tools present; no name/emoji/vibe)", () => {
 		const source = writeSource(sourceWithAllFields, "source-1.md");
 		const target = writeTarget("target-1.md");
 

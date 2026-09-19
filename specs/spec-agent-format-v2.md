@@ -47,7 +47,7 @@ mode: subagent
 temperature: 0.1
 color: "#dcb03b"
 hidden: true
-permission:
+tools:
   write: allow
   edit: allow
   bash:
@@ -85,12 +85,12 @@ permission:
 | — | `mode` | Always `subagent` |
 | — | `temperature` | Always `0.1` |
 | — | `hidden` | Always `true` |
-| — | `permission` | Fixed standard subagent permission block |
+| — | `tools` | Fixed standard subagent tools block |
 
 ### Permission block (canonical)
 
 ```yaml
-permission:
+tools:
   write: allow
   edit: allow
   bash:
@@ -174,8 +174,8 @@ either side changes.
 
 | Agent capability | Block | Agents |
 |------------------|-------|--------|
-| `permission.task` contains `allow` entries | **A — DELEGATION PROTOCOL** | `huitzilopochtli`, `quetzalcoatl`, `tlaloc`, `mictlantecuhtli` |
-| `permission.task` is `"*": deny` | **B — SKILL LOADING PROTOCOL** | `moctezuma`, `tezcatlipoca` |
+| `tools.task` contains `allow` entries | **A — DELEGATION PROTOCOL** | `huitzilopochtli`, `quetzalcoatl`, `tlaloc`, `mictlantecuhtli`, `tezcatlipoca` |
+| `tools.task` is `"*": deny` | **B — SKILL LOADING PROTOCOL** | `moctezuma` |
 
 ### Block A — DELEGATION PROTOCOL (delegating agents)
 
@@ -224,7 +224,7 @@ first, act second:
 4. **Self-review** against that checklist before returning; state any item you could not meet.
 ```
 
-Non-delegation is enforced by `permission.task: "*": deny` in the frontmatter and
+Non-delegation is enforced by `tools.task: "*": deny` in the frontmatter and
 the `### RULES` bullet "**NEVER** delegate to subagents" — not by prose in the block.
 
 ### Line budget
