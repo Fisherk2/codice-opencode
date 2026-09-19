@@ -38,9 +38,6 @@ export function migratePermissionToTools(
 	let skipped = 0;
 	const errors: string[] = [];
 
-	const FRONTMATTER_DELIM = "---";
-	const TOP_KEY_RE = /^(permission|tools):/;
-
 	for (const dir of dirs) {
 		let entries: string[];
 		try {
@@ -139,16 +136,20 @@ function migrateOneFile(
 	return { status: "migrated" };
 }
 
-// --- CLI entry point ---
-// Usage: bun run scripts/migrate-permission-to-tools.ts [--dry-run] <dir1> [dir2] ...
-if (import.meta.main) {
-	const args = process.argv.slice(2);
+/**
+ * CLI runner — parses args, runs the migration, and returns the process exit code.
+ * Extracted from the `import.meta.main` block so it is unit-testable.
+ *
+ * @param args - Raw CLI arguments (e.g. `["--dry-run", "some/dir"]`).
+ * @returns `0` on success (or dry-run with errors), `1` on usage or migration error.
+ */
+export function runCli(args: readonly string[]): number {
 	const dryRun = args.includes("--dry-run");
 	const dirs = args.filter((a) => !a.startsWith("--"));
 
 	if (dirs.length === 0) {
 		console.error("Usage: migrate-permission-to-tools [--dry-run] <dir1> [dir2] ...");
-		process.exit(1);
+		return 1;
 	}
 
 	const result = migratePermissionToTools(dirs, { dryRun });
@@ -165,7 +166,12 @@ if (import.meta.main) {
 			console.error(`  ${err}`);
 		}
 	}
-	if (result.errors.length > 0 && !dryRun) {
-		process.exit(1);
-	}
+
+	return result.errors.length > 0 && !dryRun ? 1 : 0;
+}
+
+// --- CLI entry point ---
+// Usage: bun run scripts/migrate-permission-to-tools.ts [--dry-run] <dir1> [dir2] ...
+if (import.meta.main) {
+	process.exit(runCli(process.argv.slice(2)));
 }

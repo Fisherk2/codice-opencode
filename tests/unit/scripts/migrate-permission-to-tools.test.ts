@@ -13,7 +13,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { migratePermissionToTools } from "../../../scripts/migrate-permission-to-tools";
+import { migratePermissionToTools, runCli } from "../../../scripts/migrate-permission-to-tools";
 
 describe("migratePermissionToTools", () => {
 	let tmpDir: string;
@@ -140,7 +140,7 @@ Body.
 
 	// --- Case 4: Both permission: and tools: present → error ---
 	it("returns error if both permission: and tools: exist", () => {
-		const agent = writeAgent(
+		writeAgent(
 			`---
 description: "Mixed Keys"
 mode: subagent
@@ -165,7 +165,7 @@ Body.
 
 	// --- Case 5: Malformed frontmatter (no closing ---) → error ---
 	it("returns error for malformed frontmatter without closing ---", () => {
-		const agent = writeAgent(
+		writeAgent(
 			`---
 description: "No Close"
 mode: subagent
@@ -299,5 +299,94 @@ Body.
 		// File unchanged
 		const output = readAgent(agent);
 		expect(output).not.toContain("tools:");
+	});
+
+	// --- Case 10: Nonexistent directory → error ---
+	it("reports an error for an unreadable directory", () => {
+		const result = migratePermissionToTools([join(tmpDir, "does-not-exist")]);
+
+		expect(result.migrated).toBe(0);
+		expect(result.errors.length).toBeGreaterThan(0);
+		expect(result.errors[0]).toContain("Cannot read directory");
+	});
+
+	// --- Case 11: Path that cannot be read as a file → error ---
+	it("reports an error for a file that cannot be read", () => {
+		const dir = join(tmpDir, "case-11");
+		// A directory named `*.md` passes the extension filter but readFileSync throws EISDIR.
+		mkdirSync(join(dir, "unreadable.md"), { recursive: true });
+
+		const result = migratePermissionToTools([dir]);
+
+		expect(result.migrated).toBe(0);
+		expect(result.errors.length).toBeGreaterThan(0);
+		expect(result.errors[0]).toContain("Cannot read file");
+	});
+
+	// --- Case 12: File without any frontmatter delimiter → error ---
+	it("reports an error for frontmatter with no opening ---", () => {
+		writeAgent(
+			`# No Frontmatter At All
+
+Just a markdown body with no delimiters.
+`,
+			"case-12",
+		);
+
+		const result = migratePermissionToTools([join(tmpDir, "case-12")]);
+
+		expect(result.migrated).toBe(0);
+		expect(result.errors.length).toBeGreaterThan(0);
+		expect(result.errors[0]).toContain("no opening ---");
+	});
+});
+
+describe("runCli", () => {
+	let tmpDir: string;
+
+	beforeAll(() => {
+		tmpDir = mkdtempSync(join(tmpdir(), "migrate-cli-"));
+	});
+
+	afterAll(() => {
+		rmSync(tmpDir, { recursive: true, force: true });
+	});
+
+	it("returns 1 when no directories are provided", () => {
+		expect(runCli([])).toBe(1);
+	});
+
+	it("returns 0 after a successful migration", () => {
+		const dir = join(tmpDir, "ok");
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(
+			join(dir, "agent.md"),
+			`---
+description: "CLI Agent"
+mode: subagent
+permission:
+  write: deny
+---
+# CLI
+`,
+		);
+
+		expect(runCli([dir])).toBe(0);
+	});
+
+	it("returns 0 for a dry-run even when errors are reported", () => {
+		const dir = join(tmpDir, "broken");
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(join(dir, "agent.md"), "# no frontmatter\n");
+
+		expect(runCli(["--dry-run", dir])).toBe(0);
+	});
+
+	it("returns 1 when a non-dry-run migration reports errors", () => {
+		const dir = join(tmpDir, "broken-2");
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(join(dir, "agent.md"), "# no frontmatter\n");
+
+		expect(runCli([dir])).toBe(1);
 	});
 });
