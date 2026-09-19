@@ -4,7 +4,7 @@ mode: subagent
 temperature: 0.3
 color: "#FF8A65"
 hidden: true
-permission:
+tools:
   write: ask
   edit: ask
   bash:
