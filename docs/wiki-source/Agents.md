@@ -17,7 +17,7 @@ The workspace ships with **~360 agents in 10 packs** organized into two levels:
 
 - Huitzilopochtli delegates implementation to tlaloc.
 - Quetzalcoatl delegates documentation to docs-writer, research to research-analyst, and security analysis to security-auditor.
-- Mictlantecuhtli fans out to code-reviewer, test-engineer, dependency-manager, and security-auditor in parallel during `/ship`.
+- Tezcatlipoca fans out to code-reviewer, test-engineer, dependency-manager, and security-auditor in parallel during `/ship`, then delegates corrections to specialists.
 
 **Subagents** are domain experts with deep knowledge of a specific area: a programming language, an architectural pattern, a tool, or a process. They are invoked via the `task()` mechanism when a primary agent needs specialized work done. Each subagent runs in its own context window and returns its output to the calling primary agent.
 
@@ -52,11 +52,11 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 | Agent | Role | Domain | Permission Model | Key Commands |
 |-------|------|--------|-----------------|--------------|
 | **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Read-only (writes denied). Delegates via `task()` with unified `"*": allow` + deny 5 other primaries. | `/help` |
-| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. Delegates via unified `task()` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/migrate`, `/analyze` |
+| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. Delegates via unified `task()` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/migrate` |
 | **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. Does not delegate (`task: "*": deny`). | `/plan` |
-| **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via unified `task()` pattern. | `/build`, `/sync`, `/code-simplify` |
-| **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates via unified `task()` pattern. | `/test`, `/ship`, `/deploy`, `/webperf` |
-| **tezcatlipoca** | Mirror of Truth | Reflection & analysis | Purely read-only + analysis tools. Cannot write or edit any file. Does not delegate (`task: "*": deny`). | `/review` |
+| **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via unified `task()` pattern. | `/build` |
+| **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates via unified `task()` pattern. | `/test`, `/deploy`, `/sync` |
+| **tezcatlipoca** | Mirror of Truth | Reflection, analysis & correction | Write + edit allowed. Delegates via unified `task()` pattern (deny-list of 5 other primaries). Reviews, then delegates corrections to specialists. | `/review`, `/analyze`, `/diagnosis`, `/code-simplify`, `/ship`, `/webperf` |
 
 ### Agent File Pattern
 
@@ -83,7 +83,7 @@ mode: subagent
 temperature: 0.7
 color: "#ffd700"
 hidden: true
-permission:
+tools:
   write: deny
   edit: deny
   grep: allow
@@ -126,7 +126,7 @@ to the development process. When invoked, you:
 
 Restart your OpenCode session so it recognizes the new agent. Without a restart, `task("joke-teller")` will fail because OpenCode only loads agent files at startup.
 
-No delegation-table updates are needed: primary agents use a unified `task: "*": allow` permission (with a deny-list of other primaries), so any new subagent in `agents/` is automatically delegatable.
+No delegation-table updates are needed: primary agents use a unified `tools.task` (`"*": allow` with a deny-list of other primaries), so any new subagent in `agents/` is automatically delegatable.
 
 ## Links
 

@@ -159,10 +159,10 @@ After building, continue through the remaining SDD phases:
 | Command | Phase | Agent | Purpose |
 |---------|-------|-------|---------|
 | `/test` | Validate | Mictlantecuhtli | Write tests, fix bugs using Prove-It pattern |
-| `/code-simplify` | Simplify | Tlaloc | Refactor code for clarity |
-| `/webperf` | Optimize | Mictlantecuhtli | Run web performance audits |
-| `/review` | Review | Tezcatlipoca | Five-axis code review |
-| `/ship` | Ship | Mictlantecuhtli | Pre-launch checklist and go/no-go decision |
+| `/code-simplify` | Simplify | Tezcatlipoca | Refactor code for clarity, then verify corrections |
+| `/webperf` | Optimize | Tezcatlipoca | Run web performance audits, then apply corrections |
+| `/review` | Review | Tezcatlipoca | Five-axis code review, then delegate corrections |
+| `/ship` | Ship | Tezcatlipoca | Pre-launch checklist and go/no-go decision, then corrections |
 
 Each command suggests the next logical step when it finishes, guiding you through the full cycle without needing to consult documentation.
 

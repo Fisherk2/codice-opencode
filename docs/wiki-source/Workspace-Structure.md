@@ -43,9 +43,9 @@ This is the largest directory, containing **~360 agent files across 10 packs** t
 | `huitzilopochtli.md` | Commander-in-Chief | Delegates tasks, manages workflows, orchestrates subagents |
 | `quetzalcoatl.md` | Visionary Sage | Defines specs, architecture, and project direction |
 | `moctezuma.md` | Strategic Planner | Breaks specifications into executable task plans |
-| `tlaloc.md` | Builder and Artisan | Implements code, runs builds, fixes issues |
-| `mictlantecuhtli.md` | Guardian of the Underworld | Reviews code, runs audits, enforces quality gates |
-| `tezcatlipoca.md` | Mirror of Truth | Provides adversarial review and critical analysis |
+| `tlaloc.md` | Builder and Artisan | Implements code, runs builds, writes tests and docs |
+| `mictlantecuhtli.md` | Guardian of the Underworld | Runs tests, validates quality, syncs git, deploys to production |
+| `tezcatlipoca.md` | Mirror of Truth | Reviews code, analyzes architecture, and delegates corrections to specialists |
 
 The remaining **~350 subagents (8 selectable packs)** are domain specialists — frontend developers, database administrators, security auditors, Rust engineers, and so on. Each subagent is an expert in one area and is invoked from primary agents via `task()` delegation.
 
@@ -57,7 +57,7 @@ Agent files use a consistent frontmatter format:
 ---
 description: "Short role description"
 mode: primary | subagent
-permission:
+tools:
   write: allow | deny
   edit: allow | deny
   bash:
@@ -78,20 +78,20 @@ The **17 slash commands** map to the Source-Driven Development (SDD) lifecycle. 
 | `design.md` | quetzalcoatl | Establish UI/UX and architecture |
 | `plan.md` | moctezuma | Break spec into executable tasks |
 | `build.md` | tlaloc | Implement the plan |
-| `sync.md` | tlaloc | Bidirectional git sync with conflict resolution |
+| `sync.md` | mictlantecuhtli | Bidirectional git sync with conflict resolution |
 | `migrate.md` | quetzalcoatl | Generate technology stack migration plans |
 | `test.md` | mictlantecuhtli | Validate implementation (TDD) |
-| `code-simplify.md` | tlaloc | Refactor and simplify code |
-| `webperf.md` | mictlantecuhtli | Optimize web performance |
-| `review.md` | tezcatlipoca | Five-axis code review |
-| `ship.md` | mictlantecuhtli | Pre-launch checklist and release preparation |
+| `code-simplify.md` | tezcatlipoca | Refactor and simplify code, then verify corrections |
+| `webperf.md` | tezcatlipoca | Audit web performance, then apply corrections |
+| `review.md` | tezcatlipoca | Five-axis code review, then delegate corrections |
+| `ship.md` | tezcatlipoca | Pre-launch checklist, go/no-go decision, then corrections |
 | `deploy.md` | mictlantecuhtli | Git workflow and CI/CD execution (post-ship) |
-| `analyze.md` | quetzalcoatl | Multi-dimensional architectural analysis |
+| `analyze.md` | tezcatlipoca | Multi-dimensional architectural analysis |
 | `docs-update.md` | quetzalcoatl | Synchronize documentation with code |
-| `diagnosis.md` | quetzalcoatl | Analyze issues and document technical findings |
+| `diagnosis.md` | tezcatlipoca | Suggest fixes and document technical findings |
 | `evolve.md` | quetzalcoatl | Define new specs for mature projects |
 
-Each command file contains numbered steps, `question` tool prompts at decision points, and references to skills (`@skills/skill-name/SKILL.md`). A YAML frontmatter block specifies the target agent and a verb-driven description.
+Each command file contains numbered steps, `question` tool prompts at decision points, and skill loading (`**Load** `skill-name` skill`). A YAML frontmatter block specifies the target agent and a verb-driven description.
 
 ### `skills/` — Specialized Knowledge Domains
 
@@ -109,7 +109,7 @@ Skills are the workspace's knowledge base — **51 skill directories**, each con
 | `architecture-diagrams/references/` | 10 diagram reference documents |
 | ... | *(51 total skills, 18 with references/ subdirectories)* |
 
-Skills are referenced inline by commands and agents using the `@skills/skill-name/SKILL.md` path. This keeps workflows composable — a single command may invoke multiple skills at different steps. Reference material within `skills/<name>/references/` is loaded by agents via the `reference` section in `opencode.json` and accessed with `@<skill-name>` in the OpenCode TUI.
+Skills are loaded by commands and agents with `**Load** `skill-name` skill`. This keeps workflows composable — a single command may invoke multiple skills at different steps. Reference material within `skills/<name>/references/` is loaded by agents via the `reference` section in `opencode.json` and accessed with `@<skill-name>` in the OpenCode TUI.
 
 ### Reference Files — Co-located with Skills
 
