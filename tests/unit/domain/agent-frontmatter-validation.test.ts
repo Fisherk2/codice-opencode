@@ -23,6 +23,7 @@ import {
 	type ValidationError,
 	validateAgentFrontmatter,
 	validatePermission,
+	validatePermissionsList,
 } from "./helpers/agentFrontmatterValidator";
 
 const TEMPLATE_ROOT = join(import.meta.dir, "..", "..", "..", "template", "obligatorio", "packs");
@@ -38,7 +39,7 @@ const PRIMARY_AGENTS = [
 	"tezcatlipoca",
 ] as const;
 
-// Non-delegating agents: task: "*": deny (per FEV-19, tezcatlipoca removed from this set in v2.1.3 hotfix)
+// Non-delegating agents: subagent: "*": deny (per FEV-19, tezcatlipoca removed from this set in v2.1.3 hotfix)
 const NON_DELEGATING = new Set(["moctezuma"]);
 
 /** Fails the test with a formatted error summary when errors is non-empty. */
@@ -116,6 +117,26 @@ describe("Agent Frontmatter Validation", () => {
 
 		it("has no tools value errors across all agent files", () => {
 			assertNoErrors(toolErrors, "tools errors");
+		});
+	});
+
+	describe("Permissions value correctness (V2)", () => {
+		const permErrors: ValidationError[] = [];
+
+		for (const filePath of agentFiles) {
+			const { parsed, error } = loadAgentFrontmatter(filePath);
+			if (error || !parsed?.permissions) continue;
+			permErrors.push(
+				...validatePermissionsList(
+					relative(TEMPLATE_ROOT, filePath),
+					"permissions",
+					parsed.permissions,
+				),
+			);
+		}
+
+		it("has no permissions value errors across all agent files", () => {
+			assertNoErrors(permErrors, "permissions errors");
 		});
 	});
 
@@ -197,47 +218,51 @@ describe("Agent Frontmatter Validation", () => {
 		});
 	});
 
-	describe("FEV-19 tools invariants", () => {
+	describe("FEV-19 subagent delegation invariants (V2 permissions)", () => {
 		const DELEGATING_PRIMARY_DENY_LIST = [...PRIMARY_AGENTS];
+
+		function subagentRules(
+			parsed: Record<string, unknown>,
+		): Array<{ resource: string; effect: string }> {
+			const permissions = (parsed.permissions ?? []) as Array<Record<string, unknown>>;
+			return permissions
+				.filter((r) => r.action === "subagent")
+				.map((r) => ({ resource: r.resource as string, effect: r.effect as string }));
+		}
 
 		for (const agentName of PRIMARY_AGENTS) {
 			const filePath = join(TEMPLATE_ROOT, "main", `${agentName}.md`);
 
-			it(`${agentName} has valid task tools structure`, () => {
+			it(`${agentName} declares subagent delegation rules`, () => {
 				const { parsed, error } = loadAgentFrontmatter(filePath);
 				expect(error).toBeNull();
 				expect(parsed).not.toBeNull();
-				const tools = (parsed as Record<string, unknown>).tools as
-					| Record<string, unknown>
-					| undefined;
-				expect(tools?.task).toBeDefined();
+				expect(subagentRules(parsed as Record<string, unknown>).length).toBeGreaterThan(0);
 			});
 
 			if (NON_DELEGATING.has(agentName)) {
-				it(`${agentName} has task: "*": deny (non-delegating)`, () => {
+				it(`${agentName} has subagent: "*": deny (non-delegating)`, () => {
 					const { parsed } = loadAgentFrontmatter(filePath);
-					const tools = parsed as Record<string, unknown>;
-					const task = (tools.tools as Record<string, unknown>).task as Record<string, unknown>;
-					expect(task["*"]).toBe("deny");
-					expect(Object.values(task).filter((v) => v === "allow").length).toBe(0);
+					const rules = subagentRules(parsed as Record<string, unknown>);
+					expect(rules.find((r) => r.resource === "*")?.effect).toBe("deny");
+					expect(rules.filter((r) => r.effect === "allow").length).toBe(0);
 				});
 			} else {
-				it(`${agentName} has task: "*": allow + deny all other primaries (no self-deny)`, () => {
+				it(`${agentName} has subagent: "*": allow + deny all other primaries (no self-deny)`, () => {
 					const { parsed } = loadAgentFrontmatter(filePath);
-					const tools = parsed as Record<string, unknown>;
-					const task = (tools.tools as Record<string, unknown>).task as Record<string, unknown>;
+					const rules = subagentRules(parsed as Record<string, unknown>);
 
-					expect(task["*"]).toBe("allow");
+					expect(rules.find((r) => r.resource === "*")?.effect).toBe("allow");
 
-					const denyEntries = Object.entries(task).filter(([k, v]) => k !== "*" && v === "deny");
+					const denyEntries = rules.filter((r) => r.resource !== "*" && r.effect === "deny");
 					expect(denyEntries.length).toBe(5);
 
 					// Agent must not deny itself
-					expect(task[agentName]).toBeUndefined();
+					expect(rules.find((r) => r.resource === agentName)).toBeUndefined();
 
 					// Must deny all other primaries
 					for (const deny of DELEGATING_PRIMARY_DENY_LIST.filter((n) => n !== agentName)) {
-						expect(task[deny]).toBe("deny");
+						expect(rules.find((r) => r.resource === deny)?.effect).toBe("deny");
 					}
 				});
 			}

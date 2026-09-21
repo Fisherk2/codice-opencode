@@ -21,19 +21,22 @@ export const VALID_AGENT_FIELDS: ReadonlySet<string> = new Set([
 	"mode",
 	"model",
 	"variant",
-	"temperature",
-	"top_p",
-	"prompt",
-	"tools",
-	"disable",
+	"temperature", // legacy in V2 (use request.body); accepted during migration
+	"top_p", // legacy in V2 (use request.body); accepted during migration
+	"prompt", // legacy in V2 (use system/body); accepted during migration
+	"tools", // legacy in V2 (use permissions); accepted during migration
+	"disable", // legacy in V2 (use disabled); accepted during migration
 	"hidden",
 	"options",
 	"color",
 	"steps",
-	"maxSteps",
-	// NOTE: `permission` is intentionally NOT a valid agent-file field.
-	// Opencode V2 uses `tools:` in agent .md frontmatter; `permission` only
-	// applies to opencode.json. Allowing it here masked issue #91 silently.
+	"maxSteps", // legacy in V2 (use steps); accepted during migration
+	"permissions", // native V2: [{action, resource, effect}]
+	"request", // native V2: {headers, body}
+	// NOTE: `permission` (singular) is intentionally NOT a valid agent-file field.
+	// Native V2 uses `permissions:` (list) in agent .md frontmatter; the singular
+	// `permission` only ever applied to opencode.json. Allowing it here masked
+	// issue #91 silently.
 	"name", // silently routed to options by OpenCode
 ]);
 
@@ -177,10 +180,26 @@ export function validateAgentFrontmatter(
 		}
 	}
 
-	// 7. Validate tools structure (Opencode V2 agent key)
+	// 7. Validate tools structure (legacy map key, accepted during migration)
 	if (frontmatter.tools !== undefined) {
 		const toolErrors = validateTools(relPath, "tools", frontmatter.tools);
 		errors.push(...toolErrors);
+	}
+
+	// 7b. Validate permissions list (native OpenCode V2 agent key)
+	if (frontmatter.permissions !== undefined) {
+		errors.push(...validatePermissionsList(relPath, "permissions", frontmatter.permissions));
+	}
+
+	// 7c. Validate request overlay (native OpenCode V2 agent key)
+	if (frontmatter.request !== undefined) {
+		if (typeof frontmatter.request !== "object" || frontmatter.request === null) {
+			errors.push({
+				file: relPath,
+				field: "request",
+				message: `request must be an object, got ${typeof frontmatter.request}`,
+			});
+		}
 	}
 
 	// 8. Validate mode-specific rules
@@ -280,6 +299,60 @@ export function validateTools(
 
 /** Backward-compat alias for tests still importing the old name. */
 export const validatePermission = validateTools;
+
+/**
+ * Validate the native V2 `permissions:` frontmatter list.
+ *
+ * Each rule must be `{action: string, resource: string, effect}` with
+ * effect in "allow" | "ask" | "deny" (https://opencode.ai/v2/docs/permissions).
+ */
+export function validatePermissionsList(
+	filePath: string,
+	fieldPath: string,
+	value: unknown,
+): ValidationError[] {
+	const errors: ValidationError[] = [];
+
+	if (!Array.isArray(value)) {
+		errors.push({
+			file: filePath,
+			field: fieldPath,
+			message: `permissions must be a list, got ${value === null ? "null" : typeof value}`,
+		});
+		return errors;
+	}
+
+	value.forEach((rule, idx) => {
+		const path = `${fieldPath}[${idx}]`;
+		if (typeof rule !== "object" || rule === null) {
+			errors.push({
+				file: filePath,
+				field: path,
+				message: `permissions rule must be an object, got ${rule === null ? "null" : typeof rule}`,
+			});
+			return;
+		}
+		const entry = rule as Record<string, unknown>;
+		for (const key of ["action", "resource", "effect"]) {
+			if (typeof entry[key] !== "string") {
+				errors.push({
+					file: filePath,
+					field: `${path}.${key}`,
+					message: `permissions rule "${key}" must be a string, got ${entry[key] === null ? "null" : typeof entry[key]}`,
+				});
+			}
+		}
+		if (typeof entry.effect === "string" && !VALID_PERMISSION_ACTIONS.has(entry.effect)) {
+			errors.push({
+				file: filePath,
+				field: `${path}.effect`,
+				message: `Invalid permissions effect "${entry.effect}". Must be "allow", "ask", or "deny"`,
+			});
+		}
+	});
+
+	return errors;
+}
 
 /**
  * Read, extract, and parse an agent file's frontmatter in one step.
