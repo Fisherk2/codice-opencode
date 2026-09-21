@@ -1,5 +1,11 @@
 # Implementation Plan: FEV-29 — Agent Pack Migration `permission:` → `tools:` (Opencode V2)
 
+> **SUPERSEDED 2026-09-22.** Wrong migration direction — native V2 format is
+> the `permissions:` list, not `tools:` (see `docs/diagnosis/fix28-…` and the
+> fix26 supersession banner). Fase 2 superseded this plan entirely
+> (`scripts/migrate-v1-to-v2-permissions.ts` + `scripts/migrate-all-packs.ts`,
+> 8 per-pack commits). Body preserved as history; do not execute.
+
 **Source issue:** #91
 **Branch:** `hotfix/opencode-v2-migrate`
 **Target release:** v2.1.3 (Hotfix Opencode V2)

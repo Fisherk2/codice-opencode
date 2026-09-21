@@ -1,5 +1,11 @@
 # FEV-29 — Permission → Tools Migration — Todo
 
+> **SUPERSEDED 2026-09-22.** The `permission:` → `tools:` direction was wrong:
+> native V2 format is the `permissions:` list (see `docs/diagnosis/fix28-…`,
+> `specs/spec-agent-format-v2.md`). Fase 2 migrated all 349 files via
+> `scripts/migrate-v1-to-v2-permissions.ts` + `scripts/migrate-all-packs.ts`;
+> the FEV-29 codemod and its test were deleted. Body preserved as history.
+
 **Plan:** `tasks/plan.md`
 **Branch:** `hotfix/opencode-v2-migrate`
 **Target:** v2.1.3
