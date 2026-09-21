@@ -3,7 +3,25 @@
 **ID:** FEV-29 (issue #91 — deferred from v2.1.3 hotfix scope)
 **Date:** 2026-09-19
 **Severity:** high
-**Status:** diagnosed
+**Status:** superseded (see notice below — do not apply §Proposed Solution)
+
+## Supersession notice (2026-09-21)
+
+The migration direction prescribed here (`permission:` → `tools:`) proved
+**wrong** during Fase 2 (see `fix28-subagent-delegation-kill-switch.md`). The
+body below is preserved as historical record; do not act on it. Corrections:
+
+- V2 native agent format is the **`permissions:` list** (`{action, resource,
+  effect}`), not `tools:`. `tools:` is itself legacy in current V2 — the FEV-29
+  batch pointed the wrong way and Fase 2 overwrote it toward `permissions:`.
+- `opencode.json` does **not** keep a `permission` schema; Fase 1 migrated it
+  to the same `permissions:` list (commit `69332e6`).
+- The mechanical rename is replaced by the codemod
+  `scripts/migrate-v1-to-v2-permissions.ts` (TDD suite alongside it), which
+  also renames `bash`→`shell`, `task`→`subagent`, `write`/`patch`→`edit`,
+  collapses duplicates, and injects the `subagent *: deny` chain brake.
+- Sources: use `https://opencode.ai/v2/docs/{agents,permissions,migrate-v1}/`,
+  not the `/docs/es/` fork pages cited in §References.
 
 ---
 
