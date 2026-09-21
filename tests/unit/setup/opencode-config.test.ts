@@ -110,8 +110,14 @@ describe("opencode.json — Config Schema (V2)", () => {
 		}
 	});
 
-	test("denies subagent delegation globally", () => {
-		expect(lastEffect("subagent", "*")).toBe("deny");
+	test("asks subagent delegation globally (per-agent rules refine)", () => {
+		// Empirical Fase-2 finding: a global `deny` on `subagent` acts as an
+		// absolute kill-switch — the delegation tool is not exposed even when a
+		// primary's frontmatter allows it. `ask` keeps delegation operable while
+		// per-agent frontmatter (appended last) decides allow/deny per agent.
+		// Official merge order: global rules first, agent rules last
+		// (https://opencode.ai/v2/docs/permissions/).
+		expect(lastEffect("subagent", "*")).toBe("ask");
 	});
 
 	test("mcp servers use disabled instead of enabled", () => {

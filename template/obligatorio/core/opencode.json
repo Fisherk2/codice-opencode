@@ -174,7 +174,7 @@
     {
       "action": "subagent",
       "resource": "*",
-      "effect": "deny"
+      "effect": "ask"
     },
     {
       "action": "shell",
