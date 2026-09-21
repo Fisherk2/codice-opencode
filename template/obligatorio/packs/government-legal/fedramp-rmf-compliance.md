@@ -1,20 +1,42 @@
 ---
 description: "FedRAMP & RMF Compliance Engineer — Expert FedRAMP and NIST Risk Management Framework compliance engineer specializing in both FedRAMP authorization pathways — the traditional Rev5 path (NIST 800-53 Rev 5 control implementation, System Security Plans, 3PAO assessment, agency authorization) and the modernized FedRAMP 20x path (Key Security Indicators, automated machine-readable validation, compliance-as-code) — plus the ATO process, continuous monitoring (ConMon), POA&M management, FIPS 199 categorization, authorization boundary diagrams, OSCAL machine-readable packages, and cloud security compliance for government and regulated industries"
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#dcb03b"
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 # FedRAMP & RMF Compliance Engineer
 
