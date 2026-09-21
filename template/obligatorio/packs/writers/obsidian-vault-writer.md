@@ -43,6 +43,9 @@ permissions:
   - action: question
     resource: "*"
     effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 # Obsidian Vault Writer

@@ -317,4 +317,28 @@ describe("Agent Frontmatter Validation", () => {
 			expect(errors[0]?.message).toContain('Duplicate permission for action "edit" resource "*"');
 		});
 	});
+
+	describe("Fase-2 subagent delegation brake", () => {
+		it("every migrated mode:subagent file denies subagent delegation", () => {
+			// A child session merges global permissions with its OWN frontmatter
+			// (https://opencode.ai/v2/docs/permissions/). Without an explicit
+			// subagent deny, a child would fall back to the global `ask` and
+			// could launch grandchildren (delegation chains). Files not yet
+			// migrated (no `permissions:` list) are skipped: the codemod injects
+			// the brake automatically on migration (case-17).
+			const offenders: string[] = [];
+			for (const filePath of agentFiles) {
+				const { parsed, error } = loadAgentFrontmatter(filePath);
+				if (error || !parsed) continue;
+				if ((parsed as Record<string, unknown>).mode !== "subagent") continue;
+				const permissions = (parsed as Record<string, unknown>).permissions;
+				if (!Array.isArray(permissions)) continue;
+				const denies = (permissions as Array<Record<string, unknown>>).some(
+					(r) => r.action === "subagent" && r.resource === "*" && r.effect === "deny",
+				);
+				if (!denies) offenders.push(relative(TEMPLATE_ROOT, filePath));
+			}
+			expect(offenders).toEqual([]);
+		});
+	});
 });

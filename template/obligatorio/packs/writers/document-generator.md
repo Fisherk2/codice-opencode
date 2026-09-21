@@ -40,6 +40,9 @@ permissions:
   - action: question
     resource: "*"
     effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 # Document Generator
 

@@ -396,7 +396,7 @@ describe("migrateV1ToV2Permissions — duplicate action+resource guard", () => {
 		writeAgent(
 			`---
 description: "Silent Agent"
-mode: subagent
+mode: primary
 tools:
   write: allow
   edit: allow
@@ -463,5 +463,68 @@ tools:
 			output.indexOf("- action: edit") + 120,
 		);
 		expect(editBlock).toContain("effect: allow");
+	});
+
+	it("appends subagent deny when migrating a subagent without subagent rules", () => {
+		const agent = writeAgent(
+			`---
+description: "Chain Agent"
+mode: subagent
+tools:
+  edit: allow
+---
+# Chain
+`,
+			"case-17",
+		);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-17")]);
+
+		expect(result.migrated).toBe(1);
+		expect(result.warnings.some((w) => w.includes("delegation"))).toBe(true);
+		const output = readAgent(agent);
+		const idx = output.indexOf("- action: subagent");
+		expect(idx).toBeGreaterThan(-1);
+		expect(output.slice(idx, idx + 120)).toContain("effect: deny");
+	});
+
+	it("does not inject subagent rules when migrating a primary", () => {
+		const agent = writeAgent(
+			`---
+description: "Primary Agent"
+mode: primary
+tools:
+  edit: allow
+---
+# Primary
+`,
+			"case-18",
+		);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-18")]);
+
+		expect(result.migrated).toBe(1);
+		expect(readAgent(agent)).not.toContain("- action: subagent");
+	});
+
+	it("respects an explicit subagent rule and does not inject a second one", () => {
+		const agent = writeAgent(
+			`---
+description: "Explicit Agent"
+mode: subagent
+tools:
+  edit: allow
+  task:
+    "*": allow
+---
+# Explicit
+`,
+			"case-19",
+		);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-19")]);
+
+		expect(result.migrated).toBe(1);
+		expect(readAgent(agent).split("- action: subagent").length - 1).toBe(1);
 	});
 });
