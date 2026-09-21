@@ -113,6 +113,18 @@ describe("opencode.json — Config Schema (V2)", () => {
 	test("denies subagent delegation globally", () => {
 		expect(lastEffect("subagent", "*")).toBe("deny");
 	});
+
+	test("mcp servers use disabled instead of enabled", () => {
+		const servers = loadConfig().mcp?.servers ?? {};
+		expect(Object.keys(servers).length).toBeGreaterThan(0);
+		for (const [name, server] of Object.entries(servers)) {
+			const entry = server as Record<string, unknown>;
+			expect(entry, `server ${name}`).not.toHaveProperty("enabled");
+			if ("disabled" in entry) {
+				expect(typeof entry.disabled).toBe("boolean");
+			}
+		}
+	});
 });
 
 describe("opencode.json — Shell Permission Deny Rules (V2)", () => {

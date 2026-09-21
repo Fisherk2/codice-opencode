@@ -1,7 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "openrouter/openrouter/free",
-  "small_model": "openrouter/openrouter/free",
+  "model": "opencode/big-pickle",
+  "small_model": "opencode/nemotron-3.5-lightning-free",
   "compaction": {
     "auto": true,
     "prune": true,
@@ -59,7 +59,7 @@
       "steps": 150
     },
     "tezcatlipoca": {
-      "model": "opencode/muse-spark-1.2-contributor-free",
+      "model": "opencode/muse-spark-1.3-contributor-free",
       "color": "#ff3134",
       "request": {
         "body": {
@@ -106,12 +106,11 @@
   "mcp": {
     "servers": {
       "codebase-memory-mcp": {
-        "enabled": false
+        "disabled": true
       },
       "context7": {
         "type": "remote",
-        "url": "https://mcp.context7.com/mcp",
-        "enabled": true
+        "url": "https://mcp.context7.com/mcp"
       },
       "chrome-devtools": {
         "type": "local",
@@ -120,7 +119,7 @@
           "-y",
           "chrome-devtools-mcp@1.7.0"
         ],
-        "enabled": false
+        "disabled": true
       },
       "excel": {
         "type": "local",
@@ -129,7 +128,7 @@
           "excel-mcp-server",
           "stdio"
         ],
-        "enabled": false
+        "disabled": true
       },
       "jupyter": {
         "type": "local",
@@ -137,7 +136,7 @@
           "uvx",
           "mcp-jupyter-notebook"
         ],
-        "enabled": false,
+        "disabled": true,
         "env": {
           "MCP_JUPYTER_SESSION_MODE": "server",
           "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
@@ -151,7 +150,7 @@
         "headers": {
           "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
         },
-        "enabled": false
+        "disabled": true
       },
       "firecrawl": {
         "type": "remote",
@@ -159,17 +158,15 @@
         "headers": {
           "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
         },
-        "enabled": false
+        "disabled": true
       },
       "vercel-grep": {
         "type": "remote",
-        "url": "https://mcp.grep.app",
-        "enabled": true
+        "url": "https://mcp.grep.app"
       },
       "gitmcp": {
         "type": "remote",
-        "url": "https://gitmcp.io/docs",
-        "enabled": true
+        "url": "https://gitmcp.io/docs"
       }
     }
   },
@@ -1451,7 +1448,7 @@
     },
     {
       "action": "external_directory",
-      "resource": "/tmp/*",
+      "resource": "/tmp/opencode*",
       "effect": "allow"
     }
   ]
