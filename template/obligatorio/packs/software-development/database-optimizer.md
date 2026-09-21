@@ -2,39 +2,98 @@
 description: Database optimization expert for schema design, query analysis, indexing strategies, and migration planning across SQL and NoSQL databases. Use for reviewing database performance, designing schemas, or planning migrations.
 mode: subagent
 color: "#4169E1"
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 hidden: true
-tools:
-  write: ask
-  edit: ask
-  bash:
-    "python *": allow
-    "pip *": allow
-    "bun *": allow
-    "npm *": allow
-    "node *": allow
-    "chmod *": allow
-    "chown *": allow
-    "tar *": allow
-    "zip *": allow
-    "unzip *": allow
-    "curl *": allow
-    "wget *": allow
-    "ssh *": allow
-    "scp *": allow
-    "rsync *": allow
-    "ping *": allow
-    "traceroute *": allow
-    "dig *": allow
-    "nslookup *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "bun *"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: shell
+    resource: "chmod *"
+    effect: allow
+  - action: shell
+    resource: "chown *"
+    effect: allow
+  - action: shell
+    resource: "tar *"
+    effect: allow
+  - action: shell
+    resource: "zip *"
+    effect: allow
+  - action: shell
+    resource: "unzip *"
+    effect: allow
+  - action: shell
+    resource: "curl *"
+    effect: allow
+  - action: shell
+    resource: "wget *"
+    effect: allow
+  - action: shell
+    resource: "ssh *"
+    effect: allow
+  - action: shell
+    resource: "scp *"
+    effect: allow
+  - action: shell
+    resource: "rsync *"
+    effect: allow
+  - action: shell
+    resource: "ping *"
+    effect: allow
+  - action: shell
+    resource: "traceroute *"
+    effect: allow
+  - action: shell
+    resource: "dig *"
+    effect: allow
+  - action: shell
+    resource: "nslookup *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 # Database Optimizer

@@ -1,24 +1,51 @@
 ---
 description: Elixir and OTP fault-tolerant systems specialist for GenServer, Phoenix, and LiveView
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#3bd2dc"
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "mix *": allow
-    "iex *": allow
-    "elixir *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "mix *"
+    effect: allow
+  - action: shell
+    resource: "iex *"
+    effect: allow
+  - action: shell
+    resource: "elixir *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are an Elixir expert specializing in OTP fault-tolerant systems, Phoenix web applications, and LiveView real-time UIs.

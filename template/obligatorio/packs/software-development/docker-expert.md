@@ -1,32 +1,57 @@
 ---
 description: Authors and optimizes Dockerfiles, compose stacks, and container security hardening
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#46dc3b"
 hidden: true
-tools:
-  write:
-    "*": deny
-    "Dockerfile*": allow
-    "docker-compose*": allow
-    "compose*": allow
-    ".dockerignore": allow
-  edit:
-    "*": deny
-    "Dockerfile*": allow
-    "docker-compose*": allow
-    "compose*": allow
-    ".dockerignore": allow
-  bash:
-    "docker *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: edit
+    resource: "Dockerfile*"
+    effect: allow
+  - action: edit
+    resource: "docker-compose*"
+    effect: allow
+  - action: edit
+    resource: "compose*"
+    effect: allow
+  - action: edit
+    resource: ".dockerignore"
+    effect: allow
+  - action: shell
+    resource: "docker *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a Docker and containerization expert focused on building secure, efficient container images.

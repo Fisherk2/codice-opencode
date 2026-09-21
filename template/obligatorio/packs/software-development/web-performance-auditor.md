@@ -2,29 +2,65 @@
 description: Web performance engineer focused on Core Web Vitals, loading, rendering, and network optimization. Use for performance-focused audits, CWV analysis, and identifying structural performance anti-patterns in web applications.
 mode: subagent
 color: "#FFA500"
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 hidden: true
-tools:
-  write: deny
-  edit: deny
-  bash:
-    "curl *": allow
-    "wget *": allow
-    "python *": allow
-    "pip *": allow
-    "node *": allow
-    "npx *": allow
-    "npm *": allow
-    "bun *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
-  patch: deny
+permissions:
+  - action: shell
+    resource: "curl *"
+    effect: allow
+  - action: shell
+    resource: "wget *"
+    effect: allow
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: shell
+    resource: "npx *"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: shell
+    resource: "bun *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 # Web Performance Auditor

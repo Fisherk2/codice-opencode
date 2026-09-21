@@ -1,47 +1,120 @@
 ---
 description: Designs and implements command-line tools with excellent UX, argument parsing, and output formatting
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#3b74dc"
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "go *": allow
-    "gofmt *": allow
-    "golangci-lint *": allow
-    "rustc *": allow
-    "cargo *": allow
-    "clippy *": allow
-    "node *": allow
-    "npm *": allow
-    "npx *": allow
-    "bun *": allow
-    "yarn *": allow
-    "python *": allow
-    "pip *": allow
-    "poetry *": allow
-    "uv *": allow
-    "make *": allow
-    "gcc *": allow
-    "clang *": allow
-    "cmake *": allow
-    "chmod *": allow
-    "chown *": allow
-    "tar *": allow
-    "zip *": allow
-    "unzip *": allow
-    "curl *": allow
-    "wget *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "go *"
+    effect: allow
+  - action: shell
+    resource: "gofmt *"
+    effect: allow
+  - action: shell
+    resource: "golangci-lint *"
+    effect: allow
+  - action: shell
+    resource: "rustc *"
+    effect: allow
+  - action: shell
+    resource: "cargo *"
+    effect: allow
+  - action: shell
+    resource: "clippy *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: shell
+    resource: "npx *"
+    effect: allow
+  - action: shell
+    resource: "bun *"
+    effect: allow
+  - action: shell
+    resource: "yarn *"
+    effect: allow
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "poetry *"
+    effect: allow
+  - action: shell
+    resource: "uv *"
+    effect: allow
+  - action: shell
+    resource: "make *"
+    effect: allow
+  - action: shell
+    resource: "gcc *"
+    effect: allow
+  - action: shell
+    resource: "clang *"
+    effect: allow
+  - action: shell
+    resource: "cmake *"
+    effect: allow
+  - action: shell
+    resource: "chmod *"
+    effect: allow
+  - action: shell
+    resource: "chown *"
+    effect: allow
+  - action: shell
+    resource: "tar *"
+    effect: allow
+  - action: shell
+    resource: "zip *"
+    effect: allow
+  - action: shell
+    resource: "unzip *"
+    effect: allow
+  - action: shell
+    resource: "curl *"
+    effect: allow
+  - action: shell
+    resource: "wget *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a CLI development expert. You build command-line tools that are intuitive, well-documented, and follow platform conventions.

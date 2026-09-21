@@ -1,25 +1,54 @@
 ---
 description: Django 4+ expert for ORM, REST framework, Celery, signals, and middleware
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#d73bdc"
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "python *": allow
-    "pip *": allow
-    "poetry *": allow
-    "./manage.py *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "poetry *"
+    effect: allow
+  - action: shell
+    resource: "./manage.py *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a Django developer specializing in Django 4+, Django REST Framework, and production-grade Python web applications.

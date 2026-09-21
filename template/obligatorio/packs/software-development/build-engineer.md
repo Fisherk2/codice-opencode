@@ -2,41 +2,104 @@
 description: Build engineer specializing in build system optimization, CI/CD pipeline performance, Docker image optimization, and artifact management. Use when optimizing build times, Dockerfiles, or CI pipeline configuration.
 mode: subagent
 color: "#32CD32"
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "docker *": allow
-    "npm *": allow
-    "bun *": allow
-    "go build *": allow
-    "rustc *": allow
-    "make *": allow
-    "cmake *": allow
-    "msbuild *": allow
-    "gradle *": allow
-    "maven *": allow
-    "ant *": allow
-    "bazel *": allow
-    "chmod *": allow
-    "chown *": allow
-    "tar *": allow
-    "zip *": allow
-    "unzip *": allow
-    "curl *": allow
-    "wget *": allow
-    "python *": allow
-    "pip *": allow
-    "node *": allow
-  grep: allow
-  glob: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "docker *"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: shell
+    resource: "bun *"
+    effect: allow
+  - action: shell
+    resource: "go build *"
+    effect: allow
+  - action: shell
+    resource: "rustc *"
+    effect: allow
+  - action: shell
+    resource: "make *"
+    effect: allow
+  - action: shell
+    resource: "cmake *"
+    effect: allow
+  - action: shell
+    resource: "msbuild *"
+    effect: allow
+  - action: shell
+    resource: "gradle *"
+    effect: allow
+  - action: shell
+    resource: "maven *"
+    effect: allow
+  - action: shell
+    resource: "ant *"
+    effect: allow
+  - action: shell
+    resource: "bazel *"
+    effect: allow
+  - action: shell
+    resource: "chmod *"
+    effect: allow
+  - action: shell
+    resource: "chown *"
+    effect: allow
+  - action: shell
+    resource: "tar *"
+    effect: allow
+  - action: shell
+    resource: "zip *"
+    effect: allow
+  - action: shell
+    resource: "unzip *"
+    effect: allow
+  - action: shell
+    resource: "curl *"
+    effect: allow
+  - action: shell
+    resource: "wget *"
+    effect: allow
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 # Build Engineer

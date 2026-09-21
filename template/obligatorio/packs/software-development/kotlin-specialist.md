@@ -1,23 +1,48 @@
 ---
 description: Modern JVM language expert for coroutines, Kotlin Multiplatform, and DSLs
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#6b3bdc"
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "gradle *": allow
-    "./gradlew *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "gradle *"
+    effect: allow
+  - action: shell
+    resource: "./gradlew *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a Kotlin specialist focused on idiomatic Kotlin, coroutines, multiplatform development, and DSL design.

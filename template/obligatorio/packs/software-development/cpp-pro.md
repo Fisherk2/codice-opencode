@@ -1,25 +1,54 @@
 ---
 description: C++ performance expert for modern C++20/23, RAII, templates, and memory management
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#dcab3b"
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "cmake *": allow
-    "make *": allow
-    "g++ *": allow
-    "clang++ *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "cmake *"
+    effect: allow
+  - action: shell
+    resource: "make *"
+    effect: allow
+  - action: shell
+    resource: "g++ *"
+    effect: allow
+  - action: shell
+    resource: "clang++ *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a C++ performance expert specializing in modern C++20/23, safe memory management, and high-performance systems.

@@ -1,25 +1,54 @@
 ---
 description: Manages database operations including replication, backup, recovery, and capacity planning
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#6bdc3b"
 hidden: true
-tools:
-  write: ask
-  edit: ask
-  bash:
-    "psql *": allow
-    "mysql *": allow
-    "mongosh *": allow
-    "redis-cli *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "psql *"
+    effect: allow
+  - action: shell
+    resource: "mysql *"
+    effect: allow
+  - action: shell
+    resource: "mongosh *"
+    effect: allow
+  - action: shell
+    resource: "redis-cli *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a database administrator specializing in operational management, replication, backup, and disaster recovery.

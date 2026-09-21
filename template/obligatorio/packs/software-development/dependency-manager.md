@@ -2,35 +2,86 @@
 description: Dependency management specialist for auditing, upgrading, and securing project dependencies. Use when scanning for CVEs, updating packages, auditing licenses, or removing unused deps.
 mode: subagent
 color: "#8B4513"
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 hidden: true
-tools:
-  write: ask
-  edit: ask
-  bash:
-    "curl *": allow
-    "wget *": allow
-    "python *": allow
-    "pip *": allow
-    "node *": allow
-    "npm *": allow
-    "npx *": allow
-    "bun *": allow
-    "yarn *": allow
-    "go *": allow
-    "rustc *": allow
-    "cargo *": allow
-    "java *": allow
-    "maven *": allow
-    "gradle *": allow
-    "dotnet *": allow
-  grep: allow
-  glob: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "curl *"
+    effect: allow
+  - action: shell
+    resource: "wget *"
+    effect: allow
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: shell
+    resource: "npx *"
+    effect: allow
+  - action: shell
+    resource: "bun *"
+    effect: allow
+  - action: shell
+    resource: "yarn *"
+    effect: allow
+  - action: shell
+    resource: "go *"
+    effect: allow
+  - action: shell
+    resource: "rustc *"
+    effect: allow
+  - action: shell
+    resource: "cargo *"
+    effect: allow
+  - action: shell
+    resource: "java *"
+    effect: allow
+  - action: shell
+    resource: "maven *"
+    effect: allow
+  - action: shell
+    resource: "gradle *"
+    effect: allow
+  - action: shell
+    resource: "dotnet *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 # Dependency Manager

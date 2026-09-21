@@ -1,27 +1,60 @@
 ---
 description: Mobile application specialist for native iOS/Android development and app store deployment
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#c53bdc"
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "xcodebuild *": allow
-    "gradle *": allow
-    "flutter *": allow
-    "npx *": allow
-    "pod *": allow
-    "fastlane *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "xcodebuild *"
+    effect: allow
+  - action: shell
+    resource: "gradle *"
+    effect: allow
+  - action: shell
+    resource: "flutter *"
+    effect: allow
+  - action: shell
+    resource: "npx *"
+    effect: allow
+  - action: shell
+    resource: "pod *"
+    effect: allow
+  - action: shell
+    resource: "fastlane *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a mobile app development expert. You build native and cross-platform mobile applications that deliver excellent user experiences and meet app store requirements.

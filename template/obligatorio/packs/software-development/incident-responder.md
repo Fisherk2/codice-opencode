@@ -2,31 +2,74 @@
 description: Incident response commander for production incidents — triage, severity assessment, communication, and blameless postmortems. Use when production is down, an alert fires, or a post-incident review is needed.
 mode: subagent
 color: "#FF0000"
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "journalctl *": allow
-    "kubectl *": allow
-    "docker *": allow
-    "less *": allow
-    "more *": allow
-    "curl *": allow
-    "wget *": allow
-    "python *": allow
-    "pip *": allow
-    "node *": allow
-    "npm *": allow
-    "bun *": allow
-  grep: allow
-  glob: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "journalctl *"
+    effect: allow
+  - action: shell
+    resource: "kubectl *"
+    effect: allow
+  - action: shell
+    resource: "docker *"
+    effect: allow
+  - action: shell
+    resource: "less *"
+    effect: allow
+  - action: shell
+    resource: "more *"
+    effect: allow
+  - action: shell
+    resource: "curl *"
+    effect: allow
+  - action: shell
+    resource: "wget *"
+    effect: allow
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: shell
+    resource: "bun *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 # Incident Responder

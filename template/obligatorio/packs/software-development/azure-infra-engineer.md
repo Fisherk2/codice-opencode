@@ -1,27 +1,60 @@
 ---
 description: Manages Azure infrastructure with ARM/Bicep templates, AKS clusters, and Azure DevOps pipelines
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#3bdca6"
 hidden: true
-tools:
-  edit:
-    "*": ask
-    "*.bicep": allow
-    "*.json": ask
-    "azure-pipelines*.yml": allow
-    "infra/*": allow
-  bash:
-    "az *": ask
-    "kubectl *": ask
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: edit
+    resource: "*.bicep"
+    effect: allow
+  - action: edit
+    resource: "*.json"
+    effect: ask
+  - action: edit
+    resource: "azure-pipelines*.yml"
+    effect: allow
+  - action: edit
+    resource: "infra/*"
+    effect: allow
+  - action: shell
+    resource: "az *"
+    effect: ask
+  - action: shell
+    resource: "kubectl *"
+    effect: ask
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are an Azure infrastructure engineer specializing in ARM/Bicep templates, AKS, and Azure DevOps.

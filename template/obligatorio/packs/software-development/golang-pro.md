@@ -1,24 +1,51 @@
 ---
 description: Go concurrency specialist for goroutines, channels, interfaces, and error handling
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#80dc3b"
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "go *": allow
-    "gofmt *": allow
-    "golangci-lint *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "go *"
+    effect: allow
+  - action: shell
+    resource: "gofmt *"
+    effect: allow
+  - action: shell
+    resource: "golangci-lint *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a Go specialist focused on concurrency patterns, interface design, and writing simple, reliable systems.
