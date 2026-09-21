@@ -5,9 +5,6 @@ permissions:
   - action: edit
     resource: "*"
     effect: deny
-  - action: edit
-    resource: "*"
-    effect: allow
   - action: grep
     resource: "*"
     effect: allow
@@ -17,9 +14,6 @@ permissions:
   - action: lsp
     resource: "*"
     effect: allow
-  - action: edit
-    resource: "*"
-    effect: deny
   - action: skill
     resource: "*"
     effect: allow
