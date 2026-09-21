@@ -3,7 +3,8 @@
 **Spec ID:** S5-PACKS §3 (format standardization)
 **Date:** 2026-08-04
 **Author:** Moctezuma (Strategic Planner)
-**Status:** Approved (FEV-18 Phase 1)
+**Status:** Approved (FEV-18 Phase 1) · Amended 2026-09-21 (Fase 2 — native V2 `permissions:`, delegation brake)
+**Amends:** §§3–4, 7–8 supersede the V1 `tools:` / `temperature` / `task()` contract below; FEV-18 conversion history is preserved. See `docs/diagnosis/fix28-subagent-delegation-kill-switch.md` and `scripts/migrate-v1-to-v2-permissions.ts`.
 
 ---
 
@@ -38,28 +39,54 @@ vibe: Turns ML models into production features.
 | `emoji` | string | Decorative emoji — optional |
 | `vibe` | string | Personality tagline — optional |
 
-## 3. Target Format (v2.0 — Códice standard)
+## 3. Target Format (v2.0 — Códice standard; Fase-2: native V2 permissions)
 
 ```yaml
 ---
 description: "AI Engineer — Expert AI/ML engineer specializing in model development..."
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#dcb03b"
 hidden: true
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "*": ask
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "less *"
+    effect: allow
+  - action: shell
+    resource: "more *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 # AI Engineer
@@ -69,7 +96,7 @@ tools:
 ## COMPOSITION
 
 - **Invoke directly when:** <purpose snippet>
-- **Invoke via:** Primary agents (via task delegation)
+- **Invoke via:** Primary agents (via subagent delegation)
 - **Do not invoke from:** Another persona without a specific task requiring this specialization.
 ```
 
@@ -83,31 +110,48 @@ tools:
 | `emoji` | *(dropped)* | Not part of the Códice standard |
 | `vibe` | *(dropped)* | Not part of the Códice standard |
 | — | `mode` | Always `subagent` |
-| — | `temperature` | Always `0.1` |
+| — | `request.body.temperature` | Always `0.1` (top-level `temperature` is legacy in V2) |
 | — | `hidden` | Always `true` |
-| — | `tools` | Fixed standard subagent tools block |
+| — | `permissions` | V2 native list, converted from the V1 `tools:` map (see §Permission block) |
+| — | `subagent: "*": deny` | Delegation brake, appended last for every `mode: subagent` (Fase 2) |
 
-### Permission block (canonical)
+### Permission block (canonical, V2 native)
 
 ```yaml
-tools:
-  write: allow
-  edit: allow
-  bash:
-    "*": ask
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "<command> *"
+    effect: allow
+  # … one rule per tool/resource, file order preserved …
+  - action: subagent
+    resource: "*"
+    effect: deny
 ```
 
-**Rationale:** Subagents may write/edit files (unlike primaries), require
-confirmation for bash, and have access to read/query/skill tools. This matches
-the existing convention in `template/obligatorio/packs/sin-clasificar/*.md`.
+Conversion is mechanical (applied by `scripts/migrate-v1-to-v2-permissions.ts`):
+
+| V1 (`tools:` / `permission:` map) | V2 (`permissions:` list) |
+|-----------------------------------|--------------------------|
+| Scalar `key: effect` | `- action: <key>` / `resource: "*"` / `effect` |
+| Nested `group: {pattern: effect}` | One rule per entry, file order kept |
+| `bash` → `shell`, `task` → `subagent`, `write`/`patch` → `edit` | Renamed per `https://opencode.ai/v2/docs/migrate-v1/` |
+| Top-level `temperature`/`top_p` | Moved under `request.body` |
+| `maxSteps` | Renamed to `steps` |
+| `mode: subagent` without subagent rules | Append `subagent "*": deny` (chain brake) |
+
+Fail-loud: mixed `tools:` + `permissions:`, both legacy maps, malformed
+frontmatter. Warn: `write`/`patch`/`edit` conflicts, non-consecutive
+action+resource duplicates (collapsed keeping the last, V2 last-match-wins).
+
+**Rationale:** Subagents may write/edit files (unlike most primaries) and have
+access to read/query/skill tools; shell stays gated per command. The trailing
+`subagent: "*": deny` prevents delegation chains: a child session merges the
+global `ask` with its own frontmatter, so without the brake it could launch
+grandchildren (see `docs/diagnosis/fix28-subagent-delegation-kill-switch.md`).
+This matches the migrated `template/obligatorio/packs/writers/*.md`.
 
 ## 4. COMPOSITION Block
 
@@ -121,14 +165,14 @@ and legacy subagents (`template/obligatorio/packs/sin-clasificar/typescript-pro.
 ## COMPOSITION
 
 - **Invoke directly when:** <first sentence of description, ≤120 chars>
-- **Invoke via:** Primary agents (via task delegation)
+- **Invoke via:** Primary agents (via subagent delegation)
 - **Do not invoke from:** Another persona without a specific task requiring this specialization.
 ```
 
 ### Content rules
 
 - `Invoke directly when` = first sentence of the source description (truncated to 120 chars).
-- `Invoke via` = always "Primary agents (via task delegation)" for subagents.
+- `Invoke via` = always "Primary agents (via subagent delegation)" for subagents.
 - `Do not invoke from` = standard guard text.
 - The block must appear AFTER the body content (last section of the file).
 
@@ -158,13 +202,18 @@ and legacy subagents (`template/obligatorio/packs/sin-clasificar/typescript-pro.
 | `scripts/reformat-agent.ts` | Conversion module (`reformatAgent(source, target)`) |
 | `scripts/reformat-agent-cli.ts` | CLI wrapper (`bun run scripts/reformat-agent-cli.ts <src> <dst> [--dry-run]`) |
 | `tests/unit/scripts/reformat-agent.test.ts` | 10 test cases (RED→GREEN verified) |
+| `scripts/migrate-v1-to-v2-permissions.ts` | Fase-2 codemod V1→V2 (`permissions:` list, renames, dedupe, chain brake) |
+| `tests/unit/scripts/migrate-v1-to-v2-permissions.test.ts` | 23 TDD cases (RED→GREEN verified) |
+| `docs/diagnosis/fix28-subagent-delegation-kill-switch.md` | Merge semantics, kill-switch, chain-brake design |
 | `template/obligatorio/packs/main/huitzilopochtli.md` | Primary agent reference |
 | `template/obligatorio/packs/sin-clasificar/backend-developer.md` | Legacy subagent reference |
 
-## 8. Delegation Protocol
+## 8. Delegation Protocol (Fase-2: native `subagent` tool)
 
-Primary agents delegate implicitly today: their RULES say "always delegate via
-`task()`" but there is no contract for how. This section is the canonical
+Primary agents delegate through the V2 `subagent` tool (rename of V1 `task`).
+Global `permissions` in `opencode.json` carry `subagent: "*": ask` — a global
+`deny` acts as an absolute kill-switch for the tool (see fix28), so per-agent
+frontmatter refines allow/deny on top of `ask`. This section is the canonical
 source of truth (SSOT) for delegation — the six primary agents in
 `template/obligatorio/packs/main/` carry these blocks. Within each group the
 instances are byte-identical; re-verify the spec against the agents when
@@ -174,8 +223,8 @@ either side changes.
 
 | Agent capability | Block | Agents |
 |------------------|-------|--------|
-| `tools.task` contains `allow` entries | **A — DELEGATION PROTOCOL** | `huitzilopochtli`, `quetzalcoatl`, `tlaloc`, `mictlantecuhtli`, `tezcatlipoca` |
-| `tools.task` is `"*": deny` | **B — SKILL LOADING PROTOCOL** | `moctezuma` |
+| `permissions` has `subagent: "*": allow` (+ deny-lists) | **A — DELEGATION PROTOCOL** | `huitzilopochtli`, `quetzalcoatl`, `tlaloc`, `mictlantecuhtli`, `tezcatlipoca` |
+| `permissions` has `subagent: "*": deny` | **B — SKILL LOADING PROTOCOL** | `moctezuma` |
 
 ### Block A — DELEGATION PROTOCOL (delegating agents)
 
@@ -190,7 +239,7 @@ Before executing ANY instruction — analyze first, act second:
    this task. Two or ten: the count is your judgement, the relevance is the rule.
 4. **Decide** — delegate or execute yourself (last resort, only when no specialist exists).
 
-Every `task()` you send MUST carry these three blocks:
+Every subagent call (via the `subagent` tool) you send MUST carry these three blocks:
 
 - **Deterministic instructions** — context (why + constraints) plus small, verifiable steps with explicit deliverables: paths, names, formats. Never an open-ended ask.
 - **Skills to load** — name the `skills/` the subagent must load, in priority order, with one line of justification each.
@@ -224,7 +273,7 @@ first, act second:
 4. **Self-review** against that checklist before returning; state any item you could not meet.
 ```
 
-Non-delegation is enforced by `tools.task: "*": deny` in the frontmatter and
+Non-delegation is enforced by `permissions: subagent "*": deny` in the frontmatter and
 the `### RULES` bullet "**NEVER** delegate to subagents" — not by prose in the block.
 
 ### Line budget
