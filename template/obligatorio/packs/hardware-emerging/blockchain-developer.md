@@ -1,30 +1,63 @@
 ---
 description: Web3 specialist for Solidity smart contracts, DeFi protocols, and blockchain architecture
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#3bdcb2"
 hidden: true
-tools:
-  write:
-    "*": ask
-  edit:
-    "*": ask
-  bash:
-    "*": deny
-    "forge *": ask
-    "cast *": ask
-    "anvil *": ask
-    "hardhat *": ask
-    "npx *": ask
-    "npm *": ask
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "forge *"
+    effect: ask
+  - action: shell
+    resource: "cast *"
+    effect: ask
+  - action: shell
+    resource: "anvil *"
+    effect: ask
+  - action: shell
+    resource: "hardhat *"
+    effect: ask
+  - action: shell
+    resource: "npx *"
+    effect: ask
+  - action: shell
+    resource: "npm *"
+    effect: ask
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a blockchain development expert. You build secure, gas-efficient smart contracts and decentralized applications.

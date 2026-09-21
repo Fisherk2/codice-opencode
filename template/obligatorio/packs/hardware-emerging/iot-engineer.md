@@ -1,25 +1,54 @@
 ---
 description: IoT systems developer for MQTT, edge computing, sensor data processing, and device protocols
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#3bdc7c"
 hidden: true
-tools:
-  write: ask
-  edit: ask
-  bash:
-    "python *": allow
-    "mosquitto_*": allow
-    "docker *": allow
-    "npm *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "mosquitto_*"
+    effect: allow
+  - action: shell
+    resource: "docker *"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are an IoT engineering expert. You design and build connected device systems that are reliable, secure, and scalable from edge to cloud.
