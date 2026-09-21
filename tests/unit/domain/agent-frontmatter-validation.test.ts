@@ -297,4 +297,24 @@ describe("Agent Frontmatter Validation", () => {
 			});
 		}
 	});
+
+	describe("validatePermissionsList duplicate guard", () => {
+		it("accepts distinct action+resource pairs", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [
+				{ action: "edit", resource: "*", effect: "ask" },
+				{ action: "edit", resource: "*.md", effect: "allow" },
+			]);
+			expect(errors).toEqual([]);
+		});
+
+		it("rejects duplicate action+resource pairs", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [
+				{ action: "edit", resource: "*", effect: "allow" },
+				{ action: "grep", resource: "*", effect: "allow" },
+				{ action: "edit", resource: "*", effect: "deny" },
+			]);
+			expect(errors.length).toBe(1);
+			expect(errors[0]?.message).toContain('Duplicate permission for action "edit" resource "*"');
+		});
+	});
 });

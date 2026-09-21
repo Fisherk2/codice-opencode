@@ -322,6 +322,7 @@ export function validatePermissionsList(
 		return errors;
 	}
 
+	const seen = new Map<string, number>();
 	value.forEach((rule, idx) => {
 		const path = `${fieldPath}[${idx}]`;
 		if (typeof rule !== "object" || rule === null) {
@@ -348,6 +349,19 @@ export function validatePermissionsList(
 				field: `${path}.effect`,
 				message: `Invalid permissions effect "${entry.effect}". Must be "allow", "ask", or "deny"`,
 			});
+		}
+		if (typeof entry.action === "string" && typeof entry.resource === "string") {
+			const key = `${entry.action} ${entry.resource}`;
+			const firstIdx = seen.get(key);
+			if (firstIdx !== undefined) {
+				errors.push({
+					file: filePath,
+					field: path,
+					message: `Duplicate permission for action "${entry.action}" resource "${entry.resource}" (first at ${fieldPath}[${firstIdx}]) — under V2 last-match-wins the earlier rule is dead; collapse to a single rule`,
+				});
+			} else {
+				seen.set(key, idx);
+			}
 		}
 	});
 

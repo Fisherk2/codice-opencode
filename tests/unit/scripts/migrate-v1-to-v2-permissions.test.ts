@@ -141,11 +141,15 @@ tools:
 		const output = readAgent(agent);
 		expect(output).not.toContain("write:");
 		expect(output).not.toContain("patch:");
-		// Order preserved: write-derived deny first, edit allow, patch deny last.
-		const denyIdx = output.indexOf("effect: deny");
-		const allowIdx = output.indexOf("effect: allow");
-		expect(denyIdx).toBeGreaterThan(-1);
-		expect(allowIdx).toBeGreaterThan(-1);
+		// Duplicate (edit, *) rules collapse under last-match-wins: the earlier
+		// deny and allow are dead (shadowed by the trailing patch-derived deny),
+		// so only the surviving deny is emitted.
+		expect(output.split("- action: edit").length - 1).toBe(1);
+		const editBlock = output.slice(
+			output.indexOf("- action: edit"),
+			output.indexOf("- action: edit") + 120,
+		);
+		expect(editBlock).toContain("effect: deny");
 	});
 
 	it("converts the legacy permission: key as well", () => {
@@ -384,5 +388,80 @@ tools:
 		const output = readAgent(agent);
 		const occurrences = output.split("- action: edit").length - 1;
 		expect(occurrences).toBe(1);
+	});
+});
+
+describe("migrateV1ToV2Permissions — duplicate action+resource guard", () => {
+	it("does not warn on consecutive identical merge artifacts", () => {
+		writeAgent(
+			`---
+description: "Silent Agent"
+mode: subagent
+tools:
+  write: allow
+  edit: allow
+---
+# Silent
+`,
+			"case-14",
+		);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-14")]);
+
+		expect(result.migrated).toBe(1);
+		expect(result.warnings).toEqual([]);
+	});
+
+	it("collapses non-consecutive same-effect duplicates keeping the last, with a warning", () => {
+		const agent = writeAgent(
+			`---
+description: "Split Agent"
+mode: subagent
+tools:
+  write: deny
+  grep: allow
+  patch: deny
+---
+# Split
+`,
+			"case-15",
+		);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-15")]);
+
+		expect(result.migrated).toBe(1);
+		expect(result.warnings.some((w) => w.includes("duplicate"))).toBe(true);
+		const output = readAgent(agent);
+		expect(output.split("- action: edit").length - 1).toBe(1);
+		// Survivor keeps the last position (after grep).
+		expect(output.indexOf("- action: grep")).toBeLessThan(output.indexOf("- action: edit"));
+	});
+
+	it("keeps the last occurrence on conflicting effects and warns about shadowing", () => {
+		const agent = writeAgent(
+			`---
+description: "Shadow Agent"
+mode: subagent
+tools:
+  write: deny
+  grep: allow
+  edit: allow
+---
+# Shadow
+`,
+			"case-16",
+		);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-16")]);
+
+		expect(result.migrated).toBe(1);
+		expect(result.warnings.some((w) => w.includes("shadowed"))).toBe(true);
+		const output = readAgent(agent);
+		expect(output.split("- action: edit").length - 1).toBe(1);
+		const editBlock = output.slice(
+			output.indexOf("- action: edit"),
+			output.indexOf("- action: edit") + 120,
+		);
+		expect(editBlock).toContain("effect: allow");
 	});
 });
