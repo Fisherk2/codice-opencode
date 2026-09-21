@@ -1,36 +1,88 @@
 ---
 description: "Huitzilopochtli - Supreme Orchestrator"
 mode: primary
-tools:
-  write: deny
-  edit: allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  patch: deny
-  skill: allow
-  task:
-    "*": allow
-    "quetzalcoatl": deny
-    "tezcatlipoca": deny
-    "tlaloc": deny
-    "moctezuma": deny
-    "mictlantecuhtli": deny
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
-  bash:
-    "* > *": deny
-    "* >> *": deny
-    "touch *": deny
-    "mkdir *": ask
-    "cp *": ask
-    "mv *": ask
-    "rm *": ask
-    "chmod *": deny
-    "chown *": deny
-    "ln *": deny
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "quetzalcoatl"
+    effect: deny
+  - action: subagent
+    resource: "tezcatlipoca"
+    effect: deny
+  - action: subagent
+    resource: "tlaloc"
+    effect: deny
+  - action: subagent
+    resource: "moctezuma"
+    effect: deny
+  - action: subagent
+    resource: "mictlantecuhtli"
+    effect: deny
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "* > *"
+    effect: deny
+  - action: shell
+    resource: "* >> *"
+    effect: deny
+  - action: shell
+    resource: "touch *"
+    effect: deny
+  - action: shell
+    resource: "mkdir *"
+    effect: ask
+  - action: shell
+    resource: "cp *"
+    effect: ask
+  - action: shell
+    resource: "mv *"
+    effect: ask
+  - action: shell
+    resource: "rm *"
+    effect: ask
+  - action: shell
+    resource: "chmod *"
+    effect: deny
+  - action: shell
+    resource: "chown *"
+    effect: deny
+  - action: shell
+    resource: "ln *"
+    effect: deny
 ---
 # HUITZILOPOCHTLI — SUPREME ORCHESTRATOR
 

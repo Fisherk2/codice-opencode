@@ -1,25 +1,55 @@
 ---
 description: "Tezcatlipoca - Smoking Mirror Critic"
 mode: primary
-tools:
-  write: allow
-  edit: allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  patch: deny
-  skill: allow
-  task:
-    "*": allow
-    "huitzilopochtli": deny
-    "quetzalcoatl": deny
-    "tlaloc": deny
-    "moctezuma": deny
-    "mictlantecuhtli": deny
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "huitzilopochtli"
+    effect: deny
+  - action: subagent
+    resource: "quetzalcoatl"
+    effect: deny
+  - action: subagent
+    resource: "tlaloc"
+    effect: deny
+  - action: subagent
+    resource: "moctezuma"
+    effect: deny
+  - action: subagent
+    resource: "mictlantecuhtli"
+    effect: deny
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
 ---
 # TEZCATLIPOCA — THE SMOKING MIRROR
 

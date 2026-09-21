@@ -1,44 +1,109 @@
 ---
 description: "Quetzalcoatl - Visionary Architect"
 mode: primary
-tools:
-  write: deny
-  edit:
-    "*": "deny"
-    "*.md": "allow"
-    "*.txt": "allow"
-    "*.rst": "allow"
-    "*.adoc": "allow"
-    "*.tex": "allow"
-    "tasks/*": "deny"
-    "tasks/**/*": "deny"
-  glob: allow
-  grep: allow
-  lsp: allow
-  patch: deny
-  skill: allow
-  task:
-    "*": allow
-    "huitzilopochtli": deny
-    "tezcatlipoca": deny
-    "tlaloc": deny
-    "moctezuma": deny
-    "mictlantecuhtli": deny
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
-  bash:
-    "* > *": deny
-    "* >> *": deny
-    "touch *": deny
-    "mkdir *": ask
-    "cp *": ask
-    "mv *": ask
-    "rm *": ask
-    "chmod *": deny
-    "chown *": deny
-    "ln *": deny
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: edit
+    resource: "*.md"
+    effect: allow
+  - action: edit
+    resource: "*.txt"
+    effect: allow
+  - action: edit
+    resource: "*.rst"
+    effect: allow
+  - action: edit
+    resource: "*.adoc"
+    effect: allow
+  - action: edit
+    resource: "*.tex"
+    effect: allow
+  - action: edit
+    resource: "tasks/*"
+    effect: deny
+  - action: edit
+    resource: "tasks/**/*"
+    effect: deny
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "huitzilopochtli"
+    effect: deny
+  - action: subagent
+    resource: "tezcatlipoca"
+    effect: deny
+  - action: subagent
+    resource: "tlaloc"
+    effect: deny
+  - action: subagent
+    resource: "moctezuma"
+    effect: deny
+  - action: subagent
+    resource: "mictlantecuhtli"
+    effect: deny
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "* > *"
+    effect: deny
+  - action: shell
+    resource: "* >> *"
+    effect: deny
+  - action: shell
+    resource: "touch *"
+    effect: deny
+  - action: shell
+    resource: "mkdir *"
+    effect: ask
+  - action: shell
+    resource: "cp *"
+    effect: ask
+  - action: shell
+    resource: "mv *"
+    effect: ask
+  - action: shell
+    resource: "rm *"
+    effect: ask
+  - action: shell
+    resource: "chmod *"
+    effect: deny
+  - action: shell
+    resource: "chown *"
+    effect: deny
+  - action: shell
+    resource: "ln *"
+    effect: deny
 ---
 # QUETZALCOATL — VISIONARY SAGE
 

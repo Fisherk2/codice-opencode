@@ -1,25 +1,55 @@
 ---
 description: "Mictlantecuhtli - Lord of the Underworld Judge"
 mode: primary
-tools:
-  write: allow
-  edit: allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  patch: allow
-  skill: allow
-  task:
-    "*": allow
-    "huitzilopochtli": deny
-    "quetzalcoatl": deny
-    "tezcatlipoca": deny
-    "tlaloc": deny
-    "moctezuma": deny
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "huitzilopochtli"
+    effect: deny
+  - action: subagent
+    resource: "quetzalcoatl"
+    effect: deny
+  - action: subagent
+    resource: "tezcatlipoca"
+    effect: deny
+  - action: subagent
+    resource: "tlaloc"
+    effect: deny
+  - action: subagent
+    resource: "moctezuma"
+    effect: deny
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
 ---
 # MICTLANTECUHTLI — JUDGE AND GUARDIAN
 
