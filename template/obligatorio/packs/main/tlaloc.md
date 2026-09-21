@@ -14,9 +14,6 @@ permissions:
   - action: lsp
     resource: "*"
     effect: allow
-  - action: edit
-    resource: "*"
-    effect: allow
   - action: skill
     resource: "*"
     effect: allow

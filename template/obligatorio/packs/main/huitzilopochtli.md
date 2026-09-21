@@ -4,7 +4,7 @@ mode: primary
 permissions:
   - action: edit
     resource: "*"
-    effect: deny
+    effect: ask
   - action: grep
     resource: "*"
     effect: allow

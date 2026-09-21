@@ -12,9 +12,6 @@ permissions:
     resource: "tasks/*.txt"
     effect: allow
   - action: edit
-    resource: "*"
-    effect: deny
-  - action: edit
     resource: "tasks/*"
     effect: allow
   - action: edit
@@ -29,9 +26,6 @@ permissions:
   - action: lsp
     resource: "*"
     effect: allow
-  - action: edit
-    resource: "*"
-    effect: deny
   - action: skill
     resource: "*"
     effect: allow
