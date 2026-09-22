@@ -11,13 +11,7 @@ Pick the next pending @tasks/ from the plan. For each task:
 2. Load relevant context (existing code, patterns, types)
 3. **Delegate** to asigned subagents to implement the task with: task description, acceptance criteria, skills to load, and project conventions (`AGENTS.md`, @docs/CODE_STYLE.md or similar).
 4. Subagents **should** write a failing test for the expected behavior (RED). **Load** `solid` skill for SOLID principles and clean test design
-5. Subagents **should** implement the minimum code to pass the test (GREEN), **Always load** `clean-code` skill to follow clean code practices. You can also **Load** these supporting skills as the task requires:
-   - `clean-ddd-hexagonal` skill for domain logic
-   - `error-handling-patterns` skill for error handling
-   - `security-and-hardening` skill for auth, input, or data security
-   - `ui-ux-design-pro` and `design-taste-frontend` skills for UI
-   - `bash-defensive-patterns` skill for shell scripts
-   - `performance-analysis` skill for performance-sensitive code
+5. Subagents **should** implement the minimum code to pass the test (GREEN), **Always load** `clean-code` skill to follow clean code practices.
 6. Review the subagent's work — **Delegate** `code-reviewer` subagent to verify tests pass, code follows conventions, no unintended changes
 7. Fix any discrepancies found during review before proceeding.
 8. Run the full test suite to check for regressions. If applicable, **Load** `browser-testing-with-devtools` skill for UI tasks

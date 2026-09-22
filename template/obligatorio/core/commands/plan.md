@@ -14,11 +14,12 @@ Then **Load** `planning-and-task-breakdown` skill.
 3. Slice work vertically (one complete path per task, not horizontal layers)
 4. Write tasks with acceptance criteria and verification steps. **Load** `design-patterns` skill when planning which GoF or enterprise patterns to apply in each task. **Load** `architecture-diagrams` skill to draw diagrams and components.
 5. Suggest what subagents should invoke the main agents to complete each task, analyze `agents/` directory to asign the most appropriate subagents and write them to `tasks/` files, can be multiple subagents per task (parallel/sequential) or none, **ONLY** subagents, **NOT** main agents (huitzilopochtli, quetzalcoatl, etc).
-6. Add checkpoints between phases within `tasks/plan.md` and `tasks/todo.md` — quality gates that must pass before moving to the next phase
-7. Present a brief summary of the plan for human review before saving.
-8. **Planification is done — do NOT touch or implement anything. Only plan and write to `tasks/` files.**
-9. Use the `question` tool to confirm plan with the user before saving to `tasks/plan.md` and `tasks/todo.md`
-10. Commit all changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
+6. Suggest what skills should load the subagents (or main builder if applicable) to complete each task, analyze `skills/` directory to asign the most appropriate skills and write them to `tasks/` files, can be multiple skills per task or none, the asignment should be in a table format with the task, subagent name, and skill(s) name(s).
+7. Add checkpoints between phases within `tasks/plan.md` and `tasks/todo.md` — quality gates that must pass before moving to the next phase
+8. Present a brief summary of the plan for human review before saving.
+9. **Planification is done — do NOT touch or implement anything. Only plan and write to `tasks/` files.**
+10. Use the `question` tool to confirm plan with the user before saving to `tasks/plan.md` and `tasks/todo.md`
+11. Commit all changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 ## Suggested Next Step
 
