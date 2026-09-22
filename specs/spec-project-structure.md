@@ -84,6 +84,7 @@ codice-opencode/
 │   ├── unit/                      # Domain logic tests (pure functions, entities)
 │   │   ├── quality/               # Repo-wide invariant guards (e.g. source hygiene)
 │   │   └── domain/helpers/        # Test-side domain helpers (agentFrontmatterValidator — normative V2 agent schema reader; see ADR-021)
+│   ├── setup/                     # Repository configuration validation (own Justfile/CI/tooling), not unit tests of src/
 │   ├── integration/               # Adapter tests with mocked external systems
 │   ├── e2e/                       # Shell scripts and fixtures for CLI validation (31 scenarios)
 │   └── fixtures/                  # Predefined directory trees for merge scenarios

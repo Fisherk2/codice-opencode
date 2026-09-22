@@ -2,7 +2,7 @@
  * F0 Setup Validation Tests - Index
  *
  * This file imports all F0 setup validation tests.
- * Run with: bun test tests/unit/setup/
+ * Run with: bun test tests/setup/
  */
 
 import "./package-json.test.ts";

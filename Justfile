@@ -28,6 +28,9 @@ test:
 test-unit:
     bun test tests/unit/ {{IGNORE_PATTERNS}}
 
+test-setup:
+    bun test tests/setup/ {{IGNORE_PATTERNS}}
+
 test-integration:
     bun test tests/integration/ {{IGNORE_PATTERNS}}
 

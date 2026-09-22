@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 // Project root for resolving paths
-export const PROJECT_ROOT = resolve(import.meta.dir, "../../..");
+export const PROJECT_ROOT = resolve(import.meta.dir, "../..");
 
 /**
  * Typed interfaces for configuration files
