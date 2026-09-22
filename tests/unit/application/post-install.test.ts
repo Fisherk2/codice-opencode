@@ -41,12 +41,19 @@ const MOCK_OPENCODE_SYMLINKS: readonly SymlinkSpec[] = [
 
 // ── Mock factory helpers ──────────────────────────────────────────
 
-function createMockPrompt(): { stub: IUserPrompt; warnings: string[]; successes: string[] } {
+function createMockPrompt(): {
+	stub: IUserPrompt;
+	warnings: string[];
+	successes: string[];
+	progressEvents: string[];
+} {
 	const warnings: string[] = [];
 	const successes: string[] = [];
+	const progressEvents: string[] = [];
 	return {
 		warnings,
 		successes,
+		progressEvents,
 		stub: {
 			showWarning: mockFn((msg: string) => {
 				warnings.push(msg);
@@ -60,7 +67,9 @@ function createMockPrompt(): { stub: IUserPrompt; warnings: string[]; successes:
 			showProgressBar: mockFn(() => {}),
 			updateProgress: mockFn(() => {}),
 			completeProgress: mockFn(() => {}),
-			logProgressEvent: mockFn(() => {}),
+			logProgressEvent: mockFn((event: string) => {
+				progressEvents.push(event);
+			}),
 			showIntro: mockFn(() => {}),
 			showCancel: mockFn(() => {}),
 			showError: mockFn(() => {}),
@@ -94,7 +103,10 @@ function createMockGitignoreCreator(shouldFail = false): IGitignoreCreator & { c
 	};
 }
 
-function createMockSymlinkCreator(shouldFail = false): ISymlinkCreator & { calls: number } {
+function createMockSymlinkCreator(
+	shouldFail = false,
+	failingLinks: readonly string[] = [],
+): ISymlinkCreator & { calls: number } {
 	let count = 0;
 	return {
 		get calls() {
@@ -103,15 +115,15 @@ function createMockSymlinkCreator(shouldFail = false): ISymlinkCreator & { calls
 		createSymlink: mockFn(() =>
 			Promise.resolve({ ok: true, value: undefined } as Result<void, SymlinkError>),
 		) as (linkTarget: string, linkName: string) => Promise<Result<void, SymlinkError>>,
-		createSymlinks: mockFn(async (_symlinks: readonly SymlinkSpec[]) => {
+		createSymlinks: mockFn(async (symlinks: readonly SymlinkSpec[]) => {
 			count++;
-			if (shouldFail) {
-				return {
-					ok: false as const,
-					error: [
-						{ target: ".opencode/agents", linkPath: ".opencode/agents", message: "Symlink failed" },
-					] satisfies SymlinkError[],
-				};
+			const failed = new Set(failingLinks);
+			const errors: SymlinkError[] = symlinks
+				.filter((s) => failed.has(s.linkPath))
+				.map((s) => ({ target: s.target, linkPath: s.linkPath, message: "Symlink failed" }));
+			const shouldFailBatch = shouldFail || errors.length > 0;
+			if (shouldFailBatch) {
+				return { ok: false as const, error: errors };
 			}
 			return { ok: true as const, value: undefined };
 		}) as (symlinks: readonly SymlinkSpec[]) => Promise<Result<void, SymlinkError[]>>,
@@ -337,5 +349,48 @@ describe("runPostInstallSteps", () => {
 		expect(writtenData.installedVersion).toBeUndefined();
 		expect(writtenData.installedPacks).toEqual(["software-development", "business"]);
 		expect(writtenData.optionalSelections).toEqual([]);
+	});
+
+	test("does NOT emit gitignore progress event when gitignore creation fails", async () => {
+		const prompt = createMockPrompt();
+		const options = createDefaultPostInstallOptions({
+			gitignoreCreator: createMockGitignoreCreator(true),
+			userPrompt: prompt.stub,
+		});
+
+		const result = await runPostInstallSteps(options);
+
+		expect(result.ok).toBe(true);
+		// Progress log must reflect actual results, not intent: a failed
+		// .gitignore generation already surfaces via showWarning and must
+		// not also be reported as "Generated".
+		expect(prompt.progressEvents.filter((e) => e.startsWith("gitignore:"))).toEqual([]);
+	});
+
+	test("emits gitignore progress event when gitignore creation succeeds", async () => {
+		const prompt = createMockPrompt();
+		const options = createDefaultPostInstallOptions({ userPrompt: prompt.stub });
+
+		const result = await runPostInstallSteps(options);
+
+		expect(result.ok).toBe(true);
+		expect(prompt.progressEvents).toContain("gitignore: Generated .gitignore");
+	});
+
+	test("emits 'Created' progress events only for symlinks that succeeded", async () => {
+		const prompt = createMockPrompt();
+		const options = createDefaultPostInstallOptions({
+			symlinkCreator: createMockSymlinkCreator(false, [".opencode/agents"]),
+			userPrompt: prompt.stub,
+		});
+
+		const result = await runPostInstallSteps(options);
+
+		expect(result.ok).toBe(true);
+		const symlinkEvents = prompt.progressEvents.filter((e) => e.startsWith("symlink:"));
+		expect(symlinkEvents).toEqual([
+			"symlink: Created .opencode/commands",
+			"symlink: Created .opencode/skills",
+		]);
 	});
 });
