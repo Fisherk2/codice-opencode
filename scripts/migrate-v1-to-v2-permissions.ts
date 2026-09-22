@@ -227,8 +227,7 @@ function migrateOneFile(filePath: string, dryRun: boolean, warnings: string[]): 
 	if (parsed.next === -1) {
 		return { status: "error", message: `${filePath}: malformed frontmatter (unparseable entries)` };
 	}
-	// parseBlock stops at the closing --- (indent 0 <= parent -1? no: indent 0 > -1, so it tries to parse "---" as entry -> splitKeyValue("---") has no colon -> next -1). Treat trailing --- as terminator instead.
-	const nodes = parsed.nodes.filter((n) => n.key !== "---" && n.rawLine.trim() !== "---");
+	const nodes = parsed.nodes;
 
 	const keys = nodes.map((n) => n.key);
 	const hasV2 = keys.includes("permissions");
@@ -254,15 +253,11 @@ function migrateOneFile(filePath: string, dryRun: boolean, warnings: string[]): 
 	if (!hasLegacyMap && scalarMoves.length === 0) {
 		return { status: "skipped" };
 	}
-	if (hasV2 && !hasLegacyMap && scalarMoves.length === 0) {
-		return { status: "skipped" };
-	}
 
 	const out: string[] = [];
 	const mode = nodes.find((n) => n.key === "mode")?.scalar;
 	let subagentCovered = false;
 	for (const node of nodes) {
-		if (node.rawLine.trim() === "---") continue;
 		if (LEGACY_MAP_KEYS.has(node.key)) {
 			const rules = expandLegacyMap(node, filePath, warnings);
 			if (rules === null) {
