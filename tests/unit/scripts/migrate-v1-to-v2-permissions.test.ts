@@ -16,7 +16,11 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parse as yamlParse } from "yaml";
-import { migrateV1ToV2Permissions, runCli } from "../../../scripts/migrate-v1-to-v2-permissions";
+import {
+	migrateV1ToV2Permissions,
+	quoteScalar,
+	runCli,
+} from "../../../scripts/migrate-v1-to-v2-permissions";
 
 let tmpDir: string;
 
@@ -61,7 +65,7 @@ tools:
 		expect(result.errors).toEqual([]);
 		const output = readAgent(agent);
 		expect(output).toContain("permissions:");
-		expect(output).toContain('- action: edit\n    resource: "*"');
+		expect(output).toContain('- action: "edit"\n    resource: "*"');
 		expect(output).not.toContain("\ntools:");
 	});
 
@@ -91,7 +95,7 @@ tools:
 		expect(askIdx).toBeGreaterThan(-1);
 		expect(allowIdx).toBeGreaterThan(askIdx);
 		expect(denyIdx).toBeGreaterThan(allowIdx);
-		expect(output).toContain("- action: shell");
+		expect(output).toContain('- action: "shell"');
 		expect(output).not.toContain("bash:");
 	});
 
@@ -115,7 +119,7 @@ tools:
 
 		expect(result.migrated).toBe(1);
 		const output = readAgent(agent);
-		expect(output).toContain("- action: subagent");
+		expect(output).toContain('- action: "subagent"');
 		expect(output).toContain('resource: "quetzalcoatl"');
 		expect(output).not.toContain("task:");
 	});
@@ -145,10 +149,10 @@ tools:
 		// Duplicate (edit, *) rules collapse under last-match-wins: the earlier
 		// deny and allow are dead (shadowed by the trailing patch-derived deny),
 		// so only the surviving deny is emitted.
-		expect(output.split("- action: edit").length - 1).toBe(1);
+		expect(output.split('- action: "edit"').length - 1).toBe(1);
 		const editBlock = output.slice(
-			output.indexOf("- action: edit"),
-			output.indexOf("- action: edit") + 120,
+			output.indexOf('- action: "edit"'),
+			output.indexOf('- action: "edit"') + 120,
 		);
 		expect(editBlock).toContain("effect: deny");
 	});
@@ -387,7 +391,7 @@ tools:
 
 		expect(result.migrated).toBe(1);
 		const output = readAgent(agent);
-		const occurrences = output.split("- action: edit").length - 1;
+		const occurrences = output.split('- action: "edit"').length - 1;
 		expect(occurrences).toBe(1);
 	});
 });
@@ -433,9 +437,9 @@ tools:
 		expect(result.migrated).toBe(1);
 		expect(result.warnings.some((w) => w.includes("duplicate"))).toBe(true);
 		const output = readAgent(agent);
-		expect(output.split("- action: edit").length - 1).toBe(1);
+		expect(output.split('- action: "edit"').length - 1).toBe(1);
 		// Survivor keeps the last position (after grep).
-		expect(output.indexOf("- action: grep")).toBeLessThan(output.indexOf("- action: edit"));
+		expect(output.indexOf('- action: "grep"')).toBeLessThan(output.indexOf('- action: "edit"'));
 	});
 
 	it("keeps the last occurrence on conflicting effects and warns about shadowing", () => {
@@ -458,10 +462,10 @@ tools:
 		expect(result.migrated).toBe(1);
 		expect(result.warnings.some((w) => w.includes("shadowed"))).toBe(true);
 		const output = readAgent(agent);
-		expect(output.split("- action: edit").length - 1).toBe(1);
+		expect(output.split('- action: "edit"').length - 1).toBe(1);
 		const editBlock = output.slice(
-			output.indexOf("- action: edit"),
-			output.indexOf("- action: edit") + 120,
+			output.indexOf('- action: "edit"'),
+			output.indexOf('- action: "edit"') + 120,
 		);
 		expect(editBlock).toContain("effect: allow");
 	});
@@ -484,7 +488,7 @@ tools:
 		expect(result.migrated).toBe(1);
 		expect(result.warnings.some((w) => w.includes("delegation"))).toBe(true);
 		const output = readAgent(agent);
-		const idx = output.indexOf("- action: subagent");
+		const idx = output.indexOf('- action: "subagent"');
 		expect(idx).toBeGreaterThan(-1);
 		expect(output.slice(idx, idx + 120)).toContain("effect: deny");
 	});
@@ -532,12 +536,130 @@ hidden: true
 
 		// The deny brake must sit between the last permissions: entry and the
 		// next sibling key, i.e. be the list's last element.
-		const brakeIdx = output.indexOf("- action: subagent");
+		const brakeIdx = output.indexOf('- action: "subagent"');
 		const hiddenIdx = output.indexOf("hidden: true");
 		expect(brakeIdx).toBeGreaterThan(-1);
 		expect(brakeIdx).toBeLessThan(hiddenIdx);
 		// No subagent rule after the sibling key.
-		expect(output.slice(hiddenIdx)).not.toContain("- action: subagent");
+		expect(output.slice(hiddenIdx)).not.toContain('- action: "subagent"');
+	});
+
+	it("quotes unquoted-safe scalars and round-trips embedded quotes and backslashes", () => {
+		// Action '*' unquoted is a YAML alias (`- action: *` parse error), so the
+		// emitter must quote action scalars exactly like resource scalars.
+		const agent = writeAgent(
+			`---
+description: "Star Agent"
+mode: subagent
+tools:
+  "*": ask
+---
+# Star
+`,
+			"case-21",
+		);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-21")]);
+
+		expect(result.migrated).toBe(1);
+		expect(result.errors).toEqual([]);
+		const output = readAgent(agent);
+
+		// Independent verifier: emitted frontmatter must be valid YAML whose
+		// action field round-trips to the literal string "*".
+		const fm = output.slice(
+			output.indexOf("---") + 3,
+			output.indexOf("---", output.indexOf("---") + 3),
+		);
+		const parsed = yamlParse(fm) as {
+			permissions: Array<{ action: string; resource: string; effect: string }>;
+		};
+		// mode:subagent without a subagent rule also gets the deny brake,
+		// so the list carries the star rule plus the brake.
+		const starRule = parsed.permissions.find((p) => p.action === "*");
+		expect(starRule).toBeDefined();
+		expect(starRule?.effect).toBe("ask");
+	});
+
+	it("rejects a malformed nested effect mapping with an error and no write", () => {
+		// `{"deny: pwn": allow}` — the naive colon-splitter mangles the quoted key
+		// into effect `pwn": allow`, which the old code emitted RAW, producing a
+		// malformed mapping. The validator must reject it loud, before emission.
+		const agent = writeAgent(
+			`---
+description: "Pwn Agent"
+mode: subagent
+permission:
+  bash:
+    "deny: pwn": allow
+---
+# Pwn
+`,
+			"case-22",
+		);
+		const before = readAgent(agent);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-22")]);
+
+		expect(result.migrated).toBe(0);
+		expect(result.errors.length).toBe(1);
+		expect(result.errors[0]).toContain("invalid effect");
+		expect(readAgent(agent)).toBe(before); // file untouched
+	});
+
+	it("rejects a control byte in a resource scalar", () => {
+		// \u0007 (bell) in a resource: forbidden control byte, must fail loud.
+		const agent = writeAgent(
+			`---
+description: "Bell Agent"
+mode: subagent
+permission:
+  bash:
+    "bell\u0007cmd": allow
+---
+# Bell
+`,
+			"case-23",
+		);
+		const before = readAgent(agent);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-23")]);
+
+		expect(result.migrated).toBe(0);
+		expect(result.errors.length).toBe(1);
+		expect(result.errors[0]).toContain("control");
+		expect(readAgent(agent)).toBe(before); // file untouched
+	});
+
+	it("rejects an effect outside allow/ask/deny", () => {
+		const agent = writeAgent(
+			`---
+description: "Bad Effect Agent"
+mode: subagent
+tools:
+  edit: maybe
+---
+# Bad Effect
+`,
+			"case-24",
+		);
+		const before = readAgent(agent);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-24")]);
+
+		expect(result.migrated).toBe(0);
+		expect(result.errors.length).toBe(1);
+		expect(result.errors[0]).toContain("maybe");
+		expect(readAgent(agent)).toBe(before); // file untouched
+	});
+
+	it("escapes embedded quotes and backslashes so yaml.parse round-trips them", () => {
+		// quoteScalar escaping contract: 'a"b\\c' must survive the emitted YAML
+		// and parse back to the original string.
+		const tricky = 'a"b\\c';
+		const emitted = `resource: ${quoteScalar(tricky)}`;
+		const parsed = yamlParse(emitted) as { resource: string };
+		expect(parsed.resource).toBe(tricky);
 	});
 
 	it("does not inject subagent rules when migrating a primary", () => {
@@ -556,7 +678,7 @@ tools:
 		const result = migrateV1ToV2Permissions([join(tmpDir, "case-18")]);
 
 		expect(result.migrated).toBe(1);
-		expect(readAgent(agent)).not.toContain("- action: subagent");
+		expect(readAgent(agent)).not.toContain('- action: "subagent"');
 	});
 
 	it("respects an explicit subagent rule and does not inject a second one", () => {
@@ -577,6 +699,6 @@ tools:
 		const result = migrateV1ToV2Permissions([join(tmpDir, "case-19")]);
 
 		expect(result.migrated).toBe(1);
-		expect(readAgent(agent).split("- action: subagent").length - 1).toBe(1);
+		expect(readAgent(agent).split('- action: "subagent"').length - 1).toBe(1);
 	});
 });

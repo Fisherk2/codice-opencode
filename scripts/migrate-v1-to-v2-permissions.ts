@@ -59,8 +59,25 @@ function stripQuotes(value: string): string {
 	return t;
 }
 
-function quoteResource(value: string): string {
+/**
+ * Quotes a scalar for safe YAML emission (double-quoted style). Escapes
+ * backslashes and embedded quotes so the value round-trips through any
+ * YAML parser. Exported for tests.
+ */
+export function quoteScalar(value: string): string {
 	return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+/** Effects accepted by native OpenCode V2 permission rules. */
+const VALID_EFFECTS = new Set(["allow", "ask", "deny"]);
+
+/** A scalar is emittable only if it contains no YAML-breaking control bytes. */
+function hasForbiddenControlByte(value: string): boolean {
+	for (let i = 0; i < value.length; i++) {
+		const b = value.charCodeAt(i);
+		if ((b < 32 && b !== 9 && b !== 10 && b !== 13) || b === 127) return true;
+	}
+	return false;
 }
 
 function indentOf(line: string): number {
@@ -119,14 +136,26 @@ interface Rule {
 }
 
 /** Expands one legacy map node into V2 rules, preserving file order. */
-function expandLegacyMap(node: FrontNode, filePath: string, warnings: string[]): Rule[] | null {
+function expandLegacyMap(
+	node: FrontNode,
+	filePath: string,
+	warnings: string[],
+): Rule[] | { error: string } | null {
 	const rules: Rule[] = [];
 	const editFamily = new Map<string, string>();
+
+	/** Rejects an invalid scalar with a loud, actionable error message. */
+	const rejectScalar = (kind: string, raw: string, detail: string): { error: string } => ({
+		error: `${filePath}: invalid ${kind} '${raw}' — ${detail}; migrate manually`,
+	});
 
 	if (node.scalar !== null) {
 		// Degenerate `tools: <scalar>` form.
 		const effect =
 			node.scalar === "true" ? "allow" : node.scalar === "false" ? "deny" : node.scalar;
+		if (!VALID_EFFECTS.has(effect)) {
+			return rejectScalar("effect", effect, "effect must be one of allow|ask|deny");
+		}
 		rules.push({ action: "*", resource: "*", effect });
 		return rules;
 	}
@@ -134,6 +163,12 @@ function expandLegacyMap(node: FrontNode, filePath: string, warnings: string[]):
 	for (const child of node.children) {
 		const action = ACTION_RENAME[child.key] ?? child.key;
 		if (child.scalar !== null) {
+			if (!VALID_EFFECTS.has(child.scalar)) {
+				return rejectScalar("effect", child.scalar, `effect must be one of allow|ask|deny`);
+			}
+			if (hasForbiddenControlByte(action)) {
+				return rejectScalar("action", action, "contains a forbidden control byte");
+			}
 			rules.push({ action, resource: "*", effect: child.scalar });
 			if (child.key === "write" || child.key === "patch" || child.key === "edit") {
 				editFamily.set(child.key, child.scalar);
@@ -143,7 +178,13 @@ function expandLegacyMap(node: FrontNode, filePath: string, warnings: string[]):
 		// Nested group, e.g. bash: {pattern: effect}.
 		for (const grand of child.children) {
 			if (grand.scalar === null) return null;
-			rules.push({ action, resource: grand.key, effect: grand.scalar as string });
+			if (!VALID_EFFECTS.has(grand.scalar)) {
+				return rejectScalar("effect", grand.scalar, `effect must be one of allow|ask|deny`);
+			}
+			if (hasForbiddenControlByte(grand.key)) {
+				return rejectScalar("resource", grand.key, "contains a forbidden control byte");
+			}
+			rules.push({ action, resource: grand.key, effect: grand.scalar });
 		}
 	}
 
@@ -182,18 +223,18 @@ function emitRules(rules: Rule[], filePath: string, warnings: string[]): string[
 			if (!consecutiveIdentical) {
 				if (survivor.effect === rule.effect) {
 					warnings.push(
-						`${filePath}: duplicate permission '${rule.action}' ${quoteResource(rule.resource)} (same effect '${rule.effect}') — collapsed, kept last occurrence`,
+						`${filePath}: duplicate permission '${rule.action}' ${quoteScalar(rule.resource)} (same effect '${rule.effect}') — collapsed, kept last occurrence`,
 					);
 				} else {
 					warnings.push(
-						`${filePath}: duplicate permission '${rule.action}' ${quoteResource(rule.resource)} ('${rule.effect}' shadowed by later '${survivor.effect}') — kept last (V2 last-match-wins), review manually`,
+						`${filePath}: duplicate permission '${rule.action}' ${quoteScalar(rule.resource)} ('${rule.effect}' shadowed by later '${survivor.effect}') — kept last (V2 last-match-wins), review manually`,
 					);
 				}
 			}
 			return;
 		}
-		lines.push(`  - action: ${rule.action}`);
-		lines.push(`    resource: ${quoteResource(rule.resource)}`);
+		lines.push(`  - action: ${quoteScalar(rule.action)}`);
+		lines.push(`    resource: ${quoteScalar(rule.resource)}`);
 		lines.push(`    effect: ${rule.effect}`);
 	});
 	return lines;
@@ -266,6 +307,9 @@ function migrateOneFile(filePath: string, dryRun: boolean, warnings: string[]): 
 					message: `${filePath}: unsupported nesting depth under ${node.key}: — migrate manually`,
 				};
 			}
+			if ("error" in rules) {
+				return { status: "error", message: rules.error };
+			}
 			if (rules.some((r) => r.action === "subagent")) subagentCovered = true;
 			out.push(...emitRules(rules, filePath, warnings));
 			// Delegation brake: a mode:subagent file without subagent rules would fall
@@ -277,7 +321,7 @@ function migrateOneFile(filePath: string, dryRun: boolean, warnings: string[]): 
 			// after sibling keys (hidden:, color:, ...) and corrupt the YAML.
 			// Primaries are excluded (they delegate by design); explicit rules respected.
 			if (mode === "subagent" && !subagentCovered) {
-				out.push("  - action: subagent");
+				out.push('  - action: "subagent"');
 				out.push('    resource: "*"');
 				out.push("    effect: deny");
 				warnings.push(
