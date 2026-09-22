@@ -353,6 +353,15 @@ function migrateOneFile(filePath: string, dryRun: boolean, warnings: string[]): 
 		for (const child of node.children) {
 			out.push(child.rawLine);
 			for (const grand of child.children) {
+				// Fail-loud guard: the passthrough emitter only dumps 3 levels while
+				// parseBlock parses recursively, so a 4th-level key would be silently
+				// dropped from the written file. Refuse instead of corrupting.
+				if (grand.children.length > 0) {
+					return {
+						status: "error",
+						message: `${filePath}: frontmatter key '${node.key}' nests deeper than 3 levels ('${grand.key}') — migrate manually`,
+					};
+				}
 				out.push(grand.rawLine);
 			}
 		}

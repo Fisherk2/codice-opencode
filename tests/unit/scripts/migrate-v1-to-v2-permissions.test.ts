@@ -662,6 +662,102 @@ tools:
 		expect(parsed.resource).toBe(tricky);
 	});
 
+	it("fails loud instead of silently truncating frontmatter nested deeper than 3 levels", () => {
+		// parseBlock parses nesting RECURSIVELY, but the passthrough emitter only
+		// dumps 3 levels (node.rawLine, child.rawLine, grand.rawLine). With the old
+		// code the file below migrated "successfully" while the 4th/5th level was
+		// silently dropped from the written output:
+		//   request:
+		//     headers:            <- emitted
+		//       X-Custom:         <- emitted
+		//         nested:         <- DROPPED (silent corruption)
+		//           deepest: v    <- DROPPED
+		const agent = writeAgent(
+			`---
+description: "Deep Agent"
+mode: subagent
+request:
+  headers:
+    X-Custom:
+      nested:
+        deepest: value
+tools:
+  edit: allow
+---
+# Deep
+`,
+			"case-25",
+		);
+		const before = readAgent(agent);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-25")]);
+
+		expect(result.migrated).toBe(0);
+		expect(result.errors.length).toBe(1);
+		expect(result.errors[0]).toContain("nests deeper than 3 levels");
+		expect(readAgent(agent)).toBe(before); // no write on fail-loud
+	});
+
+	it("preserves every non-target byte: body, comments, fences and untouched keys", () => {
+		const agent = writeAgent(
+			`---
+description: "Golden Agent"
+mode: subagent
+color: "#ff0000"
+tools:
+  edit: allow
+  bash:
+    "git status *": allow
+---
+# Golden Agent
+
+Multi-paragraph body with **bold**, \`inline code\` and a note that a
+migrator must not touch a single byte of this text.
+
+<!-- an HTML comment line -->
+
+\`\`\`bash
+echo "fenced code block"
+echo 'with single quotes'
+\`\`\`
+
+- list item one
+  - nested list item
+- list item two
+
+Trailing paragraph with a URL: https://example.com/path?query=1&x=2
+`,
+			"case-26",
+		);
+		const before = readAgent(agent);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-26")]);
+
+		expect(result.migrated).toBe(1);
+		expect(result.errors).toEqual([]);
+
+		const output = readAgent(agent);
+		// The body (everything from the first "# Golden Agent" heading after the
+		// closing ---) must be byte-identical.
+		const closeMarker = "---\n# Golden Agent";
+		const beforeBody = before.slice(before.indexOf(closeMarker) + 4);
+		const afterBody = output.slice(output.indexOf(closeMarker) + 4);
+		expect(afterBody).toBe(beforeBody);
+		// Untouched frontmatter keys pass through verbatim.
+		expect(output).toContain('description: "Golden Agent"');
+		expect(output).toContain('color: "#ff0000"');
+		// And the whole file must still be valid YAML frontmatter.
+		const fm = output.slice(4, output.indexOf("\n---", 4));
+		const parsed = yamlParse(fm) as {
+			description: string;
+			color: string;
+			permissions: unknown[];
+		};
+		expect(parsed.description).toBe("Golden Agent");
+		expect(parsed.color).toBe("#ff0000");
+		expect(Array.isArray(parsed.permissions)).toBe(true);
+	});
+
 	it("does not inject subagent rules when migrating a primary", () => {
 		const agent = writeAgent(
 			`---
