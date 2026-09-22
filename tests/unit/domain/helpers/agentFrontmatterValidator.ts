@@ -1,7 +1,7 @@
 /**
  * Agent frontmatter validation engine.
  *
- * Schema constants and validation functions extracted verbatim from
+ * Schema constants and validation functions extracted from
  * agent-frontmatter-validation.test.ts so the same rules can be reused by any
  * test that inspects agent files. `loadAgentFrontmatter` collapses the
  * read → extract → parse sequence that the test previously repeated inline.
@@ -24,7 +24,9 @@ export const VALID_AGENT_FIELDS: ReadonlySet<string> = new Set([
 	"temperature", // legacy in V2 (use request.body); accepted during migration
 	"top_p", // legacy in V2 (use request.body); accepted during migration
 	"prompt", // legacy in V2 (use system/body); accepted during migration
-	"tools", // legacy in V2 (use permissions); accepted during migration
+	// NOTE: `tools` (map) is intentionally NOT a valid agent-file field. It is the
+	// legacy V1 tool map; native V2 replaced it with the `permissions:` list.
+	// Rejecting it prevents the silent-shadowing class of bug (issue #91).
 	"disable", // legacy in V2 (use disabled); accepted during migration
 	"hidden",
 	"options",
@@ -180,18 +182,12 @@ export function validateAgentFrontmatter(
 		}
 	}
 
-	// 7. Validate tools structure (legacy map key, accepted during migration)
-	if (frontmatter.tools !== undefined) {
-		const toolErrors = validateTools(relPath, "tools", frontmatter.tools);
-		errors.push(...toolErrors);
-	}
-
-	// 7b. Validate permissions list (native OpenCode V2 agent key)
+	// 7. Validate permissions list (native OpenCode V2 agent key)
 	if (frontmatter.permissions !== undefined) {
 		errors.push(...validatePermissionsList(relPath, "permissions", frontmatter.permissions));
 	}
 
-	// 7c. Validate request overlay (native OpenCode V2 agent key)
+	// 8. Validate request overlay (native OpenCode V2 agent key)
 	if (frontmatter.request !== undefined) {
 		if (typeof frontmatter.request !== "object" || frontmatter.request === null) {
 			errors.push({
@@ -202,7 +198,7 @@ export function validateAgentFrontmatter(
 		}
 	}
 
-	// 8. Validate mode-specific rules
+	// 9. Validate mode-specific rules
 	if (frontmatter.mode === "primary") {
 		if (frontmatter.hidden === true) {
 			errors.push({
@@ -215,90 +211,6 @@ export function validateAgentFrontmatter(
 
 	return errors;
 }
-
-/**
- * Validate the `tools:` frontmatter key in Opencode V2 agent files.
- *
- * Accepts both scalar values (`grep: allow`) and nested maps (`bash: {"*": "deny"}`).
- * The `task:` key accepts a map with `"*": allow/deny` plus individual agent deny-lists.
- *
- * @deprecated validatePermission() — use validateTools() for Opencode V2 agent files.
- *             The old function name is kept as a re-export for backward compatibility.
- */
-export function validateTools(
-	filePath: string,
-	fieldPath: string,
-	value: unknown,
-): ValidationError[] {
-	const errors: ValidationError[] = [];
-
-	if (typeof value === "string") {
-		// Flat tool access: "allow" | "ask" | "deny"
-		if (!VALID_PERMISSION_ACTIONS.has(value)) {
-			errors.push({
-				file: filePath,
-				field: fieldPath,
-				message: `Invalid tools value "${value}". Must be "allow", "ask", or "deny"`,
-			});
-		}
-		return errors;
-	}
-
-	if (typeof value !== "object" || value === null) {
-		errors.push({
-			file: filePath,
-			field: fieldPath,
-			message: `tools must be a string or object, got ${typeof value}`,
-		});
-		return errors;
-	}
-
-	const obj = value as Record<string, unknown>;
-	for (const [key, val] of Object.entries(obj)) {
-		// Object keys can be tool names or custom patterns
-		// "task:" accepts {"*": allow/deny, "agent-name": "deny"} for primaries
-
-		if (typeof val === "string") {
-			// Flat action for this tool
-			if (!VALID_PERMISSION_ACTIONS.has(val)) {
-				errors.push({
-					file: filePath,
-					field: `${fieldPath}.${key}`,
-					message: `Invalid tools action "${val}". Must be "allow", "ask", or "deny"`,
-				});
-			}
-		} else if (typeof val === "object" && val !== null) {
-			// Object pattern: { "pattern": "action", ... } or { "*": "allow", "name": "deny" }
-			const patternObj = val as Record<string, unknown>;
-			for (const [pattern, action] of Object.entries(patternObj)) {
-				if (typeof action !== "string") {
-					errors.push({
-						file: filePath,
-						field: `${fieldPath}.${key}.${pattern}`,
-						message: `Tools pattern action must be a string, got ${typeof action}`,
-					});
-				} else if (!VALID_PERMISSION_ACTIONS.has(action)) {
-					errors.push({
-						file: filePath,
-						field: `${fieldPath}.${key}.${pattern}`,
-						message: `Invalid tools action "${action}". Must be "allow", "ask", or "deny"`,
-					});
-				}
-			}
-		} else {
-			errors.push({
-				file: filePath,
-				field: `${fieldPath}.${key}`,
-				message: `Tools value must be a string or object, got ${typeof val}`,
-			});
-		}
-	}
-
-	return errors;
-}
-
-/** Backward-compat alias for tests still importing the old name. */
-export const validatePermission = validateTools;
 
 /**
  * Validate the native V2 `permissions:` frontmatter list.
@@ -351,7 +263,7 @@ export function validatePermissionsList(
 			});
 		}
 		if (typeof entry.action === "string" && typeof entry.resource === "string") {
-			const key = `${entry.action} ${entry.resource}`;
+			const key = `${entry.action}\u0000${entry.resource}`;
 			const firstIdx = seen.get(key);
 			if (firstIdx !== undefined) {
 				errors.push({

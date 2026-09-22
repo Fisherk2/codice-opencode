@@ -2,12 +2,13 @@
  * Agent Frontmatter Validation Tests
  *
  * Validates that all agent .md files in template/obligatorio/packs/
- * conform to the OpenCode agent config schema (https://opencode.ai/config.json).
+ * conform to the native OpenCode V2 agent format described in
+ * specs/spec-agent-format-v2.md §3–4 (https://opencode.ai/v2/docs/permissions).
  *
  * The validation engine lives in ./helpers/agentFrontmatterValidator.ts
  * (reusable by contributors to check a single new agent file).
  *
- * Reference: customize-opencode skill + OpenCode config schema AgentConfig
+ * Reference: specs/spec-agent-format-v2.md §3–4 + https://opencode.ai/v2/docs/permissions
  */
 import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
@@ -22,7 +23,6 @@ import {
 	VALID_MODES,
 	type ValidationError,
 	validateAgentFrontmatter,
-	validatePermission,
 	validatePermissionsList,
 } from "./helpers/agentFrontmatterValidator";
 
@@ -104,19 +104,32 @@ describe("Agent Frontmatter Validation", () => {
 		}
 	});
 
-	describe("Tools value correctness", () => {
-		const toolErrors: ValidationError[] = [];
-
-		for (const filePath of agentFiles) {
-			const { parsed, error } = loadAgentFrontmatter(filePath);
-			if (error || !parsed?.tools) continue;
-			toolErrors.push(
-				...validatePermission(relative(TEMPLATE_ROOT, filePath), "tools", parsed.tools),
+	describe("Fase-2 legacy tools: regression guard", () => {
+		// Native V2 replaced the V1 `tools:` map with the `permissions:` list.
+		// Accepting `tools:` here would let the silent-shadowing class of bug
+		// (issue #91 / fix26) return unnoticed: OpenCode V2 ignores the legacy
+		// key, so a restrictive agent would look unrestricted.
+		it("rejects tools: as an invalid agent frontmatter field", () => {
+			const errors = validateAgentFrontmatter(
+				join(TEMPLATE_ROOT, "main", "moctezuma.md"),
+				{ description: "test", mode: "subagent", tools: { write: "deny" } },
+				TEMPLATE_ROOT,
 			);
-		}
+			const toolErrors = errors.filter((e) => e.field === "tools");
+			expect(toolErrors.length).toBeGreaterThan(0);
+			expect(toolErrors[0]?.message).toContain('Unknown frontmatter field "tools"');
+		});
 
-		it("has no tools value errors across all agent files", () => {
-			assertNoErrors(toolErrors, "tools errors");
+		it("has no agent file using the legacy tools: key", () => {
+			const legacyUsers: string[] = [];
+			for (const filePath of agentFiles) {
+				const { parsed, error } = loadAgentFrontmatter(filePath);
+				if (error || !parsed) continue;
+				if (Object.hasOwn(parsed, "tools")) {
+					legacyUsers.push(relative(TEMPLATE_ROOT, filePath));
+				}
+			}
+			expect(legacyUsers).toEqual([]);
 		});
 	});
 
@@ -203,6 +216,7 @@ describe("Agent Frontmatter Validation", () => {
 			);
 			const permissionErrors = errors.filter((e) => e.field === "permission");
 			expect(permissionErrors.length).toBeGreaterThan(0);
+			expect(permissionErrors[0]?.message).toContain('Unknown frontmatter field "permission"');
 		});
 
 		it("has no agent file using the legacy permission: key", () => {
@@ -315,6 +329,50 @@ describe("Agent Frontmatter Validation", () => {
 			]);
 			expect(errors.length).toBe(1);
 			expect(errors[0]?.message).toContain('Duplicate permission for action "edit" resource "*"');
+		});
+
+		it("does not collide when a space in one field offsets the other", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [
+				{ action: "a b", resource: "c", effect: "allow" },
+				{ action: "a", resource: "b c", effect: "deny" },
+			]);
+			expect(errors).toEqual([]);
+		});
+	});
+
+	describe("validatePermissionsList error branches", () => {
+		it("rejects a non-list permissions value", () => {
+			const errors = validatePermissionsList("test.md", "permissions", "allow");
+			expect(errors.length).toBe(1);
+			expect(errors[0]?.message).toContain("must be a list");
+		});
+
+		it("rejects a null rule", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [null]);
+			expect(errors.length).toBe(1);
+			expect(errors[0]?.message).toContain("must be an object");
+		});
+
+		it("rejects a non-object rule", () => {
+			const errors = validatePermissionsList("test.md", "permissions", ["edit"]);
+			expect(errors.length).toBe(1);
+			expect(errors[0]?.message).toContain("must be an object");
+		});
+
+		it("rejects a rule field of the wrong type", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [
+				{ action: 42, resource: "*", effect: "allow" },
+			]);
+			expect(errors.some((e) => e.message.includes('"action" must be a string'))).toBe(true);
+		});
+
+		it("rejects an invalid effect", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [
+				{ action: "edit", resource: "*", effect: "maybe" },
+			]);
+			expect(errors.some((e) => e.message.includes('Invalid permissions effect "maybe"'))).toBe(
+				true,
+			);
 		});
 	});
 
