@@ -1,5 +1,11 @@
 # Implementation Plan: FEV-30 — Remove SDD Plugin + Opencode Legacy Deprecation Banner (Issue #90)
 
+> **COMPLETADO 2026-09-22.** FEV-30 cerrado en `hotfix/opencode-v2-migrate` —
+> 10 commits atómicos (F1 deletes, F2 CI strip, F3 banner TDD, F4 docs),
+> gates verdes (`just check` 0, `just test` 1848/0, coverage 96.19%,
+> e2e 31/31). Issue #90. Este plan queda como historia; no ejecutar.
+> Siguiente: preparar release v2.1.3.
+
 > **Estado:** listo para ejecutar en rama `hotfix/opencode-v2-migrate` (target release **v2.1.3**).
 > **Issue:** [#90](https://github.com/Fisherk2/codice-opencode/issues/90)
 > **Diagnóstico:** [`docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md`](../docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md)
@@ -41,9 +47,9 @@ El plugin SDD (`sdd-pipeline.ts`, 45 líneas + 2 módulos: `destructivePatterns.
 
 **Concern:** el plugin deja de existir en disco en todos los lugares donde vive.
 
-- [ ] **Task 1.1 — Delete template plugin directory.** `git rm -r template/obligatorio/core/.opencode/plugins/` (elimina `sdd-pipeline.ts`, `destructivePatterns.ts`, `normalizeBash.ts`, `package.json`, `README.md`, `tsconfig.json`, `.gitignore`). Commit `chore(plugin): remove SDD plugin from template (FEV-30)`. Subagents: `backend-developer`, `git-workflow-manager`.
-- [ ] **Task 1.2 — Delete dev plugin copy.** `git rm -r .opencode/plugins/` (elimina `sdd-pipeline.ts` + `src/` con 16 módulos + `__tests__/`). El `.sdd-audit.log` es gitignored. Commit `chore(plugin): remove dev plugin copy (FEV-30)`. Subagents: `git-workflow-manager`.
-- [ ] **Task 1.3 — Delete plugin test suites.** `git rm -r tests/plugin/` (integration + e2e + 3 bash scripts) + `git rm tests/types/opencode-plugin.d.ts` + `git rm tests/unit/config/destructive-patterns.test.ts`. Commit `test(plugin): drop plugin test suites (FEV-30)`. Subagents: `qa-automation`.
+- [x] **Task 1.1 — Delete template plugin directory.** `git rm -r template/obligatorio/core/.opencode/plugins/` (elimina `sdd-pipeline.ts`, `destructivePatterns.ts`, `normalizeBash.ts`, `package.json`, `README.md`, `tsconfig.json`, `.gitignore`). Commit `chore(plugin): remove SDD plugin from template (FEV-30)`. Subagents: `backend-developer`, `git-workflow-manager`.
+- [x] **Task 1.2 — Delete dev plugin copy.** `git rm -r .opencode/plugins/` (elimina `sdd-pipeline.ts` + `src/` con 16 módulos + `__tests__/`). El `.sdd-audit.log` es gitignored. Commit `chore(plugin): remove dev plugin copy (FEV-30)`. Subagents: `git-workflow-manager`.
+- [x] **Task 1.3 — Delete plugin test suites.** `git rm -r tests/plugin/` (integration + e2e + 3 bash scripts) + `git rm tests/types/opencode-plugin.d.ts` + `git rm tests/unit/config/destructive-patterns.test.ts`. Commit `test(plugin): drop plugin test suites (FEV-30)`. Subagents: `qa-automation`.
 
 **Checkpoint F1:**
 - `find . -path '*/.opencode/plugins*' -not -path '*/node_modules/*' -not -path '*/fixtures/*'` retorna **0 paths** en `template/` y `.opencode/` raíz.
@@ -56,7 +62,7 @@ El plugin SDD (`sdd-pipeline.ts`, 45 líneas + 2 módulos: `destructivePatterns.
 
 **Concern:** el plugin ya no existe, pero los archivos de configuración aún lo invocan.
 
-- [ ] **Task 2.1 — Strip Justfile plugin targets + ci.yml qa-plugin job.** Eliminar de `Justfile` líneas 60-80 (targets `check-plugin`, `test-plugin-unit`, `test-plugin-integration`, `test-plugin-e2e`); eliminar de `.github/workflows/ci.yml` el job `qa-plugin` (líneas 78-112) y la invocación `just check-plugin` que aparezca en otros targets. Commit `chore(ci): remove plugin recipes and CI job (FEV-30)`. Subagents: `devops-engineer`, `code-reviewer`.
+- [x] **Task 2.1 — Strip Justfile plugin targets + ci.yml qa-plugin job.** Eliminar de `Justfile` líneas 60-80 (targets `check-plugin`, `test-plugin-unit`, `test-plugin-integration`, `test-plugin-e2e`); eliminar de `.github/workflows/ci.yml` el job `qa-plugin` (líneas 78-112) y la invocación `just check-plugin` que aparezca en otros targets. Commit `chore(ci): remove plugin recipes and CI job (FEV-30)`. Subagents: `devops-engineer`, `code-reviewer`.
 
 **Checkpoint F2:**
 - `grep -n 'check-plugin\|test-plugin\|qa-plugin\|tests/plugin' Justfile .github/workflows/ci.yml biome.json` retorna **0 matches**.
@@ -69,9 +75,9 @@ El plugin SDD (`sdd-pipeline.ts`, 45 líneas + 2 módulos: `destructivePatterns.
 
 **Concern:** usuarios en ≤ 2.1.2 deben saber al instalar que su versión es Legacy y deben actualizar.
 
-- [ ] **Task 3.1 — Implement Opencode Legacy banner.** Crear helper `src/application/helpers/opencodeLegacyBanner.ts` que: (a) lee `.codice-version` desde el workspace (`loadVersionFile` de `src/application/useCases/helpers/versionFile.ts` o equivalente); (b) compara con `2.1.2` usando `VersionComparator`; (c) si `installed ≤ 2.1.2`, imprime via `VerboseLogger.log()` (o `console.warn` si no hay logger contextual) el mensaje `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support`. Banner NO bloqueante. Commit `feat(installer): warn on Opencode Legacy installs ≤ 2.1.2 (FEV-30)`. Subagents: `backend-developer`, `test-engineer`.
-- [ ] **Task 3.2 — Wire banner into all use cases.** Llamar `maybePrintLegacyBanner()` desde `CleanInstallUseCase`, `ProjectInstallUseCase`, `UpdateWorkspaceUseCase` antes del primer prompt interactivo (en `--verbose` siempre; sin `--verbose` solo si `.codice-version` existe y es ≤ 2.1.2). Commit `feat(installer): wire legacy banner into install flows (FEV-30)`. Subagents: `backend-developer`.
-- [ ] **Task 3.3 — TDD: unit tests for legacy banner.** Crear `tests/unit/application/helpers/opencodeLegacyBanner.test.ts` cubriendo: (a) sin `.codice-version` → no imprime; (b) versión `2.1.0`, `2.1.1`, `2.1.2` → imprime; (c) versión `2.1.3`, `2.1.4`, `3.0.0` → no imprime; (d) versión inválida (`abc`) → no imprime + no rompe; (e) sin `loadVersionFile` disponible → graceful no-op. Commit `test(installer): add legacy banner unit tests (FEV-30)`. Subagents: `qa-automation`.
+- [x] **Task 3.1 — Implement Opencode Legacy banner.** Crear helper `src/application/helpers/opencodeLegacyBanner.ts` que: (a) lee `.codice-version` desde el workspace (`loadVersionFile` de `src/application/useCases/helpers/versionFile.ts` o equivalente); (b) compara con `2.1.2` usando `VersionComparator`; (c) si `installed ≤ 2.1.2`, imprime via `VerboseLogger.log()` (o `console.warn` si no hay logger contextual) el mensaje `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support`. Banner NO bloqueante. Commit `feat(installer): warn on Opencode Legacy installs ≤ 2.1.2 (FEV-30)`. Subagents: `backend-developer`, `test-engineer`.
+- [x] **Task 3.2 — Wire banner into all use cases.** Llamar `maybePrintLegacyBanner()` desde `CleanInstallUseCase`, `ProjectInstallUseCase`, `UpdateWorkspaceUseCase` antes del primer prompt interactivo (en `--verbose` siempre; sin `--verbose` solo si `.codice-version` existe y es ≤ 2.1.2). Commit `feat(installer): wire legacy banner into install flows (FEV-30)`. Subagents: `backend-developer`.
+- [x] **Task 3.3 — TDD: unit tests for legacy banner.** Crear `tests/unit/application/helpers/opencodeLegacyBanner.test.ts` cubriendo: (a) sin `.codice-version` → no imprime; (b) versión `2.1.0`, `2.1.1`, `2.1.2` → imprime; (c) versión `2.1.3`, `2.1.4`, `3.0.0` → no imprime; (d) versión inválida (`abc`) → no imprime + no rompe; (e) sin `loadVersionFile` disponible → graceful no-op. Commit `test(installer): add legacy banner unit tests (FEV-30)`. Subagents: `qa-automation`.
 
 **Checkpoint F3:**
 - `just test` 0 fallos; nuevos tests pasan.
@@ -85,9 +91,9 @@ El plugin SDD (`sdd-pipeline.ts`, 45 líneas + 2 módulos: `destructivePatterns.
 
 **Concern:** la historia del plugin se elimina de la documentación activa (no archivada, por decisión D4).
 
-- [ ] **Task 4.1 — Delete plugin specs/ADRs/diagnoses.** `git rm specs/spec-sdd-plugin-decoupling.md specs/adr/adr-013-plugin-auto-discovery.md docs/diagnosis/fix15-plugin-cleanup.md`. Commit `docs(workflow): retire plugin specs and ADRs (FEV-30)`. Subagents: `docs-writer`.
-- [ ] **Task 4.2 — Update README/SPEC/WORKFLOW/TRD/ARCHITECTURE to current state.** Quitar referencias al plugin en `README.md`, `SPEC.md`, `docs/WORKFLOW.md`, `docs/TRD.md`, `docs/ARCHITECTURE.md` (tabla de ADRs), `docs/wiki-source/.wiki/SDD-Pipeline.md`, `docs/wiki-source/.wiki/Commands.md`, `docs/wiki-source/.wiki/Configuration.md`. Reemplazar todas las menciones "55/55 plugin integration" por la métrica actual (e.g., "1935 unit/integration tests"). Commit `docs(workflow): scrub plugin references from active docs (FEV-30)`. Subagents: `docs-writer`, `technical-writer`.
-- [ ] **Task 4.3 — Update CHANGELOG Unreleased + v2.1.3 entry.** Añadir bloque `[2.1.3]` con FEV-30 marcado completo (remoción plugin + banner runtime). Mantener las menciones históricas en `[2.1.1]` (FEV-27) intactas (registro de release pasado). Commit `docs(changelog): FEV-30 release entry v2.1.3 (FEV-30)`. Subagents: `technical-writer`.
+- [x] **Task 4.1 — Delete plugin specs/ADRs/diagnoses.** `git rm specs/spec-sdd-plugin-decoupling.md specs/adr/adr-013-plugin-auto-discovery.md docs/diagnosis/fix15-plugin-cleanup.md`. Commit `docs(workflow): retire plugin specs and ADRs (FEV-30)`. Subagents: `docs-writer`.
+- [x] **Task 4.2 — Update README/SPEC/WORKFLOW/TRD/ARCHITECTURE to current state.** Quitar referencias al plugin en `README.md`, `SPEC.md`, `docs/WORKFLOW.md`, `docs/TRD.md`, `docs/ARCHITECTURE.md` (tabla de ADRs), `docs/wiki-source/.wiki/SDD-Pipeline.md`, `docs/wiki-source/.wiki/Commands.md`, `docs/wiki-source/.wiki/Configuration.md`. Reemplazar todas las menciones "55/55 plugin integration" por la métrica actual (e.g., "1935 unit/integration tests"). Commit `docs(workflow): scrub plugin references from active docs (FEV-30)`. Subagents: `docs-writer`, `technical-writer`.
+- [x] **Task 4.3 — Update CHANGELOG Unreleased + v2.1.3 entry.** Añadir bloque `[2.1.3]` con FEV-30 marcado completo (remoción plugin + banner runtime). Mantener las menciones históricas en `[2.1.1]` (FEV-27) intactas (registro de release pasado). Commit `docs(changelog): FEV-30 release entry v2.1.3 (FEV-30)`. Subagents: `technical-writer`.
 
 **Checkpoint F4 (final):**
 - `grep -rln 'plugin\|sdd-pipeline\|sddPipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|qa-plugin' docs/ specs/ wiki-source/ README.md SPEC.md 2>/dev/null` retorna **0 matches** (excepto menciones históricas en CHANGELOG v2.1.1/v2.1.2 que documentan releases pasados).
