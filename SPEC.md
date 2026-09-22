@@ -3,7 +3,7 @@
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v2.1.2
+**Current Version:** v2.1.3-beta.1
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
 > **v2.1.2 Released** (2026-08-28): Hotfix — explicit docs-writer/technical-writer delegation in docs-update command; tech debt reorganization (v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4).
