@@ -152,13 +152,18 @@ jobs:
           fi
 
       - name: Verify published artifact (post-publish smoke test)
+        # Registry read replicas can lag several minutes behind a successful
+        # publish, so a short window yields false negatives (run 35715057975
+        # aborted after ~60s while propagation took ~7 min). Widen to
+        # 30x15s (~7.5 min), still well inside this job's 20 min timeout.
         shell: bash
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
-          ATTEMPTS=5
+          ATTEMPTS=30
           for i in $(seq 1 "$ATTEMPTS"); do
-            echo "Attempt ${i}/${ATTEMPTS}: resolving @fisherk2-dev/codice@${VERSION} from the registry..."
+            elapsed=$(( (i - 1) * 15 ))
+            echo "Attempt ${i}/${ATTEMPTS} (elapsed=${elapsed}s): resolving @fisherk2-dev/codice@${VERSION} from the registry..."
             if npm view "@fisherk2-dev/codice@${VERSION}" version >/dev/null 2>&1; then
               echo "Registry reports the version; running the published CLI..."
               if bunx "@fisherk2-dev/codice@${VERSION}" --version; then
