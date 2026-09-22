@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.3] - 2026-09-22
+
+Primera release estable de la línea nativa V2. Consolida la migración FEV-29/30 publicada en `2.1.3-beta.1` y todo el trabajo posterior: avisos de upgrade para instalaciones legacy, banner de deprecación single-source, endurecimiento fail-closed del gate de cobertura e infraestructura de tests formalizada. Métricas finales: 1913 tests, 31/31 e2e, cobertura 96.16% total / 98.95% en `src/cli/main.ts`.
+
+### Added
+
+- **ADR-021** (`specs/adr/adr-021-codemod-parser-and-placement.md`): el validador es el lector normativo del esquema V2; el parser del codemod queda congelado como herramienta one-shot de emisión verbatim; el trigger de promoción a `src/domain/services/` queda documentado y las constantes de esquema permanecen exportadas en el helper del validador.
+- **Guard de higiene de código fuente**: `tests/unit/quality/source-hygiene.test.ts` falla ante cualquier byte de control crudo (C0 menos TAB/LF/CR, más DEL) en las superficies de texto rastreadas (`src`, `tests`, `scripts`, `template/obligatorio/packs`).
+- **Aviso de remanentes del plugin SDD en update**: al actualizar desde una instalación `< 2.1.3` el flujo muestra la lista exacta de ficheros del plugin retirado que sobreviven como no gestionados (`.opencode/plugins/sdd-pipeline.ts`, `.opencode/plugins/src/destructivePatterns.ts`, `.opencode/plugins/src/normalizeBash.ts`, `.opencode/plugins/README.md`, `.opencode/plugins/tsconfig.json`) y advierte de no borrar `plugins/` (puede contener plugins de terceros). Cubre Option A, Option B y no interactivo.
+- **Banner de deprecación runtime "Opencode Legacy" (FEV-30, #90)**: helper `src/application/legacyBanner.ts` que lee `.codice-version` e imprime `⚠ Opencode Legacy only — upgrade to ≥ 2.1.3 for native Opencode V2 support` para instalaciones ≤ 2.1.2. No bloqueante: archivo ausente o corrupto degrada a no-op silencioso.
+
+### Changed
+
+- **FEV-29 completado (#91)**: migración del template al formato nativo OpenCode V2 `permissions:` cerrada — 349 archivos, auditoría `tools:`/NUL, simplificación y review-round; salida verificada limpia con gates verdes.
+- **FEV-30 completado (#90)**: remoción total del plugin SDD + banner runtime + hardening del review de 5 ejes (6 commits de fixes) — 20 commits en `hotfix/opencode-v2-migrate`.
+- **Contrato de exit-code del codemod CLI** (`scripts/migrate-v1-to-v2-permissions.ts`): un dry-run con errores de validación sale `2` en lugar de `0`, para que el gating de CI no apruebe silenciosamente un review fallido; apply-with-errors sigue siendo `1` y una corrida limpia `0`. Ver `specs/spec-agent-format-v2.md` §6.
+- **Aviso de deprecación V2 en la detección**: el banner "v2.0+ Installation Detected" ahora añade el aviso Opencode Legacy para instalaciones `< 2.1.3` antes del menú de modos; el flujo de update ya no lo repite (fuente única en `versionInfoMessages`).
+- **Banner legacy single-source**: se elimina la llamada duplicada desde `CleanInstallUseCase`/`ProjectInstallUseCase` (main() ya muestra el header de detección); `isLegacyVersion`/`LEGACY_BANNER_MESSAGE` permanecen como fuente única consumida por el header y el flujo de update.
+- **Infraestructura de tests formalizada**: los tests de validación de setup se mueven a `tests/setup/` (nueva recipe `just test-setup`), se elimina el agregador muerto `tests/setup/index.ts`, y se añaden tests que pinnean las recipes del Justfile y el workflow de release.
+- **Umbrales de cobertura extraídos a `scripts/coverage-thresholds.json`**: fuente única para el umbral global (95%) y el sub-gate por fichero (`src/cli/main.ts`), consumida por `scripts/coverage-check.sh` y por CI sin duplicar el número.
+
+### Fixed
+
+- **Flags `disabled` explícitos por MCP** (`template/obligatorio/core/opencode.json`): cada servidor MCP declara su estado; solo context7, gitmcp y vercel-grep quedan habilitados, el resto explícitamente `disabled: true`.
+- **Banner legacy corregido a ≥ 2.1.3**: el mensaje apuntaba a `2.1.4`, versión inexistente; ahora apunta a la release V2-native real.
+- **Gate de cobertura endurecido (fail-closed)**: umbrales fuera de rango o `NaN`, sub-gate per-file inválido, override fuera de rango y sub-gate inaplicable (fichero ausente del reporte) ahora fallan en lugar de aprobar silenciosamente.
+- **Ventana de retry del smoke de release ampliada a ~7.5 min** (30×15s): la propagación del registro puede tardar varios minutos y una ventana corta producía falsos negativos.
+- **Brake emission position**: la cadena `subagent "*": deny` se añade después de todas las reglas de permisos existentes en lugar de a mitad del bloque.
+- **Action/effect quoting + validation**: los valores `action:`/`effect:` emitidos se citan de forma consistente y se validan contra el conjunto de acciones conocidas antes de emitirse.
+- **Depth fail-loud**: estructuras V1 `tools:` profundamente anidadas fallan de forma ruidosa en lugar de emitir salida parcial silenciosa.
+- **Verbatim golden test**: un test dorado fija la emisión byte-preserving del frontmatter del codemod (`rawLine` passthrough).
+- **Clave legacy `tools:` rechazada**: el validador de agentes ya no acepta el mapa V1 `tools:` ni su alias `validatePermission`, cerrando el hueco de shadowing silencioso (#91); eliminar la ruta muerta sube `coverage-check 95` de 93.34% a 96.00%.
+- **Byte NUL crudo eliminado** de la clave duplicada del guard de permisos: el `0x00` literal pasa a ser el escape `\u0000`, de modo que grep/ripgrep y las herramientas de diff/lectura ya no tratan el fichero del validador como binario; la semántica no cambia y queda fijada por un test de colisión de separador.
+- **Encabezados U+1F504 restaurados en 2 packs**: bytes UTF-8 que habían decaído a `=` + `0x04` quedan reparados.
+- **Validación de charset en `installedPacks` de `WorkspaceVersion.fromJSON`**: las entradas que no son strings se rechazan en la deserialización en lugar de propagarse al estado del workspace.
+
+### Removed
+
+- **`scripts/migrate-all-packs.ts`** (+ `tests/unit/scripts/migrate-all-packs.test.ts`): el runner bulk de Fase 2 quedó redundante tras completarse la migración de los 8 packs pendientes; se conserva solo en el historial de git. Una futura re-migración llama directamente a `scripts/migrate-v1-to-v2-permissions.ts` (ver `specs/spec-agent-format-v2.md` §7).
+- **Productor legacy `reformat-agent` retirado**: `scripts/reformat-agent.ts`, su wrapper CLI y su suite de tests se eliminan; el conversor FEV-18 emitía el mapa V1 `tools:`, que OpenCode V2 ignora y el validador ahora rechaza. Usa `scripts/migrate-v1-to-v2-permissions.ts`.
+- **Plugin SDD eliminado por completo (FEV-30, #90)**: fuera del template `sdd-pipeline.ts` + sus módulos (`destructivePatterns.ts`, `normalizeBash.ts`), la copia dev, las suites de tests del plugin, el fixture `sdd-workflow-test`, las recipes `*-plugin` y el job `qa-plugin` de CI, además de los specs/ADR/diagnósticos históricos con scrub de prosa en docs/wiki. El plugin fallaba en cada startup en hosts Opencode V2; su única función residual (bloqueo de comandos destructivos) ya vive en las `permission.bash` deny-lists de `template/obligatorio/core/opencode.json`, conservadas como defensa en profundidad. Diagnóstico: `docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md`.
+- **ADR-017 retirado** (auto-discovery del plugin, superado por FEV-30).
+
+### Security
+
+- **Endurecimiento de permisos del template tras retirar el plugin SDD**: la auditoría de seguridad encontró que la deny-list estática no reemplaza la normalización/bloqueo exec que hacía el plugin retirado, y que varios comandos en `allow` eran bypassables: `find -execdir`/`xargs sh -c`/pipes `curl|sh` encadenan ejecución arbitraria, y `echo >> ~/.ssh/authorized_keys`, `sed → /etc/cron.d/`, `awk 'print > "path"'` escriben archivos arbitrarios (la redirección no es cubrible con wildcards de deny). Cambios en `template/obligatorio/core/opencode.json`: (1) `find`, `echo`, `printf`, `awk`, `sed`, `xargs`, `curl` (y `http`/httpie, misma clase de riesgo fetch-and-pipe) movidos de `allow` a `ask`; (2) nuevas denies de defensa en profundidad (`find * -exec *`, `find * -execdir *`, `xargs sh *`, `xargs bash *`, `xargs chmod *`, `xargs curl *`), variantes rm (`rm -fir`, `--force --recursive` y permutaciones) y secret-read sin ancla de espacio (`*.env`, `*.ssh/id_*`, `*aws/credentials`); (3) gaps de `read` cerrados (`*id_rsa*`, `*id_ed25519*`, `*id_ecdsa*`, `*.envrc*`, `**/.npmrc`, `credentials.json*`). Ninguna deny existente fue eliminada; suite de regresión en `tests/setup/opencode-config.test.ts` pinnea el JSON de permisos.
+
+### Dependencies
+
+- **`@clack/prompts` 1.8.1** (`^1.7.0` → `^1.8.1`; arrastra `@clack/core` 1.5.1).
+- **`@biomejs/biome` 2.5.14** (`^2.5.10` → `^2.5.14`).
+- **`@types/bun` 1.4.2** (`^1.4.0` → `^1.4.2`; arrastra `bun-types` 1.4.2).
+- **`yaml` 2.9.1** (`^2.9.0` → `^2.9.1`).
+- **`typescript` 7.0.2** (`^6.0.3` → `^7.0.2`): compilador nativo; `tsc --noEmit` limpio sobre 466 ficheros sin cambios de código. Cierra el PR #97 de Dependabot.
+- **`softprops/action-gh-release` v3.0.3** (`3.0.2` → `3.0.3`, pin por SHA en `.github/workflows/release.yml`).
+
 ## [2.1.3-beta.1] - 2026-09-22
 
 ### Changed
@@ -521,7 +577,8 @@ Pre-release for v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release
 
 - Path traversal prevention; symlink skipping in directory walk; SHA-256 checksums.
 
-[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.1.2...HEAD
+[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.1.3...HEAD
+[2.1.3]: https://github.com/fisherk2/codice-opencode/compare/v2.1.3-beta.1...v2.1.3
 [2.1.2]: https://github.com/fisherk2/codice-opencode/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/fisherk2/codice-opencode/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/fisherk2/codice-opencode/compare/v2.0.0...v2.1.0
