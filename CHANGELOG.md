@@ -27,11 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ADR-021** (`specs/adr/adr-021-codemod-parser-and-placement.md`): validator is the normative V2 schema reader; codemod parser is frozen verbatim-emit one-shot tooling; promotion trigger to `src/domain/services/` documented; schema constants stay exported in the validator helper.
 - **CI Linux suite dedup**: `just test` in `.github/workflows/ci.yml` is now gated to non-Linux runners, removing the duplicated Linux suite execution.
 - **Source-hygiene raw-control-byte guard**: New `tests/unit/quality/source-hygiene.test.ts` fails on any raw control byte (C0 minus TAB/LF/CR, plus DEL) across the tracked text surfaces (`src`, `tests`, `scripts`, `template/obligatorio/packs`).
+- **Banner de deprecación runtime "Opencode Legacy" (FEV-30, #90)**: nuevo helper `src/application/helpers/opencodeLegacyBanner.ts` lee `.codice-version` y, si la instalación es ≤ 2.1.2, imprime `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support`. No bloqueante — archivo ausente o corrupto degrada a no-op silencioso. Cableado en `CleanInstallUseCase`, `ProjectInstallUseCase` y `UpdateWorkspaceUseCase`, antes del primer prompt interactivo de cada flujo.
 
 ### Removed
 
 - **`scripts/migrate-all-packs.ts` (+ `tests/unit/scripts/migrate-all-packs.test.ts`)**: the Fase-2 bulk runner was redundant after completion — all 8 pending packs were migrated; retained only in git history. A future re-migration calls `scripts/migrate-v1-to-v2-permissions.ts` directly (see `specs/spec-agent-format-v2.md` §7).
 - **Legacy `reformat-agent` producer retired**: `scripts/reformat-agent.ts`, its CLI wrapper and its test suite were deleted; the FEV-18 converter emitted the V1 `tools:` map, which OpenCode V2 ignores and the validator now rejects. Use `scripts/migrate-v1-to-v2-permissions.ts` instead.
+- **Plugin SDD eliminado por completo (FEV-30, #90)**: fuera del template `sdd-pipeline.ts` + sus módulos (`destructivePatterns.ts`, `normalizeBash.ts`), la copia dev, las suites de tests del plugin, el fixture `sdd-workflow-test`, las recipes `*-plugin` y el job `qa-plugin` de CI, además de los specs/ADR/diagnósticos históricos `spec-sdd-plugin-decoupling`, `adr-013`, `fix15` y `fix06` con scrub de prosa en docs/wiki. El plugin fallaba en cada startup en hosts Opencode V2; su única función residual (bloqueo de comandos destructivos) ya vive en las `permission.bash` deny-lists de `template/obligatorio/core/opencode.json`, que se conservan como defensa en profundidad. Diagnóstico: `docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md`.
 
 ## [2.1.2] - 2026-08-28
 
