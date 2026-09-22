@@ -12,18 +12,31 @@ on:
 
 env:
   BUN_VERSION: "1.3"
+  # Single source of truth for the tag being released, used by every step below.
+  #  - tag push:        github.ref_name is the tag (e.g. v2.1.3-beta.1).
+  #  - manual dispatch: github.ref_name would be the *branch*, which is why the
+  #    dispatch path used to always fail validation; inputs.tag is correct.
+  # The `&&`/`||` idiom evaluates to inputs.tag only when the event is
+  # workflow_dispatch (non-empty; it is required), and otherwise falls back to
+  # github.ref_name, keeping the tag-push path identical to before.
+  TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
 
 concurrency:
+  # Never cancel an in-flight release: a cancelled run can leave npm and the
+  # GitHub release inconsistent (partial publish, missing release asset).
   group: release-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   quality:
+    # GitHub forbids `timeout-minutes` on reusable-workflow caller jobs, so the
+    # 15-minute bound lives on the called `quality` job inside ci.yml.
     uses: ./.github/workflows/ci.yml
 
   release:
     needs: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
       id-token: write
@@ -33,9 +46,26 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout release tag (manual dispatch only)
+        # Tag-push runs already have the tag checked out. On dispatch the
+        # default checkout is the selected branch, so fetch and switch to the
+        # requested tag explicitly.
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          git checkout "$TAG"
+
+      - name: Setup Bun
+        # The published CLI bin (src/cli/bin.js) requires the Bun runtime; the
+        # post-publish smoke test below runs it via bunx.
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
       - name: Validate tag format (prevent injection)
         run: |
-          TAG="$GITHUB_REF_NAME"
+          set -euo pipefail
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
             echo "ERROR: Invalid tag format: $TAG"
             exit 1
@@ -44,42 +74,50 @@ jobs:
 
       - name: Extract release body from CHANGELOG
         run: |
-          TAG="$GITHUB_REF_NAME"
+          set -euo pipefail
           VERSION="${TAG#v}"
           awk -v ver="$VERSION" \
             'index($0, "## [" ver "]") == 1 { found=1; next }
              /^## \[/ && found { exit }
              found' CHANGELOG.md > release-body.md
+          # Fail closed: a tagged version MUST have release notes. Silently
+          # publishing a generic body hid missing changelog sections.
           if [ ! -s release-body.md ]; then
-            echo "## Release $VERSION" > release-body.md
-            echo "" >> release-body.md
-            echo "No changelog section found for this version. Please update CHANGELOG.md." >> release-body.md
-            echo "" >> release-body.md
-            echo "See [CHANGELOG.md](./CHANGELOG.md) for the full history." >> release-body.md
+            rm -f release-body.md
+            echo "ERROR: CHANGELOG.md has no '## [${VERSION}]' section." >&2
+            echo "Add release notes for ${VERSION} before tagging." >&2
+            exit 1
           fi
+          echo "Extracted release body for ${VERSION}."
 
       - name: Validate version
         run: |
-          TAG="$GITHUB_REF_NAME"
+          set -euo pipefail
           TAG_VERSION="${TAG#v}"
-          # Strip pre-release suffix from both tag and package.json for comparison
-          # e.g., 1.1.0-beta.2 -> 1.1.0 (both tag and package.json)
-          TAG_VERSION_BASE="${TAG_VERSION%-*}"
-          [ "$TAG_VERSION" = "$TAG_VERSION_BASE" ] && TAG_VERSION_BASE="$TAG_VERSION"
           PKG_VERSION="$(jq -r '.version' package.json)"
-          PKG_VERSION_BASE="${PKG_VERSION%-*}"
-          [ "$PKG_VERSION" = "$PKG_VERSION_BASE" ] && PKG_VERSION_BASE="$PKG_VERSION"
-          if [ "$TAG_VERSION_BASE" != "$PKG_VERSION_BASE" ]; then
-            echo "ERROR: Tag version ($TAG_VERSION_BASE) does not match package.json version ($PKG_VERSION_BASE)"
-            exit 1
+          if [[ "$TAG_VERSION" == *-* ]]; then
+            # Prerelease tag: require an exact match incl. the suffix so a tag
+            # like v1.2.3-beta.1 cannot publish package.json 1.2.3 (or beta.2).
+            if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+              echo "ERROR: Prerelease tag version ($TAG_VERSION) must exactly match package.json version ($PKG_VERSION)"
+              exit 1
+            fi
+          else
+            # Stable tag: tolerate a prerelease suffix in package.json (base-only compare).
+            TAG_VERSION_BASE="${TAG_VERSION%-*}"
+            PKG_VERSION_BASE="${PKG_VERSION%-*}"
+            if [ "$TAG_VERSION_BASE" != "$PKG_VERSION_BASE" ]; then
+              echo "ERROR: Tag version ($TAG_VERSION_BASE) does not match package.json version ($PKG_VERSION_BASE)"
+              exit 1
+            fi
           fi
-          echo "Version validated: $TAG_VERSION (base: $TAG_VERSION_BASE)"
+          echo "Version validated: tag=$TAG_VERSION package.json=$PKG_VERSION"
 
       - name: Detect release type
         id: release_type
         shell: bash
         run: |
-          TAG="$GITHUB_REF_NAME"
+          set -euo pipefail
           if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-(beta|rc)\.[0-9]+$ ]]; then
             SUFFIX="${BASH_REMATCH[1]}"
             echo "type=prerelease" >> "$GITHUB_OUTPUT"
@@ -98,6 +136,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         shell: bash
         run: |
+          set -euo pipefail
           trap 'rm -f .npmrc' EXIT
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
           NPM_TAG="${{ steps.release_type.outputs.npm_tag }}"
@@ -112,9 +151,37 @@ jobs:
             fi
           fi
 
+      - name: Verify published artifact (post-publish smoke test)
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          ATTEMPTS=5
+          for i in $(seq 1 "$ATTEMPTS"); do
+            echo "Attempt ${i}/${ATTEMPTS}: resolving @fisherk2-dev/codice@${VERSION} from the registry..."
+            if npm view "@fisherk2-dev/codice@${VERSION}" version >/dev/null 2>&1; then
+              echo "Registry reports the version; running the published CLI..."
+              if bunx "@fisherk2-dev/codice@${VERSION}" --version; then
+                echo "Smoke test passed for ${VERSION}."
+                exit 0
+              fi
+              echo "Artifact resolved but '--version' failed; retrying..."
+            else
+              echo "Not visible in the registry yet."
+            fi
+            if [ "$i" -lt "$ATTEMPTS" ]; then
+              sleep 15
+            fi
+          done
+          echo "ERROR: @fisherk2-dev/codice@${VERSION} never became reachable/runnable; aborting release." >&2
+          exit 1
+
       - name: Create Release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
+          # Explicit tag keeps the dispatch path correct (GITHUB_REF is the
+          # branch there); on tag push it equals github.ref_name as before.
+          tag_name: ${{ env.TAG }}
           body_path: release-body.md
           make_latest: ${{ steps.release_type.outputs.make_latest == 'true' }}
           prerelease: ${{ steps.release_type.outputs.type == 'prerelease' }}
