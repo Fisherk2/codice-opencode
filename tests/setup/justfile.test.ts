@@ -8,6 +8,15 @@ import { readTextFile } from "./helpers";
 describe("Justfile Configuration", () => {
 	let justfile: string;
 
+	/**
+	 * Extracts a recipe's match object up to the next line starting with a
+	 * word character (the next recipe), deduplicating the block-parsing regex
+	 * that five tests otherwise copy.
+	 */
+	function recipeBlock(name: string): RegExpMatchArray | null {
+		return justfile.match(new RegExp(`^${name}:\\r?\\n([\\s\\S]*?)(?=^\\w)`, "m"));
+	}
+
 	beforeAll(() => {
 		justfile = readTextFile("Justfile");
 	});
@@ -35,7 +44,7 @@ describe("Justfile Configuration", () => {
 	test("check recipe runs the advisory TS version check before type-checking", () => {
 		// The script is advisory (always exit 0) but must run so a resolved/declared
 		// tsc drift is visible instead of silently passing the type-check.
-		const match = justfile.match(/^check:\r?\n([\s\S]*?)(?=^\w)/m);
+		const match = recipeBlock("check");
 		expect(match).not.toBeNull();
 		expect(match![1]).toContain("bash scripts/check-ts-version.sh");
 	});
@@ -45,7 +54,7 @@ describe("Justfile Configuration", () => {
 	});
 
 	test("test-setup recipe runs only the setup test directory", () => {
-		const match = justfile.match(/^test-setup:\r?\n([\s\S]*?)(?=^\w)/m);
+		const match = recipeBlock("test-setup");
 		expect(match).not.toBeNull();
 		expect(match![1]).toContain("bun test tests/setup/");
 	});
@@ -54,7 +63,7 @@ describe("Justfile Configuration", () => {
 		// Signature is variadic so `just coverage-check 90` can override the
 		// global threshold without a hardcoded default in the Justfile.
 		expect(justfile).toMatch(/^coverage-check \*args:/m);
-		const match = justfile.match(/^coverage-check \*args:\r?\n([\s\S]*?)(?=^\w)/m);
+		const match = recipeBlock("coverage-check \\*args");
 		expect(match).not.toBeNull();
 		expect(match![1]).toContain("bash scripts/coverage-check.sh {{args}}");
 	});
@@ -67,14 +76,14 @@ describe("Justfile Configuration", () => {
 
 	test("lint recipe uses bunx @biomejs/biome", () => {
 		// Find the lint recipe block using simple section-based parsing
-		const lintMatch = justfile.match(/^lint:\r?\n([\s\S]*?)(?=^\w)/m);
+		const lintMatch = recipeBlock("lint");
 		expect(lintMatch).not.toBeNull();
 		expect(lintMatch![1]).toContain("bunx @biomejs/biome");
 	});
 
 	test("format recipe uses bunx @biomejs/biome", () => {
 		// Find the format recipe block using simple section-based parsing
-		const formatMatch = justfile.match(/^format:\r?\n([\s\S]*?)(?=^\w)/m);
+		const formatMatch = recipeBlock("format");
 		expect(formatMatch).not.toBeNull();
 		expect(formatMatch![1]).toContain("bunx @biomejs/biome");
 	});
