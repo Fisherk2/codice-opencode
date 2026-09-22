@@ -181,10 +181,10 @@ function formatHuman(report: AllPacksReport): string {
 export function runCli(args: readonly string[], deps: RunCliDeps = {}): number {
 	const parsed = parseArgs(args);
 	const root = deps.root ?? defaultPacksRoot();
-	const packs = resolvePacks(root, parsed.packs, parsed.exclude);
 	const report = runAllPacks({
 		root,
-		packs,
+		packs: parsed.packs,
+		exclude: parsed.exclude,
 		dryRun: parsed.dryRun,
 		migrate: deps.migrate,
 	});
