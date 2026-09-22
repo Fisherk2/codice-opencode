@@ -127,7 +127,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 
 ### v2.1.3 (Hotfix Opencode V2 — alcance en triaje)
 
-> **Alcance reservado:** issues surgidas con la llegada de Opencode V2 (migración `permission` → `tools` en packs, reasignación de comandos del ciclo de revisión a tezcatlipoca). La deuda 2.1.x previamente planificada se recorre una versión (v2.1.3 → v2.1.4, v2.1.4 → v2.1.5). Items concretos por definir.
+> **Alcance reservado:** issues surgidas con la llegada de Opencode V2 (migración `permission:`/`tools:` → `permissions:` (lista nativa V2) en packs, reasignación de comandos del ciclo de revisión a tezcatlipoca). La deuda 2.1.x previamente planificada se recorre una versión (v2.1.3 → v2.1.4, v2.1.4 → v2.1.5). Items concretos por definir.
 
 ### v2.1.4 (Medium Effort — 9 items, 18-24h total)
 

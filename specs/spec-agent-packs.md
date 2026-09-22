@@ -266,7 +266,7 @@ agents/ (or template/obligatorio/packs/)
 | SC-P2 | `main/` and `writers/` are always installed regardless of pack selection | E2E test |
 | SC-P3 | `software-development` is selected by default in installer | E2E test |
 | SC-P4 | Minimum 1 pack must be selected | Unit test of validation logic |
-| SC-P5 | 4 primary agents have unified `task: "*": allow` permissions | Grep validation |
+| SC-P5 | Delegating primary agents carry `subagent: "*": allow` (+ deny-list) in the native V2 `permissions:` list; `moctezuma` carries `subagent: "*": deny` | Grep validation |
 | SC-P6 | No "AVAILABLE SUBAGENTS" sections in any of the 6 primary agents (amended FEV-19 — huitzilopochtli included) | Grep validation |
 | SC-P7 | `VALID_SUBAGENTS` Set removed from plugin code | Grep validation |
 | SC-P8 | Auto-discovery recursively scans `packs/` subdirectories | Integration test |

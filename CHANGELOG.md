@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Legacy `tools:` frontmatter key now rejected**: The agent validator (`tests/unit/domain/helpers/agentFrontmatterValidator.ts`) no longer accepts the V1 `tools:` map or its `validatePermission` alias, closing the silent-shadowing loophole where OpenCode V2 ignores unknown keys (#91); removing the dead path lifts `coverage-check 95` from 93.34% to 96.00%.
+- **Raw NUL byte removed from the permissions duplicate-guard key**: The literal `0x00` byte is now the `\u0000` escape, so grep/ripgrep and diff/read tooling no longer treat the validator file as binary; semantics are unchanged and pinned by a separator-collision test.
+- **Mangled U+1F504 headings restored in 2 pack files**: UTF-8 bytes that had decayed into `=` + `0x04` are repaired.
+
+### Added
+
+- **Source-hygiene raw-control-byte guard**: New `tests/unit/quality/source-hygiene.test.ts` fails on any raw control byte (C0 minus TAB/LF/CR, plus DEL) across the tracked text surfaces (`src`, `tests`, `scripts`, `template/obligatorio/packs`).
+
 ## [2.1.2] - 2026-08-28
 
 ### Fixed

@@ -79,6 +79,7 @@ codice-opencode/
 │       └── versionContext.ts      # Version context classification for update gating
 ├── tests/
 │   ├── unit/                      # Domain logic tests (pure functions, entities)
+│   │   └── quality/               # Repo-wide invariant guards (e.g. source hygiene)
 │   ├── integration/               # Adapter tests with mocked external systems
 │   ├── e2e/                       # Shell scripts and fixtures for CLI validation (31 scenarios)
 │   └── fixtures/                  # Predefined directory trees for merge scenarios
