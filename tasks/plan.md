@@ -1,5 +1,11 @@
 # Implementation Plan: FEV-29 — Agent Pack Migration `permission:` → `tools:` (Opencode V2)
 
+> **COMPLETADO 2026-09-22.** FEV-29 cerrado en `hotfix/opencode-v2-migrate` vía
+> Fase 2 (`scripts/migrate-v1-to-v2-permissions.ts`, 349 archivos, auditoría +
+> simplificación + review-round). Este plan queda como historia; no ejecutar.
+> Siguiente: FEV-30 — 📋 listo para planificarse (Alcance: por definir en
+> planificación).
+>
 > **SUPERSEDED 2026-09-22.** Wrong migration direction — native V2 format is
 > the `permissions:` list, not `tools:` (see `docs/diagnosis/fix28-…` and the
 > fix26 supersession banner). Fase 2 superseded this plan entirely

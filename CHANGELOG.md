@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **FEV-29 completado (2026-09-22, #91)**: migración del template al formato nativo OpenCode V2 `permissions:` cerrada — 349 archivos, auditoría `tools:`/NUL, simplificación y review-round; salida verificada limpia con gates verdes. Siguiente: FEV-30 (remoción plugin SDD) — 📋 listo para planificarse, alcance por definir.
 - **Dry-run-with-errors exit-code contract for the codemod CLI** (`scripts/migrate-v1-to-v2-permissions.ts`): a dry run that surfaces validation errors now exits `2` instead of `0`, so CI gating cannot silently pass a failed review; apply-with-errors remains `1` and a clean run remains `0`. See `specs/spec-agent-format-v2.md` §6.
 
 ### Fixed

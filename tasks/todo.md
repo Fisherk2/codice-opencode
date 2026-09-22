@@ -1,5 +1,10 @@
 # FEV-29 — Permission → Tools Migration — Todo
 
+> **COMPLETADO 2026-09-22.** FEV-29 done (Fase 2: 349 archivos a `permissions:`
+> nativo V2 + auditoría + simplificación + review-round, gates verdes).
+> Siguiente: FEV-30 — 📋 listo para planificarse (Alcance: por definir en
+> planificación).
+>
 > **SUPERSEDED 2026-09-22.** The `permission:` → `tools:` direction was wrong:
 > native V2 format is the `permissions:` list (see `docs/diagnosis/fix28-…`,
 > `specs/spec-agent-format-v2.md`). Fase 2 migrated all 349 files via
