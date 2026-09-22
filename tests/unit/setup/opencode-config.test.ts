@@ -232,3 +232,85 @@ describe("opencode.json — Read Permission Deny Rules (V2)", () => {
 		expect(lastEffect("read", "*.env.example")).toBe("allow");
 	});
 });
+
+describe("opencode.json — Permission Bypass Hardening (post-SDD-removal)", () => {
+	// The retired SDD plugin normalized bash commands and blocked exec-chaining
+	// at runtime; the static permission list is now the only defense. Commands
+	// that can chain execution (`find -execdir`, `xargs sh -c`, `curl | sh`) or
+	// write arbitrary files via redirection (`echo x >> ~/.ssh/authorized_keys`,
+	// `awk 'print > "path"'`) must never sit in `allow` — redirection cannot be
+	// covered by deny wildcards, so the only structural fix is `ask`.
+	const EXEC_CAPABLE_SHELL_COMMANDS = [
+		"find *",
+		"echo",
+		"echo *",
+		"printf *",
+		"awk *",
+		"sed *",
+		"xargs *",
+		"curl *",
+		"http *", // httpie — same fetch-and-pipe risk class as curl
+	];
+
+	const REQUIRED_SHELL_HARDENING_DENIES = [
+		"find * -exec *",
+		"find * -execdir *",
+		"xargs sh *",
+		"xargs bash *",
+		"xargs chmod *",
+		"xargs curl *",
+		"rm -fir *",
+		"rm --force --recursive *",
+		"rm --recursive --force *",
+		"rm * --force --recursive *",
+		"rm * --recursive --force *",
+	];
+
+	// Space-less / tilde / relative-path variants the space-anchored denies
+	// (`* .ssh/id_*`) cannot match.
+	const REQUIRED_SHELL_SECRET_READ_DENIES = ["*.env", "*.ssh/id_*", "*aws/credentials"];
+
+	const REQUIRED_READ_HARDENING_DENIES = [
+		"*id_rsa*",
+		"*id_ed25519*",
+		"*id_ecdsa*",
+		"*.envrc*",
+		"**/.npmrc",
+		"credentials.json*",
+	];
+
+	test("exec-capable shell commands are gated to ask, not allowed", () => {
+		for (const resource of EXEC_CAPABLE_SHELL_COMMANDS) {
+			expect(lastEffect("shell", resource), resource).toBe("ask");
+		}
+	});
+
+	test("denies exec-chaining via find/xargs as defense in depth", () => {
+		for (const pattern of REQUIRED_SHELL_HARDENING_DENIES) {
+			expect(lastEffect("shell", pattern), pattern).toBe("deny");
+		}
+	});
+
+	test("denies space-less secret-read variants in shell", () => {
+		for (const pattern of REQUIRED_SHELL_SECRET_READ_DENIES) {
+			expect(lastEffect("shell", pattern), pattern).toBe("deny");
+		}
+	});
+
+	test("denies unanchored secret paths in read action", () => {
+		for (const pattern of REQUIRED_READ_HARDENING_DENIES) {
+			expect(lastEffect("read", pattern), pattern).toBe("deny");
+		}
+	});
+
+	test("pre-existing hardening denies survive unchanged", () => {
+		expect(lastEffect("shell", "rm -rf *")).toBe("deny");
+		expect(lastEffect("shell", "rm -r -f *")).toBe("deny");
+		expect(lastEffect("shell", "sed -i *")).toBe("deny");
+		expect(lastEffect("shell", "tee *")).toBe("deny");
+		expect(lastEffect("shell", "* .ssh/id_*")).toBe("deny");
+		expect(lastEffect("read", ".ssh/id_*")).toBe("deny");
+		expect(lastEffect("read", "*.env.example")).toBe("allow");
+		expect(lastEffect("shell", "* .env.example")).toBe("allow");
+	});
+});

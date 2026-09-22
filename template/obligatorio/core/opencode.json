@@ -214,22 +214,22 @@
     {
       "action": "shell",
       "resource": "find *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
       "resource": "echo",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
       "resource": "echo *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
       "resource": "printf *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
@@ -264,12 +264,12 @@
     {
       "action": "shell",
       "resource": "awk *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
       "resource": "sed *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
@@ -299,7 +299,7 @@
     {
       "action": "shell",
       "resource": "xargs *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
@@ -429,12 +429,12 @@
     {
       "action": "shell",
       "resource": "curl *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
       "resource": "http *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
@@ -919,6 +919,76 @@
     {
       "action": "shell",
       "resource": "xargs rmdir *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "find * -exec *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "find * -execdir *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs sh *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs bash *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs chmod *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs curl *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -fir *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm --force --recursive *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm --recursive --force *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm * --force --recursive *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm * --recursive --force *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*aws/credentials",
       "effect": "deny"
     },
     {
@@ -1419,6 +1489,36 @@
     {
       "action": "read",
       "resource": "*.mobileprovision",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*id_rsa*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*id_ed25519*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*id_ecdsa*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.envrc*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/.npmrc",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "credentials.json*",
       "effect": "deny"
     },
     {
