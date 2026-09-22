@@ -143,6 +143,25 @@ All three are preventable. Follow the rules above.
 
 ---
 
+## Release
+
+Releases are **tag-driven**: pushing an annotated `v*` tag runs
+[`.github/workflows/release.yml`](.github/workflows/release.yml), which gates on CI,
+publishes `@fisherk2-dev/codice` with `--provenance` (dist-tag `beta`/`rc`/`latest`) and
+creates the GitHub Release. Use the Just helpers — never push a tag by hand:
+
+```bash
+just tag vX.Y.Z-beta.1                       # validate + create annotated tag (no push)
+just release vX.Y.Z-beta.1                   # run check + test, then push the tag → CI publish
+just verify-release X.Y.Z-beta.1             # npm view + CLI --help, retried 5×15s
+just rollback vX.Y.Z-bad <good> <dist_tag>   # guarded rollback (DRY_RUN=1 to preview)
+```
+
+The full checklist, `--tag` semantics (a prerelease never overwrites `latest`) and the
+bad-publish rollback procedure (triggers + RTO) live in [docs/RELEASE.md](docs/RELEASE.md).
+
+---
+
 ## Workspace Template
 
 Códice installs an OpenCode workspace template organized into three file categories: **Obligatorio** (always copied), **Estándar** (copied only if missing), and **Opcional** (presented as a checklist). This section covers how to add new agents, skills, commands, and MCP servers to the template.
@@ -206,7 +225,7 @@ See [docs/wiki-source/README.md](docs/wiki-source/README.md) for the full proced
 
 - **npm Publishing:** `@fisherk2-dev/codice` with dist-tags `latest`, `beta`, `rc`. See [docs/TRD.md](docs/TRD.md).
 - **CI/CD Pipeline:** `ci.yml` (quality matrix) + `release.yml` (tag → npm publish). See [.github/workflows/](.github/workflows/).
-- **Release Checklist:** Pre-release test → merge to main → tag → verify CI → verify npm → sync develop.
+- **Release Runbook:** tag → verify CI → `just verify-release` → sync develop. Full checklist and rollback: [docs/RELEASE.md](docs/RELEASE.md).
 - **Reporting Issues:** Include expected vs actual behavior, steps to reproduce, environment, and verbose logs.
 - **GitHub Wiki:** [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents), [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills), [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands), [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers), [Configuration](https://github.com/fisherk2/codice-opencode/wiki/Configuration).
 

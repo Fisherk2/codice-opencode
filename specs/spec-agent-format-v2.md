@@ -322,8 +322,11 @@ the `### RULES` bullet "**NEVER** delegate to subagents" — not by prose in the
 
 ### Line budget
 
-Primary agent bodies must stay ≤100 lines (excluding YAML frontmatter) and ≤150 lines
-total. Block A ≈ 18 lines, Block B ≈ 9 lines — both fit within the existing budgets.
+Primary agent **bodies** must stay ≤100 lines (excluding YAML frontmatter). This is the
+enforced invariant (unit test: `tests/unit/domain/agent-frontmatter-validation.test.ts`).
+Total file length is frontmatter-dependent — V2 `permissions:` lists push some primaries
+past the old ≈150-line total (e.g. `quetzalcoatl.md`) — so no total budget is enforced.
+Block A ≈ 18 lines, Block B ≈ 9 lines — both fit within the body budget.
 Bullets in the three-block list and Block B step 2 render as single long lines.
 
 ---
