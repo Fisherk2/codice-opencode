@@ -133,6 +133,26 @@ describe("Agent Frontmatter Validation", () => {
 		});
 	});
 
+	describe("V2-native agent keys accepted during migration", () => {
+		it("accepts disabled as a native V2 agent frontmatter field", () => {
+			const errors = validateAgentFrontmatter(
+				join(TEMPLATE_ROOT, "main", "moctezuma.md"),
+				{ description: "t", mode: "subagent", disabled: true },
+				TEMPLATE_ROOT,
+			);
+			expect(errors).toEqual([]);
+		});
+
+		it("accepts system as a native V2 agent frontmatter field", () => {
+			const errors = validateAgentFrontmatter(
+				join(TEMPLATE_ROOT, "main", "moctezuma.md"),
+				{ description: "t", mode: "subagent", system: "You are terse." },
+				TEMPLATE_ROOT,
+			);
+			expect(errors).toEqual([]);
+		});
+	});
+
 	describe("Permissions value correctness (V2)", () => {
 		const permErrors: ValidationError[] = [];
 

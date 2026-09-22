@@ -35,6 +35,8 @@ export const VALID_AGENT_FIELDS: ReadonlySet<string> = new Set([
 	"maxSteps", // legacy in V2 (use steps); accepted during migration
 	"permissions", // native V2: [{action, resource, effect}]
 	"request", // native V2: {headers, body}
+	"system", // native V2: system prompt string
+	"disabled", // native V2: boolean; disables the agent
 	// NOTE: `permission` (singular) is intentionally NOT a valid agent-file field.
 	// Native V2 uses `permissions:` (list) in agent .md frontmatter; the singular
 	// `permission` only ever applied to opencode.json. Allowing it here masked
