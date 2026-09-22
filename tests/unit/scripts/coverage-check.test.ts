@@ -15,12 +15,17 @@
  *   (f) in-range override (90)                 -> applied
  *   (g) 'files' without src/cli/main.ts        -> inherits the global threshold
  *   (g) 'files' with an invalid main.ts value  -> exit 1 (fail-closed)
+ *   (h) sub-gate file ABSENT from the lcov      -> exit 1 (fail-closed: the
+ *       sub-gate cannot be enforced if the file was never instrumented)
+ *   (h) sub-gate file present, above/below its threshold -> pass/fail unchanged
  *
  * Speed contract: these tests MUST NOT run the real coverage suite (~13s).
  * The script derives PROJECT_DIR from its own path, so each test copies it
- * into an isolated temp tree and prepends a fake `bun` to PATH that exits 1.
- * Only the validation/resolution phase is exercised — the coverage phase is
- * intercepted, so the whole file stays well under a second.
+ * into an isolated temp tree and prepends a fake `bun` to PATH. The default
+ * fake exits 1 (coverage phase intercepted); the analysis fixtures (h) instead
+ * have it write a FAKE_LCOV_CONTENT fixture to --coverage-dir and exit 0, so
+ * the Python analysis phase runs on controlled data. The whole file stays well
+ * under a second either way.
  *
  * Interception contract: the fake `bun` writes a marker file (path via the
  * FAKE_BUN_MARKER env var) and echoes to stdout. Every test that reaches the
@@ -69,6 +74,8 @@ interface Fixture {
 	script: string;
 	configPath: string;
 	binDir: string;
+	/** When set, the fake `bun` writes this lcov to --coverage-dir and exits 0. */
+	lcov?: string;
 }
 
 interface RunResult {
@@ -82,8 +89,11 @@ interface RunResult {
 /**
  * Build an isolated project tree with a copy of the real script. When
  * `config` is null the thresholds file is intentionally left absent (case a).
+ * When `options.lcov` is set, the fake `bun` writes it to the `--coverage-dir`
+ * it receives and exits 0 (exercising the Python analysis phase); otherwise it
+ * exits 1 and the coverage phase is only intercepted.
  */
-function makeFixture(config: string | null): Fixture {
+function makeFixture(config: string | null, options: { lcov?: string } = {}): Fixture {
 	const root = mkdtempSync(join(baseDir, "case-"));
 	const scriptsDir = join(root, "scripts");
 	const binDir = join(root, "bin");
@@ -96,19 +106,34 @@ function makeFixture(config: string | null): Fixture {
 	// Intercepts `bun test` so the real suite never runs. It echoes to stdout
 	// and writes the FAKE_BUN_MARKER file: the script silences the fake's
 	// stderr with 2>/dev/null, so a stderr-only signal would be unobservable.
-	// Exit 1 mirrors a failing coverage phase and keeps the error path intact.
-	const fakeBun = join(binDir, "bun");
-	writeFileSync(
-		fakeBun,
-		[
-			"#!/usr/bin/env bash",
-			'echo "FAKE_BUN_CALLED"',
+	const fakeBunLines = [
+		"#!/usr/bin/env bash",
+		'echo "FAKE_BUN_CALLED"',
+		// biome-ignore lint/suspicious/noTemplateCurlyInString: bash parameter expansion, not a JS template literal
+		'if [ -n "${FAKE_BUN_MARKER:-}" ]; then echo "called" > "$FAKE_BUN_MARKER"; fi',
+	];
+	if (options.lcov === undefined) {
+		// Exit 1 mirrors a failing coverage phase and keeps the error path intact.
+		fakeBunLines.push("exit 1");
+	} else {
+		// Emit the lcov fixture into the --coverage-dir the script passes, then
+		// exit 0 so the script reaches its Python analysis phase.
+		fakeBunLines.push(
+			'for arg in "$@"; do',
+			'  case "$arg" in',
 			// biome-ignore lint/suspicious/noTemplateCurlyInString: bash parameter expansion, not a JS template literal
-			'if [ -n "${FAKE_BUN_MARKER:-}" ]; then echo "called" > "$FAKE_BUN_MARKER"; fi',
-			"exit 1",
-			"",
-		].join("\n"),
-	);
+			'    --coverage-dir=*) covdir="${arg#--coverage-dir=}" ;;',
+			"  esac",
+			"done",
+			// biome-ignore lint/suspicious/noTemplateCurlyInString: bash parameter expansion, not a JS template literal
+			'if [ -n "${covdir:-}" ]; then mkdir -p "$covdir"; printf "%s" "$FAKE_LCOV_CONTENT" > "$covdir/lcov.info"; fi',
+			"exit 0",
+		);
+	}
+	fakeBunLines.push("");
+
+	const fakeBun = join(binDir, "bun");
+	writeFileSync(fakeBun, fakeBunLines.join("\n"));
 	chmodSync(fakeBun, 0o755);
 
 	const configPath = join(scriptsDir, "coverage-thresholds.json");
@@ -116,7 +141,7 @@ function makeFixture(config: string | null): Fixture {
 		writeFileSync(configPath, config);
 	}
 
-	return { root, script, configPath, binDir };
+	return { root, script, configPath, binDir, lcov: options.lcov };
 }
 
 /**
@@ -142,6 +167,7 @@ function runScript(fx: Fixture, args: string[] = [], pathOverride?: string): Run
 		env: {
 			...process.env,
 			FAKE_BUN_MARKER: markerPath,
+			...(fx.lcov === undefined ? {} : { FAKE_LCOV_CONTENT: fx.lcov }),
 			PATH: pathOverride ?? `${fx.binDir}:${process.env.PATH ?? ""}`,
 		},
 		stdout: "pipe",
@@ -338,5 +364,56 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 		expect(readFileSync(fx.configPath, "utf-8")).toBe('{"global": 95}');
 		// ...and the real one is byte-identical.
 		expect(readFileSync(REAL_CONFIG, "utf-8")).toBe(before);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Per-file sub-gate analysis (h) — fail-closed when the file is not in lcov
+// ---------------------------------------------------------------------------
+
+/** Minimal lcov record for one file with the given found/hit line counts. */
+function lcovRecord(file: string, lf: number, lh: number): string {
+	return [`SF:${file}`, `LF:${lf}`, `LH:${lh}`, "end_of_record", ""].join("\n");
+}
+
+describe("coverage-check.sh — per-file sub-gate is fail-closed", () => {
+	it("(h) exits 1 when src/cli/main.ts is absent from the coverage report", () => {
+		// The configured sub-gate file was never instrumented. The old
+		// `if main_lf > 0` guard skipped the sub-gate silently, so a green
+		// global check approved the build; the gate must fail closed instead.
+		const fx = makeFixture('{"global": 50, "files": {"src/cli/main.ts": 80}}', {
+			lcov: lcovRecord("src/domain/other.ts", 10, 10),
+		});
+
+		const result = runScript(fx);
+
+		expect(existsSync(result.markerPath), "fake bun was not invoked").toBe(true);
+		expect(result.status).toBe(1);
+		expect(`${result.stdout}${result.stderr}`).toContain(
+			"'src/cli/main.ts' not found in coverage report",
+		);
+	});
+
+	it("(h) passes when src/cli/main.ts meets its per-file threshold", () => {
+		const fx = makeFixture('{"global": 50, "files": {"src/cli/main.ts": 80}}', {
+			lcov: lcovRecord("src/cli/main.ts", 100, 90),
+		});
+
+		const result = runScript(fx);
+
+		expect(existsSync(result.markerPath), "fake bun was not invoked").toBe(true);
+		expect(result.status).toBe(0);
+		expect(result.stdout).toContain("PASS: Coverage meets threshold");
+	});
+
+	it("(h) exits 1 when src/cli/main.ts is below its per-file threshold", () => {
+		const fx = makeFixture('{"global": 50, "files": {"src/cli/main.ts": 80}}', {
+			lcov: lcovRecord("src/cli/main.ts", 100, 50),
+		});
+
+		const result = runScript(fx);
+
+		expect(result.status).toBe(1);
+		expect(result.stdout).toContain("main.ts coverage below");
 	});
 });

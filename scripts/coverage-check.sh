@@ -12,8 +12,10 @@
 #
 # Exit codes:
 #   0  — Coverage meets every threshold
-#   1  — Coverage below a threshold, or thresholds config missing/invalid
-#        (fail-closed: a broken config never approves the build)
+#   1  — Coverage below a threshold, thresholds config missing/invalid, or the
+#        configured sub-gate file absent from the report
+#        (fail-closed: a broken config or an unenforced sub-gate never approves
+#        the build)
 
 set -Eeuo pipefail
 
@@ -116,12 +118,14 @@ fi
 export COVERAGE_LCOV_PATH="$COVERAGE_DIR/lcov.info"
 export COVERAGE_GLOBAL_THRESHOLD="$GLOBAL_THRESHOLD"
 export COVERAGE_MAIN_THRESHOLD="$MAIN_THRESHOLD"
+export COVERAGE_MAIN_FILE_KEY="$MAIN_FILE_KEY"
 
 python3 -c "
 import os
 import sys
 global_threshold = float(os.environ['COVERAGE_GLOBAL_THRESHOLD'])
 main_threshold = float(os.environ['COVERAGE_MAIN_THRESHOLD'])
+main_key = os.environ['COVERAGE_MAIN_FILE_KEY']
 
 lf_total = 0
 lh_total = 0
@@ -147,7 +151,7 @@ with open(os.environ['COVERAGE_LCOV_PATH']) as f:
     in_main = False
     for line in f:
         line = line.strip()
-        if line.startswith('SF:') and 'src/cli/main.ts' in line:
+        if line.startswith('SF:') and main_key in line:
             in_main = True
         elif line.startswith('SF:'):
             in_main = False
@@ -156,12 +160,19 @@ with open(os.environ['COVERAGE_LCOV_PATH']) as f:
         elif line.startswith('LH:') and in_main:
             main_lh += int(line.split(':')[1])
 
-if main_lf > 0:
-    main_cov = (main_lh / main_lf) * 100
-    print(f'main.ts coverage: {main_cov:.2f}% ({main_lh}/{main_lf} lines) — threshold {main_threshold:g}%')
-    if main_cov < main_threshold:
-        print(f'FAIL: main.ts coverage below {main_threshold:g}%')
-        sys.exit(1)
+# Fail-closed: a configured sub-gate file absent from the report was never
+# instrumented, so the sub-gate cannot be enforced. Skipping it silently (the
+# old main_lf > 0 guard) let a green global check approve the exact build the
+# sub-gate exists to protect. Exit 2 lets the shell emit a specific log_error.
+if main_lf == 0:
+    print(f\"ERROR: '{main_key}' not found in coverage report — sub-gate cannot be enforced\")
+    sys.exit(2)
+
+main_cov = (main_lh / main_lf) * 100
+print(f'main.ts coverage: {main_cov:.2f}% ({main_lh}/{main_lf} lines) — threshold {main_threshold:g}%')
+if main_cov < main_threshold:
+    print(f'FAIL: main.ts coverage below {main_threshold:g}%')
+    sys.exit(1)
 
 if coverage < global_threshold:
     print(f'FAIL: Overall coverage below {global_threshold:g}%')
@@ -170,6 +181,11 @@ if coverage < global_threshold:
 print(f'PASS: Coverage meets threshold ({global_threshold:g}%)')
 sys.exit(0)
 " 2>&1 || {
-    log_error "Coverage check failed."
+    status=$?
+    if [[ "$status" -eq 2 ]]; then
+        log_error "Sub-gate cannot be enforced: '$MAIN_FILE_KEY' not found in coverage report."
+    else
+        log_error "Coverage check failed."
+    fi
     exit 1
 }
