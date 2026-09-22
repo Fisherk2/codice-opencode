@@ -126,7 +126,7 @@ propio validador, que es lo que hace ahora
 ## 8. Referencias
 
 - Commit del fix: `387e65c` — `fix(agents): reject the legacy tools: key and de-NUL the validator`
-- Migración: `scripts/migrate-v1-to-v2-permissions.ts`, `scripts/migrate-all-packs.ts`
+- Migración: `scripts/migrate-v1-to-v2-permissions.ts` (el bulk runner `scripts/migrate-all-packs.ts` fue retirado al completarse Fase-2; solo en git history — ver spec-agent-format-v2 §7)
 - Spec: `specs/spec-agent-format-v2.md` §3 (bloque de permisos), §7 (implementaciones de referencia)
 - Diagnósticos relacionados: `docs/diagnosis/fix26-permission-tools-migration.md`, `docs/diagnosis/fix28-subagent-delegation-kill-switch.md`
 - Evidencia V2: `packages/core/src/config.ts`, `packages/core/src/config/agent.ts` (`anomalyco/opencode`, rama `dev`)
