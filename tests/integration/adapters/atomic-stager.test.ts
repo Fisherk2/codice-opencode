@@ -171,4 +171,26 @@ describe("AtomicStager", () => {
 
 		await expect(stager.commitStaging()).rejects.toThrow(/Previous commit was interrupted/);
 	});
+
+	it("never overwrites a destination file whose backup cannot be created", async () => {
+		const destFile = path.join(destDir, "locked.txt");
+		await fs.writeFile(destFile, "PRECIOUS");
+		// A non-empty directory occupying the backup path makes copyFile fail
+		// (EISDIR/ENOTEMPTY). Previously the failure was swallowed and the
+		// destination got overwritten anyway — a data-loss path.
+		const backupDir = path.join(destDir, "locked.txt.codice-backup");
+		await fs.mkdir(path.join(backupDir, "payload"), { recursive: true });
+		const src = path.join(templateDir, "locked.txt");
+		await fs.writeFile(src, "NEW");
+
+		try {
+			await stager.stageFile(src, "locked.txt");
+			await expect(stager.commitStaging()).rejects.toThrow(/back up existing destination/i);
+
+			expect(await Bun.file(destFile).text()).toBe("PRECIOUS");
+			expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		} finally {
+			await fs.rm(backupDir, { recursive: true, force: true });
+		}
+	});
 });

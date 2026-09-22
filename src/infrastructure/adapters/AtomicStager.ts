@@ -155,13 +155,22 @@ export class AtomicStager {
 
 		await fs.mkdir(path.dirname(destPath), { recursive: true });
 
+		const backupPath = `${destPath}${BACKUP_SUFFIX}`;
 		try {
-			await fs.access(destPath);
-			const backupPath = `${destPath}${BACKUP_SUFFIX}`;
 			await fs.copyFile(destPath, backupPath);
 			backups.set(destPath, backupPath);
-		} catch {
-			// destPath doesn't exist or can't be read — skip backup, proceed anyway
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
+				// destPath does not exist — nothing to back up (new file).
+			} else {
+				// A surviving original must never be overwritten without a
+				// usable backup: fail the commit so rollback runs instead.
+				const detail = error instanceof Error ? error.message : String(error);
+				throw new Error(
+					`Cannot back up existing destination file '${relativePath}': ${detail}. ` +
+						"Refusing to overwrite without a backup to avoid data loss.",
+				);
+			}
 		}
 
 		await fs.rename(stagingFilePath, destPath);
