@@ -84,12 +84,7 @@
       "disabled": true
     }
   },
-  "instructions": [
-    "CONTRIBUTING.md",
-    "SPEC.md",
-    "docs/ARCHITECTURE.md",
-    "docs/CODE_STYLE.md"
-  ],
+  "instructions": ["CONTRIBUTING.md", "SPEC.md", "docs/ARCHITECTURE.md", "docs/CODE_STYLE.md"],
   "references": {
     "clean-code": {
       "path": "./skills/clean-code/references",
@@ -118,28 +113,17 @@
       },
       "chrome-devtools": {
         "type": "local",
-        "command": [
-          "npx",
-          "-y",
-          "chrome-devtools-mcp@1.7.0"
-        ],
+        "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
         "disabled": true
       },
       "excel": {
         "type": "local",
-        "command": [
-          "uvx",
-          "excel-mcp-server",
-          "stdio"
-        ],
+        "command": ["uvx", "excel-mcp-server", "stdio"],
         "disabled": true
       },
       "jupyter": {
         "type": "local",
-        "command": [
-          "uvx",
-          "mcp-jupyter-notebook"
-        ],
+        "command": ["uvx", "mcp-jupyter-notebook"],
         "disabled": true,
         "environment": {
           "MCP_JUPYTER_SESSION_MODE": "server",
@@ -529,7 +513,7 @@
     {
       "action": "shell",
       "resource": "git bisect *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
@@ -644,7 +628,7 @@
     {
       "action": "shell",
       "resource": "gh api *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",

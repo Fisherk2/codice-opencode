@@ -304,6 +304,21 @@ describe("opencode.json — Permission Bypass Hardening (post-SDD-removal)", () 
 		}
 	});
 
+	const MUTATION_CAPABLE_SHELL_COMMANDS = [
+		// `git bisect run <cmd>` executes arbitrary commands unprompted,
+		// bypassing the shell deny-list via the bisect loop.
+		"git bisect *",
+		// `gh api --method DELETE/POST/PATCH` writes arbitrary GitHub state
+		// (repos, releases, secrets) with a single shell call.
+		"gh api *",
+	];
+
+	test("mutation-capable shell commands are gated to ask, not allowed", () => {
+		for (const resource of MUTATION_CAPABLE_SHELL_COMMANDS) {
+			expect(lastEffect("shell", resource), resource).toBe("ask");
+		}
+	});
+
 	test("denies exec-chaining via find/xargs as defense in depth", () => {
 		for (const pattern of REQUIRED_SHELL_HARDENING_DENIES) {
 			expect(lastEffect("shell", pattern), pattern).toBe("deny");
