@@ -109,10 +109,11 @@ propio validador, que es lo que hace ahora
 1. **Claves nativas V2 aún rechazadas.** `VALID_AGENT_FIELDS` no incluye `system`
    ni `disabled` (declara la legacy `disable`), aunque ambos son claves reales de
    `ConfigV2.Agent.Info`. Un agente que las use hoy falla el validador.
-2. **Productor legacy `reformat-agent`.** `scripts/reformat-agent.ts` (y su CLI y
-   test) siguen emitiendo el mapa `tools:` V1. Está superseded por
-   `scripts/migrate-v1-to-v2-permissions.ts`; no debe usarse para autorar agentes
-   nuevos.
+2. **Productor legacy `reformat-agent` — RESUELTO.** Los tres archivos
+   (`scripts/reformat-agent.ts`, su CLI y su test) fueron retirados: emitían el
+   mapa `tools:` V1, que V2 ignora y el validador rechaza. La spec §6/§7 quedó
+   actualizada y el CHANGELOG lo registra en `### Removed`. Su equivalente vigente
+   es `scripts/migrate-v1-to-v2-permissions.ts`.
 
 ## 8. Referencias
 

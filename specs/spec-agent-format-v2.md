@@ -14,8 +14,9 @@ FEV-18 migrates 267 new agents from external sources into pack directories.
 These source files use a minimalist frontmatter that is incompatible with the
 Códice workspace standard. This spec defines the **target v2.0 format** and the
 conversion rules applied by `scripts/migrate-v1-to-v2-permissions.ts` (Fase 2 —
-V1 `tools:`/`permission:` maps → native V2 `permissions:` list; the FEV-18
-producer `scripts/reformat-agent.ts` is superseded, see §7).
+V1 `tools:`/`permission:` maps → native V2 `permissions:` list). The FEV-18
+producer `scripts/reformat-agent.ts` was retired because it emitted the V1
+`tools:` map; see §7.
 
 ## 2. Source Format
 
@@ -191,27 +192,26 @@ and legacy subagents (`template/obligatorio/packs/sin-clasificar/typescript-pro.
 
 ## 6. Idempotency Guarantees
 
-`scripts/reformat-agent.ts` must produce identical output when run twice:
+`scripts/migrate-v1-to-v2-permissions.ts` must leave an already-migrated file
+untouched when run twice:
 
-- Running on a source file always generates fresh v2.0 content (deterministic).
-- Running on an **already-converted** file is not supported (source and
-  target are in different directories, so re-conversion never happens on the same file).
-- The test suite verifies: converting the same source to two targets yields
-  identical content, and re-writing the same target does not duplicate the
-  `## COMPOSITION` block.
+- A file that already carries a `permissions:` list is skipped, never rewritten.
+- Conversion preserves every other key and the Markdown body verbatim, so a
+  second pass over the same file is a no-op.
+- The Fase-2 bulk runner (`scripts/migrate-all-packs.ts`) reports the per-pack
+  skip count, which is how a no-op re-run is observed.
 
 ## 7. Reference Implementations
 
-> **LEGACY (V1-era):** the three `reformat-agent` rows below are the superseded
-> FEV-18 producer — they emit the V1 `tools:` map. Do **not** use them to author
-> new agents; use `scripts/migrate-v1-to-v2-permissions.ts` (Fase 2, native
-> `permissions:` list) instead.
+> **Retired:** the FEV-18 `reformat-agent` producer (`scripts/reformat-agent.ts`,
+> its CLI wrapper and its test suite) was deleted — it emitted the V1 `tools:` map,
+> which OpenCode V2 ignores, so it could only produce agents the validator now
+> rejects. Its transformation rules remain as history in §§2 and 5. Author new
+> agents against the native V2 `permissions:` list (§§3–4) or convert existing
+> ones with `scripts/migrate-v1-to-v2-permissions.ts` (Fase 2).
 
 | File | Role |
 |------|------|
-| `scripts/reformat-agent.ts` | **LEGACY (V1-era)** — conversion module (`reformatAgent(source, target)`); emits the superseded `tools:` map |
-| `scripts/reformat-agent-cli.ts` | **LEGACY (V1-era)** — CLI wrapper (`bun run scripts/reformat-agent-cli.ts <src> <dst> [--dry-run]`) |
-| `tests/unit/scripts/reformat-agent.test.ts` | **LEGACY (V1-era)** — 10 test cases pinning the `tools:` producer (RED→GREEN verified) |
 | `scripts/migrate-v1-to-v2-permissions.ts` | Fase-2 codemod V1→V2 (`permissions:` list, renames, dedupe, chain brake) |
 | `tests/unit/scripts/migrate-v1-to-v2-permissions.test.ts` | 23 TDD cases (RED→GREEN verified) |
 | `docs/diagnosis/fix28-subagent-delegation-kill-switch.md` | Merge semantics, kill-switch, chain-brake design |
