@@ -391,7 +391,7 @@ When an agent attempts to access a path outside the working directory that is no
 
 ## MCP Servers — Tool Connectivity
 
-The `mcp` section configures Model Context Protocol servers that extend agent capabilities. The template ships with **9 pre-configured MCP servers** in `opencode.json`. Three are enabled by default; the rest must be activated on demand.
+The `mcp` section configures Model Context Protocol servers that extend agent capabilities. The template ships with **7 pre-configured MCP servers** in `opencode.json`. Three are enabled by default; the rest must be activated on demand.
 
 | Server | Type | Default | Purpose |
 |--------|------|---------|---------|
@@ -401,9 +401,9 @@ The `mcp` section configures Model Context Protocol servers that extend agent ca
 | `chrome-devtools` | Local | ❌ Disabled | Web performance & browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation |
 | `jupyter` | Local | ❌ Disabled | Jupyter notebook automation |
-| `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
-| `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
 | `codebase-memory-mcp` | Local (global install) | ❌ Disabled | Knowledge graph for codebase intelligence |
+
+> **Removed in v2.1.3-beta.1:** The `tavily` and `firecrawl` remote MCP servers were cut from the template core `opencode.json`. OpenCode V2's native `websearch` covers the basic web-search use case; advanced Firecrawl scraping stays available via the vendored Firecrawl skills. See [MCP Servers](MCP-Servers) for details and manual setup.
 
 Three servers are enabled by default (`context7`, `vercel-grep`, `gitmcp`). To activate the others:
 

@@ -92,7 +92,7 @@ Start by running the `/help` command to see all available slash commands and the
 
 ### 2. Activate MCP Servers (Optional)
 
-The template ships with 9 pre-configured MCP servers in `opencode.json`. Three are enabled by default: `context7` (documentation queries), `vercel-grep` (GitHub code search), and `gitmcp` (GitHub repository docs). If your project needs browser debugging, spreadsheet manipulation, web scraping, or other capabilities:
+The template ships with 7 pre-configured MCP servers in `opencode.json`. Three are enabled by default: `context7` (documentation queries), `vercel-grep` (GitHub code search), and `gitmcp` (GitHub repository docs). If your project needs browser debugging, spreadsheet manipulation, notebook automation, or other capabilities:
 
 1. Check [MCP Servers](MCP-Servers) for per-server prerequisites
 2. Set `"enabled": true` for the server you need in `opencode.json`

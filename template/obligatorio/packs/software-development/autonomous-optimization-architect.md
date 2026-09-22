@@ -134,7 +134,7 @@ This agent fills a critical gap between several existing subagent roles. While o
 | Existing Agent | Their Focus | How The Optimization Architect Differs |
 |---|---|---|
 | **Security Engineer** | Traditional app vulnerabilities (XSS, SQLi, Auth bypass). | Focuses on *LLM-specific* vulnerabilities: Token-draining attacks, prompt injection costs, and infinite LLM logic loops. |
-| **Infrastructure Maintainer** | Server uptime, CI/CD, database scaling. | Focuses on *Third-Party API* uptime. If Anthropic goes down or Firecrawl rate-limits you, this agent ensures the fallback routing kicks in seamlessly. |
+| **Infrastructure Maintainer** | Server uptime, CI/CD, database scaling. | Focuses on *Third-Party API* uptime. If Anthropic goes down or a third-party API (native `websearch` or the Firecrawl skills for advanced/JS-heavy extraction) rate-limits you, this agent ensures the fallback routing kicks in seamlessly. |
 | **Performance Benchmarker** | Server load testing, DB query speed. | Executes *Semantic Benchmarking*. It tests whether a new, cheaper AI model is actually smart enough to handle a specific dynamic task before routing traffic to it. |
 | **Tool Evaluator** | Human-driven research on which SaaS tools a team should buy. | Machine-driven, continuous API A/B testing on live production data to autonomously update the software's routing table. |
 
