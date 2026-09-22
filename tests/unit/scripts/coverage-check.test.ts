@@ -5,19 +5,29 @@
  * no test, so a broken config could silently approve a build. These tests pin
  * the fail-closed contract:
  *
- *   (a) config JSON absent            -> exit 1
- *   (b) malformed JSON                -> exit 1
- *   (c) '.global' non-numeric         -> exit 1
- *   (d) '.global' out of range / NaN  -> exit 1 (fail-closed; see RED note)
- *   (e) jq absent from PATH           -> exit 1
- *   (f) non-numeric override argument -> exit 1
- *   (g) 'files' without src/cli/main.ts inherits the global threshold
+ *   (a) config JSON absent                     -> exit 1
+ *   (b) malformed JSON                         -> exit 1
+ *   (c) '.global' non-numeric                  -> exit 1
+ *   (d) '.global' out of range / NaN           -> exit 1
+ *   (d) '.global' at the inclusive 0/100 bounds -> accepted
+ *   (e) jq absent from PATH                    -> exit 1
+ *   (f) non-numeric or > 100 override argument -> exit 1
+ *   (f) in-range override (90)                 -> applied
+ *   (g) 'files' without src/cli/main.ts        -> inherits the global threshold
+ *   (g) 'files' with an invalid main.ts value  -> exit 1 (fail-closed)
  *
  * Speed contract: these tests MUST NOT run the real coverage suite (~13s).
  * The script derives PROJECT_DIR from its own path, so each test copies it
  * into an isolated temp tree and prepends a fake `bun` to PATH that exits 1.
  * Only the validation/resolution phase is exercised — the coverage phase is
- * intercepted, so the whole file stays in the low milliseconds.
+ * intercepted, so the whole file stays well under a second.
+ *
+ * Interception contract: the fake `bun` writes a marker file (path via the
+ * FAKE_BUN_MARKER env var) and echoes to stdout. Every test that reaches the
+ * coverage phase asserts the marker exists, so a regression in the PATH
+ * prepend (which would run the temp tree instead) fails loudly instead of
+ * passing silently. A stderr-only signal would be useless: the script
+ * silences the fake with `2>/dev/null`.
  *
  * Isolation contract: the real scripts/coverage-thresholds.json is never
  * written; every fixture owns its own config inside the temp tree.
@@ -27,6 +37,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import {
 	chmodSync,
 	copyFileSync,
+	existsSync,
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
@@ -64,6 +75,8 @@ interface RunResult {
 	status: number;
 	stdout: string;
 	stderr: string;
+	/** Path the fake `bun` would write when it intercepts the coverage phase. */
+	markerPath: string;
 }
 
 /**
@@ -80,10 +93,22 @@ function makeFixture(config: string | null): Fixture {
 	const script = join(scriptsDir, "coverage-check.sh");
 	copyFileSync(REAL_SCRIPT, script);
 
-	// Intercepts `bun test` so the real suite never runs. Exit 1 mirrors a
-	// failing coverage phase and keeps the script's own error path intact.
+	// Intercepts `bun test` so the real suite never runs. It echoes to stdout
+	// and writes the FAKE_BUN_MARKER file: the script silences the fake's
+	// stderr with 2>/dev/null, so a stderr-only signal would be unobservable.
+	// Exit 1 mirrors a failing coverage phase and keeps the error path intact.
 	const fakeBun = join(binDir, "bun");
-	writeFileSync(fakeBun, '#!/usr/bin/env bash\necho "FAKE_BUN_CALLED" >&2\nexit 1\n');
+	writeFileSync(
+		fakeBun,
+		[
+			"#!/usr/bin/env bash",
+			'echo "FAKE_BUN_CALLED"',
+			// biome-ignore lint/suspicious/noTemplateCurlyInString: bash parameter expansion, not a JS template literal
+			'if [ -n "${FAKE_BUN_MARKER:-}" ]; then echo "called" > "$FAKE_BUN_MARKER"; fi',
+			"exit 1",
+			"",
+		].join("\n"),
+	);
 	chmodSync(fakeBun, 0o755);
 
 	const configPath = join(scriptsDir, "coverage-thresholds.json");
@@ -96,22 +121,27 @@ function makeFixture(config: string | null): Fixture {
 
 /**
  * A PATH containing only the external commands the script needs before the jq
- * check (dirname/date), deliberately excluding jq. Used for case (e).
+ * check (dirname/date), deliberately excluding jq. Used for case (e). Missing
+ * tooling fails loudly rather than silently producing a jq-less PATH by
+ * accident (which would make case (e) pass for the wrong reason).
  */
 function makeJqLessPath(root: string): string {
 	const dir = join(root, "no-jq-bin");
 	mkdirSync(dir, { recursive: true });
 	for (const cmd of ["dirname", "date"]) {
 		const real = Bun.which(cmd);
-		if (real) symlinkSync(real, join(dir, cmd));
+		expect(real, `required command not found on PATH: ${cmd}`).toBeDefined();
+		symlinkSync(real as string, join(dir, cmd));
 	}
 	return dir;
 }
 
 function runScript(fx: Fixture, args: string[] = [], pathOverride?: string): RunResult {
+	const markerPath = join(fx.root, "bun-called.marker");
 	const proc = Bun.spawnSync([BASH, fx.script, ...args], {
 		env: {
 			...process.env,
+			FAKE_BUN_MARKER: markerPath,
 			PATH: pathOverride ?? `${fx.binDir}:${process.env.PATH ?? ""}`,
 		},
 		stdout: "pipe",
@@ -121,7 +151,19 @@ function runScript(fx: Fixture, args: string[] = [], pathOverride?: string): Run
 		status: proc.exitCode ?? -1,
 		stdout: proc.stdout.toString(),
 		stderr: proc.stderr.toString(),
+		markerPath,
 	};
+}
+
+/**
+ * Proves the fake `bun` intercepted the coverage phase. Without this a PATH
+ * regression would run the temp tree and the other assertions could still
+ * pass — the marker makes the interception observable and load-bearing.
+ */
+function expectCoveragePhaseIntercepted(result: RunResult): void {
+	expect(existsSync(result.markerPath), "fake bun was not invoked").toBe(true);
+	expect(result.stdout).toContain("FAKE_BUN_CALLED");
+	expect(result.stderr).toContain("bun test --coverage failed.");
 }
 
 describe("coverage-check.sh — fail-closed threshold resolution", () => {
@@ -188,6 +230,26 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 		expect(result.stderr).not.toContain("Running coverage via bun test");
 	});
 
+	it("(d) accepts the inclusive lower boundary (global = 0)", () => {
+		const fx = makeFixture('{"global": 0}');
+
+		const result = runScript(fx);
+
+		expect(result.stderr).not.toContain("between 0 and 100");
+		expect(result.stderr).toContain("global threshold: 0%");
+		expectCoveragePhaseIntercepted(result);
+	});
+
+	it("(d) accepts the inclusive upper boundary (global = 100)", () => {
+		const fx = makeFixture('{"global": 100}');
+
+		const result = runScript(fx);
+
+		expect(result.stderr).not.toContain("between 0 and 100");
+		expect(result.stderr).toContain("global threshold: 100%");
+		expectCoveragePhaseIntercepted(result);
+	});
+
 	it("(e) exits 1 when jq is absent from PATH", () => {
 		const fx = makeFixture('{"global": 95}');
 
@@ -227,6 +289,7 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 
 		expect(result.stderr).not.toContain("Invalid global threshold override");
 		expect(result.stderr).toContain("global threshold: 90%");
+		expectCoveragePhaseIntercepted(result);
 	});
 
 	it("(g) inherits the global threshold when 'files' omits src/cli/main.ts", () => {
@@ -236,6 +299,7 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 
 		// The resolution log proves main.ts fell back to the global value.
 		expect(result.stderr).toContain("src/cli/main.ts threshold: 95%");
+		expectCoveragePhaseIntercepted(result);
 	});
 
 	it("(g) uses the per-file threshold when 'files' defines src/cli/main.ts", () => {
@@ -244,6 +308,7 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 		const result = runScript(fx);
 
 		expect(result.stderr).toContain("src/cli/main.ts threshold: 80%");
+		expectCoveragePhaseIntercepted(result);
 	});
 
 	for (const bad of ["-1", "101", "NaN"]) {
@@ -269,6 +334,9 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 
 		runScript(fx);
 
+		// The fixture read its own config, not the real one...
+		expect(readFileSync(fx.configPath, "utf-8")).toBe('{"global": 95}');
+		// ...and the real one is byte-identical.
 		expect(readFileSync(REAL_CONFIG, "utf-8")).toBe(before);
 	});
 });
