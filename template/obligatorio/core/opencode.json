@@ -4,9 +4,9 @@
   "compaction": {
     "auto": true,
     "keep": {
-      "tokens": 10000,
+      "tokens": 10000
     },
-    "buffer": 20000,
+    "buffer": 20000
   },
   "model": "opencode/big-pickle",
   "default_agent": "huitzilopochtli",
