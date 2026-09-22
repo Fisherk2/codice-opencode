@@ -50,25 +50,30 @@ describe("maybePrintLegacyBanner", () => {
 		expect(warnings).toEqual([]);
 	});
 
-	test("when installed version is <= 2.1.2, prints the legacy banner", async () => {
-		for (const version of ["2.1.0", "2.1.1", "2.1.2"]) {
+	test.each(["2.1.0", "2.1.1", "2.1.2"])(
+		"when installed version is %s (<= 2.1.2), prints the legacy banner",
+		async (version) => {
 			const { prompt, warnings } = createPrompt();
 
 			await maybePrintLegacyBanner(createLoader(versionFile(version)), prompt);
 
 			expect(warnings).toEqual([BANNER_MESSAGE]);
-		}
-	});
+		},
+	);
 
-	test("when installed version is >= 2.1.3, does not print the banner", async () => {
-		for (const version of ["2.1.3", "2.1.4", "3.0.0"]) {
+	// "2.1.10" kills the lexicographic trap: string-wise it sorts below
+	// "2.1.2", but numerically patch 10 > 2, so semver keeps it off the
+	// legacy line.
+	test.each(["2.1.3", "2.1.4", "2.1.10", "3.0.0"])(
+		"when installed version is %s (>= 2.1.3), does not print the banner",
+		async (version) => {
 			const { prompt, warnings } = createPrompt();
 
 			await maybePrintLegacyBanner(createLoader(versionFile(version)), prompt);
 
 			expect(warnings).toEqual([]);
-		}
-	});
+		},
+	);
 
 	test("when installed version is invalid, does not print and does not throw", async () => {
 		const { prompt, warnings } = createPrompt();
@@ -91,6 +96,42 @@ describe("maybePrintLegacyBanner", () => {
 			},
 			prompt,
 		);
+
+		expect(warnings).toEqual([]);
+	});
+
+	test("when .codice-version uses the legacy v1.x installedVersion field, prints the banner", async () => {
+		const { prompt, warnings } = createPrompt();
+		const v1Payload = JSON.stringify({ installedVersion: "1.2.0", installedAt: INSTALLED_AT });
+
+		await maybePrintLegacyBanner(createLoader(v1Payload), prompt);
+
+		// WorkspaceVersion.fromJSON accepts the v1.x field; 1.2.0 <= 2.1.2 puts
+		// those installs on the retired legacy line, so the nudge applies.
+		expect(warnings).toEqual([BANNER_MESSAGE]);
+	});
+
+	test("when showWarning itself throws, the promise still resolves without rethrowing", async () => {
+		const throwingPrompt: Pick<IUserPrompt, "showWarning"> = {
+			showWarning: (_message: string): void => {
+				throw new Error("TUI crashed");
+			},
+		};
+
+		// Full fail-open: even the warning channel failing must not take the
+		// caller's flow down with it.
+		const settled = await maybePrintLegacyBanner(
+			createLoader(versionFile("2.1.0")),
+			throwingPrompt,
+		);
+
+		expect(settled).toBeUndefined();
+	});
+
+	test("when .codice-version contains malformed JSON, degrades to a silent no-op", async () => {
+		const { prompt, warnings } = createPrompt();
+
+		await maybePrintLegacyBanner(createLoader("not-json{"), prompt);
 
 		expect(warnings).toEqual([]);
 	});
