@@ -1,63 +1,60 @@
-# FEV-29 — Permission → Tools Migration — Todo
+# FEV-30 — Remove SDD Plugin + Opencode Legacy Banner — Todo
 
-> **COMPLETADO 2026-09-22.** FEV-29 done (Fase 2: 349 archivos a `permissions:`
-> nativo V2 + auditoría + simplificación + review-round, gates verdes).
-> Siguiente: FEV-30 — 📋 listo para planificarse (Alcance: por definir en
-> planificación).
+> **Plan:** [`tasks/plan.md`](./plan.md)
+> **Branch:** `hotfix/opencode-v2-migrate`
+> **Target:** v2.1.3 (mismo hotfix que FEV-29)
+> **Issue:** [#90](https://github.com/Fisherk2/codice-opencode/issues/90)
 >
-> **SUPERSEDED 2026-09-22.** The `permission:` → `tools:` direction was wrong:
-> native V2 format is the `permissions:` list (see `docs/diagnosis/fix28-…`,
-> `specs/spec-agent-format-v2.md`). Fase 2 migrated all 349 files via
-> `scripts/migrate-v1-to-v2-permissions.ts` + `scripts/migrate-all-packs.ts`;
-> the FEV-29 codemod and its test were deleted. Body preserved as history.
+> Quality gate: `just check` 0 errors + `just test` 0 failures antes de cada commit.
+> Atomicity rule: 10 commits, uno por concern (no batching).
 
-**Plan:** `tasks/plan.md`
-**Branch:** `hotfix/opencode-v2-migrate`
-**Target:** v2.1.3
+## Phase 1 — Eliminación de archivos (F1)
 
-> Quality gate: `just check` 0 errors + `just test` 0 failures before any commit in this list.
-> Atomicity rule: one commit per task. Pack migrations (1.3-1.9) must not be batched.
-
-## Phase 1 — Migration script + 7 packs (F1)
-
-- [ ] **1.1** Create `scripts/migrate-permission-to-tools.ts` — codemod w/ guard rails (already-migrated/mixed-key/YAML-error fail-loud). Subagents: `backend-developer`, `code-reviewer`.
-- [ ] **1.2** Add `tests/unit/scripts/migrate-permission-to-tools.test.ts` — 6 cases (scalar, nested-map, already-migrated, mixed-keys, malformed-YAML, idempotency). Subagents: `qa-automation`.
-- [ ] **1.3** Run codemod on `business/` (91 files). Commit `refactor(agents): migrate business pack permission -> tools`.
-- [ ] **1.4** Run codemod on `creative/` (10 files). Commit `refactor(agents): migrate creative pack permission -> tools`.
-- [ ] **1.5** Run codemod on `finance/` (11 files). Commit `refactor(agents): migrate finance pack permission -> tools`.
-- [ ] **1.6** Run codemod on `government-legal/` (8 files). Commit `refactor(agents): migrate government-legal pack permission -> tools`.
-- [ ] **1.7** Run codemod on `hardware-emerging/` (36 files). Commit `refactor(agents): migrate hardware-emerging pack permission -> tools`.
-- [ ] **1.8** Run codemod on `operations-support/` (18 files). Commit `refactor(agents): migrate operations-support pack permission -> tools`.
-- [ ] **1.9** Run codemod on `science-research/` (31 files). Commit `refactor(agents): migrate science-research pack permission -> tools`.
+- [ ] **1.1** Delete `template/obligatorio/core/.opencode/plugins/` (sdd-pipeline.ts + 2 src modules + package.json + README.md + tsconfig.json + .gitignore). Commit `chore(plugin): remove SDD plugin from template (FEV-30)`. Subagents: `backend-developer`, `git-workflow-manager`.
+- [ ] **1.2** Delete `.opencode/plugins/` (dev copy + 16 src modules + __tests__). Commit `chore(plugin): remove dev plugin copy (FEV-30)`. Subagents: `git-workflow-manager`.
+- [ ] **1.3** Delete `tests/plugin/` (integration + e2e + 3 bash scripts) + `tests/types/opencode-plugin.d.ts` + `tests/unit/config/destructive-patterns.test.ts`. Commit `test(plugin): drop plugin test suites (FEV-30)`. Subagents: `qa-automation`, `git-workflow-manager`.
 
 **Checkpoint F1**
-- [ ] `grep -rl '^permission:' template/obligatorio/packs/ | wc -l` returns `0`.
-- [ ] `just check` 0 errors.
+- [ ] `find . -path '*/.opencode/plugins*' -not -path '*/node_modules/*' -not -path '*/fixtures/*'` retorna **0 paths** en `template/` y `.opencode/` raíz.
+- [ ] `grep -rln 'sdd-pipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|tests/types/opencode-plugin' src/ scripts/ tests/ template/` retorna **0 matches**.
+- [ ] `just check` 0 errores.
 
-## Phase 2 — Validator + tests ported to `tools:` (F2)
+## Phase 2 — Cleanup de recipes de CI + Biome + Justfile + Manifest (F2)
 
-- [ ] **2.1** Port `tests/unit/domain/helpers/agentFrontmatterValidator.ts`: `validatePermission` → `validateTools`, field `permission` → `tools`, extend object handling to cover `task:` deny-list map. Subagents: `typescript-pro`, `code-reviewer`.
-- [ ] **2.2** Update `tests/unit/domain/agent-frontmatter-validation.test.ts`: replace `parsed.permission` reads with `parsed.tools`; rename describe blocks ("permission value errors" → "tools value errors"); port the FEV-19 invariants suite to `tools.task` deny-list shape. Subagents: `typescript-pro`, `test-engineer`.
-- [ ] **2.3** Update `tests/unit/scripts/reformat-agent.test.ts`: change `expect(output).toContain("permission:")` → `expect(output).toContain("tools:")` (line 62). Subagents: `qa-automation`.
+- [ ] **2.1** Strip `Justfile` plugin targets (líneas 60-80) + delete `.github/workflows/ci.yml` job `qa-plugin` (líneas 78-112). Commit `chore(ci): remove plugin recipes and CI job (FEV-30)`. Subagents: `devops-engineer`, `code-reviewer`.
 
 **Checkpoint F2**
-- [ ] `just test` green; agent-frontmatter-validation suite covers all 211 files (205 migrated + 6 primary).
-- [ ] No leftover `permission` references in `tests/unit/domain/helpers/agentFrontmatterValidator.ts` and `tests/unit/domain/agent-frontmatter-validation.test.ts`.
+- [ ] `grep -n 'check-plugin\|test-plugin\|qa-plugin\|tests/plugin' Justfile .github/workflows/ci.yml biome.json` retorna **0 matches**.
+- [ ] `just check` 0 errores.
 
-## Phase 3 — Generator + specs aligned (F3)
+## Phase 3 — Banner runtime "Opencode Legacy only" (F3)
 
-- [ ] **3.1** Port `scripts/reformat-agent.ts`: rename `SUBAGENT_PERMISSION` → `SUBAGENT_TOOLS`, emit top-level `tools:`. Subagents: `backend-developer`.
-- [ ] **3.2** Update `specs/spec-agent-format-v2.md` §3 (canonical block) and §8 (delegation references `permission.task` → `tools.task`). Subagents: `docs-writer`, `technical-writer`.
-- [ ] **3.3** Update `specs/spec-agent-packs.md` §4 (unified permission table): flip `task:` to `tools.task` with deny-list examples. Subagents: `docs-writer`.
-- [ ] **3.4** Verify + update `CONTRIBUTING.md` and `docs/wiki-source/` for any leftover `permission:` references. Subagents: `docs-writer`.
+- [ ] **3.1** Crear `src/application/helpers/opencodeLegacyBanner.ts`: lee `.codice-version`, compara con 2.1.2, imprime warning si ≤ 2.1.2. Commit `feat(installer): warn on Opencode Legacy installs ≤ 2.1.2 (FEV-30)`. Subagents: `backend-developer`, `test-engineer`.
+- [ ] **3.2** Wire `maybePrintLegacyBanner()` en `CleanInstallUseCase`, `ProjectInstallUseCase`, `UpdateWorkspaceUseCase` antes del primer prompt. Commit `feat(installer): wire legacy banner into install flows (FEV-30)`. Subagents: `backend-developer`.
+- [ ] **3.3** Crear `tests/unit/application/helpers/opencodeLegacyBanner.test.ts` con 5 casos (sin version, ≤ 2.1.2, ≥ 2.1.3, inválida, sin loadVersionFile). Commit `test(installer): add legacy banner unit tests (FEV-30)`. Subagents: `qa-automation`.
 
 **Checkpoint F3**
-- [ ] `just check && just test` green.
-- [ ] `grep -rln 'permission:' specs/ CONTRIBUTING.md docs/wiki-source/ scripts/` returns only matches in `fix26-*` diagnosis file (allowed) and the V1/V2 comparison prose (audit case-by-case).
-- [ ] No commit has bundled more than one pack change (atomicity check).
+- [ ] `just test` 0 fallos; nuevos tests pasan.
+- [ ] `just check` 0 errores.
+- [ ] Banner visible en `--verbose` con fixture `.codice-version` = `2.1.2`.
+- [ ] Banner NO aparece con `.codice-version` = `2.1.3`.
+
+## Phase 4 — Limpieza documental completa + release (F4)
+
+- [ ] **4.1** Delete `specs/spec-sdd-plugin-decoupling.md`, `specs/adr/adr-013-plugin-auto-discovery.md`, `docs/diagnosis/fix15-plugin-cleanup.md`. Commit `docs(workflow): retire plugin specs and ADRs (FEV-30)`. Subagents: `docs-writer`, `git-workflow-manager`.
+- [ ] **4.2** Update `README.md`, `SPEC.md`, `docs/WORKFLOW.md`, `docs/TRD.md`, `docs/ARCHITECTURE.md`, `docs/wiki-source/.wiki/SDD-Pipeline.md` + `Commands.md` + `Configuration.md`: scrub plugin refs + replace "55/55 plugin integration" con métrica actual. Commit `docs(workflow): scrub plugin references from active docs (FEV-30)`. Subagents: `docs-writer`, `technical-writer`.
+- [ ] **4.3** Update `CHANGELOG.md`: añadir `[2.1.3]` con FEV-30 completo (remoción + banner). Mantener historia inmutable de v2.1.1/v2.1.2. Commit `docs(changelog): FEV-30 release entry v2.1.3 (FEV-30)`. Subagents: `technical-writer`.
+
+**Checkpoint F4 (final)**
+- [ ] `grep -rln 'plugin\|sdd-pipeline\|sddPipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|qa-plugin' docs/ specs/ wiki-source/ README.md SPEC.md 2>/dev/null` retorna **0 matches** (excepto CHANGELOG history).
+- [ ] `docs/ARCHITECTURE.md` tabla ADRs: ADR-013 ausente.
+- [ ] `git status --porcelain` limpio.
+- [ ] Gates verdes: `just check && just test` + Linux `just coverage-check 95` + `just test-e2e`.
 
 ## Notes
 
-- Codemod script lives outside `src/` and is **not shipped** in the npm package; it is a contributor tool only.
-- The V2 `tools:` schema is identical in shape to V1 `permission:` — only the top-level key changes. No value rewrites are required.
-- Subagent delegation must list **subagents only** (e.g. `docs-writer`, `typescript-pro`, `qa-automation`). Main agents (`huitzilopochtli`, `quetzalcoatl`, `tlaloc`, `moctezuma`, `mictlantecuhtli`, `tezcatlipoca`) are NEVER invoked from `/plan`.
+- **Defensa en profundidad preservada:** `template/obligatorio/core/opencode.json` mantiene `permission.bash` deny-lists que ya cubren el bloqueo destructivo (FEV-27 + code review). El plugin eliminado era redundante.
+- **Banner runtime es no bloqueante.** Usuarios en ≤ 2.1.2 ven el warning pero pueden continuar.
+- **Historia documental eliminada por completo.** No hay banners "superseded" en specs/ADRs. El CHANGELOG v2.1.1 conserva el registro inmutable del release pasado.
+- **8 commits atómicos** = 3 deletes (F1) + 1 config strip (F2) + 3 banner implementation (F3) + 3 docs cleanup (F4) — total **10 commits** (ajuste: F4 son 3 commits independientes, no 1).
+- **Subagent delegation:** solo subagents (`backend-developer`, `git-workflow-manager`, `qa-automation`, `devops-engineer`, `code-reviewer`, `test-engineer`, `docs-writer`, `technical-writer`). Main agents NUNCA.

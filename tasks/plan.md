@@ -1,68 +1,99 @@
-# Implementation Plan: FEV-29 — Agent Pack Migration `permission:` → `tools:` (Opencode V2)
+# Implementation Plan: FEV-30 — Remove SDD Plugin + Opencode Legacy Deprecation Banner (Issue #90)
 
-> **COMPLETADO 2026-09-22.** FEV-29 cerrado en `hotfix/opencode-v2-migrate` vía
-> Fase 2 (`scripts/migrate-v1-to-v2-permissions.ts`, 349 archivos, auditoría +
-> simplificación + review-round). Este plan queda como historia; no ejecutar.
-> Siguiente: FEV-30 — 📋 listo para planificarse (Alcance: por definir en
-> planificación).
+> **Estado:** listo para ejecutar en rama `hotfix/opencode-v2-migrate` (target release **v2.1.3**).
+> **Issue:** [#90](https://github.com/Fisherk2/codice-opencode/issues/90)
+> **Diagnóstico:** [`docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md`](../docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md)
+> **Dependencias:** Ninguna — FEV-29 ya completó la migración a `permissions:` nativo V2 (2026-09-22).
 >
-> **SUPERSEDED 2026-09-22.** Wrong migration direction — native V2 format is
-> the `permissions:` list, not `tools:` (see `docs/diagnosis/fix28-…` and the
-> fix26 supersession banner). Fase 2 superseded this plan entirely
-> (`scripts/migrate-v1-to-v2-permissions.ts` + `scripts/migrate-all-packs.ts`,
-> 8 per-pack commits). Body preserved as history; do not execute.
-
-**Source issue:** #91
-**Branch:** `hotfix/opencode-v2-migrate`
-**Target release:** v2.1.3 (Hotfix Opencode V2)
-**Created:** 2026-09-19
-**Spec anchors:** `docs/diagnosis/fix26-permission-tools-migration.md`, `specs/spec-agent-format-v2.md` §3, `specs/spec-agent-packs.md` §4
+> **Política de commits:** 8 commits atómicos por concern (uno por concern lógico, no por archivo).
+> **Política de tests:** TDD para el banner runtime; los demás tasks son deletes/refactors con verificación por ausencia + gates.
 
 ---
 
 ## Overview
 
-Opencode V2 replaced the `permission:` key in agent `.md` frontmatter with `tools:`. The legacy key is silently ignored in V2, which makes restrictive agents (e.g. Moctezuma) appear unrestricted. The main, software-development, and writers packs were already migrated in earlier commits on this branch. FEV-29 finishes the migration for the remaining **205 agent files across 7 packs**, plus the validator/tests/scripts/specs that still consume the old key.
+El plugin SDD (`sdd-pipeline.ts`, 45 líneas + 2 módulos: `destructivePatterns.ts` + `normalizeBash.ts`) desplegado a hosts Opencode V2 falla en cada startup con "Plugin must export a default definition with an id and an effect or setup function". Después de FEV-27 (#80) el plugin quedó reducido a **única función valiosa**: bloqueo de comandos destructivos como red de seguridad. Esa red ya está duplicada y endurecida en `template/obligatorio/core/opencode.json` (`permission.bash` deny-lists). La decisión del maintainer (vía `docs/diagnosis/fix27`) es **eliminar** el plugin en lugar de portarlo, y agregar un banner de deprecación para usuarios en ≤ 2.1.2.
+
+**Resultado esperado:**
+1. Cero archivos `sdd-pipeline*`, `destructivePatterns*`, `normalizeBash*` en el repo tras FEV-30.
+2. Cero tests `tests/plugin/`, `tests/types/opencode-plugin.d.ts`, ni recipes de CI asociados al plugin.
+3. `opencode.json` mantiene `permission.bash` deny-lists como defensa en profundidad (ya existente).
+4. Banner runtime imprime `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4` cuando la versión instalada (`.codice-version`) ≤ 2.1.2.
+5. Docs/specs/ADRs que documentan el plugin se eliminan completamente (sin banners "superseded").
+
+---
 
 ## Architecture Decisions
 
-- **Flat rename as default rule.** Confirmed against `packs/software-development/accessibility-auditor.md`: scalar (`write: deny`) and nested-map (`bash: {"*": "deny"}`) values are byte-identical between V1 and V2 — only the top-level key changes.
-- **Primary agents (main/) are out of scope.** Already migrated in commit `8f34f5c` with custom task-deny-lists under `tools.task`.
-- **Validator accepts both `tools:` scalar and nested-object forms** (primary mode needs `tools.task: {"*": allow, "name": deny}`). Existing V1 object-permission logic is generalised to `tools:`.
-- **One commit per pack** (user decision) so individual packs are revertible.
+- **D1 — Eliminación total, no port.** El plugin sólo aportaba bloqueo destructivo; `opencode.json` ya tiene `permission.bash` deny-lists equivalentes + más extensos (FEV-27 revisión). Portar costaría más que el valor residual; el maintainer decide remover.
+- **D2 — Banner vía `.codice-version` (offline).** Sin red. Reutiliza `loadVersionFile()` / `updateStatusCheck()` ya existentes en `src/application/useCases/`. La comparación `installedVersion ≤ 2.1.2` se hace con `VersionComparator` (ya implementado en `src/domain/services/VersionComparator.ts`).
+- **D3 — Sin nueva release menor.** FEV-30 se incorpora a **v2.1.3** (mismo hotfix que FEV-29) porque la remoción es interna del instalador y no rompe la API pública para usuarios V2; los usuarios V1 que aún usan el plugin obtendrán el banner al actualizar.
+- **D4 — Historia documental eliminada, no archivada.** Por decisión del usuario: borrar `specs/spec-sdd-plugin-decoupling.md`, `specs/adr/adr-013-plugin-auto-discovery.md`, `docs/diagnosis/fix15-plugin-cleanup.md`, `docs/diagnosis/fix06-v1.2-phase3-documentation.md` (referencias plugin), todas las menciones de "55/55 plugin integration" en CHANGELOG/WORKFLOW/SPEC. El CHANGELOG v2.1.1/v2.1.2 conserva las menciones históricas del plugin (registro inmutable de releases pasados) pero el `README.md` y `docs/WORKFLOW.md` se actualizan al estado actual.
+- **D5 — Commits por concern, no por archivo.** 8 commits atómicos siguiendo el principio "un commit, un concern lógico" de la skill `git-workflow-and-versioning`. Esto preserva reversibilidad granular.
+- **D6 — FileRuleManifestData limpia entrada opcional.** La entrada `optional(".opencode/plugins/sdd-workflow-test.md", ...)` deja de existir (el archivo nunca existió como entrega útil; verificado por `find`).
+- **D7 — Biome.json sin exclusiones plugin.** El blanket `!!**/template` nunca estuvo en biome.json; las exclusiones `template/obligatorio/core/skills` + `template/opcional/skills` se mantienen (código de skills externos con sus propios deps).
+
+---
 
 ## Task List
 
-### Phase 1 — Migration script + 7 packs reverted per-pack (F1)
+### Phase 1 — Eliminación de archivos (F1)
 
-- [ ] **Task 1.1 — Codemod script.** Create `scripts/migrate-permission-to-tools.ts` that walks `template/obligatorio/packs/`, parses each agent's YAML frontmatter, renames top-level `permission:` → `tools:` and rewrites the file preserving indentation and trailing content. Must fail (non-zero exit) if a file already has `tools:` in frontmatter, or if the file declares both keys, or if the YAML cannot be parsed.
-- [ ] **Task 1.2 — Script dry-run + golden test.** Add `tests/unit/scripts/migrate-permission-to-tools.test.ts` covering: pure scalar value, nested-map value, file already migrated (must error), mixed keys (must error), malformed YAML (must error), idempotency (running twice yields identical content).
-- [ ] **Task 1.3 — Migrate `business/` (91 files).** `bun run scripts/migrate-permission-to-tools.ts template/obligatorio/packs/business/` → single atomic commit `refactor(agents): migrate business pack permission -> tools`.
-- [ ] **Task 1.4 — Migrate `creative/` (10).** Commit `refactor(agents): migrate creative pack permission -> tools`.
-- [ ] **Task 1.5 — Migrate `finance/` (11).** Commit `refactor(agents): migrate finance pack permission -> tools`.
-- [ ] **Task 1.6 — Migrate `government-legal/` (8).** Commit `refactor(agents): migrate government-legal pack permission -> tools`.
-- [ ] **Task 1.7 — Migrate `hardware-emerging/` (36).** Commit `refactor(agents): migrate hardware-emerging pack permission -> tools`.
-- [ ] **Task 1.8 — Migrate `operations-support/` (18).** Commit `refactor(agents): migrate operations-support pack permission -> tools`.
-- [ ] **Task 1.9 — Migrate `science-research/` (31).** Commit `refactor(agents): migrate science-research pack permission -> tools`.
+**Concern:** el plugin deja de existir en disco en todos los lugares donde vive.
 
-**Checkpoint F1:** `grep -rl '^permission:' template/obligatorio/packs/ | wc -l` returns `0`. `just check` is green (linter + tsc). The validator does not yet test `tools:`, so legacy field errors are expected; we run them only as a guard that no file accidentally keeps the old key.
+- [ ] **Task 1.1 — Delete template plugin directory.** `git rm -r template/obligatorio/core/.opencode/plugins/` (elimina `sdd-pipeline.ts`, `destructivePatterns.ts`, `normalizeBash.ts`, `package.json`, `README.md`, `tsconfig.json`, `.gitignore`). Commit `chore(plugin): remove SDD plugin from template (FEV-30)`. Subagents: `backend-developer`, `git-workflow-manager`.
+- [ ] **Task 1.2 — Delete dev plugin copy.** `git rm -r .opencode/plugins/` (elimina `sdd-pipeline.ts` + `src/` con 16 módulos + `__tests__/`). El `.sdd-audit.log` es gitignored. Commit `chore(plugin): remove dev plugin copy (FEV-30)`. Subagents: `git-workflow-manager`.
+- [ ] **Task 1.3 — Delete plugin test suites.** `git rm -r tests/plugin/` (integration + e2e + 3 bash scripts) + `git rm tests/types/opencode-plugin.d.ts` + `git rm tests/unit/config/destructive-patterns.test.ts`. Commit `test(plugin): drop plugin test suites (FEV-30)`. Subagents: `qa-automation`.
 
-### Phase 2 — Validator + test suites ported to `tools:` (F2)
+**Checkpoint F1:**
+- `find . -path '*/.opencode/plugins*' -not -path '*/node_modules/*' -not -path '*/fixtures/*'` retorna **0 paths** en `template/` y `.opencode/` raíz.
+- `grep -rln 'sdd-pipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|tests/types/opencode-plugin' src/ scripts/ tests/ template/` retorna **0 matches**.
+- `just check` 0 errores (los archivos eliminados no estaban en `src/` ni `tests/` activos).
 
-- [ ] **Task 2.1 — Port `agentFrontmatterValidator.ts` to `tools:` semantics.** Rename internal `validatePermission` → `validateTools`, switch field read from `frontmatter.permission` to `frontmatter.tools`, keep scalar/object rules but extend object handling to: (a) accept `task` as a map of `agent-name → "allow" | "ask" | "deny"` for primaries (deny-list pattern); (b) accept arbitrary shell-glob keys under `bash` (already supported) — V2 same syntax. Update exported function name only if the test imports are also updated (keep backward-compat shim if simpler).
-- [ ] **Task 2.2 — Update `tests/unit/domain/agent-frontmatter-validation.test.ts`.** Replace `parsed?.permission` with `parsed?.tools` everywhere (line ~110), rename describe blocks ("permission value errors" → "tools value errors"), and port the FEV-19 invariants suite (lines ~175-205) to assert `tools.task` structure with deny-list primaries.
-- [ ] **Task 2.3 — Update `tests/unit/scripts/reformat-agent.test.ts`.** Switch the single assertion at line 62 from `expect(output).toContain("permission:")` to `expect(output).toContain("tools:")`; verify all 10 reformat test cases still pass against the new `scripts/reformat-agent.ts` output (handled in 3.1).
+---
 
-**Checkpoint F2:** `just test` green; full frontmatter validation suite covers all 211 agent files (205 migrated + 6 main). Discover count assertion at line 60 unchanged (`>300`).
+### Phase 2 — Cleanup de recipes de CI + Biome + Justfile + Manifest (F2)
 
-### Phase 3 — Generator + specs aligned with V2 contract (F3)
+**Concern:** el plugin ya no existe, pero los archivos de configuración aún lo invocan.
 
-- [ ] **Task 3.1 — Port `scripts/reformat-agent.ts` to emit `tools:`.** Rename `SUBAGENT_PERMISSION` → `SUBAGENT_TOOLS`; rewrite the template literal so its top-level key is `tools:` with the same canonical content (write/edit/ask/allow/deny pattern). Spec cross-reference at `specs/spec-agent-format-v2.md` §3 also updated in 3.2.
-- [ ] **Task 3.2 — Update `specs/spec-agent-format-v2.md` for V2 contract.** Replace the two YAML examples that still start with `permission:` (lines ~50 and ~93) with `tools:` equivalents. Update §8 references from `permission.task` to `tools.task` (lines 177 and 227). Bump status line to reflect "FEV-29 v2 contract".
-- [ ] **Task 3.3 — Update `specs/spec-agent-packs.md` §4.** Replace the table headers/cells that show `task:` under the unified-permission example (lines 154-167) with `tools.task` and `{"*": "allow", "<other-primary>": "deny"}` examples matching the migrated primaries. Bump version note to "2.0.0+ (FEV-29 tools migration)".
-- [ ] **Task 3.4 — Update contributor cross-reference.** If `CONTRIBUTING.md` or the wiki mentions `permission:` for pack agents, replace with `tools:` examples. (Verify with `grep -rn "permission:" CONTRIBUTING.md docs/wiki-source/` — fix only if matches found.)
+- [ ] **Task 2.1 — Strip Justfile plugin targets + ci.yml qa-plugin job.** Eliminar de `Justfile` líneas 60-80 (targets `check-plugin`, `test-plugin-unit`, `test-plugin-integration`, `test-plugin-e2e`); eliminar de `.github/workflows/ci.yml` el job `qa-plugin` (líneas 78-112) y la invocación `just check-plugin` que aparezca en otros targets. Commit `chore(ci): remove plugin recipes and CI job (FEV-30)`. Subagents: `devops-engineer`, `code-reviewer`.
 
-**Checkpoint F3:** `just check` 0 errors; `just test` 0 fail; grep confirms `^permission:` returns 0 inside `template/obligatorio/packs/`; specs and validator reference `tools:` only.
+**Checkpoint F2:**
+- `grep -n 'check-plugin\|test-plugin\|qa-plugin\|tests/plugin' Justfile .github/workflows/ci.yml biome.json` retorna **0 matches**.
+- `just check` 0 errores.
+- `just test` (non-Linux) y `just coverage-check 95` (Linux) no invocan nada relativo al plugin.
+
+---
+
+### Phase 3 — Banner runtime "Opencode Legacy only" (F3)
+
+**Concern:** usuarios en ≤ 2.1.2 deben saber al instalar que su versión es Legacy y deben actualizar.
+
+- [ ] **Task 3.1 — Implement Opencode Legacy banner.** Crear helper `src/application/helpers/opencodeLegacyBanner.ts` que: (a) lee `.codice-version` desde el workspace (`loadVersionFile` de `src/application/useCases/helpers/versionFile.ts` o equivalente); (b) compara con `2.1.2` usando `VersionComparator`; (c) si `installed ≤ 2.1.2`, imprime via `VerboseLogger.log()` (o `console.warn` si no hay logger contextual) el mensaje `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support`. Banner NO bloqueante. Commit `feat(installer): warn on Opencode Legacy installs ≤ 2.1.2 (FEV-30)`. Subagents: `backend-developer`, `test-engineer`.
+- [ ] **Task 3.2 — Wire banner into all use cases.** Llamar `maybePrintLegacyBanner()` desde `CleanInstallUseCase`, `ProjectInstallUseCase`, `UpdateWorkspaceUseCase` antes del primer prompt interactivo (en `--verbose` siempre; sin `--verbose` solo si `.codice-version` existe y es ≤ 2.1.2). Commit `feat(installer): wire legacy banner into install flows (FEV-30)`. Subagents: `backend-developer`.
+- [ ] **Task 3.3 — TDD: unit tests for legacy banner.** Crear `tests/unit/application/helpers/opencodeLegacyBanner.test.ts` cubriendo: (a) sin `.codice-version` → no imprime; (b) versión `2.1.0`, `2.1.1`, `2.1.2` → imprime; (c) versión `2.1.3`, `2.1.4`, `3.0.0` → no imprime; (d) versión inválida (`abc`) → no imprime + no rompe; (e) sin `loadVersionFile` disponible → graceful no-op. Commit `test(installer): add legacy banner unit tests (FEV-30)`. Subagents: `qa-automation`.
+
+**Checkpoint F3:**
+- `just test` 0 fallos; nuevos tests pasan.
+- `just check` 0 errores.
+- Banner visible en `--verbose` con un fixture que tenga `.codice-version` = `2.1.2`.
+- Banner NO aparece con `.codice-version` = `2.1.3`.
+
+---
+
+### Phase 4 — Limpieza documental completa + release (F4)
+
+**Concern:** la historia del plugin se elimina de la documentación activa (no archivada, por decisión D4).
+
+- [ ] **Task 4.1 — Delete plugin specs/ADRs/diagnoses.** `git rm specs/spec-sdd-plugin-decoupling.md specs/adr/adr-013-plugin-auto-discovery.md docs/diagnosis/fix15-plugin-cleanup.md`. Commit `docs(workflow): retire plugin specs and ADRs (FEV-30)`. Subagents: `docs-writer`.
+- [ ] **Task 4.2 — Update README/SPEC/WORKFLOW/TRD/ARCHITECTURE to current state.** Quitar referencias al plugin en `README.md`, `SPEC.md`, `docs/WORKFLOW.md`, `docs/TRD.md`, `docs/ARCHITECTURE.md` (tabla de ADRs), `docs/wiki-source/.wiki/SDD-Pipeline.md`, `docs/wiki-source/.wiki/Commands.md`, `docs/wiki-source/.wiki/Configuration.md`. Reemplazar todas las menciones "55/55 plugin integration" por la métrica actual (e.g., "1935 unit/integration tests"). Commit `docs(workflow): scrub plugin references from active docs (FEV-30)`. Subagents: `docs-writer`, `technical-writer`.
+- [ ] **Task 4.3 — Update CHANGELOG Unreleased + v2.1.3 entry.** Añadir bloque `[2.1.3]` con FEV-30 marcado completo (remoción plugin + banner runtime). Mantener las menciones históricas en `[2.1.1]` (FEV-27) intactas (registro de release pasado). Commit `docs(changelog): FEV-30 release entry v2.1.3 (FEV-30)`. Subagents: `technical-writer`.
+
+**Checkpoint F4 (final):**
+- `grep -rln 'plugin\|sdd-pipeline\|sddPipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|qa-plugin' docs/ specs/ wiki-source/ README.md SPEC.md 2>/dev/null` retorna **0 matches** (excepto menciones históricas en CHANGELOG v2.1.1/v2.1.2 que documentan releases pasados).
+- `docs/ARCHITECTURE.md` tabla ADRs: ADR-013 ausente.
+- `docs/wiki-source/.wiki/SDD-Pipeline.md` ausente (o reemplazado por un redirect "removed in v2.1.3").
+- `git status --porcelain` limpio.
 
 ---
 
@@ -70,49 +101,148 @@ Opencode V2 replaced the `permission:` key in agent `.md` frontmatter with `tool
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Codemod silently corrupts frontmatter indentation | High | Idempotency golden test + dry-run flag (`--dry-run`) + per-pack atomic commits (user chose) so a broken pack reverts in one command |
-| Validator over-permissive on `task:` deny-list shape | Medium | FEV-19 invariants suite reuses existing assertions (deny-list primaries) but on `tools.task` |
-| A legacy `permission:` nested inside body markdown trips the codemod | Low | Script only matches the top-level YAML key, not inline content; golden test covers body strings that contain the word "permission" |
-| Specs and CONTRIBUTING out of sync after migration | Low | F3 closes with `grep` for any leftover `permission:` references in non-template docs |
+| Banner runtime rompe installs V1 que aún esperan el plugin | Medium | Banner es informativo, no bloqueante. CHANGELOG + release notes anuncian el cambio. Documentar en `docs/MIGRATION.md` la rampa de salida. |
+| Algún agente/command referencia destructivo patterns via import | High | F1 checkpoint verifica `grep` 0 matches antes de F2. La lógica de seguridad pasa a `permission.bash` deny-lists que ya están en `template/obligatorio/core/opencode.json` (FEV-27 review). |
+| Tests fixture workspace tiene `.opencode/plugins/` residual | Low | El fixture es gitignored y se regenera por `just dev`. Verificar manualmente antes de `just test-e2e`. |
+| Pérdida de cobertura por remoción de `destructive-patterns.test.ts` | Low | Los patterns ya no existen; la lógica equivalente está en `opencode.json` que se valida por `tests/unit/quality/source-hygiene.test.ts` y por el validator de permisos V2 (`tests/unit/domain/agent-frontmatter-validation.test.ts`). |
+| Wiki pages referencian plugin en prosa histórica | Low | F4 task 4.2 hace scrubbing masivo; verificar `grep` final en checkpoint F4. |
+
+---
 
 ## Verification (run after each phase)
 
 ```bash
 # after F1
+find . -path '*/.opencode/plugins*' -not -path '*/node_modules/*' -not -path '*/fixtures/*' | wc -l   # expect 0
+grep -rln 'sdd-pipeline\|DestructiveCommandBlock\|destructivePatterns' src/ scripts/ tests/ template/ | wc -l   # expect 0
 just check
-grep -rl '^permission:' template/obligatorio/packs/ | wc -l   # expect 0
+
 # after F2
-just test
+grep -n 'check-plugin\|test-plugin\|qa-plugin' Justfile .github/workflows/ci.yml biome.json | wc -l   # expect 0
+just check
+
 # after F3
-just check && just test
+just test
+just check
+
+# after F4 (final)
+grep -rln 'plugin\|sdd-pipeline\|sddPipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|qa-plugin' docs/ specs/ wiki-source/ README.md SPEC.md 2>/dev/null | wc -l   # expect 0 (except CHANGELOG history)
+git status --porcelain   # expect empty
+
+# final gates (Linux)
+just test-coverage
+just coverage-check 95
+just test-e2e
+
+# final gates (non-Linux)
+just test
 ```
+
+---
 
 ## Subagent Delegation Matrix
 
-Tasks 1.3-1.9 are mechanical and independent — they can be parallelised across subagents of the same pack domain (e.g. multiple `*-developer` subagents), or run sequentially in one session. Tasks 2.x require focused sequential work by a TypeScript-aware subagent (e.g. `typescript-pro` or `code-reviewer`) because they touch the validator and its tests. Tasks 3.x require documentation-fluent subagents (`docs-writer`, `technical-writer`).
-
-Suggested subagents (write to `tasks/todo.md` per pack, **no main agents**):
+Tareas mecánicas (deletes, grep verificadores) → `git-workflow-manager`. Tareas con lógica (banner) → `backend-developer` + `test-engineer`. Tareas documentales → `docs-writer` + `technical-writer`. Review → `code-reviewer`.
 
 | Task | Suggested subagents |
 |------|---------------------|
-| 1.1 | `backend-developer` (script + Bun fs APIs), `code-reviewer` (idempotency) |
-| 1.2 | `test-engineer`, `bun-test-specialist` (closest: `qa-automation`) |
-| 1.3-1.9 | `devops-engineer` (run + verify) — sequential per pack |
-| 2.1-2.3 | `typescript-pro`, `test-engineer` |
-| 3.1 | `backend-developer` |
-| 3.2-3.3 | `docs-writer`, `technical-writer` |
-| 3.4 | `docs-writer` |
+| 1.1 | `backend-developer`, `git-workflow-manager` |
+| 1.2 | `git-workflow-manager` |
+| 1.3 | `qa-automation`, `git-workflow-manager` |
+| 2.1 | `devops-engineer`, `code-reviewer` |
+| 3.1 | `backend-developer`, `test-engineer` |
+| 3.2 | `backend-developer` |
+| 3.3 | `qa-automation` |
+| 4.1 | `docs-writer`, `git-workflow-manager` |
+| 4.2 | `docs-writer`, `technical-writer` |
+| 4.3 | `technical-writer` |
 
-## Open Questions
+---
 
-None — all design decisions confirmed with the user before plan save.
+## Diagram — File Touch Map
+
+```mermaid
+graph TB
+    subgraph "F1 — Delete files"
+        T1["Task 1.1<br/>template/obligatorio/core/.opencode/plugins/"]
+        T2["Task 1.2<br/>.opencode/plugins/ (dev copy)"]
+        T3["Task 1.3<br/>tests/plugin/ + opencode-plugin.d.ts + destructive-patterns.test.ts"]
+    end
+
+    subgraph "F2 — Strip config"
+        R1["Task 2.1<br/>Justfile + ci.yml"]
+    end
+
+    subgraph "F3 — Banner runtime"
+        B1["Task 3.1<br/>opencodeLegacyBanner.ts"]
+        B2["Task 3.2<br/>Wire into 3 use cases"]
+        B3["Task 3.3<br/>Unit tests"]
+    end
+
+    subgraph "F4 — Docs cleanup"
+        D1["Task 4.1<br/>spec-sdd-plugin-decoupling.md<br/>adr-013<br/>fix15"]
+        D2["Task 4.2<br/>README, SPEC, WORKFLOW, TRD,<br/>ARCHITECTURE, wiki"]
+        D3["Task 4.3<br/>CHANGELOG [2.1.3] entry"]
+    end
+
+    T1 --> R1
+    T2 --> R1
+    T3 --> R1
+    R1 --> B1
+    B1 --> B2
+    B2 --> B3
+    B3 --> D1
+    D1 --> D2
+    D2 --> D3
+```
+
+---
+
+## Diagram — Banner runtime flow
+
+```mermaid
+sequenceDiagram
+    participant CLI as Códice CLI<br/>(use case entry)
+    participant Banner as opencodeLegacyBanner
+    participant VF as loadVersionFile
+    participant VC as VersionComparator
+    participant Log as VerboseLogger / console
+
+    CLI->>Banner: maybePrintLegacyBanner(workspaceDir)
+    Banner->>VF: loadVersionFile(workspaceDir)
+    alt file missing or malformed
+        VF-->>Banner: null / undefined
+        Banner-->>CLI: noop
+    else file present
+        VF-->>Banner: "2.1.2"
+        Banner->>VC: compare("2.1.2", "2.1.2")
+        VC-->>Banner: 0 (equal)
+        Banner->>Log: "⚠ Opencode Legacy only —<br/>upgrade to ≥ 2.1.4"
+    end
+```
+
+---
 
 ## Out of Scope
 
-- Primary agents (main/) — already migrated.
-- `template/opcional/` agents — already on V2 or not present (verify in F1).
-- `sin-clasificar/` legacy agents — kept on V1 per `spec-agent-format-v2.md` §9 ("Hybrid decision 2026-08-04").
-- Removal of the SDD plugin — covered by FEV-30 in a separate plan.
+- Portar el plugin a la API V2 (decisión del maintainer en `fix27`).
+- Reemplazar el plugin por un módulo nativo (`src/`) — su valor es residual y ya está duplicado en `opencode.json`.
+- Actualizar el threshold de `coverage-check` (sigue en 95%; la remoción no baja la cobertura de `src/`).
+- Cambiar la versión de `package.json` manualmente — bumping a 2.1.3 ocurre en el release, no en FEV-30.
+- Reemplazar el wiki `SDD-Pipeline.md` por documentación de `permission.bash` deny-lists (ya cubierto por `wiki-source/.wiki/Security-Hardening.md` o equivalente).
+
+---
+
+## Open Questions
+
+None — todas las decisiones confirmadas con el usuario antes de planificar:
+
+- ✅ Cobertura objetivo = **mínimo viable + banner + auto-update hint**.
+- ✅ Historia documental = **eliminada completamente** (no banners, no archive).
+- ✅ Métrica legacy "55/55 plugin integration" = **retirada** de docs activas.
+- ✅ Target release = **v2.1.3** (mismo hotfix que FEV-29).
+- ✅ Banner runtime = **detección vía `.codice-version`** (sin red).
+- ✅ Granularidad = **8 commits por concern**.
 
 ---
 
