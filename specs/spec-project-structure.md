@@ -38,6 +38,7 @@ codice-opencode/
 │   │   ├── legacyBanner.ts        # Opencode Legacy upgrade banner (advisory, fail-open)
 │   │   ├── packOptions.ts         # Pack selection option definitions
 │   │   ├── postInstall.ts         # Post-installation orchestration (gitignore, symlinks, version file)
+│   │   ├── updateHelpers.ts       # Update confirmation + version-file write helpers
 │   │   ├── versionData.ts         # Pure .codice-version parser shared by update flow and helpers
 │   │   ├── use-cases/
 │   │   │   ├── CleanInstallUseCase.ts      # Mode 1: Overwrite everything
@@ -94,7 +95,7 @@ codice-opencode/
 │   └── opcional/                  # Files presented as checklist; copied only if selected and missing
 ├── docs/                          # Architecture decisions, workflow, PRD, TRD, MIGRATION
 ├── specs/                         # Modular specification documents
-│   ├── adr/                       # Architecture Decision Records (ADR-001 to ADR-015)
+│   ├── adr/                       # Architecture Decision Records (ADR-001 to ADR-021)
 │   ├── spec-agent-format-v2.md    # Agent format specification v2
 │   ├── spec-agent-packs.md        # Agent pack system specification
 │   ├── spec-cli-commands.md       # CLI commands and modes specification

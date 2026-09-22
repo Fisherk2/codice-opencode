@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ADR-021** (`specs/adr/adr-021-codemod-parser-and-placement.md`): validator is the normative V2 schema reader; codemod parser is frozen verbatim-emit one-shot tooling; promotion trigger to `src/domain/services/` documented; schema constants stay exported in the validator helper.
 - **CI Linux suite dedup**: `just test` in `.github/workflows/ci.yml` is now gated to non-Linux runners, removing the duplicated Linux suite execution.
 - **Source-hygiene raw-control-byte guard**: New `tests/unit/quality/source-hygiene.test.ts` fails on any raw control byte (C0 minus TAB/LF/CR, plus DEL) across the tracked text surfaces (`src`, `tests`, `scripts`, `template/obligatorio/packs`).
-- **Banner de deprecación runtime "Opencode Legacy" (FEV-30, #90)**: nuevo helper `src/application/helpers/opencodeLegacyBanner.ts` lee `.codice-version` y, si la instalación es ≤ 2.1.2, imprime `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support`. No bloqueante — archivo ausente o corrupto degrada a no-op silencioso. Cableado en `CleanInstallUseCase`, `ProjectInstallUseCase` y `UpdateWorkspaceUseCase`, antes del primer prompt interactivo de cada flujo.
+- **Banner de deprecación runtime "Opencode Legacy" (FEV-30, #90)**: nuevo helper `src/application/legacyBanner.ts` lee `.codice-version` y, si la instalación es ≤ 2.1.2, imprime `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support`. No bloqueante — archivo ausente o corrupto degrada a no-op silencioso. Cableado en `CleanInstallUseCase`, `ProjectInstallUseCase` y `UpdateWorkspaceUseCase`, antes del primer prompt interactivo de cada flujo.
 
 ### Removed
 

@@ -79,6 +79,12 @@ El plugin SDD (`sdd-pipeline.ts`, 45 líneas + 2 módulos: `destructivePatterns.
 - [x] **Task 3.2 — Wire banner into all use cases.** Llamar `maybePrintLegacyBanner()` desde `CleanInstallUseCase`, `ProjectInstallUseCase`, `UpdateWorkspaceUseCase` antes del primer prompt interactivo (en `--verbose` siempre; sin `--verbose` solo si `.codice-version` existe y es ≤ 2.1.2). Commit `feat(installer): wire legacy banner into install flows (FEV-30)`. Subagents: `backend-developer`.
 - [x] **Task 3.3 — TDD: unit tests for legacy banner.** Crear `tests/unit/application/helpers/opencodeLegacyBanner.test.ts` cubriendo: (a) sin `.codice-version` → no imprime; (b) versión `2.1.0`, `2.1.1`, `2.1.2` → imprime; (c) versión `2.1.3`, `2.1.4`, `3.0.0` → no imprime; (d) versión inválida (`abc`) → no imprime + no rompe; (e) sin `loadVersionFile` disponible → graceful no-op. Commit `test(installer): add legacy banner unit tests (FEV-30)`. Subagents: `qa-automation`.
 
+**Desviaciones aceptadas del plan (Tasks 3.1–3.3):**
+- (a) Banner se emite via `IUserPrompt.showWarning` (no `VerboseLogger`/`console.warn`) — feedback visible en todos los flujos, no atado a `--verbose`.
+- (b) Sin gating `--verbose` en Task 3.2: el banner se evalúa siempre (fail-open → no-op silencioso si no aplica), espejo del contrato de `src/cli/versionContext.ts`.
+- (c) Helper reubicado a `src/application/legacyBanner.ts` (el plan original apuntaba a `src/application/helpers/opencodeLegacyBanner.ts`).
+- (d) Security follow-up del review (Fase 1): permissions de bash endurecidas + validación de strings en `installedPacks` — commits `078d85d`, `d54db7a`.
+
 **Checkpoint F3:**
 - `just test` 0 fallos; nuevos tests pasan.
 - `just check` 0 errores.
