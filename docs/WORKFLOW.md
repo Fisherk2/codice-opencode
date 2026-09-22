@@ -128,7 +128,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 |----|------|--------|------|-------------|
 | **#79** | `.codice-version` no escrito tras Clean Install | 2-3h | High | `fix14-clean-install-version-file.md` |
 | **TD-V2-70** | Shell injection via `github.ref_name` | 0.5h | Medium | `fix17-shell-injection-github-ref-name.md` |
-| **TD-V2-90** | Business pack agent count mismatch (92→91) | 0.5h | Low | `fix06-business-pack-agent-count.md` |
+| **TD-V2-90** | Business pack agent count mismatch (92→91) | 0.5h | Low | `fix25-business-pack-agent-count.md` |
 | **TD-V2-91** | Writers pack agent count mismatch (2→4) | 0.5h | Low | `fix07-writers-pack-agent-count.md` |
 | **TD-V2-93** | Outdated comments in FileMergeEngine | 1h | Low | `fix10-outdated-comments-file-merge-engine.md` |
 
@@ -160,7 +160,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 - Backup safety: `AtomicStager` persiste rollback intent o documenta limitación
 - Evento `staging_cleanup` emitido y visible en verbose mode
 - Code review hardening: 1 Critical + 4 Important + 3 Suggestions aplicados
-- Tests: 1935 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors
+- Tests: 1935 tests, 31/31 E2E, just check 0 errors
 
 ##### Resultados de code review (commit `a2964fd`)
 
@@ -169,7 +169,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | C1 | Critical | Plugin gate no leía `output.args.command` correctamente | `extractBashCommand` ahora lee `output.args.command` |
 | I1 | Important | Tests no invocaban el hook real del plugin | 5 integration tests nuevos con `output.args.command` correcto |
 | I2 | Important | Marker de backup no se limpiaba en fallo manejado | `AtomicStager` remueve marker en fallo manejado |
-| I3 | Important | Patrones `rm -r -f` y `rm -f -r` no cubiertos | Añadidos a destructivePatterns |
+| I3 | Important | Patrones `rm -r -f` y `rm -f -r` no cubiertos | Añadidos a la lista de patrones destructivos |
 | I4 | Important | Detección de huérfanos frágil (string matching) | Flag-based guard reemplaza string matching |
 | S1 | Suggestion | Variante `staging_cleanup` muerta en ProgressCallback | Eliminada (evento se emite via VerboseLogger, no ProgressCallback) |
 | S2 | Suggestion | Faltaban patrones staging/backup en gitignore | Añadidos a `template/estandar/gitignore` |
@@ -193,7 +193,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 **Criterios de éxito:**
 - CI/CD: SHA-pins actualizados a últimas versiones compatibles con Node 24
 - `VersionComparator` cachea parsed semver objects
-- Tests: 1935 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors
+- Tests: 1935 tests, 31/31 E2E, just check 0 errors
 - CI matrix (Linux, macOS, Windows) sin warnings de Node 24 deprecation
 
 **Diagnósticos:** `fix23`, `fix22`
@@ -209,7 +209,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | FEV-28 | 2 items (2 TD) | 2-3h | Bajo | ✅ Completo (2026-08-21) |
 | **Total** | **11 items** | **12-17h** | — | — |
 
-**Estrategia:** FEV-26 ✅ + FEV-27 ✅ (code review hardened) + FEV-28 ✅ completados. v2.1.1 released 2026-08-25 (1935 tests, 31/31 E2E, 55/55 plugin).
+**Estrategia:** FEV-26 ✅ + FEV-27 ✅ (code review hardened) + FEV-28 ✅ completados. v2.1.1 released 2026-08-25 (1935 tests, 31/31 E2E).
 
 **Release v2.1.1:** Todas las fases completadas. Publish con dist-tag `latest` → `@fisherk2-dev/codice@2.1.1`.
 

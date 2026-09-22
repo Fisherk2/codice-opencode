@@ -106,7 +106,7 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | `updateFlow.ts` | Lógica de merge para update mode: Option A (packs actuales) y Option B (agregar packs). | `executeUpdateFlow()` | `IFileSystem`, `FileMergeEngine` | **SRP**: Solo ejecuta el flujo de update. |
 | `VerboseLogger` | Adapter para logging estructurado en modo verbose. | `log()`, `logProgress()` | `output.ts` | **SRP**: Solo maneja logging verbose. |
 
-### 3.3 Componentes v2.1.0 (Slash Commands, Intent Auto-Discovery, Agent Delegation)
+### 3.3 Componentes v2.1.0 (Slash Commands, Agent Delegation)
 
 | Componente | Responsabilidad | Interfaces Expuestas | Dependencias | Principio SOLID Aplicado |
 |------------|-----------------|----------------------|--------------|--------------------------|
@@ -114,8 +114,6 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | `/migrate` Slash Command | Detección de stack técnico desde lock files, evaluación de breaking changes, generación de plan de migración estructurado con fases y rollback. | CLI command + skill invocation | `dependency-audit`, `deprecation-and-migration` skills | **SRP**: Solo genera el plan, no ejecuta la migración. |
 | `/deploy` Slash Command | Post-`/ship` automation. 3 modos: no-workflow (generar desde cero), betterable (analizar+optimizar), established (ejecutar workflow documentado). Genera branch protection, PR templates, CI pipelines. | CLI command + skill invocation | `ci-cd-and-automation`, `bash-defensive-patterns` skills | **SRP**: Solo genera configuración, no la ejecuta. |
 | `/analyze` Slash Command | Análisis arquitectónico de 8 dimensiones (system structure, design patterns, dependency architecture, data flow, scalability, security, testability, documentation). Genera `docs/TECH_DEBT.md` con hallazgos priorizados. | CLI command + skill invocation | `clean-ddd-hexagonal`, `design-patterns`, `dependency-audit` skills | **SRP**: Solo analiza y reporta, no modifica código. |
-| SDD Intent Auto-Discovery | Detección basada en filesystem de palabras clave de comandos. Reemplaza el mapa hardcodeado `INTENT_PATTERNS` con un escaneo dinámico de `template/obligatorio/core/commands/*.md`. | `discoverIntents()` | filesystem reads | **OCP**: Nuevos comandos se descubren automáticamente sin modificar el plugin. |
-| Bilingual Intent Support | Las palabras clave de comandos funcionan en inglés y español mediante un mapa de traducción que se aplica tras el auto-discovery. | `translateIntent(keyword, locale)` | static map | **OCP**: Nuevos idiomas se agregan como mapas independientes. |
 | Agent Delegation Protocol | Los seis agentes primarios siguen un protocolo de tres fases (Analyze → Plan → Execute) antes de invocar subagentes. Cada `task()` incluye instrucciones determinísticas, skills a cargar y checklist de aceptación. | `delegateToSubagent(task)` | `task()` from opencode | **DIP**: Protocolo independiente del subagente concreto invocado. |
 
 ## 4. Contratos de API / Integraciones
@@ -138,12 +136,11 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
   2. `setup-bun` (SHA-pined) + `setup-just` (SHA-pined)
   3. `bun install`
   4. **Matrix job `quality`** (Ubuntu, macOS, Windows): `just check` (lint+format+typecheck) → `just test` (unit+integration) → `just test-e2e` (Linux only) → `just coverage-check 95` (Linux only).
-  5. **Job `qa-plugin`** (Ubuntu): `just test-plugin-unit` + `just check-plugin` + `just test-plugin-integration`.
-  6. **Job `packaging`** (Ubuntu): `just test-packaging` para validar estructura del tarball npm.
-  7. **Branch Protection** (rama `main` y `develop`): required status checks strict = true; contexts = `quality (ubuntu-latest)`, `quality (macos-latest)`, `quality (windows-latest)`; required approving reviews = 0 (single-contributor); dismiss stale reviews = true; enforce admins = false; allow force pushes = false; allow deletions = false; required conversation resolution = true. Aplicado vía `scripts/setup-branch-protection.sh` (idempotente, JSON body via `--input`).
-  8. **Release workflow** (tag `v*`): reusable `quality` job (`uses: ./.github/workflows/ci.yml`) → validación de tag format (`^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$`) → extracción de CHANGELOG section → validación de version match con `package.json` → detección de tipo (prerelease vs release) → `npm publish --provenance` (requiere `repository.url` en package.json) → `softprops/action-gh-release` con `make_latest` y `prerelease` flags.
-  9. **PR templates + Issue templates**: `bug_report.md`, `feature_request.md` en `.github/ISSUE_TEMPLATE/`; `PULL_REQUEST_TEMPLATE.md` en `.github/`.
-  10. **Permissions**: CI `contents: read`; release `contents: write + id-token: write` (para npm provenance OIDC).
+  5. **Job `packaging`** (Ubuntu): `just test-packaging` para validar estructura del tarball npm.
+  6. **Branch Protection** (rama `main` y `develop`): required status checks strict = true; contexts = `quality (ubuntu-latest)`, `quality (macos-latest)`, `quality (windows-latest)`; required approving reviews = 0 (single-contributor); dismiss stale reviews = true; enforce admins = false; allow force pushes = false; allow deletions = false; required conversation resolution = true. Aplicado vía `scripts/setup-branch-protection.sh` (idempotente, JSON body via `--input`).
+  7. **Release workflow** (tag `v*`): reusable `quality` job (`uses: ./.github/workflows/ci.yml`) → validación de tag format (`^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$`) → extracción de CHANGELOG section → validación de version match con `package.json` → detección de tipo (prerelease vs release) → `npm publish --provenance` (requiere `repository.url` en package.json) → `softprops/action-gh-release` con `make_latest` y `prerelease` flags.
+  8. **PR templates + Issue templates**: `bug_report.md`, `feature_request.md` en `.github/ISSUE_TEMPLATE/`; `PULL_REQUEST_TEMPLATE.md` en `.github/`.
+  9. **Permissions**: CI `contents: read`; release `contents: write + id-token: write` (para npm provenance OIDC).
 - **Rollback**: Al ser un cliente, el "rollback" es que el usuario use la release anterior con bunx/npx. La atomicidad local protege contra rollbacks de instalación fallida.
 - **paths-ignore** (push only, nunca en PR): `docs/**`, `CHANGELOG.md` — los cambios de documentación no rompen el CI.
 - **npm provenance**: SLSA v1 generado automáticamente por npm al publicar con `--provenance`. Verificable en https://www.npmjs.com/package/@fisherk2-dev/codice.
@@ -172,7 +169,6 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | **ADR-010** | Entries virtuales en manifest | Flag `noTemplateCopy` para entries cuyo contenido se genera post-instalación | Entries como `.devin/` aparecen en UX de selección pero skipan resolución de template. | Eliminar del manifest (pierde visibilidad en UX). |
 | **ADR-011** | Binary Removal | npm/bunx como única distribución; compilación de binarios removida | Eliminación de 74MB binarios, simplificación CI/CD | Mantener binarios (mantenimiento alto, poco uso) |
 | **ADR-012** | References Co-location | Referencias co-locadas con skills, expuestas vía sección reference | Skills autocontenidos, configuración opcional | Referencias centralizadas en template/obligatorio/references/ |
-| **ADR-013** | SDD Plugin Auto-Discovery | Auto-descubrimiento filesystem + configuración JSON + quality infra | Plugin desacoplado de documentación, extensible | Maps hardcoded en sdd-pipeline.ts |
 | **ADR-014** | Sistema de packs | Clasificación de agentes en packs: 8 seleccionables + 2 obligatorios (main, writers) | Instalación selectiva de agentes, wizard de selección, tarball 8MB | Todos los agentes siempre (sin selección) |
 | **ADR-015** | Installer UX v2 | UX metadata-driven con selección de packs, resumen pre-instalación, y actualizaciones version-gated | Mejor UX para gestión de packs, bloqueo de update en v1.x | UX plana sin selección de packs |
 | **ADR-016** | Slash Commands v2.1 | Adición de 4 comandos (`/sync`, `/migrate`, `/deploy`, `/analyze`) con flujos definidos y delegación a skills | Cubre sync bidireccional, migración, deploy y análisis arquitectónico sin código nuevo en el template | Comandos implementados como bash scripts (frágil), CLI extension points (demasiado complejo) |

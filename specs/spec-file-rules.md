@@ -84,7 +84,6 @@ The `docs/` directory is **Estandar** by default, but contains **Opcional** exce
 | Path | Category | Rationale |
 |------|----------|-----------|
 | `.opencode/` (directory itself) | **Obligatorio** | Core configuration directory. |
-| `.opencode/plugins/` | **Obligatorio** | Plugin directory inherits parent category. |
 | `.opencode/*` (any other file) | **Obligatorio** | All other OpenCode config files are mandatory. |
 
 ---

@@ -10,7 +10,7 @@
 
 ## Context
 
-The SDD pipeline plugin (`sdd-pipeline.ts`, 665 lines — historical; since FEV-27 #80 the plugin is 27 lines — see CHANGELOG v2.1.1) maps user intents to commands via the `INTENT_PATTERNS` constant (lines 62–135 in the pre-refactor version, see ADR-013). This map is hardcoded: every new command requires a manual entry listing its trigger keywords.
+The SDD pipeline plugin (665 lines at its peak — historical; since FEV-27 #80 the plugin was reduced to 27 lines before removal in FEV-30 — see CHANGELOG v2.1.1) maps user intents to commands via the `INTENT_PATTERNS` constant (lines 62–135 in the pre-refactor version, see ADR-013). This map is hardcoded: every new command requires a manual entry listing its trigger keywords.
 
 This creates two problems:
 

@@ -3,7 +3,7 @@
 **Spec ID:** S5-PACKS
 **Status:** Draft
 **Phase:** v2.0.0 — Agent Ecosystem Restructuring
-**Depends on:** S2 (FileRules), S3 (CLI Commands), ADR-013 (Plugin Auto-Discovery)
+**Depends on:** S2 (FileRules), S3 (CLI Commands)
 **Author:** Fisherk2
 **Date:** 2026-08-04
 **Version:** 2.0.0
@@ -31,7 +31,7 @@ The `template/obligatorio/` directory is restructured into `core/` (infrastructu
 template/
 ├── obligatorio/
 │   ├── core/                        # Renamed from current obligatorio root content
-│   │   ├── .opencode/               # Plugin, opencode.json
+│   │   ├── .opencode/               # OpenCode config
 │   │   ├── commands/                # CLI commands
 │   │   ├── skills/                  # Skills
 │   │   └── skills-lock.json
@@ -181,33 +181,7 @@ Four primary agents (quetzalcoatl, tlaloc, mictlantecuhtli, huitzilopochtli) use
 
 ---
 
-## 5. Plugin Changes
-
-### 5.1 Code Changes
-
-| File | Change | Risk |
-|------|--------|------|
-| `validSubagents.ts` | Delete `VALID_SUBAGENTS` Set; keep `PRIMARY_AGENTS` constant | Low |
-| `defaults.ts` | Remove `VALID_SUBAGENTS` references | Low |
-| `sdd-pipeline.ts` | Change fallback from `DEFAULTS.VALID_SUBAGENTS` to `new Set(PRIMARY_AGENTS)` | Low |
-| `sdd-pipeline.ts` | Update error message from "VALID_SUBAGENTS catalog" to "agents/ directory" | Low |
-| `defaults.test.ts` | Update tests to remove VALID_SUBAGENTS assertions | Low |
-
-### 5.2 Auto-Discovery Impact
-
-The auto-discovery system (ADR-013) already scans `agents/` for subagent registration. With the pack system, agents are in `packs/<pack-name>/` subdirectories. The discovery function must be updated to recursively scan `packs/` subdirectories:
-
-```
-agents/ (or template/obligatorio/packs/)
-├── main/           → discovered as primary agents
-├── writers/        → discovered as subagents
-├── software-development/ → discovered as subagents
-└── ...
-```
-
----
-
-## 6. CONTRIBUTING.md Updates
+## 5. CONTRIBUTING.md Updates
 
 ### 6.1 "Add a New Agent" Section
 
@@ -225,7 +199,7 @@ agents/ (or template/obligatorio/packs/)
 
 ---
 
-## 7. Wiki Agents.md Updates
+## 6. Wiki Agents.md Updates
 
 | Section | Change |
 |---------|--------|
@@ -236,7 +210,7 @@ agents/ (or template/obligatorio/packs/)
 
 ---
 
-## 8. Boundaries
+## 7. Boundaries
 
 ### Always
 
@@ -258,7 +232,7 @@ agents/ (or template/obligatorio/packs/)
 
 ---
 
-## 9. Success Criteria
+## 8. Success Criteria
 
 | ID | Criterion | Test Method |
 |----|-----------|-------------|
@@ -275,7 +249,7 @@ agents/ (or template/obligatorio/packs/)
 
 ---
 
-## 10. Open Questions
+## 9. Open Questions
 
 1. **Pack overlap:** Should an agent be allowed in multiple packs? Current decision: no, single assignment only.
 2. **Custom packs:** Should users be able to create custom packs? Deferred to v2.1.0.
@@ -284,7 +258,7 @@ agents/ (or template/obligatorio/packs/)
 
 ---
 
-## 11. Related Specifications
+## 10. Related Specifications
 
 - [spec-file-rules.md](./spec-file-rules.md) — File classification system (Obligatorio/Estándar/Opcional)
 - [spec-cli-commands.md](./spec-cli-commands.md) — CLI commands and installation modes
@@ -292,7 +266,7 @@ agents/ (or template/obligatorio/packs/)
 
 ---
 
-## 12. Changelog
+## 11. Changelog
 
 | Version | Date | Changes |
 |---------|------|---------|

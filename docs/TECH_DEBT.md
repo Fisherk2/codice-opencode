@@ -1,7 +1,7 @@
 # Technical Debt — Códice
 
 **Last updated:** 2026-09-21
-**Status:** v2.1.2 Released (2026-08-28) — Hotfix: docs-update delegation fix + tech debt reorg — 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production `src/` · Branch `hotfix/opencode-v2-migrate`: Fase-2 V2-native permissions migration in progress (4 deferred Important findings below)
+**Status:** v2.1.2 Released (2026-08-28) — Hotfix: docs-update delegation fix + tech debt reorg — 1935 tests, 31/31 E2E, coverage ≥95% production `src/` · Branch `hotfix/opencode-v2-migrate`: Fase-2 V2-native permissions migration in progress (4 deferred Important findings below)
 **Current version:** v2.1.2
 **Next version:** v2.1.3 (hotfix Opencode V2, planned)
 
@@ -63,7 +63,7 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
   - I4: Flag-based guard replaces fragile string-matching for orphan detection
   - S1: Removed dead `staging_cleanup` variant from ProgressCallback
   - S2: Added staging/backup patterns to `template/estandar/gitignore`
-- 1935 tests / 0 fail, 31/31 E2E, 55/55 plugin integration, coverage ≥95%
+- 1935 tests / 0 fail, 31/31 E2E, coverage ≥95%
 
 ---
 
@@ -104,7 +104,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | **TD-V2-51** | Missing staging_cleanup event | Debt | 1h → 0.5h | Low | `fix21-missing-staging-cleanup-event.md` |
 
 **Code review (commit `a2964fd`):** 1 Critical + 4 Important + 3 Suggestions — todos aplicados.
-**Metrics finales:** 1935 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors.
+**Metrics finales:** 1935 tests, 31/31 E2E, just check 0 errors.
 
 #### FEV-28: Infrastructure & Performance ✅ Completo (2026-08-21)
 
@@ -122,7 +122,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | — | docs-update delegation fix | Fix | — | Low | Explicit `docs-writer` and `technical-writer` subagent references |
 | — | Tech debt reorg | Chore | — | Low | v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4 |
 
-**Metrics:** 1935 tests, 31/31 E2E, 55/55 plugin integration.
+**Metrics:** 1935 tests, 31/31 E2E.
 
 ### v2.1.3 (Hotfix Opencode V2 — alcance en triaje)
 
@@ -181,7 +181,7 @@ estimado, riesgo evaluado).
 | v1.x debt | ✅ All resolved |
 | v2.0.0 debt | ✅ All resolved |
 | v2.1.0 debt | ✅ All resolved (4 new commands, SDD intent auto-discovery, bilingual intents, agent delegation, CI/CD hardening) |
-| v2.1.1 | ✅ Released — FEV-26+27+28 — 1935 tests, 55/55 plugin integration |
+| v2.1.1 | ✅ Released — FEV-26+27+28 — 1935 tests |
 | v2.1.3 backlog | Hotfix Opencode V2 — alcance en triaje + 4 hallazgos Fase-2 diferidos (TD-V2-93-f2..96) |
 | v2.1.4 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.1.5 backlog | 4 items (4 debt) — 12-16h |

@@ -18,7 +18,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - Flags no-interactivos: `--dest`, `--force`, `--mode`.
   - Publicación npm como método oficial de distribución (`bunx @fisherk2-dev/codice`).
   - Gobernanza de agentes: regla de no-assumption (preguntar antes de actuar) y delegación-first para los 6 agentes primarios.
-  - Restricciones de comandos destructivos: 53 patrones bash bloqueados en dos capas (plugin sdd-pipeline.ts + opencode.json).
+  - Restricciones de comandos destructivos: patrones bash bloqueados vía la configuración de permisos `opencode.json`.
   - 9 MCP servers pre-configurados (3 habilitados por defecto: context7, vercel-grep, gitmcp).
   - Subagente obsidian-vault-writer + 3 skills de Obsidian para administración de vaults.
   - ISP split: `IFileSystem` (6 métodos) + `IStagingSystem` (4 métodos) para segregación de interfaces.
@@ -28,7 +28,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - Formato `.codice-version` v2.0: incluye `installedPacks`, `installedAt`, `optionalSelections?`.
   - Update modes: Option A (solo packs actuales) y Option B (agregar packs con instalados bloqueados).
   - **v2.1:** Cuatro nuevos slash commands: `/sync` (sincronización bidireccional de git con 4 modos y 4 estrategias de resolución de conflictos), `/migrate` (análisis de migración de stack técnico con fases y rollback), `/deploy` (automatización post-`/ship` para generar branch protection, templates de PR, pipelines CI/CD), `/analyze` (análisis arquitectónico de 8 dimensiones que alimenta `docs/TECH_DEBT.md`).
-  - **v2.1:** Auto-discovery de intents en SDD plugin: detección basada en filesystem de palabras clave de comandos reemplaza el mapa hardcodeado `INTENT_PATTERNS`.
+  - **v2.1:** Auto-discovery de intents: detección basada en filesystem de palabras clave de comandos reemplaza el mapa hardcodeado `INTENT_PATTERNS`.
   - **v2.1:** Soporte bilingüe de intents: palabras clave de comandos funcionan tanto en inglés como en español.
   - **v2.1:** Protocolo de delegación de agentes: los seis agentes primarios analizan antes de actuar, mapean subagentes/skills requeridos, e invocan vía `task()` con instrucciones determinísticas, skills a cargar y checklist de objetivos.
 - **Alcance del MVP (Out):** 
@@ -56,7 +56,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | HU-09 | Dev Experimentado | Analizar la migración de stack técnico (`/migrate`) | Planear actualizaciones de dependencias con breaking changes sin afectar la estabilidad. | Baja | `/migrate` detecta stack desde lock files, evalúa breaking changes, y genera plan estructurado con fases y rollback en `docs/MIGRATION.md`. |
 | HU-10 | Dev Experimentado | Automatizar el despliegue post-`/ship` (`/deploy`) | Configurar branch protection, PR templates y pipelines CI/CD sin edición manual. | Media | `/deploy` genera configuración desde cero (no-workflow), analiza y optimiza (betterable), o ejecuta workflow documentado (established). |
 | HU-11 | Dev Experimentado | Analizar la arquitectura del proyecto (`/analyze`) | Identificar tech debt y riesgos arquitectónicos con priorización. | Media | `/analyze` ejecuta análisis de 8 dimensiones y genera `docs/TECH_DEBT.md` con hallazgos Critical/High/Medium/Low. |
-| HU-12 | Cualquiera | Usar palabras clave de comandos en inglés o español | Interactuar con el agente en mi idioma preferido. | Baja | Los intents funcionan bilingualmente gracias al auto-discovery de SDD plugin. |
+| HU-12 | Cualquiera | Usar palabras clave de comandos en inglés o español | Interactuar con el agente en mi idioma preferido. | Baja | Los intents funcionan bilingualmente. |
 | HU-13 | Cualquiera | Ver cómo un agente principal delega trabajo a subagentes | Confiar en la calidad y trazabilidad de las decisiones automatizadas. | Alta | Cada `task()` incluye instrucciones determinísticas, skills a cargar y checklist de aceptación. Protocolo documentado en `docs/ARCHITECTURE.md`. |
 
 ## 4. Requisitos Funcionales
@@ -101,6 +101,6 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | 1.2.0 | 2026-08-03 | Fisherk2 | Sincronizado con v1.2.0: binarios removidos (ADR-011), .devin removido, progress bar, /help, /test, /ship, ADR-011 a ADR-013. | ✅ Aprobado |
 | 2.0.0 | 2026-08-07 | Fisherk2 | Sincronizado con v2.0.0: sistema de packs (ADR-014), installer UX v2 (ADR-015), 355 agentes en 10 packs, version-gated updates, 30 E2E scenarios, 1920 tests. | ✅ Aprobado |
 | 2.1.0-beta.1 | 2026-08-12 | Fisherk2 | Sincronizado con v2.1.0-beta.1: 4 nuevos comandos (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD plugin intent auto-discovery, bilingual intents, agent delegation protocol (FEV-25), CI/CD hardening, npm provenance SLSA v1, 31 E2E scenarios, 2052 tests. ADRs 016-020. | ✅ Aprobado |
-| 2.1.1 | 2026-08-25 | Fisherk2 | Sincronizado con v2.1.1: FEV-26+27+28 (bug #79, shell injection, manifest corrections, plugin cleanup #80, external dir permissions #81, backup integrity, staging cleanup, CI SHA-pins Node 24 + VersionComparator cache), code review hardened, 1935 tests, 31/31 E2E, 55/55 plugin integration, ~360 agents in 10 packs. | ✅ Aprobado |
+| 2.1.1 | 2026-08-25 | Fisherk2 | Sincronizado con v2.1.1: FEV-26+27+28 (bug #79, shell injection, manifest corrections, plugin cleanup #80, external dir permissions #81, backup integrity, staging cleanup, CI SHA-pins Node 24 + VersionComparator cache), code review hardened, 1935 tests, 31/31 E2E, ~360 agents in 10 packs. | ✅ Aprobado |
 
 ---

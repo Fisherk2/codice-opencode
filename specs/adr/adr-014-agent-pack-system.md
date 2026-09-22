@@ -67,7 +67,7 @@ task:
 
 - `VALID_SUBAGENTS` Set deleted from `validSubagents.ts` (keep `PRIMARY_AGENTS` constant)
 - `defaults.ts` updated to remove `VALID_SUBAGENTS` references
-- `sdd-pipeline.ts` fallback changed from `DEFAULTS.VALID_SUBAGENTS` to `new Set(PRIMARY_AGENTS)`
+- Subagent validation fallback changed from `DEFAULTS.VALID_SUBAGENTS` to `new Set(PRIMARY_AGENTS)`
 - Auto-discovery updated to recursively scan `packs/` subdirectories
 
 ## Consequences

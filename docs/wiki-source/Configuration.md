@@ -417,7 +417,6 @@ Three servers are enabled by default (`context7`, `vercel-grep`, `gitmcp`). To a
 
 ## See Also
 
-- [SDD Pipeline](SDD-Pipeline) — How the plugin orchestrates agents, blocks destructive commands, and validates subagents
 - [MCP Servers](MCP-Servers) — Pre-configured servers, activation, and per-agent control
 - [Workspace Structure](Workspace-Structure) — Directory layout and file descriptions
 - [opencode.ai/docs/configuration](https://opencode.ai/docs/configuration) — Official OpenCode configuration reference

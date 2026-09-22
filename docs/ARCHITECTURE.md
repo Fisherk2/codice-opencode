@@ -173,8 +173,6 @@ graph TD
 | `/migrate` command | CLI + Skill | Tech stack migration analysis with phases and rollback | `dependency-audit`, `deprecation-and-migration` skills |
 | `/deploy` command | CLI + Skill | Post-`/ship` deployment automation (3 modes) | `ci-cd-and-automation` skill |
 | `/analyze` command | CLI + Skill | 8-dimension architecture analysis → `TECH_DEBT.md` | `clean-ddd-hexagonal`, `design-patterns` skills |
-| Intent Auto-Discovery | Plugin (SDD) | Filesystem scan of `template/obligatorio/core/commands/*.md` for command keywords | `discoverIntents()` |
-| Bilingual Intents | Plugin (SDD) | EN/ES keyword translation via static overlay map | `translateIntent(keyword, locale)` |
 | Agent Delegation Protocol | Agent (6 primary) | Analyze → Plan → Execute before `task()` calls | `delegateToSubagent(task)` |
 
 ## Key Patterns

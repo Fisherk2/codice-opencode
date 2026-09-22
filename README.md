@@ -179,7 +179,7 @@ That's it. Bun downloads and runs the latest version automatically.
 
 > **Tip:** Use `bunx --fresh @fisherk2-dev/codice` to force download the latest version.
 
-> **Next steps:** After installation, visit the [GitHub Wiki → Getting Started](https://github.com/fisherk2/codice-opencode/wiki/Getting-Started) guide to configure models, install plugin dependencies, and start your first workflow.
+> **Next steps:** After installation, visit the [GitHub Wiki → Getting Started](https://github.com/fisherk2/codice-opencode/wiki/Getting-Started) guide to configure models and start your first workflow.
 
 ### Usage
 

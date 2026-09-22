@@ -64,7 +64,7 @@ Every agent file follows the same structure: YAML frontmatter, markdown body, an
 
 ## How to Add a New Subagent
 
-Adding a new agent only requires creating a single markdown file. The SDD plugin detects it automatically on the next session start.
+Adding a new agent only requires creating a single markdown file. OpenCode detects it automatically on the next session start.
 
 ### Step 1: Determine Agent Type
 
@@ -74,7 +74,7 @@ For this guide, we will create a **subagent** called `joke-teller`.
 
 ### Step 2: Create the Agent File
 
-Create `agents/joke-teller.md` with YAML frontmatter and a markdown body. The SDD plugin will discover this file and register `joke-teller` as a valid subagent automatically:
+Create `agents/joke-teller.md` with YAML frontmatter and a markdown body. OpenCode will discover this file and register `joke-teller` as a valid subagent automatically:
 
 ```markdown
 ---
@@ -132,4 +132,3 @@ No delegation-table updates are needed: primary agents use unified `permissions`
 
 - [OpenCode Agent Documentation](https://opencode.ai/docs/agents) — Official OpenCode agent configuration guide.
 - [Command Reference](Commands) — Slash commands that invoke primary agents.
-- [SDD Pipeline Plugin](https://github.com/fisherk2/codice-opencode) — Source for the agent validation logic.

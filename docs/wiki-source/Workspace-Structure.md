@@ -170,13 +170,10 @@ OpenCode's internal configuration directory:
 ├── agents/             # Agent definitions (symlinked from agents/)
 ├── commands/           # Command definitions (symlinked from commands/)
 ├── skills/             # Skill definitions (symlinked from skills/)
-├── plugins/            # SDD pipeline plugin
-│   ├── sdd-pipeline.ts
-│   └── README.md
 └── .gitignore
 ```
 
-The `plugins/sdd-pipeline.ts` file is the SDD Pipeline plugin entry point — a minimal safety-net plugin that blocks destructive bash commands (`tool.execute.before`). Supporting modules in `src/` hold the pattern list (`destructivePatterns.ts`) and command normalization (`normalizeBash.ts`). This is an always-present file (obligatorio) that gets updated with template releases.
+Destructive-command blocking is enforced through the `permissions` rules in `opencode.json` rather than a plugin.
 
 ---
 
@@ -186,7 +183,7 @@ The template organizes files into three categories that determine how they behav
 
 | Category | Behavior | Examples |
 |----------|----------|----------|
-| **Obligatorio** | Always present, updated on every install | `opencode.json`, `agents/`, `commands/`, `skills/`, `.opencode/plugins/` |
+| **Obligatorio** | Always present, updated on every install | `opencode.json`, `agents/`, `commands/`, `skills/` |
 | **Estándar** | Created if missing, preserved if present | `README.md`, `CONTRIBUTING.md`, `docs/`, `specs/`, `tasks/` |
 | **Opcional** | Installed only if you choose them | `Dockerfile`, `Justfile`, `.gitmessage` |
 

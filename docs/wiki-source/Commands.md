@@ -218,7 +218,7 @@ Invoke @skills/spec-driven-development/SKILL.md to scaffold...
 
 ## How to Add a New Command
 
-Adding a new slash command requires creating the command file, registering it in the SDD plugin, and updating the orchestration documentation. Follow these steps:
+Adding a new slash command requires creating the command file and updating the orchestration documentation. Follow these steps:
 
 ### Step 1: Create the Command File
 
@@ -282,4 +282,3 @@ Restart your OpenCode session so it recognizes the new command file.
 
 - [OpenCode Command Documentation](https://opencode.ai/docs/commands) — Official OpenCode command configuration guide.
 - [Agent Reference](Agents) — Primary agents that execute each command.
-- [SDD Pipeline Plugin](https://github.com/fisherk2/codice-opencode) — Source for command registration and intent detection.

@@ -82,7 +82,7 @@ After reinstalling, your `.codice-version` will record v2.0+ and future updates 
 
 **Symptom:** The installer fails partway through with an error like:
 ```
-Error: Permission denied at /path/to/destination/.opencode/plugins/sdd-pipeline.ts
+Error: Permission denied at /path/to/destination/opencode.json
 ```
 or the CLI exits with a non-zero code without copying any files.
 
@@ -153,7 +153,7 @@ bunx @fisherk2-dev/codice --dest my-project --project
 
 | Classification | Behavior in Update Mode |
 |---------------|------------------------|
-| **Mandatory** (`obligatorio/`) | Always overwritten — core configuration, agents, commands, plugins |
+| **Mandatory** (`obligatorio/`) | Always overwritten — core configuration, agents, commands |
 | **Standard** (`estandar/`) | **Only copied if the file does not exist** in the destination. If it already exists, it is preserved as-is. |
 | **Optional** (`opcional/`) | Skipped entirely — never touched during updates |
 
