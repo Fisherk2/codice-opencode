@@ -157,10 +157,19 @@ describe("Release Workflow Configuration", () => {
 	test("smoke test retries for ~7.5 minutes to ride out registry propagation lag", () => {
 		// Registry read replicas can lag several minutes behind a successful
 		// publish; a short window produces false negatives (run 35715057975).
-		// Pin the widened 30 x 15s window, tolerating whitespace variations.
+		// Pin the widened window, tolerating whitespace variations.
 		expect(releaseYaml).toMatch(/ATTEMPTS=30/);
 		expect(releaseYaml).toMatch(/seq\s+1\s+"\$ATTEMPTS"/);
+		expect(releaseYaml).toMatch(/sleep\s+15/);
 		expect(releaseYaml).toMatch(/elapsed=\$\(\(\s*\(i\s*-\s*1\)\s*\*\s*15\s*\)\)/);
+
+		// Derive the window from the pinned constants so the test states the
+		// intent ("~7.5 min") instead of a magic number: 30 attempts x 15s = 450s.
+		const attempts = Number(releaseYaml.match(/ATTEMPTS=(\d+)/)?.[1]);
+		const sleepSeconds = Number(releaseYaml.match(/sleep\s+(\d+)/)?.[1]);
+		expect(attempts).toBe(30);
+		expect(sleepSeconds).toBe(15);
+		expect(attempts * sleepSeconds).toBe(450);
 	});
 
 	// --- Security hardening ---
