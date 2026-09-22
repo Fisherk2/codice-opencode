@@ -7,11 +7,12 @@ import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, createProgressCallback, wrapMergeError } from "../helpers";
+import { isLegacyVersion } from "../legacyBanner";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { parseVersionData } from "../versionData";
 import { isPreV2Version, resolveUpdatePacks } from "./updateFlow";
-import { finishUpdate, maybeConfirmUpdate } from "./updateHelpers";
+import { buildPluginRemnantMessage, finishUpdate, maybeConfirmUpdate } from "./updateHelpers";
 import { notifyIfUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
 
 /**
@@ -73,6 +74,14 @@ export class UpdateWorkspaceUseCase {
 		// files are all treated as "must reinstall" — never update blindly.
 		const localVersion = await this.readInstalledVersion();
 		if (localVersion === null) return success(undefined);
+
+		// Pre-2.1.3 installs carry SDD plugin files the updater cannot
+		// remove: warn with the exact remnant list. Placed before the
+		// confirm prompt so Option A, Option B, and non-interactive
+		// updates (all flowing through here) inform the user up front.
+		if (isLegacyVersion(localVersion.version)) {
+			this.userPrompt.showWarning(buildPluginRemnantMessage());
+		}
 
 		// Ask for confirmation if not forced. Defaults to Yes so unattended
 		// sessions can accept the update with a single keystroke (plan Phase 4).

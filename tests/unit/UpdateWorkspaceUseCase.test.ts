@@ -318,4 +318,69 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 		expect(result.ok).toBe(true);
 		expect(prompt.warnings.join("\n")).not.toContain("Opencode Legacy only");
 	});
+
+	test.each(["2.0.0", "2.1.2"])(
+		"should warn about the legacy plugin remnant on update from %s (< 2.1.3)",
+		async (version) => {
+			const mergeEngine = new CaptureMergeEngine();
+			const fs = new FakeFileSystem();
+			fs.versionFileContent = JSON.stringify({
+				version,
+				installedPacks: ["software-development"],
+				installedAt: "2026-01-01T00:00:00.000Z",
+			});
+			const prompt = new FakeUserPrompt();
+			const useCase = new UpdateWorkspaceUseCase(
+				fs,
+				mergeEngine,
+				prompt,
+				new FakeGitHubClient(),
+				new FakeVersionComparator(),
+				BUNDLED_TEST_VERSION,
+			);
+
+			const result = await useCase.execute("/tmp/fake-dest", { force: true });
+
+			expect(result.ok).toBe(true);
+			const warnings = prompt.warnings.join("\n");
+			expect(warnings).toContain("remnant");
+			for (const file of [
+				".opencode/plugins/sdd-pipeline.ts",
+				".opencode/plugins/src/destructivePatterns.ts",
+				".opencode/plugins/src/normalizeBash.ts",
+				".opencode/plugins/README.md",
+				".opencode/plugins/tsconfig.json",
+			]) {
+				expect(warnings).toContain(file);
+			}
+			expect(warnings).toContain("Do NOT delete the plugins/ directory itself");
+			expect(warnings).toContain("third-party plugins");
+		},
+	);
+
+	test("should show no legacy warnings on update from 2.1.3", async () => {
+		const mergeEngine = new CaptureMergeEngine();
+		const fs = new FakeFileSystem();
+		fs.versionFileContent = JSON.stringify({
+			version: "2.1.3",
+			installedPacks: ["software-development"],
+			installedAt: "2026-01-01T00:00:00.000Z",
+		});
+		const prompt = new FakeUserPrompt();
+		const useCase = new UpdateWorkspaceUseCase(
+			fs,
+			mergeEngine,
+			prompt,
+			new FakeGitHubClient(),
+			new FakeVersionComparator(),
+			"2.1.4",
+		);
+
+		const result = await useCase.execute("/tmp/fake-dest", { force: true });
+
+		expect(result.ok).toBe(true);
+		const warnings = prompt.warnings.join("\n");
+		expect(warnings).not.toContain("remnant");
+		expect(warnings).not.toContain("Opencode Legacy only");
+	});
 });

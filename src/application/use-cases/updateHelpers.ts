@@ -16,6 +16,34 @@ import type { IUserPrompt } from "../ports/IUserPrompt";
 import type { UpdateWorkspaceOptions } from "./UpdateWorkspaceUseCase";
 
 /**
+ * Destination-relative paths of the SDD plugin shipped by installers
+ * <= 2.1.2 (tag v2.1.2: template/obligatorio/core/.opencode/plugins/*,
+ * spread to the destination root by the "core" source grouping). v2.1.3
+ * removed the plugin from the template, so these files survive an update
+ * as unmanaged remnants.
+ */
+export const LEGACY_PLUGIN_REMNANT_FILES: readonly string[] = [
+	".opencode/plugins/sdd-pipeline.ts",
+	".opencode/plugins/src/destructivePatterns.ts",
+	".opencode/plugins/src/normalizeBash.ts",
+	".opencode/plugins/README.md",
+	".opencode/plugins/tsconfig.json",
+];
+
+/**
+ * Build the advisory shown when updating from a pre-2.1.3 install whose
+ * SDD plugin files survive the update as unmanaged remnants.
+ */
+export function buildPluginRemnantMessage(): string {
+	return [
+		"Legacy plugin remnant: v2.1.3 removed the SDD plugin, but these files from your previous install remain and must be deleted manually:",
+		...LEGACY_PLUGIN_REMNANT_FILES,
+		"(plus .opencode/plugins/sdd-workflow-test.md if you installed it as an optional file)",
+		"Do NOT delete the plugins/ directory itself — it may contain third-party plugins.",
+	].join("\n");
+}
+
+/**
  * Ask the user for confirmation when the update is not forced.
  * Defaults to Yes so unattended sessions can accept the update
  * with a single keystroke (plan Phase 4).
