@@ -23,9 +23,7 @@ import {
 	getRulesByCategory,
 	isRuleSelected,
 } from "../../domain/entities/FileRuleManifest";
-import type { Result } from "../../domain/types/Result";
 import { promptForOptionals } from "../helpers";
-import { maybePrintLegacyBanner } from "../legacyBanner";
 import { promptForPackSelection } from "../packOptions";
 import { type BaseInstallOptions, InstallUseCaseBase } from "./InstallUseCaseBase";
 
@@ -36,19 +34,6 @@ export type { BaseInstallOptions };
  * All files are treated as mandatory regardless of their manifest category.
  */
 export class CleanInstallUseCase extends InstallUseCaseBase {
-	/**
-	 * FEV-30: wire the Opencode Legacy banner before the inherited flow's
-	 * first interactive prompt (confirmOverwrite); the invariant install
-	 * flow then runs via the base template method.
-	 */
-	override async execute(
-		destinationPath: string,
-		options: BaseInstallOptions = {},
-	): Promise<Result<void, Error>> {
-		await maybePrintLegacyBanner(this.fileSystem, this.userPrompt);
-		return await super.execute(destinationPath, options);
-	}
-
 	/**
 	 * Pack selection: force=true auto-selects all packs (no interaction);
 	 * otherwise shows the interactive menu with the default pack pre-selected.
