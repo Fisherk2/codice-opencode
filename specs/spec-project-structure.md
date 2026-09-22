@@ -37,6 +37,7 @@ codice-opencode/
 │   │   ├── installSummary.ts      # Install summary screen computation
 │   │   ├── packOptions.ts         # Pack selection option definitions
 │   │   ├── postInstall.ts         # Post-installation orchestration (gitignore, symlinks, version file)
+│   │   ├── versionData.ts         # Pure .codice-version parser shared by update flow and helpers
 │   │   ├── use-cases/
 │   │   │   ├── CleanInstallUseCase.ts      # Mode 1: Overwrite everything
 │   │   │   ├── InstallUseCaseBase.ts       # Template Method base class for install use cases

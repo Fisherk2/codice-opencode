@@ -11,9 +11,9 @@ import { describe, expect, mock as mockFn, test } from "bun:test";
 import type { IUserPrompt } from "../../../../src/application/ports/IUserPrompt";
 import {
 	isPreV2Version,
-	parseVersionData,
 	resolveUpdatePacks,
 } from "../../../../src/application/use-cases/updateFlow";
+import { parseVersionData } from "../../../../src/application/versionData";
 
 const V2_VERSION_FILE = JSON.stringify({
 	version: "2.0.0",

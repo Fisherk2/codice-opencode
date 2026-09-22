@@ -13,7 +13,7 @@
 import type { IFileSystem } from "../../domain/ports/IFileSystem";
 import { VersionComparator } from "../../domain/services/VersionComparator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
-import { parseVersionData } from "../use-cases/updateFlow";
+import { parseVersionData } from "../versionData";
 
 /** Last Códice version shipped on the retired Opencode Legacy runtime. */
 const LEGACY_MAX_VERSION = "2.1.2";

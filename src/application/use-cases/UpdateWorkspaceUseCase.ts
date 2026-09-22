@@ -10,7 +10,8 @@ import { checkWritable, createProgressCallback, wrapMergeError } from "../helper
 import { maybePrintLegacyBanner } from "../helpers/opencodeLegacyBanner";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
-import { isPreV2Version, parseVersionData, resolveUpdatePacks } from "./updateFlow";
+import { parseVersionData } from "../versionData";
+import { isPreV2Version, resolveUpdatePacks } from "./updateFlow";
 import { finishUpdate, maybeConfirmUpdate } from "./updateHelpers";
 import { notifyIfUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
 
