@@ -131,6 +131,25 @@ describe("opencode.json — Config Schema (V2)", () => {
 			}
 		}
 	});
+
+	test("mcp servers declare explicit disabled flags by value", () => {
+		// Explicit flags (not just presence/type): the installer ships
+		// remote docs/grep helpers ON and heavyweight local toolchains OFF.
+		const servers = loadConfig().mcp?.servers ?? {};
+		const enabled = ["context7", "gitmcp", "vercel-grep"];
+		const disabled = ["codebase-memory-mcp", "chrome-devtools", "excel", "jupyter"];
+
+		for (const name of enabled) {
+			const entry = servers[name] as Record<string, unknown> | undefined;
+			expect(entry, `server ${name}`).toBeDefined();
+			expect(entry?.disabled, `server ${name}`).toBe(false);
+		}
+		for (const name of disabled) {
+			const entry = servers[name] as Record<string, unknown> | undefined;
+			expect(entry, `server ${name}`).toBeDefined();
+			expect(entry?.disabled, `server ${name}`).toBe(true);
+		}
+	});
 });
 
 describe("opencode.json — Shell Permission Deny Rules (V2)", () => {
