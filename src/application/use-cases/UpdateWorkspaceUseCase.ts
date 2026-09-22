@@ -11,6 +11,10 @@ import { isLegacyVersion } from "../legacyBanner";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { parseVersionData } from "../versionData";
+import {
+	buildNoPreviousInstallWarning,
+	buildUpdateSystemChangedWarning,
+} from "../versionGateMessages";
 import { isPreV2Version, resolveUpdatePacks } from "./updateFlow";
 import { buildPluginRemnantMessage, finishUpdate, maybeConfirmUpdate } from "./updateHelpers";
 import { notifyIfUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
@@ -149,15 +153,11 @@ export class UpdateWorkspaceUseCase {
 	private async readInstalledVersion(): Promise<WorkspaceVersion | null> {
 		const localVersion = parseVersionData(await this.fileSystem.readVersionFile());
 		if (!localVersion) {
-			await this.userPrompt.showWarning(
-				"No previous Códice installation found. Update is not available — use Clean Install or Project Install.",
-			);
+			await this.userPrompt.showWarning(buildNoPreviousInstallWarning());
 			return null;
 		}
 		if (isPreV2Version(localVersion)) {
-			await this.userPrompt.showWarning(
-				`Detected v${localVersion.version} installation. The update system has changed in v2.0.0. Please reinstall using Clean Install or Project Install to adopt the new pack system.`,
-			);
+			await this.userPrompt.showWarning(buildUpdateSystemChangedWarning(localVersion.version));
 			return null;
 		}
 		return localVersion;
