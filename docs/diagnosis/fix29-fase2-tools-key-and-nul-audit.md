@@ -114,6 +114,14 @@ propio validador, que es lo que hace ahora
    mapa `tools:` V1, que V2 ignora y el validador rechaza. La spec §6/§7 quedó
    actualizada y el CHANGELOG lo registra en `### Removed`. Su equivalente vigente
    es `scripts/migrate-v1-to-v2-permissions.ts`.
+3. **Deuda diferida de Fase-2 — registrada en `docs/TECH_DEBT.md` (v2.1.3).**
+   La auditoría de arquitectura (ver ADR-021) diferidió cuatro hallazgos de
+   prioridad Important, rastreados como `TD-V2-93-f2..TD-V2-96`:
+   emisión write-safe atómica del codemod, gap de superficie del escaneo de
+   higiene (`SCAN_ROOTS` + allowlist sin extensión), punto ciego del invariant
+   de brake (`mode: subagent` sin `permissions:` escapa el chequeo CI) y los
+   pendientes del parser (pérdida de líneas en blanco internas y la semántica
+   degenerada `tools: <scalar>` → `action: "*"` sin confirmar contra OpenCode V2).
 
 ## 8. Referencias
 

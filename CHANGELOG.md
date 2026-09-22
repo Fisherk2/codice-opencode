@@ -7,18 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Dry-run-with-errors exit-code contract for the codemod CLI** (`scripts/migrate-v1-to-v2-permissions.ts`): a dry run that surfaces validation errors now exits `2` instead of `0`, so CI gating cannot silently pass a failed review; apply-with-errors remains `1` and a clean run remains `0`. See `specs/spec-agent-format-v2.md` §6.
+
 ### Fixed
 
+- **Brake emission position**: the `subagent "*": deny` chain brake is now appended after all existing permission rules instead of potentially landing mid-block.
+- **Action/effect quoting + validation**: emitted `action:`/`effect:` values are quoted consistently and validated against the known-action set before emission.
+- **Depth fail-loud**: deeply nested V1 `tools:` structures now fail loudly instead of silently emitting partial output.
+- **Verbatim golden test**: a golden test pins byte-preserving frontmatter emit of the codemod (`rawLine` passthrough).
 - **Legacy `tools:` frontmatter key now rejected**: The agent validator (`tests/unit/domain/helpers/agentFrontmatterValidator.ts`) no longer accepts the V1 `tools:` map or its `validatePermission` alias, closing the silent-shadowing loophole where OpenCode V2 ignores unknown keys (#91); removing the dead path lifts `coverage-check 95` from 93.34% to 96.00%.
 - **Raw NUL byte removed from the permissions duplicate-guard key**: The literal `0x00` byte is now the `\u0000` escape, so grep/ripgrep and diff/read tooling no longer treat the validator file as binary; semantics are unchanged and pinned by a separator-collision test.
 - **Mangled U+1F504 headings restored in 2 pack files**: UTF-8 bytes that had decayed into `=` + `0x04` are repaired.
 
 ### Added
 
+- **ADR-021** (`specs/adr/adr-021-codemod-parser-and-placement.md`): validator is the normative V2 schema reader; codemod parser is frozen verbatim-emit one-shot tooling; promotion trigger to `src/domain/services/` documented; schema constants stay exported in the validator helper.
+- **CI Linux suite dedup**: `just test` in `.github/workflows/ci.yml` is now gated to non-Linux runners, removing the duplicated Linux suite execution.
 - **Source-hygiene raw-control-byte guard**: New `tests/unit/quality/source-hygiene.test.ts` fails on any raw control byte (C0 minus TAB/LF/CR, plus DEL) across the tracked text surfaces (`src`, `tests`, `scripts`, `template/obligatorio/packs`).
 
 ### Removed
 
+- **`scripts/migrate-all-packs.ts` (+ `tests/unit/scripts/migrate-all-packs.test.ts`)**: the Fase-2 bulk runner was redundant after completion — all 8 pending packs were migrated; retained only in git history. A future re-migration calls `scripts/migrate-v1-to-v2-permissions.ts` directly (see `specs/spec-agent-format-v2.md` §7).
 - **Legacy `reformat-agent` producer retired**: `scripts/reformat-agent.ts`, its CLI wrapper and its test suite were deleted; the FEV-18 converter emitted the V1 `tools:` map, which OpenCode V2 ignores and the validator now rejects. Use `scripts/migrate-v1-to-v2-permissions.ts` instead.
 
 ## [2.1.2] - 2026-08-28

@@ -79,7 +79,8 @@ codice-opencode/
 │       └── versionContext.ts      # Version context classification for update gating
 ├── tests/
 │   ├── unit/                      # Domain logic tests (pure functions, entities)
-│   │   └── quality/               # Repo-wide invariant guards (e.g. source hygiene)
+│   │   ├── quality/               # Repo-wide invariant guards (e.g. source hygiene)
+│   │   └── domain/helpers/        # Test-side domain helpers (agentFrontmatterValidator — normative V2 agent schema reader; see ADR-021)
 │   ├── integration/               # Adapter tests with mocked external systems
 │   ├── e2e/                       # Shell scripts and fixtures for CLI validation (31 scenarios)
 │   └── fixtures/                  # Predefined directory trees for merge scenarios
@@ -100,6 +101,7 @@ codice-opencode/
 │   ├── spec-sdd-plugin-decoupling.md # SDD plugin decoupling specification
 │   └── spec-template.md           # Template specification
 ├── Justfile                       # Task definitions
+├── scripts/                       # One-shot repo tooling; imports only node/* + own siblings; never imported by src/; may be retired without deprecation (ADR-021)
 ├── package.json                   # Bun dependencies and scripts
 ├── tsconfig.json                  # Strict TypeScript configuration
 ├── biome.json                     # Linting and formatting rules

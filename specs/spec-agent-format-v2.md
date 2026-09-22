@@ -198,10 +198,44 @@ untouched when run twice:
 - A file that already carries a `permissions:` list is skipped, never rewritten.
 - Conversion preserves every other key and the Markdown body verbatim, so a
   second pass over the same file is a no-op.
-- The Fase-2 bulk runner (`scripts/migrate-all-packs.ts`) reports the per-pack
-  skip count, which is how a no-op re-run is observed.
+
+### Exit-code contract (amended 2026-09-21)
+
+The codemod CLI exposes distinct exit codes so CI can distinguish review from
+emission outcomes:
+
+| Outcome | Exit code |
+|---------|-----------|
+| Clean run (no errors, dry-run or apply) | `0` |
+| **Dry-run with errors** — validation failures reported, no files written | **`2`** |
+| **Apply with errors** — a real pass produced errors alongside any writes | **`1`** |
+
+The dry-run-with-errors code changed from `0` to `2`: a dry run that surfaces
+validation failures is a *finding*, not a success, and gating on exit code must
+not silently pass it. The `1` code remains reserved for apply-mode errors so a
+pass that wrote files and then failed can be told apart from a read-only failed
+review.
 
 ## 7. Reference Implementations
+
+> **Removed:** the Fase-2 bulk runner `scripts/migrate-all-packs.ts` (plus its
+> test `tests/unit/scripts/migrate-all-packs.test.ts`) retired this round —
+> all 8 pending packs were migrated and the per-pack bookkeeping made it
+> redundant. It lives only in git history (`9abb2f0`..HEAD; `git log --follow
+> scripts/migrate-all-packs.ts`).
+>
+> **A future re-migration calls the codemod directly.** One pack per invocation,
+> one commit per pack (the Fase-2 batching rule):
+>
+> ```bash
+> # review first — exit 2 if validation errors surface, nothing written
+> bun run scripts/migrate-v1-to-v2-permissions.ts --dry-run template/obligatorio/packs/<pack>
+> # then emit — exit 1 if the apply pass produced errors, 0 when clean
+> bun run scripts/migrate-v1-to-v2-permissions.ts template/obligatorio/packs/<pack>
+> ```
+>
+> Gate each pack with `tests/unit/domain/helpers/agentFrontmatterValidator.ts`
+> and the coverage gate (`just coverage-check 95`), as Fase-2 did.
 
 > **Retired:** the FEV-18 `reformat-agent` producer (`scripts/reformat-agent.ts`,
 > its CLI wrapper and its test suite) was deleted — it emitted the V1 `tools:` map,

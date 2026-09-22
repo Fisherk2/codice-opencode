@@ -1,7 +1,7 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-09-19
-**Status:** v2.1.2 Released (2026-08-28) — Hotfix: docs-update delegation fix + tech debt reorg — 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production `src/`
+**Last updated:** 2026-09-21
+**Status:** v2.1.2 Released (2026-08-28) — Hotfix: docs-update delegation fix + tech debt reorg — 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production `src/` · Branch `hotfix/opencode-v2-migrate`: Fase-2 V2-native permissions migration in progress (4 deferred Important findings below)
 **Current version:** v2.1.2
 **Next version:** v2.1.3 (hotfix Opencode V2, planned)
 
@@ -129,6 +129,19 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 
 > **Alcance reservado:** issues surgidas con la llegada de Opencode V2 (migración `permission:`/`tools:` → `permissions:` (lista nativa V2) en packs, reasignación de comandos del ciclo de revisión a tezcatlipoca). La deuda 2.1.x previamente planificada se recorre una versión (v2.1.3 → v2.1.4, v2.1.4 → v2.1.5). Items concretos por definir.
 
+#### Hallazgos de Fase-2 diferidos (2026-09-21, prioridad Important — no perdidos)
+
+Registrados durante la auditoría Fase-2 (fix29) y decidido diferirlos para no
+bloquear el cierre del hotfix. Tipos/prioridad según la tabla de arriba (Effort
+estimado, riesgo evaluado).
+
+| ID | Item | Type | Effort | Risk | Description |
+|----|------|------|--------|------|-------------|
+| **TD-V2-93-f2** | Emisión atómica write-safe en el codemod | Debt | 1h | Medium | `scripts/migrate-v1-to-v2-permissions.ts` usa `writeFileSync` in-place: un fallo a mitad de escritura deja el archivo truncado/corrupto sin rollback. Recomendado: escribir a `.tmp` y `renameSync` (mismo esquema atómico que `AtomicStager`). |
+| **TD-V2-94** | Gap de superficie en el escaneo de higiene | Debt | 2-3h | Medium | `SCAN_ROOTS` de `tests/unit/quality/source-hygiene.test.ts` omite directorios shipped pero no escaneados: `template/estandar`, `template/obligatorio/core` (`.sh`, plugin TS, Dockerfile), `template/opcional`; falta además una allowlist de archivos sin extensión (Dockerfile/Makefile/Justfile). |
+| **TD-V2-95** | Punto ciego del invariant de brake | Debt | 1h | Low | El chequeo CI del chain brake (`subagent "*": deny`) solo inspecciona bloques `permissions:` existentes; un agente con `mode: subagent` sin ningún bloque `permissions:` escapa el gate y heredaría la `ask` global sin freno. |
+| **TD-V2-96** | Pendientes cosméticos/semánticos del parser | Debt | 2h | Low | (a) El parser de líneas del codemod pierde líneas en blanco internas del frontmatter (emisión verbatim de claves, no de líneas intermedias — cosmético); (b) la degeneración `tools: <scalar>` → `action: "*"` no está confirmada contra las reglas de matching de OpenCode V2 — validar antes de promover cualquier uso del codemod. |
+
 ### v2.1.4 (Medium Effort — 9 items, 18-24h total)
 
 | ID | Item | Type | Effort | Risk | Description |
@@ -170,7 +183,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 | v2.0.0 debt | ✅ All resolved |
 | v2.1.0 debt | ✅ All resolved (4 new commands, SDD intent auto-discovery, bilingual intents, agent delegation, CI/CD hardening) |
 | v2.1.1 | ✅ Released — FEV-26+27+28 — 1935 tests, 55/55 plugin integration |
-| v2.1.3 backlog | Hotfix Opencode V2 — alcance en triaje |
+| v2.1.3 backlog | Hotfix Opencode V2 — alcance en triaje + 4 hallazgos Fase-2 diferidos (TD-V2-93-f2..96) |
 | v2.1.4 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.1.5 backlog | 4 items (4 debt) — 12-16h |
 | v2.3 backlog | 3 items (1 debt + 2 features) — 18-28h |
@@ -199,5 +212,5 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 ---
 
 *Maintained by Códice team. Update when tech debt items are added or resolved.*
-*Last updated: 2026-09-19*
+*Last updated: 2026-09-21*
 *Next deep audit: after v2.1.3 release*
