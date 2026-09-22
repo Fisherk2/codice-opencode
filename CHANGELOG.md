@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.3-beta.1] - 2026-09-22
+
 ### Changed
 
-- **FEV-29 completado (2026-09-22, #91)**: migración del template al formato nativo OpenCode V2 `permissions:` cerrada — 349 archivos, auditoría `tools:`/NUL, simplificación y review-round; salida verificada limpia con gates verdes. Siguiente: FEV-30 (remoción plugin SDD) — 📋 listo para planificarse, alcance por definir.
+- **FEV-29 completado (2026-09-22, #91)**: migración del template al formato nativo OpenCode V2 `permissions:` cerrada — 349 archivos, auditoría `tools:`/NUL, simplificación y review-round; salida verificada limpia con gates verdes. **FEV-30 completado (2026-09-22, #90)**: remoción total del plugin SDD + banner runtime `src/application/legacyBanner.ts` + hardening del review de 5 ejes (6 commits de fixes) — 20 commits en `hotfix/opencode-v2-migrate`, 1865 tests, 31/31 e2e. Release v2.1.3-beta.1.
 - **Dry-run-with-errors exit-code contract for the codemod CLI** (`scripts/migrate-v1-to-v2-permissions.ts`): a dry run that surfaces validation errors now exits `2` instead of `0`, so CI gating cannot silently pass a failed review; apply-with-errors remains `1` and a clean run remains `0`. See `specs/spec-agent-format-v2.md` §6.
 
 ### Fixed
@@ -21,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Legacy `tools:` frontmatter key now rejected**: The agent validator (`tests/unit/domain/helpers/agentFrontmatterValidator.ts`) no longer accepts the V1 `tools:` map or its `validatePermission` alias, closing the silent-shadowing loophole where OpenCode V2 ignores unknown keys (#91); removing the dead path lifts `coverage-check 95` from 93.34% to 96.00%.
 - **Raw NUL byte removed from the permissions duplicate-guard key**: The literal `0x00` byte is now the `\u0000` escape, so grep/ripgrep and diff/read tooling no longer treat the validator file as binary; semantics are unchanged and pinned by a separator-collision test.
 - **Mangled U+1F504 headings restored in 2 pack files**: UTF-8 bytes that had decayed into `=` + `0x04` are repaired.
+- **Validación de charset en `installedPacks` de `WorkspaceVersion.fromJSON`**: entradas que no son strings se rechazan en la deserialización en lugar de propagarse al estado del workspace.
 
 ### Added
 
@@ -34,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`scripts/migrate-all-packs.ts` (+ `tests/unit/scripts/migrate-all-packs.test.ts`)**: the Fase-2 bulk runner was redundant after completion — all 8 pending packs were migrated; retained only in git history. A future re-migration calls `scripts/migrate-v1-to-v2-permissions.ts` directly (see `specs/spec-agent-format-v2.md` §7).
 - **Legacy `reformat-agent` producer retired**: `scripts/reformat-agent.ts`, its CLI wrapper and its test suite were deleted; the FEV-18 converter emitted the V1 `tools:` map, which OpenCode V2 ignores and the validator now rejects. Use `scripts/migrate-v1-to-v2-permissions.ts` instead.
 - **Plugin SDD eliminado por completo (FEV-30, #90)**: fuera del template `sdd-pipeline.ts` + sus módulos (`destructivePatterns.ts`, `normalizeBash.ts`), la copia dev, las suites de tests del plugin, el fixture `sdd-workflow-test`, las recipes `*-plugin` y el job `qa-plugin` de CI, además de los specs/ADR/diagnósticos históricos `spec-sdd-plugin-decoupling`, `adr-013`, `fix15` y `fix06` con scrub de prosa en docs/wiki. El plugin fallaba en cada startup en hosts Opencode V2; su única función residual (bloqueo de comandos destructivos) ya vive en las `permission.bash` deny-lists de `template/obligatorio/core/opencode.json`, que se conservan como defensa en profundidad. Diagnóstico: `docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md`.
+- **ADR-017 retirado** (auto-discovery del plugin, superado por FEV-30) + follow-ups del review de 5 ejes: predicado `isOnLegacyLine` extraído en el banner legacy y suite de edge tests del banner ampliada de 5 a 13 casos.
 
 ### Security
 
