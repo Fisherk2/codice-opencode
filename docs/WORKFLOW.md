@@ -150,7 +150,6 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 | ID | Item | Effort | Risk | Diagnóstico |
 |----|------|--------|------|-------------|
-| **#80** | Limpieza del plugin (solo bloqueo destructivo) | 3-4h | Medium | `fix15-plugin-cleanup.md` |
 | **#81** | Permisos directorios externos (deny-by-default) | 1-2h | Medium | `fix16-external-directory-permissions.md` |
 | **TD-V2-9** | SIGINT mid-commit backup overwrite | 2-3h | Low | `fix05-sigint-backup-overwrite.md` |
 | **TD-V2-51** | Missing staging_cleanup event | 1h | Low | `fix09-missing-staging-cleanup-event.md` |
@@ -175,7 +174,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | S1 | Suggestion | Variante `staging_cleanup` muerta en ProgressCallback | Eliminada (evento se emite via VerboseLogger, no ProgressCallback) |
 | S2 | Suggestion | Faltaban patrones staging/backup en gitignore | Añadidos a `template/estandar/gitignore` |
 
-**Diagnósticos:** `fix15`, `fix16`, `fix19`, `fix21`
+**Diagnósticos:** `fix16`, `fix19`, `fix21`
 
 ---
 

@@ -78,7 +78,6 @@
 | [spec-success-criteria.md](specs/spec-success-criteria.md) | Criterios de éxito funcionales, de rendimiento y calidad |
 | [spec-code-style-summary.md](specs/spec-code-style-summary.md) | Resumen de reglas de estilo de código |
 | [spec-boundaries.md](specs/spec-boundaries.md) | Reglas Always/Ask First/Never e protocolo de delegación |
-| [spec-sdd-plugin-decoupling.md](specs/spec-sdd-plugin-decoupling.md) | Desacoplamiento del plugin SDD |
 
 ### Codebase Memory MCP
 

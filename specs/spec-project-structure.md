@@ -98,7 +98,6 @@ codice-opencode/
 │   ├── spec-cli-commands.md       # CLI commands and modes specification
 │   ├── spec-file-rules.md         # File classification rules
 │   ├── spec-installer-ux-v2.md    # Installer UX v2 specification
-│   ├── spec-sdd-plugin-decoupling.md # SDD plugin decoupling specification
 │   └── spec-template.md           # Template specification
 ├── Justfile                       # Task definitions
 ├── scripts/                       # One-shot repo tooling; imports only node/* + own siblings; never imported by src/; may be retired without deprecation (ADR-021)

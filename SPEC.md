@@ -28,7 +28,6 @@ Códice is a command-line interface (CLI) tool built with Bun that installs and 
 | [spec-boundaries.md](specs/spec-boundaries.md) | Always / Ask First / Never rules (incl. v2.1 agent delegation protocol) |
 | [spec-file-rules.md](specs/spec-file-rules.md) | File classification rules (Obligatorio/Estándar/Opcional) |
 | [spec-cli-commands.md](specs/spec-cli-commands.md) | Exhaustive CLI command and mode specification |
-| [spec-sdd-plugin-decoupling.md](specs/spec-sdd-plugin-decoupling.md) | SDD plugin auto-discovery and configuration |
 | [spec-agent-packs.md](specs/spec-agent-packs.md) | Agent pack system (8 selectable packs + 2 mandatory) |
 | [spec-installer-ux-v2.md](specs/spec-installer-ux-v2.md) | Installer UX v2 with pack wizard and version gating |
 | [spec-agent-format-v2.md](specs/spec-agent-format-v2.md) | Agent format v2 with YAML frontmatter schema |

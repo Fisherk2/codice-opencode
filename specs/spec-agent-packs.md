@@ -288,7 +288,6 @@ agents/ (or template/obligatorio/packs/)
 
 - [spec-file-rules.md](./spec-file-rules.md) — File classification system (Obligatorio/Estándar/Opcional)
 - [spec-cli-commands.md](./spec-cli-commands.md) — CLI commands and installation modes
-- [ADR-013](./adr/adr-013-plugin-auto-discovery.md) — SDD Plugin Auto-Discovery
 - [ADR-014](./adr/adr-014-agent-pack-system.md) — Agent Pack System decision record
 
 ---

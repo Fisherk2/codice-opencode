@@ -99,7 +99,6 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 
 | ID | Item | Type | Effort | Risk | Diagnóstico |
 |----|------|------|--------|------|-------------|
-| **#80** | Limpieza del plugin (solo bloqueo destructivo) | Feature | 3-4h → 2h | Medium | `fix15-plugin-cleanup.md` |
 | **#81** | Permisos directorios externos (deny-by-default) | Feature | 1-2h → 0.5h | Medium | `fix16-external-directory-permissions.md` |
 | **TD-V2-9** | SIGINT mid-commit backup overwrite | Debt | 2-3h → 1h | Low | `fix19-sigint-backup-overwrite.md` |
 | **TD-V2-51** | Missing staging_cleanup event | Debt | 1h → 0.5h | Low | `fix21-missing-staging-cleanup-event.md` |
