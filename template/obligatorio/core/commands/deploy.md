@@ -5,7 +5,7 @@ agent: mictlantecuhtli
 
 ## Pre-Flight: Detect Existing Workflow
 
-**Delegate** `deployment-engineer` and `secret-credential-engineer` subagents in parallel to detect the project's CI/CD infrastructure:
+**Delegate** `deployment-engineer` and `secrets-credential-engineer` subagents in parallel to detect the project's CI/CD infrastructure:
 
 1. **Contributing Guidelines** - Check for @CONTRIBUTING.md in project root.
 2. **Configuration Files** - Check for `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `.travis.yml`, or other CI config directories.
