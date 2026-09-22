@@ -207,6 +207,28 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 		expect(result.stderr).not.toContain("Running coverage via bun test");
 	});
 
+	it("(f) exits 1 when the global override exceeds 100", () => {
+		// `coverage < 999` is always true, so an unbounded override would fail
+		// every build with a confusing message instead of a config error.
+		const fx = makeFixture('{"global": 95}');
+
+		const result = runScript(fx, ["999"]);
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain("Invalid global threshold override");
+		expect(result.stderr).toContain("between 0 and 100");
+		expect(result.stderr).not.toContain("Running coverage via bun test");
+	});
+
+	it("(f) accepts a valid in-range override and applies it", () => {
+		const fx = makeFixture('{"global": 95}');
+
+		const result = runScript(fx, ["90"]);
+
+		expect(result.stderr).not.toContain("Invalid global threshold override");
+		expect(result.stderr).toContain("global threshold: 90%");
+	});
+
 	it("(g) inherits the global threshold when 'files' omits src/cli/main.ts", () => {
 		const fx = makeFixture('{"global": 95, "files": {}}');
 
@@ -224,13 +246,22 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 		expect(result.stderr).toContain("src/cli/main.ts threshold: 80%");
 	});
 
-	it("(g) falls back to the global threshold when the per-file value is out of range", () => {
-		const fx = makeFixture('{"global": 95, "files": {"src/cli/main.ts": -1}}');
+	for (const bad of ["-1", "101", "NaN"]) {
+		it(`(g) exits 1 when src/cli/main.ts is present but invalid (${bad})`, () => {
+			// Fail-closed asymmetry with '.global': a present-but-invalid value
+			// must not silently relax the sub-gate. A typo like 150 is a config
+			// error, not an implicit "inherit the global" request.
+			const fx = makeFixture(`{"global": 95, "files": {"src/cli/main.ts": ${bad}}}`);
 
-		const result = runScript(fx);
+			const result = runScript(fx);
 
-		expect(result.stderr).toContain("src/cli/main.ts threshold: 95%");
-	});
+			expect(result.status).toBe(1);
+			expect(result.stderr).toContain("Invalid coverage thresholds config");
+			expect(result.stderr).toContain("src/cli/main.ts");
+			expect(result.stderr).toContain("between 0 and 100");
+			expect(result.stderr).not.toContain("Running coverage via bun test");
+		});
+	}
 
 	it("does not mutate the real scripts/coverage-thresholds.json", () => {
 		const before = readFileSync(REAL_CONFIG, "utf-8");

@@ -4,7 +4,8 @@
 #
 # Thresholds live in scripts/coverage-thresholds.json — the single source of
 # truth for both the global gate and the per-file sub-gate (src/cli/main.ts).
-# An optional positional argument overrides ONLY the global threshold.
+# An optional positional argument overrides ONLY the global threshold
+# (must be within 0-100).
 #
 # Usage:
 #   bash scripts/coverage-check.sh [global-threshold]
@@ -22,6 +23,11 @@ COVERAGE_DIR="$PROJECT_DIR/coverage"
 THRESHOLDS_FILE="$SCRIPT_DIR/coverage-thresholds.json"
 MAIN_FILE_KEY="src/cli/main.ts"
 IGNORE_PATTERNS="--path-ignore-patterns=template/obligatorio/core/skills/**,skills/**"
+
+# Accepted threshold range, shared by both jq reads (single definition).
+# `select` also rejects NaN, which `. | numbers` accepts (NaN serializes to
+# null but is internally a number, so `.global | numbers` alone lets it pass).
+JQ_IN_RANGE='def in_range: . >= 0 and . <= 100;'
 
 log_info() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $*" >&2; }
 log_error() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $*" >&2; }
@@ -47,22 +53,36 @@ fi
 # comparison as `coverage < -1` / `coverage < NaN`, both false, silently
 # approving the build; `101` would make every build fail with a confusing
 # message instead of a config error.
-if ! GLOBAL_THRESHOLD="$(jq -er '.global | numbers | select(. >= 0 and . <= 100)' "$THRESHOLDS_FILE")"; then
+if ! GLOBAL_THRESHOLD="$(jq -er "$JQ_IN_RANGE .global | numbers | select(in_range)" "$THRESHOLDS_FILE")"; then
     log_error "Invalid coverage thresholds config: '.global' must be a number between 0 and 100 ($THRESHOLDS_FILE)"
     exit 1
 fi
 
-# Per-file sub-gate; falls back to the global threshold when not configured or
-# when the configured value is unusable (non-numeric / out of range).
-if ! MAIN_THRESHOLD="$(jq -er --arg key "$MAIN_FILE_KEY" '.files[$key] | numbers | select(. >= 0 and . <= 100)' "$THRESHOLDS_FILE")"; then
+# Per-file sub-gate. The two cases are deliberately asymmetric:
+#   - key ABSENT  -> inherit the (already validated) global threshold.
+#   - key PRESENT but invalid (non-numeric / out of range) -> fail closed, like
+#     '.global'. Falling back silently would let a typo (e.g. 150) relax the
+#     sub-gate with no signal, the exact fail-open this script exists to stop.
+if jq -e --arg key "$MAIN_FILE_KEY" '(.files // {}) | has($key)' "$THRESHOLDS_FILE" >/dev/null 2>&1; then
+    if ! MAIN_THRESHOLD="$(jq -er --arg key "$MAIN_FILE_KEY" "$JQ_IN_RANGE .files[\$key] | numbers | select(in_range)" "$THRESHOLDS_FILE")"; then
+        log_error "Invalid coverage thresholds config: '.files[\"$MAIN_FILE_KEY\"]' must be a number between 0 and 100 ($THRESHOLDS_FILE)"
+        exit 1
+    fi
+else
     MAIN_THRESHOLD="$GLOBAL_THRESHOLD"
 fi
 
-# Optional positional argument overrides ONLY the global threshold.
+# Optional positional argument overrides ONLY the global threshold. The range
+# guard mirrors the config check: an unbounded override (e.g. 999) would make
+# `coverage < 999` always true, failing every build with a confusing message.
 GLOBAL_OVERRIDE="${1:-}"
 if [[ -n "$GLOBAL_OVERRIDE" ]]; then
     if [[ ! "$GLOBAL_OVERRIDE" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
         log_error "Invalid global threshold override: '$GLOBAL_OVERRIDE' (expected a number)"
+        exit 1
+    fi
+    if ! jq -e -n --arg v "$GLOBAL_OVERRIDE" '($v | tonumber) <= 100' >/dev/null; then
+        log_error "Invalid global threshold override: '$GLOBAL_OVERRIDE' (expected a number between 0 and 100)"
         exit 1
     fi
     GLOBAL_THRESHOLD="$GLOBAL_OVERRIDE"
