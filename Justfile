@@ -17,6 +17,7 @@ format-check:
     bunx @biomejs/biome ci src/ tests/
 
 check:
+    bash scripts/check-ts-version.sh
     bunx @biomejs/biome ci src/ tests/ && bun run tsc --noEmit
 
 # Exclude template/obligatorio/core/skills/ and skills/ — external code with own test deps

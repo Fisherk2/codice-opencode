@@ -32,6 +32,14 @@ describe("Justfile Configuration", () => {
 		expect(justfile).toMatch(/^check:/m);
 	});
 
+	test("check recipe runs the advisory TS version check before type-checking", () => {
+		// The script is advisory (always exit 0) but must run so a resolved/declared
+		// tsc drift is visible instead of silently passing the type-check.
+		const match = justfile.match(/^check:\r?\n([\s\S]*?)(?=^\w)/m);
+		expect(match).not.toBeNull();
+		expect(match![1]).toContain("bash scripts/check-ts-version.sh");
+	});
+
 	test("has test recipe", () => {
 		expect(justfile).toMatch(/^test:/m);
 	});
