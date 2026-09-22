@@ -42,14 +42,19 @@ if ! command -v jq >/dev/null 2>&1; then
 fi
 
 # A malformed config (invalid JSON or non-numeric value) fails here instead of
-# silently falling back to a default that could pass.
-if ! GLOBAL_THRESHOLD="$(jq -er '.global | numbers' "$THRESHOLDS_FILE")"; then
-    log_error "Invalid coverage thresholds config: '.global' must be a number ($THRESHOLDS_FILE)"
+# silently falling back to a default that could pass. The range guard is part
+# of the fail-closed contract: `-1` (or NaN) would otherwise reach the
+# comparison as `coverage < -1` / `coverage < NaN`, both false, silently
+# approving the build; `101` would make every build fail with a confusing
+# message instead of a config error.
+if ! GLOBAL_THRESHOLD="$(jq -er '.global | numbers | select(. >= 0 and . <= 100)' "$THRESHOLDS_FILE")"; then
+    log_error "Invalid coverage thresholds config: '.global' must be a number between 0 and 100 ($THRESHOLDS_FILE)"
     exit 1
 fi
 
-# Per-file sub-gate; falls back to the global threshold when not configured.
-if ! MAIN_THRESHOLD="$(jq -er --arg key "$MAIN_FILE_KEY" '.files[$key] | numbers' "$THRESHOLDS_FILE")"; then
+# Per-file sub-gate; falls back to the global threshold when not configured or
+# when the configured value is unusable (non-numeric / out of range).
+if ! MAIN_THRESHOLD="$(jq -er --arg key "$MAIN_FILE_KEY" '.files[$key] | numbers | select(. >= 0 and . <= 100)' "$THRESHOLDS_FILE")"; then
     MAIN_THRESHOLD="$GLOBAL_THRESHOLD"
 fi
 
