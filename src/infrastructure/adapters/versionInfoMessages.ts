@@ -1,3 +1,4 @@
+import { isLegacyVersion, LEGACY_BANNER_MESSAGE } from "../../application/legacyBanner";
 import type { VersionDisplayInfo } from "../../application/ports/IUserPrompt";
 
 /** Note titles keyed by detected installation status. */
@@ -46,13 +47,19 @@ export function buildVersionInfoMessages(info: VersionDisplayInfo): {
 					"The update system has changed in v2.0.0. Please reinstall using Clean Install or Project Install to adopt the new pack system.",
 				].join("\n"),
 			};
-		case "v2.0+":
-			return {
-				title: STATUS_TITLES["v2.0+"],
-				message: [
-					`Current installation: v${info.version}`,
-					`Packs: ${info.installedPacks.length > 0 ? info.installedPacks.join(", ") : "(none)"}`,
-				].join("\n"),
-			};
+		case "v2.0+": {
+			const lines = [
+				`Current installation: v${info.version}`,
+				`Packs: ${info.installedPacks.length > 0 ? info.installedPacks.join(", ") : "(none)"}`,
+			];
+			// Legacy installs (< 2.1.3) predate native Opencode V2 support:
+			// warn here, before the mode menu, so the deprecation is visible
+			// before the user commits to a mode (single source — the update
+			// flow does not repeat it).
+			if (info.version !== null && isLegacyVersion(info.version)) {
+				lines.push(LEGACY_BANNER_MESSAGE);
+			}
+			return { title: STATUS_TITLES["v2.0+"], message: lines.join("\n") };
+		}
 	}
 }

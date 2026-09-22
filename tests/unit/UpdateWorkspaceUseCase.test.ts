@@ -294,4 +294,28 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 		expect(prompt.warnings.join(" ")).toContain("update system has changed");
 		expect(mergeEngine.capturedRules.length).toBe(0);
 	});
+
+	test("should not repeat the Opencode Legacy warning on update from 2.1.2 (detection banner owns it)", async () => {
+		const mergeEngine = new CaptureMergeEngine();
+		const fs = new FakeFileSystem();
+		fs.versionFileContent = JSON.stringify({
+			version: "2.1.2",
+			installedPacks: ["software-development"],
+			installedAt: "2026-01-01T00:00:00.000Z",
+		});
+		const prompt = new FakeUserPrompt();
+		const useCase = new UpdateWorkspaceUseCase(
+			fs,
+			mergeEngine,
+			prompt,
+			new FakeGitHubClient(),
+			new FakeVersionComparator(),
+			BUNDLED_TEST_VERSION,
+		);
+
+		const result = await useCase.execute("/tmp/fake-dest", { force: true });
+
+		expect(result.ok).toBe(true);
+		expect(prompt.warnings.join("\n")).not.toContain("Opencode Legacy only");
+	});
 });

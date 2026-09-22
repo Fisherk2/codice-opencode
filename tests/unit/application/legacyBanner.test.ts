@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { maybePrintLegacyBanner } from "../../../src/application/legacyBanner";
+import { isLegacyVersion, maybePrintLegacyBanner } from "../../../src/application/legacyBanner";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 
@@ -134,5 +134,26 @@ describe("maybePrintLegacyBanner", () => {
 		await maybePrintLegacyBanner(createLoader("not-json{"), prompt);
 
 		expect(warnings).toEqual([]);
+	});
+});
+
+describe("isLegacyVersion", () => {
+	test.each(["2.0.0", "2.1.0", "2.1.1", "2.1.2"])(
+		"version %s (< 2.1.3) is on the legacy line",
+		(version) => {
+			expect(isLegacyVersion(version)).toBe(true);
+		},
+	);
+
+	test.each(["2.1.3", "2.1.3-beta.1", "2.1.4", "2.1.10", "3.0.0"])(
+		"version %s (>= 2.1.3) is not on the legacy line",
+		(version) => {
+			expect(isLegacyVersion(version)).toBe(false);
+		},
+	);
+
+	test("invalid version degrades to false (fail-open)", () => {
+		expect(isLegacyVersion("abc")).toBe(false);
+		expect(isLegacyVersion("")).toBe(false);
 	});
 });

@@ -20,26 +20,26 @@
 
 import type { IFileSystem } from "../domain/ports/IFileSystem";
 import { VersionComparator } from "../domain/services/VersionComparator";
-import type { Result } from "../domain/types/Result";
-import type { RemoteVersionStatus } from "../domain/types/version";
 import type { IUserPrompt } from "./ports/IUserPrompt";
 import { parseVersionData } from "./versionData";
 
 /** Last Códice version shipped on the retired Opencode Legacy runtime. */
 const LEGACY_MAX_VERSION = "2.1.2";
 
-const LEGACY_BANNER_MESSAGE =
+export const LEGACY_BANNER_MESSAGE =
 	"⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support";
 
 /**
- * Is the installed version on the retired legacy line (its version at or
- * below the threshold)?
+ * Is the given installed version on the retired legacy line (at or below
+ * the threshold)?
  *
  * compare() reports from the remote's perspective: with the threshold as
  * "remote", "ahead" (threshold > installed) and "equal" both mean the
- * install sits on the legacy line and deserves the warning.
+ * install sits on the legacy line and deserves the warning. Invalid
+ * versions fail the comparison and degrade to false (fail-open).
  */
-function isOnLegacyLine(comparison: Result<RemoteVersionStatus, Error>): boolean {
+export function isLegacyVersion(version: string): boolean {
+	const comparison = new VersionComparator().compare(version, LEGACY_MAX_VERSION);
 	return comparison.ok && (comparison.value === "ahead" || comparison.value === "equal");
 }
 
@@ -66,8 +66,7 @@ export async function maybePrintLegacyBanner(
 		const installed = parseVersionData(await fileSystem.readVersionFile());
 		if (installed === null) return;
 
-		const comparison = new VersionComparator().compare(installed.version, LEGACY_MAX_VERSION);
-		if (isOnLegacyLine(comparison)) {
+		if (isLegacyVersion(installed.version)) {
 			userPrompt.showWarning(LEGACY_BANNER_MESSAGE);
 		}
 	} catch {

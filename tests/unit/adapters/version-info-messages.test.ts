@@ -58,4 +58,29 @@ describe("buildVersionInfoMessages", () => {
 
 		expect(buildVersionInfoMessages(info).message).toContain("(none)");
 	});
+
+	test.each(["2.0.0", "2.1.0", "2.1.1", "2.1.2"])(
+		"v2.0+ with legacy version %s (< 2.1.3) appends the Opencode Legacy deprecation warning",
+		(version) => {
+			const info: VersionDisplayInfo = { version, installedPacks: [], status: "v2.0+" };
+
+			const result = buildVersionInfoMessages(info);
+
+			expect(result.title).toContain("v2.0+ Installation Detected");
+			expect(result.message).toContain(
+				"⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support",
+			);
+		},
+	);
+
+	test.each(["2.1.3", "2.1.4", "2.1.10", "3.0.0"])(
+		"v2.0+ with version %s (>= 2.1.3) shows no deprecation warning",
+		(version) => {
+			const info: VersionDisplayInfo = { version, installedPacks: [], status: "v2.0+" };
+
+			const result = buildVersionInfoMessages(info);
+
+			expect(result.message).not.toContain("Opencode Legacy only");
+		},
+	);
 });
