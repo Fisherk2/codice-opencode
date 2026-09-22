@@ -38,87 +38,49 @@
  * written; every fixture owns its own config inside the temp tree.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import {
-	chmodSync,
-	copyFileSync,
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	symlinkSync,
-	writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, expect, it } from "bun:test";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+	createScriptFixture,
+	expectFakeBunInvoked,
+	makePathWithout,
+	type RunResult,
+	runScript,
+	type ScriptFixture,
+	setupScriptTestBase,
+} from "./harness";
 
 const REPO_ROOT = join(import.meta.dir, "..", "..", "..");
 const REAL_SCRIPT = join(REPO_ROOT, "scripts", "coverage-check.sh");
 const REAL_CONFIG = join(REPO_ROOT, "scripts", "coverage-thresholds.json");
 
-const BASH = Bun.which("bash") ?? "bash";
+setupScriptTestBase("coverage-check-");
 
-let baseDir: string;
-
-beforeAll(() => {
-	baseDir = mkdtempSync(join(tmpdir(), "coverage-check-"));
-});
-
-afterAll(() => {
-	rmSync(baseDir, { recursive: true, force: true });
-});
-
-interface Fixture {
-	root: string;
-	script: string;
-	configPath: string;
-	binDir: string;
+interface FixtureOptions {
 	/** When set, the fake `bun` writes this lcov to --coverage-dir and exits 0. */
 	lcov?: string;
 }
 
-interface RunResult {
-	status: number;
-	stdout: string;
-	stderr: string;
-	/** Path the fake `bun` would write when it intercepts the coverage phase. */
-	markerPath: string;
-}
-
 /**
- * Build an isolated project tree with a copy of the real script. When
+ * Builds an isolated project tree with a copy of the real script. When
  * `config` is null the thresholds file is intentionally left absent (case a).
  * When `options.lcov` is set, the fake `bun` writes it to the `--coverage-dir`
  * it receives and exits 0 (exercising the Python analysis phase); otherwise it
  * exits 1 and the coverage phase is only intercepted.
  */
-function makeFixture(config: string | null, options: { lcov?: string } = {}): Fixture {
-	const root = mkdtempSync(join(baseDir, "case-"));
-	const scriptsDir = join(root, "scripts");
-	const binDir = join(root, "bin");
-	mkdirSync(scriptsDir, { recursive: true });
-	mkdirSync(binDir, { recursive: true });
-
-	const script = join(scriptsDir, "coverage-check.sh");
-	copyFileSync(REAL_SCRIPT, script);
-
+function makeFixture(config: string | null, options: FixtureOptions = {}): ScriptFixture {
 	// Intercepts `bun test` so the real suite never runs. It echoes to stdout
 	// and writes the FAKE_BUN_MARKER file: the script silences the fake's
 	// stderr with 2>/dev/null, so a stderr-only signal would be unobservable.
-	const fakeBunLines = [
-		"#!/usr/bin/env bash",
-		'echo "FAKE_BUN_CALLED"',
-		// biome-ignore lint/suspicious/noTemplateCurlyInString: bash parameter expansion, not a JS template literal
-		'if [ -n "${FAKE_BUN_MARKER:-}" ]; then echo "called" > "$FAKE_BUN_MARKER"; fi',
-	];
+	const fakeBunBody = ['echo "FAKE_BUN_CALLED"'];
 	if (options.lcov === undefined) {
 		// Exit 1 mirrors a failing coverage phase and keeps the error path intact.
-		fakeBunLines.push("exit 1");
+		fakeBunBody.push("exit 1");
 	} else {
 		// Emit the lcov fixture into the --coverage-dir the script passes, then
 		// exit 0 so the script reaches its Python analysis phase.
-		fakeBunLines.push(
+		fakeBunBody.push(
 			'for arg in "$@"; do',
 			'  case "$arg" in',
 			// biome-ignore lint/suspicious/noTemplateCurlyInString: bash parameter expansion, not a JS template literal
@@ -130,55 +92,18 @@ function makeFixture(config: string | null, options: { lcov?: string } = {}): Fi
 			"exit 0",
 		);
 	}
-	fakeBunLines.push("");
 
-	const fakeBun = join(binDir, "bun");
-	writeFileSync(fakeBun, fakeBunLines.join("\n"));
-	chmodSync(fakeBun, 0o755);
-
-	const configPath = join(scriptsDir, "coverage-thresholds.json");
-	if (config !== null) {
-		writeFileSync(configPath, config);
-	}
-
-	return { root, script, configPath, binDir, lcov: options.lcov };
-}
-
-/**
- * A PATH containing only the external commands the script needs before the jq
- * check (dirname/date), deliberately excluding jq. Used for case (e). Missing
- * tooling fails loudly rather than silently producing a jq-less PATH by
- * accident (which would make case (e) pass for the wrong reason).
- */
-function makeJqLessPath(root: string): string {
-	const dir = join(root, "no-jq-bin");
-	mkdirSync(dir, { recursive: true });
-	for (const cmd of ["dirname", "date"]) {
-		const real = Bun.which(cmd);
-		expect(real, `required command not found on PATH: ${cmd}`).toBeDefined();
-		symlinkSync(real as string, join(dir, cmd));
-	}
-	return dir;
-}
-
-function runScript(fx: Fixture, args: string[] = [], pathOverride?: string): RunResult {
-	const markerPath = join(fx.root, "bun-called.marker");
-	const proc = Bun.spawnSync([BASH, fx.script, ...args], {
-		env: {
-			...process.env,
-			FAKE_BUN_MARKER: markerPath,
-			...(fx.lcov === undefined ? {} : { FAKE_LCOV_CONTENT: fx.lcov }),
-			PATH: pathOverride ?? `${fx.binDir}:${process.env.PATH ?? ""}`,
-		},
-		stdout: "pipe",
-		stderr: "pipe",
+	const fx = createScriptFixture({
+		script: REAL_SCRIPT,
+		fakeBunBody,
+		...(options.lcov === undefined ? {} : { extraEnv: { FAKE_LCOV_CONTENT: options.lcov } }),
 	});
-	return {
-		status: proc.exitCode ?? -1,
-		stdout: proc.stdout.toString(),
-		stderr: proc.stderr.toString(),
-		markerPath,
-	};
+
+	if (config !== null) {
+		writeFileSync(join(fx.root, "scripts", "coverage-thresholds.json"), config);
+	}
+
+	return fx;
 }
 
 /**
@@ -187,7 +112,7 @@ function runScript(fx: Fixture, args: string[] = [], pathOverride?: string): Run
  * pass — the marker makes the interception observable and load-bearing.
  */
 function expectCoveragePhaseIntercepted(result: RunResult): void {
-	expect(existsSync(result.markerPath), "fake bun was not invoked").toBe(true);
+	expectFakeBunInvoked(result);
 	expect(result.stdout).toContain("FAKE_BUN_CALLED");
 	expect(result.stderr).toContain("bun test --coverage failed.");
 }
@@ -279,7 +204,7 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 	it("(e) exits 1 when jq is absent from PATH", () => {
 		const fx = makeFixture('{"global": 95}');
 
-		const result = runScript(fx, [], makeJqLessPath(fx.root));
+		const result = runScript(fx, [], makePathWithout(fx.root, ["dirname", "date"]));
 
 		expect(result.status).toBe(1);
 		expect(result.stderr).toContain("jq is required");
@@ -361,7 +286,9 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 		runScript(fx);
 
 		// The fixture read its own config, not the real one...
-		expect(readFileSync(fx.configPath, "utf-8")).toBe('{"global": 95}');
+		expect(readFileSync(join(fx.root, "scripts", "coverage-thresholds.json"), "utf-8")).toBe(
+			'{"global": 95}',
+		);
 		// ...and the real one is byte-identical.
 		expect(readFileSync(REAL_CONFIG, "utf-8")).toBe(before);
 	});
@@ -387,7 +314,7 @@ describe("coverage-check.sh — per-file sub-gate is fail-closed", () => {
 
 		const result = runScript(fx);
 
-		expect(existsSync(result.markerPath), "fake bun was not invoked").toBe(true);
+		expectFakeBunInvoked(result);
 		expect(result.status).toBe(1);
 		expect(`${result.stdout}${result.stderr}`).toContain(
 			"'src/cli/main.ts' not found in coverage report",
@@ -401,7 +328,7 @@ describe("coverage-check.sh — per-file sub-gate is fail-closed", () => {
 
 		const result = runScript(fx);
 
-		expect(existsSync(result.markerPath), "fake bun was not invoked").toBe(true);
+		expectFakeBunInvoked(result);
 		expect(result.status).toBe(0);
 		expect(result.stdout).toContain("PASS: Coverage meets threshold");
 	});

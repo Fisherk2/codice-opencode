@@ -28,40 +28,23 @@
  * the marker is ABSENT, proving the short-circuit happened where expected.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import {
-	chmodSync,
-	copyFileSync,
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	rmSync,
-	symlinkSync,
-	writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, expect, it } from "bun:test";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+	createScriptFixture,
+	expectFakeBunInvoked,
+	expectFakeBunNotInvoked,
+	makePathWithout,
+	runScript,
+	type ScriptFixture,
+	setupScriptTestBase,
+} from "./harness";
 
 const REPO_ROOT = join(import.meta.dir, "..", "..", "..");
 const REAL_SCRIPT = join(REPO_ROOT, "scripts", "check-ts-version.sh");
 
-const BASH = Bun.which("bash") ?? "bash";
-
-let baseDir: string;
-
-beforeAll(() => {
-	baseDir = mkdtempSync(join(tmpdir(), "check-ts-version-"));
-});
-
-afterAll(() => {
-	rmSync(baseDir, { recursive: true, force: true });
-});
-
-interface Fixture {
-	root: string;
-	script: string;
-	binDir: string;
-}
+setupScriptTestBase("check-ts-version-");
 
 interface FixtureOptions {
 	/** Raw package.json content; null => the file is left absent. */
@@ -72,81 +55,19 @@ interface FixtureOptions {
 
 const DEFAULT_PACKAGE_JSON = '{"devDependencies":{"typescript":"^7.0.2"}}';
 
-function makeFixture(options: FixtureOptions = {}): Fixture {
-	const root = mkdtempSync(join(baseDir, "case-"));
-	const scriptsDir = join(root, "scripts");
-	const binDir = join(root, "bin");
-	mkdirSync(scriptsDir, { recursive: true });
-	mkdirSync(binDir, { recursive: true });
+function makeFixture(options: FixtureOptions = {}): ScriptFixture {
+	const bunVersion = options.bunVersion === undefined ? "Version 7.0.0" : options.bunVersion;
+	const fakeBunBody = bunVersion === null ? ["exit 1"] : [`echo "${bunVersion}"`];
 
-	const script = join(scriptsDir, "check-ts-version.sh");
-	copyFileSync(REAL_SCRIPT, script);
+	const fx = createScriptFixture({ script: REAL_SCRIPT, fakeBunBody });
 
 	const packageJson =
 		options.packageJson === undefined ? DEFAULT_PACKAGE_JSON : options.packageJson;
 	if (packageJson !== null) {
-		writeFileSync(join(root, "package.json"), packageJson);
+		writeFileSync(join(fx.root, "package.json"), packageJson);
 	}
 
-	const bunVersion = options.bunVersion === undefined ? "Version 7.0.0" : options.bunVersion;
-	const fakeBunLines = ["#!/usr/bin/env bash"];
-	// Marker first: it must be written even when the fake exits 1, so the test
-	// can tell "the script reached the compiler check" from "it short-circuited".
-	// biome-ignore lint/suspicious/noTemplateCurlyInString: bash parameter expansion, not a JS template literal
-	fakeBunLines.push('if [ -n "${FAKE_BUN_MARKER:-}" ]; then echo called > "$FAKE_BUN_MARKER"; fi');
-	if (bunVersion === null) {
-		fakeBunLines.push("exit 1");
-	} else {
-		fakeBunLines.push(`echo "${bunVersion}"`);
-	}
-	fakeBunLines.push("");
-
-	const fakeBun = join(binDir, "bun");
-	writeFileSync(fakeBun, fakeBunLines.join("\n"));
-	chmodSync(fakeBun, 0o755);
-
-	return { root, script, binDir };
-}
-
-interface RunResult {
-	status: number;
-	stdout: string;
-	stderr: string;
-	/** Path the fake `bun` writes when the script reaches the compiler check. */
-	markerPath: string;
-}
-
-function runScript(fx: Fixture, pathOverride?: string): RunResult {
-	const markerPath = join(fx.root, "bun-called.marker");
-	const proc = Bun.spawnSync([BASH, fx.script], {
-		env: {
-			...process.env,
-			FAKE_BUN_MARKER: markerPath,
-			PATH: pathOverride ?? `${fx.binDir}:${process.env.PATH ?? ""}`,
-		},
-		stdout: "pipe",
-		stderr: "pipe",
-	});
-	return {
-		status: proc.exitCode ?? -1,
-		stdout: proc.stdout.toString(),
-		stderr: proc.stderr.toString(),
-		markerPath,
-	};
-}
-
-/**
- * A PATH containing only `dirname` (needed before the jq check) and no jq.
- * Missing tooling fails loudly rather than silently producing a jq-less PATH
- * by accident (which would make case (d) pass for the wrong reason).
- */
-function makeNoJqPath(root: string): string {
-	const dir = join(root, "no-jq-bin");
-	mkdirSync(dir, { recursive: true });
-	const real = Bun.which("dirname");
-	expect(real, "required command not found on PATH: dirname").toBeDefined();
-	symlinkSync(real as string, join(dir, "dirname"));
-	return dir;
+	return fx;
 }
 
 describe("check-ts-version.sh — advisory drift warning", () => {
@@ -160,7 +81,7 @@ describe("check-ts-version.sh — advisory drift warning", () => {
 
 		expect(result.status).toBe(0);
 		expect(result.stderr).not.toContain("WARNING");
-		expect(existsSync(result.markerPath), "fake bun was not invoked").toBe(true);
+		expectFakeBunInvoked(result);
 	});
 
 	it("(b) exits 0 with a warning naming both versions on a major mismatch", () => {
@@ -175,7 +96,7 @@ describe("check-ts-version.sh — advisory drift warning", () => {
 		expect(result.stderr).toContain("WARNING");
 		expect(result.stderr).toContain("6.0.3");
 		expect(result.stderr).toContain("7.0.2");
-		expect(existsSync(result.markerPath), "fake bun was not invoked").toBe(true);
+		expectFakeBunInvoked(result);
 	});
 
 	it("(c) exits 0 silently when package.json is absent", () => {
@@ -186,7 +107,7 @@ describe("check-ts-version.sh — advisory drift warning", () => {
 		expect(result.status).toBe(0);
 		expect(result.stderr).not.toContain("WARNING");
 		// Short-circuits before the compiler is ever invoked.
-		expect(existsSync(result.markerPath)).toBe(false);
+		expectFakeBunNotInvoked(result);
 	});
 
 	it("(c) exits 0 silently when package.json declares no typescript", () => {
@@ -196,17 +117,17 @@ describe("check-ts-version.sh — advisory drift warning", () => {
 
 		expect(result.status).toBe(0);
 		expect(result.stderr).not.toContain("WARNING");
-		expect(existsSync(result.markerPath)).toBe(false);
+		expectFakeBunNotInvoked(result);
 	});
 
 	it("(d) exits 0 silently when jq is absent from PATH", () => {
 		const fx = makeFixture();
 
-		const result = runScript(fx, makeNoJqPath(fx.root));
+		const result = runScript(fx, [], makePathWithout(fx.root, ["dirname"]));
 
 		expect(result.status).toBe(0);
 		expect(result.stderr).not.toContain("WARNING");
-		expect(existsSync(result.markerPath)).toBe(false);
+		expectFakeBunNotInvoked(result);
 	});
 
 	it("(e) exits 0 silently when the compiler version cannot be resolved", () => {
@@ -216,6 +137,6 @@ describe("check-ts-version.sh — advisory drift warning", () => {
 
 		expect(result.status).toBe(0);
 		expect(result.stderr).not.toContain("WARNING");
-		expect(existsSync(result.markerPath), "fake bun was not invoked").toBe(true);
+		expectFakeBunInvoked(result);
 	});
 });
