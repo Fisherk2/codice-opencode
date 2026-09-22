@@ -1,12 +1,15 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "opencode/big-pickle",
-  "small_model": "opencode/nemotron-3.5-lightning-free",
+  "formatter": true,
   "compaction": {
     "auto": true,
-    "prune": true,
-    "reserved": 10000
+    "keep": {
+      "tokens": 10000,
+    },
+    "buffer": 20000,
   },
+  "model": "opencode/big-pickle",
+  "default_agent": "huitzilopochtli",
   "agents": {
     "huitzilopochtli": {
       "model": "opencode/mimo-v2.5-free",
@@ -137,28 +140,12 @@
           "mcp-jupyter-notebook"
         ],
         "disabled": true,
-        "env": {
+        "environment": {
           "MCP_JUPYTER_SESSION_MODE": "server",
           "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
           "MCP_JUPYTER_TOKEN": "{env:MCP_JUPYTER_TOKEN}",
           "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
         }
-      },
-      "tavily": {
-        "type": "remote",
-        "url": "https://mcp.tavily.com/mcp",
-        "headers": {
-          "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
-        },
-        "disabled": true
-      },
-      "firecrawl": {
-        "type": "remote",
-        "url": "https://mcp.firecrawl.dev/v2/mcp",
-        "headers": {
-          "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
-        },
-        "disabled": true
       },
       "vercel-grep": {
         "type": "remote",
