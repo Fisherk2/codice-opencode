@@ -141,6 +141,18 @@ estimado, riesgo evaluado).
 | **TD-V2-95** | Punto ciego del invariant de brake | Debt | 1h | Low | El chequeo CI del chain brake (`subagent "*": deny`) solo inspecciona bloques `permissions:` existentes; un agente con `mode: subagent` sin ningún bloque `permissions:` escapa el gate y heredaría la `ask` global sin freno. |
 | **TD-V2-96** | Pendientes cosméticos/semánticos del parser | Debt | 2h | Low | (a) El parser de líneas del codemod pierde líneas en blanco internas del frontmatter (emisión verbatim de claves, no de líneas intermedias — cosmético); (b) la degeneración `tools: <scalar>` → `action: "*"` no está confirmada contra las reglas de matching de OpenCode V2 — validar antes de promover cualquier uso del codemod. |
 
+#### Falso verde del type-check local con TypeScript 7 en mounts que ignoran `chmod` (2026-09-22, prioridad Medium)
+
+| ID | Item | Type | Effort | Risk | Description |
+|----|------|------|--------|------|-------------|
+| **TD-V2-97** | Falso verde del type-check local (TS 7 en fuseblk/NTFS) | Debt | 1h | Medium | `just check` valida con el `tsc` global (6.0.3) en vez del declarado (7.0.2) porque el mount ignora el bit de ejecución del binario nativo. Mitigado con un warning no bloqueante (`scripts/check-ts-version.sh`). |
+
+- **Síntoma:** `just check` reporta 0 errores, pero `bun run tsc --version` resuelve el `tsc` global (6.0.3) en vez del declarado en `package.json` (7.0.2).
+- **Causa:** el binario nativo de TypeScript 7 (`node_modules/@typescript/typescript-linux-x64/lib/tsc`) queda en modo `-rw-r--r--` porque el mount `nosuid,nodev` (fuseblk/NTFS) ignora `chmod`; Bun cae entonces al `tsc` global.
+- **Impacto:** solo local. La CI (ext4) preserva el bit de ejecución y `release.yml` ejecuta la matriz de calidad antes de publicar, por lo que el falso verde no alcanza un release.
+- **Mitigación actual:** warning no bloqueante emitido por `scripts/check-ts-version.sh`, invocado al inicio de `just check`; siempre `exit 0` y degradación silenciosa si `jq`, `package.json` o el propio `tsc` no se pueden resolver.
+- **Workaround:** copiar `node_modules/@typescript/typescript-linux-x64` a un FS con ejecución (p. ej. `/tmp`) y ejecutar `lib/tsc --noEmit -p tsconfig.json` desde ahí.
+
 ### v2.1.4 (Medium Effort — 9 items, 18-24h total)
 
 | ID | Item | Type | Effort | Risk | Description |
