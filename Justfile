@@ -37,10 +37,12 @@ test-integration:
 test-coverage:
     bun test tests/ --coverage {{IGNORE_PATTERNS}}
 
-# Generate lcov coverage report and enforce minimum threshold (default: 95%)
-# Usage: just coverage-check [threshold]
-coverage-check threshold="95":
-    bash scripts/coverage-check.sh {{threshold}}
+# Generate lcov coverage report and enforce minimum thresholds read from
+# scripts/coverage-thresholds.json (single source of truth for global + per-file).
+# An optional argument overrides only the global threshold.
+# Usage: just coverage-check [global-threshold]
+coverage-check *args:
+    bash scripts/coverage-check.sh {{args}}
 
 test-watch:
     bun test tests/ --watch {{IGNORE_PATTERNS}}

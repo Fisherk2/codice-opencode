@@ -42,7 +42,7 @@
 ### Pre-Commit
 - [ ] `just check` — 0 errores (biome ci + tsc --noEmit).
 - [ ] `just test` — 0 fallos.
-- [ ] `just coverage-check 95` — 0 fallos (gate CI de cobertura ≥95%; detecta código muerto como la ruta legacy `tools:` en FEV-29).
+- [ ] `just coverage-check` — 0 fallos (umbral en `scripts/coverage-thresholds.json`; detecta código muerto como la ruta legacy `tools:` en FEV-29).
 - [ ] Sin tipos `any` en código de producción.
 - [ ] Documentación actualizada si cambió API pública.
 
