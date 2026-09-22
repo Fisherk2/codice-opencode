@@ -15,6 +15,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { parse as yamlParse } from "yaml";
 import { migrateV1ToV2Permissions, runCli } from "../../../scripts/migrate-v1-to-v2-permissions";
 
 let tmpDir: string;
@@ -486,6 +487,57 @@ tools:
 		const idx = output.indexOf("- action: subagent");
 		expect(idx).toBeGreaterThan(-1);
 		expect(output.slice(idx, idx + 120)).toContain("effect: deny");
+	});
+
+	it("emits the subagent deny brake inside the permissions list, before sibling keys", () => {
+		// Reproduction contract: the legacy map is NOT the last key. With the old
+		// trailing append, the brake was emitted after `hidden: true`, producing a
+		// dangling sequence item (`- action:` under `hidden:`) that breaks YAML.
+		// NOTE (old code): the brake was appended to `out` after the frontmatter
+		// passthrough loop, so any sibling key after the legacy map corrupted it:
+		//   permissions:
+		//     ...
+		//   hidden: true
+		//     - action: subagent   <-- dangling sequence item
+		const agent = writeAgent(
+			`---
+description: "Brake Agent"
+mode: subagent
+tools:
+  edit: allow
+hidden: true
+---
+# Brake
+`,
+			"case-20",
+		);
+
+		const result = migrateV1ToV2Permissions([join(tmpDir, "case-20")]);
+
+		expect(result.migrated).toBe(1);
+		expect(result.errors).toEqual([]);
+
+		// Independent verifier: the emitted frontmatter must be valid YAML.
+		const output = readAgent(agent);
+		const fm = output.slice(
+			output.indexOf("---") + 3,
+			output.indexOf("---", output.indexOf("---") + 3),
+		);
+		const parsed = yamlParse(fm) as {
+			permissions: Array<{ action: string; resource: string; effect: string }>;
+			hidden: boolean;
+		};
+		expect(Array.isArray(parsed.permissions)).toBe(true);
+		expect(parsed.hidden).toBe(true);
+
+		// The deny brake must sit between the last permissions: entry and the
+		// next sibling key, i.e. be the list's last element.
+		const brakeIdx = output.indexOf("- action: subagent");
+		const hiddenIdx = output.indexOf("hidden: true");
+		expect(brakeIdx).toBeGreaterThan(-1);
+		expect(brakeIdx).toBeLessThan(hiddenIdx);
+		// No subagent rule after the sibling key.
+		expect(output.slice(hiddenIdx)).not.toContain("- action: subagent");
 	});
 
 	it("does not inject subagent rules when migrating a primary", () => {

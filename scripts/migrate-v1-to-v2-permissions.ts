@@ -268,6 +268,22 @@ function migrateOneFile(filePath: string, dryRun: boolean, warnings: string[]): 
 			}
 			if (rules.some((r) => r.action === "subagent")) subagentCovered = true;
 			out.push(...emitRules(rules, filePath, warnings));
+			// Delegation brake: a mode:subagent file without subagent rules would fall
+			// back to the global `ask` in its child session, letting children launch
+			// grandchildren. Inject an explicit deny as the list's LAST element (wins
+			// over global ask). Injection only happens when no subagent rule exists,
+			// so it provably trails every rule from this map. It must be emitted here,
+			// inside the node loop: appending after the passthrough would place it
+			// after sibling keys (hidden:, color:, ...) and corrupt the YAML.
+			// Primaries are excluded (they delegate by design); explicit rules respected.
+			if (mode === "subagent" && !subagentCovered) {
+				out.push("  - action: subagent");
+				out.push('    resource: "*"');
+				out.push("    effect: deny");
+				warnings.push(
+					`${filePath}: mode:subagent without subagent rules — appended subagent *: deny to prevent delegation chains (child sessions would otherwise merge global ask)`,
+				);
+			}
 			continue;
 		}
 		if (node.key === "temperature" || node.key === "top_p") {
@@ -296,19 +312,6 @@ function migrateOneFile(filePath: string, dryRun: boolean, warnings: string[]): 
 				out.push(grand.rawLine);
 			}
 		}
-	}
-
-	// Delegation brake: a mode:subagent file without subagent rules would fall
-	// back to the global `ask` in its child session, letting children launch
-	// grandchildren. Append an explicit deny last (wins over global ask).
-	// Primaries are excluded (they delegate by design); explicit rules respected.
-	if (hasLegacyMap && mode === "subagent" && !subagentCovered) {
-		out.push("  - action: subagent");
-		out.push('    resource: "*"');
-		out.push("    effect: deny");
-		warnings.push(
-			`${filePath}: mode:subagent without subagent rules — appended subagent *: deny to prevent delegation chains (child sessions would otherwise merge global ask)`,
-		);
 	}
 
 	if (!dryRun) {
