@@ -87,8 +87,7 @@ export class UpdateWorkspaceUseCase {
 			this.userPrompt.showWarning(buildPluginRemnantMessage());
 		}
 
-		// Ask for confirmation if not forced. Defaults to Yes so unattended
-		// sessions can accept the update with a single keystroke (plan Phase 4).
+		// Ask for confirmation if not forced.
 		if (
 			!(await maybeConfirmUpdate(
 				this.fileSystem,

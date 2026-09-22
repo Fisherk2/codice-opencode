@@ -1,9 +1,6 @@
 /**
  * migrate-v1-to-v2-permissions — Codemod V1 (permission:/tools: map) to native V2 (permissions: list).
  *
- * TDD (Fase 2): these tests are written BEFORE the script exists (RED),
- * then the script is implemented to make them pass (GREEN).
- *
  * Conversion contract (opencode.ai/v2/docs/migrate-v1):
  * - `permission:` / `tools:` map  ->  `permissions:` [{action, resource, effect}]
  * - renames: bash -> shell, task -> subagent, write/patch -> edit

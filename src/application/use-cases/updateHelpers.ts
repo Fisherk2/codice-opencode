@@ -22,7 +22,7 @@ import type { UpdateWorkspaceOptions } from "./UpdateWorkspaceUseCase";
  * removed the plugin from the template, so these files survive an update
  * as unmanaged remnants.
  */
-export const LEGACY_PLUGIN_REMNANT_FILES: readonly string[] = [
+const LEGACY_PLUGIN_REMNANT_FILES: readonly string[] = [
 	".opencode/plugins/sdd-pipeline.ts",
 	".opencode/plugins/src/destructivePatterns.ts",
 	".opencode/plugins/src/normalizeBash.ts",
