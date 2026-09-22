@@ -1,12 +1,12 @@
 # Implementation Plan: FEV-30 — Remove SDD Plugin + Opencode Legacy Deprecation Banner (Issue #90)
 
 > **COMPLETADO 2026-09-22.** FEV-30 cerrado en `hotfix/opencode-v2-migrate` —
-> 10 commits atómicos (F1 deletes, F2 CI strip, F3 banner TDD, F4 docs),
-> gates verdes (`just check` 0, `just test` 1848/0, coverage 96.19%,
-> e2e 31/31). Issue #90. Este plan queda como historia; no ejecutar.
-> Siguiente: preparar release v2.1.3.
+> 20 commits (F1 deletes, F2 CI strip, F3 banner TDD, F4 docs, review 5 ejes + 6 fixes),
+> gates verdes (`just check` 0, `just test` 1865/0, e2e 31/31).
+> Trabajo FEV-30 HEAD `7cdb65d`. Issue #90. Este plan queda como historia; no ejecutar.
+> Release: v2.1.3-beta.1 lista para lanzarse (sin push; pendiente decisión de release).
 
-> **Estado:** listo para ejecutar en rama `hotfix/opencode-v2-migrate` (target release **v2.1.3**).
+> **Estado:** ✅ completado y cerrado en rama `hotfix/opencode-v2-migrate` (release **v2.1.3-beta.1**).
 > **Issue:** [#90](https://github.com/Fisherk2/codice-opencode/issues/90)
 > **Diagnóstico:** [`docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md`](../docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md)
 > **Dependencias:** Ninguna — FEV-29 ya completó la migración a `permissions:` nativo V2 (2026-09-22).

@@ -1,9 +1,10 @@
 # FEV-30 — Remove SDD Plugin + Opencode Legacy Banner — Todo
 
 > **COMPLETADO 2026-09-22.** FEV-30 cerrado en `hotfix/opencode-v2-migrate` —
-> 10 commits atómicos (F1 deletes, F2 CI strip, F3 banner TDD, F4 docs),
-> gates verdes (`just check` 0, `just test` 1848/0, coverage 96.19%,
-> e2e 31/31). Issue #90. Siguiente: preparar release v2.1.3.
+> 20 commits (F1 deletes, F2 CI strip, F3 banner TDD, F4 docs, review 5 ejes + 6 fixes),
+> gates verdes (`just check` 0, `just test` 1865/0, e2e 31/31).
+> Trabajo FEV-30 HEAD `7cdb65d`. Issue #90.
+> Release: v2.1.3-beta.1 lista para lanzarse (sin push; pendiente decisión de release).
 
 > **Plan:** [`tasks/plan.md`](./plan.md)
 > **Branch:** `hotfix/opencode-v2-migrate`
@@ -61,5 +62,5 @@
 - **Defensa en profundidad preservada:** `template/obligatorio/core/opencode.json` mantiene `permission.bash` deny-lists que ya cubren el bloqueo destructivo (FEV-27 + code review). El plugin eliminado era redundante.
 - **Banner runtime es no bloqueante.** Usuarios en ≤ 2.1.2 ven el warning pero pueden continuar.
 - **Historia documental eliminada por completo.** No hay banners "superseded" en specs/ADRs. El CHANGELOG v2.1.1 conserva el registro inmutable del release pasado.
-- **10 commits atómicos** = 3 deletes (F1) + 1 config strip (F2) + 3 banner implementation (F3) + 3 docs cleanup (F4) — total **10 commits**.
+- **20 commits reales** (conteo `git log --oneline c168586..7cdb65d` + base = 10 planificados F1–F4 + review 5 ejes y 6 fixes) — el plan original preveía 10 atómicos; el review añadió el resto.
 - **Subagent delegation:** solo subagents (`backend-developer`, `git-workflow-manager`, `qa-automation`, `devops-engineer`, `code-reviewer`, `test-engineer`, `docs-writer`, `technical-writer`). Main agents NUNCA.
