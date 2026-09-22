@@ -319,6 +319,15 @@ describe("opencode.json — Permission Bypass Hardening (post-SDD-removal)", () 
 		}
 	});
 
+	test("denies reading X session cookie sidecars", () => {
+		// Sidecar holds Chrome session cookies + auth tokens for profile reuse;
+		// exfiltration equals full account takeover for those sessions.
+		expect(lastEffect("read", "*x-session-cookies*")).toBe("deny");
+		expect(lastEffect("shell", "* x-session-cookies*")).toBe("deny");
+		// Space-less variant `cat *x-session-cookies*`-style access.
+		expect(lastEffect("shell", "*x-session-cookies*")).toBe("deny");
+	});
+
 	test("denies exec-chaining via find/xargs as defense in depth", () => {
 		for (const pattern of REQUIRED_SHELL_HARDENING_DENIES) {
 			expect(lastEffect("shell", pattern), pattern).toBe("deny");

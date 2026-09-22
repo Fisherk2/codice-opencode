@@ -1386,8 +1386,23 @@
       "effect": "deny"
     },
     {
+      "action": "shell",
+      "resource": "* x-session-cookies*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*x-session-cookies*",
+      "effect": "deny"
+    },
+    {
       "action": "read",
       "resource": "credentials.json",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*x-session-cookies*",
       "effect": "deny"
     },
     {
