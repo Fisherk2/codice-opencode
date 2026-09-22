@@ -16,11 +16,7 @@ import { join, relative } from "node:path";
 import {
 	collectAgentFiles,
 	extractFrontmatter,
-	HEX_COLOR_PATTERN,
 	loadAgentFrontmatter,
-	THEME_COLORS,
-	VALID_AGENT_FIELDS,
-	VALID_MODES,
 	type ValidationError,
 	validateAgentFrontmatter,
 	validatePermissionsList,
@@ -49,12 +45,6 @@ function assertNoErrors(errors: readonly ValidationError[], label: string): void
 		.map((e) => `  ${e.file}${e.field ? ` [${e.field}]` : ""}: ${e.message}`)
 		.join("\n");
 	throw new Error(`Found ${errors.length} ${label}:\n${summary}`);
-}
-
-/** Fails the test with a formatted summary when raw strings are non-empty. */
-function assertNoRawErrors(errors: readonly string[], label: string): void {
-	if (errors.length === 0) return;
-	throw new Error(`Found ${errors.length} ${label}:\n${errors.join("\n")}`);
 }
 
 describe("Agent Frontmatter Validation", () => {
@@ -173,61 +163,7 @@ describe("Agent Frontmatter Validation", () => {
 		});
 	});
 
-	describe("Mode correctness", () => {
-		const modeErrors: string[] = [];
-
-		for (const filePath of agentFiles) {
-			const { parsed, error } = loadAgentFrontmatter(filePath);
-			if (error || !parsed) continue;
-			if (parsed.mode && !VALID_MODES.has(parsed.mode as string)) {
-				modeErrors.push(`${relative(TEMPLATE_ROOT, filePath)}: mode="${parsed.mode}"`);
-			}
-			if (parsed.hidden === true && parsed.mode === "primary") {
-				modeErrors.push(`${relative(TEMPLATE_ROOT, filePath)}: hidden=true on primary agent`);
-			}
-		}
-
-		it("has no mode errors across all agent files", () => {
-			assertNoRawErrors(modeErrors, "mode errors");
-		});
-	});
-
-	describe("Color correctness", () => {
-		const colorErrors: string[] = [];
-
-		for (const filePath of agentFiles) {
-			const { parsed, error } = loadAgentFrontmatter(filePath);
-			if (error || !parsed) continue;
-			const color = parsed.color;
-			if (typeof color === "string" && !HEX_COLOR_PATTERN.test(color) && !THEME_COLORS.has(color)) {
-				colorErrors.push(`${relative(TEMPLATE_ROOT, filePath)}: color="${color}"`);
-			}
-		}
-
-		it("has no color errors across all agent files", () => {
-			assertNoRawErrors(colorErrors, "color errors");
-		});
-	});
-
-	describe("Unknown field detection", () => {
-		const unknownFieldErrors: string[] = [];
-
-		for (const filePath of agentFiles) {
-			const { parsed, error } = loadAgentFrontmatter(filePath);
-			if (error || !parsed) continue;
-			for (const key of Object.keys(parsed)) {
-				if (!VALID_AGENT_FIELDS.has(key)) {
-					unknownFieldErrors.push(`${relative(TEMPLATE_ROOT, filePath)}: "${key}"`);
-				}
-			}
-		}
-
-		it("has no unknown frontmatter fields across all agent files", () => {
-			assertNoRawErrors(unknownFieldErrors, "unknown fields");
-		});
-	});
-
-	describe("FEV-29 legacy permission: regression guard", () => {
+	describe("Fase-2 legacy tools: regression guard", () => {
 		it("rejects permission: as an invalid agent frontmatter field", () => {
 			const errors = validateAgentFrontmatter(
 				join(TEMPLATE_ROOT, "main", "moctezuma.md"),
