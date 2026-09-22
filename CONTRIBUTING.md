@@ -69,7 +69,7 @@ just test-coverage  # With coverage report
 
 ## Git Workflow
 
-This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release), with two distinct flows:
+This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release), with three distinct flows:
 
 ### Branch Naming & Rules
 
@@ -81,6 +81,7 @@ This project follows a **3-stage pipeline**: `develop` (integration) → `main` 
 | `docs/` | Documentation | `develop` | `develop` | `docs/api-guide` |
 | `refactor/` | Restructuring | `develop` | `develop` | `refactor/merge-engine` |
 | `hotfix/` | Emergency fixes | `main` | `main` | `hotfix/critical-security` |
+| `release/` | Stable release preparation | `develop` | `main` | `release/2.1.3` |
 
 ### Critical Rules
 
@@ -131,6 +132,26 @@ develop ──●──────────────●────  (syn
 2. PR directly to `main` → squash merge
 3. Tag for release
 4. Post-release: sync `develop` ← `main`
+
+### Release Flow (`release/`)
+
+```
+develop ──●───────────────●──  (integration)
+           ╲             ╱
+            ●─────●─────●  ← stabilization → release/X.Y.Z
+                          │
+main ──────●──────────────●──  (production)
+           │                    │
+           └── PR release→main ─┘  (squash merge)
+                                     │
+tags                                 ● vX.Y.Z
+```
+
+1. Branch from `develop`: `git checkout -b release/X.Y.Z develop`
+2. Stabilization fixes land on the branch (PRs to `release/X.Y.Z` or direct commits — it is a short-lived, unprotected branch)
+3. When CI is green: PR `release/X.Y.Z` → `main` → squash merge
+4. Tag for release
+5. Post-release: sync `develop` ← `main`
 
 ### Why Clean Merges
 
