@@ -7,6 +7,15 @@ function isString(value: unknown): value is string {
 }
 
 /**
+ * Pack IDs emitted by the installer are lowercase kebab-case ASCII
+ * (e.g. "software-development"); see FileRuleManifestData. .codice-version is
+ * user-writable, so its installedPacks entries are untrusted input — anything
+ * outside this charset (ANSI escapes, fake TUI options like "\n2) implant")
+ * is discarded rather than interpolated into prompts.
+ */
+const PACK_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
+
+/**
  * Value object representing a semantic version (vX.Y.Z).
  * Uses the semver library for version parsing and comparison.
  */
@@ -103,13 +112,22 @@ export class WorkspaceVersion {
 					`Invalid .codice-version file: field 'installedPacks' must be an array of pack IDs (e.g. ["software-development"]), received ${typeof obj.installedPacks}`,
 				);
 			}
-			installedPacks = obj.installedPacks.filter(isString);
+			// Silent discard mirrors the non-string treatment: the file is
+			// user-writable, so malformed entries degrade to "pack not
+			// installed" instead of failing the whole update flow.
+			installedPacks = obj.installedPacks.filter(
+				(pack): pack is string => isString(pack) && PACK_ID_PATTERN.test(pack),
+			);
 		}
 
 		return new WorkspaceVersion(
 			versionField,
 			obj.installedAt,
 			installedPacks,
+			// optionalSelections holds template file paths (dots, slashes, dots
+			// in extensions), so the pack-ID charset does not apply; it is not
+			// interpolated into TUI hints (only installedPacks is), so it
+			// stays as-is.
 			Array.isArray(obj.optionalSelections) ? obj.optionalSelections.filter(isString) : [],
 		);
 	}

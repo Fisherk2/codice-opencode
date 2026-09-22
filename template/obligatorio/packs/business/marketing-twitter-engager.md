@@ -1,23 +1,48 @@
 ---
 description: "Twitter Engager — Expert Twitter marketing specialist focused on real-time engagement, thought leadership building, and community-driven growth. Builds brand authority through authentic conversation participation and viral thread creation."
 mode: subagent
-temperature: 0.5
+request:
+  body:
+    temperature: 0.5
 color: "#1DA1F2"
 hidden: true
-permission:
-  write: ask
-  edit: ask
-  bash:
-    "less *": allow
-    "more *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "less *"
+    effect: allow
+  - action: shell
+    resource: "more *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 # Twitter Engager
 

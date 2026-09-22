@@ -10,7 +10,7 @@ MCP (Model Context Protocol) servers extend OpenCode agents with external tools 
 
 ## Pre-Configured MCP Servers
 
-The template ships with **9 MCP servers** pre-configured in `opencode.json`. Three are enabled by default (`context7`, `vercel-grep`, `gitmcp`); the rest are disabled to conserve context and must be activated on demand.
+The template ships with **7 MCP servers** pre-configured in `opencode.json`. Three are enabled by default (`context7`, `vercel-grep`, `gitmcp`); the rest are disabled to conserve context and must be activated on demand.
 
 | Server | Type | Default | Template Feature |
 |--------|------|---------|------------------|
@@ -18,11 +18,11 @@ The template ships with **9 MCP servers** pre-configured in `opencode.json`. Thr
 | `chrome-devtools` | Local | ❌ Disabled | `/webperf` Deep mode, browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`xlsx` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
-| `tavily` | Remote (OAuth) | ❌ Disabled | Real-time web search (API key) |
-| `firecrawl` | Remote (OAuth) | ❌ Disabled | Web scraping and crawling (API key) |
 | `vercel-grep` | Remote | ✅ Enabled | GitHub code search across 1M+ repos |
 | `gitmcp` | Remote | ✅ Enabled | GitHub repository documentation |
 | `codebase-memory-mcp` | Local (global install) | ❌ Disabled | Knowledge graph for codebase intelligence |
+
+> **Removed in v2.1.3-beta.1:** The `tavily` and `firecrawl` remote MCP servers were cut from the template core `opencode.json` (v2.1.3 renamed their `enabled` toggle to `disabled`, then dropped both entries). OpenCode V2's native `websearch` tool covers the basic web-search use case, and advanced/JS-heavy scraping is available through the vendored Firecrawl skills. Their sections below are kept as reference if you want to add either server manually.
 
 ---
 
@@ -351,7 +351,7 @@ If you prefer not to use the install command, add to `opencode.json`:
 
 Remote MCP server for AI-optimized web search. Provides search and content extraction with domain filtering, news search, and LLM-friendly results. Requires a free Tavily API key.
 
-**Pre-configured as:** `"enabled": false` — requires API key setup.
+> **Removed from template core (v2.1.3-beta.1):** this entry no longer ships in `opencode.json`. OpenCode V2's native `websearch` tool covers the basic real-time web search use case; add Tavily manually only if you need domain filtering and news-specific search. The setup below is for manual configuration.
 
 #### Prerequisites
 
@@ -405,7 +405,7 @@ Remote MCP server for AI-optimized web search. Provides search and content extra
 
 Remote MCP server for scraping, crawling, and extracting content from web pages. Supports batch scraping, deep crawling, and structured data extraction. Requires a Firecrawl API key.
 
-**Pre-configured as:** `"enabled": false` — requires setup.
+> **Removed from template core (v2.1.3-beta.1):** this entry no longer ships in `opencode.json`. OpenCode V2's native `websearch` covers basic web search, and the vendored Firecrawl skills remain the supported path for advanced/JS-heavy scraping. The setup below is for adding the MCP server manually on top of the skills.
 
 #### Quick Start
 

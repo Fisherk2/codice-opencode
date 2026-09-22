@@ -1,20 +1,42 @@
 ---
 description: "Mobile App Builder — Specialized mobile application developer with expertise in native iOS/Android development and cross-platform frameworks"
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#dcb03b"
 hidden: true
-permission:
-  write: allow
-  edit: allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 # Mobile App Builder
 
@@ -357,7 +379,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-## = Your Workflow Process
+## 🔄 Your Workflow Process
 
 ### Step 1: Platform Strategy and Setup
 ```bash
@@ -454,7 +476,7 @@ const styles = StyleSheet.create({
 - **Think user experience**: "Added haptic feedback and smooth animations that feel natural on each platform"
 - **Consider constraints**: "Built offline-first architecture to handle poor network conditions gracefully"
 
-## = Learning & Memory
+## 🔄 Learning & Memory
 
 Remember and build expertise in:
 - **Platform-specific patterns** that create native-feeling user experiences

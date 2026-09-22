@@ -1,257 +1,263 @@
-# Implementation Plan: FEV-28 — Infrastructure & Performance
+# Implementation Plan: FEV-30 — Remove SDD Plugin + Opencode Legacy Deprecation Banner (Issue #90)
 
-**Phase:** FEV-28 (v2.1.1) — ✅ Completo
-**Issues/TD:** [TD-V2-7](https://github.com/Fisherk2/codice-opencode/blob/main/docs/TECH_DEBT.md), [TD-V2-61](https://github.com/Fisherk2/codice-opencode/blob/main/docs/TECH_DEBT.md)
-**Diagnósticos:** [`docs/diagnosis/fix23`](../docs/diagnosis/fix23-action-sha-pins-node24.md), [`docs/diagnosis/fix22`](../docs/diagnosis/fix22-no-caching-version-comparison.md)
-**Date:** 2026-08-21
-**Author:** Moctezuma (Strategic Planner)
-**Branch:** `fix/tech-debt-2.1.1`
-**Todo list:** [todo.md](./todo.md)
-**Methodology:** Vertical slicing (1 item = 1 slice completo) · commits atómicos por fase · TDD donde aplique · checkpoint quality gates
+> **COMPLETADO 2026-09-22.** FEV-30 cerrado en `hotfix/opencode-v2-migrate` —
+> 20 commits (F1 deletes, F2 CI strip, F3 banner TDD, F4 docs, review 5 ejes + 6 fixes),
+> gates verdes (`just check` 0, `just test` 1865/0, e2e 31/31).
+> Trabajo FEV-30 HEAD `7cdb65d`. Issue #90. Este plan queda como historia; no ejecutar.
+> Release: v2.1.3-beta.1 lista para lanzarse (sin push; pendiente decisión de release).
+
+> **Estado:** ✅ completado y cerrado en rama `hotfix/opencode-v2-migrate` (release **v2.1.3-beta.1**).
+> **Issue:** [#90](https://github.com/Fisherk2/codice-opencode/issues/90)
+> **Diagnóstico:** [`docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md`](../docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md)
+> **Dependencias:** Ninguna — FEV-29 ya completó la migración a `permissions:` nativo V2 (2026-09-22).
+>
+> **Política de commits:** 8 commits atómicos por concern (uno por concern lógico, no por archivo).
+> **Política de tests:** TDD para el banner runtime; los demás tasks son deletes/refactors con verificación por ausencia + gates.
 
 ---
 
 ## Overview
 
-FEV-28 cierra el ciclo de **Infrastructure & Performance** antes del release v2.1.1. Resuelve los 2 items restantes del backlog v2.1.1 identificados en el deep audit (2026-08-19):
+El plugin SDD (`sdd-pipeline.ts`, 45 líneas + 2 módulos: `destructivePatterns.ts` + `normalizeBash.ts`) desplegado a hosts Opencode V2 falla en cada startup con "Plugin must export a default definition with an id and an effect or setup function". Después de FEV-27 (#80) el plugin quedó reducido a **única función valiosa**: bloqueo de comandos destructivos como red de seguridad. Esa red ya está duplicada y endurecida en `template/obligatorio/core/opencode.json` (`permission.bash` deny-lists). La decisión del maintainer (vía `docs/diagnosis/fix27`) es **eliminar** el plugin en lugar de portarlo, y agregar un banner de deprecación para usuarios en ≤ 2.1.2.
 
-1. **TD-V2-7** — Actualizar SHA-pins de GitHub Actions (`actions/checkout`, `actions/cache`, `extractions/setup-just`, `oven-sh/setup-bun`) a las últimas majors compatibles con Node 24, eliminando los warnings de deprecación "Node.js 20 actions are deprecated" en los logs de CI/CD.
-2. **TD-V2-61** — Añadir caché de objetos semver parseados dentro de `VersionComparator` para evitar re-parsear los mismos strings en comparaciones repetidas (mismo uso en tests y operaciones batch).
-
-**Lo que FEV-28 hace:**
-
-1. Bumpa los SHA-pins en `.github/workflows/ci.yml` y `.github/workflows/release.yml` a las últimas majors Node 24-compatible (checkout v7, cache v6, setup-just v4, oven-sh/setup-bun v2.2 ya está al día).
-2. Introduce un `Map<string, SemVer>` privado dentro de `VersionComparator` que cachea el resultado de `semver.valid()` por string de versión. Sin estado global, sin nuevas dependencias, sin cambios en el port `IVersionComparator`.
-
-**Lo que FEV-28 NO hace (out-of-scope):**
-
-- No toca `WorkspaceVersion` (que también usa `semver.valid()` directamente) — está fuera del alcance del diagnóstico y agregar acoplamiento.
-- No toca `GitHubRestClient` por la misma razón.
-- No introduce un módulo de caché compartido ni WeakMap.
-- No cambia los tags mutables — se mantiene SHA-pinning por ADR-019.
-- No hace release v2.1.1 — eso ocurre después de merge a `develop`.
+**Resultado esperado:**
+1. Cero archivos `sdd-pipeline*`, `destructivePatterns*`, `normalizeBash*` en el repo tras FEV-30.
+2. Cero tests `tests/plugin/`, `tests/types/opencode-plugin.d.ts`, ni recipes de CI asociados al plugin.
+3. `opencode.json` mantiene `permission.bash` deny-lists como defensa en profundidad (ya existente).
+4. Banner runtime imprime `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4` cuando la versión instalada (`.codice-version`) ≤ 2.1.2.
+5. Docs/specs/ADRs que documentan el plugin se eliminan completamente (sin banners "superseded").
 
 ---
 
-## Dependency Graph
+## Architecture Decisions
 
-```
-                    ┌──────────────────────────────────────────┐
-                    │  develop (clean, post-FEV-27 merged)     │
-                    └─────────────┬────────────────────────────┘
-                                  │
-                  checkout branch fix/fev-28-infrastructure-performance
-                                  │
-        ┌─────────────────────────┴─────────────────────────┐
-        │                                                   │
-        ▼                                                   ▼
- ┌──────────────────────────────┐            ┌──────────────────────────────┐
- │ Phase 1 — TD-V2-7            │            │ Phase 2 — TD-V2-61           │
- │ Bump SHA-pins (Node 24)      │  ── indep ──▶ │ Add semver cache in          │
- │                              │            │ VersionComparator           │
- │ ci.yml + release.yml (2)     │            │ + unit test                  │
- │ Acceptance: CI 3 OS green,   │            │ Acceptance: cache hit on 2nd │
- │ no Node 20 deprecation warn  │            │ call, parsing once           │
- └──────────────┬───────────────┘            └──────────────┬───────────────┘
-                │                                           │
-                └─────────────┬─────────────────────────────┘
-                              ▼
-                   ┌──────────────────────────┐
-                   │ Quality Gate Checkpoint  │
-                   │ just check · just test   │
-                   │ just test-e2e · coverage │
-                   └──────────────┬───────────┘
-                                  ▼
-                   ┌──────────────────────────┐
-                   │ Commit + push + PR to    │
-                   │ develop → post-FEV-28    │
-                   │ docs sync (CHANGELOG,    │
-                   │ TECH_DEBT, WORKFLOW)     │
-                   └──────────────────────────┘
-```
-
-**Why independent:** Las dos fases no comparten archivos. Se pueden implementar y commitear por separado (una fase = un commit atómico). Sin embargo, ambas se ejecutan en la misma rama para mantener una única PR pequeña y revisable.
+- **D1 — Eliminación total, no port.** El plugin sólo aportaba bloqueo destructivo; `opencode.json` ya tiene `permission.bash` deny-lists equivalentes + más extensos (FEV-27 revisión). Portar costaría más que el valor residual; el maintainer decide remover.
+- **D2 — Banner vía `.codice-version` (offline).** Sin red. Reutiliza `loadVersionFile()` / `updateStatusCheck()` ya existentes en `src/application/useCases/`. La comparación `installedVersion ≤ 2.1.2` se hace con `VersionComparator` (ya implementado en `src/domain/services/VersionComparator.ts`).
+- **D3 — Sin nueva release menor.** FEV-30 se incorpora a **v2.1.3** (mismo hotfix que FEV-29) porque la remoción es interna del instalador y no rompe la API pública para usuarios V2; los usuarios V1 que aún usan el plugin obtendrán el banner al actualizar.
+- **D4 — Historia documental eliminada, no archivada.** Por decisión del usuario: borrar `specs/spec-sdd-plugin-decoupling.md`, `specs/adr/adr-013-plugin-auto-discovery.md`, `docs/diagnosis/fix15-plugin-cleanup.md`, `docs/diagnosis/fix06-v1.2-phase3-documentation.md` (referencias plugin), todas las menciones de "55/55 plugin integration" en CHANGELOG/WORKFLOW/SPEC. El CHANGELOG v2.1.1/v2.1.2 conserva las menciones históricas del plugin (registro inmutable de releases pasados) pero el `README.md` y `docs/WORKFLOW.md` se actualizan al estado actual.
+- **D5 — Commits por concern, no por archivo.** 8 commits atómicos siguiendo el principio "un commit, un concern lógico" de la skill `git-workflow-and-versioning`. Esto preserva reversibilidad granular.
+- **D6 — FileRuleManifestData limpia entrada opcional.** La entrada `optional(".opencode/plugins/sdd-workflow-test.md", ...)` deja de existir (el archivo nunca existió como entrega útil; verificado por `find`).
+- **D7 — Biome.json sin exclusiones plugin.** El blanket `!!**/template` nunca estuvo en biome.json; las exclusiones `template/obligatorio/core/skills` + `template/opcional/skills` se mantienen (código de skills externos con sus propios deps).
 
 ---
 
-## Identified SHAs (validados contra `/git/commits/` API)
+## Task List
 
-| Acción | Repo | Tag | Commit SHA (validado) | Estado actual | Acción |
-|--------|------|-----|----------------------|---------------|--------|
-| `actions/checkout` | actions/checkout | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` | `11d5960a326750d5838078e36cf38b85af677262` (v4) | **bump** |
-| `actions/cache` | actions/cache | v6.1.0 | `55cc8345863c7cc4c66a329aec7e433d2d1c52a9` | `0057852bfaa89a56745cba8c7296529d2fc39830` (v4) | **bump** |
-| `extractions/setup-just` | extractions/setup-just | v4 | `53165ef7e734c5c07cb06b3c8e7b647c5aa16db3` | `dd310ad5a97d8e7b41793f8ef055398d51ad4de6` (v3) | **bump** |
-| `oven-sh/setup-bun` | oven-sh/setup-bun | v2.2.0 | `0c5077e51419868618aeaa5fe8019c62421857d6` | `0c5077e51419868618aeaa5fe8019c62421857d6` (v2.2.0) | **no change** (ya actualizado) |
+### Phase 1 — Eliminación de archivos (F1)
 
-> **Validación:** Cada SHA fue confirmado vía `GET /repos/{owner}/{repo}/git/commits/{sha}` retornando HTTP 200 (commit SHA real, no SHA de annotated tag). Fuente: GitHub REST API, 2026-08-21.
+**Concern:** el plugin deja de existir en disco en todos los lugares donde vive.
 
----
+- [x] **Task 1.1 — Delete template plugin directory.** `git rm -r template/obligatorio/core/.opencode/plugins/` (elimina `sdd-pipeline.ts`, `destructivePatterns.ts`, `normalizeBash.ts`, `package.json`, `README.md`, `tsconfig.json`, `.gitignore`). Commit `chore(plugin): remove SDD plugin from template (FEV-30)`. Subagents: `backend-developer`, `git-workflow-manager`.
+- [x] **Task 1.2 — Delete dev plugin copy.** `git rm -r .opencode/plugins/` (elimina `sdd-pipeline.ts` + `src/` con 16 módulos + `__tests__/`). El `.sdd-audit.log` es gitignored. Commit `chore(plugin): remove dev plugin copy (FEV-30)`. Subagents: `git-workflow-manager`.
+- [x] **Task 1.3 — Delete plugin test suites.** `git rm -r tests/plugin/` (integration + e2e + 3 bash scripts) + `git rm tests/types/opencode-plugin.d.ts` + `git rm tests/unit/config/destructive-patterns.test.ts`. Commit `test(plugin): drop plugin test suites (FEV-30)`. Subagents: `qa-automation`.
 
-## Phase 1 — TD-V2-7: SHA-pins → Node 24-compatible
-
-### Task 1.1: Bump SHA-pins in ci.yml and release.yml
-
-**Description:** Reemplazar los 3 SHA-pins obsoletos (checkout v4 → v7.0.1, cache v4 → v6.1.0, setup-just v3 → v4) en ambos workflows. `oven-sh/setup-bun` ya está al día (v2.2.0) y no requiere cambio. Después del bump, los warnings "Node.js 20 actions are deprecated" deben desaparecer en los logs de CI/CD.
-
-**Acceptance criteria:**
-- [ ] `ci.yml` línea 38: `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1`
-- [ ] `ci.yml` línea 49: `actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9`
-- [ ] `ci.yml` línea 46: `extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3`
-- [ ] `release.yml` línea 32: `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1`
-- [ ] `oven-sh/setup-bun` se mantiene sin cambios (ya está en v2.2.0)
-- [ ] Workflow syntax válido (GitHub Actions parser no rechaza)
-
-**Verification:**
-- [ ] Push a la rama activa dispara CI; el job `quality` corre en ubuntu/macos/windows sin warnings de Node 20.
-- [ ] `grep -n "Node.js 20 actions" <(gh run view --log)` retorna 0 líneas en el último run.
-- [ ] `just check` y `just test` siguen verdes localmente (workflows no afectan código).
-
-**Dependencies:** None.
-
-**Files likely touched:**
-- `.github/workflows/ci.yml` (3 líneas modificadas)
-- `.github/workflows/release.yml` (1 línea modificada)
-
-**Estimated scope:** XS (1 commit, 4 líneas modificadas, sin código).
-
-**Commit message (Conventional Commits):**
-```
-chore(ci): bump GitHub Actions SHA-pins to Node 24-compatible majors
-
-- actions/checkout v4 → v7.0.1 (SHA 3d3c42e5...)
-- actions/cache v4 → v6.1.0 (SHA 55cc8345863c...)
-- extractions/setup-just v3 → v4 (SHA 53165ef7e734...)
-- oven-sh/setup-bun ya está en v2.2.0 (no change)
-
-Resuelve warnings "Node.js 20 actions are deprecated" en CI logs.
-Verificado vía curl /repos/{owner}/{repo}/git/commits/{sha} → HTTP 200.
-
-Refs: TD-V2-7, fix23
-Co-Authored-By: Moctezuma <dev@fisherk2.com>
-```
+**Checkpoint F1:**
+- `find . -path '*/.opencode/plugins*' -not -path '*/node_modules/*' -not -path '*/fixtures/*'` retorna **0 paths** en `template/` y `.opencode/` raíz.
+- `grep -rln 'sdd-pipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|tests/types/opencode-plugin' src/ scripts/ tests/ template/` retorna **0 matches**.
+- `just check` 0 errores (los archivos eliminados no estaban en `src/` ni `tests/` activos).
 
 ---
 
-## Phase 2 — TD-V2-61: VersionComparator semi-cache
+### Phase 2 — Cleanup de recipes de CI + Biome + Justfile + Manifest (F2)
 
-### Task 2.1: Add parsed-semver cache + unit test (TDD)
+**Concern:** el plugin ya no existe, pero los archivos de configuración aún lo invocan.
 
-**Description:** Añadir un `Map<string, SemVer>` privado dentro de `VersionComparator` que cachea el resultado de `semver.valid(version)` por string de versión. Esto evita re-parsear los mismos strings en comparaciones repetidas (escenario común en tests y en operaciones batch que comparan versiones múltiples veces).
+- [x] **Task 2.1 — Strip Justfile plugin targets + ci.yml qa-plugin job.** Eliminar de `Justfile` líneas 60-80 (targets `check-plugin`, `test-plugin-unit`, `test-plugin-integration`, `test-plugin-e2e`); eliminar de `.github/workflows/ci.yml` el job `qa-plugin` (líneas 78-112) y la invocación `just check-plugin` que aparezca en otros targets. Commit `chore(ci): remove plugin recipes and CI job (FEV-30)`. Subagents: `devops-engineer`, `code-reviewer`.
 
-**Decisión de diseño:**
-- **Alcance:** Cache solo dentro de `VersionComparator`. `WorkspaceVersion` y `GitHubRestClient` también usan `semver.valid()` pero están fuera del alcance (acoplamiento no justificado).
-- **Invalidación:** No es necesaria — el cache crece con la cantidad de versiones distintas vistas, acotado al cardinal del input (no hay leak unbounded porque los strings son inmutables y el cache muere con la instancia).
-- **No cambia el port `IVersionComparator`:** La interfaz pública `compare()` mantiene el mismo contrato. El cache es detalle de implementación.
-- **No afecta cobertura:** Tests existentes siguen pasando. Test nuevo cubre el comportamiento.
-
-**Acceptance criteria:**
-- [ ] `VersionComparator` tiene un campo privado `readonly cache: Map<string, SemVer>` inicializado en el constructor.
-- [ ] `compare()` consulta el cache antes de llamar a `semver.valid()`; si está, reutiliza; si no, parsea y cachea.
-- [ ] Test nuevo: `tests/unit/domain/version-comparator.test.ts` — describe `VersionComparator cache` valida que 2 llamadas con el mismo string no invocan `semver.valid()` dos veces (verificable mockeando o con spy). Alternativa: assert que el cache se llena con la entrada esperada.
-- [ ] `validateVersion()` (función pura exportada) NO usa cache — se mantiene determinista y side-effect-free como función pura del módulo. (Solo la clase lo usa.)
-- [ ] Tests existentes (147 líneas en `version-comparator.test.ts`) siguen pasando.
-
-**Verification:**
-- [ ] `just check` 0 errores.
-- [ ] `just test` 1931+ tests pasando (1931 base + al menos 2 nuevos del cache).
-- [ ] Coverage de `VersionComparator.ts` ≥ 95% (ya lo es; nuevo código cubierto).
-- [ ] `just test-coverage` overall ≥ 95%.
-
-**Dependencies:** None (independiente de Phase 1).
-
-**Files likely touched:**
-- `src/domain/services/VersionComparator.ts` (modificar clase, ~10 líneas añadidas)
-- `tests/unit/domain/version-comparator.test.ts` (nuevo `describe` block, ~25 líneas)
-
-**Estimated scope:** S (1 commit, 2 archivos).
-
-**Commit message (Conventional Commits):**
-```
-perf(domain): cache parsed semver objects in VersionComparator
-
-VersionComparator re-parseaba los mismos strings en cada llamada
-a compare()/validateVersions(). Añade Map<string, SemVer> privado
-a la clase para memoizar el resultado de semver.valid().
-
-- Sin cambios en port IVersionComparator (detalle de implementación)
-- validateVersion() (función pura) no usa cache — side-effect-free
-- Sin tocar WorkspaceVersion ni GitHubRestClient (fuera de alcance)
-
-Test nuevo: describe block valida cache hit en 2da llamada idéntica.
-Refs: TD-V2-61, fix22
-Co-Authored-By: Moctezuma <dev@fisherk2.com>
-```
+**Checkpoint F2:**
+- `grep -n 'check-plugin\|test-plugin\|qa-plugin\|tests/plugin' Justfile .github/workflows/ci.yml biome.json` retorna **0 matches**.
+- `just check` 0 errores.
+- `just test` (non-Linux) y `just coverage-check 95` (Linux) no invocan nada relativo al plugin.
 
 ---
 
-## Quality Gate Checkpoint (post Phase 2)
+### Phase 3 — Banner runtime "Opencode Legacy only" (F3)
 
-- [ ] `just check` — 0 errores (biome ci + tsc --noEmit)
-- [ ] `just test` — 1931+ tests, 0 fail
-- [ ] `just test-e2e` — 31/31 escenarios (Linux)
-- [ ] `just test-packaging` — 5/5 escenarios
-- [ ] `just test-coverage` — ≥95% lines, ≥95% funcs en production `src/`
-- [ ] CI matrix (ubuntu + macos + windows) sin warnings de Node 20 deprecation
-- [ ] `just lint` y `just format` limpios
-- [ ] Sin tipos `any` introducidos en código de producción
-- [ ] Comentarios explican el *porqué* (no el *qué*)
+**Concern:** usuarios en ≤ 2.1.2 deben saber al instalar que su versión es Legacy y deben actualizar.
+
+- [x] **Task 3.1 — Implement Opencode Legacy banner.** Crear helper `src/application/helpers/opencodeLegacyBanner.ts` que: (a) lee `.codice-version` desde el workspace (`loadVersionFile` de `src/application/useCases/helpers/versionFile.ts` o equivalente); (b) compara con `2.1.2` usando `VersionComparator`; (c) si `installed ≤ 2.1.2`, imprime via `VerboseLogger.log()` (o `console.warn` si no hay logger contextual) el mensaje `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support`. Banner NO bloqueante. Commit `feat(installer): warn on Opencode Legacy installs ≤ 2.1.2 (FEV-30)`. Subagents: `backend-developer`, `test-engineer`.
+- [x] **Task 3.2 — Wire banner into all use cases.** Llamar `maybePrintLegacyBanner()` desde `CleanInstallUseCase`, `ProjectInstallUseCase`, `UpdateWorkspaceUseCase` antes del primer prompt interactivo (en `--verbose` siempre; sin `--verbose` solo si `.codice-version` existe y es ≤ 2.1.2). Commit `feat(installer): wire legacy banner into install flows (FEV-30)`. Subagents: `backend-developer`.
+- [x] **Task 3.3 — TDD: unit tests for legacy banner.** Crear `tests/unit/application/helpers/opencodeLegacyBanner.test.ts` cubriendo: (a) sin `.codice-version` → no imprime; (b) versión `2.1.0`, `2.1.1`, `2.1.2` → imprime; (c) versión `2.1.3`, `2.1.4`, `3.0.0` → no imprime; (d) versión inválida (`abc`) → no imprime + no rompe; (e) sin `loadVersionFile` disponible → graceful no-op. Commit `test(installer): add legacy banner unit tests (FEV-30)`. Subagents: `qa-automation`.
+
+**Desviaciones aceptadas del plan (Tasks 3.1–3.3):**
+- (a) Banner se emite via `IUserPrompt.showWarning` (no `VerboseLogger`/`console.warn`) — feedback visible en todos los flujos, no atado a `--verbose`.
+- (b) Sin gating `--verbose` en Task 3.2: el banner se evalúa siempre (fail-open → no-op silencioso si no aplica), espejo del contrato de `src/cli/versionContext.ts`.
+- (c) Helper reubicado a `src/application/legacyBanner.ts` (el plan original apuntaba a `src/application/helpers/opencodeLegacyBanner.ts`).
+- (d) Security follow-up del review (Fase 1): permissions de bash endurecidas + validación de strings en `installedPacks` — commits `078d85d`, `d54db7a`.
+
+**Checkpoint F3:**
+- `just test` 0 fallos; nuevos tests pasan.
+- `just check` 0 errores.
+- Banner visible en `--verbose` con un fixture que tenga `.codice-version` = `2.1.2`.
+- Banner NO aparece con `.codice-version` = `2.1.3`.
 
 ---
 
-## Post-FEV-28 (no parte del plan, solo contexto)
+### Phase 4 — Limpieza documental completa + release (F4)
 
-Una vez ambas fases mergeadas a `develop`:
+**Concern:** la historia del plugin se elimina de la documentación activa (no archivada, por decisión D4).
 
-1. `docs/WORKFLOW.md` → mover FEV-28 de "⏳ Pendiente" a "✅ Completo" con fecha.
-2. `docs/TECH_DEBT.md` → marcar TD-V2-7 y TD-V2-61 como resueltos en sección v2.1.1.
-3. `CHANGELOG.md` → entrada v2.1.1 con los 2 items de FEV-28.
-4. PR `develop` → `main` → tag → `bun publish` con dist-tag `beta`.
+- [x] **Task 4.1 — Delete plugin specs/ADRs/diagnoses.** `git rm specs/spec-sdd-plugin-decoupling.md specs/adr/adr-013-plugin-auto-discovery.md docs/diagnosis/fix15-plugin-cleanup.md`. Commit `docs(workflow): retire plugin specs and ADRs (FEV-30)`. Subagents: `docs-writer`.
+- [x] **Task 4.2 — Update README/SPEC/WORKFLOW/TRD/ARCHITECTURE to current state.** Quitar referencias al plugin en `README.md`, `SPEC.md`, `docs/WORKFLOW.md`, `docs/TRD.md`, `docs/ARCHITECTURE.md` (tabla de ADRs), `docs/wiki-source/.wiki/SDD-Pipeline.md`, `docs/wiki-source/.wiki/Commands.md`, `docs/wiki-source/.wiki/Configuration.md`. Reemplazar todas las menciones "55/55 plugin integration" por la métrica actual (e.g., "1935 unit/integration tests"). Commit `docs(workflow): scrub plugin references from active docs (FEV-30)`. Subagents: `docs-writer`, `technical-writer`.
+- [x] **Task 4.3 — Update CHANGELOG Unreleased + v2.1.3 entry.** Añadir bloque `[2.1.3]` con FEV-30 marcado completo (remoción plugin + banner runtime). Mantener las menciones históricas en `[2.1.1]` (FEV-27) intactas (registro de release pasado). Commit `docs(changelog): FEV-30 release entry v2.1.3 (FEV-30)`. Subagents: `technical-writer`.
 
-Esos pasos los cubre el release manager con `/plan` + `/ship` posterior, NO FEV-28.
+**Checkpoint F4 (final):**
+- `grep -rln 'plugin\|sdd-pipeline\|sddPipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|qa-plugin' docs/ specs/ wiki-source/ README.md SPEC.md 2>/dev/null` retorna **0 matches** (excepto menciones históricas en CHANGELOG v2.1.1/v2.1.2 que documentan releases pasados).
+- `docs/ARCHITECTURE.md` tabla ADRs: ADR-013 ausente.
+- `docs/wiki-source/.wiki/SDD-Pipeline.md` ausente (o reemplazado por un redirect "removed in v2.1.3").
+- `git status --porcelain` limpio.
 
 ---
 
 ## Risks and Mitigations
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| GitHub Action v7/v6 introduce breaking change no documentado | Medium | Low | Phase 1 solo toca ci.yml/release.yml, reversible con un revert. CI matrix cubre los 3 OS antes de merge. |
-| Cache rompe determinismo en tests (orden de inserción, map iteration) | Low | Low | Cache es detalle privado; compare() retorna el mismo valor. Tests assertan comportamiento, no orden interno. |
-| Múltiples instancias de `VersionComparator` crean caches duplicados | Low | High | Aceptado: el proyecto instancia 1 sola vez por CLI run (vía DI container). No hay caso de uso de instancias múltiples. Si surge, refactorizar a WeakMap (futuro). |
-| `oven-sh/setup-bun` SHA-pinning podría no estar al día | Low | Low | Verificado vía API: v2.2.0 ya coincide con el SHA actual. No requiere cambio. |
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Banner runtime rompe installs V1 que aún esperan el plugin | Medium | Banner es informativo, no bloqueante. CHANGELOG + release notes anuncian el cambio. Documentar en `docs/MIGRATION.md` la rampa de salida. |
+| Algún agente/command referencia destructivo patterns via import | High | F1 checkpoint verifica `grep` 0 matches antes de F2. La lógica de seguridad pasa a `permission.bash` deny-lists que ya están en `template/obligatorio/core/opencode.json` (FEV-27 review). |
+| Tests fixture workspace tiene `.opencode/plugins/` residual | Low | El fixture es gitignored y se regenera por `just dev`. Verificar manualmente antes de `just test-e2e`. |
+| Pérdida de cobertura por remoción de `destructive-patterns.test.ts` | Low | Los patterns ya no existen; la lógica equivalente está en `opencode.json` que se valida por `tests/unit/quality/source-hygiene.test.ts` y por el validator de permisos V2 (`tests/unit/domain/agent-frontmatter-validation.test.ts`). |
+| Wiki pages referencian plugin en prosa histórica | Low | F4 task 4.2 hace scrubbing masivo; verificar `grep` final en checkpoint F4. |
+
+---
+
+## Verification (run after each phase)
+
+```bash
+# after F1
+find . -path '*/.opencode/plugins*' -not -path '*/node_modules/*' -not -path '*/fixtures/*' | wc -l   # expect 0
+grep -rln 'sdd-pipeline\|DestructiveCommandBlock\|destructivePatterns' src/ scripts/ tests/ template/ | wc -l   # expect 0
+just check
+
+# after F2
+grep -n 'check-plugin\|test-plugin\|qa-plugin' Justfile .github/workflows/ci.yml biome.json | wc -l   # expect 0
+just check
+
+# after F3
+just test
+just check
+
+# after F4 (final)
+grep -rln 'plugin\|sdd-pipeline\|sddPipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|qa-plugin' docs/ specs/ wiki-source/ README.md SPEC.md 2>/dev/null | wc -l   # expect 0 (except CHANGELOG history)
+git status --porcelain   # expect empty
+
+# final gates (Linux)
+just test-coverage
+just coverage-check 95
+just test-e2e
+
+# final gates (non-Linux)
+just test
+```
+
+---
+
+## Subagent Delegation Matrix
+
+Tareas mecánicas (deletes, grep verificadores) → `git-workflow-manager`. Tareas con lógica (banner) → `backend-developer` + `test-engineer`. Tareas documentales → `docs-writer` + `technical-writer`. Review → `code-reviewer`.
+
+> Exigencia `template/obligatorio/core/commands/plan.md` paso 6: tabla `task | subagent | skill(s)` con skills reales de `skills/`.
+
+| Task | Subagents | Skills + justificación |
+|------|-----------|------------------------|
+| 1.1 | `backend-developer`, `git-workflow-manager` | `git-workflow-and-versioning` — commit atómico `chore(plugin)` por concern delete; `bash-defensive-patterns` — verificación segura `find`/`grep` 0-matches sin globs destructivos |
+| 1.2 | `git-workflow-manager` | `git-workflow-and-versioning` — `git rm -r` dev copy con mensaje convencional reversible; `bash-defensive-patterns` — confirma 0 paths residuales excluyendo `node_modules`/`fixtures` |
+| 1.3 | `qa-automation`, `git-workflow-manager` | `git-workflow-and-versioning` — commit `test(plugin)` que aísla el drop de suites; `test-driven-development` — gate rojo/verde: `just test` sigue en verde tras eliminar `tests/plugin/` |
+| 2.1 | `devops-engineer`, `code-reviewer` | `ci-cd-and-automation` — strip del job `qa-plugin` y targets `check/test-plugin` sin romper el DAG de CI; `code-review-and-quality` — review de `Justfile`+`ci.yml` post-strip; `git-workflow-and-versioning` — commit `chore(ci)` atómico |
+| 3.1 | `backend-developer`, `test-engineer` | `test-driven-development` — helper `opencodeLegacyBanner.ts` guiado por casos rojo→verde; `clean-code` — helper pequeño, no bloqueante, sin side-effects ocultos; `clean-ddd-hexagonal` — ubica el banner en `application/helpers` reutilizando `VersionComparator`/`loadVersionFile` (solo referencia, no implementación) |
+| 3.2 | `backend-developer` | `clean-ddd-hexagonal` — cablea `maybePrintLegacyBanner()` vía use cases sin saltarse la capa application (solo referencia); `refactoring-patterns` — inserta la llamada antes del primer prompt con el cambio mínimo seguro |
+| 3.3 | `qa-automation` | `test-driven-development` — 5 casos TDD (ausente / ≤2.1.2 imprime / ≥2.1.3 no imprime / inválida / sin loader); `debugging-and-error-recovery` — versión `abc` y loader ausente degradan a no-op sin romper el install |
+| 4.1 | `docs-writer`, `git-workflow-manager` | `documentation-and-adrs` — retira `spec-sdd-plugin-decoupling` + ADR-013 con trazabilidad D4 (eliminación, no archivo); `git-workflow-and-versioning` — commit `docs(workflow)` atómico de deletes |
+| 4.2 | `docs-writer`, `technical-writer` | `documentation-and-adrs` — scrub de refs plugin en SPEC/WORKFLOW/TRD/ARCHITECTURE/wiki manteniendo consistencia; `crafting-effective-readmes` — reescribe `README.md` al estado actual sin métrica legacy "55/55" |
+| 4.3 | `technical-writer` | `changelog-generate` — entrada `[2.1.3]` en formato Keep a Changelog (remoción + banner); `documentation-and-adrs` — preserva historia inmutable v2.1.1/v2.1.2 mientras documenta el cambio |
+
+---
+
+## Diagram — File Touch Map
+
+```mermaid
+graph TB
+    subgraph "F1 — Delete files"
+        T1["Task 1.1<br/>template/obligatorio/core/.opencode/plugins/"]
+        T2["Task 1.2<br/>.opencode/plugins/ (dev copy)"]
+        T3["Task 1.3<br/>tests/plugin/ + opencode-plugin.d.ts + destructive-patterns.test.ts"]
+    end
+
+    subgraph "F2 — Strip config"
+        R1["Task 2.1<br/>Justfile + ci.yml"]
+    end
+
+    subgraph "F3 — Banner runtime"
+        B1["Task 3.1<br/>opencodeLegacyBanner.ts"]
+        B2["Task 3.2<br/>Wire into 3 use cases"]
+        B3["Task 3.3<br/>Unit tests"]
+    end
+
+    subgraph "F4 — Docs cleanup"
+        D1["Task 4.1<br/>spec-sdd-plugin-decoupling.md<br/>adr-013<br/>fix15"]
+        D2["Task 4.2<br/>README, SPEC, WORKFLOW, TRD,<br/>ARCHITECTURE, wiki"]
+        D3["Task 4.3<br/>CHANGELOG [2.1.3] entry"]
+    end
+
+    T1 --> R1
+    T2 --> R1
+    T3 --> R1
+    R1 --> B1
+    B1 --> B2
+    B2 --> B3
+    B3 --> D1
+    D1 --> D2
+    D2 --> D3
+```
+
+---
+
+## Diagram — Banner runtime flow
+
+```mermaid
+sequenceDiagram
+    participant CLI as Códice CLI<br/>(use case entry)
+    participant Banner as opencodeLegacyBanner
+    participant VF as loadVersionFile
+    participant VC as VersionComparator
+    participant Log as VerboseLogger / console
+
+    CLI->>Banner: maybePrintLegacyBanner(workspaceDir)
+    Banner->>VF: loadVersionFile(workspaceDir)
+    alt file missing or malformed
+        VF-->>Banner: null / undefined
+        Banner-->>CLI: noop
+    else file present
+        VF-->>Banner: "2.1.2"
+        Banner->>VC: compare("2.1.2", "2.1.2")
+        VC-->>Banner: 0 (equal)
+        Banner->>Log: "⚠ Opencode Legacy only —<br/>upgrade to ≥ 2.1.4"
+    end
+```
+
+---
+
+## Out of Scope
+
+- Portar el plugin a la API V2 (decisión del maintainer en `fix27`).
+- Reemplazar el plugin por un módulo nativo (`src/`) — su valor es residual y ya está duplicado en `opencode.json`.
+- Actualizar el threshold de `coverage-check` (sigue en 95%; la remoción no baja la cobertura de `src/`).
+- Cambiar la versión de `package.json` manualmente — bumping a 2.1.3 ocurre en el release, no en FEV-30.
+- Reemplazar el wiki `SDD-Pipeline.md` por documentación de `permission.bash` deny-lists (ya cubierto por `wiki-source/.wiki/Security-Hardening.md` o equivalente).
 
 ---
 
 ## Open Questions
 
-Ninguna pendiente — todas las decisiones fueron confirmadas vía `question` tool:
-- Alcance del caché: solo `VersionComparator` (no módulo compartido).
-- Estrategia SHA: investigar y actualizar a últimas Node 24-compatible majors.
+None — todas las decisiones confirmadas con el usuario antes de planificar:
+
+- ✅ Cobertura objetivo = **mínimo viable + banner + auto-update hint**.
+- ✅ Historia documental = **eliminada completamente** (no banners, no archive).
+- ✅ Métrica legacy "55/55 plugin integration" = **retirada** de docs activas.
+- ✅ Target release = **v2.1.3** (mismo hotfix que FEV-29).
+- ✅ Banner runtime = **detección vía `.codice-version`** (sin red).
+- ✅ Granularidad = **8 commits por concern**.
 
 ---
 
-## Architecture Diagram (Mermaid)
-
-```mermaid
-graph LR
-    subgraph "Phase 1 — Infra (TD-V2-7)"
-        A1[ci.yml] --> A2[release.yml]
-        A2 --> A3{CI matrix<br/>ubuntu + macos + windows}
-        A3 --> A4{Node 20 warning<br/>gone?}
-    end
-
-    subgraph "Phase 2 — Performance (TD-V2-61)"
-        B1[VersionComparator<br/>+cache Map] --> B2[unit test<br/>cache hit]
-        B2 --> B3[just test 1931+ green]
-    end
-
-    A4 --> C[Quality Gate<br/>just check · just test<br/>just test-e2e · coverage]
-    B3 --> C
-    C --> D[PR to develop]
-    D --> E[Post-FEV-28 docs sync<br/>WORKFLOW · TECH_DEBT · CHANGELOG]
-```
-
----
-
-*Plan created by Moctezuma. Update when phases complete or scope changes.*
-*Last revised: 2026-08-21*
+*End of plan — see `tasks/todo.md` for the live checklist.*

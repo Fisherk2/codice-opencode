@@ -3,7 +3,7 @@ description: Create or edit structured specification documents for UI/UX.
 agent: quetzalcoatl
 ---
 
-Invoke @skills/ui-ux-design-pro/SKILL.md to begin the design process.
+**Load** `ui-ux-design-pro` skill to begin the design process.
 
 ## Phase 0 — Pre-flight: Understand Design Scope
 
@@ -45,9 +45,9 @@ Constraints:
 Once all reports are back, synthesize into a comprehensive design specification:
 
 1. **User Experience** — Aggregate `ux-researcher` insights: personas, journeys, pain points, opportunities
-2. **Technical Constraints** — Pull from `frontend-developer` and @skills/frontend-ui-engineering/SKILL.md for component architecture, state management, API needs, performance
+2. **Technical Constraints** — Pull from `frontend-developer` and **Load** `frontend-ui-engineering` skill for component architecture, state management, API needs, performance
 3. **Accessibility** — Integrate `accessibility-tester` requirements: WCAG compliance, keyboard nav, screen readers
-4. **Design System** — Define tokens, colors, typography, spacing, components using @skills/design-taste-frontend/SKILL.md for metric-based UI/UX rules
+4. **Design System** — Define tokens, colors, typography, spacing, components **Loading** `design-taste-frontend` skill for metric-based UI/UX rules
 5. **User Flows** — Create flow diagrams **Loading** `architecture-diagrams` skill, combining UX research and technical constraints
 
 ## Phase C — Save Design Specification
@@ -69,7 +69,7 @@ Once all reports are back, synthesize into a comprehensive design specification:
 2. Also create or update supporting files in @specs/design/
 3. **Design specification is done — do NOT touch or implement code files.**
 4. Use the `question` tool to confirm with the user before proceeding.
-5. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
+5. Commit all changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 ## Rules
 

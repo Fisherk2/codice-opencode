@@ -159,7 +159,7 @@ Se conservan siempre que existan en tu `agents/` y elige **Project Install**:
 
 - Project Install copia agentes de packs solo si faltan → tus archivos `agents/mi-agente.md` no se sobrescriben.
 - Clean Install **sí sobrescribe** `agents/` — úsalo solo en proyectos nuevos o si quieres resetear el workspace.
-- Tras migrar, tu agente sigue disponible: el plugin auto-descubre cualquier `.md` en `agents/` (recursivo), no requiere registrarlo en catálogos.
+- Tras migrar, tu agente sigue disponible: OpenCode descubre automáticamente cualquier `.md` en `agents/` (recursivo), no requiere registrarlo en catálogos.
 
 ### ¿Puedo agregar packs más adelante?
 

@@ -1,31 +1,72 @@
 ---
 description: "Compliance Auditor — Expert technical compliance auditor specializing in SOC 2, ISO 27001, HIPAA, and PCI-DSS audits — from readiness assessment through evidence collection to certification."
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#dcb03b"
 hidden: true
-permission:
-  write: deny
-  edit: deny
-  bash:
-    "* > *": deny
-    "* >> *": deny
-    "touch *": deny
-    "mkdir *": deny
-    "cp *": deny
-    "mv *": deny
-    "rm *": deny
-    "chmod *": deny
-    "chown *": deny
-    "ln *": deny
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "* > *"
+    effect: deny
+  - action: shell
+    resource: "* >> *"
+    effect: deny
+  - action: shell
+    resource: "touch *"
+    effect: deny
+  - action: shell
+    resource: "mkdir *"
+    effect: deny
+  - action: shell
+    resource: "cp *"
+    effect: deny
+  - action: shell
+    resource: "mv *"
+    effect: deny
+  - action: shell
+    resource: "rm *"
+    effect: deny
+  - action: shell
+    resource: "chmod *"
+    effect: deny
+  - action: shell
+    resource: "chown *"
+    effect: deny
+  - action: shell
+    resource: "ln *"
+    effect: deny
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 # Compliance Auditor
 

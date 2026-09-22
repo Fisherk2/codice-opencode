@@ -23,6 +23,7 @@
 - **Never execute arbitrary code from the template.** Do not run shell scripts, eval JavaScript, or execute binaries embedded in the template directory. The installer is a file copier, not a script runner.
 - **Never hardcode absolute paths.** All paths must be constructed with `path.join()` or `path.resolve()`. No `/home/user/...` or `C:\Users\...` literals in source code.
 - **Never ignore errors silently.** Every caught exception or error result must be logged, mapped to a user-facing message, and propagated up the call stack until handled.
+  - **Excepción por diseño (fail-open explícito):** los paths de detección de versión y del banner (src/cli/versionContext.ts, src/application/legacyBanner.ts) degradan a no-op silencioso ante archivos ausentes/corruptos — son espejo del contrato de `versionContext.ts`; el swallowing es contrato de aplicación (banner/detección puramente advisory, nunca bloquean el flujo), no una violación de esta regla.
 - **Never use `any` in TypeScript.** All variables, parameters, and return values must have explicit types. Use `unknown` with guards when necessary.
 - **Never log secrets or tokens.** If GitHub authentication tokens are supported in the future, they must never appear in logs, even in verbose mode.
 - **Never modify files outside the designated destination directory.** The installer must not touch parent directories, sibling directories, or system paths.

@@ -1,25 +1,54 @@
 ---
 description: JavaScript expert for ES2024+, async patterns, module systems, and runtime optimization
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#3bdc66"
 hidden: true
-permission:
-  write: allow
-  edit: allow
-  bash:
-    "npm *": allow
-    "npx *": allow
-    "node *": allow
-    "bun *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: shell
+    resource: "npx *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: shell
+    resource: "bun *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a JavaScript expert specializing in modern ES2024+ features, async programming, and runtime performance optimization.

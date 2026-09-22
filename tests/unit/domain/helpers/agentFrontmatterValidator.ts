@@ -1,7 +1,7 @@
 /**
  * Agent frontmatter validation engine.
  *
- * Schema constants and validation functions extracted verbatim from
+ * Schema constants and validation functions extracted from
  * agent-frontmatter-validation.test.ts so the same rules can be reused by any
  * test that inspects agent files. `loadAgentFrontmatter` collapses the
  * read → extract → parse sequence that the test previously repeated inline.
@@ -21,17 +21,26 @@ export const VALID_AGENT_FIELDS: ReadonlySet<string> = new Set([
 	"mode",
 	"model",
 	"variant",
-	"temperature",
-	"top_p",
-	"prompt",
-	"tools",
-	"disable",
+	"temperature", // legacy in V2 (use request.body); accepted during migration
+	"top_p", // legacy in V2 (use request.body); accepted during migration
+	"prompt", // legacy in V2 (use system/body); accepted during migration
+	// NOTE: `tools` (map) is intentionally NOT a valid agent-file field. It is the
+	// legacy V1 tool map; native V2 replaced it with the `permissions:` list.
+	// Rejecting it prevents the silent-shadowing class of bug (issue #91).
+	"disable", // legacy in V2 (use disabled); accepted during migration
 	"hidden",
 	"options",
 	"color",
 	"steps",
-	"maxSteps",
-	"permission",
+	"maxSteps", // legacy in V2 (use steps); accepted during migration
+	"permissions", // native V2: [{action, resource, effect}]
+	"request", // native V2: {headers, body}
+	"system", // native V2: system prompt string
+	"disabled", // native V2: boolean; disables the agent
+	// NOTE: `permission` (singular) is intentionally NOT a valid agent-file field.
+	// Native V2 uses `permissions:` (list) in agent .md frontmatter; the singular
+	// `permission` only ever applied to opencode.json. Allowing it here masked
+	// issue #91 silently.
 	"name", // silently routed to options by OpenCode
 ]);
 
@@ -175,13 +184,23 @@ export function validateAgentFrontmatter(
 		}
 	}
 
-	// 7. Validate permission structure
-	if (frontmatter.permission !== undefined) {
-		const permErrors = validatePermission(relPath, "permission", frontmatter.permission);
-		errors.push(...permErrors);
+	// 7. Validate permissions list (native OpenCode V2 agent key)
+	if (frontmatter.permissions !== undefined) {
+		errors.push(...validatePermissionsList(relPath, "permissions", frontmatter.permissions));
 	}
 
-	// 8. Validate mode-specific rules
+	// 8. Validate request overlay (native OpenCode V2 agent key)
+	if (frontmatter.request !== undefined) {
+		if (typeof frontmatter.request !== "object" || frontmatter.request === null) {
+			errors.push({
+				file: relPath,
+				field: "request",
+				message: `request must be an object, got ${typeof frontmatter.request}`,
+			});
+		}
+	}
+
+	// 9. Validate mode-specific rules
 	if (frontmatter.mode === "primary") {
 		if (frontmatter.hidden === true) {
 			errors.push({
@@ -195,75 +214,70 @@ export function validateAgentFrontmatter(
 	return errors;
 }
 
-export function validatePermission(
+/**
+ * Validate the native V2 `permissions:` frontmatter list.
+ *
+ * Each rule must be `{action: string, resource: string, effect}` with
+ * effect in "allow" | "ask" | "deny" (https://opencode.ai/v2/docs/permissions).
+ */
+export function validatePermissionsList(
 	filePath: string,
 	fieldPath: string,
 	value: unknown,
 ): ValidationError[] {
 	const errors: ValidationError[] = [];
 
-	if (typeof value === "string") {
-		// Flat permission: "allow" | "ask" | "deny"
-		if (!VALID_PERMISSION_ACTIONS.has(value)) {
-			errors.push({
-				file: filePath,
-				field: fieldPath,
-				message: `Invalid permission value "${value}". Must be "allow", "ask", or "deny"`,
-			});
-		}
-		return errors;
-	}
-
-	if (typeof value !== "object" || value === null) {
+	if (!Array.isArray(value)) {
 		errors.push({
 			file: filePath,
 			field: fieldPath,
-			message: `permission must be a string or object, got ${typeof value}`,
+			message: `permissions must be a list, got ${value === null ? "null" : typeof value}`,
 		});
 		return errors;
 	}
 
-	const obj = value as Record<string, unknown>;
-	for (const [key, val] of Object.entries(obj)) {
-		// Object keys can be either standard permission keys or custom tool patterns
-		// Standard permission keys must be in the valid set
-		// Custom tool patterns (like "bash" with sub-patterns) are allowed
-
-		if (typeof val === "string") {
-			// Flat action for this tool
-			if (!VALID_PERMISSION_ACTIONS.has(val)) {
-				errors.push({
-					file: filePath,
-					field: `${fieldPath}.${key}`,
-					message: `Invalid permission action "${val}". Must be "allow", "ask", or "deny"`,
-				});
-			}
-		} else if (typeof val === "object" && val !== null) {
-			// Object pattern: { "pattern": "action", ... }
-			const patternObj = val as Record<string, unknown>;
-			for (const [pattern, action] of Object.entries(patternObj)) {
-				if (typeof action !== "string") {
-					errors.push({
-						file: filePath,
-						field: `${fieldPath}.${key}.${pattern}`,
-						message: `Permission pattern action must be a string, got ${typeof action}`,
-					});
-				} else if (!VALID_PERMISSION_ACTIONS.has(action)) {
-					errors.push({
-						file: filePath,
-						field: `${fieldPath}.${key}.${pattern}`,
-						message: `Invalid permission action "${action}". Must be "allow", "ask", or "deny"`,
-					});
-				}
-			}
-		} else {
+	const seen = new Map<string, number>();
+	value.forEach((rule, idx) => {
+		const path = `${fieldPath}[${idx}]`;
+		if (typeof rule !== "object" || rule === null) {
 			errors.push({
 				file: filePath,
-				field: `${fieldPath}.${key}`,
-				message: `Permission value must be a string or object, got ${typeof val}`,
+				field: path,
+				message: `permissions rule must be an object, got ${rule === null ? "null" : typeof rule}`,
+			});
+			return;
+		}
+		const entry = rule as Record<string, unknown>;
+		for (const key of ["action", "resource", "effect"]) {
+			if (typeof entry[key] !== "string") {
+				errors.push({
+					file: filePath,
+					field: `${path}.${key}`,
+					message: `permissions rule "${key}" must be a string, got ${entry[key] === null ? "null" : typeof entry[key]}`,
+				});
+			}
+		}
+		if (typeof entry.effect === "string" && !VALID_PERMISSION_ACTIONS.has(entry.effect)) {
+			errors.push({
+				file: filePath,
+				field: `${path}.effect`,
+				message: `Invalid permissions effect "${entry.effect}". Must be "allow", "ask", or "deny"`,
 			});
 		}
-	}
+		if (typeof entry.action === "string" && typeof entry.resource === "string") {
+			const key = `${entry.action}\u0000${entry.resource}`;
+			const firstIdx = seen.get(key);
+			if (firstIdx !== undefined) {
+				errors.push({
+					file: filePath,
+					field: path,
+					message: `Duplicate permission for action "${entry.action}" resource "${entry.resource}" (first at ${fieldPath}[${firstIdx}]) — under V2 last-match-wins the earlier rule is dead; collapse to a single rule`,
+				});
+			} else {
+				seen.set(key, idx);
+			}
+		}
+	});
 
 	return errors;
 }

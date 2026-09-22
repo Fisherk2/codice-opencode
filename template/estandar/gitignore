@@ -32,8 +32,6 @@
 # /.claude/
 # /.claude-plugin/
 # /.claude/.simplify-ignore-cache/
-/.opencode/plugins/.sdd-state.json
-/.opencode/plugins/.sdd-audit.log
 # /skills-lock.json
 # /opencode.json
 # /.codice-version

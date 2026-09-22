@@ -42,6 +42,7 @@
 ### Pre-Commit
 - [ ] `just check` — 0 errores (biome ci + tsc --noEmit).
 - [ ] `just test` — 0 fallos.
+- [ ] `just coverage-check 95` — 0 fallos (gate CI de cobertura ≥95%; detecta código muerto como la ruta legacy `tools:` en FEV-29).
 - [ ] Sin tipos `any` en código de producción.
 - [ ] Documentación actualizada si cambió API pública.
 
@@ -77,7 +78,6 @@
 | [spec-success-criteria.md](specs/spec-success-criteria.md) | Criterios de éxito funcionales, de rendimiento y calidad |
 | [spec-code-style-summary.md](specs/spec-code-style-summary.md) | Resumen de reglas de estilo de código |
 | [spec-boundaries.md](specs/spec-boundaries.md) | Reglas Always/Ask First/Never e protocolo de delegación |
-| [spec-sdd-plugin-decoupling.md](specs/spec-sdd-plugin-decoupling.md) | Desacoplamiento del plugin SDD |
 
 ### Codebase Memory MCP
 

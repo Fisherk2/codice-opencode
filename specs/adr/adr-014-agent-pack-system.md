@@ -67,7 +67,7 @@ task:
 
 - `VALID_SUBAGENTS` Set deleted from `validSubagents.ts` (keep `PRIMARY_AGENTS` constant)
 - `defaults.ts` updated to remove `VALID_SUBAGENTS` references
-- `sdd-pipeline.ts` fallback changed from `DEFAULTS.VALID_SUBAGENTS` to `new Set(PRIMARY_AGENTS)`
+- Subagent validation fallback changed from `DEFAULTS.VALID_SUBAGENTS` to `new Set(PRIMARY_AGENTS)`
 - Auto-discovery updated to recursively scan `packs/` subdirectories
 
 ## Consequences
@@ -120,5 +120,4 @@ Organize agents into pack directories within the template. The installer present
 
 - [spec-agent-packs.md](../spec-agent-packs.md) — Complete specification with agent classification
 - [spec-installer-ux-v2.md](../spec-installer-ux-v2.md) — Installer UX with pack selection
-- [ADR-013](./adr-013-plugin-auto-discovery.md) — Auto-discovery system (extended for packs)
 - [ADR-015](./adr-015-installer-ux-v2.md) — Installer UX v2 decision

@@ -39,7 +39,7 @@ For the selected migration target, perform the following analysis in parallel:
 
 ### Dependency Analysis
 **Delegate** `dependency-manager` subagent:
-- **Load** @skills/dependency-audit/SKILL.md to identify affected dependencies
+- **Load** `dependency-audit` skill to identify affected dependencies
 - Check for transitive dependency conflicts
 - Identify unmaintained packages
 
@@ -53,7 +53,7 @@ For the selected migration target, perform the following analysis in parallel:
 
 ## Phase 2: Generate Migration Plan
 
-1. **Load** @skills/deprecation-and-migration/SKILL.md (and/or `db-migration` skill), then create @docs/MIGRATION.md (or update if exists) with:
+1. **Load** `deprecation-and-migration` skill (and/or `db-migration` skill), then create @docs/MIGRATION.md (or update if exists) with:
 
 - Overview (date, scope, estimated effort, risk level)
 - Pre-migration checklist
@@ -76,7 +76,7 @@ For the selected migration target, perform the following analysis in parallel:
 
 3. **Migrate plan done — do NOT touch or implement code files.**
 4. Use the `question` tool to confirm with the user before proceeding.
-5. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
+5. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 ## Suggested Next Step
 

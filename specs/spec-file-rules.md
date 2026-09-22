@@ -84,8 +84,6 @@ The `docs/` directory is **Estandar** by default, but contains **Opcional** exce
 | Path | Category | Rationale |
 |------|----------|-----------|
 | `.opencode/` (directory itself) | **Obligatorio** | Core configuration directory. |
-| `.opencode/plugins/` | **Obligatorio** | Plugin directory inherits parent category. |
-| `.opencode/plugins/sdd-workflow-test.md` | **Opcional** | Test workflow spec; only needed for SDD validation. |
 | `.opencode/*` (any other file) | **Obligatorio** | All other OpenCode config files are mandatory. |
 
 ---
@@ -356,9 +354,6 @@ When the user selects **Project Install** or **Update** mode, the TUI presents o
   ◯ Documentation
     ◯ docs/DESIGN.md
     ◯ docs/SCHEMA.md
-
-  ◯ Testing & Workflow
-   ◯ .opencode/plugins/sdd-workflow-test.md
 
  ◯ Design Specs
    ◯ specs/design/

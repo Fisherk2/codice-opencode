@@ -32,7 +32,7 @@ We adopt **four slash commands** for v2.1, each implemented as a command markdow
 1. **Skill delegation, not duplication** — Commands invoke skills via the SDD plugin; they do not reimplement git, migration, or analysis logic.
 2. **Template-owned** — Command files live under `template/obligatorio/core/commands/` and are installed atomically with the workspace (Obligatorio classification).
 3. **Composable** — `/deploy` explicitly follows `/ship`; `/analyze` feeds `TECH_DEBT.md` consumed by future `/migrate` runs.
-4. **Bilingual-ready** — Command keywords are surfaced for intent detection (see ADR-017).
+4. **Bilingual-ready** — Command keywords are surfaced for intent detection. (Nota: el plan de auto-discovery fue retirado en FEV-30, #90 — el plugin SDO fue eliminado.)
 
 ## Consequences
 
@@ -56,6 +56,6 @@ We adopt **four slash commands** for v2.1, each implemented as a command markdow
 
 ## Related Decisions
 
-* ADR-013 — SDD Plugin Auto-Discovery (command → agent/skill mapping now extended)
-* ADR-017 — SDD Intent Auto-Discovery (keyword detection for these commands)
+* ~~ADR-013 — SDD Plugin Auto-Discovery~~ — (plan de auto-discovery retirado en FEV-30, #90 — el plugin SDO fue eliminado; los comandos se resuelven directamente por archivo markdown)
+* ~~ADR-017 — SDD Intent Auto-Discovery~~ — (plan de auto-discovery retirado en FEV-30, #90 — el plugin SDO fue eliminado; los comandos se invocan directamente, sin detección de keywords)
 * ADR-018 — Agent Delegation Protocol (how primary agents execute these commands)

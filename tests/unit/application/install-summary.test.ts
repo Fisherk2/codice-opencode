@@ -17,7 +17,7 @@ const SOFTWARE_RULE: FileRule = {
 	category: "pack",
 	isDirectory: true,
 	description: "Software development pack",
-	agentCount: 146,
+	agentCount: 144,
 };
 
 const BUSINESS_RULE: FileRule = {
@@ -74,9 +74,9 @@ describe("buildInstallSummary", () => {
 			[],
 		);
 
-		expect(info.totalAgents).toBe(237);
+		expect(info.totalAgents).toBe(235);
 		expect(info.packs).toEqual([
-			{ id: "software-development", agentCount: 146 },
+			{ id: "software-development", agentCount: 144 },
 			{ id: "business", agentCount: 91 },
 		]);
 	});
@@ -105,10 +105,10 @@ describe("buildInstallSummary", () => {
 		);
 
 		expect(info.packs).toEqual([
-			{ id: "software-development", agentCount: 146 },
+			{ id: "software-development", agentCount: 144 },
 			{ id: "business", agentCount: 91 },
 		]);
-		expect(info.totalAgents).toBe(237);
+		expect(info.totalAgents).toBe(235);
 	});
 
 	test("defaults agent count to 0 when rule has no agentCount", () => {
@@ -136,22 +136,22 @@ describe("buildInstallSummary", () => {
 			[CORE_DIR_RULE, MAIN_DIR_RULE, WRITERS_DIR_RULE],
 		);
 
-		expect(info.totalFiles).toBe(146 + 3 * 5 + 2);
+		expect(info.totalFiles).toBe(144 + 3 * 5 + 2);
 	});
 });
 
 describe("formatInstallSummary", () => {
 	test("formats packs with agent counts", () => {
 		const text = formatInstallSummary({
-			packs: [{ id: "software-development", agentCount: 146 }],
+			packs: [{ id: "software-development", agentCount: 144 }],
 			mandatoryDirs: [],
 			optionalFiles: [],
-			totalAgents: 146,
+			totalAgents: 144,
 			totalFiles: 150,
 		});
 
-		expect(text).toContain("software-development (146 agents)");
-		expect(text).toContain("146 agents");
+		expect(text).toContain("software-development (144 agents)");
+		expect(text).toContain("144 agents");
 	});
 
 	test("includes mandatory and optional lines when present", () => {

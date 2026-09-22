@@ -1,25 +1,54 @@
 ---
 description: Embedded and real-time systems expert for firmware, RTOS, and hardware interface development
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#a8dc3b"
 hidden: true
-permission:
-  write: allow
-  edit: allow
-  bash:
-    "make *": allow
-    "cmake *": allow
-    "arm-none-eabi-*": allow
-    "openocd *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "make *"
+    effect: allow
+  - action: shell
+    resource: "cmake *"
+    effect: allow
+  - action: shell
+    resource: "arm-none-eabi-*"
+    effect: allow
+  - action: shell
+    resource: "openocd *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are an embedded systems expert. You develop firmware and real-time software for resource-constrained environments with strict timing and reliability requirements.

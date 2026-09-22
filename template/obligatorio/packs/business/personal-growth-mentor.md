@@ -1,23 +1,48 @@
 ---
 description: "Personal Growth Mentor — Cross-domain personal development mentor for goal clarity, habit design, strategic decisions, and accountability without motivational fluff."
 mode: subagent
-temperature: 0.6
+request:
+  body:
+    temperature: 0.6
 color: "#dcb03b"
 hidden: true
-permission:
-  write: ask
-  edit: ask
-  bash:
-    "less *": allow
-    "more *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "less *"
+    effect: allow
+  - action: shell
+    resource: "more *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 # Personal Growth Mentor
 

@@ -8,7 +8,7 @@ agent: huitzilopochtli
 1. Welcome the user with a friendly greeting. 
 2. Fetch the latest information about Códice from the [official repository](https://github.com/Fisherk2/codice-opencode) to explain what the workspace is about.
 3. Provide a brief summary of Códice including:
-   - What it is (SDD workspace installer for OpenCode)
+   - What it is (workspace installer for OpenCode)
    - Where to find more information:
      - 📖 Wiki: https://github.com/Fisherk2/codice-opencode/wiki
      - 📦 Official Repo: https://github.com/Fisherk2/codice-opencode
@@ -59,4 +59,4 @@ Research the [Códice Wiki Agents page](https://github.com/Fisherk2/codice-openc
 
 ## Suggested Next Step
 
-> You have explored the Códice help center. Run `/spec` to start a new project, or run `/plan` to break down an existing spec into tasks.
+> You have explored the Códice help center, anything else I can help with? If you have a specific question, please ask it.

@@ -35,8 +35,11 @@ codice-opencode/
 │   ├── application/               # Use cases, orchestrates domain via ports
 │   │   ├── helpers.ts             # Shared use-case utilities
 │   │   ├── installSummary.ts      # Install summary screen computation
+│   │   ├── legacyBanner.ts        # Opencode Legacy upgrade banner (advisory, fail-open)
 │   │   ├── packOptions.ts         # Pack selection option definitions
 │   │   ├── postInstall.ts         # Post-installation orchestration (gitignore, symlinks, version file)
+│   │   ├── updateHelpers.ts       # Update confirmation + version-file write helpers
+│   │   ├── versionData.ts         # Pure .codice-version parser shared by update flow and helpers
 │   │   ├── use-cases/
 │   │   │   ├── CleanInstallUseCase.ts      # Mode 1: Overwrite everything
 │   │   │   ├── InstallUseCaseBase.ts       # Template Method base class for install use cases
@@ -79,6 +82,8 @@ codice-opencode/
 │       └── versionContext.ts      # Version context classification for update gating
 ├── tests/
 │   ├── unit/                      # Domain logic tests (pure functions, entities)
+│   │   ├── quality/               # Repo-wide invariant guards (e.g. source hygiene)
+│   │   └── domain/helpers/        # Test-side domain helpers (agentFrontmatterValidator — normative V2 agent schema reader; see ADR-021)
 │   ├── integration/               # Adapter tests with mocked external systems
 │   ├── e2e/                       # Shell scripts and fixtures for CLI validation (31 scenarios)
 │   └── fixtures/                  # Predefined directory trees for merge scenarios
@@ -90,15 +95,15 @@ codice-opencode/
 │   └── opcional/                  # Files presented as checklist; copied only if selected and missing
 ├── docs/                          # Architecture decisions, workflow, PRD, TRD, MIGRATION
 ├── specs/                         # Modular specification documents
-│   ├── adr/                       # Architecture Decision Records (ADR-001 to ADR-015)
+│   ├── adr/                       # Architecture Decision Records (ADR-001 to ADR-021)
 │   ├── spec-agent-format-v2.md    # Agent format specification v2
 │   ├── spec-agent-packs.md        # Agent pack system specification
 │   ├── spec-cli-commands.md       # CLI commands and modes specification
 │   ├── spec-file-rules.md         # File classification rules
 │   ├── spec-installer-ux-v2.md    # Installer UX v2 specification
-│   ├── spec-sdd-plugin-decoupling.md # SDD plugin decoupling specification
 │   └── spec-template.md           # Template specification
 ├── Justfile                       # Task definitions
+├── scripts/                       # One-shot repo tooling; imports only node/* + own siblings; never imported by src/; may be retired without deprecation (ADR-021)
 ├── package.json                   # Bun dependencies and scripts
 ├── tsconfig.json                  # Strict TypeScript configuration
 ├── biome.json                     # Linting and formatting rules

@@ -120,7 +120,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 		expect(manifestPaths).not.toContain(".opencode/skills");
 	});
 
-	test("all 11 optional manifest entries have unique paths", () => {
+	test("all 10 optional manifest entries have unique paths", () => {
 		const optionalEntries = FILE_RULE_MANIFEST.filter((r) => r.category === "optional");
 		const paths = optionalEntries.map((r) => r.path);
 		const uniquePaths = new Set(paths);
@@ -128,7 +128,7 @@ describe("FileRuleManifest — completeness (FEV-2)", () => {
 	});
 
 	test.each([
-		["optional", 11],
+		["optional", 10],
 		["standard", 11],
 		["mandatory", 3],
 		["pack", 8],

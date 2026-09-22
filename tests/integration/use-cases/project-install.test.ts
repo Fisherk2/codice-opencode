@@ -408,11 +408,11 @@ describe("ProjectInstallUseCase", () => {
 
 			await useCase.execute("/tmp/project", { force: true, version: "2.1.0" });
 
-			// force=true uses only DEFAULT_PACKS (software-development, 146 agents)
+			// force=true uses only DEFAULT_PACKS (software-development, 144 agents)
 			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
 				expect.objectContaining({
-					packs: expect.arrayContaining([{ id: "software-development", agentCount: 146 }]),
-					totalAgents: 146,
+					packs: expect.arrayContaining([{ id: "software-development", agentCount: 144 }]),
+					totalAgents: 144,
 				}),
 			);
 		});

@@ -3,12 +3,12 @@
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v2.1.2
+**Current Version:** v2.1.3-beta.1
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
 > **v2.1.2 Released** (2026-08-28): Hotfix — explicit docs-writer/technical-writer delegation in docs-update command; tech debt reorganization (v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4).
 >
-> **Previous: v2.1.1** (2026-08-25): FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅ — Bug #79, shell injection fix (TD-V2-70), manifest corrections (TD-V2-90/91), FileMergeEngine refresh (TD-V2-93), plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup (TD-V2-51), CI SHA-pins Node 24 (TD-V2-7), VersionComparator cache (TD-V2-61). Code review hardened (1 Critical + 4 Important + 3 Suggestions). 1935 tests, 31/31 E2E, 55/55 plugin integration, coverage ≥95% production src/.
+> **Previous: v2.1.1** (2026-08-25): FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅ — Bug #79, shell injection fix (TD-V2-70), manifest corrections (TD-V2-90/91), FileMergeEngine refresh (TD-V2-93), plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup (TD-V2-51), CI SHA-pins Node 24 (TD-V2-7), VersionComparator cache (TD-V2-61). Code review hardened (1 Critical + 4 Important + 3 Suggestions). 1935 tests, 31/31 E2E, coverage ≥95% production src/.
 
 ## Objective
 
@@ -28,7 +28,6 @@ Códice is a command-line interface (CLI) tool built with Bun that installs and 
 | [spec-boundaries.md](specs/spec-boundaries.md) | Always / Ask First / Never rules (incl. v2.1 agent delegation protocol) |
 | [spec-file-rules.md](specs/spec-file-rules.md) | File classification rules (Obligatorio/Estándar/Opcional) |
 | [spec-cli-commands.md](specs/spec-cli-commands.md) | Exhaustive CLI command and mode specification |
-| [spec-sdd-plugin-decoupling.md](specs/spec-sdd-plugin-decoupling.md) | SDD plugin auto-discovery and configuration |
 | [spec-agent-packs.md](specs/spec-agent-packs.md) | Agent pack system (8 selectable packs + 2 mandatory) |
 | [spec-installer-ux-v2.md](specs/spec-installer-ux-v2.md) | Installer UX v2 with pack wizard and version gating |
 | [spec-agent-format-v2.md](specs/spec-agent-format-v2.md) | Agent format v2 with YAML frontmatter schema |

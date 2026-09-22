@@ -1,26 +1,57 @@
 ---
 description: FastAPI async Python API expert for Pydantic, dependency injection, and OpenAPI
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#52dc3b"
 hidden: true
-permission:
-  write: allow
-  edit: allow
-  bash:
-    "python *": allow
-    "pip *": allow
-    "poetry *": allow
-    "uv *": allow
-    "uvicorn *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "poetry *"
+    effect: allow
+  - action: shell
+    resource: "uv *"
+    effect: allow
+  - action: shell
+    resource: "uvicorn *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a FastAPI developer specializing in high-performance async Python APIs, Pydantic validation, and OpenAPI-first design.

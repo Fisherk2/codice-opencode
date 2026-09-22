@@ -2,33 +2,77 @@
 description: Security engineer focused on vulnerability detection, threat modeling, and secure coding practices. Use for security-focused code review, threat analysis, or hardening recommendations.
 mode: subagent
 color: "#FF4444"
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 hidden: true
-permission:
-  write: deny
-  edit: deny
-  bash:
-    "python *": allow
-    "pip *": allow
-    "bun *": allow
-    "npm *": allow
-    "node *": allow
-    "chmod *": allow
-    "chown *": allow
-    "tar *": allow
-    "zip *": allow
-    "unzip *": allow
-    "curl *": allow
-    "wget *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  patch: deny
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "bun *"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: shell
+    resource: "chmod *"
+    effect: allow
+  - action: shell
+    resource: "chown *"
+    effect: allow
+  - action: shell
+    resource: "tar *"
+    effect: allow
+  - action: shell
+    resource: "zip *"
+    effect: allow
+  - action: shell
+    resource: "unzip *"
+    effect: allow
+  - action: shell
+    resource: "curl *"
+    effect: allow
+  - action: shell
+    resource: "wget *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 # Security Auditor

@@ -71,5 +71,5 @@ Every delegation call must include:
 ## Related Decisions
 
 * ADR-016 — Slash Commands v2.1 (commands are the entry points that primary agents delegate through)
-* ADR-017 — SDD Intent Auto-Discovery (intent routing precedes delegation)
+* ~~ADR-017 — SDD Intent Auto-Discovery~~ — (plan de auto-discovery retirado en FEV-30, #90 — el plugin SDO fue eliminado; la delegación parte directamente de los archivos de comando)
 * FEV-25 — Implementation milestone that applied this protocol to all six agents

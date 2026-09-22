@@ -1,73 +1,95 @@
 {
   "$schema": "https://opencode.ai/config.json",
-
-  "model": "openrouter/openrouter/free",
-  "small_model": "openrouter/openrouter/free",
-
+  "formatter": true,
   "compaction": {
     "auto": true,
-    "prune": true,
-    "reserved": 10000
+    "keep": {
+      "tokens": 10000
+    },
+    "buffer": 20000
   },
-
-  "agent": {
+  "model": "opencode/big-pickle",
+  "default_agent": "huitzilopochtli",
+  "agents": {
     "huitzilopochtli": {
       "model": "opencode/mimo-v2.5-free",
       "color": "#d3e22b",
-      "temperature": 0.5,
+      "request": {
+        "body": {
+          "temperature": 0.5
+        }
+      },
       "steps": 50
     },
     "quetzalcoatl": {
       "model": "opencode/nemotron-3-ultra-free",
       "color": "#ffffff",
-      "temperature": 0.2,
+      "request": {
+        "body": {
+          "temperature": 0.2
+        }
+      },
       "steps": 120
     },
     "moctezuma": {
       "model": "opencode/big-pickle",
       "color": "#8B4513",
-      "temperature": 0.1,
+      "request": {
+        "body": {
+          "temperature": 0.1
+        }
+      },
       "steps": 100
     },
     "tlaloc": {
       "model": "opencode/nemotron-3.5-lightning-free",
       "color": "#00ffff",
-      "temperature": 0.2,
+      "request": {
+        "body": {
+          "temperature": 0.2
+        }
+      },
       "steps": 200
     },
     "mictlantecuhtli": {
-      "model": "opencode/hy3-free",
+      "model": "opencode/muse-spark-1.3-contributor-free",
       "color": "#2d2d2d",
-      "temperature": 0.2,
+      "request": {
+        "body": {
+          "temperature": 0.2
+        }
+      },
       "steps": 150
     },
     "tezcatlipoca": {
-      "model": "opencode/muse-spark-1.2-contributor-free",
+      "model": "opencode/mimo-v2.6-flash-free",
       "color": "#ff3134",
-      "temperature": 0.1,
+      "request": {
+        "body": {
+          "temperature": 0.1
+        }
+      },
       "steps": 100
     },
     "build": {
-      "disable": true
+      "disabled": true
     },
     "plan": {
-      "disable": true
+      "disabled": true
     },
     "explore": {
-      "disable":true
+      "disabled": true
     },
     "general": {
-      "disable": true
+      "disabled": true
     }
   },
-
   "instructions": [
     "CONTRIBUTING.md",
     "SPEC.md",
     "docs/ARCHITECTURE.md",
     "docs/CODE_STYLE.md"
   ],
-
   "references": {
     "clean-code": {
       "path": "./skills/clean-code/references",
@@ -84,329 +106,1437 @@
       "description": "Official OpenCode repository — CLI, API, and configuration reference"
     }
   },
-
   "mcp": {
-    "codebase-memory-mcp": {
-      "enabled": false
-    },
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp",
-      "enabled": true
-    },
-    "chrome-devtools": {
-      "type": "local",
-      "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
-      "enabled": false
-    },
-    "excel": {
-      "type": "local",
-      "command": ["uvx", "excel-mcp-server", "stdio"],
-      "enabled": false
-    },
-    "jupyter": {
-      "type": "local",
-      "command": ["uvx", "mcp-jupyter-notebook"],
-      "enabled": false,
-      "env": {
-        "MCP_JUPYTER_SESSION_MODE": "server",
-        "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
-        "MCP_JUPYTER_TOKEN": "{env:MCP_JUPYTER_TOKEN}",
-        "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
+    "servers": {
+      "codebase-memory-mcp": {
+        "disabled": true
+      },
+      "context7": {
+        "type": "remote",
+        "url": "https://mcp.context7.com/mcp"
+      },
+      "chrome-devtools": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "chrome-devtools-mcp@1.7.0"
+        ],
+        "disabled": true
+      },
+      "excel": {
+        "type": "local",
+        "command": [
+          "uvx",
+          "excel-mcp-server",
+          "stdio"
+        ],
+        "disabled": true
+      },
+      "jupyter": {
+        "type": "local",
+        "command": [
+          "uvx",
+          "mcp-jupyter-notebook"
+        ],
+        "disabled": true,
+        "environment": {
+          "MCP_JUPYTER_SESSION_MODE": "server",
+          "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
+          "MCP_JUPYTER_TOKEN": "{env:MCP_JUPYTER_TOKEN}",
+          "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
+        }
+      },
+      "vercel-grep": {
+        "type": "remote",
+        "url": "https://mcp.grep.app"
+      },
+      "gitmcp": {
+        "type": "remote",
+        "url": "https://gitmcp.io/docs"
       }
-    },
-    "tavily": {
-      "type": "remote",
-      "url": "https://mcp.tavily.com/mcp",
-      "headers": {
-        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
-      },
-      "enabled": false
-    },
-    "firecrawl": {
-      "type": "remote",
-      "url": "https://mcp.firecrawl.dev/v2/mcp",
-      "headers": {
-        "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
-      },
-      "enabled": false
-    },
-    "vercel-grep": {
-      "type": "remote",
-      "url": "https://mcp.grep.app",
-      "enabled": true
-    },
-    "gitmcp": {
-      "type": "remote",
-      "url": "https://gitmcp.io/docs",
-      "enabled": true
     }
   },
-
-  "permission": {
-    "task": {
-      "*": "deny"
+  "permissions": [
+    {
+      "action": "subagent",
+      "resource": "*",
+      "effect": "ask"
     },
-    "bash": {
-      "*": "ask",
-      "cd *": "allow",
-      "ls": "allow",
-      "ls *": "allow",
-      "tree *": "allow",
-      "grep *": "allow",
-      "wc *": "allow",
-      "find *": "allow",
-      "echo": "allow",
-      "echo *": "allow",
-      "printf *": "allow",
-      "cat *": "allow",
-      "head *": "allow",
-      "tail *": "allow",
-      "sort *": "allow",
-      "uniq *": "allow",
-      "cut *": "allow",
-      "awk *": "allow",
-      "sed *": "allow",
-      "tr *": "allow",
-      "diff *": "allow",
-      "comm *": "allow",
-      "paste *": "allow",
-      "join *": "allow",
-      "xargs *": "allow",
-      "nl *": "allow",
-      "column *": "allow",
-      "cksum *": "allow",
-      "strings *": "allow",
-      "jq *": "allow",
-      "rg *": "allow",
-      "ag *": "allow",
-      "ack *": "allow",
-      "fd *": "allow",
-      "bat *": "allow",
-      "exa *": "allow",
-      "eza *": "allow",
-      "delta *": "allow",
-      "hexyl *": "allow",
-      "df *": "allow",
-      "free": "allow",
-      "uname *": "allow",
-      "whoami": "allow",
-      "id": "allow",
-      "uptime": "allow",
-      "ps *": "allow",
-      "lsof *": "allow",
-      "dig *": "allow",
-      "nslookup *": "allow",
-      "host *": "allow",
-      "curl *": "allow",
-      "http *": "allow",
-      "unzip -l *": "allow",
-      "zipinfo *": "allow",
-      "tar -tf *": "allow",
-      "which *": "allow",
-      "pwd": "allow",
-      "file *": "allow",
-      "stat *": "allow",
-      "du *": "allow",
-      "date *": "allow",
-      "dirname *": "allow",
-      "basename *": "allow",
-      "realpath *": "allow",
-      "git status *": "allow",
-      "git status": "allow",
-      "git diff *": "allow",
-      "git log *": "allow",
-      "git branch": "allow",
-      "git branch -r *": "allow",
-      "git branch -a": "allow",
-      "git show *": "allow",
-      "git bisect *": "allow",
-      "git blame *": "allow",
-      "git tag": "allow",
-      "git tag -l *": "allow",
-      "git remote -v": "allow",
-      "git remote": "allow",
-      "git stash list": "allow",
-      "git reflog": "allow",
-      "git shortlog *": "allow",
-      "git ls-files": "allow",
-      "git ls-files *": "allow",
-      "gh auth status": "allow",
-      "gh repo view": "allow",
-      "gh repo view *": "allow",
-      "gh issue list": "allow",
-      "gh issue view *": "allow",
-      "gh pr list": "allow",
-      "gh pr view *": "allow",
-      "gh pr checks *": "allow",
-      "gh run list": "allow",
-      "gh run view *": "allow",
-      "gh release list": "allow",
-      "gh release view *": "allow",
-      "gh api *": "allow",
-      "gh gist list": "allow",
-      "gh gist view *": "allow",
-      "env": "deny",
-      "env *": "deny",
-      "printenv *": "deny",
-      "* .env": "deny",
-      "* .env.*": "deny",
-      "* ./.env": "deny",
-      "* ./.env.*": "deny",
-      "* .env.example": "allow",
-      "* ./.env.example": "allow",
-      "* .npmrc": "deny",
-      "* .pem": "deny",
-      "* .key": "deny",
-      "* .p12": "deny",
-      "* .pfx": "deny",
-      "* credentials.json": "deny",
-      "* service-account*.json": "deny",
-      "* .ssh/id_*": "deny",
-      "* .ssh/config": "deny",
-      "* .aws/credentials": "deny",
-      "* .kube/config": "deny",
-      "* .netrc": "deny",
-      "* .pgpass": "deny",
-      "* .git-credentials": "deny",
-      "* .docker/config.json": "deny",
-      "* .gpg": "deny",
-      "* .ovpn": "deny",
-      "* .npmrc *": "deny",
-      "* .pem *": "deny",
-      "* .key *": "deny",
-      "* .p12 *": "deny",
-      "* .pfx *": "deny",
-      "* credentials.json *": "deny",
-      "* service-account*.json *": "deny",
-      "* .netrc *": "deny",
-      "* .pgpass *": "deny",
-      "* .git-credentials *": "deny",
-      "* .gpg *": "deny",
-      "* .ovpn *": "deny",
-      "rm -rf *": "deny",
-      "rm -fr *": "deny",
-      "rm -r -f *": "deny",
-      "rm -f -r *": "deny",
-      "rm -rfv *": "deny",
-      "rm -rfv/*": "deny",
-      "shred *": "deny",
-      "find * -exec rm *": "deny",
-      "find * -delete": "deny",
-      "tee *": "deny",
-      "sed -i *": "deny",
-      "xargs rm *": "deny",
-      "xargs rmdir *": "deny",
-      "git push -f *": "deny",
-      "git push --force *": "deny",
-      "git push --force-with-lease *": "deny",
-      "git reset --hard *": "deny",
-      "git reset --mixed *": "deny",
-      "git clean -fd *": "deny",
-      "git clean -fdx *": "deny",
-      "git clean -fxd *": "deny",
-      "git checkout -- *": "deny",
-      "git checkout -f *": "deny",
-      "git restore *": "deny",
-      "git filter-repo *": "deny",
-      "git branch -D *": "deny",
-      "git stash drop": "deny",
-      "git stash clear": "deny",
-      "drop table *": "deny",
-      "drop database *": "deny",
-      "drop schema *": "deny",
-      "truncate table *": "deny",
-      "truncate *": "deny",
-      "docker rm -f *": "deny",
-      "docker rmi -f *": "deny",
-      "docker system prune -a *": "deny",
-      "docker volume rm *": "deny",
-      "docker volume prune *": "deny",
-      "kubectl delete * --all *": "deny",
-      "kubectl drain *": "deny",
-      "chmod -R 777 /*": "deny",
-      "chmod 777 /*": "deny",
-      "chmod -R 777 ~/*": "deny",
-      "chmod 777 ~/*": "deny",
-      "chown -R *": "deny",
-      "kill -9 0": "deny",
-      "kill -9 1": "deny",
-      "shutdown -h *": "deny",
-      "shutdown -r *": "deny",
-      "reboot": "deny",
-      "halt": "deny",
-      "poweroff": "deny",
-      "iptables -F *": "deny",
-      "iptables -F": "deny",
-      "ufw disable": "deny",
-      "firewalld disable": "deny",
-      "npm publish *": "deny",
-      "npm publish": "deny",
-      "pip install * --force-reinstall *": "deny",
-      "apt remove *": "deny",
-      "apt purge *": "deny",
-      "apt-get remove *": "deny",
-      "apt-get purge *": "deny",
-      "yum remove *": "deny",
-      "dnf remove *": "deny",
-      "unset PATH": "deny",
-      "export PATH=[^$]*": "deny",
-      "mkfs *": "deny",
-      "dd if=*": "deny",
-      "fdisk /dev/*": "deny",
-      "wipefs *": "deny",
-      "parted * mklabel *": "deny",
-      "terraform destroy -auto-approve *": "deny",
-      "pulumi destroy --yes *": "deny",
-      "aws s3 rm --recursive *": "deny",
-      "aws ec2 terminate-instances *": "deny",
-      "aws rds delete-db-instance *": "deny",
-      "az vm delete *": "deny",
-      "az group delete *": "deny",
-      "gcloud compute instances delete *": "deny",
-      "mongo * dropDatabase": "deny",
-      "mongosh * dropDatabase": "deny",
-      "redis-cli * FLUSHALL": "deny",
-      "redis-cli * FLUSHDB": "deny",
-      "mysqladmin drop *": "deny",
-      "psql * -c * drop *": "deny",
-      "psql * -c * alter system *": "deny",
-      "psql * -c * truncate *": "deny"
+    {
+      "action": "shell",
+      "resource": "*",
+      "effect": "ask"
     },
-    "read": {
-      "*": "allow",
-      "*.env": "deny",
-      "*.env.*": "deny",
-      "*.env.example": "allow",
-      ".npmrc": "deny",
-      "*.pem": "deny",
-      "*.key": "deny",
-      "*.p12": "deny",
-      "*.pfx": "deny",
-      "credentials.json": "deny",
-      ".cargo/credentials": "deny",
-      "service-account*.json": "deny",
-      ".ssh/id_*": "deny",
-      ".ssh/config": "deny",
-      ".aws/credentials": "deny",
-      ".kube/config": "deny",
-      ".netrc": "deny",
-      ".pgpass": "deny",
-      ".git-credentials": "deny",
-      ".s3cfg": "deny",
-      ".config/gh/hosts.yml": "deny",
-      ".docker/config.json": "deny",
-      "*.gpg": "deny",
-      "*.ovpn": "deny",
-      "*.mobileprovision": "deny"
-  },
-    "external_directory": {
-      "*": "deny",
-      "~/.bun/*": "allow",
-      "~/.cargo/*": "allow",
-      "~/go/*": "allow",
-      "~/.cache/*": "allow",
-      "/tmp/*": "allow"
+    {
+      "action": "shell",
+      "resource": "cd *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "ls",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "ls *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "tree *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "grep *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "wc *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "find *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "echo",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "echo *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "printf *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "cat *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "head *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "tail *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "sort *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "uniq *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "cut *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "awk *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "sed *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "tr *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "diff *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "comm *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "paste *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "join *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "nl *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "column *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "cksum *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "strings *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "jq *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "rg *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "ag *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "ack *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "fd *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "bat *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "exa *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "eza *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "delta *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "hexyl *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "df *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "free",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "uname *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "whoami",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "id",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "uptime",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "ps *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "lsof *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "dig *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "nslookup *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "host *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "curl *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "http *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "unzip -l *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "zipinfo *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "tar -tf *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "which *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "pwd",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "file *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "stat *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "du *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "date *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "dirname *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "basename *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "realpath *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git status *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git status",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git diff *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git log *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git branch",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git branch -r *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git branch -a",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git show *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git bisect *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git blame *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git tag",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git tag -l *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git remote -v",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git remote",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git stash list",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git reflog",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git shortlog *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git ls-files",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git ls-files *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh auth status",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh repo view",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh repo view *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh issue list",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh issue view *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh pr list",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh pr view *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh pr checks *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh run list",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh run view *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh release list",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh release view *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh api *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh gist list",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh gist view *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "env *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "printenv *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .env.*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* ./.env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* ./.env.*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .env.example",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "* ./.env.example",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "* .npmrc",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .pem",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .key",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .p12",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .pfx",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* credentials.json",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* service-account*.json",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .ssh/config",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .aws/credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .kube/config",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .netrc",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .pgpass",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .git-credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .docker/config.json",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .gpg",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .ovpn",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .npmrc *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .pem *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .key *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .p12 *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .pfx *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* credentials.json *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* service-account*.json *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .netrc *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .pgpass *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .git-credentials *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .gpg *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .ovpn *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rf *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -fr *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -r -f *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -f -r *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rfv *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rfv/*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "shred *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "find * -exec rm *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "find * -delete",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "tee *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "sed -i *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs rm *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs rmdir *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "find * -exec *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "find * -execdir *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs sh *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs bash *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs chmod *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs curl *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -fir *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm --force --recursive *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm --recursive --force *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm * --force --recursive *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm * --recursive --force *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*aws/credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git push -f *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git push --force *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git push --force-with-lease *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git reset --hard *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git reset --mixed *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git clean -fd *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git clean -fdx *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git clean -fxd *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git checkout -- *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git checkout -f *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git restore *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git filter-repo *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git branch -D *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git stash drop",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git stash clear",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "drop table *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "drop database *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "drop schema *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "truncate table *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "truncate *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "docker rm -f *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "docker rmi -f *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "docker system prune -a *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "docker volume rm *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "docker volume prune *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "kubectl delete * --all *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "kubectl drain *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "chmod -R 777 /*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "chmod 777 /*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "chmod -R 777 ~/*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "chmod 777 ~/*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "chown -R *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "kill -9 0",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "kill -9 1",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "shutdown -h *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "shutdown -r *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "reboot",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "halt",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "poweroff",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "iptables -F *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "iptables -F",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "ufw disable",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "firewalld disable",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "npm publish *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "npm publish",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "pip install * --force-reinstall *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "apt remove *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "apt purge *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "apt-get remove *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "apt-get purge *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "yum remove *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "dnf remove *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "unset PATH",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "export PATH=[^$]*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "mkfs *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "dd if=*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "fdisk /dev/*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "wipefs *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "parted * mklabel *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "terraform destroy -auto-approve *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "pulumi destroy --yes *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "aws s3 rm --recursive *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "aws ec2 terminate-instances *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "aws rds delete-db-instance *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "az vm delete *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "az group delete *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "gcloud compute instances delete *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "mongo * dropDatabase",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "mongosh * dropDatabase",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "redis-cli * FLUSHALL",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "redis-cli * FLUSHDB",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "mysqladmin drop *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "psql * -c * drop *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "psql * -c * alter system *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "psql * -c * truncate *",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "read",
+      "resource": "*.env",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.env.*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.env.example",
+      "effect": "allow"
+    },
+    {
+      "action": "read",
+      "resource": ".npmrc",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.pem",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.key",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.p12",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.pfx",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "credentials.json",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".cargo/credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "service-account*.json",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".ssh/config",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".aws/credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".kube/config",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".netrc",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".pgpass",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".git-credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".s3cfg",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".config/gh/hosts.yml",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": ".docker/config.json",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.gpg",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.ovpn",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.mobileprovision",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*id_rsa*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*id_ed25519*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*id_ecdsa*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.envrc*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/.npmrc",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "credentials.json*",
+      "effect": "deny"
+    },
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/.bun/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/.cargo/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/go/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/.cache/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "/tmp/opencode/*",
+      "effect": "allow"
     }
-  }
+  ]
 }
