@@ -22,7 +22,6 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 | [ADR-014](../specs/adr/adr-014-agent-pack-system.md) | Agent Pack System | Accepted | Pack-based agent classification with 8 selectable packs + 2 mandatory |
 | [ADR-015](../specs/adr/adr-015-installer-ux-v2.md) | Installer UX v2 | Accepted | Metadata-driven installer with pack selection and version-gated updates |
 | [ADR-016](../specs/adr/adr-016-new-commands.md) | Slash Commands v2.1 | Accepted | 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`) with skill delegation |
-| [ADR-017](../specs/adr/adr-017-sdd-intent-auto-discovery.md) | SDD Intent Auto-Discovery | Accepted | Filesystem-based command keyword detection + bilingual EN/ES support |
 | [ADR-018](../specs/adr/adr-018-agent-delegation.md) | Agent Delegation Protocol | Accepted | Analyze → Plan → Execute protocol for primary agents via `task()` |
 | [ADR-019](../specs/adr/adr-019-cicd-hardening.md) | CI/CD Hardening | Accepted | SHA-pinned actions, branch protection, PR/issue templates, npm provenance |
 | [ADR-020](../specs/adr/adr-020-spec-modularization.md) | SPEC Modularization | Accepted | 441-line SPEC.md → 44-line index + 8 sub-specs |

@@ -74,8 +74,8 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | RF-10 | Slash Command `/migrate` | Análisis de migración de stack técnico con fases y rollback documentados en `docs/MIGRATION.md`. | Implementado (v2.1) | HU-09, ADR-016 |
 | RF-11 | Slash Command `/deploy` | Automatización post-`/ship` para generar branch protection, PR templates y pipelines CI/CD. | Implementado (v2.1) | HU-10, ADR-016 |
 | RF-12 | Slash Command `/analyze` | Análisis arquitectónico de 8 dimensiones que actualiza `docs/TECH_DEBT.md`. | Implementado (v2.1) | HU-11, ADR-016 |
-| RF-13 | Auto-discovery de Intents | Detección basada en filesystem de palabras clave de comandos reemplaza mapa hardcodeado. | Implementado (v2.1) | HU-12, ADR-017 |
-| RF-14 | Soporte Bilingüe de Intents | Las palabras clave de comandos funcionan tanto en inglés como en español. | Implementado (v2.1) | HU-12, ADR-017 |
+| RF-13 | Auto-discovery de Intents | ~~Detección basada en filesystem de palabras clave de comandos~~ Retirado en FEV-30, #90 (el plugin SDO fue eliminado). | Retirado (FEV-30) | HU-12 |
+| RF-14 | Soporte Bilingüe de Intents | ~~Las palabras clave de comandos funcionan tanto en inglés como en español.~~ Retirado en FEV-30, #90 (el plugin SDO fue eliminado). | Retirado (FEV-30) | HU-12 |
 | RF-15 | Protocolo de Delegación de Agentes | Los agentes primarios analizan, mapean subagentes/skills, e invocan vía `task()` con instrucciones determinísticas y checklist de aceptación. | Implementado (v2.1) | HU-13, ADR-018 |
 
 ## 5. Requisitos No Funcionales
