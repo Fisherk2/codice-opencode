@@ -5,7 +5,7 @@ agent: tezcatlipoca
 
 **Load** `code-review-and-quality` skill to perform a thorough code review.
 
-Review the target changes (staged or recent commits) across all five axes:
+Review the target changes (staged or recent commits) across all five axes, one axis at a time, sequentially. For each axis, load the relevant skill and delegate to the appropriate subagents:
 
 1. **Correctness** — Does it match the spec? Edge cases handled? Tests adequate? **Delegate** `error-coordinator` subagent and **Load** `error-handling-patterns` skill for error path and resilience review
 2. **Readability** — Clear names? Straightforward logic? Well-organized? **Delegate** `code-reviewer` subagent and **Load** `solid` skill to evaluate SOLID principles and clean code

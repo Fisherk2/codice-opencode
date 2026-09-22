@@ -49,7 +49,7 @@
       "steps": 200
     },
     "mictlantecuhtli": {
-      "model": "opencode/hy3-free",
+      "model": "opencode/muse-spark-1.3-contributor-free",
       "color": "#2d2d2d",
       "request": {
         "body": {
@@ -59,7 +59,7 @@
       "steps": 150
     },
     "tezcatlipoca": {
-      "model": "opencode/muse-spark-1.3-contributor-free",
+      "model": "opencode/mimo-v2.6-flash-free",
       "color": "#ff3134",
       "request": {
         "body": {
@@ -1448,7 +1448,7 @@
     },
     {
       "action": "external_directory",
-      "resource": "/tmp/opencode*",
+      "resource": "/tmp/opencode/*",
       "effect": "allow"
     }
   ]
