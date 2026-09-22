@@ -17,19 +17,8 @@ import {
 } from "../versionGateMessages";
 import { isPreV2Version, resolveUpdatePacks } from "./updateFlow";
 import { buildPluginRemnantMessage, finishUpdate, maybeConfirmUpdate } from "./updateHelpers";
+import type { UpdateWorkspaceOptions } from "./updateOptions";
 import { notifyIfUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
-
-/**
- * Options for the update workspace execution.
- */
-export interface UpdateWorkspaceOptions {
-	/** Skip the confirmation prompt */
-	readonly force?: boolean;
-	/** Explicit version tag (overrides GitHub version lookup) */
-	readonly version?: string;
-	/** Packs to add during a non-interactive update (Option B without the menu) */
-	readonly addPacks?: readonly string[];
-}
 
 /**
  * Mode 3: Update Workspace — update an existing v2.0+ installation.

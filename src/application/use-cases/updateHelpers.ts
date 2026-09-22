@@ -13,7 +13,7 @@ import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { Result } from "../../domain/types/Result";
 import { confirmOverwrite, writeVersionFileSafe } from "../helpers";
 import type { IUserPrompt } from "../ports/IUserPrompt";
-import type { UpdateWorkspaceOptions } from "./UpdateWorkspaceUseCase";
+import type { UpdateWorkspaceOptions } from "./updateOptions";
 
 /**
  * Destination-relative paths of the SDD plugin shipped by installers
