@@ -36,6 +36,21 @@ describe("Justfile Configuration", () => {
 		expect(justfile).toMatch(/^test:/m);
 	});
 
+	test("test-setup recipe runs only the setup test directory", () => {
+		const match = justfile.match(/^test-setup:\r?\n([\s\S]*?)(?=^\w)/m);
+		expect(match).not.toBeNull();
+		expect(match![1]).toContain("bun test tests/setup/");
+	});
+
+	test("coverage-check accepts args and delegates to the script with them", () => {
+		// Signature is variadic so `just coverage-check 90` can override the
+		// global threshold without a hardcoded default in the Justfile.
+		expect(justfile).toMatch(/^coverage-check \*args:/m);
+		const match = justfile.match(/^coverage-check \*args:\r?\n([\s\S]*?)(?=^\w)/m);
+		expect(match).not.toBeNull();
+		expect(match![1]).toContain("bash scripts/coverage-check.sh {{args}}");
+	});
+
 	test("build recipe is removed (binary compilation removed in v1.2.0)", () => {
 		expect(justfile).not.toMatch(/^build:/m);
 		expect(justfile).not.toMatch(/^build-all:/m);
