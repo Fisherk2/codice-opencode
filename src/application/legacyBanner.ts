@@ -8,10 +8,20 @@
  * Purely advisory and fail-open: absent, corrupt, or unreadable version files
  * degrade to a silent no-op so the banner can never interrupt an install,
  * update, or menu flow (mirrors detectVersionContext's detection contract).
+ *
+ * Settling assumption (left out deliberately: local FS + advisory contract):
+ * `readVersionFile` is expected to always settle — it reads from the local
+ * filesystem, where a hanging read is not a realistic failure mode. A loader
+ * that never settles would stall the caller without throwing, which the
+ * fail-open try/catch cannot absorb; adding a timeout would pull concurrency
+ * machinery into a three-line advisory helper. Accepted by design; revisit
+ * if this ever reads from remote I/O.
  */
 
 import type { IFileSystem } from "../domain/ports/IFileSystem";
 import { VersionComparator } from "../domain/services/VersionComparator";
+import type { Result } from "../domain/types/Result";
+import type { RemoteVersionStatus } from "../domain/types/version";
 import type { IUserPrompt } from "./ports/IUserPrompt";
 import { parseVersionData } from "./versionData";
 
@@ -20,6 +30,18 @@ const LEGACY_MAX_VERSION = "2.1.2";
 
 const LEGACY_BANNER_MESSAGE =
 	"⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support";
+
+/**
+ * Is the installed version on the retired legacy line (its version at or
+ * below the threshold)?
+ *
+ * compare() reports from the remote's perspective: with the threshold as
+ * "remote", "ahead" (threshold > installed) and "equal" both mean the
+ * install sits on the legacy line and deserves the warning.
+ */
+function isOnLegacyLine(comparison: Result<RemoteVersionStatus, Error>): boolean {
+	return comparison.ok && (comparison.value === "ahead" || comparison.value === "equal");
+}
 
 /**
  * Warn the user when the workspace was installed by Opencode Legacy (<= 2.1.2).
@@ -44,12 +66,8 @@ export async function maybePrintLegacyBanner(
 		const installed = parseVersionData(await fileSystem.readVersionFile());
 		if (installed === null) return;
 
-		// compare() reports from the remote's perspective: with the threshold as
-		// "remote", "ahead" (threshold > installed) and "equal" both mean the
-		// install sits on the legacy line and deserves the warning.
 		const comparison = new VersionComparator().compare(installed.version, LEGACY_MAX_VERSION);
-		if (!comparison.ok) return;
-		if (comparison.value === "ahead" || comparison.value === "equal") {
+		if (isOnLegacyLine(comparison)) {
 			userPrompt.showWarning(LEGACY_BANNER_MESSAGE);
 		}
 	} catch {
