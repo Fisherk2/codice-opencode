@@ -32,8 +32,16 @@ describe("Release Workflow Configuration", () => {
 
 	test("has version validation step comparing tag vs package.json", () => {
 		expect(releaseYaml).toContain("Validate version");
-		expect(releaseYaml).toContain("GITHUB_REF_NAME");
+		// Tag is resolved through the TAG env indirection: workflow_dispatch uses
+		// the inputs.tag, tag push falls back to github.ref_name.
+		expect(releaseYaml).toContain("TAG:");
+		expect(releaseYaml).toContain("inputs.tag");
+		expect(releaseYaml).toContain("github.ref_name");
 		expect(releaseYaml).toContain("package.json");
+		// Prerelease tags demand an exact match (incl. suffix); stable tags
+		// compare the base version only.
+		expect(releaseYaml).toContain('"$TAG_VERSION" != "$PKG_VERSION"');
+		expect(releaseYaml).toContain('"$TAG_VERSION_BASE" != "$PKG_VERSION_BASE"');
 	});
 
 	test("does not interpolate untrusted github context into shell scripts (injection guard)", () => {
@@ -152,6 +160,8 @@ describe("Release Workflow Configuration", () => {
 	test("has concurrency group to prevent parallel releases", () => {
 		expect(releaseYaml).toContain("concurrency:");
 		expect(releaseYaml).toContain("release-");
-		expect(releaseYaml).toContain("cancel-in-progress: true");
+		// Deliberately false: cancelling an in-flight publish can leave npm and
+		// the GitHub release inconsistent (partial publish, missing asset).
+		expect(releaseYaml).toContain("cancel-in-progress: false");
 	});
 });
