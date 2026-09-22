@@ -61,7 +61,8 @@ jobs:
       - name: Run checks (lint + format + typecheck)
         run: just check
 
-      - name: Run tests (unit + integration)
+      - name: Run tests (unit + integration, non-Linux — Linux gates via coverage run)
+        if: runner.os != 'Linux'
         run: just test
 
       - name: Run E2E tests (Linux only — bash scripts)
