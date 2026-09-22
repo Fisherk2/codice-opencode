@@ -144,18 +144,20 @@ just test
 
 Tareas mecánicas (deletes, grep verificadores) → `git-workflow-manager`. Tareas con lógica (banner) → `backend-developer` + `test-engineer`. Tareas documentales → `docs-writer` + `technical-writer`. Review → `code-reviewer`.
 
-| Task | Suggested subagents |
-|------|---------------------|
-| 1.1 | `backend-developer`, `git-workflow-manager` |
-| 1.2 | `git-workflow-manager` |
-| 1.3 | `qa-automation`, `git-workflow-manager` |
-| 2.1 | `devops-engineer`, `code-reviewer` |
-| 3.1 | `backend-developer`, `test-engineer` |
-| 3.2 | `backend-developer` |
-| 3.3 | `qa-automation` |
-| 4.1 | `docs-writer`, `git-workflow-manager` |
-| 4.2 | `docs-writer`, `technical-writer` |
-| 4.3 | `technical-writer` |
+> Exigencia `template/obligatorio/core/commands/plan.md` paso 6: tabla `task | subagent | skill(s)` con skills reales de `skills/`.
+
+| Task | Subagents | Skills + justificación |
+|------|-----------|------------------------|
+| 1.1 | `backend-developer`, `git-workflow-manager` | `git-workflow-and-versioning` — commit atómico `chore(plugin)` por concern delete; `bash-defensive-patterns` — verificación segura `find`/`grep` 0-matches sin globs destructivos |
+| 1.2 | `git-workflow-manager` | `git-workflow-and-versioning` — `git rm -r` dev copy con mensaje convencional reversible; `bash-defensive-patterns` — confirma 0 paths residuales excluyendo `node_modules`/`fixtures` |
+| 1.3 | `qa-automation`, `git-workflow-manager` | `git-workflow-and-versioning` — commit `test(plugin)` que aísla el drop de suites; `test-driven-development` — gate rojo/verde: `just test` sigue en verde tras eliminar `tests/plugin/` |
+| 2.1 | `devops-engineer`, `code-reviewer` | `ci-cd-and-automation` — strip del job `qa-plugin` y targets `check/test-plugin` sin romper el DAG de CI; `code-review-and-quality` — review de `Justfile`+`ci.yml` post-strip; `git-workflow-and-versioning` — commit `chore(ci)` atómico |
+| 3.1 | `backend-developer`, `test-engineer` | `test-driven-development` — helper `opencodeLegacyBanner.ts` guiado por casos rojo→verde; `clean-code` — helper pequeño, no bloqueante, sin side-effects ocultos; `clean-ddd-hexagonal` — ubica el banner en `application/helpers` reutilizando `VersionComparator`/`loadVersionFile` (solo referencia, no implementación) |
+| 3.2 | `backend-developer` | `clean-ddd-hexagonal` — cablea `maybePrintLegacyBanner()` vía use cases sin saltarse la capa application (solo referencia); `refactoring-patterns` — inserta la llamada antes del primer prompt con el cambio mínimo seguro |
+| 3.3 | `qa-automation` | `test-driven-development` — 5 casos TDD (ausente / ≤2.1.2 imprime / ≥2.1.3 no imprime / inválida / sin loader); `debugging-and-error-recovery` — versión `abc` y loader ausente degradan a no-op sin romper el install |
+| 4.1 | `docs-writer`, `git-workflow-manager` | `documentation-and-adrs` — retira `spec-sdd-plugin-decoupling` + ADR-013 con trazabilidad D4 (eliminación, no archivo); `git-workflow-and-versioning` — commit `docs(workflow)` atómico de deletes |
+| 4.2 | `docs-writer`, `technical-writer` | `documentation-and-adrs` — scrub de refs plugin en SPEC/WORKFLOW/TRD/ARCHITECTURE/wiki manteniendo consistencia; `crafting-effective-readmes` — reescribe `README.md` al estado actual sin métrica legacy "55/55" |
+| 4.3 | `technical-writer` | `changelog-generate` — entrada `[2.1.3]` en formato Keep a Changelog (remoción + banner); `documentation-and-adrs` — preserva historia inmutable v2.1.1/v2.1.2 mientras documenta el cambio |
 
 ---
 
