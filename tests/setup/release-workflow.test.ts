@@ -148,6 +148,21 @@ describe("Release Workflow Configuration", () => {
 		expect(releaseYaml).toContain("CHANGELOG.md");
 	});
 
+	// --- Post-publish smoke test (retry window) ---
+
+	test("has a post-publish artifact verification step", () => {
+		expect(releaseYaml).toContain("Verify published artifact");
+	});
+
+	test("smoke test retries for ~7.5 minutes to ride out registry propagation lag", () => {
+		// Registry read replicas can lag several minutes behind a successful
+		// publish; a short window produces false negatives (run 35715057975).
+		// Pin the widened 30 x 15s window, tolerating whitespace variations.
+		expect(releaseYaml).toMatch(/ATTEMPTS=30/);
+		expect(releaseYaml).toMatch(/seq\s+1\s+"\$ATTEMPTS"/);
+		expect(releaseYaml).toMatch(/elapsed=\$\(\(\s*\(i\s*-\s*1\)\s*\*\s*15\s*\)\)/);
+	});
+
 	// --- Security hardening ---
 
 	test("softprops/action-gh-release is SHA-pinned", () => {

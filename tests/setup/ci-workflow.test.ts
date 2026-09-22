@@ -54,6 +54,18 @@ describe("CI Workflow Configuration", () => {
 		expect(ciYaml).toContain("just test-e2e");
 	});
 
+	test("coverage step is config-driven (no hardcoded threshold)", () => {
+		// The 95% threshold lives in scripts/coverage-thresholds.json; pinning it
+		// again on the CI invocation would silently desync from the JSON.
+		expect(ciYaml).toContain("run: just coverage-check");
+		const invocations = ciYaml.match(/just coverage-check[^\n]*/g) ?? [];
+		expect(invocations.length).toBeGreaterThan(0);
+		for (const line of invocations) {
+			expect(line.trim(), line).toBe("just coverage-check");
+		}
+		expect(ciYaml).not.toMatch(/just coverage-check\s+[0-9]/);
+	});
+
 	test("binary build and smoke test steps are removed", () => {
 		expect(ciYaml).not.toContain("Build binary");
 		expect(ciYaml).not.toContain("Smoke test binary");
