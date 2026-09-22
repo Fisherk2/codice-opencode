@@ -439,7 +439,13 @@ export function runCli(args: readonly string[]): number {
 		}
 	}
 
-	return result.errors.length > 0 && !dryRun ? 1 : 0;
+	// Exit-code contract (documented): apply with errors -> 1; dry-run with
+	// errors -> 2 (the caller must learn the pass would fail before writing);
+	// warnings never affect the exit code; clean runs -> 0.
+	if (result.errors.length > 0) {
+		return dryRun ? 2 : 1;
+	}
+	return 0;
 }
 
 // --- CLI entry point ---

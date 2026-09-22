@@ -363,12 +363,43 @@ tools:
 		expect(runCli([dir])).toBe(0);
 	});
 
+	it("returns 2 when a dry-run migration reports errors (fail-loud contract)", () => {
+		// Contract change (documented): apply-with-errors exits 1, dry-run-with-
+		// errors exits 2, clean runs exit 0. The old code returned 0 for a dry-run
+		// even with errors, hiding the failure from callers scripting the codemod.
+		const dir = join(tmpDir, "cli-dry-errors");
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(join(dir, "agent.md"), "# no frontmatter\n");
+
+		expect(runCli([dir, "--dry-run"])).toBe(2);
+	});
+
 	it("returns 1 when a non-dry-run migration reports errors", () => {
 		const dir = join(tmpDir, "cli-broken");
 		mkdirSync(dir, { recursive: true });
 		writeFileSync(join(dir, "agent.md"), "# no frontmatter\n");
 
 		expect(runCli([dir])).toBe(1);
+	});
+
+	it("returns 0 for warnings alone — only errors affect the exit code", () => {
+		// write/patch/edit conflicts warn but do not error: exit stays 0.
+		const dir = join(tmpDir, "cli-warn-only");
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(
+			join(dir, "agent.md"),
+			`---
+description: "Warn Agent"
+mode: primary
+tools:
+  write: deny
+  edit: allow
+---
+# Warn
+`,
+		);
+
+		expect(runCli([dir])).toBe(0);
 	});
 });
 
