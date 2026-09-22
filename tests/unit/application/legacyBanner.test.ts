@@ -8,7 +8,11 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { isLegacyVersion } from "../../../src/application/legacyBanner";
+import {
+	isLegacyVersion,
+	LEGACY_BANNER_MESSAGE,
+	LEGACY_MAX_VERSION,
+} from "../../../src/application/legacyBanner";
 
 describe("isLegacyVersion", () => {
 	test.each(["2.0.0", "2.1.0", "2.1.1", "2.1.2"])(
@@ -28,5 +32,18 @@ describe("isLegacyVersion", () => {
 	test("invalid version degrades to false (fail-open)", () => {
 		expect(isLegacyVersion("abc")).toBe(false);
 		expect(isLegacyVersion("")).toBe(false);
+	});
+
+	/**
+	 * Contract: the upgrade target quoted in the banner is the smallest version
+	 * that is NOT on the legacy line — i.e. the patch bump immediately after
+	 * LEGACY_MAX_VERSION. Deriving it from the threshold (rather than hardcoding
+	 * "2.1.3") makes message and predicate fail together if either drifts.
+	 */
+	test("banner quotes the first non-legacy version as the upgrade target", () => {
+		const firstNonLegacy = LEGACY_MAX_VERSION.replace(/\d+$/, (p) => String(Number(p) + 1));
+
+		expect(isLegacyVersion(firstNonLegacy)).toBe(false);
+		expect(LEGACY_BANNER_MESSAGE).toContain(`≥ ${firstNonLegacy}`);
 	});
 });

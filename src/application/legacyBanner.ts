@@ -4,7 +4,7 @@
  * The V1 plugin was removed from the template, so workspaces installed by the
  * retired Opencode Legacy line (<= 2.1.2) silently lose plugin support. The
  * detection banner shown before the mode menu nudges those users toward
- * >= 2.1.4 (native Opencode V2 support) — a single source owned by
+ * >= 2.1.3 (native Opencode V2 support) — a single source owned by
  * versionInfoMessages. This module provides the threshold predicate and the
  * shared message that banner consumes.
  */
@@ -12,10 +12,10 @@
 import { VersionComparator } from "../domain/services/VersionComparator";
 
 /** Last Códice version shipped on the retired Opencode Legacy runtime. */
-const LEGACY_MAX_VERSION = "2.1.2";
+export const LEGACY_MAX_VERSION = "2.1.2";
 
 export const LEGACY_BANNER_MESSAGE =
-	"⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support";
+	"⚠ Opencode Legacy only — upgrade to ≥ 2.1.3 for native Opencode V2 support";
 
 /**
  * Is the given installed version on the retired legacy line (at or below

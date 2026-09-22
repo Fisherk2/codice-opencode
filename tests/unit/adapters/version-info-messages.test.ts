@@ -68,7 +68,7 @@ describe("buildVersionInfoMessages", () => {
 
 			expect(result.title).toContain("v2.0+ Installation Detected");
 			expect(result.message).toContain(
-				"⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support",
+				"⚠ Opencode Legacy only — upgrade to ≥ 2.1.3 for native Opencode V2 support",
 			);
 		},
 	);
