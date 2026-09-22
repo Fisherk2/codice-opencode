@@ -7,7 +7,7 @@ import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, createProgressCallback, wrapMergeError } from "../helpers";
-import { maybePrintLegacyBanner } from "../helpers/opencodeLegacyBanner";
+import { maybePrintLegacyBanner } from "../legacyBanner";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { parseVersionData } from "../versionData";

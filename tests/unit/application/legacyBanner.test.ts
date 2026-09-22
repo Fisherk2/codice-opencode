@@ -8,9 +8,9 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { maybePrintLegacyBanner } from "../../../../src/application/helpers/opencodeLegacyBanner";
-import type { IUserPrompt } from "../../../../src/application/ports/IUserPrompt";
-import type { IFileSystem } from "../../../../src/domain/ports/IFileSystem";
+import { maybePrintLegacyBanner } from "../../../src/application/legacyBanner";
+import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
+import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 
 const INSTALLED_AT = "2026-01-01T00:00:00.000Z";
 

@@ -35,6 +35,7 @@ codice-opencode/
 │   ├── application/               # Use cases, orchestrates domain via ports
 │   │   ├── helpers.ts             # Shared use-case utilities
 │   │   ├── installSummary.ts      # Install summary screen computation
+│   │   ├── legacyBanner.ts        # Opencode Legacy upgrade banner (advisory, fail-open)
 │   │   ├── packOptions.ts         # Pack selection option definitions
 │   │   ├── postInstall.ts         # Post-installation orchestration (gitignore, symlinks, version file)
 │   │   ├── versionData.ts         # Pure .codice-version parser shared by update flow and helpers

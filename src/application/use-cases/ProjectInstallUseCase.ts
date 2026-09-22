@@ -26,7 +26,7 @@ import {
 } from "../../domain/entities/FileRuleManifest";
 import type { Result } from "../../domain/types/Result";
 import { promptForOptionals } from "../helpers";
-import { maybePrintLegacyBanner } from "../helpers/opencodeLegacyBanner";
+import { maybePrintLegacyBanner } from "../legacyBanner";
 import { DEFAULT_PACKS, promptForPackSelection } from "../packOptions";
 import { type BaseInstallOptions, InstallUseCaseBase } from "./InstallUseCaseBase";
 
