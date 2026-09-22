@@ -7,30 +7,10 @@
  */
 
 import { getPackRules } from "../../domain/entities/FileRuleManifest";
-// Value import: WorkspaceVersion.fromJSON is a runtime static call, so a
-// type-only import would be erased and throw "Cannot read properties of
-// undefined" inside parseVersionData's try/catch.
-import { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
+import type { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
 import { stripVPrefix } from "../../domain/types/version";
 import { toPackOptions } from "../packOptions";
 import type { IUserPrompt, UpdateOptionChoice } from "../ports/IUserPrompt";
-
-/**
- * Parse and validate the `.codice-version` payload.
- *
- * Returns null when the file is absent, contains malformed JSON, or fails
- * WorkspaceVersion.fromJSON validation — all three are treated as "no
- * previous installation" by the update version gate.
- */
-export function parseVersionData(rawData: string | null): WorkspaceVersion | null {
-	if (rawData === null) return null;
-	try {
-		const parsed: unknown = JSON.parse(rawData);
-		return WorkspaceVersion.fromJSON(parsed);
-	} catch {
-		return null;
-	}
-}
 
 /**
  * Whether an installation predates the v2.0 pack system.

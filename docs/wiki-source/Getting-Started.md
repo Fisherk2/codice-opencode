@@ -74,7 +74,6 @@ your-project/
 ├── specs/                     # Modular specifications and ADRs
 ├── tasks/                     # Task breakdowns (created by /plan)
 ├── .opencode/
-│   ├── plugins/               # SDD pipeline and orchestrator plugins
 │   └── agents/ → agents/      # Symlink to agents directory
 ├── agents/                    # ~360 agents: 6 primary + 4 writer + ~350 subagents across 8 selectable packs
 ├── commands/                  # 17 SDD slash commands
@@ -93,7 +92,7 @@ Start by running the `/help` command to see all available slash commands and the
 
 ### 2. Activate MCP Servers (Optional)
 
-The template ships with 9 pre-configured MCP servers in `opencode.json`. Three are enabled by default: `context7` (documentation queries), `vercel-grep` (GitHub code search), and `gitmcp` (GitHub repository docs). If your project needs browser debugging, spreadsheet manipulation, web scraping, or other capabilities:
+The template ships with 7 pre-configured MCP servers in `opencode.json`. Three are enabled by default: `context7` (documentation queries), `vercel-grep` (GitHub code search), and `gitmcp` (GitHub repository docs). If your project needs browser debugging, spreadsheet manipulation, notebook automation, or other capabilities:
 
 1. Check [MCP Servers](MCP-Servers) for per-server prerequisites
 2. Set `"enabled": true` for the server you need in `opencode.json`
@@ -159,17 +158,16 @@ After building, continue through the remaining SDD phases:
 | Command | Phase | Agent | Purpose |
 |---------|-------|-------|---------|
 | `/test` | Validate | Mictlantecuhtli | Write tests, fix bugs using Prove-It pattern |
-| `/code-simplify` | Simplify | Tlaloc | Refactor code for clarity |
-| `/webperf` | Optimize | Mictlantecuhtli | Run web performance audits |
-| `/review` | Review | Tezcatlipoca | Five-axis code review |
-| `/ship` | Ship | Mictlantecuhtli | Pre-launch checklist and go/no-go decision |
+| `/code-simplify` | Simplify | Tezcatlipoca | Refactor code for clarity, then verify corrections |
+| `/webperf` | Optimize | Tezcatlipoca | Run web performance audits, then apply corrections |
+| `/review` | Review | Tezcatlipoca | Five-axis code review, then delegate corrections |
+| `/ship` | Ship | Tezcatlipoca | Pre-launch checklist and go/no-go decision, then corrections |
 
 Each command suggests the next logical step when it finishes, guiding you through the full cycle without needing to consult documentation.
 
 ## Next Steps
 
 - [Configuration](Configuration) — Models, permissions, agents, and MCP settings
-- [SDD Pipeline](SDD-Pipeline) — How the orchestration plugin works
 - [MCP Servers](MCP-Servers) — Activate pre-configured servers and add new ones
 - [Workspace Structure](Workspace-Structure) — Learn what each file and directory does
 - [Commands](Commands) — Detailed reference for all 17 slash commands

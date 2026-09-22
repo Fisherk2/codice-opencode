@@ -44,7 +44,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// OBLIGATORIO (Mandatory) — always copied
 	// =============================================
 	// v2.0 (FEV-17): the 7 standalone mandatory entries (opencode.json,
-	// skills-lock.json, agents, commands, .opencode, .opencode/plugins, skills)
+	// skills-lock.json, agents, commands, .opencode, skills)
 	// collapsed into 4 SOURCE GROUPINGS. The destination stays flat via
 	// destPath: core/* spreads to root (destPath ""), packs/* merge into
 	// agents/. Symlinks .opencode/{agents,commands,skills} are still generated
@@ -80,7 +80,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	pack(
 		"packs/software-development",
 		"Software development pack (default ON: backend, frontend, mobile, DevOps, databases, AI/ML, security, testing)",
-		146,
+		144,
 	),
 	pack(
 		"packs/business",
@@ -134,10 +134,6 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// OPCIONAL (Optional) — only if user opts in
 	// =============================================
 	optional(".gitmessage", "Git commit message template; team-specific customization"),
-	optional(
-		".opencode/plugins/sdd-workflow-test.md",
-		"SDD pipeline workflow test specs; only needed for plugin validation",
-	),
 	optional("Justfile", "Just task runner; not all users need it"),
 	optional("Makefile", "Alternative task runner; mutually exclusive with Justfile for many teams"),
 	optional("requirements.txt", "Python dependencies; only relevant for Python-based workspaces"),

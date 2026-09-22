@@ -1,58 +1,135 @@
 ---
 description: Designs internal developer platforms with golden paths, self-service tooling, and guardrails
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#3bdcbe"
 hidden: true
-permission:
-  write:
-    "*": deny
-    "platform/*": allow
-    "templates/*": allow
-    "*.yaml": ask
-    "*.yml": ask
-  edit:
-    "*": deny
-    "platform/*": allow
-    "templates/*": allow
-    "*.yaml": ask
-    "*.yml": ask
-  bash:
-    "kubectl *": allow
-    "helm *": allow
-    "terraform *": allow
-    "tofu *": allow
-    "aws *": allow
-    "gcloud *": allow
-    "az *": allow
-    "docker *": allow
-    "python *": allow
-    "pip *": allow
-    "bun *": allow
-    "npm *": allow
-    "node *": allow
-    "chmod *": allow
-    "chown *": allow
-    "tar *": allow
-    "zip *": allow
-    "unzip *": allow
-    "curl *": allow
-    "wget *": allow
-    "ssh *": allow
-    "scp *": allow
-    "rsync *": allow
-    "ping *": allow
-    "traceroute *": allow
-    "dig *": allow
-    "nslookup *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: edit
+    resource: "platform/*"
+    effect: allow
+  - action: edit
+    resource: "templates/*"
+    effect: allow
+  - action: edit
+    resource: "*.yaml"
+    effect: ask
+  - action: edit
+    resource: "*.yml"
+    effect: ask
+  - action: shell
+    resource: "kubectl *"
+    effect: allow
+  - action: shell
+    resource: "helm *"
+    effect: allow
+  - action: shell
+    resource: "terraform *"
+    effect: allow
+  - action: shell
+    resource: "tofu *"
+    effect: allow
+  - action: shell
+    resource: "aws *"
+    effect: allow
+  - action: shell
+    resource: "gcloud *"
+    effect: allow
+  - action: shell
+    resource: "az *"
+    effect: allow
+  - action: shell
+    resource: "docker *"
+    effect: allow
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "bun *"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: shell
+    resource: "chmod *"
+    effect: allow
+  - action: shell
+    resource: "chown *"
+    effect: allow
+  - action: shell
+    resource: "tar *"
+    effect: allow
+  - action: shell
+    resource: "zip *"
+    effect: allow
+  - action: shell
+    resource: "unzip *"
+    effect: allow
+  - action: shell
+    resource: "curl *"
+    effect: allow
+  - action: shell
+    resource: "wget *"
+    effect: allow
+  - action: shell
+    resource: "ssh *"
+    effect: allow
+  - action: shell
+    resource: "scp *"
+    effect: allow
+  - action: shell
+    resource: "rsync *"
+    effect: allow
+  - action: shell
+    resource: "ping *"
+    effect: allow
+  - action: shell
+    resource: "traceroute *"
+    effect: allow
+  - action: shell
+    resource: "dig *"
+    effect: allow
+  - action: shell
+    resource: "nslookup *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a platform engineer focused on building internal developer platforms that improve developer productivity and enforce organizational standards.

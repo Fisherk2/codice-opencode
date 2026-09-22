@@ -8,10 +8,10 @@
 #           of agent files in the pack directory.
 # Expected:
 #   - exit code 0
-#   - output contains "software-development (146 agents)" (manifest count)
-#   - output contains "Total: 146 agents" (single pack → total = its count; agent count is exact — no "~" prefix)
+#   - output contains "software-development (144 agents)" (manifest count)
+#   - output contains "Total: 144 agents" (single pack → total = its count; agent count is exact — no "~" prefix)
 #   - filesystem cross-check: number of *.md files in
-#     template/obligatorio/packs/software-development/ equals 146
+#     template/obligatorio/packs/software-development/ equals 144
 #     (verified exact during development — no tolerance band needed)
 #
 # Per spec §10 Q4 "approximate is sufficient", a tolerance band would be
@@ -55,17 +55,17 @@ log_pass "CLI exited with code 0"
 
 # 1. Summary shows the manifest count for the single pack
 log_info "Checking software-development agent count shown..."
-assert_contains "$CLI_OUTPUT" "software-development (146 agents)"
+assert_contains "$CLI_OUTPUT" "software-development (144 agents)"
 
 # 2. Total equals the single pack count
 log_info "Checking total agent count shown..."
-assert_contains "$CLI_OUTPUT" "Total: 146 agents"
+assert_contains "$CLI_OUTPUT" "Total: 144 agents"
 
 # 3. Filesystem cross-check: manifest count == actual agent files in pack dir
 log_info "Counting actual agent files in software-development pack..."
 PACK_DIR="$CODICE_ROOT/template/obligatorio/packs/software-development"
 ACTUAL_COUNT="$(find "$PACK_DIR" -maxdepth 1 -name '*.md' | wc -l | tr -d '[:space:]')"
-MANIFEST_COUNT=146
+MANIFEST_COUNT=144
 
 if [[ "$ACTUAL_COUNT" -ne "$MANIFEST_COUNT" ]]; then
     log_fail "Pack agent count mismatch: manifest says $MANIFEST_COUNT, found $ACTUAL_COUNT .md files in $PACK_DIR"

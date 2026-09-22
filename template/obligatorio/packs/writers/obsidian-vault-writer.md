@@ -2,28 +2,50 @@
 description: "Obsidian vault specialist for writing, editing, and managing Markdown files in Obsidian vaults. Expert in Markdown syntax, Obsidian features, and vault organization."
 mode: subagent
 color: "#7C3AED"
-temperature: 0.2
+request:
+  body:
+    temperature: 0.2
 hidden: true
-permission:
-  write:
-    "*": ask
-    "*.md": allow
-    "*.mdx": allow
-    "*.markdown": allow
-  edit:
-    "*": ask
-    "*.md": allow
-    "*.mdx": allow
-    "*.markdown": allow
-  bash:
-    "obsidian *": allow
-  grep: allow
-  glob: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: edit
+    resource: "*.md"
+    effect: allow
+  - action: edit
+    resource: "*.mdx"
+    effect: allow
+  - action: edit
+    resource: "*.markdown"
+    effect: allow
+  - action: shell
+    resource: "obsidian *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 # Obsidian Vault Writer

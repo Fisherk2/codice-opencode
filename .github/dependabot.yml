@@ -1,0 +1,60 @@
+# Dependabot configuration.
+#
+# Keeps SHA-pinned GitHub Actions current (ADR-019 §1: "Dependabot is
+# configured to propose SHA updates") and keeps runtime + dev dependencies
+# fresh, targeting the `develop` integration branch per the 3-stage pipeline.
+#
+# Ecosystem note: this repository uses Bun and tracks only `bun.lock` (there
+# is no package-lock.json). Dependabot's `npm` ecosystem updates package.json
+# but does NOT touch bun.lock, so its PRs would fail `bun install
+# --frozen-lockfile` in CI. The native `bun` ecosystem (GA 2025-02-13) updates
+# both files, so it is configured here instead of `npm`.
+version: 2
+updates:
+  # --- GitHub Actions (SHA pins) ---
+  # Actions are pinned to full commit SHAs; Dependabot proposes new SHAs and
+  # syncs the trailing version comment. Patch/minor bumps are grouped; major
+  # bumps stay as individual PRs.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    groups:
+      github-actions-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # --- Bun dependencies (runtime + dev) ---
+  - package-ecosystem: "bun"
+    directory: "/"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      # Patch/minor bumps land as two reviewable PRs (production and dev);
+      # major bumps stay separate for closer review.
+      bun-production-minor-patch:
+        dependency-type: "production"
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      bun-development-minor-patch:
+        dependency-type: "development"
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

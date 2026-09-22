@@ -11,7 +11,7 @@ agent: mictlantecuhtli
 2. **Linter** — Check for linter configs.
 3. **Formatter** — Check for formatter configs.
 4. **Typechecker** — Check for typechecker configs.
-5. **Test directory structure** — Ensure `test/` exists with `unit/`, `integration/`, `e2e/` subdirs (create missing); if `test/` exists but is not separated, use `question` to ask whether to refactor existing tests into those dirs following the [Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html).
+5. **Test directory structure** — Ensure `test/` directories exists with `unit/`, `integration/`, `e2e/` subdirs (create missing); if `test/` exists but is not separated, use `question` to ask whether to refactor existing tests into those dirs following the [Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html).
 
 Output summary:
 
@@ -49,7 +49,7 @@ For each confirmed tool:
 
 ## Phase 2: Test-Driven Development
 
-**Load** @skills/test-driven-development/SKILL.md skill and work on @test/ folder to follow the TDD process.
+**Load** `test-driven-development` skill and work on `test/` directories to follow the TDD process.
 
 Write depending of phase 1 report:
 
@@ -89,13 +89,13 @@ After ALL tests changes, run ALL quality checks AGAIN:
 **If ANY check fails, revert and reconsider:**
 
 6. Fix any discrepancies found during testing before proceeding, and run the test after each change.
-7. If agents are stuck or the testing process fails, **Delegate** to `debugger` subagent and follow @skills/debugging-and-error-recovery/SKILL.md to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
-8. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
+7. If agents are stuck or the testing process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
+8. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 ## Escalation to Incident Response
 
 If debugging detects a **production incident** (e.g., users affected, service degradation), escalate to:
-- **Load** `incident-response` skill and **Delegate** to `error-coordinator` subagent — Incident triage, communication, and postmortem workflow 
+- **Delegate** to `error-coordinator` subagent and **Load** `incident-response` skill — Incident triage, communication, and postmortem workflow 
 
 ## Suggested Next Step
 

@@ -27,9 +27,9 @@ Fixes #<!-- issue number -->
 ## Checklist
 
 - [ ] `just check` passes locally (lint + format + typecheck)
-- [ ] `bun test` passes (unit + integration)
-- [ ] E2E tests pass: `just test-e2e` (if applicable)
-- [ ] No `any` types introduced in production code
+- [ ] `just test` passes (unit + integration)
+- [ ] E2E tests pass: `just test-e2e` (CI runs the suite on Linux only)
+- [ ] No `any` in production code (reviewer-checked; `biome.json` disables `noExplicitAny`)
 - [ ] Public API or CLI commands documented (if changed)
 - [ ] ADR created / updated (if architecture decision changed — see `docs/ARCHITECTURE.md`)
 - [ ] Branch protection rules satisfied (CI green on all platforms)

@@ -1,26 +1,57 @@
 ---
 description: Game development expert for game loops, physics, rendering, and engine-specific implementation
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#3baedc"
 hidden: true
-permission:
-  write: allow
-  edit: allow
-  bash:
-    "dotnet *": allow
-    "unity *": allow
-    "unreal *": allow
-    "godot *": allow
-    "npm *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "dotnet *"
+    effect: allow
+  - action: shell
+    resource: "unity *"
+    effect: allow
+  - action: shell
+    resource: "unreal *"
+    effect: allow
+  - action: shell
+    resource: "godot *"
+    effect: allow
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a game development expert. You build performant, engaging games with clean architecture and optimized rendering and physics systems.

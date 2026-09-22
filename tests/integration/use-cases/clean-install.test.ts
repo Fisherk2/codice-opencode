@@ -382,11 +382,11 @@ describe("CleanInstallUseCase", () => {
 
 			await useCase.execute("/tmp/project", { force: true, version: "2.1.0" });
 
-			// force=true auto-selects all 8 packs → 351 total agents
+			// force=true auto-selects all 8 packs → 349 total agents
 			expect(prompt.showInstallSummary).toHaveBeenCalledWith(
 				expect.objectContaining({
-					packs: expect.arrayContaining([{ id: "software-development", agentCount: 146 }]),
-					totalAgents: 351,
+					packs: expect.arrayContaining([{ id: "software-development", agentCount: 144 }]),
+					totalAgents: 349,
 					totalFiles: expect.any(Number),
 				}),
 			);

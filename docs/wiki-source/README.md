@@ -33,9 +33,8 @@ git push
 2. `Getting-Started.md` — Primeros pasos
 3. `Workspace-Structure.md` — Estructura del workspace
 4. `Configuration.md` — Configuración de opencode.json
-5. **`SDD-Pipeline.md`** — Plugin de orquestación SDD
-6. **`MCP-Servers.md`** — Servidores MCP preconfigurados y activación
-7. `Agents.md` — Agentes y guía para añadir nuevos
-8. `Commands.md` — Comandos SDD y guía para añadir nuevos
-9. `Skills.md` — Skills y guía para añadir nuevos
-10. `Troubleshooting.md` — Solución de problemas
+5. **`MCP-Servers.md`** — Servidores MCP preconfigurados y activación
+6. `Agents.md` — Agentes y guía para añadir nuevos
+7. `Commands.md` — Comandos SDD y guía para añadir nuevos
+8. `Skills.md` — Skills y guía para añadir nuevos
+9. `Troubleshooting.md` — Solución de problemas

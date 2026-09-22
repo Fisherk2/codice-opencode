@@ -1,26 +1,57 @@
 ---
 description: Designs network infrastructure including DNS, load balancing, firewalls, and VPN/peering
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#dc3ba7"
 hidden: true
-permission:
-  write: deny
-  edit: deny
-  bash:
-    "dig *": allow
-    "nslookup *": allow
-    "traceroute *": allow
-    "ping *": allow
-    "curl -I *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "dig *"
+    effect: allow
+  - action: shell
+    resource: "nslookup *"
+    effect: allow
+  - action: shell
+    resource: "traceroute *"
+    effect: allow
+  - action: shell
+    resource: "ping *"
+    effect: allow
+  - action: shell
+    resource: "curl -I *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a network engineer specializing in cloud and on-premises network infrastructure design.

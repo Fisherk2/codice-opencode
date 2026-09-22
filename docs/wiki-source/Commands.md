@@ -118,17 +118,17 @@ flowchart LR
 | **Plan** | `/plan` | moctezuma | Break down specifications into small, verifiable tasks with acceptance criteria and dependency graphs. |
 | **Build** | `/build` | tlaloc | Implement tasks incrementally using TDD (Red-Green-Refactor). Each task is built, tested, verified, and committed. |
 | **Test** | `/test` | mictlantecuhtli | Write failing tests, implement to make them pass, and verify the full suite. Supports the Prove-It pattern for bug fixes. |
-| **Refactor** | `/code-simplify` | tlaloc | Simplify code for clarity and maintainability without changing behavior. Applies named refactoring transformations. |
-| **Review** | `/review` | tezcatlipoca | Conduct a five-axis code review: correctness, readability, architecture, security, and performance. |
-| **Ship** | `/ship` | mictlantecuhtli | Run a parallel fan-out pre-launch checklist (code review, security audit, test coverage, dependency audit, accessibility), then synthesize a go/no-go decision with rollback plan. |
-| **Performance** | `/webperf` | mictlantecuhtli | Run a web performance audit via the web-performance-auditor subagent. Deep mode with Lighthouse or quick mode via source scanning. |
+| **Refactor** | `/code-simplify` | tezcatlipoca | Simplify code for clarity and maintainability without changing behavior. Delegates review to specialists, applies fixes incrementally, then re-verifies. |
+| **Review** | `/review` | tezcatlipoca | Conduct a five-axis code review: correctness, readability, architecture, security, and performance. Delegates findings to specialists and applies corrections if confirmed. |
+| **Ship** | `/ship` | tezcatlipoca | Run a parallel fan-out pre-launch checklist (code review, security audit, test coverage, dependency audit, accessibility), then synthesize a go/no-go decision with rollback plan. Applies fixes if confirmed. |
+| **Performance** | `/webperf` | tezcatlipoca | Run a web performance audit via the web-performance-auditor subagent. Deep mode with Lighthouse or quick mode via source scanning. Applies fixes if confirmed. |
 | **Maintain** | `/docs-update` | quetzalcoatl | Update, migrate, and synchronize documentation with the current codebase state. Creates ADRs for significant decisions. |
-| **Analyze** | `/diagnosis` | quetzalcoatl | Analyze issues (remote or local), run diagnostics, and document technical findings in `docs/diagnosis/`. Does not implement fixes — only documents. |
+| **Analyze** | `/diagnosis` | tezcatlipoca | Suggest fixes for problems (remote or local), run diagnostics, and document technical findings in `docs/diagnosis/`. Documents diagnosis — does not implement fixes. |
 | **Evolve** | `/evolve` | quetzalcoatl | Create new specs or modify existing ones for mature projects with established versions and documentation. |
-| **Sync** | `/sync` | tlaloc | Bidirectional git sync with 4 modes and 4 conflict resolution strategies. Can be invoked at any SDD phase. |
+| **Sync** | `/sync` | mictlantecuhtli | Bidirectional git sync with 4 modes and 4 conflict resolution strategies. Can be invoked at any SDD phase. |
 | **Migrate** (optional) | `/migrate` | quetzalcoatl | Detects current tech stack, evaluates breaking changes, generates a structured migration plan with phases, steps, and rollback procedures. |
 | **Deploy** | `/deploy` | mictlantecuhtli | Post-`/ship` deployment automation. 3 modes: no workflow, betterable, established. Generates branch protection, PR templates, CI pipelines. |
-| **Analyze** | `/analyze` | quetzalcoatl | 8-dimension architecture analysis generating prioritized `TECH_DEBT.md`. Findings feed `/diagnosis`. |
+| **Analyze** | `/analyze` | tezcatlipoca | 8-dimension architecture analysis generating prioritized `TECH_DEBT.md`. Findings feed `/diagnosis`. |
 
 ### Recommended Workflows
 
@@ -161,13 +161,14 @@ agent: <primary-agent-name>
 | Field | Required | Description |
 |-------|----------|-------------|
 | `description` | Yes | One-line description starting with an action verb. Example: "Break down the spec into small, verifiable tasks with acceptance criteria." |
-| `agent` | Yes | The primary agent that executes this command. Must be one of: `quetzalcoatl`, `moctezuma`, `tlaloc`, `mictlantecuhtli`, `tezcatlipoca`. |
+| `agent` | Yes | The primary agent that executes this command. Must be one of: `huitzilopochtli`, `quetzalcoatl`, `moctezuma`, `tlaloc`, `mictlantecuhtli`, `tezcatlipoca`. |
 
 ### Markdown Body
 
 The body contains numbered steps that the agent follows. Key patterns:
 
-- **Skill references**: Skills are referenced inline with `@skills/<skill-name>/SKILL.md`. For example, `@skills/test-driven-development/SKILL.md`.
+- **Skill references**: Skills are loaded with `**Load** \`skill-name\` skill`. For example, `**Load** \`test-driven-development\` skill`.
+- **Delegation**: Commands delegate work to subagents with `**Delegate** \`subagent-name\` subagent`, passing deterministic instructions, skills to load, and a goal checklist.
 - **Question tool**: Commands use the `question` tool at decision points to clarify intent with the user before proceeding.
 - **Phases**: Complex commands use `## Phase` headings to organize multi-stage workflows.
 - **Rules section**: Commands include a `## Rules` section listing constraints and restrictions.
@@ -217,7 +218,7 @@ Invoke @skills/spec-driven-development/SKILL.md to scaffold...
 
 ## How to Add a New Command
 
-Adding a new slash command requires creating the command file, registering it in the SDD plugin, and updating the orchestration documentation. Follow these steps:
+Adding a new slash command requires creating the command file and updating the orchestration documentation. Follow these steps:
 
 ### Step 1: Create the Command File
 
@@ -226,10 +227,10 @@ Create `commands/<command-name>.md` with YAML frontmatter and a markdown body. F
 ```markdown
 ---
 description: Deploy the application to a target environment with rollback support
-agent: tlaloc
+agent: mictlantecuhtli
 ---
 
-Invoke @skills/shipping-and-launch/SKILL.md.
+**Load** `shipping-and-launch` skill.
 
 ## Phase 0 — Pre-flight: Detect Target Environment
 
@@ -281,4 +282,3 @@ Restart your OpenCode session so it recognizes the new command file.
 
 - [OpenCode Command Documentation](https://opencode.ai/docs/commands) — Official OpenCode command configuration guide.
 - [Agent Reference](Agents) — Primary agents that execute each command.
-- [SDD Pipeline Plugin](https://github.com/fisherk2/codice-opencode) — Source for command registration and intent detection.

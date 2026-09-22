@@ -37,7 +37,7 @@ We modularize `SPEC.md` into an **index + 8 sub-specs** under `specs/`:
 | `specs/spec-code-style-summary.md` | Brief code style rules linking to `docs/CODE_STYLE.md` | SPEC.md §9 |
 | `specs/spec-boundaries.md` | Always / Ask First / Never rules, agent delegation protocol | SPEC.md §10 |
 
-Additional v2.x specs (`spec-agent-packs.md`, `spec-installer-ux-v2.md`, `spec-agent-format-v2.md`, `spec-template.md`, `spec-sdd-plugin-decoupling.md`) remain as peers — they were already modular.
+Additional v2.x specs (`spec-agent-packs.md`, `spec-installer-ux-v2.md`, `spec-agent-format-v2.md`, `spec-template.md`) remain as peers — they were already modular.
 
 ### What Stays in SPEC.md
 

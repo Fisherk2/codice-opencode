@@ -49,31 +49,30 @@ If the user has a rough idea but needs to explore alternatives or variations, **
 ## Phase 1: Execute — New or Modified Specs
 
 1. **Select subagents** — inspect available subagents for requirement analysis and `docs-writer` for spec drafting.
-4. **Delegate** — invoke in parallel appropriate subagents to analyze requirements and refine specs.
-5. **Generate specs** — subagent `docs-writer` should **Load** @skills/spec-driven-development/SKILL.md to generate structured specs for the new or changed requirements in `specs/` using @specs/spec-template.md as a template.
+4. **Fan out analysis** — **Delegate** in parallel appropriate subagents to analyze requirements and refine specs.
+5. **Generate specs** — **Delegate** `docs-writer` subagent and **Load** `spec-driven-development` skill to generate structured specs for the new or changed requirements in `specs/` using @specs/spec-template.md as a template.
 6. **Determine scope** — does this change existing specs or create new ones?
    - New feature → create `specs/spec-<feature>.md`
    - Modify existing → update relevant spec files
 7. **Document architecture impact** — update or add ADRs using @specs/adr/adr-template.md in `specs/adr/` if the change affects architecture
-8. Include updated architecture diagrams using @skills/architecture-diagrams/SKILL.md
-9. For non-trivial decisions, **Load** @skills/doubt-driven-development/SKILL.md
+8. **Load** `architecture-diagrams` skill to include updated architecture diagrams 
+9. For non-trivial decisions, **Load** `doubt-driven-development` skill
 10. If @SPEC.md or @AGENTS.md exceeds **200 lines**, **Load** `agent-md-refactor`skill to modularize into @specs/
 11. **Spec update done — do NOT touch or implement code files.**
 12. Use the `question` tool to confirm with the user before proceeding.
-13. Commit atomic changes with a descriptive message following @skills/git-workflow-and-versioning/SKILL.md conventions.
+13. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 ## Rules
 
-1. `/evolve` is for **existing, mature projects only**. If the project is new, lacks version history, or lacks comprehensive documentation, suggest running `/spec` or `/docs-update` instead.
-2. Use the `question` tool before overwriting any existing documentation — always show the diff or changes first and confirm.
-3. When modifying specs, preserve previous versions or document the change history.
-4. Every evolution should leave the project in a consistent, documented state.
-5. Use @SPEC.md as the single source of truth for project scope and direction.
-6. **RESTRICTIONS:**
-   - Do NOT write to `tasks/` (exclusive to `/plan`).
-   - Do NOT implement code (exclusive to `/build`).
-   - Do NOT update documentation (use `/docs-update` for that).
-   - Do NOT resolve issues (use `/diagnosis` for that).
+- `/evolve` is for **existing, mature projects only**. If the project is new, lacks version history, or lacks comprehensive documentation, suggest running `/spec` or `/docs-update` instead.
+- Use the `question` tool before overwriting any existing documentation — always show the diff or changes first and confirm.
+- When modifying specs, preserve previous versions or document the change history.
+- Every evolution should leave the project in a consistent, documented state.
+- Use @SPEC.md as the single source of truth for project scope and direction.
+- **Never** write to `tasks/` directories (use `/plan` for that).
+- **Never** implement code changes.
+- **Never** update documentation (use `/docs-update` for that).
+- **Never** resolve issues (use `/diagnosis` for that).
 
 ## Suggested Next Step
 

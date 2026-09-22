@@ -2,12 +2,13 @@
  * Agent Frontmatter Validation Tests
  *
  * Validates that all agent .md files in template/obligatorio/packs/
- * conform to the OpenCode agent config schema (https://opencode.ai/config.json).
+ * conform to the native OpenCode V2 agent format described in
+ * specs/spec-agent-format-v2.md §3–4 (https://opencode.ai/v2/docs/permissions).
  *
  * The validation engine lives in ./helpers/agentFrontmatterValidator.ts
  * (reusable by contributors to check a single new agent file).
  *
- * Reference: customize-opencode skill + OpenCode config schema AgentConfig
+ * Reference: specs/spec-agent-format-v2.md §3–4 + https://opencode.ai/v2/docs/permissions
  */
 import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
@@ -15,14 +16,10 @@ import { join, relative } from "node:path";
 import {
 	collectAgentFiles,
 	extractFrontmatter,
-	HEX_COLOR_PATTERN,
 	loadAgentFrontmatter,
-	THEME_COLORS,
-	VALID_AGENT_FIELDS,
-	VALID_MODES,
 	type ValidationError,
 	validateAgentFrontmatter,
-	validatePermission,
+	validatePermissionsList,
 } from "./helpers/agentFrontmatterValidator";
 
 const TEMPLATE_ROOT = join(import.meta.dir, "..", "..", "..", "template", "obligatorio", "packs");
@@ -38,7 +35,8 @@ const PRIMARY_AGENTS = [
 	"tezcatlipoca",
 ] as const;
 
-const NON_DELEGATING = new Set(["moctezuma", "tezcatlipoca"]);
+// Non-delegating agents: subagent: "*": deny (per FEV-19, tezcatlipoca removed from this set in v2.1.3 hotfix)
+const NON_DELEGATING = new Set(["moctezuma"]);
 
 /** Fails the test with a formatted error summary when errors is non-empty. */
 function assertNoErrors(errors: readonly ValidationError[], label: string): void {
@@ -47,12 +45,6 @@ function assertNoErrors(errors: readonly ValidationError[], label: string): void
 		.map((e) => `  ${e.file}${e.field ? ` [${e.field}]` : ""}: ${e.message}`)
 		.join("\n");
 	throw new Error(`Found ${errors.length} ${label}:\n${summary}`);
-}
-
-/** Fails the test with a formatted summary when raw strings are non-empty. */
-function assertNoRawErrors(errors: readonly string[], label: string): void {
-	if (errors.length === 0) return;
-	throw new Error(`Found ${errors.length} ${label}:\n${errors.join("\n")}`);
 }
 
 describe("Agent Frontmatter Validation", () => {
@@ -102,119 +94,164 @@ describe("Agent Frontmatter Validation", () => {
 		}
 	});
 
-	describe("Permission value correctness", () => {
+	describe("Fase-2 legacy tools: regression guard", () => {
+		// Native V2 replaced the V1 `tools:` map with the `permissions:` list.
+		// Accepting `tools:` here would let the silent-shadowing class of bug
+		// (issue #91 / fix26) return unnoticed: OpenCode V2 ignores the legacy
+		// key, so a restrictive agent would look unrestricted.
+		it("rejects tools: as an invalid agent frontmatter field", () => {
+			const errors = validateAgentFrontmatter(
+				join(TEMPLATE_ROOT, "main", "moctezuma.md"),
+				{ description: "test", mode: "subagent", tools: { write: "deny" } },
+				TEMPLATE_ROOT,
+			);
+			const toolErrors = errors.filter((e) => e.field === "tools");
+			expect(toolErrors.length).toBeGreaterThan(0);
+			expect(toolErrors[0]?.message).toContain('Unknown frontmatter field "tools"');
+		});
+
+		it("has no agent file using the legacy tools: key", () => {
+			const legacyUsers: string[] = [];
+			for (const filePath of agentFiles) {
+				const { parsed, error } = loadAgentFrontmatter(filePath);
+				if (error || !parsed) continue;
+				if (Object.hasOwn(parsed, "tools")) {
+					legacyUsers.push(relative(TEMPLATE_ROOT, filePath));
+				}
+			}
+			expect(legacyUsers).toEqual([]);
+		});
+	});
+
+	describe("V2-native agent keys accepted during migration", () => {
+		it("accepts disabled as a native V2 agent frontmatter field", () => {
+			const errors = validateAgentFrontmatter(
+				join(TEMPLATE_ROOT, "main", "moctezuma.md"),
+				{ description: "t", mode: "subagent", disabled: true },
+				TEMPLATE_ROOT,
+			);
+			expect(errors).toEqual([]);
+		});
+
+		it("accepts system as a native V2 agent frontmatter field", () => {
+			const errors = validateAgentFrontmatter(
+				join(TEMPLATE_ROOT, "main", "moctezuma.md"),
+				{ description: "t", mode: "subagent", system: "You are terse." },
+				TEMPLATE_ROOT,
+			);
+			expect(errors).toEqual([]);
+		});
+	});
+
+	describe("Permissions value correctness (V2)", () => {
 		const permErrors: ValidationError[] = [];
 
 		for (const filePath of agentFiles) {
 			const { parsed, error } = loadAgentFrontmatter(filePath);
-			if (error || !parsed?.permission) continue;
+			if (error || !parsed?.permissions) continue;
 			permErrors.push(
-				...validatePermission(relative(TEMPLATE_ROOT, filePath), "permission", parsed.permission),
+				...validatePermissionsList(
+					relative(TEMPLATE_ROOT, filePath),
+					"permissions",
+					parsed.permissions,
+				),
 			);
 		}
 
-		it("has no permission value errors across all agent files", () => {
-			assertNoErrors(permErrors, "permission errors");
+		it("has no permissions value errors across all agent files", () => {
+			assertNoErrors(permErrors, "permissions errors");
 		});
 	});
 
-	describe("Mode correctness", () => {
-		const modeErrors: string[] = [];
-
-		for (const filePath of agentFiles) {
-			const { parsed, error } = loadAgentFrontmatter(filePath);
-			if (error || !parsed) continue;
-			if (parsed.mode && !VALID_MODES.has(parsed.mode as string)) {
-				modeErrors.push(`${relative(TEMPLATE_ROOT, filePath)}: mode="${parsed.mode}"`);
-			}
-			if (parsed.hidden === true && parsed.mode === "primary") {
-				modeErrors.push(`${relative(TEMPLATE_ROOT, filePath)}: hidden=true on primary agent`);
-			}
-		}
-
-		it("has no mode errors across all agent files", () => {
-			assertNoRawErrors(modeErrors, "mode errors");
+	describe("Fase-2 legacy tools: regression guard", () => {
+		it("rejects permission: as an invalid agent frontmatter field", () => {
+			const errors = validateAgentFrontmatter(
+				join(TEMPLATE_ROOT, "main", "moctezuma.md"),
+				{ description: "test", mode: "subagent", permission: { write: "deny" } },
+				TEMPLATE_ROOT,
+			);
+			const permissionErrors = errors.filter((e) => e.field === "permission");
+			expect(permissionErrors.length).toBeGreaterThan(0);
+			expect(permissionErrors[0]?.message).toContain('Unknown frontmatter field "permission"');
 		});
-	});
 
-	describe("Color correctness", () => {
-		const colorErrors: string[] = [];
-
-		for (const filePath of agentFiles) {
-			const { parsed, error } = loadAgentFrontmatter(filePath);
-			if (error || !parsed) continue;
-			const color = parsed.color;
-			if (typeof color === "string" && !HEX_COLOR_PATTERN.test(color) && !THEME_COLORS.has(color)) {
-				colorErrors.push(`${relative(TEMPLATE_ROOT, filePath)}: color="${color}"`);
-			}
-		}
-
-		it("has no color errors across all agent files", () => {
-			assertNoRawErrors(colorErrors, "color errors");
-		});
-	});
-
-	describe("Unknown field detection", () => {
-		const unknownFieldErrors: string[] = [];
-
-		for (const filePath of agentFiles) {
-			const { parsed, error } = loadAgentFrontmatter(filePath);
-			if (error || !parsed) continue;
-			for (const key of Object.keys(parsed)) {
-				if (!VALID_AGENT_FIELDS.has(key)) {
-					unknownFieldErrors.push(`${relative(TEMPLATE_ROOT, filePath)}: "${key}"`);
+		it("has no agent file using the legacy permission: key", () => {
+			const legacyUsers: string[] = [];
+			for (const filePath of agentFiles) {
+				const { parsed, error } = loadAgentFrontmatter(filePath);
+				if (error || !parsed) continue;
+				if (Object.hasOwn(parsed, "permission")) {
+					legacyUsers.push(relative(TEMPLATE_ROOT, filePath));
 				}
 			}
-		}
-
-		it("has no unknown frontmatter fields across all agent files", () => {
-			assertNoRawErrors(unknownFieldErrors, "unknown fields");
+			expect(legacyUsers).toEqual([]);
 		});
 	});
 
-	describe("FEV-19 permission invariants", () => {
+	describe("FEV-19 subagent delegation invariants (V2 permissions)", () => {
 		const DELEGATING_PRIMARY_DENY_LIST = [...PRIMARY_AGENTS];
+
+		function subagentRules(
+			parsed: Record<string, unknown>,
+		): Array<{ resource: string; effect: string }> {
+			const permissions = (parsed.permissions ?? []) as Array<Record<string, unknown>>;
+			return permissions
+				.filter((r) => r.action === "subagent")
+				.map((r) => ({ resource: r.resource as string, effect: r.effect as string }));
+		}
 
 		for (const agentName of PRIMARY_AGENTS) {
 			const filePath = join(TEMPLATE_ROOT, "main", `${agentName}.md`);
 
-			it(`${agentName} has valid task permission structure`, () => {
+			it(`${agentName} declares subagent delegation rules`, () => {
 				const { parsed, error } = loadAgentFrontmatter(filePath);
 				expect(error).toBeNull();
 				expect(parsed).not.toBeNull();
-				const perm = (parsed as Record<string, unknown>).permission as
-					| Record<string, unknown>
-					| undefined;
-				expect(perm?.task).toBeDefined();
+				expect(subagentRules(parsed as Record<string, unknown>).length).toBeGreaterThan(0);
 			});
 
 			if (NON_DELEGATING.has(agentName)) {
-				it(`${agentName} has task: "*": deny (non-delegating)`, () => {
+				it(`${agentName} has subagent: "*": deny (non-delegating)`, () => {
 					const { parsed } = loadAgentFrontmatter(filePath);
-					const perm = parsed as Record<string, unknown>;
-					const task = (perm.permission as Record<string, unknown>).task as Record<string, unknown>;
-					expect(task["*"]).toBe("deny");
-					expect(Object.values(task).filter((v) => v === "allow").length).toBe(0);
+					const rules = subagentRules(parsed as Record<string, unknown>);
+					expect(rules.find((r) => r.resource === "*")?.effect).toBe("deny");
+					expect(rules.filter((r) => r.effect === "allow").length).toBe(0);
 				});
 			} else {
-				it(`${agentName} has task: "*": allow + 5 deny primaries (no self-deny)`, () => {
+				it(`${agentName} has subagent: "*": allow + deny all other primaries (no self-deny)`, () => {
 					const { parsed } = loadAgentFrontmatter(filePath);
-					const perm = parsed as Record<string, unknown>;
-					const task = (perm.permission as Record<string, unknown>).task as Record<string, unknown>;
+					const rules = subagentRules(parsed as Record<string, unknown>);
 
-					expect(task["*"]).toBe("allow");
+					expect(rules.find((r) => r.resource === "*")?.effect).toBe("allow");
 
-					const denyEntries = Object.entries(task).filter(([k, v]) => k !== "*" && v === "deny");
+					const denyEntries = rules.filter((r) => r.resource !== "*" && r.effect === "deny");
 					expect(denyEntries.length).toBe(5);
 
-					expect(task[agentName]).toBeUndefined();
-					expect(task.tezcatlipoca).toBe("deny");
+					// Agent must not deny itself
+					expect(rules.find((r) => r.resource === agentName)).toBeUndefined();
 
+					// Must deny all other primaries
 					for (const deny of DELEGATING_PRIMARY_DENY_LIST.filter((n) => n !== agentName)) {
-						expect(task[deny]).toBe("deny");
+						expect(rules.find((r) => r.resource === deny)?.effect).toBe("deny");
 					}
 				});
 			}
+		}
+	});
+
+	describe("Primary agent body line budget", () => {
+		// spec-agent-format-v2.md §8: primary agent bodies stay ≤100 lines
+		// (excluding YAML frontmatter). Only the body is enforced: total file
+		// length is frontmatter-dependent and V2 `permissions:` lists push some
+		// primaries (e.g. quetzalcoatl.md) past the retired ≈150-line total.
+		for (const agentName of PRIMARY_AGENTS) {
+			it(`${agentName} body stays within 100 lines`, () => {
+				const content = readFileSync(join(TEMPLATE_ROOT, "main", `${agentName}.md`), "utf-8");
+				const { bodyStart } = extractFrontmatter(content);
+				const body = content.slice(bodyStart).trim();
+				const lineCount = body === "" ? 0 : body.split("\n").length;
+				expect(lineCount).toBeLessThanOrEqual(100);
+			});
 		}
 	});
 
@@ -245,5 +282,93 @@ describe("Agent Frontmatter Validation", () => {
 				expect(content).toContain("agents/");
 			});
 		}
+	});
+
+	describe("validatePermissionsList duplicate guard", () => {
+		it("accepts distinct action+resource pairs", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [
+				{ action: "edit", resource: "*", effect: "ask" },
+				{ action: "edit", resource: "*.md", effect: "allow" },
+			]);
+			expect(errors).toEqual([]);
+		});
+
+		it("rejects duplicate action+resource pairs", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [
+				{ action: "edit", resource: "*", effect: "allow" },
+				{ action: "grep", resource: "*", effect: "allow" },
+				{ action: "edit", resource: "*", effect: "deny" },
+			]);
+			expect(errors.length).toBe(1);
+			expect(errors[0]?.message).toContain('Duplicate permission for action "edit" resource "*"');
+		});
+
+		it("does not collide when a space in one field offsets the other", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [
+				{ action: "a b", resource: "c", effect: "allow" },
+				{ action: "a", resource: "b c", effect: "deny" },
+			]);
+			expect(errors).toEqual([]);
+		});
+	});
+
+	describe("validatePermissionsList error branches", () => {
+		it("rejects a non-list permissions value", () => {
+			const errors = validatePermissionsList("test.md", "permissions", "allow");
+			expect(errors.length).toBe(1);
+			expect(errors[0]?.message).toContain("must be a list");
+		});
+
+		it("rejects a null rule", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [null]);
+			expect(errors.length).toBe(1);
+			expect(errors[0]?.message).toContain("must be an object");
+		});
+
+		it("rejects a non-object rule", () => {
+			const errors = validatePermissionsList("test.md", "permissions", ["edit"]);
+			expect(errors.length).toBe(1);
+			expect(errors[0]?.message).toContain("must be an object");
+		});
+
+		it("rejects a rule field of the wrong type", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [
+				{ action: 42, resource: "*", effect: "allow" },
+			]);
+			expect(errors.some((e) => e.message.includes('"action" must be a string'))).toBe(true);
+		});
+
+		it("rejects an invalid effect", () => {
+			const errors = validatePermissionsList("test.md", "permissions", [
+				{ action: "edit", resource: "*", effect: "maybe" },
+			]);
+			expect(errors.some((e) => e.message.includes('Invalid permissions effect "maybe"'))).toBe(
+				true,
+			);
+		});
+	});
+
+	describe("Fase-2 subagent delegation brake", () => {
+		it("every migrated mode:subagent file denies subagent delegation", () => {
+			// A child session merges global permissions with its OWN frontmatter
+			// (https://opencode.ai/v2/docs/permissions/). Without an explicit
+			// subagent deny, a child would fall back to the global `ask` and
+			// could launch grandchildren (delegation chains). Files not yet
+			// migrated (no `permissions:` list) are skipped: the codemod injects
+			// the brake automatically on migration (case-17).
+			const offenders: string[] = [];
+			for (const filePath of agentFiles) {
+				const { parsed, error } = loadAgentFrontmatter(filePath);
+				if (error || !parsed) continue;
+				if ((parsed as Record<string, unknown>).mode !== "subagent") continue;
+				const permissions = (parsed as Record<string, unknown>).permissions;
+				if (!Array.isArray(permissions)) continue;
+				const denies = (permissions as Array<Record<string, unknown>>).some(
+					(r) => r.action === "subagent" && r.resource === "*" && r.effect === "deny",
+				);
+				if (!denies) offenders.push(relative(TEMPLATE_ROOT, filePath));
+			}
+			expect(offenders).toEqual([]);
+		});
 	});
 });

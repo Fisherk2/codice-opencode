@@ -1,35 +1,63 @@
 ---
 description: Manages Kubernetes clusters, Helm charts, service mesh, and container orchestration
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#3b49dc"
 hidden: true
-permission:
-  write:
-    "*": deny
-    "k8s/*": allow
-    "helm/*": allow
-    "charts/*": allow
-    "*.yaml": ask
-    "*.yml": ask
-  edit:
-    "*": deny
-    "k8s/*": allow
-    "helm/*": allow
-    "charts/*": allow
-    "*.yaml": ask
-    "*.yml": ask
-  bash:
-    "kubectl *": allow
-    "helm *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: edit
+    resource: "k8s/*"
+    effect: allow
+  - action: edit
+    resource: "helm/*"
+    effect: allow
+  - action: edit
+    resource: "charts/*"
+    effect: allow
+  - action: edit
+    resource: "*.yaml"
+    effect: ask
+  - action: edit
+    resource: "*.yml"
+    effect: ask
+  - action: shell
+    resource: "kubectl *"
+    effect: allow
+  - action: shell
+    resource: "helm *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a Kubernetes specialist focused on cluster management, workload orchestration, and service mesh configuration.

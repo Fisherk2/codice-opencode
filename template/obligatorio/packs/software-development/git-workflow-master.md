@@ -2,50 +2,131 @@
 description: "Git Workflow Master — Expert in Git workflows, branching strategies, and version control best practices including conventional commits, rebasing, worktrees, and CI-friendly branch management."
 mode: subagent
 color: "#dcb03b"
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 hidden: true
-permission:
-  write: ask
-  edit: ask
-  bash:
-    "git status": allow
-    "git status *": allow
-    "git diff *": allow
-    "git log *": allow
-    "git branch": allow
-    "git branch -r": allow
-    "git branch -a": allow
-    "git branch -a *": allow
-    "git show *": allow
-    "git fetch *": allow
-    "git pull *": allow
-    "git rebase *": allow
-    "git merge *": allow
-    "git checkout *": allow
-    "git switch *": allow
-    "git stash *": allow
-    "git commit *": allow
-    "git add *": allow
-    "git reset *": allow
-    "git tag *": allow
-    "git remote *": allow
-    "git reflog": allow
-    "git shortlog *": allow
-    "git bisect *": allow
-    "git blame *": allow
-    "git cherry-pick *": allow
-    "git worktree *": allow
-    "git apply *": deny
-    "git am *": deny
-    "less *": allow
-    "more *": allow
-  grep: allow
-  glob: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "git status"
+    effect: allow
+  - action: shell
+    resource: "git status *"
+    effect: allow
+  - action: shell
+    resource: "git diff *"
+    effect: allow
+  - action: shell
+    resource: "git log *"
+    effect: allow
+  - action: shell
+    resource: "git branch"
+    effect: allow
+  - action: shell
+    resource: "git branch -r"
+    effect: allow
+  - action: shell
+    resource: "git branch -a"
+    effect: allow
+  - action: shell
+    resource: "git branch -a *"
+    effect: allow
+  - action: shell
+    resource: "git show *"
+    effect: allow
+  - action: shell
+    resource: "git fetch *"
+    effect: allow
+  - action: shell
+    resource: "git pull *"
+    effect: allow
+  - action: shell
+    resource: "git rebase *"
+    effect: allow
+  - action: shell
+    resource: "git merge *"
+    effect: allow
+  - action: shell
+    resource: "git checkout *"
+    effect: allow
+  - action: shell
+    resource: "git switch *"
+    effect: allow
+  - action: shell
+    resource: "git stash *"
+    effect: allow
+  - action: shell
+    resource: "git commit *"
+    effect: allow
+  - action: shell
+    resource: "git add *"
+    effect: allow
+  - action: shell
+    resource: "git reset *"
+    effect: allow
+  - action: shell
+    resource: "git tag *"
+    effect: allow
+  - action: shell
+    resource: "git remote *"
+    effect: allow
+  - action: shell
+    resource: "git reflog"
+    effect: allow
+  - action: shell
+    resource: "git shortlog *"
+    effect: allow
+  - action: shell
+    resource: "git bisect *"
+    effect: allow
+  - action: shell
+    resource: "git blame *"
+    effect: allow
+  - action: shell
+    resource: "git cherry-pick *"
+    effect: allow
+  - action: shell
+    resource: "git worktree *"
+    effect: allow
+  - action: shell
+    resource: "git apply *"
+    effect: deny
+  - action: shell
+    resource: "git am *"
+    effect: deny
+  - action: shell
+    resource: "less *"
+    effect: allow
+  - action: shell
+    resource: "more *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 # Git Workflow Master

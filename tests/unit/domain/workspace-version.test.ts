@@ -211,6 +211,42 @@ describe("WorkspaceVersion v2.0 format", () => {
 		expect(v.installedPacks).toEqual(["software-development", "business"]);
 	});
 
+	test("fromJSON discards pack IDs with ANSI escape sequences", () => {
+		const v = WorkspaceVersion.fromJSON({
+			version: "2.0.0",
+			installedPacks: ["\x1b[2J", "software-development"],
+			installedAt: "2026-08-06T12:00:00.000Z",
+		});
+		expect(v.installedPacks).toEqual(["software-development"]);
+	});
+
+	test("fromJSON discards pack IDs faking TUI options via newlines", () => {
+		const v = WorkspaceVersion.fromJSON({
+			version: "2.0.0",
+			installedPacks: ["\n2) implant", "business"],
+			installedAt: "2026-08-06T12:00:00.000Z",
+		});
+		expect(v.installedPacks).toEqual(["business"]);
+	});
+
+	test("fromJSON discards pack IDs outside the kebab-case charset", () => {
+		const v = WorkspaceVersion.fromJSON({
+			version: "2.0.0",
+			installedPacks: ["Software-Development", "software_dev", "../escape", "pack;", " "],
+			installedAt: "2026-08-06T12:00:00.000Z",
+		});
+		expect(v.installedPacks).toEqual([]);
+	});
+
+	test("fromJSON keeps valid kebab-case pack IDs including multi-digit", () => {
+		const v = WorkspaceVersion.fromJSON({
+			version: "2.0.0",
+			installedPacks: ["software-development", "government-legal", "main"],
+			installedAt: "2026-08-06T12:00:00.000Z",
+		});
+		expect(v.installedPacks).toEqual(["software-development", "government-legal", "main"]);
+	});
+
 	test("toJSON emits v2.0 format with version, installedPacks, installedAt, optionalSelections", () => {
 		const v = new WorkspaceVersion(
 			"2.0.0",

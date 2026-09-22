@@ -1,5 +1,5 @@
-# Plan de implementación – Códice v1.0.0 → v2.1.2
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-08-28 (v2.1.2 Hotfix ✅) | **Metodología:** TDD Iterativo
+# Plan de implementación – Códice v1.0.0 → v2.1.3
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-09-22 (v2.1.3-beta.1 — FEV-30 ✅, release lista) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -21,6 +21,8 @@
 | FEV-26 | Quick Wins: Bug fixes + Security patches + Documentation | #79, TD-V2-70, TD-V2-90, TD-V2-91, TD-V2-93 | ✅ Completo (2026-08-20) |
 | FEV-27 | Security & Observability: Plugin cleanup + Permissions + Backup safety | #80, #81, TD-V2-9, TD-V2-51 | ✅ Completo (2026-08-20) |
 | FEV-28 | Infrastructure & Performance: CI SHA-pins Node 24 + VersionComparator cache | TD-V2-7, TD-V2-61 | ✅ 2026-08-21 (1935 tests) |
+| FEV-29 | Migración `permission:`/`tools:` → `permissions:` (lista nativa V2) en los packs restantes de agentes (Opencode V2) | #91 | ✅ Completo (2026-09-22) — 349 archivos, 8 commits por pack |
+| FEV-30 | Remoción plugin SDD + banner Legacy + hardening review (5 ejes) | #90 | ✅ Completo (2026-09-22) — 20 commits, 1865 tests, 31/31 e2e |
 
 ## 2. Fases Iniciales (F0 – F6.5)
 
@@ -126,7 +128,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 |----|------|--------|------|-------------|
 | **#79** | `.codice-version` no escrito tras Clean Install | 2-3h | High | `fix14-clean-install-version-file.md` |
 | **TD-V2-70** | Shell injection via `github.ref_name` | 0.5h | Medium | `fix17-shell-injection-github-ref-name.md` |
-| **TD-V2-90** | Business pack agent count mismatch (92→91) | 0.5h | Low | `fix06-business-pack-agent-count.md` |
+| **TD-V2-90** | Business pack agent count mismatch (92→91) | 0.5h | Low | `fix25-business-pack-agent-count.md` |
 | **TD-V2-91** | Writers pack agent count mismatch (2→4) | 0.5h | Low | `fix07-writers-pack-agent-count.md` |
 | **TD-V2-93** | Outdated comments in FileMergeEngine | 1h | Low | `fix10-outdated-comments-file-merge-engine.md` |
 
@@ -148,7 +150,6 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 
 | ID | Item | Effort | Risk | Diagnóstico |
 |----|------|--------|------|-------------|
-| **#80** | Limpieza del plugin (solo bloqueo destructivo) | 3-4h | Medium | `fix15-plugin-cleanup.md` |
 | **#81** | Permisos directorios externos (deny-by-default) | 1-2h | Medium | `fix16-external-directory-permissions.md` |
 | **TD-V2-9** | SIGINT mid-commit backup overwrite | 2-3h | Low | `fix05-sigint-backup-overwrite.md` |
 | **TD-V2-51** | Missing staging_cleanup event | 1h | Low | `fix09-missing-staging-cleanup-event.md` |
@@ -159,7 +160,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 - Backup safety: `AtomicStager` persiste rollback intent o documenta limitación
 - Evento `staging_cleanup` emitido y visible en verbose mode
 - Code review hardening: 1 Critical + 4 Important + 3 Suggestions aplicados
-- Tests: 1935 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors
+- Tests: 1935 tests, 31/31 E2E, just check 0 errors
 
 ##### Resultados de code review (commit `a2964fd`)
 
@@ -168,12 +169,12 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | C1 | Critical | Plugin gate no leía `output.args.command` correctamente | `extractBashCommand` ahora lee `output.args.command` |
 | I1 | Important | Tests no invocaban el hook real del plugin | 5 integration tests nuevos con `output.args.command` correcto |
 | I2 | Important | Marker de backup no se limpiaba en fallo manejado | `AtomicStager` remueve marker en fallo manejado |
-| I3 | Important | Patrones `rm -r -f` y `rm -f -r` no cubiertos | Añadidos a destructivePatterns |
+| I3 | Important | Patrones `rm -r -f` y `rm -f -r` no cubiertos | Añadidos a la lista de patrones destructivos |
 | I4 | Important | Detección de huérfanos frágil (string matching) | Flag-based guard reemplaza string matching |
 | S1 | Suggestion | Variante `staging_cleanup` muerta en ProgressCallback | Eliminada (evento se emite via VerboseLogger, no ProgressCallback) |
 | S2 | Suggestion | Faltaban patrones staging/backup en gitignore | Añadidos a `template/estandar/gitignore` |
 
-**Diagnósticos:** `fix15`, `fix16`, `fix19`, `fix21`
+**Diagnósticos:** `fix16`, `fix19`, `fix21`
 
 ---
 
@@ -192,7 +193,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 **Criterios de éxito:**
 - CI/CD: SHA-pins actualizados a últimas versiones compatibles con Node 24
 - `VersionComparator` cachea parsed semver objects
-- Tests: 1935 tests, 31/31 E2E, 55/55 plugin integration, just check 0 errors
+- Tests: 1935 tests, 31/31 E2E, just check 0 errors
 - CI matrix (Linux, macOS, Windows) sin warnings de Node 24 deprecation
 
 **Diagnósticos:** `fix23`, `fix22`
@@ -208,7 +209,7 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | FEV-28 | 2 items (2 TD) | 2-3h | Bajo | ✅ Completo (2026-08-21) |
 | **Total** | **11 items** | **12-17h** | — | — |
 
-**Estrategia:** FEV-26 ✅ + FEV-27 ✅ (code review hardened) + FEV-28 ✅ completados. v2.1.1 released 2026-08-25 (1935 tests, 31/31 E2E, 55/55 plugin).
+**Estrategia:** FEV-26 ✅ + FEV-27 ✅ (code review hardened) + FEV-28 ✅ completados. v2.1.1 released 2026-08-25 (1935 tests, 31/31 E2E).
 
 **Release v2.1.1:** Todas las fases completadas. Publish con dist-tag `latest` → `@fisherk2-dev/codice@2.1.1`.
 
@@ -220,6 +221,30 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | Tech debt reorg | Chore | v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4 |
 
 **Release v2.1.2:** Hotfix released 2026-08-28. Publish con dist-tag `latest` → `@fisherk2-dev/codice@2.1.2`.
+
+### v2.1.3-beta.1 (Hotfix Opencode V2 — FEV-29 ✅ + FEV-30 ✅, 2026-09-22)
+
+> Deuda 2.1.x previamente planificada para v2.1.3 se recorre a v2.1.4 (ver TECH_DEBT.md). Alcance reservado para issues surgidas con Opencode V2.
+
+| Item | Type | Issue | Description |
+|------|------|-------|-------------|
+| **FEV-29** | Fix | #91 | Migración completa `permission:`/`tools:` → `permissions:` (lista nativa V2) de los 349 archivos de agentes pendientes de `template/obligatorio/packs/` (8 packs, un commit por pack; main/ y writers/ ya eran nativos V2). Codemods `scripts/migrate-v1-to-v2-permissions.ts` + `scripts/migrate-all-packs.ts`, spec `spec-agent-format-v2.md` + tests de frontmatter + guard `tests/unit/quality/source-hygiene.test.ts`. Diagnósticos: `docs/diagnosis/fix28-subagent-delegation-kill-switch.md`, `docs/diagnosis/fix29-fase2-tools-key-and-nul-audit.md` |
+| **FEV-30** | Removal | #90 | ✅ Completo (2026-09-22) — remoción completa del plugin SDD (template, `.opencode/plugins/`, tests, specs/ADRs — no se migró a V2) + banner runtime `src/application/legacyBanner.ts` (versiones ≤ 2.1.2 solo Opencode Legacy) + hardening del review de 5 ejes (6 commits de fixes). Diagnóstico: `docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md` |
+
+**Dependencias:** FEV-29 y FEV-30 son independientes entre sí. Ambos completados 2026-09-22 en `hotfix/opencode-v2-migrate`: FEV-29 (migración a la lista nativa `permissions:` — 349 archivos — + reasignación de comandos), FEV-30 (remoción plugin + banner + hardening review — 20 commits).
+
+**FEV-29 — Entregado (2026-09-22):**
+- Codemod V1→V2 (`scripts/migrate-v1-to-v2-permissions.ts`) + bulk runner `scripts/migrate-all-packs.ts` (retirado tras completar los 8 packs).
+- Auditoría `tools:`/NUL + claves `system:`/`disabled:` aceptadas; retiro del productor legacy `reformat-agent`.
+- Simplificación (filtros de pack resueltos una vez, ramas muertas eliminadas, duplicados colapsados, freno `subagent "*": deny` dentro de la lista).
+- Review-round: freno dentro de la lista, quote/validación action-effect, depth fail-loud, exit 2 en dry-run con errores, dedup CI (`just test` solo non-Linux).
+- Gates verdes: salida migrada verificada limpia.
+
+**FEV-30 — Entregado (2026-09-22):**
+- Remoción total del plugin SDD (template `.opencode/plugins/`, copia dev, suites `tests/plugin/`, recipes CI `qa-plugin`, specs/ADRs `spec-sdd-plugin-decoupling` + `adr-013`/`adr-017`).
+- Banner runtime `src/application/legacyBanner.ts` cableado en los 3 use cases de instalación (no bloqueante, fail-open).
+- Review de 5 ejes + 6 commits de fixes (permisos bash endurecidos, validación `installedPacks`, predicado `isOnLegacyLine`, edge tests 5→13).
+- Gates verdes: `just check` 0, `just test` 1865/0, e2e 31/31. Release v2.1.3-beta.1 (`CHANGELOG.md`).
 
 ## 4. Estrategia de Pruebas por Fase
 
@@ -267,3 +292,4 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | v2.1.0-beta.1 | 2052 | 31/31 | ≥95% | 2026-08-12 |
 | v2.1.1 | 1935 | 31/31 | ≥95% | 2026-08-25 |
 | v2.1.2 | 1935 | 31/31 | ≥95% | 2026-08-28 |
+| v2.1.3-beta.1 | 1865 | 31/31 | ≥95% | 2026-09-22 |

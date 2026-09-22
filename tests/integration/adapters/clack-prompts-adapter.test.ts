@@ -405,25 +405,25 @@ describe("ClackPromptsAdapter", () => {
 	describe("ClackPromptsAdapter.showInstallSummary()", () => {
 		it("displays summary via clack.note()", () => {
 			adapter.showInstallSummary({
-				packs: [{ id: "software-development", agentCount: 146 }],
+				packs: [{ id: "software-development", agentCount: 144 }],
 				mandatoryDirs: [],
 				optionalFiles: [],
-				totalAgents: 146,
+				totalAgents: 144,
 				totalFiles: 150,
 			});
 
 			expect(mockNote).toHaveBeenCalledWith(
-				expect.stringContaining("software-development (146 agents)"),
+				expect.stringContaining("software-development (144 agents)"),
 				expect.stringContaining("📋 Installation Summary"),
 			);
 		});
 
 		it("formats the summary body from InstallSummaryInfo", () => {
 			adapter.showInstallSummary({
-				packs: [{ id: "software-development", agentCount: 146 }],
+				packs: [{ id: "software-development", agentCount: 144 }],
 				mandatoryDirs: ["core", "packs/main", "packs/writers"],
 				optionalFiles: ["Justfile", "Dockerfile"],
-				totalAgents: 146,
+				totalAgents: 144,
 				totalFiles: 163,
 			});
 

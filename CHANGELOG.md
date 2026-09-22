@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.3-beta.1] - 2026-09-22
+
+### Changed
+
+- **FEV-29 completado (2026-09-22, #91)**: migración del template al formato nativo OpenCode V2 `permissions:` cerrada — 349 archivos, auditoría `tools:`/NUL, simplificación y review-round; salida verificada limpia con gates verdes. **FEV-30 completado (2026-09-22, #90)**: remoción total del plugin SDD + banner runtime `src/application/legacyBanner.ts` + hardening del review de 5 ejes (6 commits de fixes) — 20 commits en `hotfix/opencode-v2-migrate`, 1865 tests, 31/31 e2e. Release v2.1.3-beta.1.
+- **Dry-run-with-errors exit-code contract for the codemod CLI** (`scripts/migrate-v1-to-v2-permissions.ts`): a dry run that surfaces validation errors now exits `2` instead of `0`, so CI gating cannot silently pass a failed review; apply-with-errors remains `1` and a clean run remains `0`. See `specs/spec-agent-format-v2.md` §6.
+
+### Fixed
+
+- **Brake emission position**: the `subagent "*": deny` chain brake is now appended after all existing permission rules instead of potentially landing mid-block.
+- **Action/effect quoting + validation**: emitted `action:`/`effect:` values are quoted consistently and validated against the known-action set before emission.
+- **Depth fail-loud**: deeply nested V1 `tools:` structures now fail loudly instead of silently emitting partial output.
+- **Verbatim golden test**: a golden test pins byte-preserving frontmatter emit of the codemod (`rawLine` passthrough).
+- **Legacy `tools:` frontmatter key now rejected**: The agent validator (`tests/unit/domain/helpers/agentFrontmatterValidator.ts`) no longer accepts the V1 `tools:` map or its `validatePermission` alias, closing the silent-shadowing loophole where OpenCode V2 ignores unknown keys (#91); removing the dead path lifts `coverage-check 95` from 93.34% to 96.00%.
+- **Raw NUL byte removed from the permissions duplicate-guard key**: The literal `0x00` byte is now the `\u0000` escape, so grep/ripgrep and diff/read tooling no longer treat the validator file as binary; semantics are unchanged and pinned by a separator-collision test.
+- **Mangled U+1F504 headings restored in 2 pack files**: UTF-8 bytes that had decayed into `=` + `0x04` are repaired.
+- **Validación de charset en `installedPacks` de `WorkspaceVersion.fromJSON`**: entradas que no son strings se rechazan en la deserialización en lugar de propagarse al estado del workspace.
+
+### Added
+
+- **ADR-021** (`specs/adr/adr-021-codemod-parser-and-placement.md`): validator is the normative V2 schema reader; codemod parser is frozen verbatim-emit one-shot tooling; promotion trigger to `src/domain/services/` documented; schema constants stay exported in the validator helper.
+- **CI Linux suite dedup**: `just test` in `.github/workflows/ci.yml` is now gated to non-Linux runners, removing the duplicated Linux suite execution.
+- **Source-hygiene raw-control-byte guard**: New `tests/unit/quality/source-hygiene.test.ts` fails on any raw control byte (C0 minus TAB/LF/CR, plus DEL) across the tracked text surfaces (`src`, `tests`, `scripts`, `template/obligatorio/packs`).
+- **Banner de deprecación runtime "Opencode Legacy" (FEV-30, #90)**: nuevo helper `src/application/legacyBanner.ts` lee `.codice-version` y, si la instalación es ≤ 2.1.2, imprime `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support`. No bloqueante — archivo ausente o corrupto degrada a no-op silencioso. Cableado en `CleanInstallUseCase`, `ProjectInstallUseCase` y `UpdateWorkspaceUseCase`, antes del primer prompt interactivo de cada flujo.
+
+### Removed
+
+- **`scripts/migrate-all-packs.ts` (+ `tests/unit/scripts/migrate-all-packs.test.ts`)**: the Fase-2 bulk runner was redundant after completion — all 8 pending packs were migrated; retained only in git history. A future re-migration calls `scripts/migrate-v1-to-v2-permissions.ts` directly (see `specs/spec-agent-format-v2.md` §7).
+- **Legacy `reformat-agent` producer retired**: `scripts/reformat-agent.ts`, its CLI wrapper and its test suite were deleted; the FEV-18 converter emitted the V1 `tools:` map, which OpenCode V2 ignores and the validator now rejects. Use `scripts/migrate-v1-to-v2-permissions.ts` instead.
+- **Plugin SDD eliminado por completo (FEV-30, #90)**: fuera del template `sdd-pipeline.ts` + sus módulos (`destructivePatterns.ts`, `normalizeBash.ts`), la copia dev, las suites de tests del plugin, el fixture `sdd-workflow-test`, las recipes `*-plugin` y el job `qa-plugin` de CI, además de los specs/ADR/diagnósticos históricos `spec-sdd-plugin-decoupling`, `adr-013`, `fix15` y `fix06` con scrub de prosa en docs/wiki. El plugin fallaba en cada startup en hosts Opencode V2; su única función residual (bloqueo de comandos destructivos) ya vive en las `permission.bash` deny-lists de `template/obligatorio/core/opencode.json`, que se conservan como defensa en profundidad. Diagnóstico: `docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md`.
+- **ADR-017 retirado** (auto-discovery del plugin, superado por FEV-30) + follow-ups del review de 5 ejes: predicado `isOnLegacyLine` extraído en el banner legacy y suite de edge tests del banner ampliada de 5 a 13 casos.
+
+### Security
+
+- **Endurecimiento de permisos del template tras retirar el plugin SDD**: la auditoría de seguridad encontró que la deny-list estática no reemplaza la normalización/bloqueo exec que hacía el plugin retirado, y que varios comandos en `allow` eran bypassables: `find -execdir`/`xargs sh -c`/pipes `curl|sh` encadenan ejecución arbitraria, y `echo >> ~/.ssh/authorized_keys`, `sed → /etc/cron.d/`, `awk 'print > "path"'` escriben archivos arbitrarios (la redirección no es cubrible con wildcards de deny). Cambios en `template/obligatorio/core/opencode.json`: (1) `find`, `echo`, `printf`, `awk`, `sed`, `xargs`, `curl` (y `http`/httpie, misma clase de riesgo fetch-and-pipe) movidos de `allow` a `ask`; (2) nuevas denies de defensa en profundidad (`find * -exec *`, `find * -execdir *`, `xargs sh *`, `xargs bash *`, `xargs chmod *`, `xargs curl *`), variantes rm (`rm -fir`, `--force --recursive` y permutaciones) y secret-read sin ancla de espacio (`*.env`, `*.ssh/id_*`, `*aws/credentials`); (3) gaps de `read` cerrados (`*id_rsa*`, `*id_ed25519*`, `*id_ecdsa*`, `*.envrc*`, `**/.npmrc`, `credentials.json*`). Ninguna deny existente fue eliminada; suite de regresión en `tests/unit/setup/opencode-config.test.ts` pinnea el JSON de permisos.
+
 ## [2.1.2] - 2026-08-28
 
 ### Fixed

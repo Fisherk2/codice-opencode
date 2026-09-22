@@ -1,24 +1,51 @@
 ---
 description: Develops, trains, and optimizes machine learning models for production deployment
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#aa3bdc"
 hidden: true
-permission:
-  write: allow
-  edit: allow
-  bash:
-    "python *": allow
-    "pip *": allow
-    "jupyter *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "python *"
+    effect: allow
+  - action: shell
+    resource: "pip *"
+    effect: allow
+  - action: shell
+    resource: "jupyter *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a machine learning engineering expert. You build, train, and optimize ML models that perform reliably at scale.

@@ -1,36 +1,69 @@
 ---
 description: Manages infrastructure as code with Terraform including modules, state management, and providers
 mode: subagent
-temperature: 0.1
+request:
+  body:
+    temperature: 0.1
 color: "#dc3b6e"
 hidden: true
-permission:
-  write:
-    "*": deny
-    "*.tf": allow
-    "*.tfvars": allow
-    "*.hcl": allow
-    "modules/*": allow
-  edit:
-    "*": deny
-    "*.tf": allow
-    "*.tfvars": allow
-    "*.hcl": allow
-    "modules/*": allow
-  bash:
-    "terraform fmt *": allow
-    "terraform validate *": allow
-    "terraform plan *": allow
-    "terraform state list *": allow
-    "terraform state show *": allow
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  todowrite: allow
-  webfetch: allow
-  websearch: allow
-  question: allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: edit
+    resource: "*.tf"
+    effect: allow
+  - action: edit
+    resource: "*.tfvars"
+    effect: allow
+  - action: edit
+    resource: "*.hcl"
+    effect: allow
+  - action: edit
+    resource: "modules/*"
+    effect: allow
+  - action: shell
+    resource: "terraform fmt *"
+    effect: allow
+  - action: shell
+    resource: "terraform validate *"
+    effect: allow
+  - action: shell
+    resource: "terraform plan *"
+    effect: allow
+  - action: shell
+    resource: "terraform state list *"
+    effect: allow
+  - action: shell
+    resource: "terraform state show *"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: lsp
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: todowrite
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are a Terraform engineer specializing in infrastructure as code, module design, state management, and provider configuration.
