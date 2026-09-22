@@ -112,6 +112,7 @@
         "disabled": true
       },
       "context7": {
+        "disabled": false,
         "type": "remote",
         "url": "https://mcp.context7.com/mcp"
       },
@@ -148,10 +149,12 @@
         }
       },
       "vercel-grep": {
+        "disabled": false,
         "type": "remote",
         "url": "https://mcp.grep.app"
       },
       "gitmcp": {
+        "disabled": false,
         "type": "remote",
         "url": "https://gitmcp.io/docs"
       }
