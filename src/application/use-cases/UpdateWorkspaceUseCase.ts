@@ -7,6 +7,7 @@ import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, createProgressCallback, wrapMergeError } from "../helpers";
+import { maybePrintLegacyBanner } from "../helpers/opencodeLegacyBanner";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { isPreV2Version, parseVersionData, resolveUpdatePacks } from "./updateFlow";
@@ -52,13 +53,18 @@ export class UpdateWorkspaceUseCase {
 	) {}
 
 	/**
-	 * Execute a workspace update: writable check → v2.0 version gate → confirm
-	 * → GitHub info → bundled comparison → pack scope → scoped merge → version file.
+	 * Execute a workspace update: legacy banner → writable check → v2.0
+	 * version gate → confirm → GitHub info → bundled comparison → pack scope
+	 * → scoped merge → version file.
 	 */
 	async execute(
 		destinationPath: string,
 		options?: UpdateWorkspaceOptions,
 	): Promise<Result<void, Error>> {
+		// FEV-30: advisory legacy banner precedes the first prompt
+		// (version-gate warnings and the update confirm dialog).
+		await maybePrintLegacyBanner(this.fileSystem, this.userPrompt);
+
 		// Check writability
 		const writableCheck = await checkWritable(this.fileSystem, destinationPath);
 		if (!writableCheck.ok) return writableCheck;
