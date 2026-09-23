@@ -6,7 +6,7 @@ This guide walks you through installing the Códice workspace template and runni
 
 Before installing Códice, you need **OpenCode** installed on your system. OpenCode is the AI-assisted development harness that Códice extends with agents, commands, and skills.
 
-- **[Install OpenCode](https://opencode.ai/docs/installation)** — follow the official installation guide for your platform
+- **[Install OpenCode](https://opencode.ai/v2/docs/)** — the official V2 intro page carries the install methods for your platform (curl, Homebrew, npm, Bun, standalone binaries)
 - **Verify the installation** by running `opencode --version` in your terminal
 
 > Códice is distributed via npm and executed with `bunx @fisherk2-dev/codice`. Bun is the recommended runtime.
@@ -74,8 +74,10 @@ your-project/
 ├── specs/                     # Modular specifications and ADRs
 ├── tasks/                     # Task breakdowns (created by /plan)
 ├── .opencode/
-│   └── agents/ → agents/      # Symlink to agents directory
-├── agents/                    # ~360 agents: 6 primary + 4 writer + ~350 subagents across 8 selectable packs
+│   ├── agents/ → ../agents/     # Symlinks recreated post-install
+│   ├── commands/ → ../commands/
+│   └── skills/ → ../skills/
+├── agents/                    # 359 agents: 6 primary + 4 writer + 349 subagents across 8 selectable packs
 ├── commands/                  # 17 SDD slash commands
 └── skills/                    # 51 engineering skills
 ```
@@ -116,4 +118,4 @@ There you will discover what you can do with Códice and where to start.
 - [Agents](Agents) — Understand each agent's role, permissions, and recommended models
 - [Configuration](Configuration) — Configure models, agents, permissions, MCP, and more
 
-For OpenCode-specific questions (agent configuration, permission model, MCP servers), refer to the [official OpenCode documentation](https://opencode.ai/docs).
+For OpenCode-specific questions (agent configuration, permission model, MCP servers), refer to the [official OpenCode V2 documentation](https://opencode.ai/v2/docs/).

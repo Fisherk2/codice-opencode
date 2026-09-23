@@ -2,7 +2,7 @@
 
 The workspace behavior is controlled by `opencode.json` at the project root — the main configuration file for OpenCode. This page explains the key sections and how to customize them for your project.
 
-> For the full configuration reference, see [opencode.ai/docs/configuration](https://opencode.ai/docs/configuration).
+> For the full configuration reference, see [opencode.ai/v2/docs/config](https://opencode.ai/v2/docs/config/).
 
 ---
 
@@ -19,42 +19,46 @@ The workspace template ships with a pre-configured `opencode.json` that you can 
 ### `model` — Default AI Model
 
 ```json
-"model": "openrouter/openrouter/free"
+"model": "opencode/big-pickle"
 ```
 
-The `model` field sets the main AI model used for general chat and tasks. It uses the format `<provider>/<model-id>`. This model is the default for all interactions unless an agent or command overrides it.
+The `model` field sets the main AI model used for general chat and tasks. It uses the format `provider/model`. The value above is what the Códice template ships. This model is the default for all interactions unless an agent or command overrides it.
 
-### `small_model` — Lightweight Model
+### `default_agent` — Session Entry Point
 
 ```json
-"small_model": "openrouter/openrouter/free"
+"default_agent": "huitzilopochtli"
 ```
 
-The `small_model` is used for low-complexity operations — quick file reads, simple classification, or other tasks where full model capability is unnecessary. This saves cost and improves responsiveness.
+Sets the primary agent used when a session does not select one explicitly. The template routes new sessions to its commander agent.
+
+> V1's `small_model` field has no native V2 equivalent — OpenCode maps it to the built-in `title` agent's model (`agents.title.model`). The template does not ship it.
 
 ### `compaction` — Context Window Management
 
 ```json
 "compaction": {
   "auto": true,
-  "prune": true,
-  "reserved": 10000
+  "keep": {
+    "tokens": 10000
+  },
+  "buffer": 20000
 }
 ```
 
 | Field | Description |
 |-------|-------------|
 | `auto` | Automatically compact the conversation when approaching the token limit |
-| `prune` | Remove older, less relevant messages instead of summarizing them |
-| `reserved` | Minimum number of tokens to reserve for the next response (10,000 by default) |
+| `keep.tokens` | Token budget of recent context retained after compaction |
+| `buffer` | Headroom reserved before automatic compaction triggers |
 
-Increasing `reserved` gives the model more room for long responses but triggers compaction sooner. Decreasing it postpones compaction but may truncate responses.
+> V2 has no `prune` or `reserved` field — V1's `preserve_recent_tokens` maps to `keep.tokens` and V1's `reserved` maps to `buffer`; the legacy fields are ignored with a warning (per the V2 migration guide).
 
 ---
 
-## Provider Configuration (Not configurated)
+## Provider Configuration (`providers`)
 
-The `provider` section defines available AI model providers and their per-model options:
+The `providers` section (plural in V2; V1's singular `provider` map is a legacy name) defines available AI model providers and their per-model options. The Códice template ships **no `providers` block** — OpenCode's built-in provider catalog already covers the models below, and credentials connect via `/connect`. Add `providers` only for custom endpoints, model overrides, or variants:
 
 | Provider | Models | Official Docs |
 |----------|--------|---------------|
@@ -66,36 +70,38 @@ The `provider` section defines available AI model providers and their per-model 
 | `openai` | GPT-5, GPT-5.1 Codex, GPT-5.3 Codex, GPT-5.4 Mini, GPT-5.5 Pro | [platform.openai.com/docs](https://platform.openai.com/docs/models) |
 | `z-ai` | GLM 5.1 | [open.bigmodel.cn](https://open.bigmodel.cn/dev/api) |
 
-> **⚠️ Provider configurations change frequently.** Each provider has its own parameter naming, model IDs, and authentication methods. The template provides a starting point, but always consult the official provider documentation linked above for the most up-to-date configuration options. Do not treat the examples in this page as authoritative — they may become outdated as providers update their APIs.
+> **⚠️ Provider configurations change frequently.** Each provider has its own parameter naming, model IDs, and authentication methods. Always consult the official provider documentation linked above for the most up-to-date configuration options. Do not treat the examples in this page as authoritative — they may become outdated as providers update their APIs.
 
 ### Per-Model Options
 
-Each model can have its own options and **variants** — named configurations optimized for different workloads:
+Provider and model entries customize requests with `settings`, `headers`, and `body`, and can define **variants** — named configurations optimized for different workloads:
 
-```json
-"deepseek": {
-  "models": {
-    "deepseek-v4-flash": {
-      "options": {
-        "thinking": { "type": "enabled" },
-        "reasoningEffort": "medium"
-      },
-      "variants": {
-        "deep-think": {
+```jsonc
+"providers": {
+  "deepseek": {
+    "models": {
+      "deepseek-v4-flash": {
+        "settings": {
           "thinking": { "type": "enabled" },
-          "reasoningEffort": "high"
+          "reasoningEffort": "medium"
         },
-        "economy": {
-          "thinking": { "type": "disabled" },
-          "reasoningEffort": "low"
-        }
+        "variants": [
+          {
+            "id": "deep-think",
+            "settings": { "reasoningEffort": "high" }
+          },
+          {
+            "id": "economy",
+            "settings": { "reasoningEffort": "low" }
+          }
+        ]
       }
     }
   }
 }
 ```
 
-**Variants** let you switch between modes without changing the model:
+**Variants** let you switch between modes without changing the model — select one with `#variant` (e.g. `deepseek/deepseek-v4-flash#deep-think`):
 
 | Variant | Use Case |
 |---------|----------|
@@ -107,49 +113,62 @@ Each model can have its own options and **variants** — named configurations op
 
 ## Agent Configuration
 
-The `agent` section configures each primary agent individually. The template assigns specific models, temperatures, and step limits to each agent based on its role in the SDD cycle:
+The `agents` section (V2; V1's singular `agent` map is legacy) configures each primary agent individually. The template assigns specific models, request bodies, and step limits to each agent based on its role in the SDD cycle. In native V2 shape, `temperature` lives under `request.body` (top-level `temperature` and `disable` are legacy fields that V2 translates automatically), and built-in agents are turned off with `"disabled": true`:
 
-```json
-"agent": {
+```jsonc
+"agents": {
   "huitzilopochtli": {
-    "model": "opencode-go/mimo-v2.5",
+    "model": "opencode/mimo-v2.5-free",
     "color": "#d3e22b",
-    "temperature": 0.5,
-    "steps": 25
-  },
-  "quetzalcoatl": {
-    "model": "opencode-go/qwen3.7-plus",
-    "color": "#ffffff",
-    "temperature": 0.3,
-    "steps": 60
-  },
-  "moctezuma": {
-    "model": "opencode-go/minimax-m3",
-    "color": "#8B4513",
-    "temperature": 0.1,
-    "steps": 20
-  },
-  "tlaloc": {
-    "model": "opencode-go/deepseek-v4-flash",
-    "color": "#00ffff",
-    "temperature": 0.2,
-    "steps": 90
-  },
-  "mictlantecuhtli": {
-    "model": "opencode-go/mimo-v2.5",
-    "color": "#2d2d2d",
-    "temperature": 0.2,
-    "steps": 60
-  },
-  "tezcatlipoca": {
-    "model": "opencode-go/glm-5.2",
-    "color": "#ff3134",
-    "temperature": 0.1,
+    "request": {
+      "body": { "temperature": 0.5 }
+    },
     "steps": 50
   },
-  "build": { "disable": true },
-  "plan": { "disable": true },
-  "general": { "disable": true }
+  "quetzalcoatl": {
+    "model": "opencode/nemotron-3-ultra-free",
+    "color": "#ffffff",
+    "request": {
+      "body": { "temperature": 0.2 }
+    },
+    "steps": 120
+  },
+  "moctezuma": {
+    "model": "opencode/big-pickle",
+    "color": "#8B4513",
+    "request": {
+      "body": { "temperature": 0.1 }
+    },
+    "steps": 100
+  },
+  "tlaloc": {
+    "model": "opencode/nemotron-3.5-lightning-free",
+    "color": "#00ffff",
+    "request": {
+      "body": { "temperature": 0.2 }
+    },
+    "steps": 200
+  },
+  "mictlantecuhtli": {
+    "model": "opencode/muse-spark-1.3-contributor-free",
+    "color": "#2d2d2d",
+    "request": {
+      "body": { "temperature": 0.2 }
+    },
+    "steps": 150
+  },
+  "tezcatlipoca": {
+    "model": "opencode/mimo-v2.6-flash-free",
+    "color": "#ff3134",
+    "request": {
+      "body": { "temperature": 0.1 }
+    },
+    "steps": 100
+  },
+  "build": { "disabled": true },
+  "plan": { "disabled": true },
+  "explore": { "disabled": true },
+  "general": { "disabled": true }
 }
 ```
 
@@ -157,11 +176,11 @@ The `agent` section configures each primary agent individually. The template ass
 
 | Field | Description |
 |-------|-------------|
-| `model` | Override the default model for this specific agent |
+| `model` | Override the default model for this specific agent (`provider/model`, optional `#variant`) |
 | `color` | UI accent color (hex) for agent messages in the OpenCode interface |
-| `temperature` | Creativity level (0.0 = deterministic, 1.0 = creative) |
-| `steps` | Maximum execution steps before requiring user approval |
-| `disable` | Hide or disable built-in OpenCode agents |
+| `request` | Per-agent header and JSON body overlays (the template carries `temperature` here; note the V2 docs: the session runner preserves these values but does not yet send them with model requests — configure active request settings on the provider, model, or variant) |
+| `steps` | Maximum number of model steps; on the final step OpenCode removes tools and asks the model to summarize |
+| `disabled` | Remove a built-in or custom agent (V1's `disable` is legacy) |
 
 ### Why These Settings?
 
@@ -169,12 +188,12 @@ Each agent's configuration reflects its role in the SDD pipeline:
 
 | Agent | Model Choice | Temperature | Steps | Color | Rationale |
 |-------|-------------|:-----------:|:-----:|:-----:|-----------|
-| **Huitzilopochtli** | mimo-v2.5 (balanced) | 0.5 | 25 | 🟡 Yellow | Supreme orchestrator — needs balanced creativity to decide which subagent to invoke. Higher temperature for flexible delegation. Low step count because orchestration is quick. |
-| **Quetzalcoatl** | qwen3.7-plus (powerful) | 0.3 | 60 | ⚪ White | Visionary Sage — spec writing and design. Low temperature for precise, structured output. Higher step count for comprehensive documentation generation. |
-| **Moctezuma** | minimax-m3 (fast) | 0.1 | 20 | 🟤 Brown | Strategic Commander — task breakdown. Near-deterministic temperature for structured plan output. Fast model since planning is formulaic. |
-| **Tlaloc** | deepseek-v4-flash (fast) | 0.2 | 90 | 🔵 Cyan | Rain God Builder — code implementation. Low temperature for correct code, highest step limit because building is multi-step (test→code→refactor). |
-| **Mictlantecuhtli** | mimo-v2.5 (balanced) | 0.2 | 60 | ⚫ Dark | Underworld Judge — testing and validation. Low temperature for thorough verification. High step limit for complex test suites and ship checklist. |
-| **Tezcatlipoca** | glm-5.2 (powerful) | 0.1 | 50 | 🔴 Red | Smoking Mirror Critic — code review. Near-deterministic for objective analysis. Moderate step count for thorough five-axis review. |
+| **Huitzilopochtli** | mimo-v2.5-free (balanced) | 0.5 | 50 | 🟡 Yellow | Supreme orchestrator — needs balanced creativity to decide which subagent to invoke. Higher temperature for flexible delegation. Lowest step count because orchestration is quick. |
+| **Quetzalcoatl** | nemotron-3-ultra-free (powerful) | 0.2 | 120 | ⚪ White | Visionary Sage — spec writing and design. Low temperature for precise, structured output. Higher step count for comprehensive documentation generation. |
+| **Moctezuma** | big-pickle (default) | 0.1 | 100 | 🟤 Brown | Strategic Commander — task breakdown. Near-deterministic temperature for structured plan output. The template's default model keeps planning runs simple. |
+| **Tlaloc** | nemotron-3.5-lightning-free (fast) | 0.2 | 200 | 🔵 Cyan | Rain God Builder — code implementation. Low temperature for correct code, highest step limit because building is multi-step (test→code→refactor). |
+| **Mictlantecuhtli** | muse-spark-1.3-contributor-free | 0.2 | 150 | ⚫ Dark | Underworld Judge — testing and validation. Low temperature for thorough verification. High step limit for complex test suites and ship checklist. |
+| **Tezcatlipoca** | mimo-v2.6-flash-free | 0.1 | 100 | 🔴 Red | Smoking Mirror Critic — code review. Near-deterministic for objective analysis. Moderate step count for thorough five-axis review. |
 
 ---
 
@@ -184,16 +203,14 @@ Each agent's configuration reflects its role in the SDD pipeline:
 "instructions": [
   "CONTRIBUTING.md",
   "SPEC.md",
-  "docs/WORKFLOW.md",
-  "docs/TECH_DEBT.md",
   "docs/ARCHITECTURE.md",
   "docs/CODE_STYLE.md"
 ]
 ```
 
-Files listed in `instructions` are loaded into the model's context on every interaction. They serve as persistent project knowledge — the model reads them automatically without being asked.
+> **V2 behavior:** the config schema still accepts the `instructions` array, but per the V2 Instructions guide it *"does not currently resolve its files, glob patterns, or URLs"* — entries are **not** injected into model context. Active project instructions come from **`AGENTS.md`** (global file plus workspace/project discovery), which every Códice installation ships.
 
-Add your own files here if there are documents you want the model to always know about (e.g., an API contract, a style guide, or a glossary).
+Keep the array for compatibility, but put guidance you want the model to actually follow in `AGENTS.md`.
 
 ---
 
@@ -214,7 +231,7 @@ The `references` section configures local directories or Git repositories that a
   },
   "opencode": {
     "repository": "anomalyco/opencode",
-    "branch": "main",
+    "branch": "dev",
     "description": "Official OpenCode repository — CLI, API, and configuration reference"
   }
 }
@@ -226,15 +243,15 @@ The `references` section configures local directories or Git repositories that a
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `path` | For local refs | Relative path to the reference directory (from `opencode.json`) |
-| `repository` | For remote refs | Git repository in `owner/repo` format |
+| `path` | For local refs | Relative path to the reference directory (from the directory containing the config file; `~/` and absolute paths supported) |
+| `repository` | For remote refs | Git repository in `owner/repo` format (also Git URLs and SCP-style remotes) |
 | `branch` | ❌ | Git branch to use (default: repository default) |
-| `description` | ✅ | Plain-language description to help the agent decide when to load this reference |
-| `hidden` | ❌ | If `true`, hides the reference from TUI listings (default: `false`) |
+| `description` | ❌ | Plain-language description; **with** one, the reference is advertised to agents with its alias and resolved path — without one it stays available to clients but is not advertised automatically |
+| `hidden` | ❌ | If `true`, hides the reference from interactive client selectors (default: `false`) |
 
 ### How to Use
 
-In the OpenCode TUI, type `@<alias>` to load the reference material into the current conversation. For example, `@clean-code` loads all files from `skills/clean-code/references/`.
+Clients attach a reference by its root alias — the attachment carries a non-recursive listing of the root's immediate files and directories. Ask the agent to inspect a specific path when you need content below the root, e.g. `Inspect the codice-opencode reference and summarize specs/spec-agent-format-v2.md`. Note that references do not grant extra permissions: access outside the active Location still follows the normal `read`/`edit` and `external_directory` rules.
 
 ### Add a Custom Reference
 
@@ -261,40 +278,52 @@ Or a remote repository:
 }
 ```
 
-> **Official docs:** [opencode.ai/docs/references](https://opencode.ai/docs/references) — Full reference for the configuration format.
+> **Official docs:** [opencode.ai/v2/docs/references](https://opencode.ai/v2/docs/references/) — Full reference for the configuration format.
 
 ---
 
 ## Permissions — Security Boundaries
 
-The `permission` section controls what agents can do. The template uses a **default-deny** model: most operations require explicit approval, while safe read-only commands are pre-approved.
+The `permissions` section controls what agents can do. In OpenCode V2 it is one **ordered array of rules** — each `{ "action": ..., "resource": ..., "effect": ... }` — and **the last matching rule wins** (so broad rules go first and exceptions follow). If no rule matches, OpenCode uses `ask`. The template pairs a generous read-only baseline with a strict posture on execution, delegation, external paths, and secrets.
 
-### Permission Levels
+### Effects
 
-| Level | Meaning |
-|-------|---------|
+| Effect | Meaning |
+|--------|---------|
 | `allow` | Agent can execute without asking — used for safe, read-only operations |
-| `ask` | Agent must ask for approval before executing — the default for most operations |
+| `ask` | Agent must ask for approval before executing — V2's no-match fallback |
 | `deny` | Agent cannot execute regardless of approval — used for sensitive or destructive operations |
 
-### `permission.bash` — Shell Command Access
+### `shell` rules — Shell Command Access
 
-The bash allowlist permits safe, read-only commands automatically while blocking destructive operations. Commands NOT in the allowlist default to `ask`.
+The template opens with `{ "action": "shell", "resource": "*", "effect": "ask" }`, then layers exceptions — so **any command not explicitly allowed or denied is asked**. V2 renamed the V1 action `bash` to `shell`.
 
 **Fully allowed (no prompt):**
 
 | Category | Commands | Examples |
 |----------|----------|---------|
-| **File reading** | `cat`, `head`, `tail`, `less` equivalents | `cat package.json`, `head -n 20 log.txt` |
-| **File search** | `grep`, `rg`, `ag`, `ack`, `fd`, `find` | `grep -r "TODO" src/` |
+| **File reading** | `cat`, `head`, `tail`, `bat`, `less` equivalents | `cat package.json`, `head -n 20 log.txt` |
+| **File search** | `grep`, `rg`, `ag`, `ack` | `grep -r "TODO" src/` |
 | **File info** | `file`, `stat`, `du`, `ls`, `tree`, `wc` | `ls -la`, `stat config.json` |
-| **Text processing** | `sed`, `awk`, `sort`, `uniq`, `cut`, `tr`, `jq`, `diff`, `tee` | `jq '.name' package.json` |
+| **Text processing** | `sort`, `uniq`, `cut`, `tr`, `jq`, `diff`, `comm`, `paste`, `join` | `jq '.name' package.json` |
 | **Git read-only** | `git status`, `git diff`, `git log`, `git show`, `git blame`, `git branch`, `git tag` | `git log --oneline -5` |
 | **GitHub CLI (read)** | `gh repo view`, `gh issue list`, `gh pr list`, `gh release list` | `gh pr view 42` |
-| **Network (read)** | `curl`, `http`, `dig`, `nslookup`, `host` | `curl https://api.example.com` |
+| **Network (read)** | `dig`, `nslookup`, `host` | `nslookup example.com` |
 | **Process info** | `ps`, `lsof`, `uptime`, `free`, `uname`, `whoami`, `id`, `pwd` | `lsof -i :3000` |
-| **Archive inspection** | `unzip -l`, `zipinfo`, `tar -tf` | `tar -tf archive.tar.gz` |
+| **Archive inspection** | `unzip -l`, `zipinfo` | `zipinfo release.zip` |
 | **Path utilities** | `dirname`, `basename`, `realpath`, `which` | `which node` |
+
+**Always asked (explicit `ask` rules on top of the broad `shell * → ask`):**
+
+| Category | Commands |
+|----------|----------|
+| **Filesystem traversal** | `find`, `fd` (their `-exec`/`-delete` forms are denied outright) |
+| **Text mutation** | `sed`, `awk` (`sed -i` and `tee` are denied) |
+| **Network** | `curl`, `http`, `gh api` |
+| **Echo/print** | `echo`, `printf` |
+| **Pipes/redirects** | `xargs`, and any command containing output redirection (`* > *`) |
+| **Archives** | `tar -tf` |
+| **Git** | `git bisect` |
 
 **Always denied (blocked):**
 
@@ -325,73 +354,66 @@ The template blocks agents from reading or writing sensitive files across multip
 
 This prevents agents from accidentally reading or exposing secrets during their work, even in verbose or debug modes.
 
-### `permission.task` — Subagent Delegation
+### `subagent` rules — Subagent Delegation
 
-The `task` permission controls which subagents a primary agent can invoke. The template sets a global deny:
+The `subagent` action controls which subagents a primary agent can invoke (V1 called this action `task`). The template's first `permissions` rule is a global **ask**:
 
 ```json
-"task": {
-  "*": "deny"
-}
+{ "action": "subagent", "resource": "*", "effect": "ask" }
 ```
 
-This means **no agent can delegate by default**. Primary agents that need delegation (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli) have explicit allow rules in their agent file's YAML frontmatter, not in `opencode.json`. The global deny acts as a safety net — even if an agent file accidentally omits the restriction, delegation is blocked.
+So no delegation runs silently. The primaries that delegate (huitzilopochtli, quetzalcoatl, tlaloc, mictlantecuhtli, and tezcatlipoca) append their own rules in their agent file's YAML frontmatter: `{ "action": "subagent", "resource": "*", "effect": "allow" }` followed by explicit `deny` entries for the five other primaries. `moctezuma` never delegates — its frontmatter ends with `{ "action": "subagent", "resource": "*", "effect": "deny" }`. Because agent rules are appended after global rules and the last match wins, the global `ask` remains the safety net for anything not covered.
 
-> **Official docs:** [opencode.ai/docs/permissions](https://opencode.ai/docs/permissions) — Full reference for the permission system.
+> **Official docs:** [opencode.ai/v2/docs/permissions](https://opencode.ai/v2/docs/permissions/) — Full reference for the permission system.
 
-### `permission.external_directory` — External Directory Access
+### `external_directory` — External Directory Access
 
-The `external_directory` permission controls which paths **outside the current working directory** agents can access. This applies to any tool that takes a path as input — `read`, `edit`, `glob`, `grep`, and `bash` commands that reference external paths.
-
-Without explicit `external_directory` rules, agents cannot access any external directories. The template uses a **deny-by-default** model with an explicit allowlist of safe, well-known paths:
+The `external_directory` action controls which paths **outside the active Location and its project worktree** can be touched at all — it applies to external paths used by `read`, `edit`, `write`, and `patch` **before** their own rules, and the `shell` tool additionally checks its external working directory and directories inferred from the command. The template denies everything external, then explicitly allowlists a few safe roots:
 
 ```json
-"external_directory": {
-  "*": "deny",
-  "~/.bun/*": "allow",
-  "~/.cargo/*": "allow",
-  "~/go/*": "allow",
-  "~/.cache/*": "allow",
-  "/tmp/*": "allow"
-}
+[
+  { "action": "external_directory", "resource": "*", "effect": "deny" },
+  { "action": "external_directory", "resource": "~/.bun/*", "effect": "allow" },
+  { "action": "external_directory", "resource": "~/.cargo/*", "effect": "allow" },
+  { "action": "external_directory", "resource": "~/go/*", "effect": "allow" },
+  { "action": "external_directory", "resource": "~/.cache/*", "effect": "allow" },
+  { "action": "external_directory", "resource": "/tmp/opencode/*", "effect": "allow" }
+]
 ```
 
 #### How It Works
 
-1. **Default deny** — The `"*": "deny"` rule blocks all external directory access.
-2. **Explicit allowlist** — Only the listed paths are permitted. Each entry uses glob patterns:
-   - `~` expands to the user's home directory (e.g., `~/.bun/*` matches `~/.bun/install/cache/...`)
-   - `*` matches a single path level (e.g., `~/.bun/*` matches `~/.bun/something` but not `~/.bun/a/b`)
-   - `**` matches multiple levels recursively (e.g., `~/projects/**` matches `~/projects/a/b/c`)
-   - `{a,b}` matches alternation (e.g., `~/projects/{personal,work}/**`)
-3. **Layered rules** — Tool-specific permissions (e.g., `edit`, `read`) inherit from `external_directory`. You can further restrict access within an allowed directory:
+1. **Default deny** — the `{ "resource": "*", "effect": "deny" }` rule blocks all external directory access.
+2. **Explicit allowlist** — only the listed paths are permitted. V2 matching uses **whole-value wildcards**, not path-aware globs:
+   - `*` matches zero or more characters, **including `/`** (so `~/.bun/*` reaches nested files — V2 has no separate `**` recursion syntax)
+   - `?` matches exactly one character
+   - everything else is literal
+   A leading `~`, `~/`, `$HOME`, or `$HOME/` is expanded at config-load time for `external_directory`, `read`, and `edit` resources (shell resources stay raw text).
+3. **Layered rules** — tool-specific permissions (e.g. `edit`, `read`) still apply inside an allowed directory. Deny an edit while allowing reads:
 
 ```json
-"permission": {
-  "external_directory": {
-    "~/projects/personal/**": "allow"
-  },
-  "edit": {
-    "~/projects/personal/**": "deny"
-  }
-}
+[
+  { "action": "external_directory", "resource": "~/projects/personal/*", "effect": "allow" },
+  { "action": "read", "resource": "~/projects/personal/*", "effect": "allow" },
+  { "action": "edit", "resource": "~/projects/personal/*", "effect": "deny" }
+]
 ```
 
 In this example, agents can `read` files in `~/projects/personal/` but cannot `edit` them.
 
-> **⚠️ Security note:** Only allow paths you trust. Agents with external directory access can read and write files in those paths (subject to `read`/`edit`/`bash` permission rules). Avoid allowing broad paths like `~/` or `/` — use specific subdirectories instead.
+> **⚠️ Security note:** Only allow paths you trust. Agents with external directory access can read and write files in those paths (subject to `read`/`edit`/`shell` rules). Avoid allowing broad paths like `~/` or `/` — use specific subdirectories instead.
 
-#### Deny-by-Default Behavior
+#### Deny vs Ask Behavior
 
-When an agent attempts to access a path outside the working directory that is not in the allowlist, OpenCode blocks the operation. If `enableExternalDirectoryDialog` is set to `true` in your OpenCode config, a UI dialog appears asking for approval. Otherwise, the operation is silently denied.
+When an agent attempts to access an external path matched by a `deny` rule, OpenCode blocks the operation outright. When the resolved effect is `ask`, the client decides — **allow once**, **allow always** (saves a project-scoped `allow` rule), or **reject**. Saved approvals never override a configured `deny`. (V1-era settings like an external-directory dialog toggle do not exist in V2.)
 
-> **Official docs:** [opencode.ai/docs/permissions#external-directories](https://opencode.ai/docs/permissions#external-directories) — Full reference for external directory permission patterns.
+> **Official docs:** [opencode.ai/v2/docs/permissions#directories](https://opencode.ai/v2/docs/permissions/#directories) — Full reference for external directory permission patterns.
 
 ---
 
 ## MCP Servers — Tool Connectivity
 
-The `mcp` section configures Model Context Protocol servers that extend agent capabilities. The template ships with **7 pre-configured MCP servers** in `opencode.json`. Three are enabled by default; the rest must be activated on demand.
+The `mcp.servers` section configures Model Context Protocol servers that extend agent capabilities (V2 nests each server under `mcp.servers`; V1 placed server names directly under `mcp`). The template ships with **7 pre-configured MCP servers** in `opencode.json`. Three are enabled by default; the rest must be activated on demand.
 
 | Server | Type | Default | Purpose |
 |--------|------|---------|---------|
@@ -408,7 +430,7 @@ The `mcp` section configures Model Context Protocol servers that extend agent ca
 Three servers are enabled by default (`context7`, `vercel-grep`, `gitmcp`). To activate the others:
 
 1. **Install prerequisites** (see [MCP Servers](MCP-Servers) for per-server requirements)
-2. **Set `"enabled": true`** for the server you need in `opencode.json`
+2. **Set `"disabled": false`** for the server you need in `opencode.json` — V2 groups servers under `mcp.servers` and uses `disabled` (the inverse of V1's `enabled` toggle)
 3. **Restart OpenCode**
 
 > **Full guide:** [MCP Servers](MCP-Servers) covers activation steps, per-agent control, prerequisites, and which template features require which MCP server.
@@ -419,6 +441,6 @@ Three servers are enabled by default (`context7`, `vercel-grep`, `gitmcp`). To a
 
 - [MCP Servers](MCP-Servers) — Pre-configured servers, activation, and per-agent control
 - [Workspace Structure](Workspace-Structure) — Directory layout and file descriptions
-- [opencode.ai/docs/configuration](https://opencode.ai/docs/configuration) — Official OpenCode configuration reference
-- [opencode.ai/docs/permissions](https://opencode.ai/docs/permissions) — Detailed permissions guide
-- [opencode.ai/docs/mcp-servers/](https://opencode.ai/docs/mcp-servers/) — Official OpenCode MCP documentation
+- [opencode.ai/v2/docs/config](https://opencode.ai/v2/docs/config/) — Official OpenCode configuration reference
+- [opencode.ai/v2/docs/permissions](https://opencode.ai/v2/docs/permissions/) — Detailed permissions guide
+- [opencode.ai/v2/docs/mcp-servers](https://opencode.ai/v2/docs/mcp-servers/) — Official OpenCode MCP documentation
