@@ -19,6 +19,10 @@ import { computeStagePlan, type StagePlan } from "./stagePlanner";
  * In update mode, standard directories use tree-level diffing
  * (computeStagePlan) to deliver only new files instead of skipping
  * entire directories.
+ *
+ * Failure contract: planning, staging and commit errors all surface as
+ * MergeError (not raw exceptions) with staging cleaned up; AtomicStager
+ * additionally removes promoted-but-unbacked files during commit rollback.
  */
 export class FileMergeEngine implements IFileMergeEngine {
 	constructor(private readonly fileSystem: IFileSystem & IStagingSystem) {}
