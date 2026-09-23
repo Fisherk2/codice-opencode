@@ -5,8 +5,8 @@
 **Phase:** v2.0.0 — Agent Ecosystem Restructuring
 **Depends on:** S2 (FileRules), S3 (CLI Commands)
 **Author:** Fisherk2
-**Date:** 2026-08-04
-**Version:** 2.0.0
+**Date:** 2026-09-22
+**Version:** 2.0.1
 
 ---
 
@@ -45,16 +45,17 @@ template/
 │       │   └── tezcatlipoca.md
 │       ├── writers/                 # Technical writers (MANDATORY)
 │       │   ├── docs-writer.md
+│       │   ├── document-generator.md
 │       │   ├── obsidian-vault-writer.md
-│       │   └── scientific-literature-researcher.md
-│       ├── software-development/    # ~175 agents (DEFAULT)
-│       ├── creative/                # ~15 agents
-│       ├── business/                # ~47 agents
-│       ├── finance/                 # ~11 agents
-│       ├── government-legal/        # ~11 agents
-│       ├── science-research/        # ~31 agents
-│       ├── hardware-emerging/       # ~33 agents
-│       └── operations-support/      # ~22 agents
+│       │   └── technical-writer.md
+│       ├── software-development/    # 144 agents (DEFAULT)
+│       ├── creative/                # 10 agents
+│       ├── business/                # 91 agents
+│       ├── finance/                 # 11 agents
+│       ├── government-legal/        # 8 agents
+│       ├── science-research/        # 31 agents
+│       ├── hardware-emerging/       # 36 agents
+│       └── operations-support/      # 18 agents
 ├── estandar/                        # Unchanged
 └── opcional/                        # Unchanged
 ```
@@ -68,20 +69,30 @@ template/
 
 ### 2.2 Selectable Packs
 
-| Pack ID | Description | Default | Approx. Count |
-|---------|-------------|---------|---------------|
-| `software-development` | Backend, frontend, mobile, DevOps, databases, APIs, CLI, cloud, AI/ML, security, testing, debugging | ✅ Selected | ~175 |
-| `creative` | Design, UI/UX, visual arts, frontend aesthetics, design systems | ❌ | ~15 |
-| `business` | Marketing, sales, product management, competitive analysis, content strategy, project management | ❌ | ~47 |
-| `finance` | Financial analysis, trading, accounting, fintech, bookkeeping, tax, investment | ❌ | ~11 |
-| `government-legal` | Legal tech, compliance, government, regulatory, ESG/sustainability | ❌ | ~11 |
-| `science-research` | Academic research, scientific literature, data science, GIS, healthcare research | ❌ | ~31 |
-| `hardware-emerging` | IoT, embedded systems, blockchain, XR/spatial computing, game development, desktop apps | ❌ | ~33 |
-| `operations-support` | Customer service, IT operations, infrastructure maintenance, HR, support, translation | ❌ | ~22 |
+| Pack ID | Description | Default | Agent Count |
+|---------|-------------|---------|-------------|
+| `software-development` | Backend, frontend, mobile, DevOps, databases, APIs, CLI, cloud, AI/ML, security, testing, debugging | ✅ Selected | 144 |
+| `creative` | Design, UI/UX, visual arts, frontend aesthetics, design systems | ❌ | 10 |
+| `business` | Marketing, sales, product management, competitive analysis, content strategy, project management | ❌ | 91 |
+| `finance` | Financial analysis, trading, accounting, fintech, bookkeeping, tax, investment | ❌ | 11 |
+| `government-legal` | Legal tech, compliance, government, regulatory, ESG/sustainability | ❌ | 8 |
+| `science-research` | Academic research, scientific literature, data science, GIS, healthcare research | ❌ | 31 |
+| `hardware-emerging` | IoT, embedded systems, blockchain, XR/spatial computing, game development, desktop apps | ❌ | 36 |
+| `operations-support` | Customer service, IT operations, infrastructure maintenance, HR, support, translation | ❌ | 18 |
+
+Agent counts are exact (verified 2026-09-22 against `template/obligatorio/packs/*/` and
+the `agentCount` fields in `src/domain/entities/FileRuleManifestData.ts`, pinned by
+`pack-agent-counts.test`): 8 selectable packs = 349 agents, plus `main` (6) + `writers`
+(4) = **359 total**.
 
 ---
 
 ## 3. Agent Classification Results
+
+> **Note (2026-09-22):** the pack sections below record the v2.0.0 classification
+> snapshot; the name lists are representative of the assignment decisions, not an
+> exhaustive inventory. For authoritative per-pack totals use §2.2 (verified against
+> `template/obligatorio/packs/` and `FileRuleManifestData.ts`).
 
 ### 3.1 Classification Summary
 
@@ -89,11 +100,11 @@ template/
 |----------|-------|--------|
 | **REDUNDANT** | 13 | Discarded — same name/purpose as existing agent |
 | **IMPROVABLE** | 59 | Discarded — content merged into existing agents |
-| **IDEAL** | ~345 | Added — unique purpose, assigned to pack |
+| **IDEAL** | 349 | Added — unique purpose, assigned to pack |
 | **Primary** | 6 | Placed in `packs/main/` (mandatory) |
-| **Writers** | 3 | Placed in `packs/writers/` (mandatory) |
+| **Writers** | 4 | Placed in `packs/writers/` (mandatory) |
 
-### 3.2 Pack Assignment — software-development (~175 agents)
+### 3.2 Pack Assignment — software-development (144 agents)
 
 All computing systems: backend, frontend, mobile, DevOps, databases, APIs, CLI, cloud, AI/ML, security, testing, debugging.
 
@@ -117,31 +128,31 @@ All computing systems: backend, frontend, mobile, DevOps, databases, APIs, CLI, 
 
 **Architecture & Patterns:** software-architect, microservices-architect, event-driven-architect, domain-driven-design, clean-architect, hexagonal-architect, cqrs-developer, api-designer, graphql-architect, grpc-developer, rest-api-designer, websocket-developer, message-queue-architect, system-designer, distributed-systems
 
-### 3.3 Pack Assignment — creative (~15 agents)
+### 3.3 Pack Assignment — creative (10 agents)
 
 designer, ui-designer, ux-designer, ux-researcher, visual-designer, brand-designer, motion-designer, illustrator, icon-designer, typography-specialist, color-theorist, design-systems-architect, figma-developer, sketch-developer, creative-director
 
-### 3.4 Pack Assignment — business (~47 agents)
+### 3.4 Pack Assignment — business (91 agents)
 
 product-manager, business-analyst, competitive-analyst, content-marketer, seo-specialist, growth-hacker, marketing-strategist, social-media-manager, email-marketer, copywriter, technical-writer-business, sales-engineer, sales-ops-analyst, account-executive, business-development, partnership-manager, customer-success, retention-specialist, revenue-ops, pricing-strategist, market-researcher, brand-strategist, communications-manager, public-relations, event-planner, community-manager, influencer-manager, affiliate-manager, crm-administrator, hubspot-admin, salesforce-admin, project-manager, scrum-master, agile-coach, product-owner, program-manager, portfolio-manager, strategy-consultant, management-consultant, operations-manager, supply-chain-analyst, logistics-coordinator, procurement-analyst, quality-manager, lean-six-sigma, change-management, executive-coach
 
-### 3.5 Pack Assignment — finance (~11 agents)
+### 3.5 Pack Assignment — finance (11 agents)
 
 fintech-engineer, payment-integration, financial-analyst, accountant, bookkeeper, tax-specialist, investment-analyst, portfolio-manager-finance, risk-analyst, actuary, auditor-finance
 
-### 3.6 Pack Assignment — government-legal (~11 agents)
+### 3.6 Pack Assignment — government-legal (8 agents)
 
 legal-advisor-legal, compliance-officer, regulatory-analyst, contract-manager, ip-lawyer, privacy-officer, dpo-specialist, government-developer, policy-analyst, esg-analyst, sustainability-reporter
 
-### 3.7 Pack Assignment — science-research (~31 agents)
+### 3.7 Pack Assignment — science-research (31 agents)
 
 research-scientist, research-analyst, knowledge-synthesizer, academic-writer, peer-reviewer, grant-writer, literature-reviewer, meta-analyst, statistician, biostatistician, epidemiologist, clinical-researcher, bioinformatician, genomics-researcher, proteomics-researcher, neuroscientist, pharmacologist, toxicologist, environmental-scientist, climate-scientist, geospatial-analyst, gis-developer, remote-sensing, oceanographer, astronomer, physicist, chemist, materials-scientist, biologist, ecologist, science-communicator
 
-### 3.8 Pack Assignment — hardware-emerging (~33 agents)
+### 3.8 Pack Assignment — hardware-emerging (36 agents)
 
 iot-engineer, embedded-systems, firmware-engineer, rtos-developer, fpga-developer, pcb-designer, hardware-designer, circuit-designer, sensor-engineer, arduino-developer, raspberry-pi-developer, esp32-developer, stm32-developer, blockchain-developer, solidity-developer, web3-developer, defi-developer, smart-contract-auditor, token-economist, vr-developer, ar-developer, xr-developer, spatial-computing, unity-developer, unreal-developer, godot-developer, game-designer, game-developer, level-designer, game-economist, desktop-developer, native-app-developer, systems-programmer
 
-### 3.9 Pack Assignment — operations-support (~22 agents)
+### 3.9 Pack Assignment — operations-support (18 agents)
 
 customer-support, help-desk, technical-support, community-support, customer-success-ops, it-operations, sysadmin, network-ops, database-ops, cloud-ops, devops-support, release-manager, hr-specialist, recruiter, hr-business-partner, talent-acquisition, learning-development, translator, interpreter, localization-engineer, technical-translator, multilingual-support
 
@@ -271,6 +282,7 @@ Four primary agents (quetzalcoatl, tlaloc, mictlantecuhtli, huitzilopochtli) use
 | Version | Date | Changes |
 |---------|------|---------|
 | 2.0.0 | 2026-08-04 | Initial specification. Pack-based agent system, permission unification, subagent table removal, plugin changes. |
+| 2.0.1 | 2026-09-22 | Count corrections verified live against `template/obligatorio/packs/`: Writers 3 → 4 (`docs-writer`, `document-generator`, `obsidian-vault-writer`, `technical-writer` — resolves the §3.1/§6 contradiction; `scientific-literature-researcher` belongs to `science-research`) and removed from the writers tree listing; per-pack counts refreshed to exact `FileRuleManifestData` values (144/91/36/31/18/11/10/8 = 349 selectable, +6 main +4 writers = 359). |
 
 ---
 

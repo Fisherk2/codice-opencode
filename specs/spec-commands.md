@@ -39,8 +39,7 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 | `codice --verbose` | Verbose mode | Enable structured logging to stderr for all operations; useful for debugging |
 | `codice --help` | Help display | Show usage instructions, available flags, and link to documentation |
 | `codice --dest <path>` | Destination directory | Specify the target directory for installation (default: current working directory) |
-| `codice --force` | Skip confirmations | Skip confirmation prompts and include all optional files without interactive selection |
-| `codice --mode <mode>` | Direct mode selection | Skip interactive menu and go directly to the specified mode (`clean`, `project`, or `update`) |
+| `codice --force` | Skip confirmations | Skip confirmation prompts; pack/optional defaults are mode-dependent (Clean: all packs + all optionals; Project: default pack, no optionals; Update: installed packs only) |
 | `codice --clean` | Direct clean install | Skip interactive menu and run Clean Install mode directly |
 | `codice --project` | Direct project install | Skip interactive menu and run Project Install mode directly |
 | `codice --update` | Direct update | Skip interactive menu and run Update Workspace mode directly |
