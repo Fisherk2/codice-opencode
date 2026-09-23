@@ -31,7 +31,12 @@ jobs:
   quality:
     # GitHub forbids `timeout-minutes` on reusable-workflow caller jobs, so the
     # 15-minute bound lives on the called `quality` job inside ci.yml.
+    # The ref must be recomputed here (the `env` context is not allowed in
+    # `with:`): on dispatch the run checks out the branch, so the quality job
+    # needs the resolved release tag to validate the exact published commit.
     uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
 
   release:
     needs: quality

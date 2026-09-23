@@ -34,6 +34,23 @@ describe("CI Workflow Configuration", () => {
 		expect(ciYaml).toContain("windows-latest");
 	});
 
+	test("declares an optional ref input for the reusable release quality checkout", () => {
+		// release.yml passes the released tag as `ref`; push/PR runs leave it
+		// empty and keep checking out the triggering ref (checkout default).
+		const callBlock = ciYaml.slice(ciYaml.indexOf("workflow_call:"), ciYaml.indexOf("jobs:"));
+		expect(callBlock).toContain("inputs:");
+		expect(callBlock).toMatch(/ref:/);
+		expect(callBlock).toContain("required: false");
+	});
+
+	test("checkout step consumes the explicit ref input when provided", () => {
+		const checkoutBlock = ciYaml.slice(
+			ciYaml.indexOf("uses: actions/checkout@"),
+			ciYaml.indexOf("Setup Bun"),
+		);
+		expect(checkoutBlock).toContain("ref: ${{ inputs.ref }}");
+	});
+
 	test("has concurrency with cancel-in-progress", () => {
 		expect(ciYaml).toContain("cancel-in-progress: true");
 	});

@@ -28,6 +28,21 @@ describe("Release Workflow Configuration", () => {
 		expect(releaseYaml).toContain("tag:");
 	});
 
+	test("quality gate validates the released tag, not the dispatch branch", () => {
+		// On workflow_dispatch the run starts on the branch, not the tag; the
+		// quality job must hand the resolved tag to ci.yml so the gates run
+		// against the exact commit being published (same expression as the
+		// TAG env, recomputed because `env` context is not allowed in `with:`).
+		const qualityBlock = releaseYaml.slice(
+			releaseYaml.indexOf("# GitHub forbids"),
+			releaseYaml.indexOf("  release:"),
+		);
+		expect(qualityBlock).toContain("./.github/workflows/ci.yml");
+		expect(qualityBlock).toContain(
+			"ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}",
+		);
+	});
+
 	// --- Version validation ---
 
 	test("has version validation step comparing tag vs package.json", () => {
