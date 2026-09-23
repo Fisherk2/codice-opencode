@@ -214,4 +214,45 @@ describe("AtomicStager", () => {
 		// a backup-only rollback cannot undo it, so rollback must unlink it.
 		expect(await Bun.file(path.join(destDir, "aaa_new.txt")).exists()).toBe(false);
 	});
+
+	it("refuses to write into a pre-existing symlinked staging directory", async () => {
+		// Attacker-controlled or corrupted destination: .codice-staging is a
+		// symlink pointing somewhere else (e.g., the home dir or /etc).
+		const outsideDir = await fs.mkdtemp(path.join(tmpDir, "outside-"));
+		const evilDestDir = await fs.mkdtemp(path.join(tmpDir, "dest-evil-"));
+		await fs.symlink(outsideDir, path.join(evilDestDir, STAGING_DIR_NAME));
+		const evilStager = new AtomicStager(evilDestDir);
+
+		const src = path.join(templateDir, "symlink.txt");
+		await fs.writeFile(src, "SMUGGLED");
+
+		await expect(evilStager.stageFile(src, "payload.txt")).rejects.toThrow(/symbolic link/i);
+
+		// Nothing was written through the link — outside dir stays empty.
+		const outsideEntries = await fs.readdir(outsideDir);
+		expect(outsideEntries).toEqual([]);
+		await fs.rm(evilDestDir, { recursive: true, force: true });
+		await fs.rm(outsideDir, { recursive: true, force: true });
+	});
+
+	it("refuses to write a backup through a pre-existing symlinked backup path", async () => {
+		const destFile = path.join(destDir, "victim.txt");
+		await fs.writeFile(destFile, "OLD");
+		const outsideTarget = path.join(tmpDir, "outside-target.txt");
+		await fs.writeFile(outsideTarget, "KEEP ME");
+		// ".codice-backup" suffix matches AtomicStager's private BACKUP_SUFFIX
+		await fs.symlink(outsideTarget, `${destFile}.codice-backup`);
+
+		const src = path.join(templateDir, "victim.txt");
+		await fs.writeFile(src, "NEW");
+		await stager.stageFile(src, "victim.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/symbolic link/i);
+
+		// copyFile follows destination symlinks — the commit must abort before
+		// it can clobber the symlink's external target.
+		expect(await Bun.file(outsideTarget).text()).toBe("KEEP ME");
+		expect(await Bun.file(destFile).text()).toBe("OLD");
+		await fs.unlink(`${destFile}.codice-backup`).catch(() => {});
+	});
 });

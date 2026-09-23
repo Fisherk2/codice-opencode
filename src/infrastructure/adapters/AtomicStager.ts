@@ -165,11 +165,36 @@ export class AtomicStager {
 
 	/** Copy a source file to the staging directory, creating parent dirs as needed. */
 	private async writeFileToStaging(sourcePath: string, stagingRelativePath: string): Promise<void> {
+		// Fail-closed: a pre-existing symlink at the staging root must not
+		// redirect staging writes outside the destination root.
+		await this.ensureNotSymlink(this.stagingRoot, "staging directory");
 		const stagingPath = this.resolveStagingPath(stagingRelativePath);
 		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
 		// copyFile is cross-device-safe (unlike rename) and avoids loading into RAM.
 		await fs.copyFile(sourcePath, stagingPath);
 		this.logger.log("stage_file", `${sourcePath} → ${stagingPath}`);
+	}
+
+	/**
+	 * Fail-closed guard against symlink redirection: lstat does not follow
+	 * links, so a symlinked staging root or backup path is detected without
+	 * dereferencing it. Coverage note: this closes the two known write
+	 * targets (staging root, backup path); intermediate component symlinks
+	 * between destinationRoot and those targets are out of scope.
+	 */
+	private async ensureNotSymlink(targetPath: string, role: string): Promise<void> {
+		let lstat: Awaited<ReturnType<typeof fs.lstat>>;
+		try {
+			lstat = await fs.lstat(targetPath);
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException)?.code === "ENOENT") return;
+			// Uncheckable state (EACCES from parent perms...) — refuse to write.
+			const detail = error instanceof Error ? error.message : String(error);
+			throw new Error(`Cannot verify ${role} '${targetPath}': ${detail}`);
+		}
+		if (lstat.isSymbolicLink()) {
+			throw new Error(`Refusing to write: ${role} '${targetPath}' exists and is a symbolic link.`);
+		}
 	}
 
 	/** Atomically rename a staged file to its destination, backing up the original first. */
@@ -186,6 +211,7 @@ export class AtomicStager {
 		await fs.mkdir(path.dirname(destPath), { recursive: true });
 
 		const backupPath = `${destPath}${BACKUP_SUFFIX}`;
+		await this.ensureNotSymlink(backupPath, "backup file");
 		try {
 			await fs.copyFile(destPath, backupPath);
 			backups.set(destPath, backupPath);
