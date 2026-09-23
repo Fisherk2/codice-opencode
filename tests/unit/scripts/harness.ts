@@ -150,9 +150,11 @@ export function makePathWithout(root: string, cmds: readonly string[]): string {
 	for (const cmd of cmds) {
 		const real = Bun.which(cmd);
 		expect(real, `required command not found on PATH: ${cmd}`).toBeDefined();
-		// `type` is required on Windows (ignored on POSIX): "file" matches the
-		// executable we link to.
-		symlinkSync(real as string, join(dir, cmd), "file");
+		// MSYS/Cygwin resolves a bare name by appending ".exe" and cannot spawn a
+		// native PE linked bare: extend on Windows only (POSIX looks up the exact
+		// name). `"file"` is required on Windows and ignored on POSIX.
+		const linkName = process.platform === "win32" ? `${cmd}.exe` : cmd;
+		symlinkSync(real as string, join(dir, linkName), "file");
 	}
 	return dir;
 }
