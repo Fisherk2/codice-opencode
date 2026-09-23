@@ -436,3 +436,34 @@ describe("opencode.json — F1/F2: redirect rewrite & tar listing (faithful reso
 		expect(effect("shell", "cat ~/.x-session-cookies")).toBe("deny");
 	});
 });
+
+describe("opencode.json — F-H1: exec-capable search commands gated (2.1.3)", () => {
+	const permissions = () => loadConfig().permissions ?? [];
+	const effect = (action: string, input: string) => resolveEffect(permissions(), action, input);
+
+	test("fd * is not allowed", () => {
+		// fd can execute arbitrary commands via -x/--exec/--exec-batch — same
+		// exec-chaining class as `find *`, so it must resolve ask, never allow.
+		expect(effect("shell", "fd . -x id"), "fd . -x id").toBe("ask");
+		expect(effect("shell", "fd . --exec sh -c id"), "fd . --exec sh -c id").toBe("ask");
+	});
+
+	test("rg * --pre/--pre-global is not allowed (both arg orders)", () => {
+		// --pre pipes every match through an arbitrary preprocessor program.
+		// `rg *` stays allow; only the preprocessor surface is denied, in
+		// document order so the deny (added after the allow) wins.
+		expect(effect("shell", "rg --pre bash pattern"), "<flag> args").not.toBe("allow");
+		expect(effect("shell", "rg pattern --pre bash"), "args <flag>").not.toBe("allow");
+		expect(effect("shell", "rg --pre-global bash pattern"), "<flag> args -global").not.toBe(
+			"allow",
+		);
+		expect(effect("shell", "rg pattern --pre-global bash"), "args -global <flag>").not.toBe(
+			"allow",
+		);
+	});
+
+	test("rg --pre=<cmd> joined form is not allowed", () => {
+		expect(effect("shell", "rg --pre=cat pattern file"), "joined <flag>").not.toBe("allow");
+		expect(effect("shell", "rg pattern file --pre=cat"), "joined <flag> args").not.toBe("allow");
+	});
+});

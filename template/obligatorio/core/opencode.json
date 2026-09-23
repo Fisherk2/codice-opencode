@@ -307,6 +307,36 @@
     },
     {
       "action": "shell",
+      "resource": "rg * --pre *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rg --pre *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rg * --pre-global *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rg --pre-global *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rg * --pre=*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rg --pre=*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
       "resource": "ag *",
       "effect": "allow"
     },
@@ -318,7 +348,7 @@
     {
       "action": "shell",
       "resource": "fd *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
