@@ -308,8 +308,9 @@ describe("opencode.json — Permission Bypass Hardening (post-SDD-removal)", () 
 	];
 
 	// Space-less / tilde / relative-path variants the space-anchored denies
-	// (`* .ssh/id_*`) cannot match.
-	const REQUIRED_SHELL_SECRET_READ_DENIES = ["*.env", "*.ssh/id_*", "*aws/credentials"];
+	// (`* .ssh/id_*`) cannot match. `*aws/credentials*` is the terminal
+	// (redirect-surviving) form; the body copy was deduplicated in favor of it.
+	const REQUIRED_SHELL_SECRET_READ_DENIES = ["*.env", "*.ssh/id_*", "*aws/credentials*"];
 
 	const REQUIRED_READ_HARDENING_DENIES = [
 		"*id_rsa*",
@@ -553,5 +554,31 @@ describe("opencode.json — F-M1: redirect gate cannot down-grade secret denies 
 		expect(effect("shell", "cat readme > copy.md")).toBe("ask");
 		expect(effect("shell", "rm -rf x > /dev/null")).toBe("ask");
 		expect(effect("shell", "grep pattern > findings.txt")).toBe("ask");
+	});
+
+	test("remaining high-value secrets re-anchored after *> too", () => {
+		const REDIRECTED_SECRETS = [
+			"cat a/.netrc > x.txt",
+			"cat a/.pgpass > x.txt",
+			"cat a/.git-credentials > x.txt",
+			"cat sub/credentials.json > leak.txt",
+			"cat a/.kube/config > leak.txt",
+			"cat a/.docker/config.json > leak.txt",
+			"cat a/x/service-account.json > leak.txt",
+		];
+		for (const stmt of REDIRECTED_SECRETS) {
+			expect(effect("shell", stmt), stmt).toBe("deny");
+		}
+	});
+
+	test("no duplicated-exact permission rules in the final state", () => {
+		const seen = new Map<string, number>();
+		for (const [index, rule] of (loadConfig().permissions ?? []).entries()) {
+			const key = `${rule.action}|${rule.resource}|${rule.effect}`;
+			expect(seen.has(key), `rule ${index} duplicates ${seen.get(key) ?? ""} for ${key}`).toBe(
+				false,
+			);
+			seen.set(key, index);
+		}
 	});
 });

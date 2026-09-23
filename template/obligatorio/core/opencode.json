@@ -151,6 +151,36 @@
       "effect": "ask"
     },
     {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/.bun/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/.cargo/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/go/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/.cache/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "/tmp/opencode/*",
+      "effect": "allow"
+    },
+    {
       "action": "shell",
       "resource": "*",
       "effect": "ask"
@@ -697,11 +727,6 @@
     },
     {
       "action": "shell",
-      "resource": "* .env",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
       "resource": "* .env.*",
       "effect": "deny"
     },
@@ -713,6 +738,21 @@
     {
       "action": "shell",
       "resource": "* ./.env.*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.env *",
       "effect": "deny"
     },
     {
@@ -758,11 +798,6 @@
     {
       "action": "shell",
       "resource": "* service-account*.json",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "* .ssh/id_*",
       "effect": "deny"
     },
     {
@@ -992,21 +1027,6 @@
     },
     {
       "action": "shell",
-      "resource": "*.env",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "*.ssh/id_*",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "*aws/credentials",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
       "resource": "*.npmrc",
       "effect": "deny"
     },
@@ -1018,11 +1038,6 @@
     {
       "action": "shell",
       "resource": "*.kube/config",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "*docker/config.json*",
       "effect": "deny"
     },
     {
@@ -1421,6 +1436,76 @@
       "effect": "deny"
     },
     {
+      "action": "shell",
+      "resource": "*>*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "*x-session-cookies*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* x-session-cookies*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*/.ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*aws/credentials*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.netrc*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.pgpass*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.git-credentials*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*credentials.json*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.kube/config*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*docker/config.json*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*service-account*.json*",
+      "effect": "deny"
+    },
+    {
       "action": "read",
       "resource": "*",
       "effect": "allow"
@@ -1463,16 +1548,6 @@
     {
       "action": "read",
       "resource": "*.pfx",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "* x-session-cookies*",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "*x-session-cookies*",
       "effect": "deny"
     },
     {
@@ -1633,81 +1708,6 @@
     {
       "action": "read",
       "resource": "*docker/config.json*",
-      "effect": "deny"
-    },
-    {
-      "action": "external_directory",
-      "resource": "*",
-      "effect": "deny"
-    },
-    {
-      "action": "external_directory",
-      "resource": "~/.bun/*",
-      "effect": "allow"
-    },
-    {
-      "action": "external_directory",
-      "resource": "~/.cargo/*",
-      "effect": "allow"
-    },
-    {
-      "action": "external_directory",
-      "resource": "~/go/*",
-      "effect": "allow"
-    },
-    {
-      "action": "external_directory",
-      "resource": "~/.cache/*",
-      "effect": "allow"
-    },
-    {
-      "action": "external_directory",
-      "resource": "/tmp/opencode/*",
-      "effect": "allow"
-    },
-    {
-      "action": "shell",
-      "resource": "*>*",
-      "effect": "ask"
-    },
-    {
-      "action": "shell",
-      "resource": "*x-session-cookies*",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "* x-session-cookies*",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "*.env",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "* .env",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "*.env *",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "*/.ssh/id_*",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "* .ssh/id_*",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "*aws/credentials*",
       "effect": "deny"
     }
   ]
