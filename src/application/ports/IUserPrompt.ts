@@ -1,63 +1,36 @@
 import type { FileRule } from "../../domain/entities/FileRule";
+import type {
+	InstallMode,
+	PackOption,
+	UpdateOption,
+	UpdateOptionChoice,
+} from "../types/displayContracts";
+import type { IMessageDisplay } from "./IMessageDisplay";
+import type { IProgressReporter } from "./IProgressReporter";
 
 /**
- * Pack metadata for the pack selection screen.
+ * Contracts re-exported so existing consumers keep their import site.
+ * The data shapes themselves live in ../types/displayContracts (type-only
+ * module — shared by the segregated ports without import cycles).
  */
-export interface PackOption {
-	/** Pack identifier (e.g., "software-development") */
-	readonly id: string;
-	/** Human-readable name (e.g., "Software Development") */
-	readonly name: string;
-	/** Short description of pack contents */
-	readonly description: string;
-	/** Approximate agent count in this pack */
-	readonly agentCount: number;
-	/** Whether this pack is locked (already installed, can't be deselected in Update Option B) */
-	readonly locked?: boolean;
-}
+export type {
+	InstallMode,
+	InstallSummaryInfo,
+	PackOption,
+	UpdateOption,
+	UpdateOptionChoice,
+	VersionDisplayInfo,
+} from "../types/displayContracts";
 
 /**
- * Display metadata for the local installation state.
- * Used to show "Current installation: v2.0.0, Packs: software-development" in the TUI.
+ * Interactive TUI surface for prompts, confirmations and checklists.
+ *
+ * ISP split: pure output (messages) lives in IMessageDisplay, progress
+ * reporting in IProgressReporter; IUserPrompt composes both and adds the
+ * interactive decision methods. Consumers needing only output depend on
+ * the narrow interfaces instead of the full prompt.
  */
-export interface VersionDisplayInfo {
-	/** Detected local version (e.g., "2.0.0"), or null if not detected */
-	readonly version: string | null;
-	/** Packs installed locally (empty if pre-v2.0) */
-	readonly installedPacks: readonly string[];
-	/** Installation status for messaging */
-	readonly status: "missing" | "pre-1.2.0" | "pre-2.0.0" | "v2.0+";
-}
-
-/**
- * Update sub-option choice.
- */
-export type UpdateOption = "current" | "add" | "cancel";
-
-/** Installation modes selectable from the TUI or CLI flags. */
-export type InstallMode = "clean" | "project" | "update";
-
-export interface UpdateOptionChoice {
-	readonly value: UpdateOption;
-	readonly label: string;
-	readonly hint?: string;
-}
-
-/**
- * Abstract TUI interactions for prompts, confirmations,
- * and file selection checklists.
- */
-export interface IUserPrompt {
-	/**
-	 * Display a warning message to the user.
-	 */
-	showWarning(message: string): void;
-
-	/**
-	 * Display an informational message.
-	 */
-	showInfo(message: string): void;
-
+export interface IUserPrompt extends IMessageDisplay, IProgressReporter {
 	/**
 	 * Ask the user for a yes/no confirmation.
 	 * @param message - The question to display.
@@ -72,55 +45,6 @@ export interface IUserPrompt {
 	 * @returns Selected paths.
 	 */
 	selectOptional(options: readonly FileRule[]): Promise<string[]>;
-
-	/**
-	 * Display a multi-file progress bar.
-	 * @param total - Total number of files to process.
-	 * @param label - Optional label to display alongside the bar.
-	 */
-	showProgressBar(total: number, label?: string): void;
-
-	/**
-	 * Update the progress bar to show current file being processed.
-	 * @param current - Number of files completed (0-indexed).
-	 * @param filePath - Path of the file currently being processed.
-	 */
-	updateProgress(current: number, filePath: string): void;
-
-	/**
-	 * Mark the progress bar as complete. Cleans up any resources.
-	 * Must be called after the last file is processed, even on error paths,
-	 * to ensure the terminal cursor and TUI state are restored.
-	 */
-	completeProgress(): void;
-
-	/**
-	 * Log a structured progress event message.
-	 * Messages should follow the pattern: "category: message"
-	 * e.g., "commit: 47 files committed", "symlink: Created .opencode/agents"
-	 * @param message - The event message to log (may include category prefix for styling).
-	 */
-	logProgressEvent(message: string): void;
-
-	/**
-	 * Display the application intro header.
-	 */
-	showIntro(title: string): void;
-
-	/**
-	 * Display the exit message on success.
-	 */
-	showSuccess(message: string): void;
-
-	/**
-	 * Display the exit message on cancellation.
-	 */
-	showCancel(message: string): void;
-
-	/**
-	 * Display the exit message on error.
-	 */
-	showError(message: string): void;
 
 	/**
 	 * Prompt the user to select an installation mode.
@@ -142,43 +66,10 @@ export interface IUserPrompt {
 	): Promise<readonly string[]>;
 
 	/**
-	 * showVersionInfo — display detected local installation info to the user.
-	 * Shown before the mode menu when version is detected.
-	 */
-	showVersionInfo(info: VersionDisplayInfo): void;
-
-	/**
 	 * selectUpdateOption — prompt user to choose between Update Option A (current packs) or Option B (add packs).
 	 *
 	 * @param options - Available update choices.
 	 * @returns Selected option or null on cancel.
 	 */
 	selectUpdateOption(options: readonly UpdateOptionChoice[]): Promise<UpdateOption | null>;
-
-	/**
-	 * showInstallSummary — display a pre-install summary of what will be
-	 * installed. Called by InstallUseCaseBase between buildRules and merge.
-	 * Informational only; no confirmation step.
-	 *
-	 * @param info - Summary data (packs, optionals, totals).
-	 */
-	showInstallSummary(info: InstallSummaryInfo): void;
-}
-
-/**
- * Pre-install summary data displayed before the merge step.
- * The user has already confirmed overwrite + packs + optionals; this is
- * informational only (no confirmation step per FEV-22 decision #5).
- */
-export interface InstallSummaryInfo {
-	/** Packs to install with their agent counts */
-	readonly packs: readonly { readonly id: string; readonly agentCount: number }[];
-	/** Mandatory directories always included in the install */
-	readonly mandatoryDirs: readonly string[];
-	/** Optional files the user selected (empty if none) */
-	readonly optionalFiles: readonly string[];
-	/** Total exact agents (sum of pack agentCount, verified by pack-agent-counts.test) */
-	readonly totalAgents: number;
-	/** Total files (packs + mandatory + optionals) */
-	readonly totalFiles: number;
 }

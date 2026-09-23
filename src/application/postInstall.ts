@@ -17,8 +17,9 @@ import type { GitignoreError } from "../domain/types/GitignoreError";
 import { type Result, success } from "../domain/types/Result";
 import { writeVersionFileSafe } from "./helpers";
 import type { IGitignoreCreator } from "./ports/IGitignoreCreator";
+import type { IMessageDisplay } from "./ports/IMessageDisplay";
+import type { IProgressReporter } from "./ports/IProgressReporter";
 import type { ISymlinkCreator, SymlinkSpec } from "./ports/ISymlinkCreator";
-import type { IUserPrompt } from "./ports/IUserPrompt";
 
 /**
  * Create a .gitignore file from the template, showing a warning on failure.
@@ -34,7 +35,7 @@ import type { IUserPrompt } from "./ports/IUserPrompt";
  */
 export async function createGitignoreSafe(
 	gitignoreCreator: IGitignoreCreator,
-	prompt: IUserPrompt,
+	prompt: IMessageDisplay,
 	destinationPath: string,
 ): Promise<Result<void, GitignoreError>> {
 	const gitignoreResult = await gitignoreCreator.createGitignore(destinationPath);
@@ -65,7 +66,7 @@ export async function createGitignoreSafe(
  */
 export async function createSymlinksWithWarning(
 	symlinkCreator: ISymlinkCreator,
-	prompt: IUserPrompt,
+	prompt: IMessageDisplay,
 	symlinks: readonly SymlinkSpec[],
 	label: string,
 	retryHint?: boolean,
@@ -91,7 +92,8 @@ export interface PostInstallOptions {
 	readonly fileSystem: IFileSystem & IStagingSystem;
 	readonly gitignoreCreator: IGitignoreCreator;
 	readonly symlinkCreator: ISymlinkCreator;
-	readonly userPrompt: IUserPrompt;
+	/** Narrow prompt port: post-install steps only report progress and messages. */
+	readonly userPrompt: IProgressReporter & IMessageDisplay;
 	readonly opencodeSymlinks: readonly SymlinkSpec[];
 	readonly destinationPath: string;
 	/** [FEV-21] Packs selected during install wizard */
