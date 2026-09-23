@@ -8,7 +8,7 @@ import type { ProgressCallback, ProgressEvent } from "../types/ProgressEvent";
 import type { Result } from "../types/Result";
 import { failure, success } from "../types/Result";
 import { computeExclusions, skipReason } from "./mergeRules";
-import { computeStagePlan } from "./stagePlanner";
+import { computeStagePlan, type StagePlan } from "./stagePlanner";
 
 /**
  * Orchestrates atomic file merging according to classification rules:
@@ -31,12 +31,19 @@ export class FileMergeEngine implements IFileMergeEngine {
 		const selected = new Set(options?.selectedOptionals ?? []);
 		const isUpdateMode = options?.updateMode ?? false;
 		const onProgress = options?.onProgress;
-		const { stageDecisions, expandedDirs, total } = await computeStagePlan(
-			this.fileSystem,
-			rules,
-			selected,
-			isUpdateMode,
-		);
+
+		let plan: StagePlan;
+		try {
+			plan = await computeStagePlan(this.fileSystem, rules, selected, isUpdateMode);
+		} catch (err) {
+			const message = this.errorMessage(err, "Unknown planning error");
+			this.safeEmit(onProgress, { type: "error", filePath: "", message });
+			// Planning happens before any staging write, but a residual staging
+			// directory from an interrupted earlier run must not leak either.
+			await this.fileSystem.cleanStaging();
+			return failure(stagingError("", message));
+		}
+		const { stageDecisions, expandedDirs, total } = plan;
 		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
 		let current = 0;
 
