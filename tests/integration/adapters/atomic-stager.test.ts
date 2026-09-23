@@ -193,4 +193,25 @@ describe("AtomicStager", () => {
 			await fs.rm(backupDir, { recursive: true, force: true });
 		}
 	});
+
+	it("removes newly promoted files from the destination when rollback runs", async () => {
+		// aaa_new.txt sorts before zzz/ so it is promoted (no backup — new file)
+		// before the mid-commit failure forces a rollback.
+		const zzzFile = path.join(destDir, "zzz");
+		await fs.writeFile(zzzFile, "I AM A FILE, NOT A DIR");
+		const srcNew = path.join(templateDir, "aaa_new.txt");
+		await fs.writeFile(srcNew, "FRESH");
+		const srcBroken = path.join(templateDir, "zzz", "broken.txt");
+		await fs.mkdir(path.dirname(srcBroken), { recursive: true });
+		await fs.writeFile(srcBroken, "SHOULD NOT LAND");
+
+		await stager.stageFile(srcNew, "aaa_new.txt");
+		await stager.stageFile(srcBroken, "zzz/broken.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
+
+		// The earlier rename created a fresh destination file with no backup —
+		// a backup-only rollback cannot undo it, so rollback must unlink it.
+		expect(await Bun.file(path.join(destDir, "aaa_new.txt")).exists()).toBe(false);
+	});
 });

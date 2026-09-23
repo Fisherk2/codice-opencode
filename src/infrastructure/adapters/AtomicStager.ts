@@ -11,7 +11,9 @@ const BACKUP_SUFFIX = ".codice-backup";
  * Atomic file staging, commit, and rollback operations.
  *
  * Files are staged to a staging directory, then atomically renamed to the
- * destination. On failure, backed-up originals are restored for consistency.
+ * destination. On commit failure, newly promoted files are unlinked and
+ * backed-up originals are restored; unremovable residues are reported in
+ * the error instead of silently kept.
  */
 export class AtomicStager {
 	private readonly destinationRoot: string;
@@ -60,12 +62,16 @@ export class AtomicStager {
 	}
 
 	/**
-	 * Promote staged files to the destination. Backs up originals first;
-	 * on failure restores all backups to guarantee consistency.
+	 * Promote staged files to the destination. Backs up originals first.
+	 * On failure the rollback removes newly promoted files (rename-only,
+	 * no backup) and restores the backed-up originals. Best effort: a
+	 * promoted file whose unlink fails is listed in the thrown error so
+	 * the residue is visible instead of silent.
 	 */
 	async commitStaging(): Promise<void> {
 		const stagingDir = this.stagingRoot;
 		const backups = new Map<string, string>();
+		const promoted = new Set<string>();
 		const intentPath = path.join(this.destinationRoot, BACKUP_INTENT_FILE);
 
 		// Fail-fast: refuse if previous commit was interrupted (hard-kill left orphan).
@@ -97,7 +103,7 @@ export class AtomicStager {
 			const stagedFiles = await walkDirectory(stagingDir);
 			this.logger.log("commit", `promoting ${stagedFiles.length} staged file(s)`);
 			for (const stagingFilePath of stagedFiles) {
-				await this.renameStagedFile(stagingFilePath, stagingDir, backups);
+				await this.renameStagedFile(stagingFilePath, stagingDir, backups, promoted);
 			}
 
 			await this.cleanStaging();
@@ -112,15 +118,38 @@ export class AtomicStager {
 
 			await fs.unlink(intentPath).catch(() => {});
 		} catch (error) {
-			// Rollback on failure. Remove intent marker after handled rollback —
+			// Rollback on failure. Rename-promoted files (no backup existed) are
+			// unlinked so they cannot leak as partial results; unlink failures
+			// are reported, not thrown — the residue message is the best-effort
+			// guarantee here. Remove intent marker after handled rollback —
 			// only a hard-kill leaves an orphan marker that blocks the next run.
+			let residueNote = "";
+			if (promoted.size > 0) {
+				this.logger.log(
+					"rollback",
+					`removing ${promoted.size} promoted file(s) after failed commit`,
+				);
+				const residues: string[] = [];
+				for (const destPath of promoted) {
+					try {
+						await fs.unlink(destPath);
+					} catch (unlinkError) {
+						if ((unlinkError as NodeJS.ErrnoException)?.code !== "ENOENT") {
+							residues.push(destPath);
+						}
+					}
+				}
+				if (residues.length > 0) {
+					residueNote = ` WARNING: could not remove ${residues.length} promoted file(s): ${residues.join(", ")}`;
+				}
+			}
 			this.logger.log("rollback", `restoring ${backups.size} backup(s) after failed commit`);
 			await this.restoreBackups(backups);
 			await this.cleanStaging();
 			await fs.unlink(intentPath).catch(() => {});
 
 			const message = error instanceof Error ? error.message : String(error);
-			throw new Error(`Failed to commit staged files: ${message}`);
+			throw new Error(`Failed to commit staged files: ${message}${residueNote}`);
 		}
 	}
 
@@ -148,6 +177,7 @@ export class AtomicStager {
 		stagingFilePath: string,
 		stagingDir: string,
 		backups: Map<string, string>,
+		promoted: Set<string>,
 	): Promise<void> {
 		const relativePath = path.relative(stagingDir, stagingFilePath);
 		const destPath = this.resolveDestinationPath(relativePath);
@@ -174,6 +204,7 @@ export class AtomicStager {
 		}
 
 		await fs.rename(stagingFilePath, destPath);
+		promoted.add(destPath);
 	}
 
 	/**
