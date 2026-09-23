@@ -4,12 +4,12 @@ The Códice workspace defines a two-tier agent hierarchy that governs how AI ass
 
 ## Architecture Overview
 
-The workspace ships with **~360 agents in 10 packs** organized into two levels:
+The workspace ships with **359 agents in 10 packs** organized into two levels:
 
 | Level | Count | Role | How They're Invoked |
 |-------|-------|------|---------------------|
 | **Primary Agents** | 6 | Entry points for slash commands | Via `/command` from the user |
-| **Subagents** | ~351 | Domain specialists in 8 selectable packs | Via the `subagent` tool from a primary agent |
+| **Subagents** | 349 | Domain specialists in 8 selectable packs | Via the `subagent` tool from a primary agent |
 
 ### Two-Tier Model
 
@@ -31,7 +31,7 @@ Agents are organized by domain in the `template/obligatorio/packs/` directory:
 packs/
 ├── main/                  (6 primary agents — MANDATORY)
 ├── writers/               (4 writer agents — MANDATORY)
-├── software-development/  (146 agents — DEFAULT selected)
+├── software-development/  (144 agents — DEFAULT selected)
 ├── business/              (91 agents)
 ├── science-research/      (31 agents)
 ├── hardware-emerging/     (36 agents)
@@ -41,7 +41,7 @@ packs/
 └── government-legal/      (8 agents)
 ```
 
-8 selectable packs = 351 agents; +6 primary + 4 writers = ~361 total.
+8 selectable packs = 349 agents; +6 primary + 4 writers = 359 total.
 
 At install time, agents are copied to the flat `agents/` directory (pack is an installer concept — selected packs are chosen via the installer wizard; at runtime all agents are peers). Each agent file follows the same structure (see [Agent File Pattern](#agent-file-pattern) below).
 
@@ -51,9 +51,9 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 
 | Agent | Role | Domain | Permission Model | Key Commands |
 |-------|------|--------|-----------------|--------------|
-| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Delegation-only (edits ask for approval). Delegates via the `subagent` tool with `"*": allow` + deny 5 other primaries. | `/help` |
-| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to markdown files. Cannot write code or tasks. Delegates via the unified `subagent` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/migrate` |
-| **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. Does not delegate (`permissions`: `subagent "*": deny`). | `/plan` |
+| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Delegation-only (edits ask for approval). Delegates via the `subagent` tool (`subagent` `*` → `allow`, then explicit `deny` rules for the 5 other primaries). | `/help` |
+| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to documentation formats (`*.md`, `*.txt`, `*.rst`, `*.adoc`). Cannot write code or tasks. Delegates via the unified `subagent` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/migrate` |
+| **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. Does not delegate (`permissions` rule: `subagent` `*` → `deny`). | `/plan` |
 | **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via the unified `subagent` pattern. | `/build` |
 | **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates via the unified `subagent` pattern. | `/test`, `/deploy`, `/sync` |
 | **tezcatlipoca** | Mirror of Truth | Reflection, analysis & correction | Write + edit allowed. Delegates via the unified `subagent` pattern (deny-list of 5 other primaries). Reviews, then delegates corrections to specialists. | `/review`, `/analyze`, `/diagnosis`, `/code-simplify`, `/ship`, `/webperf` |
@@ -74,29 +74,42 @@ For this guide, we will create a **subagent** called `joke-teller`.
 
 ### Step 2: Create the Agent File
 
-Create `agents/joke-teller.md` with YAML frontmatter and a markdown body. OpenCode will discover this file and register `joke-teller` as a valid subagent automatically:
+Create `agents/joke-teller.md` with V2-native YAML frontmatter and a markdown body. OpenCode will discover this file and register `joke-teller` as a valid subagent automatically. Per the V2 agent configuration format, permissions are an ordered list of `{action, resource, effect}` rules — the legacy `tools:` map (with its `write`/`bash`/`task` keys) should not be used in new V2 agents:
 
 ```markdown
 ---
 description: Tells programming jokes to lighten the mood during development sessions
 mode: subagent
-temperature: 0.7
 color: "#ffd700"
 hidden: true
-tools:
-  write: deny
-  edit: deny
-  grep: allow
-  glob: allow
-  lsp: allow
-  skill: allow
-  task:
-    "*": deny
-  todowrite: allow
-  question: allow
-  bash:
-    "curl *": allow
-    "wget *": allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: skill
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "curl *"
+    effect: allow
+  - action: shell
+    resource: "wget *"
+    effect: allow
 ---
 
 # JOKE TELLER — MORALE BOOSTER
@@ -124,11 +137,11 @@ to the development process. When invoked, you:
 
 ### Step 3: Restart OpenCode
 
-Restart your OpenCode session so it recognizes the new agent. Without a restart, invoking `joke-teller` via the `subagent` tool will fail because OpenCode only loads agent files at startup.
+Restart your OpenCode session so it recognizes the new agent; until then, `joke-teller` may not appear as a selectable subagent via the `subagent` tool.
 
-No delegation-table updates are needed: primary agents use unified `permissions` subagent rules (`"*": allow` with a deny-list of other primaries), so any new subagent in `agents/` is automatically delegatable.
+No delegation-table updates are needed: primary agents use unified `permissions` subagent rules (`subagent` `*` → `allow` with a deny-list of other primaries), so any new subagent in `agents/` is automatically delegatable.
 
 ## Links
 
-- [OpenCode Agent Documentation](https://opencode.ai/docs/agents) — Official OpenCode agent configuration guide.
+- [OpenCode Agent Documentation](https://opencode.ai/v2/docs/agents/) — Official OpenCode V2 agent configuration guide.
 - [Command Reference](Commands) — Slash commands that invoke primary agents.

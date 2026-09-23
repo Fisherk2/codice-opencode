@@ -2,7 +2,7 @@
 
 Skills are the workspace's reusable knowledge base. Each skill is a Markdown file that teaches an agent how to perform a specific task domain — from writing robust Bash scripts to designing professional UI/UX, from running incident response to auditing dependencies. Together they form a library of **51 engineering process guides** that agents load on demand.
 
-> For the official OpenCode skills documentation, see [opencode.ai/docs/skills](https://opencode.ai/docs/skills).
+> For the official OpenCode skills documentation, see [opencode.ai/v2/docs/skills](https://opencode.ai/v2/docs/skills/).
 
 ---
 
@@ -11,7 +11,7 @@ Skills are the workspace's reusable knowledge base. Each skill is a Markdown fil
 A skill is a specialized instruction set stored in `skills/<skill-name>/`. Each skill directory contains:
 
 - **`SKILL.md`** (required) — The skill workflow with YAML frontmatter, numbered steps, and exit criteria.
-- **`references/`** (optional) — Extended reference material co-located with the skill. Loaded via OpenCode's `reference` section in `opencode.json`.
+- **`references/`** (optional) — Extended reference material co-located with the skill. Exposed through OpenCode's `references` section in `opencode.json` (V2's plural name; the singular V1 `reference` map is legacy).
 
 ```
 skills/<skill-name>/
@@ -22,11 +22,11 @@ skills/<skill-name>/
 ```
 
 The `SKILL.md` file has:
-- **YAML frontmatter** — Metadata including a machine-readable `name` and a plain-language `description` that helps the agent decide when the skill applies.
+- **YAML frontmatter** — A plain-language `description` (what OpenCode shows the model when advertising the skill) and an optional `name` display label. The skill's **ID** is derived from its file path, not from `name`.
 - **Numbered steps** — A concrete workflow the agent follows, from pre-flight checks through execution to verification.
 - **Exit criteria** — Clear conditions that define when the task is done.
 
-The `references/` subdirectory extends the skill with deeper knowledge without bloating the `SKILL.md`. References are exposed via the `reference` section in `opencode.json` and accessed by invoking `@<skill-name>` in the OpenCode TUI.
+The `references/` subdirectory extends the skill with deeper knowledge without bloating the `SKILL.md`. References are exposed via the `references` section in `opencode.json`; entries with a `description` are advertised to agents with their alias and resolved path, and the client attaches them by that alias.
 
 ```
 skills/
@@ -45,9 +45,9 @@ skills/
 
 ## How Agents Use Skills
 
-When an agent encounters a task, it scans the `skills/` directory at startup to discover available skills. Each skill's `SKILL.md` frontmatter includes a `description` that tells the agent when it applies. The agent matches the task against these descriptions and loads the appropriate skill on demand.
+When an agent encounters a task, OpenCode searches its skill sources automatically (the workspace's skills are exposed under `.opencode/skills/` via the installer symlink). At each model step, OpenCode lists the permitted skills that have a `description` — just ID, name, and description, not the full body — so the agent sees which skills apply and loads one on demand by calling the `skill` tool with its exact ID.
 
-This discovery is automatic — no manual registration or index maintenance is required. If the skill exists in `skills/`, the agent can find and use it.
+This discovery is automatic — no manual registration or index maintenance is required. If the skill exists in a discovered source, the agent can find and use it.
 
 ---
 
@@ -112,7 +112,7 @@ The workspace ships with 51 skills covering the full development lifecycle:
 
 ## How to Add a New Skill
 
-Adding a custom skill requires creating the skill file in the `skills/` directory. OpenCode discovers skills automatically at startup — no manual registration needed.
+Adding a custom skill requires creating the skill file in the `skills/` directory. OpenCode discovers skills automatically from its skill sources — no manual registration needed.
 
 ### Step 1: Create the Skill Directory and File
 
@@ -178,9 +178,9 @@ Example:
 - [ ] Temporary files are cleaned up on exit.
 ```
 
-### Step 4: Restart OpenCode
+### Step 4: Verify Discovery
 
-Restart your OpenCode session. Skills are loaded at startup, so a restart is required before agents can discover and use the new skill.
+No manual registration is needed — V2 builds the advertised skill list at each model step from the discovered sources. If the new skill does not appear, work through the checklist from the official troubleshooting section: confirm the file is a root-level `*.md` or a nested `SKILL.md`, verify the **path-derived, case-sensitive ID** (not the frontmatter `name`), make sure a `description` exists, check `opencode/autoinvoke` and the agent's `skill` permissions, and look for a later source defining the same ID.
 
 ---
 
@@ -208,6 +208,6 @@ Skills should contain only what is necessary to guide the agent correctly. Avoid
 
 ## Links
 
-- [OpenCode Skills Documentation](https://opencode.ai/docs/skills) — Official OpenCode skills reference and configuration guide.
+- [OpenCode Skills Documentation](https://opencode.ai/v2/docs/skills/) — Official OpenCode V2 skills reference and configuration guide.
 - [Commands](Commands) — Slash commands that invoke skills during their workflows.
 - [Workspace Structure](Workspace-Structure) — Where skills live in the directory layout.

@@ -63,7 +63,7 @@ export async function exportCookies(
   const filePath = sidecarPath(config.filename, profileDir);
   await mkdir(dirname(filePath), { recursive: true });
   const data: SidecarData = { savedAt: new Date().toISOString(), cookies: filtered };
-  await writeFile(filePath, JSON.stringify(data, null, 2));
+  await writeFile(filePath, JSON.stringify(data, null, 2), { mode: 0o600 });
   return true;
 }
 

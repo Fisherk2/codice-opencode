@@ -1,5 +1,7 @@
 import * as clack from "@clack/prompts";
 import { formatInstallSummary } from "../../application/installSummary";
+import type { IMessageDisplay } from "../../application/ports/IMessageDisplay";
+import type { IProgressReporter } from "../../application/ports/IProgressReporter";
 import type {
 	InstallMode,
 	InstallSummaryInfo,
@@ -43,7 +45,7 @@ const PROGRESS_EMITTERS = new Map<string, (text: string) => void>([
 	["skip", (text) => clack.log.warn(`⊘ ${text}`)],
 ]);
 
-export class ClackPromptsAdapter implements IUserPrompt {
+export class ClackPromptsAdapter implements IUserPrompt, IProgressReporter, IMessageDisplay {
 	// biome-ignore lint/complexity/noUselessConstructor: Bun coverage artifact (REF: TECH_DEBT.md TD-1.2)
 	constructor() {}
 

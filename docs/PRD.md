@@ -1,5 +1,5 @@
-# Product Requirements Document – Códice: Opencode Workspace Installer v2.1.1
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-08-25 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Product Requirements Document – Códice: Opencode Workspace Installer v2.1.3
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-09-22 | **Autor:** Fisherk2 | **Estado:** Aprobado
 
 ## 0. Descripción General
 Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñada para instalar, configurar y actualizar plantillas de espacios de trabajo de OpenCode (`opencode`). Su objetivo es proporcionar una experiencia de instalación "a prueba de tontos", rápida, segura y con fusión inteligente de archivos, preservando las personalizaciones del usuario.
@@ -15,21 +15,21 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - Orquestación de tareas y pruebas mediante `Justfile`.
   - Generación post-instalación de symlinks y `.gitignore` (compatibilidad npm/bunx).
   - Menú de archivos opcionales en ambos modos de instalación (Limpia y Proyecto).
-  - Flags no-interactivos: `--dest`, `--force`, `--mode`.
+  - Flags no-interactivos: `--clean`/`--project`/`--update` (omiten el menú de modos), `--dest`, `--force`, `--verbose` (terminales: `--version`/`-V`, `--help`/`-h`).
   - Publicación npm como método oficial de distribución (`bunx @fisherk2-dev/codice`).
   - Gobernanza de agentes: regla de no-assumption (preguntar antes de actuar) y delegación-first para los 6 agentes primarios.
   - Restricciones de comandos destructivos: patrones bash bloqueados vía la configuración de permisos `opencode.json`.
-  - 9 MCP servers pre-configurados (3 habilitados por defecto: context7, vercel-grep, gitmcp).
+  - 7 MCP servers pre-configurados (3 habilitados por defecto: context7, vercel-grep, gitmcp; el resto con `disabled: true` explícito).
   - Subagente obsidian-vault-writer + 3 skills de Obsidian para administración de vaults.
   - ISP split: `IFileSystem` (6 métodos) + `IStagingSystem` (4 métodos) para segregación de interfaces.
-  - Sistema de packs: 8 packs seleccionables + 2 directorios obligatorios (main, writers). ~360 agentes distribuidos en 10 packs (6 primary + 4 writers + ~350 subagents).
+  - Sistema de packs: 8 packs seleccionables + 2 directorios obligatorios (main, writers). 359 agentes distribuidos en 10 packs (6 primary + 4 writers + 349 en los 8 packs seleccionables).
   - Installer UX v2: wizard de selección de packs, resumen pre-instalación con conteos de agentes, actualizaciones version-gated (solo v2.0+).
   - Flags CLI adicionales: `--packs <list>`, `--packs-all`, `--update-add-packs <list>`, `--clean`, `--project`, `--update`.
   - Formato `.codice-version` v2.0: incluye `installedPacks`, `installedAt`, `optionalSelections?`.
   - Update modes: Option A (solo packs actuales) y Option B (agregar packs con instalados bloqueados).
   - **v2.1:** Cuatro nuevos slash commands: `/sync` (sincronización bidireccional de git con 4 modos y 4 estrategias de resolución de conflictos), `/migrate` (análisis de migración de stack técnico con fases y rollback), `/deploy` (automatización post-`/ship` para generar branch protection, templates de PR, pipelines CI/CD), `/analyze` (análisis arquitectónico de 8 dimensiones que alimenta `docs/TECH_DEBT.md`).
-  - **v2.1:** Auto-discovery de intents: detección basada en filesystem de palabras clave de comandos reemplaza el mapa hardcodeado `INTENT_PATTERNS`.
-  - **v2.1:** Soporte bilingüe de intents: palabras clave de comandos funcionan tanto en inglés como en español.
+  - ~~**v2.1:** Auto-discovery de intents: detección basada en filesystem de palabras clave de comandos reemplaza el mapa hardcodeado `INTENT_PATTERNS`.~~ Retirado en FEV-30, #90 (plugin SDD eliminado; los comandos se resuelven por archivo markdown).
+  - ~~**v2.1:** Soporte bilingüe de intents: palabras clave de comandos funcionan tanto en inglés como en español.~~ Retirado en FEV-30, #90 (plugin SDD eliminado).
   - **v2.1:** Protocolo de delegación de agentes: los seis agentes primarios analizan antes de actuar, mapean subagentes/skills requeridos, e invocan vía `task()` con instrucciones determinísticas, skills a cargar y checklist de objetivos.
 - **Alcance del MVP (Out):** 
   - Instalación de dependencias de terceros fuera del template.
@@ -50,13 +50,13 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | HU-03 | Dev Experimentado | Ejecutar "Actualizar Workspace" | Saber si hay una nueva versión en GitHub y aplicar solo los cambios necesarios. | Alta | El CLI consulta la API de GitHub. Si hay update, aplica fusión granular. Si no, muestra mensaje de "versión más reciente". |
 | HU-04 | Mantenedor | Ejecutar `just test` o `make test` | Verificar que la lógica de fusión y la TUI funcionen correctamente antes de hacer un release. | Alta | Las pruebas unitarias (Bun/Vitest) y E2E (scripts de shell) pasan con >80% de cobertura. |
 | HU-05 | Cualquiera | Que el instalador falle a mitad de proceso | Que mi proyecto no quede en un estado corrupto o a medias. | Alta | Si falla, el directorio `.codice-staging/` se elimina y el proyecto original queda intacto (Atomicidad). |
-| HU-06 | Dev Experimentado | Seleccionar qué packs de agentes instalar | Tener solo los agentes relevantes para mi tipo de proyecto, sin instalar los ~360 agentes. | Media | El instalador presenta un wizard de selección. Se instalan solo los packs elegidos. |
+| HU-06 | Dev Experimentado | Seleccionar qué packs de agentes instalar | Tener solo los agentes relevantes para mi tipo de proyecto, sin instalar los 359 agentes. | Media | El instalador presenta un wizard de selección. Se instalan solo los packs elegidos. |
 | HU-07 | Dev Experimentado | Agregar packs en una actualización | Expandir mi workspace con nuevos packs sin reinstalar desde cero. | Baja | Update mode ofrece Option B para agregar packs. Los packs ya instalados quedan bloqueados. |
 | HU-08 | Dev Experimentado | Sincronizar el workspace con git de forma bidireccional (`/sync`) | Mantener el repositorio alineado con el remoto y resolver conflictos de manera controlada. | Media | `/sync` detecta modo (full-sync, incremental-sync, dry-run, conflict-resolution). Aplica estrategias NEWER_WINS, GITHUB_WINS, LOCAL_WINS o INTELLIGENT_MERGE. |
 | HU-09 | Dev Experimentado | Analizar la migración de stack técnico (`/migrate`) | Planear actualizaciones de dependencias con breaking changes sin afectar la estabilidad. | Baja | `/migrate` detecta stack desde lock files, evalúa breaking changes, y genera plan estructurado con fases y rollback en `docs/MIGRATION.md`. |
 | HU-10 | Dev Experimentado | Automatizar el despliegue post-`/ship` (`/deploy`) | Configurar branch protection, PR templates y pipelines CI/CD sin edición manual. | Media | `/deploy` genera configuración desde cero (no-workflow), analiza y optimiza (betterable), o ejecuta workflow documentado (established). |
 | HU-11 | Dev Experimentado | Analizar la arquitectura del proyecto (`/analyze`) | Identificar tech debt y riesgos arquitectónicos con priorización. | Media | `/analyze` ejecuta análisis de 8 dimensiones y genera `docs/TECH_DEBT.md` con hallazgos Critical/High/Medium/Low. |
-| HU-12 | Cualquiera | Usar palabras clave de comandos en inglés o español | Interactuar con el agente en mi idioma preferido. | Baja | Los intents funcionan bilingualmente. |
+| HU-12 | Cualquiera | ~~Usar palabras clave de comandos en inglés o español~~ | ~~Interactuar con el agente en mi idioma preferido.~~ | Baja | Retirada en FEV-30, #90 (plugin SDD eliminado; ver RF-13/RF-14). |
 | HU-13 | Cualquiera | Ver cómo un agente principal delega trabajo a subagentes | Confiar en la calidad y trazabilidad de las decisiones automatizadas. | Alta | Cada `task()` incluye instrucciones determinísticas, skills a cargar y checklist de aceptación. Protocolo documentado en `docs/ARCHITECTURE.md`. |
 
 ## 4. Requisitos Funcionales
@@ -74,8 +74,8 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | RF-10 | Slash Command `/migrate` | Análisis de migración de stack técnico con fases y rollback documentados en `docs/MIGRATION.md`. | Implementado (v2.1) | HU-09, ADR-016 |
 | RF-11 | Slash Command `/deploy` | Automatización post-`/ship` para generar branch protection, PR templates y pipelines CI/CD. | Implementado (v2.1) | HU-10, ADR-016 |
 | RF-12 | Slash Command `/analyze` | Análisis arquitectónico de 8 dimensiones que actualiza `docs/TECH_DEBT.md`. | Implementado (v2.1) | HU-11, ADR-016 |
-| RF-13 | Auto-discovery de Intents | ~~Detección basada en filesystem de palabras clave de comandos~~ Retirado en FEV-30, #90 (el plugin SDO fue eliminado). | Retirado (FEV-30) | HU-12 |
-| RF-14 | Soporte Bilingüe de Intents | ~~Las palabras clave de comandos funcionan tanto en inglés como en español.~~ Retirado en FEV-30, #90 (el plugin SDO fue eliminado). | Retirado (FEV-30) | HU-12 |
+| RF-13 | Auto-discovery de Intents | ~~Detección basada en filesystem de palabras clave de comandos~~ Retirado en FEV-30, #90 (el plugin SDD fue eliminado). | Retirado (FEV-30) | HU-12 |
+| RF-14 | Soporte Bilingüe de Intents | ~~Las palabras clave de comandos funcionan tanto en inglés como en español.~~ Retirado en FEV-30, #90 (el plugin SDD fue eliminado). | Retirado (FEV-30) | HU-12 |
 | RF-15 | Protocolo de Delegación de Agentes | Los agentes primarios analizan, mapean subagentes/skills, e invocan vía `task()` con instrucciones determinísticas y checklist de aceptación. | Implementado (v2.1) | HU-13, ADR-018 |
 
 ## 5. Requisitos No Funcionales
@@ -102,5 +102,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | 2.0.0 | 2026-08-07 | Fisherk2 | Sincronizado con v2.0.0: sistema de packs (ADR-014), installer UX v2 (ADR-015), 355 agentes en 10 packs, version-gated updates, 30 E2E scenarios, 1920 tests. | ✅ Aprobado |
 | 2.1.0-beta.1 | 2026-08-12 | Fisherk2 | Sincronizado con v2.1.0-beta.1: 4 nuevos comandos (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD plugin intent auto-discovery, bilingual intents, agent delegation protocol (FEV-25), CI/CD hardening, npm provenance SLSA v1, 31 E2E scenarios, 2052 tests. ADRs 016-020. | ✅ Aprobado |
 | 2.1.1 | 2026-08-25 | Fisherk2 | Sincronizado con v2.1.1: FEV-26+27+28 (bug #79, shell injection, manifest corrections, plugin cleanup #80, external dir permissions #81, backup integrity, staging cleanup, CI SHA-pins Node 24 + VersionComparator cache), code review hardened, 1935 tests, 31/31 E2E, ~360 agents in 10 packs. | ✅ Aprobado |
+| 2.1.2 | 2026-08-28 | Fisherk2 | Sincronizado con v2.1.2: hotfix de delegación en docs-update (referencias explícitas a `docs-writer`/`technical-writer`) + reorganización de deuda técnica (v2.1.2→v2.1.3, v2.1.3→v2.1.4). 1935 tests, 31/31 E2E. | ✅ Aprobado |
+| 2.1.3 | 2026-09-22 | Fisherk2 | Sincronizado con v2.1.3: FEV-29 (migración del template a `permissions:` nativo OpenCode V2 — 349 archivos, #91) y FEV-30 (remoción total del plugin SDD + banner legacy ≤2.1.2 + hardening de 5 ejes, #90); RF-13/RF-14/HU-12 retirados; MCPs con `disabled` explícito (7 servidores, 3 habilitados); flags de modo reales: `--clean`/`--project`/`--update` (no existe flag genérico de modo); 1959 tests, 31/31 E2E, cobertura 96.39%; 359 agentes en 10 packs; ADRs 021-024 (013/017 retirados). | ✅ Aprobado |
 
 ---

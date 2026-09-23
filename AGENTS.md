@@ -42,7 +42,7 @@
 ### Pre-Commit
 - [ ] `just check` — 0 errores (biome ci + tsc --noEmit).
 - [ ] `just test` — 0 fallos.
-- [ ] `just coverage-check 95` — 0 fallos (gate CI de cobertura ≥95%; detecta código muerto como la ruta legacy `tools:` en FEV-29).
+- [ ] `just coverage-check` — 0 fallos (umbral en `scripts/coverage-thresholds.json`; detecta código muerto como la ruta legacy `tools:` en FEV-29).
 - [ ] Sin tipos `any` en código de producción.
 - [ ] Documentación actualizada si cambió API pública.
 
@@ -64,7 +64,7 @@
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Guía de contribución, CI/CD, releases |
 | [spec-file-rules.md](specs/spec-file-rules.md) | Reglas de clasificación de archivos |
 | [spec-cli-commands.md](specs/spec-cli-commands.md) | Especificación de modos y comandos CLI |
-| [adr/](specs/adr/) | Architecture Decision Records (ADR-001 al ADR-020) |
+| [adr/](specs/adr/) | Architecture Decision Records (ADR-001 al ADR-024; 013/017 retirados en FEV-30) |
 | [MIGRATION.md](docs/MIGRATION.md) | Guía de migración v1.x → v2.0.0 |
 | [spec-agent-packs.md](specs/spec-agent-packs.md) | Sistema de packs de agentes |
 | [spec-installer-ux-v2.md](specs/spec-installer-ux-v2.md) | UX del instalador v2 |

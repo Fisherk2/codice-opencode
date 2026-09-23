@@ -2,7 +2,7 @@
 
 This guide covers common issues you may encounter while using the Códice workspace installer and its generated workspace. Each entry follows a **Symptom → Cause → Solution** structure so you can quickly identify and resolve the problem.
 
-If you do not find your issue here, check the [OpenCode FAQ](https://opencode.ai/docs/faq) or open a bug report on [GitHub Issues](https://github.com/fisherk2/codice-opencode/issues).
+If you do not find your issue here, check the [OpenCode V2 troubleshooting guide](https://opencode.ai/v2/docs/troubleshooting/) or open a bug report on [GitHub Issues](https://github.com/fisherk2/codice-opencode/issues).
 
 ---
 
@@ -62,7 +62,7 @@ The installer exits without copying files.
 | v1.2.0 ≤ version < 2.0.0 | Blocked — guides you to reinstall with Clean/Project Install |
 | v2.0.0+ | Normal — Option A (current packs) or Option B (add packs) |
 
-This is by design, not a bug. The update system was redesigned in v2.0.0 to support the pack system (ADR-015) and cannot operate on legacy v1.x installations.
+This is by design, not a bug. The update system was redesigned in v2.0.0 to support the pack system (ADR-014) and cannot operate on legacy v1.x installations.
 
 **Solution:** Reinstall using Clean Install or Project Install:
 
@@ -241,14 +241,19 @@ If symlinks are consistently missing after every install, verify that your proje
    uvx mcp-jupyter-notebook
    ```
 
-4. **Increase the timeout** — If a server is slow to respond (common for remote servers), add a `timeout` value:
+4. **Increase the timeout** — If a server is slow to start or respond (common for remote servers), add a per-server `timeout` object. V2 separates the purposes — defaults: `startup` 30s, `catalog` 30s, `execution` 12h:
    ```json
    {
      "mcp": {
-       "my-server": {
-         "type": "remote",
-         "url": "https://my-server.com/mcp",
-         "timeout": 15000  // 15 seconds instead of default 5
+       "servers": {
+         "my-server": {
+           "type": "remote",
+           "url": "https://my-server.com/mcp",
+           "timeout": {
+             "startup": 45000,
+             "catalog": 45000
+           }
+         }
        }
      }
    }
@@ -259,7 +264,7 @@ If symlinks are consistently missing after every install, verify that your proje
    lsof -i :9222
    ```
 
-6. **Disable other MCP servers temporarily** — Isolate connectivity issues by disabling all MCP servers except the one you are testing. Set `"enabled": false` for others in `opencode.json`.
+6. **Disable other MCP servers temporarily** — Isolate connectivity issues by disabling all MCP servers except the one you are testing. Set `"disabled": true` for others in `opencode.json`.
 
 ---
 
@@ -288,7 +293,7 @@ ls -la .opencode/agents .opencode/commands .opencode/skills
 
 ## Still stuck?
 
-- **[OpenCode FAQ](https://opencode.ai/docs/faq)** — General questions about OpenCode itself (configuration, models, permissions, providers)
+- **[OpenCode Troubleshooting Guide](https://opencode.ai/v2/docs/troubleshooting/)** — Official service, log, and diagnostics reference (V2 has no separate FAQ page)
 - **[GitHub Issues](https://github.com/fisherk2/codice-opencode/issues)** — Report bugs, request features, or search existing issues for solutions
 - **When reporting a bug**, include:
   - Your operating system and version

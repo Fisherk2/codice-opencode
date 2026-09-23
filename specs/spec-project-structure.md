@@ -74,7 +74,7 @@ codice-opencode/
 │       ├── container.ts           # Dependency injection container
 │       ├── main.ts                # Entry point: orchestrates mode selection and execution
 │       ├── output.ts              # TUI output formatting and logging
-│       ├── parse-args.ts          # CLI argument parsing (--dest, --force, --mode, etc.)
+│       ├── parse-args.ts          # CLI argument parsing (--clean, --project, --update, --dest, --force, --verbose, --packs, --packs-all, --update-add-packs, --version/-V, --help/-h)
 │       ├── signalHandlers.ts      # SIGINT cleanup handlers (extracted from main.ts)
 │       ├── validateDestPath.ts    # Destination path validation (extracted from parse-args.ts)
 │       ├── validatePackList.ts    # Pack list validation for --packs flag
@@ -84,6 +84,7 @@ codice-opencode/
 │   ├── unit/                      # Domain logic tests (pure functions, entities)
 │   │   ├── quality/               # Repo-wide invariant guards (e.g. source hygiene)
 │   │   └── domain/helpers/        # Test-side domain helpers (agentFrontmatterValidator — normative V2 agent schema reader; see ADR-021)
+│   ├── setup/                     # Repository configuration validation (own Justfile/CI/tooling), not unit tests of src/
 │   ├── integration/               # Adapter tests with mocked external systems
 │   ├── e2e/                       # Shell scripts and fixtures for CLI validation (31 scenarios)
 │   └── fixtures/                  # Predefined directory trees for merge scenarios
@@ -95,7 +96,7 @@ codice-opencode/
 │   └── opcional/                  # Files presented as checklist; copied only if selected and missing
 ├── docs/                          # Architecture decisions, workflow, PRD, TRD, MIGRATION
 ├── specs/                         # Modular specification documents
-│   ├── adr/                       # Architecture Decision Records (ADR-001 to ADR-021)
+│   ├── adr/                       # Architecture Decision Records (ADR-001 to ADR-024)
 │   ├── spec-agent-format-v2.md    # Agent format specification v2
 │   ├── spec-agent-packs.md        # Agent pack system specification
 │   ├── spec-cli-commands.md       # CLI commands and modes specification

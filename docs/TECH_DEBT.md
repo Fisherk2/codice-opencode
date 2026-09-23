@@ -1,9 +1,9 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-09-21
-**Status:** v2.1.2 Released (2026-08-28) — Hotfix: docs-update delegation fix + tech debt reorg — 1935 tests, 31/31 E2E, coverage ≥95% production `src/` · Branch `hotfix/opencode-v2-migrate`: Fase-2 V2-native permissions migration in progress (4 deferred Important findings below)
-**Current version:** v2.1.2
-**Next version:** v2.1.3 (hotfix Opencode V2, planned)
+**Last updated:** 2026-09-22
+**Status:** v2.1.3 FEV-29 + FEV-30 COMPLETED (2026-09-22) — 1959 tests, 31/31 E2E, coverage 96.39% (global gate 95% + `src/cli/main.ts` sub-gate 95%) · `v2.1.3-beta.1` published (dist-tag `beta`) · stable 2.1.3 on `release/2.1.3` with green gates, pending GO/tag · 4 deferred Phase-2 findings + TD-V2-97 remain open (below)
+**Current version:** v2.1.3-beta.1 (stable 2.1.3 pending tag)
+**Next version:** v2.1.4 (Medium Effort — 9 items, 18-24h)
 
 ---
 
@@ -124,9 +124,9 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 
 **Metrics:** 1935 tests, 31/31 E2E.
 
-### v2.1.3 (Hotfix Opencode V2 — alcance en triaje)
+### v2.1.3 ✅ FEV-29 + FEV-30 completados (2026-09-22) — estable pendiente de GO/tag
 
-> **Alcance reservado:** issues surgidas con la llegada de Opencode V2 (migración `permission:`/`tools:` → `permissions:` (lista nativa V2) en packs, reasignación de comandos del ciclo de revisión a tezcatlipoca). La deuda 2.1.x previamente planificada se recorre una versión (v2.1.3 → v2.1.4, v2.1.4 → v2.1.5). Items concretos por definir.
+> **Alcance (ejecutado):** FEV-29 (#91) migró el template completo al formato nativo OpenCode V2 `permissions:` (349 archivos) y FEV-30 (#90) removió el plugin SDD + añadió el banner legacy y el hardening del review de 5 ejes — completados en `hotfix/opencode-v2-migrate` y consolidados en `v2.1.3-beta.1`; el trabajo post-beta quedó en `release/2.1.3`. La deuda 2.1.x previamente planificada se recorrió una versión (v2.1.3 → v2.1.4, v2.1.4 → v2.1.5). Los hallazgos diferidos y TD-V2-97 de abajo siguen abiertos.
 
 #### Hallazgos de Fase-2 diferidos (2026-09-21, prioridad Important — no perdidos)
 
@@ -140,6 +140,18 @@ estimado, riesgo evaluado).
 | **TD-V2-94** | Gap de superficie en el escaneo de higiene | Debt | 2-3h | Medium | `SCAN_ROOTS` de `tests/unit/quality/source-hygiene.test.ts` omite directorios shipped pero no escaneados: `template/estandar`, `template/obligatorio/core` (`.sh`, plugin TS, Dockerfile), `template/opcional`; falta además una allowlist de archivos sin extensión (Dockerfile/Makefile/Justfile). |
 | **TD-V2-95** | Punto ciego del invariant de brake | Debt | 1h | Low | El chequeo CI del chain brake (`subagent "*": deny`) solo inspecciona bloques `permissions:` existentes; un agente con `mode: subagent` sin ningún bloque `permissions:` escapa el gate y heredaría la `ask` global sin freno. |
 | **TD-V2-96** | Pendientes cosméticos/semánticos del parser | Debt | 2h | Low | (a) El parser de líneas del codemod pierde líneas en blanco internas del frontmatter (emisión verbatim de claves, no de líneas intermedias — cosmético); (b) la degeneración `tools: <scalar>` → `action: "*"` no está confirmada contra las reglas de matching de OpenCode V2 — validar antes de promover cualquier uso del codemod. |
+
+#### Falso verde del type-check local con TypeScript 7 en mounts que ignoran `chmod` (2026-09-22, prioridad Medium)
+
+| ID | Item | Type | Effort | Risk | Description |
+|----|------|------|--------|------|-------------|
+| **TD-V2-97** | Falso verde del type-check local (TS 7 en fuseblk/NTFS) | Debt | 1h | Medium | `just check` valida con el `tsc` global (6.0.3) en vez del declarado (7.0.2) porque el mount ignora el bit de ejecución del binario nativo. Mitigado con un warning no bloqueante (`scripts/check-ts-version.sh`). |
+
+- **Síntoma:** `just check` reporta 0 errores, pero `bun run tsc --version` resuelve el `tsc` global (6.0.3) en vez del declarado en `package.json` (7.0.2).
+- **Causa:** el binario nativo de TypeScript 7 (`node_modules/@typescript/typescript-linux-x64/lib/tsc`) queda en modo `-rw-r--r--` porque el mount `nosuid,nodev` (fuseblk/NTFS) ignora `chmod`; Bun cae entonces al `tsc` global.
+- **Impacto:** solo local. La CI (ext4) preserva el bit de ejecución y `release.yml` ejecuta la matriz de calidad antes de publicar, por lo que el falso verde no alcanza un release.
+- **Mitigación actual:** warning no bloqueante emitido por `scripts/check-ts-version.sh`, invocado al inicio de `just check`; siempre `exit 0` y degradación silenciosa si `jq`, `package.json` o el propio `tsc` no se pueden resolver.
+- **Workaround:** copiar `node_modules/@typescript/typescript-linux-x64` a un FS con ejecución (p. ej. `/tmp`) y ejecutar `lib/tsc --noEmit -p tsconfig.json` desde ahí.
 
 ### v2.1.4 (Medium Effort — 9 items, 18-24h total)
 
@@ -180,9 +192,10 @@ estimado, riesgo evaluado).
 |----------|--------|
 | v1.x debt | ✅ All resolved |
 | v2.0.0 debt | ✅ All resolved |
-| v2.1.0 debt | ✅ All resolved (4 new commands, SDD intent auto-discovery, bilingual intents, agent delegation, CI/CD hardening) |
+| v2.1.0 debt | ✅ All resolved (4 new commands, SDD intent auto-discovery, bilingual intents, agent delegation, CI/CD hardening) — intent auto-discovery + bilingual intents later retired in FEV-30 (plugin SDD removed) |
 | v2.1.1 | ✅ Released — FEV-26+27+28 — 1935 tests |
-| v2.1.3 backlog | Hotfix Opencode V2 — alcance en triaje + 4 hallazgos Fase-2 diferidos (TD-V2-93-f2..96) |
+| v2.1.2 | ✅ Released (2026-08-28) — docs-update delegation hotfix + debt reorg — 1935 tests |
+| v2.1.3 | ✅ FEV-29+FEV-30 complete (1959 tests, 31/31 E2E, 96.39%) — beta published, stable pending GO/tag — open: 4 hallazgos Fase-2 diferidos (TD-V2-93-f2..96) + TD-V2-97 |
 | v2.1.4 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.1.5 backlog | 4 items (4 debt) — 12-16h |
 | v2.3 backlog | 3 items (1 debt + 2 features) — 18-28h |
@@ -211,5 +224,5 @@ estimado, riesgo evaluado).
 ---
 
 *Maintained by Códice team. Update when tech debt items are added or resolved.*
-*Last updated: 2026-09-21*
-*Next deep audit: after v2.1.3 release*
+*Last updated: 2026-09-22*
+*Next deep audit: after v2.1.3 stable release*

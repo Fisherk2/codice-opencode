@@ -15,6 +15,7 @@ describe("Directory Structure", () => {
 		"src/infrastructure/config",
 		"src/cli",
 		"tests/unit",
+		"tests/setup",
 		"tests/integration",
 		"tests/e2e",
 		"tests/fixtures",

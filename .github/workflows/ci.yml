@@ -25,6 +25,14 @@ on:
       - 'docs/**'
       - 'CHANGELOG.md'
   workflow_call:
+    inputs:
+      # Explicit ref (a release tag) handed over by release.yml so the quality
+      # gate validates the exact commit being published on dispatch runs.
+      # Empty (push/PR runs) keeps the default checkout of the triggering ref.
+      ref:
+        description: 'Git ref to check out for the quality gates (optional).'
+        type: string
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -51,6 +59,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          # Empty input falls back to the default checkout of the triggering
+          # ref; release.yml hands over the release tag on dispatch runs.
+          ref: ${{ inputs.ref }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
@@ -88,7 +100,7 @@ jobs:
 
       - name: Coverage check with threshold (Linux only)
         if: runner.os == 'Linux'
-        run: just coverage-check 95
+        run: just coverage-check
         timeout-minutes: 15
 
   # Dependency CVE gate. Not part of branch protection (only the three

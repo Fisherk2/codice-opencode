@@ -13,11 +13,13 @@
 
 import type { IFileSystem } from "../domain/ports/IFileSystem";
 import type { IStagingSystem } from "../domain/ports/IStagingSystem";
+import type { GitignoreError } from "../domain/types/GitignoreError";
 import { type Result, success } from "../domain/types/Result";
 import { writeVersionFileSafe } from "./helpers";
 import type { IGitignoreCreator } from "./ports/IGitignoreCreator";
+import type { IMessageDisplay } from "./ports/IMessageDisplay";
+import type { IProgressReporter } from "./ports/IProgressReporter";
 import type { ISymlinkCreator, SymlinkSpec } from "./ports/ISymlinkCreator";
-import type { IUserPrompt } from "./ports/IUserPrompt";
 
 /**
  * Create a .gitignore file from the template, showing a warning on failure.
@@ -28,12 +30,14 @@ import type { IUserPrompt } from "./ports/IUserPrompt";
  * @param gitignoreCreator - Adapter for .gitignore generation.
  * @param prompt - Adapter for user-facing warnings.
  * @param destinationPath - Target directory passed to the gitignore creator adapter.
+ * @returns The underlying Result, so callers can conditionally report success
+ *   in their progress log (events reflect actual results, not intent).
  */
 export async function createGitignoreSafe(
 	gitignoreCreator: IGitignoreCreator,
-	prompt: IUserPrompt,
+	prompt: IMessageDisplay,
 	destinationPath: string,
-): Promise<void> {
+): Promise<Result<void, GitignoreError>> {
 	const gitignoreResult = await gitignoreCreator.createGitignore(destinationPath);
 	if (!gitignoreResult.ok) {
 		prompt.showWarning(
@@ -43,6 +47,7 @@ export async function createGitignoreSafe(
 				"Run with --verbose for details.",
 		);
 	}
+	return gitignoreResult;
 }
 
 /**
@@ -56,23 +61,28 @@ export async function createGitignoreSafe(
  * @param symlinks - Array of symlink specs to create.
  * @param label - Directory label for the warning message (e.g. "opencode", "devin").
  * @param retryHint - If true, appends "Re-run the installer to retry symlink creation."
+ * @returns The specs that were created successfully, so callers can report
+ *   per-link results in their progress log (events reflect actual results).
  */
 export async function createSymlinksWithWarning(
 	symlinkCreator: ISymlinkCreator,
-	prompt: IUserPrompt,
+	prompt: IMessageDisplay,
 	symlinks: readonly SymlinkSpec[],
 	label: string,
 	retryHint?: boolean,
-): Promise<void> {
+): Promise<readonly SymlinkSpec[]> {
 	const result = await symlinkCreator.createSymlinks(symlinks);
 	if (!result.ok) {
+		const failedLinks = new Set(result.error.map((e) => e.linkPath));
 		const message =
 			`Some .${label}/ symlinks could not be created (${result.error.length} failures). ` +
 			"The workspace was installed successfully." +
 			(retryHint ? " Re-run the installer to retry symlink creation." : "") +
 			" Run with --verbose for details.";
 		prompt.showWarning(message);
+		return symlinks.filter((s) => !failedLinks.has(s.linkPath));
 	}
+	return symlinks;
 }
 
 /**
@@ -82,7 +92,8 @@ export interface PostInstallOptions {
 	readonly fileSystem: IFileSystem & IStagingSystem;
 	readonly gitignoreCreator: IGitignoreCreator;
 	readonly symlinkCreator: ISymlinkCreator;
-	readonly userPrompt: IUserPrompt;
+	/** Narrow prompt port: post-install steps only report progress and messages. */
+	readonly userPrompt: IProgressReporter & IMessageDisplay;
 	readonly opencodeSymlinks: readonly SymlinkSpec[];
 	readonly destinationPath: string;
 	/** [FEV-21] Packs selected during install wizard */
@@ -127,18 +138,20 @@ export async function runPostInstallSteps(
 	} = options;
 
 	// Step 1: Generate .gitignore from template (graceful on failure)
-	await createGitignoreSafe(gitignoreCreator, userPrompt, destinationPath);
-	userPrompt.logProgressEvent("gitignore: Generated .gitignore");
+	const gitignoreResult = await createGitignoreSafe(gitignoreCreator, userPrompt, destinationPath);
+	if (gitignoreResult.ok) {
+		userPrompt.logProgressEvent("gitignore: Generated .gitignore");
+	}
 
 	// Step 2: Create .opencode/ symlinks always
-	await createSymlinksWithWarning(
+	const createdSymlinks = await createSymlinksWithWarning(
 		symlinkCreator,
 		userPrompt,
 		opencodeSymlinks,
 		"opencode",
 		retryHint,
 	);
-	for (const spec of opencodeSymlinks) {
+	for (const spec of createdSymlinks) {
 		userPrompt.logProgressEvent(`symlink: Created ${spec.linkPath}`);
 	}
 

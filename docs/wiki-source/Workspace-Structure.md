@@ -2,7 +2,7 @@
 
 The Códice workspace template installs a complete OpenCode project environment organized into categories: always-present files, merge-safe defaults, and optional add-ons. This page describes what you get and how each piece fits together.
 
-> For an overview of the OpenCode workspace system, see [opencode.ai/docs/workspace](https://opencode.ai/docs/workspace).
+> For an overview of how OpenCode discovers project configuration (`.opencode/`, `opencode.json`), see [opencode.ai/v2/docs/config#locations](https://opencode.ai/v2/docs/config/#locations). V2 has no dedicated "workspace" page.
 
 ---
 
@@ -18,7 +18,7 @@ workspace/
 ├── LICENSE               # Open-source license
 ├── opencode.json         # OpenCode configuration
 ├── .env.example          # Environment template
-├── agents/               # AI agent definitions (~360 across 10 packs)
+├── agents/               # AI agent definitions (359 across 10 packs)
 ├── commands/             # Slash command workflows (17 files)
 ├── skills/               # Specialized knowledge domains (51 dirs)
 ├── docs/                 # Project documentation
@@ -34,7 +34,7 @@ workspace/
 
 ### `agents/` — AI Agent Definitions
 
-This is the largest directory, containing **~360 agent files across 10 packs** that define AI personas. Each file is a Markdown document with YAML frontmatter describing an agent's role, permissions, and behavior.
+This is the largest directory, containing **359 agent files across 10 packs** that define AI personas. Each file is a Markdown document with YAML frontmatter describing an agent's role, permissions, and behavior.
 
 **Six primary agents** serve as the main entry points:
 
@@ -47,7 +47,7 @@ This is the largest directory, containing **~360 agent files across 10 packs** t
 | `mictlantecuhtli.md` | Guardian of the Underworld | Runs tests, validates quality, syncs git, deploys to production |
 | `tezcatlipoca.md` | Mirror of Truth | Reviews code, analyzes architecture, and delegates corrections to specialists |
 
-The remaining **~350 subagents (8 selectable packs)** are domain specialists — frontend developers, database administrators, security auditors, Rust engineers, and so on. Each subagent is an expert in one area and is invoked from primary agents via `task()` delegation.
+The remaining **349 subagents (8 selectable packs)** are domain specialists — frontend developers, database administrators, security auditors, Rust engineers, and so on. Each subagent is an expert in one area and is invoked from primary agents through the `subagent` tool (V1's `task()`/`task` naming is legacy; V2 renamed the action and tool to `subagent`).
 
 The template keeps pack source under `template/obligatorio/packs/` (10 packs: 2 mandatory — main + writers — and 8 selectable); the installer copies selected packs into the flat `agents/` directory. The install wizard lets you choose packs and shows a summary with per-pack agent counts.
 
@@ -57,19 +57,24 @@ Agent files use a consistent frontmatter format:
 ---
 description: "Short role description"
 mode: primary | subagent
-tools:
-  write: allow | deny
-  edit: allow | deny
-  bash:
-    "*": allow | ask | deny
-  read:
-    "*": allow | deny
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow | ask | deny
+  - action: subagent
+    resource: "*"
+    effect: allow | deny
+  - action: shell
+    resource: "git status"
+    effect: allow
 ---
 ```
 
+> This is the native V2 shape (ordered `{action, resource, effect}` rules, last-match-wins). V1's `tools:`/`permission:` maps — with keys like `write`, `bash`, and `task` — are legacy names that V2 translates automatically; new files in the template use `permissions:`.
+
 ### `commands/` — Slash Command Workflows
 
-The **17 slash commands** map to the Source-Driven Development (SDD) lifecycle. Each is a Markdown file defining a workflow that a primary agent executes when the user types `/command-name`.
+The **17 slash commands** map to the Spec-Driven Development (SDD) lifecycle. Each is a Markdown file defining a workflow that a primary agent executes when the user types `/command-name`.
 
 | Command | Agent | Phase |
 |---------|-------|-------|
@@ -109,11 +114,11 @@ Skills are the workspace's knowledge base — **51 skill directories**, each con
 | `architecture-diagrams/references/` | 10 diagram reference documents |
 | ... | *(51 total skills, 18 with references/ subdirectories)* |
 
-Skills are loaded by commands and agents with `**Load** `skill-name` skill`. This keeps workflows composable — a single command may invoke multiple skills at different steps. Reference material within `skills/<name>/references/` is loaded by agents via the `reference` section in `opencode.json` and accessed with `@<skill-name>` in the OpenCode TUI.
+Skills are loaded by commands and agents with `**Load** `skill-name` skill`. This keeps workflows composable — a single command may invoke multiple skills at different steps. Reference material within `skills/<name>/references/` is exposed through the `references` section in `opencode.json`: described entries are advertised to agents with their alias and resolved path, and the client attaches a reference by its alias.
 
 ### Reference Files — Co-located with Skills
 
-The template ships **59 reference documents** covering software engineering best practices. Unlike the original centralized model, references are now **co-located** with their primary skill:
+The template ships **64 reference documents** covering software engineering best practices. Unlike the original centralized model, references are now **co-located** with their primary skill:
 
 | Reference File | Located In |
 |---------------|------------|
@@ -126,7 +131,7 @@ The template ships **59 reference documents** covering software engineering best
 | README standards | `skills/crafting-effective-readmes/references/` |
 | Security, performance, error handling | Each in its respective skill's `references/` |
 
-This co-location makes skills **self-contained**: installing a skill also installs its reference material. References are exposed via OpenCode's native `reference` section in `opencode.json`, accessible by invoking `@<skill-name>` in the OpenCode TUI.
+This co-location makes skills **self-contained**: installing a skill also installs its reference material. References are exposed via OpenCode's native `references` section in `opencode.json`, advertised by alias, and attached from the client.
 
 ### `docs/` — Project Documentation
 
@@ -155,11 +160,11 @@ specs/
 └── spec-cli-commands.md
 ```
 
-This directory grows as your project matures. The `evolve/` command creates new specs here, and each ADR documents a resolved architectural decision with its context, options, and rationale.
+This directory grows as your project matures. The `/evolve` command creates new specs here, and each ADR documents a resolved architectural decision with its context, options, and rationale.
 
 ### `tasks/` — Execution Tasks
 
-Used by the SDD pipeline to track implementation progress. When `plan/` breaks a spec into work units, the resulting tasks are written here as numbered Markdown files. This directory is managed exclusively by the `moctezuma` agent during planning and by `tlaloc` during execution.
+Used by the SDD pipeline to track implementation progress. When `/plan` breaks a spec into work units, the resulting tasks are written here as numbered Markdown files. This directory is managed exclusively by the `moctezuma` agent during planning and by `tlaloc` during execution.
 
 ### `.opencode/` — Runtime Configuration
 
@@ -198,7 +203,7 @@ The workspace is designed around a **cycle** that repeats as your project evolve
 1. You type a slash command (e.g., `/spec`)
 2. OpenCode routes the command to the target primary agent
 3. The agent reads the command file from `commands/` and follows its steps
-4. At each step, the agent may invoke skills from `skills/` or load reference material from `skills/<name>/references/` via the `reference` section
+4. At each step, the agent may invoke skills from `skills/` or access reference material from `skills/<name>/references/` via the `references` section
 5. The agent may delegate sub-tasks to subagents defined in `agents/`
 6. The result is written to the appropriate directory (`specs/`, `docs/`, `tasks/`, `src/`, etc.)
 7. The command suggests the next logical command in the cycle
@@ -209,9 +214,9 @@ The workspace is designed around a **cycle** that repeats as your project evolve
 
 | Directory | Files | Purpose |
 |-----------|-------|---------|
-| `agents/` | ~360 | AI agent persona definitions |
-| `commands/` | 12 | Slash command workflows |
-| `skills/` | 52 + 59 refs | Specialized knowledge domains with co-located reference material |
+| `agents/` | 359 | AI agent persona definitions |
+| `commands/` | 17 | Slash command workflows |
+| `skills/` | 51 + 64 refs | Specialized knowledge domains with co-located reference material |
 | `docs/` | 5+ | Project documentation |
 | `specs/` | 3+ | Modular specs and ADRs |
 
@@ -222,4 +227,4 @@ Total template footprint: ~500+ files providing a complete AI-assisted developme
 ## See Also
 
 - [Configuration](Configuration) — Configuring the workspace via `opencode.json`
-- [opencode.ai/docs/workspace](https://opencode.ai/docs/workspace) — Official OpenCode workspace documentation
+- [opencode.ai/v2/docs/config](https://opencode.ai/v2/docs/config/#locations) — Official OpenCode configuration guide (project config locations, `.opencode/` discovery)

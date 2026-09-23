@@ -171,4 +171,125 @@ describe("AtomicStager", () => {
 
 		await expect(stager.commitStaging()).rejects.toThrow(/Previous commit was interrupted/);
 	});
+
+	it("never overwrites a destination file whose backup cannot be created", async () => {
+		const destFile = path.join(destDir, "locked.txt");
+		await fs.writeFile(destFile, "PRECIOUS");
+		// A non-empty directory occupying the backup path makes copyFile fail
+		// (EISDIR/ENOTEMPTY). Previously the failure was swallowed and the
+		// destination got overwritten anyway — a data-loss path.
+		const backupDir = path.join(destDir, "locked.txt.codice-backup");
+		await fs.mkdir(path.join(backupDir, "payload"), { recursive: true });
+		const src = path.join(templateDir, "locked.txt");
+		await fs.writeFile(src, "NEW");
+
+		try {
+			await stager.stageFile(src, "locked.txt");
+			await expect(stager.commitStaging()).rejects.toThrow(/back up existing destination/i);
+
+			expect(await Bun.file(destFile).text()).toBe("PRECIOUS");
+			expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		} finally {
+			await fs.rm(backupDir, { recursive: true, force: true });
+		}
+	});
+
+	it("removes newly promoted files from the destination when rollback runs", async () => {
+		// aaa_new.txt sorts before zzz/ so it is promoted (no backup — new file)
+		// before the mid-commit failure forces a rollback.
+		const zzzFile = path.join(destDir, "zzz");
+		await fs.writeFile(zzzFile, "I AM A FILE, NOT A DIR");
+		const srcNew = path.join(templateDir, "aaa_new.txt");
+		await fs.writeFile(srcNew, "FRESH");
+		const srcBroken = path.join(templateDir, "zzz", "broken.txt");
+		await fs.mkdir(path.dirname(srcBroken), { recursive: true });
+		await fs.writeFile(srcBroken, "SHOULD NOT LAND");
+
+		await stager.stageFile(srcNew, "aaa_new.txt");
+		await stager.stageFile(srcBroken, "zzz/broken.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
+
+		// The earlier rename created a fresh destination file with no backup —
+		// a backup-only rollback cannot undo it, so rollback must unlink it.
+		expect(await Bun.file(path.join(destDir, "aaa_new.txt")).exists()).toBe(false);
+	});
+
+	it("refuses to write into a pre-existing symlinked staging directory", async () => {
+		// Attacker-controlled or corrupted destination: .codice-staging is a
+		// symlink pointing somewhere else (e.g., the home dir or /etc).
+		const outsideDir = await fs.mkdtemp(path.join(tmpDir, "outside-"));
+		const evilDestDir = await fs.mkdtemp(path.join(tmpDir, "dest-evil-"));
+		await fs.symlink(outsideDir, path.join(evilDestDir, STAGING_DIR_NAME));
+		const evilStager = new AtomicStager(evilDestDir);
+
+		const src = path.join(templateDir, "symlink.txt");
+		await fs.writeFile(src, "SMUGGLED");
+
+		await expect(evilStager.stageFile(src, "payload.txt")).rejects.toThrow(/symbolic link/i);
+
+		// Nothing was written through the link — outside dir stays empty.
+		const outsideEntries = await fs.readdir(outsideDir);
+		expect(outsideEntries).toEqual([]);
+		await fs.rm(evilDestDir, { recursive: true, force: true });
+		await fs.rm(outsideDir, { recursive: true, force: true });
+	});
+
+	it("refuses to write a backup through a pre-existing symlinked backup path", async () => {
+		const destFile = path.join(destDir, "victim.txt");
+		await fs.writeFile(destFile, "OLD");
+		const outsideTarget = path.join(tmpDir, "outside-target.txt");
+		await fs.writeFile(outsideTarget, "KEEP ME");
+		// ".codice-backup" suffix matches AtomicStager's private BACKUP_SUFFIX
+		await fs.symlink(outsideTarget, `${destFile}.codice-backup`);
+
+		const src = path.join(templateDir, "victim.txt");
+		await fs.writeFile(src, "NEW");
+		await stager.stageFile(src, "victim.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/symbolic link/i);
+
+		// copyFile follows destination symlinks — the commit must abort before
+		// it can clobber the symlink's external target.
+		expect(await Bun.file(outsideTarget).text()).toBe("KEEP ME");
+		expect(await Bun.file(destFile).text()).toBe("OLD");
+		await fs.unlink(`${destFile}.codice-backup`).catch(() => {});
+	});
+
+	it("rolls back a composite commit (promoted, backed-up, and failing file)", async () => {
+		// One commit mixes all three rollback outcomes: a file with NO prior
+		// destination (pure promotion — rollback must unlink it), a file WITH
+		// a prior destination (backup restore path), and a third whose rename
+		// fails mid-commit (the zzz/ FILE forces an ENOTDIR at commit time),
+		// proving the two rollback strategies cover one ordered pass.
+		const overwrittenDest = path.join(destDir, "cmp_overwritten.txt");
+		await fs.writeFile(overwrittenDest, "ORIGINAL_OVERWRITTEN");
+		await fs.writeFile(path.join(destDir, "zzz"), "I AM A FILE, NOT A DIR");
+		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+
+		const srcPromoted = path.join(templateDir, "cmp_promoted.txt");
+		await fs.writeFile(srcPromoted, "PROMOTED");
+		const srcOverwrite = path.join(templateDir, "cmp_overwritten.txt");
+		await fs.writeFile(srcOverwrite, "NEW_OVERWRITTEN");
+		const srcBroken = path.join(templateDir, "zzz", "broken.txt");
+		await fs.mkdir(path.dirname(srcBroken), { recursive: true });
+		await fs.writeFile(srcBroken, "SHOULD NOT LAND");
+
+		await stager.stageFile(srcPromoted, "cmp_promoted.txt");
+		await stager.stageFile(srcOverwrite, "cmp_overwritten.txt");
+		await stager.stageFile(srcBroken, "zzz/broken.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
+
+		// promoted file absent from destination (no backup to restore from)
+		expect(await Bun.file(path.join(destDir, "cmp_promoted.txt")).exists()).toBe(false);
+		// overwritten file restored to ORIGINAL content by its backup
+		expect(await Bun.file(overwrittenDest).text()).toBe("ORIGINAL_OVERWRITTEN");
+		// failing file untouched / absent
+		expect(await Bun.file(path.join(destDir, "zzz", "broken.txt")).exists()).toBe(false);
+		// staging dir swept and intent marker removed
+		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await Bun.file(intentPath).exists()).toBe(false);
+		expect(await findBackups(destDir)).toEqual([]);
+	});
 });

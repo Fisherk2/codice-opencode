@@ -202,8 +202,8 @@ v2.1.0 es una **actualización sin breaking changes** que añade funcionalidad:
 | Cambio | v2.0.0 | v2.1.0 |
 |--------|--------|--------|
 | **4 nuevos slash commands** | No existían | `/sync`, `/migrate`, `/deploy`, `/analyze` |
-| **Intent auto-discovery** | `INTENT_PATTERNS` hardcoded en el plugin | Detección basada en filesystem de `template/obligatorio/core/commands/*.md` |
-| **Bilingual intents** | Solo inglés | Soporte inglés + español (SPANISH_INTENT_KEYWORDS overlay) |
+| ~~**Intent auto-discovery**~~ | ~~`INTENT_PATTERNS` hardcoded en el plugin~~ | Retirado en FEV-30 (plugin SDD eliminado); los comandos se resuelven por archivo markdown |
+| ~~**Bilingual intents**~~ | ~~Solo inglés~~ | Retirado en FEV-30 (plugin SDD eliminado); no hay overlay `SPANISH_INTENT_KEYWORDS` |
 | **Agent delegation protocol** | Sin protocolo formal | Analyze → Plan → Execute en 6 agentes principales; `task()` con instrucciones determinísticas, skills a cargar, checklist de aceptación |
 | **CI/CD hardening** | SHA-pins antiguos | Actions SHA-pined a majors Node 24, branch protection real, PR/issue templates |
 | **npm provenance** | Sin provenance | SLSA v1 generado automáticamente por npm con `--provenance` |
@@ -241,7 +241,7 @@ v2.1.0 es una **actualización sin breaking changes** que añade funcionalidad:
 ### 7.4 Problemas conocidos
 
 - **npm auto-correction del bin name:** El campo `bin[codice]` fue corregido automáticamente por npm al publicar v2.1.0-beta.1 (nombre "was cleaned"). Sin impacto en el usuario final — se resolvió declarando `repository.url` en `package.json`.
-- **Node 20 deprecation warnings:** Las actions de GitHub (`actions/cache`, `actions/checkout`, `extractions/setup-just`) fuerzan ejecución en Node 24 a pesar de los SHA-pins antiguos. Se resolverá actualizando a majors recientes en v2.1.1.
+- **Node 20 deprecation warnings:** Las actions de GitHub (`actions/cache`, `actions/checkout`, `extractions/setup-just`) forzaban ejecución en Node 24 a pesar de los SHA-pins antiguos. Se resolvió en v2.1.1 (FEV-28, TD-V2-7) actualizando los SHA-pins a majors Node 24.
 
 ---
 

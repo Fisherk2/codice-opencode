@@ -84,12 +84,7 @@
       "disabled": true
     }
   },
-  "instructions": [
-    "CONTRIBUTING.md",
-    "SPEC.md",
-    "docs/ARCHITECTURE.md",
-    "docs/CODE_STYLE.md"
-  ],
+  "instructions": ["CONTRIBUTING.md", "SPEC.md", "docs/ARCHITECTURE.md", "docs/CODE_STYLE.md"],
   "references": {
     "clean-code": {
       "path": "./skills/clean-code/references",
@@ -112,33 +107,23 @@
         "disabled": true
       },
       "context7": {
+        "disabled": false,
         "type": "remote",
         "url": "https://mcp.context7.com/mcp"
       },
       "chrome-devtools": {
         "type": "local",
-        "command": [
-          "npx",
-          "-y",
-          "chrome-devtools-mcp@1.7.0"
-        ],
+        "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
         "disabled": true
       },
       "excel": {
         "type": "local",
-        "command": [
-          "uvx",
-          "excel-mcp-server",
-          "stdio"
-        ],
+        "command": ["uvx", "excel-mcp-server", "stdio"],
         "disabled": true
       },
       "jupyter": {
         "type": "local",
-        "command": [
-          "uvx",
-          "mcp-jupyter-notebook"
-        ],
+        "command": ["uvx", "mcp-jupyter-notebook"],
         "disabled": true,
         "environment": {
           "MCP_JUPYTER_SESSION_MODE": "server",
@@ -148,10 +133,12 @@
         }
       },
       "vercel-grep": {
+        "disabled": false,
         "type": "remote",
         "url": "https://mcp.grep.app"
       },
       "gitmcp": {
+        "disabled": false,
         "type": "remote",
         "url": "https://gitmcp.io/docs"
       }
@@ -162,6 +149,36 @@
       "action": "subagent",
       "resource": "*",
       "effect": "ask"
+    },
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/.bun/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/.cargo/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/go/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/.cache/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "/tmp/opencode/*",
+      "effect": "allow"
     },
     {
       "action": "shell",
@@ -237,6 +254,16 @@
       "action": "shell",
       "resource": "sort *",
       "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "sort * -o *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "sort -o *",
+      "effect": "deny"
     },
     {
       "action": "shell",
@@ -320,6 +347,36 @@
     },
     {
       "action": "shell",
+      "resource": "rg * --pre *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rg --pre *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rg * --pre-global *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rg --pre-global *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rg * --pre=*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rg --pre=*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
       "resource": "ag *",
       "effect": "allow"
     },
@@ -331,7 +388,7 @@
     {
       "action": "shell",
       "resource": "fd *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
@@ -436,7 +493,7 @@
     {
       "action": "shell",
       "resource": "tar -tf *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
@@ -526,7 +583,7 @@
     {
       "action": "shell",
       "resource": "git bisect *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
@@ -641,7 +698,7 @@
     {
       "action": "shell",
       "resource": "gh api *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
@@ -666,11 +723,6 @@
     {
       "action": "shell",
       "resource": "printenv *",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "* .env",
       "effect": "deny"
     },
     {
@@ -731,11 +783,6 @@
     {
       "action": "shell",
       "resource": "* service-account*.json",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "* .ssh/id_*",
       "effect": "deny"
     },
     {
@@ -965,17 +1012,37 @@
     },
     {
       "action": "shell",
-      "resource": "*.env",
+      "resource": "*.npmrc",
       "effect": "deny"
     },
     {
       "action": "shell",
-      "resource": "*.ssh/id_*",
+      "resource": "*.netrc",
       "effect": "deny"
     },
     {
       "action": "shell",
-      "resource": "*aws/credentials",
+      "resource": "*.kube/config",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.pgpass",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.git-credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*credentials.json",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.cargo/credentials",
       "effect": "deny"
     },
     {
@@ -1354,6 +1421,91 @@
       "effect": "deny"
     },
     {
+      "action": "shell",
+      "resource": "*>*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "*x-session-cookies*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* x-session-cookies*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*/.ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*aws/credentials*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.netrc*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.pgpass*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.git-credentials*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*credentials.json*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.kube/config*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*docker/config.json*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*service-account*.json*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.env *",
+      "effect": "deny"
+    },
+    {
       "action": "read",
       "resource": "*",
       "effect": "allow"
@@ -1401,6 +1553,11 @@
     {
       "action": "read",
       "resource": "credentials.json",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*x-session-cookies*",
       "effect": "deny"
     },
     {
@@ -1509,34 +1666,49 @@
       "effect": "deny"
     },
     {
-      "action": "external_directory",
-      "resource": "*",
+      "action": "read",
+      "resource": "**/credentials.json",
       "effect": "deny"
     },
     {
-      "action": "external_directory",
-      "resource": "~/.bun/*",
-      "effect": "allow"
+      "action": "read",
+      "resource": "**/service-account*.json",
+      "effect": "deny"
     },
     {
-      "action": "external_directory",
-      "resource": "~/.cargo/*",
-      "effect": "allow"
+      "action": "read",
+      "resource": "**/.aws/credentials",
+      "effect": "deny"
     },
     {
-      "action": "external_directory",
-      "resource": "~/go/*",
-      "effect": "allow"
+      "action": "read",
+      "resource": "**/.kube/config",
+      "effect": "deny"
     },
     {
-      "action": "external_directory",
-      "resource": "~/.cache/*",
-      "effect": "allow"
+      "action": "read",
+      "resource": "**/.netrc",
+      "effect": "deny"
     },
     {
-      "action": "external_directory",
-      "resource": "/tmp/opencode/*",
-      "effect": "allow"
+      "action": "read",
+      "resource": "**/.pgpass",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/.git-credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/.cargo/credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*docker/config.json*",
+      "effect": "deny"
     }
   ]
 }

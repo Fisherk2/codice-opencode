@@ -7,7 +7,7 @@ DEST="${1:-tests/fixtures/bench/project}"
 mkdir -p "$DEST"
 
 hyperfine --warmup 1 --runs 5 --command-name "project-install" \
-    "bun run src/cli/main.ts --mode project --dest $DEST --force"
+    "bun run src/cli/main.ts --project --dest $DEST --force"
 
 echo ""
 echo "SC-9 assertion: Project Install should complete in < 5 seconds (median)."

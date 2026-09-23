@@ -20,7 +20,7 @@ just check        # Lint + format + typecheck
 just test         # All unit + integration tests
 ```
 
-- **Prerequisites:** [Bun](https://bun.sh) >= 1.1.x, [Just](https://github.com/casey/just)
+- **Prerequisites:** [Bun](https://bun.sh) >= 1.3 (CI pins 1.3 — use it to reproduce CI locally), [Just](https://github.com/casey/just)
 - **Architecture:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Clean Architecture, dependency rule, ADRs
 - **Code style:** [docs/CODE_STYLE.md](docs/CODE_STYLE.md) — Strict TypeScript, naming conventions, error handling
 
@@ -36,15 +36,25 @@ just test         # All unit + integration tests
    git checkout -b feat/my-feature develop
    ```
 3. **Write code**, following [code style](docs/CODE_STYLE.md). Write or update tests.
-4. **Run the full check suite** locally:
+4. **Run the full gate ladder** locally (same commands CI enforces):
    ```bash
-   just check
-   just test
+   just check            # biome ci + tsc --noEmit — 0 errors
+   just test             # unit + integration — 0 failures
+   just coverage-check   # 95% global + src/cli/main.ts gates
+   just test-e2e         # CLI E2E suite — 31/31 scenarios
    ```
 5. **Commit** using [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `style:`, `perf:`).
 6. **Push and open a PR** against `develop` with a descriptive title referencing related issues.
 7. **Ensure CI passes** on all platforms (Linux, macOS, Windows). A failure on any platform blocks the merge.
 8. **Squash merge** into `develop` after review.
+
+### Commit Trailer: Co-Authored-By
+
+Every commit authored by an AI agent ends with a `Co-Authored-By` trailer naming the **primary agent** that ran the session — attribution lives in the trailer, never in the subject line:
+
+```
+Co-Authored-By: Huitzilopochtli <dev@fisherk2.com>
+```
 
 ### Testing
 
@@ -60,7 +70,7 @@ just test-watch     # Watch mode for development
 just test-coverage  # With coverage report
 ```
 
-- **Unit tests:** > 90% coverage target. Domain layer only.
+- **Coverage gate:** `just coverage-check` enforces **95% global** plus a **95% sub-gate on `src/cli/main.ts`** (single source: `scripts/coverage-thresholds.json`; measured 96.39% at v2.1.3). The gate covers all production `src/`, not just the domain layer.
 - **Integration tests:** Adapters with real temp dirs. No live network calls.
 - **E2E tests:** `bun run src/cli/main.ts`, isolated dirs, 31 scenarios. Bash scripts (Linux CI only).
 - **Pack flags:** `--packs <list>` (comma-separated), `--packs-all` (all 8 selectable), `--update-add-packs <list>` (add packs during update).
@@ -69,7 +79,7 @@ just test-coverage  # With coverage report
 
 ## Git Workflow
 
-This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release), with two distinct flows:
+This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release), with three distinct flows:
 
 ### Branch Naming & Rules
 
@@ -81,6 +91,7 @@ This project follows a **3-stage pipeline**: `develop` (integration) → `main` 
 | `docs/` | Documentation | `develop` | `develop` | `docs/api-guide` |
 | `refactor/` | Restructuring | `develop` | `develop` | `refactor/merge-engine` |
 | `hotfix/` | Emergency fixes | `main` | `main` | `hotfix/critical-security` |
+| `release/` | Stable release preparation | `develop` | `main` | `release/2.1.3` |
 
 ### Critical Rules
 
@@ -132,6 +143,26 @@ develop ──●──────────────●────  (syn
 3. Tag for release
 4. Post-release: sync `develop` ← `main`
 
+### Release Flow (`release/`)
+
+```
+develop ──●───────────────●──  (integration)
+           ╲             ╱
+            ●─────●─────●  ← stabilization → release/X.Y.Z
+                          │
+main ──────●──────────────●──  (production)
+           │                    │
+           └── PR release→main ─┘  (squash merge)
+                                     │
+tags                                 ● vX.Y.Z
+```
+
+1. Branch from `develop`: `git checkout -b release/X.Y.Z develop`
+2. Stabilization fixes land on the branch (PRs to `release/X.Y.Z` or direct commits — it is a short-lived, unprotected branch)
+3. When CI is green: PR `release/X.Y.Z` → `main` → squash merge
+4. Tag for release
+5. Post-release: sync `develop` ← `main`
+
 ### Why Clean Merges
 
 With a single contributor, every PR from `develop` → `main` should be a clean fast-forward merge. If merge conflicts occur, the cause is one of:
@@ -157,8 +188,10 @@ just verify-release X.Y.Z-beta.1             # npm view + CLI --help, retried 5�
 just rollback vX.Y.Z-bad <good> <dist_tag>   # guarded rollback (DRY_RUN=1 to preview)
 ```
 
-The full checklist, `--tag` semantics (a prerelease never overwrites `latest`) and the
-bad-publish rollback procedure (triggers + RTO) live in [docs/RELEASE.md](docs/RELEASE.md).
+`just tag` validates the tag format (`vX.Y.Z`, `vX.Y.Z-beta.N` or `vX.Y.Z-rc.N`), a
+prerelease tag never overwrites `latest` (it publishes under its own `beta`/`rc` dist-tag),
+and `just rollback` is the guarded bad-publish recovery. Release-phase status and final gate
+metrics are tracked in [docs/WORKFLOW.md](docs/WORKFLOW.md).
 
 ---
 
@@ -172,13 +205,13 @@ Códice installs an OpenCode workspace template organized into three file catego
 2. Update the agent catalog at the [GitHub Wiki → Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents).
 3. Restart your OpenCode session.
 
-**Primary agents** additionally require: SDD plugin hooks and orchestration patterns.
+**Primary agents** additionally require: orchestration patterns.
 
 ### Add a New Skill
 
 1. Create `template/obligatorio/core/skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description`).
 2. Include actionable numbered steps, verification criteria, and exit conditions.
-3. (Optional) Add extended reference material in `skills/<skill-name>/references/` — these become available to agents via the `reference` section in `opencode.json`.
+3. (Optional) Add extended reference material in `skills/<skill-name>/references/` — these become available to agents via the `references` section in `opencode.json`.
 4. Add to the [GitHub Wiki → Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills).
 5. Restart your OpenCode session.
 
@@ -225,10 +258,10 @@ See [docs/wiki-source/README.md](docs/wiki-source/README.md) for the full proced
 
 - **npm Publishing:** `@fisherk2-dev/codice` with dist-tags `latest`, `beta`, `rc`. See [docs/TRD.md](docs/TRD.md).
 - **CI/CD Pipeline:** `ci.yml` (quality matrix) + `release.yml` (tag → npm publish). See [.github/workflows/](.github/workflows/).
-- **Release Runbook:** tag → verify CI → `just verify-release` → sync develop. Full checklist and rollback: [docs/RELEASE.md](docs/RELEASE.md).
+- **Release Runbook:** tag → verify CI → `just verify-release` → sync develop. Commands and guarded rollback: see the [Release](#release) section above; phase status in [docs/WORKFLOW.md](docs/WORKFLOW.md).
 - **Reporting Issues:** Include expected vs actual behavior, steps to reproduce, environment, and verbose logs.
 - **GitHub Wiki:** [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents), [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills), [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands), [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers), [Configuration](https://github.com/fisherk2/codice-opencode/wiki/Configuration).
 
 ---
 
-*Last revised: 2026-08-19*
+*Last revised: 2026-09-22*
