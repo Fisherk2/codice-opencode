@@ -201,7 +201,13 @@ describe("coverage-check.sh — fail-closed threshold resolution", () => {
 		expectCoveragePhaseIntercepted(result);
 	});
 
-	it("(e) exits 1 when jq is absent from PATH", () => {
+	// POSIX-only: same limitation as case (d) in check-ts-version.test.ts — this
+	// case isolates the script from jq by replacing PATH with a minimal symlink
+	// farm. MSYS cannot spawn a native symlink to a PE binary, so the script aborts
+	// computing SCRIPT_DIR before reaching the jq check. There is no portable
+	// alternative: bash skips directories and non-executable files when resolving a
+	// command, so jq cannot be shadowed while keeping the real PATH.
+	it.skipIf(process.platform === "win32")("(e) exits 1 when jq is absent from PATH", () => {
 		const fx = makeFixture('{"global": 95}');
 
 		const result = runScript(fx, [], makePathWithout(fx.root, ["dirname", "date"]));

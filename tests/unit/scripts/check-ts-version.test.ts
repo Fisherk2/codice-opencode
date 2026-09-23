@@ -120,15 +120,23 @@ describe("check-ts-version.sh — advisory drift warning", () => {
 		expectFakeBunNotInvoked(result);
 	});
 
-	it("(d) exits 0 silently when jq is absent from PATH", () => {
-		const fx = makeFixture();
+	// POSIX-only: this case isolates the script from jq by replacing PATH with a
+	// minimal symlink farm. MSYS cannot spawn a native symlink to a PE binary, so
+	// the script aborts computing SCRIPT_DIR before reaching the jq check. There is
+	// no portable alternative: bash skips directories and non-executable files when
+	// resolving a command, so jq cannot be shadowed while keeping the real PATH.
+	it.skipIf(process.platform === "win32")(
+		"(d) exits 0 silently when jq is absent from PATH",
+		() => {
+			const fx = makeFixture();
 
-		const result = runScript(fx, [], makePathWithout(fx.root, ["dirname"]));
+			const result = runScript(fx, [], makePathWithout(fx.root, ["dirname"]));
 
-		expect(result.status).toBe(0);
-		expect(result.stderr).not.toContain("WARNING");
-		expectFakeBunNotInvoked(result);
-	});
+			expect(result.status).toBe(0);
+			expect(result.stderr).not.toContain("WARNING");
+			expectFakeBunNotInvoked(result);
+		},
+	);
 
 	it("(e) exits 0 silently when the compiler version cannot be resolved", () => {
 		const fx = makeFixture({ bunVersion: null });
