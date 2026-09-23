@@ -191,7 +191,7 @@ Códice presents an interactive menu with three installation modes:
 | **Project Install** | Selectively merges files using classification rules | Adopting the template into an existing project |
 | **Update Workspace** | Updates only Obligatorio + Estándar files after a version check | Keeping an existing v2.0+ installation current |
 
-> **Version-gated updates:** Update Workspace only runs on v2.1+ installations. v1.x installations must reinstall with Clean or Project Install; <1.2.0 installs receive a cleanup suggestion. See [docs/MIGRATION.md](docs/MIGRATION.md) for the upgrade guide.
+> **Version-gated updates:** Update Workspace only runs on v2.0+ installations. v1.x installations must reinstall with Clean or Project Install; <1.2.0 installs receive a cleanup suggestion. See [docs/MIGRATION.md](docs/MIGRATION.md) for the upgrade guide.
 
 ```bash
 # Interactive menu (default):
@@ -355,7 +355,7 @@ flowchart LR
 | Audit performance (optional) | `/webperf` | tezcatlipoca | Delegates to web-performance-auditor to audit Core Web Vitals, GPU animations, layout shifts, CSS efficiency. Applies corrections if confirmed, then re-verifies | observability-and-instrumentation, browser-testing-with-devtools |
 | Simplify | `/code-simplify` | tezcatlipoca | Delegates review to specialists, scans for simplification opportunities (nesting, long functions, ternaries, dead code). Applies incrementally with tests, then re-verifies | code-simplification, refactoring-patterns, solid |
 | Review | `/review` | tezcatlipoca | 5-axis audit: Correctness, Readability, Architecture, Security, Performance. Incorporates /webperf findings. Findings categorized Critical/Important/Suggestion. Delegates corrections to specialists if confirmed | code-review-and-quality, solid, security-and-hardening, performance-optimization |
-| Ship | `/ship` | tezcatlipoca | Parallel fan-out: code-reviewer, security-auditor, test-engineer, dependency-manager, ±accessibility-tester. Produces GO/NO-GO decision + rollback plan. Applies corrections if confirmed | shipping-and-launch, crafting-effective-readmes, architecture-diagrams, bash-defensive-patterns |
+| Ship | `/ship` | tezcatlipoca | Parallel fan-out: code-reviewer, security-auditor, test-engineer, dependency-manager, ±accessibility-tester. Produces GO/NO-GO decision + rollback plan. Applies corrections if confirmed, then stops only when the code is ready for deployment | shipping-and-launch, crafting-effective-readmes, architecture-diagrams, bash-defensive-patterns |
 | Sync workspace | `/sync` | mictlantecuhtli | Bidirectional git sync with 4 modes (full-sync, incremental-sync, dry-run, conflict-resolution) and 4 conflict resolution strategies (NEWER_WINS, GITHUB_WINS, LOCAL_WINS, INTELLIGENT_MERGE). Pre-flight checks git + remote. Wildcard — can be invoked at any SDD phase | git-workflow-and-versioning, interview-me, observability-and-instrumentation |
 | Migrate stack | `/migrate` | quetzalcoatl | Detects current tech stack from lock files, evaluates breaking changes between versions, generates a structured migration plan in `docs/MIGRATION.md` with phases, steps, and rollback procedures. Updates `WORKFLOW.md` and `specs/` automatically | dependency-audit, interview-me, deprecation-and-migration, test-driven-development, changelog-generate |
 | Analyze architecture | `/analyze` | tezcatlipoca | 8-dimension analysis (system structure, design patterns, dependency architecture, data flow, scalability, security, testability, documentation). Generates prioritized `docs/TECH_DEBT.md` with Critical/High/Medium/Low findings. Findings feed `/diagnosis` | clean-ddd-hexagonal, design-patterns, dependency-audit, observability-and-instrumentation, performance-analysis, security-and-hardening, test-driven-development, documentation-and-adrs, code-review-and-quality |
@@ -381,7 +381,7 @@ flowchart LR
 
 This project would not exist without the work of:
 
-- **[awesome-opencode](https://github.com/weisser-dev/awesome-opencode)** — Source of inspiration for implementing new skills, the 90+ specialized agents, and OpenCode documentation.
+- **[awesome-opencode](https://github.com/weisser-dev/awesome-opencode)** — Source of inspiration for implementing new skills and OpenCode documentation. Their upstream catalog lists 90+ specialized agents; Códice ships its own agent set as 10 packs under `template/obligatorio/packs/`.
 - **[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)** — Base of this project. This repository is a fork of that work, which laid the foundations of the AI agent skill ecosystem.
 - **[oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim/)** — Direct inspiration for the multi-main-agent architecture and Mexican orchestration system design.
 - **[msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)** — Source of the new subagents added to the pack system. This repository provided the agent definitions that were adapted and integrated into Códice's 10-pack architecture.

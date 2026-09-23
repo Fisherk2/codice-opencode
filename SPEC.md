@@ -3,10 +3,12 @@
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v2.1.3-beta.1
+**Current Version:** v2.1.3
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
-> **v2.1.2 Released** (2026-08-28): Hotfix — explicit docs-writer/technical-writer delegation in docs-update command; tech debt reorganization (v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4).
+> **v2.1.3** (2026-09-22): FEV-29 ✅ + FEV-30 ✅ — template migrated to the native OpenCode V2 `permissions:` format (349 agent files; legacy `tools:` frontmatter rejected) and the SDD plugin fully removed from the template (destructive-command blocking now lives in the `permissions.bash` deny-lists); runtime "Opencode Legacy" banner (`src/application/legacyBanner.ts`) reads `.codice-version` offline and warns installs ≤ 2.1.2. 1941 tests, 31/31 E2E, coverage 96.30% total / 98.95% `src/cli/main.ts`.
+>
+> **Previous: v2.1.2 Released** (2026-08-28): Hotfix — explicit docs-writer/technical-writer delegation in docs-update command; tech debt reorganization (v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4).
 >
 > **Previous: v2.1.1** (2026-08-25): FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅ — Bug #79, shell injection fix (TD-V2-70), manifest corrections (TD-V2-90/91), FileMergeEngine refresh (TD-V2-93), plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup (TD-V2-51), CI SHA-pins Node 24 (TD-V2-7), VersionComparator cache (TD-V2-61). Code review hardened (1 Critical + 4 Important + 3 Suggestions). 1935 tests, 31/31 E2E, coverage ≥95% production src/.
 
@@ -39,8 +41,8 @@ Resolved decisions are documented in the respective ADRs (see [specs/adr/](specs
 
 - **AGENTS.md** — Strict AI agent rules, project context, and documentation index.
 - **docs/WORKFLOW.md** — Implementation phases, task breakdown, and formal technical review gates.
-- **docs/PRD.md** — Product Requirements Document (if exists).
-- **docs/TRD.md** — Technical Requirements Document (if exists).
+- **docs/PRD.md** — Product Requirements Document.
+- **docs/TRD.md** — Technical Requirements Document.
 - **Reference Repository:** `https://github.com/weisser-dev/awesome-opencode` — Similar installation system for UX and flow inspiration.
 
 *End of Spec*
