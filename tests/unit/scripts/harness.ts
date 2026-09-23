@@ -23,7 +23,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, delimiter, join } from "node:path";
 
 export const REPO_ROOT = join(import.meta.dir, "..", "..", "..");
 
@@ -83,7 +83,7 @@ export function createScriptFixture(options: FixtureOptions): ScriptFixture {
 	mkdirSync(scriptsDir, { recursive: true });
 	mkdirSync(binDir, { recursive: true });
 
-	const script = join(scriptsDir, realScript.split("/").pop() ?? realScript);
+	const script = join(scriptsDir, basename(realScript));
 	copyFileSync(realScript, script);
 
 	// The marker is written before anything else so a test can tell "the
@@ -115,7 +115,7 @@ export function runScript(
 			...process.env,
 			...fx.env,
 			FAKE_BUN_MARKER: markerPath,
-			PATH: pathOverride ?? `${fx.binDir}:${process.env.PATH ?? ""}`,
+			PATH: pathOverride ?? `${fx.binDir}${delimiter}${process.env.PATH ?? ""}`,
 		},
 		stdout: "pipe",
 		stderr: "pipe",
@@ -150,7 +150,9 @@ export function makePathWithout(root: string, cmds: readonly string[]): string {
 	for (const cmd of cmds) {
 		const real = Bun.which(cmd);
 		expect(real, `required command not found on PATH: ${cmd}`).toBeDefined();
-		symlinkSync(real as string, join(dir, cmd));
+		// `type` is required on Windows (ignored on POSIX): "file" matches the
+		// executable we link to.
+		symlinkSync(real as string, join(dir, cmd), "file");
 	}
 	return dir;
 }
