@@ -227,6 +227,16 @@
     },
     {
       "action": "shell",
+      "resource": "sort * -o *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "sort -o *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
       "resource": "uniq *",
       "effect": "allow"
     },
@@ -997,6 +1007,46 @@
     },
     {
       "action": "shell",
+      "resource": "*.npmrc",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.netrc",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.kube/config",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*docker/config.json*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.pgpass",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.git-credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*credentials.json",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.cargo/credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
       "resource": "git push -f *",
       "effect": "deny"
     },
@@ -1538,6 +1588,51 @@
     {
       "action": "read",
       "resource": "credentials.json*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/credentials.json",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/service-account*.json",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/.aws/credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/.kube/config",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/.netrc",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/.pgpass",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/.git-credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "**/.cargo/credentials",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*docker/config.json*",
       "effect": "deny"
     },
     {

@@ -467,3 +467,67 @@ describe("opencode.json — F-H1: exec-capable search commands gated (2.1.3)", (
 		expect(effect("shell", "rg pattern file --pre=cat"), "joined <flag> args").not.toBe("allow");
 	});
 });
+
+describe("opencode.json — F-H2: unanchored secret filenames across subdir paths (2.1.3)", () => {
+	const permissions = () => loadConfig().permissions ?? [];
+	const effect = (action: string, input: string) => resolveEffect(permissions(), action, input);
+
+	test("read inside a subdirectory denies every protected secret filename", () => {
+		const SECRET_READS = [
+			"a/.npmrc",
+			"sub/.netrc",
+			"a/b/.kube/config",
+			"a/.docker/docker/config.json",
+			"dockerd/docker/config.json",
+			"a/.pgpass",
+			"a/.git-credentials",
+			"sub/credentials.json",
+			"a/.cargo/credentials",
+			// already-anchored pins: keep holding under the resolver
+			"a/.ssh/id_rsa",
+			"a/.aws/credentials",
+			"a/priv.pem",
+			"a/deep/x/service-account.json",
+		];
+		for (const target of SECRET_READS) {
+			expect(effect("read", target), `read ${target}`).toBe("deny");
+		}
+	});
+
+	test("shell access to protected secret filenames in subdirs is not allow", () => {
+		const SECRET_SHELL = [
+			"cat a/.npmrc",
+			"cat a/.netrc",
+			"cat a/b/.kube/config",
+			"cat a/.docker/config.json",
+			"cat dockerd/docker/config.json",
+			"strings a/.pgpass",
+			"cat a/.git-credentials",
+			"cat sub/credentials.json",
+			"cat a/.cargo/credentials",
+			"cat a/.aws/credentials",
+		];
+		for (const stmt of SECRET_SHELL) {
+			expect(effect("shell", stmt), stmt).not.toBe("allow");
+		}
+	});
+
+	test("negative controls: benign filenames with related names stay free", () => {
+		// deliberate controls — verified to resolve allow BEFORE this change
+		expect(effect("read", "a/report.netrc.bak")).toBe("allow");
+		expect(effect("read", "a/config.json")).toBe("allow");
+		expect(effect("shell", "cat README.md")).toBe("allow");
+	});
+});
+
+describe("opencode.json — sort -o overwrite gate (2.1.3)", () => {
+	const permissions = () => loadConfig().permissions ?? [];
+	const effect = (action: string, input: string) => resolveEffect(permissions(), action, input);
+
+	test("sort with -o output overwrite resolves deny, plain sort stays allow", () => {
+		expect(effect("shell", "sort in.txt -o out.txt")).toBe("deny");
+		expect(effect("shell", "sort -o out.txt in.txt")).toBe("deny");
+		// negative control: sort without -o still allow
+		expect(effect("shell", "sort data.txt")).toBe("allow");
+	});
+});
