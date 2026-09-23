@@ -533,6 +533,34 @@ describe("opencode.json — sort -o overwrite gate (2.1.3)", () => {
 	});
 });
 
+describe("opencode.json — .env.example carve-back (onboarding flows stay allowed) (2.1.3)", () => {
+	const permissions = () => loadConfig().permissions ?? [];
+	const effect = (action: string, input: string) => resolveEffect(permissions(), action, input);
+
+	test("plain reads of .env.example resolve allow past the reordered .env deny family", () => {
+		expect(effect("read", ".env.example")).toBe("allow");
+		// subdir variant: read `*.env.example` allow outranks `*.env.*` deny (later rule)
+		expect(effect("read", "docs/examples/app.env.example")).toBe("allow");
+	});
+
+	test("plain shell statements on .env.example resolve allow (no redirect, denies don't match)", () => {
+		// `cat *`/`grep *` allows + `* .env.example` allow (745-rating) outrank the
+		// `.env` denies: `*.env` is $-anchored (no match), `*.env *` needs literal
+		// ".env " with trailing space (absent), `*.env.*` is read-action only.
+		expect(effect("shell", "cat .env.example")).toBe("allow");
+		expect(effect("shell", "grep TOKEN .env.example")).toBe("allow");
+	});
+
+	test("redirected .env.example statements hit the *> gate (ask, conservative)", () => {
+		expect(effect("shell", "cat .env.example > README.md")).toBe("ask");
+	});
+
+	test("negative controls: real .env files stay denied", () => {
+		expect(effect("read", "docs/app.env")).toBe("deny");
+		expect(effect("shell", "cat docs/app.env > x")).toBe("deny");
+	});
+});
+
 describe("opencode.json — F-M1: redirect gate cannot down-grade secret denies (2.1.3)", () => {
 	const permissions = () => loadConfig().permissions ?? [];
 	const effect = (action: string, input: string) => resolveEffect(permissions(), action, input);
