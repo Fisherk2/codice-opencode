@@ -6,7 +6,7 @@
 **Current Version:** v2.1.3
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
-> **v2.1.3** (2026-09-22): FEV-29 ✅ + FEV-30 ✅ — template migrated to the native OpenCode V2 `permissions:` format (349 agent files; legacy `tools:` frontmatter rejected) and the SDD plugin fully removed from the template (destructive-command blocking now lives in the `permissions.bash` deny-lists); runtime "Opencode Legacy" banner (`src/application/legacyBanner.ts`) reads `.codice-version` offline and warns installs ≤ 2.1.2. 1941 tests, 31/31 E2E, coverage 96.30% total / 98.95% `src/cli/main.ts`.
+> **v2.1.3** (2026-09-22): FEV-29 ✅ + FEV-30 ✅ — template migrated to the native OpenCode V2 `permissions:` format (349 agent files; legacy `tools:` frontmatter rejected) and the SDD plugin fully removed from the template (destructive-command blocking now lives in the `permissions.bash` deny-lists); runtime "Opencode Legacy" banner (`src/application/legacyBanner.ts`) reads `.codice-version` offline and warns installs ≤ 2.1.2. 1959 tests, 31/31 E2E, coverage 96.39% total / 98.95% `src/cli/main.ts`.
 >
 > **Previous: v2.1.2 Released** (2026-08-28): Hotfix — explicit docs-writer/technical-writer delegation in docs-update command; tech debt reorganization (v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4).
 >

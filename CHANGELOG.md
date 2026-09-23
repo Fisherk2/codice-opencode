@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.3] - 2026-09-22
 
-Primera release estable de la línea nativa V2. Consolida la migración FEV-29/30 publicada en `2.1.3-beta.1` y todo el trabajo posterior: avisos de upgrade para instalaciones legacy, banner de deprecación single-source, endurecimiento fail-closed del gate de cobertura e infraestructura de tests formalizada. Métricas finales: 1941 tests (4354 expect()), 31/31 e2e, cobertura 96.30% total / 98.95% en `src/cli/main.ts`.
+Primera release estable de la línea nativa V2. Consolida la migración FEV-29/30 publicada en `2.1.3-beta.1` y todo el trabajo posterior: avisos de upgrade para instalaciones legacy, banner de deprecación single-source, endurecimiento fail-closed del gate de cobertura e infraestructura de tests formalizada. Métricas finales: 1959 tests (4734 expect()), 31/31 e2e, cobertura 96.39% total / 98.95% en `src/cli/main.ts`.
 
 ### Added
 
@@ -47,6 +47,7 @@ Primera release estable de la línea nativa V2. Consolida la migración FEV-29/3
 - **Validación de charset en `installedPacks` de `WorkspaceVersion.fromJSON`**: las entradas que no son strings se rechazan en la deserialización en lugar de propagarse al estado del workspace.
 - **Estabilización del stager/merge (review-round post-beta)**: el stager no confirma ningún fichero cuyo backup haya fallado (fail-early); el rollback cubre también los ficheros nuevos ya promovidos; el área de staging se endurece frente a symlinks pre-creados; los errores de planificación del merge se mapean a `MergeError` con limpieza del staging.
 - **Eventos postInstall condicionales**: los eventos de progreso reflejan resultados reales, no intención.
+- **Cross-platform bash test harness**: `tests/unit/scripts/harness.ts` hardcoded POSIX separators (`split("/")`) and a `:`-delimited `PATH`, which made 27 tests fail under `quality (windows-latest)` on the release PR's first Windows run. Test infrastructure only — installer behavior is unchanged.
 
 ### Removed
 

@@ -70,7 +70,7 @@ just test-watch     # Watch mode for development
 just test-coverage  # With coverage report
 ```
 
-- **Coverage gate:** `just coverage-check` enforces **95% global** plus a **95% sub-gate on `src/cli/main.ts`** (single source: `scripts/coverage-thresholds.json`; measured 96.30% at v2.1.3). The gate covers all production `src/`, not just the domain layer.
+- **Coverage gate:** `just coverage-check` enforces **95% global** plus a **95% sub-gate on `src/cli/main.ts`** (single source: `scripts/coverage-thresholds.json`; measured 96.39% at v2.1.3). The gate covers all production `src/`, not just the domain layer.
 - **Integration tests:** Adapters with real temp dirs. No live network calls.
 - **E2E tests:** `bun run src/cli/main.ts`, isolated dirs, 31 scenarios. Bash scripts (Linux CI only).
 - **Pack flags:** `--packs <list>` (comma-separated), `--packs-all` (all 8 selectable), `--update-add-packs <list>` (add packs during update).
