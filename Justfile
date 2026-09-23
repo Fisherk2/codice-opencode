@@ -77,29 +77,29 @@ bench:
         --runs 5 \
         --export-json tests/fixtures/bench/clean-install.json \
         --command-name "clean-install" \
-        "bun run src/cli/main.ts --mode clean --dest tests/fixtures/bench/clean --force"
+        "bun run src/cli/main.ts --clean --dest tests/fixtures/bench/clean --force"
     echo "Benchmarking Project Install..."
     hyperfine \
         --warmup 1 \
         --runs 5 \
         --export-json tests/fixtures/bench/project-install.json \
         --command-name "project-install" \
-        "bun run src/cli/main.ts --mode project --dest tests/fixtures/bench/project --force"
+        "bun run src/cli/main.ts --project --dest tests/fixtures/bench/project --force"
     echo "Benchmarking Update Workspace..."
     hyperfine \
         --warmup 1 \
         --runs 5 \
         --export-json tests/fixtures/bench/update-workspace.json \
         --command-name "update-workspace" \
-        "bun run src/cli/main.ts --mode update --dest tests/fixtures/bench/update --force"
+        "bun run src/cli/main.ts --update --dest tests/fixtures/bench/update --force"
 
 # ─── Release ───────────────────────────────────────────────────────────────────
 # Tag-driven releases. Pushing a `v*` tag triggers .github/workflows/release.yml.
-# Full checklist, dist-tag semantics and rollback runbook: docs/RELEASE.md.
+# Full checklist, dist-tag semantics and rollback runbook: CONTRIBUTING.md ("Release" section).
 
 # Create an annotated release tag after validating format, package.json alignment
 # and local/remote uniqueness. Annotation only — never signed (gpg may be absent).
-# Does NOT push; the next step is printed. See docs/RELEASE.md.
+# Does NOT push; the next step is printed. See CONTRIBUTING.md ("Release" section).
 # Usage: just tag v2.1.3-beta.1
 tag version:
     #!/usr/bin/env bash
@@ -162,7 +162,7 @@ release version:
         fi
     fi
     git push origin "$TAG"
-    echo "✔ Pushed $TAG. Watch the run with: gh run watch   (see docs/RELEASE.md)"
+    echo "✔ Pushed $TAG. Watch the run with: gh run watch   (see the 'Release' section of CONTRIBUTING.md)"
 
 # Verify a published release is live on npm and runnable. Retries 5×15s to ride
 # out registry propagation lag after release.yml publishes.
@@ -251,4 +251,4 @@ rollback version prev_version dist_tag:
     echo ""
     echo "✔ Rollback steps complete."
     echo "Note: never rely on npm unpublish (>72h restricted); deprecate + dist-tag is the"
-    echo "      supported path. See docs/RELEASE.md for triggers, RTO and --cleanup-tag."
+    echo "      supported path. See the 'Release' section of CONTRIBUTING.md for the rollback procedure."

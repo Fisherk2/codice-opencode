@@ -7,7 +7,7 @@ DEST="${1:-tests/fixtures/bench/update}"
 mkdir -p "$DEST"
 
 hyperfine --warmup 1 --runs 5 --command-name "update-workspace" \
-    "bun run src/cli/main.ts --mode update --dest $DEST --force"
+    "bun run src/cli/main.ts --update --dest $DEST --force"
 
 echo ""
 echo "SC-9 assertion: Update Workspace should complete in < 5 seconds (median)."
