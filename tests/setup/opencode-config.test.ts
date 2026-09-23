@@ -531,3 +531,27 @@ describe("opencode.json — sort -o overwrite gate (2.1.3)", () => {
 		expect(effect("shell", "sort data.txt")).toBe("allow");
 	});
 });
+
+describe("opencode.json — F-M1: redirect gate cannot down-grade secret denies (2.1.3)", () => {
+	const permissions = () => loadConfig().permissions ?? [];
+	const effect = (action: string, input: string) => resolveEffect(permissions(), action, input);
+
+	test("cookie read with terminal redirect resolves deny", () => {
+		expect(effect("shell", "cat .opencode/x-session-cookies > leak.txt")).toBe("deny");
+		expect(effect("shell", "cat ~/.x-session-cookies > leak.txt")).toBe("deny");
+	});
+
+	test("re-anchored denies after *>: secret reads with redirect never allow", () => {
+		expect(effect("shell", "grep x src/.env > out.txt")).toBe("deny");
+		expect(effect("shell", "cat ~/.ssh/id_rsa > keycopy.txt")).toBe("deny");
+		expect(effect("shell", "cat ~/.aws/credentials > leak.txt")).toBe("deny");
+	});
+
+	test("redirect gate stays functional for non-denied targets (ask)", () => {
+		// The terminal *> rule still fires for plain writes — safety behavior
+		// unchanged (legacy F1 pin).
+		expect(effect("shell", "cat readme > copy.md")).toBe("ask");
+		expect(effect("shell", "rm -rf x > /dev/null")).toBe("ask");
+		expect(effect("shell", "grep pattern > findings.txt")).toBe("ask");
+	});
+});

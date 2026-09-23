@@ -1669,6 +1669,46 @@
       "action": "shell",
       "resource": "*>*",
       "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "*x-session-cookies*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* x-session-cookies*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.env *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*/.ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .ssh/id_*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*aws/credentials*",
+      "effect": "deny"
     }
   ]
 }
