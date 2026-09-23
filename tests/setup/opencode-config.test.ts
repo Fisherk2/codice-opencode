@@ -56,6 +56,28 @@ function rulesFor(action: string): PermissionRule[] {
 	return (loadConfig().permissions ?? []).filter((r) => r.action === action);
 }
 
+/** Replicates opencode's `Wildcard.match` (packages/opencode/src/util/wildcard.ts). */
+function wildcardMatch(str: string, pattern: string): boolean {
+	const value = str ? str.replaceAll("\\", "/") : str;
+	const source = pattern ? pattern.replaceAll("\\", "/") : pattern;
+	let escaped = source
+		.replace(/[.+^${}()|[\]\\]/g, "\\$&") // escape special regex chars
+		.replace(/\*/g, ".*") // * becomes .*
+		.replace(/\?/g, "."); // ? becomes .
+	if (escaped.endsWith(" .*")) {
+		escaped = escaped.slice(0, -3) + "( .*)?";
+	}
+	return new RegExp(`^${escaped}$`, "s").test(value);
+}
+
+/** Fidelity helper: resolves (action, full command/resource text) the way opencode does — last matching rule wins. */
+function resolveEffect(permissions: PermissionRule[], action: string, input: string): string {
+	const rule = [...permissions]
+		.reverse()
+		.find((r) => r.action === action && wildcardMatch(input, r.resource));
+	return rule?.effect ?? "allow";
+}
+
 /** Resolves the effective V2 outcome: last matching rule wins. */
 function lastEffect(action: string, resource: string): string | undefined {
 	const matches = rulesFor(action).filter((r) => r.resource === resource);
@@ -355,5 +377,62 @@ describe("opencode.json — Permission Bypass Hardening (post-SDD-removal)", () 
 		expect(lastEffect("read", ".ssh/id_*")).toBe("deny");
 		expect(lastEffect("read", "*.env.example")).toBe("allow");
 		expect(lastEffect("shell", "* .env.example")).toBe("allow");
+	});
+});
+
+describe("opencode.json — F1/F2: redirect rewrite & tar listing (faithful resolution)", () => {
+	// opencode passes the shell statement text EXACTLY as written (tree-sitter
+	// `redirected_statement` node text) through `Wildcard.match` with
+	// last-match-wins over the rule list. A policy that only allows a command
+	// by prefix therefore also allows rewriting ANY file after `>`, including
+	// self-escalation (`cat > opencode.json` rewrites the permission file
+	// itself) and appending to `~/.ssh/authorized_keys`. The only structural
+	// fix is a terminal ask rule matching any redirect.
+	const permissions = () => loadConfig().permissions ?? [];
+	const effect = (action: string, input: string) => resolveEffect(permissions(), action, input);
+
+	test("RED — portable-bypass: shell redirects currently resolve allow, not ask", () => {
+		expect(effect("shell", "cat /tmp/x > ~/.ssh/authorized_keys")).toBe("ask");
+		expect(effect("shell", "grep pattern > findings.txt")).toBe("ask");
+	});
+
+	test("redirect protection: every redirect request resolves ask", () => {
+		const REDIRECT_STATEMENTS = [
+			// self-escalation: rewrites the permission file itself
+			"cat > opencode.json",
+			"cat /tmp/x > ~/.ssh/authorized_keys",
+			"grep pattern > findings.txt",
+			"sort input.txt > output.txt",
+			// spacing variants the tree-sitter node text can carry
+			"cat x >y",
+			"cat x> y",
+			"cat x>y",
+			// append variant
+			"echo token >> ~/.bashrc",
+		];
+		for (const stmt of REDIRECT_STATEMENTS) {
+			expect(effect("shell", stmt), stmt).toBe("ask");
+		}
+	});
+
+	test("regression: plain reads stay allow without redirects", () => {
+		const PLAIN_READS = ["cat README.md", "rg foo .", "ls", "wc -l file.txt", "cat package.json"];
+		for (const stmt of PLAIN_READS) {
+			expect(effect("shell", stmt), stmt).toBe("allow");
+		}
+	});
+
+	test("F2: tar -tf listing resolves ask (--to-command is arbitrary exec)", () => {
+		expect(effect("shell", "tar -tf x.tar")).toBe("ask");
+	});
+
+	test("pre-existing mutation pins hold under the faithful resolver", () => {
+		expect(effect("shell", "git bisect run just check")).toBe("ask");
+		expect(effect("shell", "gh api --method DELETE repos/a/b")).toBe("ask");
+	});
+
+	test("pre-existing secret pins hold under the faithful resolver", () => {
+		expect(effect("read", ".opencode/x-session-cookies")).toBe("deny");
+		expect(effect("shell", "cat ~/.x-session-cookies")).toBe("deny");
 	});
 });

@@ -423,7 +423,7 @@
     {
       "action": "shell",
       "resource": "tar -tf *",
-      "effect": "allow"
+      "effect": "ask"
     },
     {
       "action": "shell",
@@ -1539,6 +1539,11 @@
       "action": "external_directory",
       "resource": "/tmp/opencode/*",
       "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "*>*",
+      "effect": "ask"
     }
   ]
 }
