@@ -742,21 +742,6 @@
     },
     {
       "action": "shell",
-      "resource": "*.env",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "* .env",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
-      "resource": "*.env *",
-      "effect": "deny"
-    },
-    {
-      "action": "shell",
       "resource": "* .env.example",
       "effect": "allow"
     },
@@ -1503,6 +1488,21 @@
     {
       "action": "shell",
       "resource": "*service-account*.json*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "* .env",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "*.env *",
       "effect": "deny"
     },
     {
