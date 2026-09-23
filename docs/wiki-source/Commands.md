@@ -174,48 +174,6 @@ The body contains numbered steps that the agent follows. Key patterns:
 - **Rules section**: Commands include a `## Rules` section listing constraints and restrictions.
 - **Suggested Next Step**: Every command ends with a `## Suggested Next Step` block that suggests the next command to run.
 
-### Example: `/spec`
-
-```markdown
----
-description: Init a new project — establish specs, documentation, and project conventions from scratch
-agent: quetzalcoatl
----
-
-## Pre-Flight: Detect Project State
-
-1. Read @AGENTS.md — real project-specific rules or placeholder?
-2. Read @SPEC.md — real content or missing?
-3. Scan @docs/ — real documentation or empty templates?
-4. Check @specs/ and @specs/adr/ — any existing modular files?
-
-## Phase 0: Clarify Intent
-
-If the user's request is vague, invoke @skills/interview-me/SKILL.md
-to extract intent before proceeding.
-
-## Phase 1: Refine Requirements
-
-Use the `question` tool to clarify interactively:
-1. Objective and target users
-2. Core features and acceptance criteria
-3. Tech stack preferences and constraints
-4. Boundaries
-
-## Phase 2: Generate Initial Documentation
-
-Invoke @skills/spec-driven-development/SKILL.md to scaffold...
-
-## Rules
-
-1. `/spec` is for projects in conception phase. For mature projects, redirect to `/evolve`.
-2. Never overwrite existing files without user confirmation.
-
-## Suggested Next Step
-
-> Your project specs are ready. Run `/plan` to create an execution plan, or run `/design` to establish the UI/UX design.
-```
-
 ## How to Add a New Command
 
 Adding a new slash command requires creating the command file and updating the orchestration documentation. Follow these steps:
