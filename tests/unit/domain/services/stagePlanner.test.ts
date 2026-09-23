@@ -750,6 +750,23 @@ describe("computeStagePlan — Update mode: tree diff edge cases", () => {
 		expect(result.total).toBe(3);
 	});
 
+	test("throws when a standard directory rule carries destPath", async () => {
+		// Invariant: standard rules never set destPath — only mandatory rules
+		// use it. A future change adding destPath must fail fast instead of
+		// silently tree-diffing the wrong destination directory.
+		const fs = createMockFs({ exists: new Map([["docs", true]]) });
+		const badRule: FileRule = {
+			path: "docs",
+			category: "standard",
+			isDirectory: true,
+			description: "Standard rule for docs",
+			destPath: "agents",
+		};
+		await expect(computeStagePlan(fs, [badRule], new Set(), true)).rejects.toThrow(
+			/Standard rule "docs" must not set destPath/,
+		);
+	});
+
 	// ---- assertNever compile-time guard ----
 
 	test("throws on unrecognized rule category (assertNever guard)", async () => {

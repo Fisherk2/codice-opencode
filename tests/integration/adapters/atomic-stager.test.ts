@@ -255,4 +255,41 @@ describe("AtomicStager", () => {
 		expect(await Bun.file(destFile).text()).toBe("OLD");
 		await fs.unlink(`${destFile}.codice-backup`).catch(() => {});
 	});
+
+	it("rolls back a composite commit (promoted, backed-up, and failing file)", async () => {
+		// One commit mixes all three rollback outcomes: a file with NO prior
+		// destination (pure promotion — rollback must unlink it), a file WITH
+		// a prior destination (backup restore path), and a third whose rename
+		// fails mid-commit (the zzz/ FILE forces an ENOTDIR at commit time),
+		// proving the two rollback strategies cover one ordered pass.
+		const overwrittenDest = path.join(destDir, "cmp_overwritten.txt");
+		await fs.writeFile(overwrittenDest, "ORIGINAL_OVERWRITTEN");
+		await fs.writeFile(path.join(destDir, "zzz"), "I AM A FILE, NOT A DIR");
+		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+
+		const srcPromoted = path.join(templateDir, "cmp_promoted.txt");
+		await fs.writeFile(srcPromoted, "PROMOTED");
+		const srcOverwrite = path.join(templateDir, "cmp_overwritten.txt");
+		await fs.writeFile(srcOverwrite, "NEW_OVERWRITTEN");
+		const srcBroken = path.join(templateDir, "zzz", "broken.txt");
+		await fs.mkdir(path.dirname(srcBroken), { recursive: true });
+		await fs.writeFile(srcBroken, "SHOULD NOT LAND");
+
+		await stager.stageFile(srcPromoted, "cmp_promoted.txt");
+		await stager.stageFile(srcOverwrite, "cmp_overwritten.txt");
+		await stager.stageFile(srcBroken, "zzz/broken.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
+
+		// promoted file absent from destination (no backup to restore from)
+		expect(await Bun.file(path.join(destDir, "cmp_promoted.txt")).exists()).toBe(false);
+		// overwritten file restored to ORIGINAL content by its backup
+		expect(await Bun.file(overwrittenDest).text()).toBe("ORIGINAL_OVERWRITTEN");
+		// failing file untouched / absent
+		expect(await Bun.file(path.join(destDir, "zzz", "broken.txt")).exists()).toBe(false);
+		// staging dir swept and intent marker removed
+		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await Bun.file(intentPath).exists()).toBe(false);
+		expect(await findBackups(destDir)).toEqual([]);
+	});
 });
