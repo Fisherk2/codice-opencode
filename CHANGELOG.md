@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.3] - 2026-09-22
 
-Primera release estable de la línea nativa V2. Consolida la migración FEV-29/30 publicada en `2.1.3-beta.1` y todo el trabajo posterior: avisos de upgrade para instalaciones legacy, banner de deprecación single-source, endurecimiento fail-closed del gate de cobertura e infraestructura de tests formalizada. Métricas finales: 1913 tests, 31/31 e2e, cobertura 96.16% total / 98.95% en `src/cli/main.ts`.
+Primera release estable de la línea nativa V2. Consolida la migración FEV-29/30 publicada en `2.1.3-beta.1` y todo el trabajo posterior: avisos de upgrade para instalaciones legacy, banner de deprecación single-source, endurecimiento fail-closed del gate de cobertura e infraestructura de tests formalizada. Métricas finales: 1941 tests (4354 expect()), 31/31 e2e, cobertura 96.30% total / 98.95% en `src/cli/main.ts`.
 
 ### Added
 
@@ -27,6 +27,9 @@ Primera release estable de la línea nativa V2. Consolida la migración FEV-29/3
 - **Banner legacy single-source**: se elimina la llamada duplicada desde `CleanInstallUseCase`/`ProjectInstallUseCase` (main() ya muestra el header de detección); `isLegacyVersion`/`LEGACY_BANNER_MESSAGE` permanecen como fuente única consumida por el header y el flujo de update.
 - **Infraestructura de tests formalizada**: los tests de validación de setup se mueven a `tests/setup/` (nueva recipe `just test-setup`), se elimina el agregador muerto `tests/setup/index.ts`, y se añaden tests que pinnean las recipes del Justfile y el workflow de release.
 - **Umbrales de cobertura extraídos a `scripts/coverage-thresholds.json`**: fuente única para el umbral global (95%) y el sub-gate por fichero (`src/cli/main.ts`), consumida por `scripts/coverage-check.sh` y por CI sin duplicar el número.
+- **Quality gates sobre el tag publicado**: en ejecuciones `workflow_dispatch` de `release.yml`, la matriz de calidad corre contra el tag de publicación, no contra la rama de despacho.
+- **Puerto `IUserPrompt` dividido** (`src/application/ports/`): prompt, progreso (`IProgressReporter`) y display (`IMessageDisplay`) quedan como puertos separados; `updateOptions` se extrae a su propio módulo para romper el ciclo de tipos entre el caso de uso de update y sus helpers.
+- **Contrato de fallo de `FileMergeEngine` documentado**: el header del servicio documenta el contrato real (errores de planificación → `MergeError` con limpieza del staging).
 
 ### Fixed
 
@@ -42,6 +45,8 @@ Primera release estable de la línea nativa V2. Consolida la migración FEV-29/3
 - **Byte NUL crudo eliminado** de la clave duplicada del guard de permisos: el `0x00` literal pasa a ser el escape `\u0000`, de modo que grep/ripgrep y las herramientas de diff/lectura ya no tratan el fichero del validador como binario; la semántica no cambia y queda fijada por un test de colisión de separador.
 - **Encabezados U+1F504 restaurados en 2 packs**: bytes UTF-8 que habían decaído a `=` + `0x04` quedan reparados.
 - **Validación de charset en `installedPacks` de `WorkspaceVersion.fromJSON`**: las entradas que no son strings se rechazan en la deserialización en lugar de propagarse al estado del workspace.
+- **Estabilización del stager/merge (review-round post-beta)**: el stager no confirma ningún fichero cuyo backup haya fallado (fail-early); el rollback cubre también los ficheros nuevos ya promovidos; el área de staging se endurece frente a symlinks pre-creados; los errores de planificación del merge se mapean a `MergeError` con limpieza del staging.
+- **Eventos postInstall condicionales**: los eventos de progreso reflejan resultados reales, no intención.
 
 ### Removed
 
@@ -53,6 +58,7 @@ Primera release estable de la línea nativa V2. Consolida la migración FEV-29/3
 ### Security
 
 - **Endurecimiento de permisos del template tras retirar el plugin SDD**: la auditoría de seguridad encontró que la deny-list estática no reemplaza la normalización/bloqueo exec que hacía el plugin retirado, y que varios comandos en `allow` eran bypassables: `find -execdir`/`xargs sh -c`/pipes `curl|sh` encadenan ejecución arbitraria, y `echo >> ~/.ssh/authorized_keys`, `sed → /etc/cron.d/`, `awk 'print > "path"'` escriben archivos arbitrarios (la redirección no es cubrible con wildcards de deny). Cambios en `template/obligatorio/core/opencode.json`: (1) `find`, `echo`, `printf`, `awk`, `sed`, `xargs`, `curl` (y `http`/httpie, misma clase de riesgo fetch-and-pipe) movidos de `allow` a `ask`; (2) nuevas denies de defensa en profundidad (`find * -exec *`, `find * -execdir *`, `xargs sh *`, `xargs bash *`, `xargs chmod *`, `xargs curl *`), variantes rm (`rm -fir`, `--force --recursive` y permutaciones) y secret-read sin ancla de espacio (`*.env`, `*.ssh/id_*`, `*aws/credentials`); (3) gaps de `read` cerrados (`*id_rsa*`, `*id_ed25519*`, `*id_ecdsa*`, `*.envrc*`, `**/.npmrc`, `credentials.json*`). Ninguna deny existente fue eliminada; suite de regresión en `tests/setup/opencode-config.test.ts` pinnea el JSON de permisos.
+- **Endurecimiento de permisos del template (review-round post-beta)**: `git bisect run *` y mutaciones `gh api *` pasan de `allow` a `ask`; las cookies de sesión X del sidecar de navegador quedan denegadas a los agentes (0600 en reposo); las redirecciones shell (`*>*`, vector de escritura arbitraria) y `tar -tf *` (filtración de rutas) pasan a `ask`. Regresión pinneada en `tests/setup/opencode-config.test.ts`.
 
 ### Dependencies
 

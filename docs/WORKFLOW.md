@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.1.3
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-09-22 (v2.1.3-beta.1 — FEV-30 ✅, release lista) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-09-22 (pre-release v2.1.3-beta.1 ✅ publicada — dist-tag `beta`, `latest` intacto; v2.1.3 estable lista pendiente de go-ahead) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -246,6 +246,8 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 - Review de 5 ejes + 6 commits de fixes (permisos bash endurecidos, validación `installedPacks`, predicado `isOnLegacyLine`, edge tests 5→13).
 - Gates verdes: `just check` 0, `just test` 1865/0, e2e 31/31. Release v2.1.3-beta.1 (`CHANGELOG.md`).
 
+**Estable v2.1.3 — lista pendiente de go-ahead (2026-09-22):** pre-release `v2.1.3-beta.1` publicada y verificada (dist-tag `beta`, `latest` intacto). Review-round post-beta aplicado en `release/2.1.3` (12 commits: hardening de permisos del template — `git bisect`/`gh api`/cookies de sesión X/redirecciones shell/`tar -tf` —, estabilización stager/merge — fail-early en backup, rollback completo, symlinks, `MergeError` en planificación —, eventos postInstall condicionales, quality-on-tag en `release.yml`, split del puerto `IUserPrompt`). Gates finales: 1941 tests / 4354 expect() / 0 fail, e2e 31/31, cobertura 96.30% total / 98.95% `src/cli/main.ts`, madge 0 ciclos. Lanzamiento estable (`v2.1.3` → `latest`, sync a `develop`) pendiente de aprobación del usuario — aún no ejecutado.
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -293,3 +295,4 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 | v2.1.1 | 1935 | 31/31 | ≥95% | 2026-08-25 |
 | v2.1.2 | 1935 | 31/31 | ≥95% | 2026-08-28 |
 | v2.1.3-beta.1 | 1865 | 31/31 | ≥95% | 2026-09-22 |
+| v2.1.3 (estable, pendiente de lanzamiento) | 1941 | 31/31 | 96.30% | 2026-09-22 |

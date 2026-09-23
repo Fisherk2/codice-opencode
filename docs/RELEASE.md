@@ -8,6 +8,11 @@ push, verify and (guarded) roll back.
 
 For branching rules see [CONTRIBUTING.md → Git Workflow](../CONTRIBUTING.md#git-workflow).
 
+> **Estado v2.1.3 (2026-09-22):** la pre-release `v2.1.3-beta.1` está publicada y
+> verificada (dist-tag `beta`; `latest` intacto). El lanzamiento estable (`v2.1.3`
+> → `latest`, sync a `develop`) sigue el checklist §3 y está pendiente del
+> go-ahead del usuario — aún no ejecutado.
+
 ---
 
 ## 1. What the release workflow actually does
