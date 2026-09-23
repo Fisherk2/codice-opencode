@@ -2,6 +2,11 @@
 
 Testing is organized in three phases with distinct scopes, tools, and success criteria.
 
+> Repository configuration is additionally validated by setup tests in `tests/setup/`
+> (Justfile, CI workflow, `package.json`, `tsconfig`, Biome, bunfig, directory layout).
+> These are **not** unit tests of `src/`, so they live outside `tests/unit/` and run
+> via `just test-setup` (or as part of the full `just test` glob).
+
 ## Phase 1: Unit Tests
 
 **Scope:** Pure domain logic — entities, value objects, and domain services.  

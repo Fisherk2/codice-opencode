@@ -88,6 +88,8 @@ Before make output review, use the `question` tool to resolve ambiguities:
 
 If agents are stuck or the corrections process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
 
+7. **Stop** when all issues are resolved and the code is ready for deployment.
+
 ## Rules
 
 - The rollback plan is mandatory before any GO decision.

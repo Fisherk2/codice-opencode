@@ -34,6 +34,23 @@ describe("CI Workflow Configuration", () => {
 		expect(ciYaml).toContain("windows-latest");
 	});
 
+	test("declares an optional ref input for the reusable release quality checkout", () => {
+		// release.yml passes the released tag as `ref`; push/PR runs leave it
+		// empty and keep checking out the triggering ref (checkout default).
+		const callBlock = ciYaml.slice(ciYaml.indexOf("workflow_call:"), ciYaml.indexOf("jobs:"));
+		expect(callBlock).toContain("inputs:");
+		expect(callBlock).toMatch(/ref:/);
+		expect(callBlock).toContain("required: false");
+	});
+
+	test("checkout step consumes the explicit ref input when provided", () => {
+		const checkoutBlock = ciYaml.slice(
+			ciYaml.indexOf("uses: actions/checkout@"),
+			ciYaml.indexOf("Setup Bun"),
+		);
+		expect(checkoutBlock).toContain("ref: ${{ inputs.ref }}");
+	});
+
 	test("has concurrency with cancel-in-progress", () => {
 		expect(ciYaml).toContain("cancel-in-progress: true");
 	});
@@ -52,6 +69,18 @@ describe("CI Workflow Configuration", () => {
 
 	test("has just test-e2e step", () => {
 		expect(ciYaml).toContain("just test-e2e");
+	});
+
+	test("coverage step is config-driven (no hardcoded threshold)", () => {
+		// The 95% threshold lives in scripts/coverage-thresholds.json; pinning it
+		// again on the CI invocation would silently desync from the JSON.
+		expect(ciYaml).toContain("run: just coverage-check");
+		const invocations = ciYaml.match(/just coverage-check[^\n]*/g) ?? [];
+		expect(invocations.length).toBeGreaterThan(0);
+		for (const line of invocations) {
+			expect(line.trim(), line).toBe("just coverage-check");
+		}
+		expect(ciYaml).not.toMatch(/just coverage-check\s+[0-9]/);
 	});
 
 	test("binary build and smoke test steps are removed", () => {

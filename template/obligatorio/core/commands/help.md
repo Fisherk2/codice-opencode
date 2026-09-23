@@ -38,22 +38,22 @@ Explain how to configure and use the Códice workspace:
 
 ### D) How do I install a Skill?
 Research the [Códice Wiki Skills page](https://github.com/Fisherk2/codice-opencode/wiki/Skills) and provide step-by-step instructions.
-- If the wiki is insufficient, use [OpenCode official docs](https://opencode.ai/docs/) as the authoritative source
+- If the wiki is insufficient, use [OpenCode official docs](https://opencode.ai/v2/docs/) as the authoritative source
 
 ### E) How do I install a command?
 Research the [Códice Wiki Commands page](https://github.com/Fisherk2/codice-opencode/wiki/Commands) and provide step-by-step instructions.
-- If the wiki is insufficient, use [OpenCode official docs](https://opencode.ai/docs/) as the authoritative source
+- If the wiki is insufficient, use [OpenCode official docs](https://opencode.ai/v2/docs/) as the authoritative source
 
 ### F) How do I install a primary Agent or Subagent?
 Research the [Códice Wiki Agents page](https://github.com/Fisherk2/codice-opencode/wiki/Agents) and provide step-by-step instructions.
-- If the wiki is insufficient, use [OpenCode official docs](https://opencode.ai/docs/) as the authoritative source
+- If the wiki is insufficient, use [OpenCode official docs](https://opencode.ai/v2/docs/) as the authoritative source
 
 ## Rules
 
 1. `/help` is read-only — does not modify files or change project state
 2. DO NOT WRITE ANY FILES — only describe, explain, and suggest next steps
 3. Always research the [Códice Wiki](https://github.com/Fisherk2/codice-opencode/wiki) for current information before answering
-4. If the wiki is insufficient, use [OpenCode official documentation](https://opencode.ai/docs/) as the authoritative fallback
+4. If the wiki is insufficient, use [OpenCode official documentation](https://opencode.ai/v2/docs/) as the authoritative fallback
 5. If you cannot find the answer in the wiki or official docs, say "I don't know" and suggest the user ask the community
 6. The `question` tool must present EXACTLY the 6 labeled options (A through F) with their full descriptions
 

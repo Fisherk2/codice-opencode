@@ -31,7 +31,12 @@ jobs:
   quality:
     # GitHub forbids `timeout-minutes` on reusable-workflow caller jobs, so the
     # 15-minute bound lives on the called `quality` job inside ci.yml.
+    # The ref must be recomputed here (the `env` context is not allowed in
+    # `with:`): on dispatch the run checks out the branch, so the quality job
+    # needs the resolved release tag to validate the exact published commit.
     uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
 
   release:
     needs: quality
@@ -152,13 +157,18 @@ jobs:
           fi
 
       - name: Verify published artifact (post-publish smoke test)
+        # Registry read replicas can lag several minutes behind a successful
+        # publish, so a short window yields false negatives (run 35715057975
+        # aborted after ~60s while propagation took ~7 min). Widen to
+        # 30x15s (~7.5 min), still well inside this job's 20 min timeout.
         shell: bash
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
-          ATTEMPTS=5
+          ATTEMPTS=30
           for i in $(seq 1 "$ATTEMPTS"); do
-            echo "Attempt ${i}/${ATTEMPTS}: resolving @fisherk2-dev/codice@${VERSION} from the registry..."
+            elapsed=$(( (i - 1) * 15 ))
+            echo "Attempt ${i}/${ATTEMPTS} (elapsed=${elapsed}s): resolving @fisherk2-dev/codice@${VERSION} from the registry..."
             if npm view "@fisherk2-dev/codice@${VERSION}" version >/dev/null 2>&1; then
               echo "Registry reports the version; running the published CLI..."
               if bunx "@fisherk2-dev/codice@${VERSION}" --version; then
@@ -177,7 +187,7 @@ jobs:
           exit 1
 
       - name: Create Release
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           # Explicit tag keeps the dispatch path correct (GITHUB_REF is the
           # branch there); on tag push it equals github.ref_name as before.

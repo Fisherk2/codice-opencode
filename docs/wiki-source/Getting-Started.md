@@ -6,7 +6,7 @@ This guide walks you through installing the Códice workspace template and runni
 
 Before installing Códice, you need **OpenCode** installed on your system. OpenCode is the AI-assisted development harness that Códice extends with agents, commands, and skills.
 
-- **[Install OpenCode](https://opencode.ai/docs/installation)** — follow the official installation guide for your platform
+- **[Install OpenCode](https://opencode.ai/v2/docs/)** — the official V2 intro page carries the install methods for your platform (curl, Homebrew, npm, Bun, standalone binaries)
 - **Verify the installation** by running `opencode --version` in your terminal
 
 > Códice is distributed via npm and executed with `bunx @fisherk2-dev/codice`. Bun is the recommended runtime.
@@ -74,8 +74,10 @@ your-project/
 ├── specs/                     # Modular specifications and ADRs
 ├── tasks/                     # Task breakdowns (created by /plan)
 ├── .opencode/
-│   └── agents/ → agents/      # Symlink to agents directory
-├── agents/                    # ~360 agents: 6 primary + 4 writer + ~350 subagents across 8 selectable packs
+│   ├── agents/ → ../agents/     # Symlinks recreated post-install
+│   ├── commands/ → ../commands/
+│   └── skills/ → ../skills/
+├── agents/                    # 359 agents: 6 primary + 4 writer + 349 subagents across 8 selectable packs
 ├── commands/                  # 17 SDD slash commands
 └── skills/                    # 51 engineering skills
 ```
@@ -84,86 +86,28 @@ For a detailed breakdown of every file and directory, see [Workspace Structure](
 
 ## First Steps
 
-Once the workspace is installed, open your project in OpenCode and follow these steps:
+Once the workspace is installed, follow these steps to start working:
 
-### 1. Run `/help`
+### 1. Adjust the parameters in opencode.json
 
-Start by running the `/help` command to see all available slash commands and their descriptions. This gives you an overview of the entire SDD workflow at a glance.
+Open `opencode.json` in your project root and review the model, agents, and permissions.
+This file comes from the template (`template/obligatorio/core/opencode.json`) and ships with working defaults.
+To change models or permissions, see [Configuration](Configuration).
 
-### 2. Activate MCP Servers (Optional)
+### 2. Enable the MCPs and configure their env
 
-The template ships with 7 pre-configured MCP servers in `opencode.json`. Three are enabled by default: `context7` (documentation queries), `vercel-grep` (GitHub code search), and `gitmcp` (GitHub repository docs). If your project needs browser debugging, spreadsheet manipulation, notebook automation, or other capabilities:
+The template includes 7 MCPs; 3 are enabled by default: context7, vercel-grep, and gitmcp.
+To enable another one, set `"disabled": false` in its `opencode.json` entry and define its environment variables.
+See [MCP Servers](MCP-Servers) for each server's requirements and configuration.
 
-1. Check [MCP Servers](MCP-Servers) for per-server prerequisites
-2. Set `"enabled": true` for the server you need in `opencode.json`
-3. Restart OpenCode
+### 3. Start OpenCode
 
-> Most projects only need the 3 default servers (already enabled). Activate others on demand to conserve context.
+Open a terminal in your project directory and run `opencode`.
 
-### 3. Run `/spec` to Define Your Project
+### 4. Run /help
 
-The first SDD cycle phase is specification. Run:
-
-```
-/spec
-```
-
-This activates **Quetzalcoatl** (the Visionary Sage), who will:
-
-- Analyze your project state
-- Ask clarifying questions about your goals, users, and constraints
-- Generate a structured `SPEC.md` with objectives, commands, architecture, code style, testing strategy, and boundaries
-- Create supporting documentation (`docs/ARCHITECTURE.md`, `docs/CODE_STYLE.md`, etc.)
-- Create modular specs in `specs/` and Architecture Decision Records in `specs/adr/`
-
-The `/spec` command is for **new projects or projects in the conception phase**. If your project already has stable code and releases, use `/evolve` instead.
-
-### 4. Run `/plan` to Break the Spec into Tasks
-
-Once your specification is ready, run:
-
-```
-/plan
-```
-
-This activates **Moctezuma** (the Strategist), who will:
-
-- Analyze the dependency graph between components
-- Slice work into small, independent, verifiable tasks
-- Write each task with acceptance criteria and verification steps
-- Save the plan to `tasks/plan.md` and `tasks/todo.md`
-- Present the plan for your review before saving
-
-### 5. Run `/build` to Implement
-
-With a plan in place, run:
-
-```
-/build
-```
-
-This activates **Tlaloc** (the Builder), who works through each task incrementally using TDD (Test-Driven Development):
-
-- Pick the next pending task from the plan
-- Write a failing test (RED)
-- Implement the minimum code to pass (GREEN)
-- Run the full test suite to check for regressions
-- Commit and mark the task complete
-- Move to the next task
-
-### Continue the SDD Cycle
-
-After building, continue through the remaining SDD phases:
-
-| Command | Phase | Agent | Purpose |
-|---------|-------|-------|---------|
-| `/test` | Validate | Mictlantecuhtli | Write tests, fix bugs using Prove-It pattern |
-| `/code-simplify` | Simplify | Tezcatlipoca | Refactor code for clarity, then verify corrections |
-| `/webperf` | Optimize | Tezcatlipoca | Run web performance audits, then apply corrections |
-| `/review` | Review | Tezcatlipoca | Five-axis code review, then delegate corrections |
-| `/ship` | Ship | Tezcatlipoca | Pre-launch checklist and go/no-go decision, then corrections |
-
-Each command suggests the next logical step when it finishes, guiding you through the full cycle without needing to consult documentation.
+Run `/help` inside OpenCode to see the 17 available commands.
+There you will discover what you can do with Códice and where to start.
 
 ## Next Steps
 
@@ -174,4 +118,4 @@ Each command suggests the next logical step when it finishes, guiding you throug
 - [Agents](Agents) — Understand each agent's role, permissions, and recommended models
 - [Configuration](Configuration) — Configure models, agents, permissions, MCP, and more
 
-For OpenCode-specific questions (agent configuration, permission model, MCP servers), refer to the [official OpenCode documentation](https://opencode.ai/docs).
+For OpenCode-specific questions (agent configuration, permission model, MCP servers), refer to the [official OpenCode V2 documentation](https://opencode.ai/v2/docs/).

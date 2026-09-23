@@ -8,7 +8,7 @@ import type { ProgressCallback, ProgressEvent } from "../types/ProgressEvent";
 import type { Result } from "../types/Result";
 import { failure, success } from "../types/Result";
 import { computeExclusions, skipReason } from "./mergeRules";
-import { computeStagePlan } from "./stagePlanner";
+import { computeStagePlan, type StagePlan } from "./stagePlanner";
 
 /**
  * Orchestrates atomic file merging according to classification rules:
@@ -19,6 +19,10 @@ import { computeStagePlan } from "./stagePlanner";
  * In update mode, standard directories use tree-level diffing
  * (computeStagePlan) to deliver only new files instead of skipping
  * entire directories.
+ *
+ * Failure contract: planning, staging and commit errors all surface as
+ * MergeError (not raw exceptions) with staging cleaned up; AtomicStager
+ * additionally removes promoted-but-unbacked files during commit rollback.
  */
 export class FileMergeEngine implements IFileMergeEngine {
 	constructor(private readonly fileSystem: IFileSystem & IStagingSystem) {}
@@ -31,12 +35,19 @@ export class FileMergeEngine implements IFileMergeEngine {
 		const selected = new Set(options?.selectedOptionals ?? []);
 		const isUpdateMode = options?.updateMode ?? false;
 		const onProgress = options?.onProgress;
-		const { stageDecisions, expandedDirs, total } = await computeStagePlan(
-			this.fileSystem,
-			rules,
-			selected,
-			isUpdateMode,
-		);
+
+		let plan: StagePlan;
+		try {
+			plan = await computeStagePlan(this.fileSystem, rules, selected, isUpdateMode);
+		} catch (err) {
+			const message = this.errorMessage(err, "Unknown planning error");
+			this.safeEmit(onProgress, { type: "error", filePath: "", message });
+			// Planning happens before any staging write, but a residual staging
+			// directory from an interrupted earlier run must not leak either.
+			await this.fileSystem.cleanStaging();
+			return failure(stagingError("", message));
+		}
+		const { stageDecisions, expandedDirs, total } = plan;
 		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
 		let current = 0;
 

@@ -1,6 +1,6 @@
 # Códice Wiki
 
-Welcome to the **Códice** workspace wiki. Códice is an [OpenCode](https://opencode.ai/docs) workspace template that installs a complete **Spec-Driven Development (SDD)** workflow into your project with a single command.
+Welcome to the **Códice** workspace wiki. Códice is an [OpenCode](https://opencode.ai/v2/docs/) workspace template that installs a complete **Spec-Driven Development (SDD)** workflow into your project with a single command.
 
 ## What Is Códice?
 
@@ -9,11 +9,11 @@ Códice is a pre-configured OpenCode workspace — a curated collection of agent
 The template includes:
 
 - **6 primary agents** — specialist personas that orchestrate the SDD cycle (spec writing, planning, building, testing, reviewing, shipping)
-- **~360 agents in 10 packs** — 6 primary agents + 4 writer agents + ~350 subagents across 8 selectable packs
+- **359 agents in 10 packs** — 6 primary agents + 4 writer agents + 349 subagents across 8 selectable packs
 - **17 slash commands** — `/spec`, `/plan`, `/build`, `/test`, `/review`, `/ship`, `/sync`, `/migrate`, `/deploy`, `/analyze`, and more — each wired to the right agent with a defined workflow
 - **51 engineering skills** — reusable workflow instructions for TDD, code review, security hardening, performance optimization, UI/UX design, and more
-- **Pre-configured permissions** — read/write/bash access rules tuned for safe AI-assisted development
-- **Multi-model provider configuration** — ready-to-use settings for Anthropic, DeepSeek, Google, OpenAI, MiniMax, Moonshot, and Z-AI models
+- **Pre-configured permissions** — ordered V2 rules (`shell`, `read`, `subagent`, `external_directory` actions with `allow`/`ask`/`deny` effects) tuned for safe AI-assisted development
+- **Opinionated model defaults** — a working default model (`opencode/big-pickle`) plus per-agent model, step, and color overrides for the six primary agents; provider configuration (`providers`) is intentionally left for you to add
 
 ## Who Is This For?
 
@@ -44,14 +44,14 @@ Códice solves this by providing a **versioned, atomic installer** that:
 - [Configuration](Configuration) — Understanding `opencode.json` and agent settings
 - [MCP Servers](MCP-Servers) — Pre-configured servers, activation, and per-agent control
 - [Agents](Agents) — The six primary agents, subagent catalog, and how to add new ones
-- [Commands](Commands) — All 12 SDD slash commands and their workflows
+- [Commands](Commands) — All 17 SDD slash commands and their workflows
 - [Skills](Skills) — Engineering skills included in the template and how to add new ones
 - [Configuration](Configuration) — Configure models, agents, permissions, MCP servers, and references
 - [Troubleshooting](Troubleshooting) — Common issues and solutions
 
 ## Learn More
 
-Códice is built on top of [OpenCode](https://opencode.ai/docs). For documentation on OpenCode itself — including installation, agent configuration, permission models, MCP server setup, and the full API reference — visit the official OpenCode documentation.
+Códice is built on top of [OpenCode](https://opencode.ai/v2/docs/). For documentation on OpenCode itself — including installation, agent configuration, permission models, MCP server setup, and the full API reference — visit the official OpenCode V2 documentation.
 
 ---
 

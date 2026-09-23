@@ -120,14 +120,14 @@ flowchart LR
 | **Test** | `/test` | mictlantecuhtli | Write failing tests, implement to make them pass, and verify the full suite. Supports the Prove-It pattern for bug fixes. |
 | **Refactor** | `/code-simplify` | tezcatlipoca | Simplify code for clarity and maintainability without changing behavior. Delegates review to specialists, applies fixes incrementally, then re-verifies. |
 | **Review** | `/review` | tezcatlipoca | Conduct a five-axis code review: correctness, readability, architecture, security, and performance. Delegates findings to specialists and applies corrections if confirmed. |
-| **Ship** | `/ship` | tezcatlipoca | Run a parallel fan-out pre-launch checklist (code review, security audit, test coverage, dependency audit, accessibility), then synthesize a go/no-go decision with rollback plan. Applies fixes if confirmed. |
+| **Ship** | `/ship` | tezcatlipoca | Run a parallel fan-out pre-launch checklist (code review, security audit, test coverage, dependency audit, accessibility), then synthesize a go/no-go decision with rollback plan. Applies fixes if confirmed, and stops when all issues are resolved and the code is ready for deployment (step 7). |
 | **Performance** | `/webperf` | tezcatlipoca | Run a web performance audit via the web-performance-auditor subagent. Deep mode with Lighthouse or quick mode via source scanning. Applies fixes if confirmed. |
 | **Maintain** | `/docs-update` | quetzalcoatl | Update, migrate, and synchronize documentation with the current codebase state. Creates ADRs for significant decisions. |
 | **Analyze** | `/diagnosis` | tezcatlipoca | Suggest fixes for problems (remote or local), run diagnostics, and document technical findings in `docs/diagnosis/`. Documents diagnosis — does not implement fixes. |
 | **Evolve** | `/evolve` | quetzalcoatl | Create new specs or modify existing ones for mature projects with established versions and documentation. |
 | **Sync** | `/sync` | mictlantecuhtli | Bidirectional git sync with 4 modes and 4 conflict resolution strategies. Can be invoked at any SDD phase. |
 | **Migrate** (optional) | `/migrate` | quetzalcoatl | Detects current tech stack, evaluates breaking changes, generates a structured migration plan with phases, steps, and rollback procedures. |
-| **Deploy** | `/deploy` | mictlantecuhtli | Post-`/ship` deployment automation. 3 modes: no workflow, betterable, established. Generates branch protection, PR templates, CI pipelines. |
+| **Deploy** | `/deploy` | mictlantecuhtli | Post-`/ship` deployment automation. Pre-flight detects the project's CI/CD state, then offers: **(A)** generate or improve the CI/CD workflow, or **(B)** execute the current workflow. Generates branch protection, PR templates, CI pipelines. |
 | **Analyze** | `/analyze` | tezcatlipoca | 8-dimension architecture analysis generating prioritized `TECH_DEBT.md`. Findings feed `/diagnosis`. |
 
 ### Recommended Workflows
@@ -173,48 +173,6 @@ The body contains numbered steps that the agent follows. Key patterns:
 - **Phases**: Complex commands use `## Phase` headings to organize multi-stage workflows.
 - **Rules section**: Commands include a `## Rules` section listing constraints and restrictions.
 - **Suggested Next Step**: Every command ends with a `## Suggested Next Step` block that suggests the next command to run.
-
-### Example: `/spec`
-
-```markdown
----
-description: Init a new project — establish specs, documentation, and project conventions from scratch
-agent: quetzalcoatl
----
-
-## Pre-Flight: Detect Project State
-
-1. Read @AGENTS.md — real project-specific rules or placeholder?
-2. Read @SPEC.md — real content or missing?
-3. Scan @docs/ — real documentation or empty templates?
-4. Check @specs/ and @specs/adr/ — any existing modular files?
-
-## Phase 0: Clarify Intent
-
-If the user's request is vague, invoke @skills/interview-me/SKILL.md
-to extract intent before proceeding.
-
-## Phase 1: Refine Requirements
-
-Use the `question` tool to clarify interactively:
-1. Objective and target users
-2. Core features and acceptance criteria
-3. Tech stack preferences and constraints
-4. Boundaries
-
-## Phase 2: Generate Initial Documentation
-
-Invoke @skills/spec-driven-development/SKILL.md to scaffold...
-
-## Rules
-
-1. `/spec` is for projects in conception phase. For mature projects, redirect to `/evolve`.
-2. Never overwrite existing files without user confirmation.
-
-## Suggested Next Step
-
-> Your project specs are ready. Run `/plan` to create an execution plan, or run `/design` to establish the UI/UX design.
-```
 
 ## How to Add a New Command
 
@@ -274,11 +232,11 @@ agent: mictlantecuhtli
 
 Review the `## Suggested Next Step` blocks in existing commands to see if any should add `/deploy` as a suggestion. For example, `/ship` could suggest: *"Run `/deploy` to push to production, or run `/docs-update` for documentation maintenance."*
 
-### Step 3: Restart OpenCode
+### Step 3: It's Live
 
-Restart your OpenCode session so it recognizes the new command file.
+OpenCode reloads command files and configuration changes automatically — saving the file makes the new command available without restarting the session (see the *Loading* section of the V2 Commands guide).
 
 ## Links
 
-- [OpenCode Command Documentation](https://opencode.ai/docs/commands) — Official OpenCode command configuration guide.
+- [OpenCode Command Documentation](https://opencode.ai/v2/docs/commands/) — Official OpenCode V2 command configuration guide.
 - [Agent Reference](Agents) — Primary agents that execute each command.

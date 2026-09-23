@@ -18,13 +18,19 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 | [ADR-009](../specs/adr/adr-009-gitignore-post-install.md) | Post-Installation Gitignore Generation | Accepted | IGitignoreCreator port + BunGitignoreCreator adapter for npm-compatible gitignore generation |
 | [ADR-010](../specs/adr/adr-010-no-template-copy-flag.md) | noTemplateCopy Flag for Virtual Manifest Entries | Accepted | `noTemplateCopy?` field on FileRule for entries whose content is generated post-installation (e.g., `.devin/` symlinks) |
 | [ADR-011](../specs/adr/adr-011-binary-removal.md) | Binary Removal | Accepted | npm/bunx as sole distribution; binary compilation removed |
-| [ADR-012](../specs/adr/adr-012-references-co-location.md) | References Co-location | Accepted | References co-located with skills, exposed via `reference` section |
+| [ADR-012](../specs/adr/adr-012-references-co-location.md) | References Co-location | Accepted | References co-located with skills, exposed via `references` section |
 | [ADR-014](../specs/adr/adr-014-agent-pack-system.md) | Agent Pack System | Accepted | Pack-based agent classification with 8 selectable packs + 2 mandatory |
 | [ADR-015](../specs/adr/adr-015-installer-ux-v2.md) | Installer UX v2 | Accepted | Metadata-driven installer with pack selection and version-gated updates |
 | [ADR-016](../specs/adr/adr-016-new-commands.md) | Slash Commands v2.1 | Accepted | 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`) with skill delegation |
 | [ADR-018](../specs/adr/adr-018-agent-delegation.md) | Agent Delegation Protocol | Accepted | Analyze → Plan → Execute protocol for primary agents via `task()` |
 | [ADR-019](../specs/adr/adr-019-cicd-hardening.md) | CI/CD Hardening | Accepted | SHA-pinned actions, branch protection, PR/issue templates, npm provenance |
 | [ADR-020](../specs/adr/adr-020-spec-modularization.md) | SPEC Modularization | Accepted | 441-line SPEC.md → 44-line index + 8 sub-specs |
+| [ADR-021](../specs/adr/adr-021-codemod-parser-and-placement.md) | Codemod Parser and Placement | Accepted | The validator is the normative V2 schema reader; the codemod parser stays frozen as one-shot verbatim-emit tooling |
+| [ADR-022](../specs/adr/adr-022-sdd-plugin-removal-legacy-banner.md) | SDD Plugin Removal and Offline Legacy Deprecation Banner | Accepted | Plugin fully removed (FEV-30, crashes on V2 hosts); enforcement lives solely in `permissions:` deny-lists; offline legacy banner (`legacyBanner.ts`) warns ≤ 2.1.2 before the mode menu |
+| [ADR-023](../specs/adr/adr-023-short-lived-release-branches.md) | Short-Lived `release/X.Y.Z` Branches for Stable Promotion | Accepted (amends ADR-019) | Stabilization commits land on a short-lived `release/X.Y.Z` branch; quality gates run on the publication tag; stable tag requires explicit human go-ahead |
+| [ADR-024](../specs/adr/adr-024-mcp-explicit-disabled-schema.md) | Explicit `disabled` MCP Schema and 3-Server Active Default | Accepted | V2 schema `mcp.servers` + explicit `disabled` per server (7 servers); only context7, gitmcp and vercel-grep connect by default; tavily/firecrawl removed |
+
+> **Note:** ADR-013 (plugin auto-discovery) and ADR-017 (intent auto-discovery) were **retired in FEV-30** (#90) together with the SDD plugin — that is why they are missing from the numbering. [ADR-022](../specs/adr/adr-022-sdd-plugin-removal-legacy-banner.md) supersedes both as the register entry for plugin-era enforcement.
 
 > **Note:** `TemplateResolver` and `AtomicStager` are extracted classes (not full ADRs). They are SRP-based refactorings of `BunFileSystem` that follow the existing ADR-003 (atomic staging) pattern.
 
@@ -131,10 +137,11 @@ graph TD
 
 ### Application Layer (`src/application/`)
 - Use cases orchestrate domain services
-- Port interfaces: IFileSystem, IStagingSystem, IGitHubClient, IUserPrompt, ISymlinkCreator, IGitignoreCreator
+- Port interfaces: IFileSystem, IStagingSystem, IGitHubClient, ISymlinkCreator, IGitignoreCreator + split prompt ports (2.1.3): `IUserPrompt` (interaction) extends `IMessageDisplay` (notices/errors) and `IProgressReporter` (spinners/progress)
+- Legacy deprecation: legacyBanner.ts (`isLegacyVersion`, `LEGACY_MAX_VERSION = "2.1.2"`, `LEGACY_BANNER_MESSAGE`) — single source consumed by the pre-menu detection header and the update flow
 - Shared helpers: helpers.ts (shared guard logic), postInstall.ts (post-installation orchestration)
 - Install summary: installSummary.ts (pre-merge summary computation), packOptions.ts (pack selection definitions)
-- Update flow: updateFlow.ts (merge execution), updateStatusCheck.ts (version classification)
+- Update flow: updateFlow.ts (Option A/B pack-scope resolution), updateHelpers.ts (SDD-remnant warning, confirm), updateStatusCheck.ts (version classification)
 - Template Method: InstallUseCaseBase (shared skeleton for Clean/Project install)
 - No business rules, only coordination
 

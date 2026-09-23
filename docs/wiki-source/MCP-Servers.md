@@ -2,7 +2,7 @@
 
 MCP (Model Context Protocol) servers extend OpenCode agents with external tools and data sources. This page covers the MCP servers that come pre-configured in this workspace template, how to activate them, and which template features depend on them.
 
-> **Official documentation:** [opencode.ai/docs/mcp-servers/](https://opencode.ai/docs/mcp-servers/) covers the basics of local, remote, and OAuth-based MCP server configuration.
+> **Official documentation:** [opencode.ai/v2/docs/mcp-servers](https://opencode.ai/v2/docs/mcp-servers/) covers the basics of local, remote, and OAuth-based MCP server configuration.
 >
 > **Find MCP servers:** [mcp.so](https://mcp.so) | [glama.ai/mcp/servers](https://glama.ai/mcp/servers)
 
@@ -42,15 +42,17 @@ Each server requires different prerequisites. Follow the steps below for the ser
 
 Remote MCP server that provides up-to-date library documentation. Used by the `find-docs` skill.
 
-**Pre-configured as:** `"enabled": true` — no setup needed.
+**Pre-configured as:** `"disabled": false` (connected) — no setup needed.
 
 ```json
 {
   "mcp": {
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp",
-      "enabled": true
+    "servers": {
+      "context7": {
+        "type": "remote",
+        "url": "https://mcp.context7.com/mcp",
+        "disabled": false
+      }
     }
   }
 }
@@ -61,11 +63,14 @@ For higher rate limits, sign up for a free account and set your API key:
 ```json
 {
   "mcp": {
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp",
-      "headers": {
-        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+    "servers": {
+      "context7": {
+        "type": "remote",
+        "url": "https://mcp.context7.com/mcp",
+        "oauth": false,
+        "headers": {
+          "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+        }
       }
     }
   }
@@ -103,16 +108,18 @@ Local MCP server from the Chrome DevTools team (`ChromeDevTools/chrome-devtools-
    ```json
    {
      "mcp": {
-       "chrome-devtools": {
-         "type": "local",
-         "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
-         "enabled": true
+       "servers": {
+         "chrome-devtools": {
+           "type": "local",
+           "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+           "disabled": false
+         }
        }
      }
    }
    ```
 
-3. **Restart OpenCode** for the change to take effect.
+3. **Verify** — servers connect automatically once configured; run `opencode mcp list` to confirm the connection.
 
 #### Available Tools
 
@@ -157,16 +164,18 @@ Local MCP server for reading, writing, and manipulating Excel files (.xlsx) dire
    ```json
    {
      "mcp": {
-       "excel": {
-         "type": "local",
-         "command": ["uvx", "excel-mcp-server", "stdio"],
-         "enabled": true
+       "servers": {
+         "excel": {
+           "type": "local",
+           "command": ["uvx", "excel-mcp-server", "stdio"],
+           "disabled": false
+         }
        }
      }
    }
    ```
 
-3. **Restart OpenCode** for the change to take effect.
+3. **Verify** — servers connect automatically once configured; run `opencode mcp list` to confirm the connection.
 
 > **Repository:** [github.com/haris-musa/excel-mcp-server](https://github.com/haris-musa/excel-mcp-server)
 
@@ -202,22 +211,26 @@ jupyter lab --port 8888 --IdentityProvider.token=mcp-dev-token
 ```json
 {
   "mcp": {
-    "jupyter": {
-      "type": "local",
-      "command": ["uvx", "mcp-jupyter-notebook"],
-      "enabled": true,
-      "env": {
-        "MCP_JUPYTER_SESSION_MODE": "server",
-        "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
-        "MCP_JUPYTER_TOKEN": "mcp-dev-token",
-        "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
+    "servers": {
+      "jupyter": {
+        "type": "local",
+        "command": ["uvx", "mcp-jupyter-notebook"],
+        "disabled": false,
+        "environment": {
+          "MCP_JUPYTER_SESSION_MODE": "server",
+          "MCP_JUPYTER_BASE_URL": "http://localhost:8888",
+          "MCP_JUPYTER_TOKEN": "{env:MCP_JUPYTER_TOKEN}",
+          "MCP_JUPYTER_NOTEBOOK_PATH": "agent_demo.ipynb"
+        }
       }
     }
   }
 }
 ```
 
-**3. Restart OpenCode** — the server will connect automatically.
+> **Note:** V2 names the variable map `environment` (not `env`) and the template keeps secrets out of the file with `{env:...}` substitution. Set `MCP_JUPYTER_TOKEN` in your shell before starting OpenCode.
+
+**3. Verify** — `opencode mcp list` shows the connection; servers connect automatically once configured.
 
 #### Local Mode (no Jupyter server needed)
 
@@ -226,10 +239,12 @@ For lightweight sessions without a full Jupyter server:
 ```json
 {
   "mcp": {
-    "jupyter": {
-      "type": "local",
-      "command": ["uvx", "mcp-jupyter-notebook", "--mode", "local"],
-      "enabled": false
+    "servers": {
+      "jupyter": {
+        "type": "local",
+        "command": ["uvx", "mcp-jupyter-notebook", "--mode", "local"],
+        "disabled": false
+      }
     }
   }
 }
@@ -258,7 +273,7 @@ For lightweight sessions without a full Jupyter server:
 
 Local MCP server that indexes your codebase into a persistent knowledge graph. Provides structural search, call tracing, architecture analysis, dead code detection, and 15 other tools. Supports 158 languages via tree-sitter. Ships as a single static binary — zero dependencies, no API keys required.
 
-**Pre-configured as:** `"enabled": false` — requires global installation on the user's machine.
+**Pre-configured as:** `"disabled": true` — requires global installation on the user's machine.
 
 #### Prerequisites
 
@@ -282,13 +297,15 @@ Unblock-File .\install.ps1
 
 The installer auto-detects OpenCode and configures the MCP entry. After installation:
 
-1. **Restart OpenCode** for the change to take effect.
-2. **Enable the MCP** in `opencode.json` (set `"enabled": true`):
+1. **Restart the background service** so it picks up the new binary: `opencode service restart`.
+2. **Enable the MCP** in `opencode.json` (set `"disabled": false`):
    ```json
    {
      "mcp": {
-       "codebase-memory-mcp": {
-         "enabled": true
+       "servers": {
+         "codebase-memory-mcp": {
+           "disabled": false
+         }
        }
      }
    }
@@ -315,9 +332,11 @@ If you prefer not to use the install command, add to `opencode.json`:
 ```json
 {
   "mcp": {
-    "codebase-memory-mcp": {
-      "command": "/path/to/codebase-memory-mcp",
-      "args": []
+    "servers": {
+      "codebase-memory-mcp": {
+        "type": "local",
+        "command": ["/path/to/codebase-memory-mcp"]
+      }
     }
   }
 }
@@ -369,13 +388,16 @@ Remote MCP server for AI-optimized web search. Provides search and content extra
    ```json
    {
      "mcp": {
-       "tavily": {
-         "type": "remote",
-         "url": "https://mcp.tavily.com/mcp",
-         "headers": {
-           "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
-         },
-         "enabled": true
+       "servers": {
+         "tavily": {
+           "type": "remote",
+           "url": "https://mcp.tavily.com/mcp",
+           "oauth": false,
+           "headers": {
+             "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+           },
+           "disabled": false
+         }
        }
      }
    }
@@ -388,7 +410,7 @@ Remote MCP server for AI-optimized web search. Provides search and content extra
    This launches an OAuth flow in your browser. No manual API key handling required.
 
 2. **Enable the server** (if not using OAuth, enable in `opencode.json` as shown above).
-3. **Restart OpenCode** for the change to take effect.
+3. **Verify** — run `opencode mcp list` to confirm the connection status.
 
 #### Available Tools
 
@@ -432,19 +454,22 @@ Remote MCP server for scraping, crawling, and extracting content from web pages.
    ```json
    {
      "mcp": {
-       "firecrawl": {
-         "type": "remote",
-         "url": "https://mcp.firecrawl.dev/v2/mcp",
-         "headers": {
-           "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
-         },
-         "enabled": true
+       "servers": {
+         "firecrawl": {
+           "type": "remote",
+           "url": "https://mcp.firecrawl.dev/v2/mcp",
+           "oauth": false,
+           "headers": {
+             "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
+           },
+           "disabled": false
+         }
        }
      }
    }
    ```
 
-4. **Restart OpenCode** for the change to take effect.
+4. **Verify** — run `opencode mcp list` to confirm the connection status.
 
 #### Available Tools
 
@@ -463,15 +488,17 @@ Remote MCP server for scraping, crawling, and extracting content from web pages.
 
 Remote MCP server from Vercel that searches code patterns across 1M+ public GitHub repositories. Returns real-world code snippets ranked by relevance. Ideal for finding usage examples of APIs and libraries.
 
-**Pre-configured as:** `"enabled": true` — no setup needed.
+**Pre-configured as:** `"disabled": false` — no setup needed.
 
 ```json
 {
   "mcp": {
-    "vercel-grep": {
-      "type": "remote",
-      "url": "https://mcp.grep.app",
-      "enabled": true
+    "servers": {
+      "vercel-grep": {
+        "type": "remote",
+        "url": "https://mcp.grep.app",
+        "disabled": false
+      }
     }
   }
 }
@@ -495,15 +522,17 @@ Remote MCP server from Vercel that searches code patterns across 1M+ public GitH
 
 Remote MCP server that transforms any public GitHub repository into a documentation endpoint. Change `github.com` to `gitmcp.io` in a repo URL and your AI agent gets instant access to its README, docs, and code structure.
 
-**Pre-configured as:** `"enabled": true` — no setup needed.
+**Pre-configured as:** `"disabled": false` — no setup needed.
 
 ```json
 {
   "mcp": {
-    "gitmcp": {
-      "type": "remote",
-      "url": "https://gitmcp.io/docs",
-      "enabled": true
+    "servers": {
+      "gitmcp": {
+        "type": "remote",
+        "url": "https://gitmcp.io/docs",
+        "disabled": false
+      }
     }
   }
 }
@@ -536,43 +565,45 @@ Remote MCP server that transforms any public GitHub repository into a documentat
 
 ## Per-Agent Control
 
-The template recommends a **disable-globally, enable-per-agent** strategy to conserve context while giving specific agents access to the tools they need.
+The template recommends a **deny-tools-globally, allow-per-agent** strategy to conserve context while giving specific agents access to the tools they need. V2 does this through the ordered `permissions` array rather than the removed V1 `tools:` map: keep the server connected, deny its tools globally with a rule matching the normalized `<server>_*` action, and re-allow them inside `agents.<name>.permissions` (agent rules are appended after global rules and the last matching rule wins).
 
-For example, `chrome-devtools` is useful for agents that run browser tests or performance audits, but unnecessary for other agents. Here's how to disable it globally and enable it only for `mictlantecuhtli` and `tlaloc`:
+For example, `chrome-devtools` is useful for agents that run browser tests or performance audits, but unnecessary for other agents. Here's how to make it available only to `mictlantecuhtli` and `tlaloc`:
 
 ```json
 {
   "mcp": {
-    "chrome-devtools": {
-      "type": "local",
-      "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
-      "enabled": true
+    "servers": {
+      "chrome-devtools": {
+        "type": "local",
+        "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+        "disabled": false
+      }
     }
   },
-  "tools": {
-    "chrome-devtools*": false
-  },
-  "agent": {
+  "permissions": [
+    { "action": "chrome-devtools_*", "resource": "*", "effect": "deny" }
+  ],
+  "agents": {
     "mictlantecuhtli": {
-      "tools": {
-        "chrome-devtools*": true
-      }
+      "permissions": [
+        { "action": "chrome-devtools_*", "resource": "*", "effect": "allow" }
+      ]
     },
     "tlaloc": {
-      "tools": {
-        "chrome-devtools*": true
-      }
+      "permissions": [
+        { "action": "chrome-devtools_*", "resource": "*", "effect": "allow" }
+      ]
     }
   }
 }
 ```
 
 This pattern applies to any MCP server:
-1. Enable the server in the `mcp` section (so OpenCode starts it)
-2. Disable all its tools globally in the `tools` section
-3. Re-enable tools only for specific agents using `agent.<name>.tools`
+1. Keep the server connected in `mcp.servers` (`"disabled": false`) — permission rules hide/deny tools without disconnecting the server
+2. Deny all its tools globally with a `permissions` rule on the normalized `<server>_*` action
+3. Re-allow the tools only for specific agents under `agents.<name>.permissions`
 
-> **Official docs:** See [opencode.ai/docs/mcp-servers#per-agent](https://opencode.ai/docs/mcp-servers#per-agent) for more on per-agent tool control.
+> **Official docs:** See [opencode.ai/v2/docs/mcp-servers#permissions](https://opencode.ai/v2/docs/mcp-servers/#permissions) and [opencode.ai/v2/docs/permissions#agents](https://opencode.ai/v2/docs/permissions/#agents) for more on per-agent tool control.
 
 ---
 
@@ -584,10 +615,11 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 ```json
 {
   "mcp": {
-    "my-server": {
-      "type": "local",
-      "command": ["npx", "-y", "my-mcp-package"],
-      "enabled": true
+    "servers": {
+      "my-server": {
+        "type": "local",
+        "command": ["npx", "-y", "my-mcp-package"]
+      }
     }
   }
 }
@@ -597,10 +629,11 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 ```json
 {
   "mcp": {
-    "my-server": {
-      "type": "remote",
-      "url": "https://my-mcp-server.com/mcp",
-      "enabled": true
+    "servers": {
+      "my-server": {
+        "type": "remote",
+        "url": "https://my-mcp-server.com/mcp"
+      }
     }
   }
 }
@@ -615,7 +648,7 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 | **Puppeteer** | Browser automation | `@modelcontextprotocol/server-puppeteer` |
 | **Memory** | Persistent storage | `@modelcontextprotocol/server-memory` |
 | **Sentry** | Error tracking (remote) | `https://mcp.sentry.dev/mcp` (+ OAuth) |
-> **Avoid the GitHub MCP server:** It consumes a large number of tokens. Use the `gh` CLI via the `bash` tool instead.
+> **Avoid the GitHub MCP server:** It consumes a large number of tokens. Use the `gh` CLI via the `shell` tool instead.
 
 ---
 
@@ -625,7 +658,7 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 2. **Prefer per-agent activation** — Disable tools globally and enable them only for specific agents that need them (see [Per-Agent Control](#per-agent-control)).
 3. **Use `@latest` for Chrome DevTools MCP** — `chrome-devtools-mcp@latest` ensures you always get the newest version without manual updates.
 4. **Use environment variables for secrets** — Reference API keys and tokens with `{env:VAR_NAME}` in the config. Never hardcode credentials.
-5. **Configure timeouts for slow servers** — If an MCP server is slow to respond, increase the `timeout` value (default: 5000ms).
+5. **Configure timeouts for slow servers** — If an MCP server is slow to respond or to start, set its per-server `timeout` object (`startup`, `catalog`, `execution`). V2 defaults: startup 30s, catalog 30s, execution 12h.
 6. **Test new servers incrementally** — Add one server at a time and verify it works before adding the next. This helps isolate configuration issues.
 7. **Run `opencode mcp list`** to see all configured servers and their authentication status.
 
@@ -635,4 +668,4 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 
 - [Configuration](Configuration#mcp-servers--tool-connectivity) — The `mcp` section in opencode.json
 - [Getting Started](Getting-Started) — First steps after installing the template
-- [opencode.ai/docs/mcp-servers/](https://opencode.ai/docs/mcp-servers/) — Official OpenCode MCP documentation
+- [opencode.ai/v2/docs/mcp-servers](https://opencode.ai/v2/docs/mcp-servers/) — Official OpenCode MCP documentation

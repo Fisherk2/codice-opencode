@@ -28,6 +28,21 @@ describe("Release Workflow Configuration", () => {
 		expect(releaseYaml).toContain("tag:");
 	});
 
+	test("quality gate validates the released tag, not the dispatch branch", () => {
+		// On workflow_dispatch the run starts on the branch, not the tag; the
+		// quality job must hand the resolved tag to ci.yml so the gates run
+		// against the exact commit being published (same expression as the
+		// TAG env, recomputed because `env` context is not allowed in `with:`).
+		const qualityBlock = releaseYaml.slice(
+			releaseYaml.indexOf("# GitHub forbids"),
+			releaseYaml.indexOf("  release:"),
+		);
+		expect(qualityBlock).toContain("./.github/workflows/ci.yml");
+		expect(qualityBlock).toContain(
+			"ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}",
+		);
+	});
+
 	// --- Version validation ---
 
 	test("has version validation step comparing tag vs package.json", () => {
@@ -146,6 +161,30 @@ describe("Release Workflow Configuration", () => {
 	test("extracts release body from CHANGELOG", () => {
 		expect(releaseYaml).toContain("Extract release body from CHANGELOG");
 		expect(releaseYaml).toContain("CHANGELOG.md");
+	});
+
+	// --- Post-publish smoke test (retry window) ---
+
+	test("has a post-publish artifact verification step", () => {
+		expect(releaseYaml).toContain("Verify published artifact");
+	});
+
+	test("smoke test retries for ~7.5 minutes to ride out registry propagation lag", () => {
+		// Registry read replicas can lag several minutes behind a successful
+		// publish; a short window produces false negatives (run 35715057975).
+		// Pin the widened window, tolerating whitespace variations.
+		expect(releaseYaml).toMatch(/ATTEMPTS=30/);
+		expect(releaseYaml).toMatch(/seq\s+1\s+"\$ATTEMPTS"/);
+		expect(releaseYaml).toMatch(/sleep\s+15/);
+		expect(releaseYaml).toMatch(/elapsed=\$\(\(\s*\(i\s*-\s*1\)\s*\*\s*15\s*\)\)/);
+
+		// Derive the window from the pinned constants so the test states the
+		// intent ("~7.5 min") instead of a magic number: 30 attempts x 15s = 450s.
+		const attempts = Number(releaseYaml.match(/ATTEMPTS=(\d+)/)?.[1]);
+		const sleepSeconds = Number(releaseYaml.match(/sleep\s+(\d+)/)?.[1]);
+		expect(attempts).toBe(30);
+		expect(sleepSeconds).toBe(15);
+		expect(attempts * sleepSeconds).toBe(450);
 	});
 
 	// --- Security hardening ---

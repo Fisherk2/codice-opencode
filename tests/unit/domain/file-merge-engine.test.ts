@@ -379,6 +379,57 @@ describe("FileMergeEngine — Error handling", () => {
 		const commitCalls = calls.filter((c) => c.method === "commitStaging");
 		expect(commitCalls.length).toBe(0);
 	});
+
+	test("maps planning errors to a staging Failure instead of throwing raw", async () => {
+		const { fs } = createMockFs();
+		fs.destinationExists = async () => {
+			throw new Error("Destination walk failed");
+		};
+		const engine = new FileMergeEngine(fs);
+		const events: ProgressEvent[] = [];
+
+		const result = await engine.execute([rule("README.md", "standard")], {
+			updateMode: false,
+			onProgress: (e) => events.push(e),
+		});
+
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.phase).toBe("staging");
+			expect(result.error.message).toContain("Destination walk failed");
+		}
+	});
+
+	test("cleans staging after a planning failure", async () => {
+		const { fs, calls } = createMockFs();
+		fs.destinationExists = async () => {
+			throw new Error("Destination walk failed");
+		};
+		const engine = new FileMergeEngine(fs);
+
+		await engine.execute([rule("README.md", "standard")], { updateMode: false });
+
+		const cleanCalls = calls.filter((c) => c.method === "cleanStaging");
+		expect(cleanCalls.length).toBe(1);
+		const commitCalls = calls.filter((c) => c.method === "commitStaging");
+		expect(commitCalls.length).toBe(0);
+	});
+
+	test("emits an error progress event on planning failure", async () => {
+		const { fs } = createMockFs();
+		fs.destinationExists = async () => {
+			throw new Error("Destination walk failed");
+		};
+		const engine = new FileMergeEngine(fs);
+		const events: ProgressEvent[] = [];
+
+		await engine.execute([rule("README.md", "standard")], {
+			updateMode: false,
+			onProgress: (e) => events.push(e),
+		});
+
+		expect(events.some((e) => e.type === "error")).toBe(true);
+	});
 });
 
 // ---- destPath edge cases (FEV-17) ----
