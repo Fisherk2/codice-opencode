@@ -76,21 +76,18 @@ Write depending of phase 1 report:
 
 ## Phase 3: Final Quality Gate
 
-1. **Delegate** `code-reviewer` subagent and **Load** `code-review-and-quality` skill for multi-axis review (correctness, readability, architecture, security, performance) to review implemented tests.
-2. Apply suggested changes
+Run ALL quality checks:
 
-After ALL tests changes, run ALL quality checks AGAIN:
-
-2. Run full test suite — must ALL pass (0 failures)
-3. Run linter — must have 0 errors (warnings OK but report them)
-4. Run formatter CHECK mode — must have 0 unformatted files
-5. Run typechecker — must have 0 type errors
+1. Run full test suite — must ALL pass (0 failures)
+2. Run linter — must have 0 errors (warnings OK but report them)
+3. Run formatter CHECK mode — must have 0 unformatted files
+4. Run typechecker — must have 0 type errors
 
 **If ANY check fails, revert and reconsider:**
 
-6. Fix any discrepancies found during testing before proceeding, and run the test after each change.
-7. If agents are stuck or the testing process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
-8. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
+5. Fix any discrepancies found during testing before proceeding, and run the test after each change.
+6. If agents are stuck or the testing process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
+7. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 ## Escalation to Incident Response
 
