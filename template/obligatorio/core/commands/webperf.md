@@ -54,9 +54,7 @@ Return the full audit report to the user. For remediation of findings, **Load** 
 
 1. Use the `question` tool to ask the user to confirm the review before proceeding with fixes.
 2. If user confirms, **Delegate** `refactorer` subagent and **Load** `incremental-implementation` skill to apply all observations incrementally, **Load** `solid` skill to maintain SOLID principles — run tests after each change, if tests fail after a change, revert that change and reconsider.
-3. **Delegate** `code-reviewer` subagent and **Load** `code-review-and-quality` skill to review the corrected code. For UI tasks, also verify **Loading** `browser-testing-with-devtools` skill
-4. Fix any discrepancies found during review before proceeding and run test after each change.
-5. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
+3. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 If agents are stuck or the corrections process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
 

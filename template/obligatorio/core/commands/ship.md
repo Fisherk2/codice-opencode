@@ -82,13 +82,11 @@ Before make output review, use the `question` tool to resolve ambiguities:
 
 2. Use the `question` tool to ask the user to confirm the reports before proceeding with fixes.
 3. If user confirms, **Delegate** `minimal-change-engineer` subagent and **Load** `incremental-implementation` skill to apply all observations incrementally, **Load** `solid` skill to maintain SOLID principles — run tests after each change, if tests fail after a change, revert that change and reconsider.
-4. **Delegate** `code-reviewer` subagent and **Load** `code-review-and-quality` skill to review the corrected code. For UI tasks, also verify **Loading** `browser-testing-with-devtools` skill
-5. Fix any discrepancies found during review before proceeding and run test after each change.
-6. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
+4. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 If agents are stuck or the corrections process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
 
-7. **Stop** when all issues are resolved and the code is ready for deployment.
+5. **Stop** when all issues are resolved and the code is ready for deployment.
 
 ## Rules
 
