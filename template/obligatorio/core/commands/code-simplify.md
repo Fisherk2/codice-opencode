@@ -19,9 +19,7 @@ Simplify and refactory code to improve readability and maintainability on recent
    - Duplicated logic → shared functions
    - Dead code → remove after confirming
 6. After subagents find simplification opportunities, **Delegate** `refactorer` subagent and **Load** `incremental-implementation` skill to apply all opportunities incrementally, **Load** `solid` skill to maintain SOLID principles — run tests after each change, if tests fail after a change, revert that change and reconsider.
-7. **Delegate** `code-reviewer` subagent and **Load** `code-review-and-quality` skill to review the simplified code. For UI tasks, also verify **Loading** `browser-testing-with-devtools` skill
-8. Fix any discrepancies found during review before proceeding and run test after each change.
-9. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
+7. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 If agents are stuck or the simplification process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
 

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.4] - 2026-09-25
+
+Hotfix de rendimiento de comandos: elimina la delegación redundante a `code-reviewer` en 6 comandos del template y reserva la línea 2.1.x a hotfixes (deuda replanificada a 2.2.x/2.3.x/2.5.x).
+
+> Estado: COMPLETADO — listo para lanzamiento (GO/tag pendiente).
+
+### Changed
+
+- **Deuda replanificada fuera de 2.1.x** (`docs/TECH_DEBT.md`): la línea 2.1.x queda reservada a hotfixes; v2.1.4 → v2.2.0 (9 items, 18-24h), v2.1.5 → v2.3.0 (4 items), v2.3 → v2.5.0 (3 items), con nota de política 2026-09-25 y `Last updated` a 2026-09-25.
+- **Remediación alineada a `minimal-change-engineer` en `/review`**: `template/obligatorio/core/commands/review.md` delega la aplicación de observaciones a `minimal-change-engineer` en lugar de `refactorer`; pasos renumerados tras retirar el gate duplicado.
+
+### Fixed
+
+- **Delegación redundante a `code-reviewer` eliminada en 6 comandos** (`template/obligatorio/core/commands/`): `build.md`, `code-simplify.md`, `review.md`, `ship.md`, `test.md` y `webperf.md` ya no invocan un gate `code-reviewer` + `code-review-and-quality` duplicado tras la remediación; cada flujo conserva su quality gate propio (suite completa, atomic commits con `git-workflow-and-versioning`) con pasos renumerados. Reduce latencia y overhead de tokens en el track `hotfix/commands-performance`.
+
 ## [2.1.3] - 2026-09-22
 
 Primera release estable de la línea nativa V2. Consolida la migración FEV-29/30 publicada en `2.1.3-beta.1` y todo el trabajo posterior: avisos de upgrade para instalaciones legacy, banner de deprecación single-source, endurecimiento fail-closed del gate de cobertura e infraestructura de tests formalizada. Métricas finales: 1959 tests (4734 expect()), 31/31 e2e, cobertura 96.39% total / 98.95% en `src/cli/main.ts`.
@@ -584,7 +599,8 @@ Pre-release for v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release
 
 - Path traversal prevention; symlink skipping in directory walk; SHA-256 checksums.
 
-[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.1.3...HEAD
+[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.1.4...HEAD
+[2.1.4]: https://github.com/fisherk2/codice-opencode/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/fisherk2/codice-opencode/compare/v2.1.3-beta.1...v2.1.3
 [2.1.2]: https://github.com/fisherk2/codice-opencode/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/fisherk2/codice-opencode/compare/v2.1.0...v2.1.1

@@ -1,9 +1,9 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-09-22
-**Status:** v2.1.3 FEV-29 + FEV-30 COMPLETED (2026-09-22) — 1959 tests, 31/31 E2E, coverage 96.39% (global gate 95% + `src/cli/main.ts` sub-gate 95%) · `v2.1.3-beta.1` published (dist-tag `beta`) · stable 2.1.3 on `release/2.1.3` with green gates, pending GO/tag · 4 deferred Phase-2 findings + TD-V2-97 remain open (below)
-**Current version:** v2.1.3-beta.1 (stable 2.1.3 pending tag)
-**Next version:** v2.1.4 (Medium Effort — 9 items, 18-24h)
+**Last updated:** 2026-09-25
+**Status:** v2.1.3 FEV-29 + FEV-30 COMPLETED (2026-09-22) — 1959 tests, 31/31 E2E, coverage 96.39% (global gate 95% + `src/cli/main.ts` sub-gate 95%) · `v2.1.3-beta.1` published (dist-tag `beta`) · stable 2.1.3 on `release/2.1.3` with green gates, pending GO/tag · 4 deferred Phase-2 findings + TD-V2-97 remain open (below) · v2.1.4 HOTFIX COMPLETE (2026-09-25) — 6 commands sin gate duplicado + debt reschedule — listo para GO/tag
+**Current version:** v2.1.3 stable + 2.1.4 stagedReady — listo para GO/tag
+**Next version:** v2.2.0 (Medium Effort — 9 items, 18-24h)
 
 ---
 
@@ -127,6 +127,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 ### v2.1.3 ✅ FEV-29 + FEV-30 completados (2026-09-22) — estable pendiente de GO/tag
 
 > **Alcance (ejecutado):** FEV-29 (#91) migró el template completo al formato nativo OpenCode V2 `permissions:` (349 archivos) y FEV-30 (#90) removió el plugin SDD + añadió el banner legacy y el hardening del review de 5 ejes — completados en `hotfix/opencode-v2-migrate` y consolidados en `v2.1.3-beta.1`; el trabajo post-beta quedó en `release/2.1.3`. La deuda 2.1.x previamente planificada se recorrió una versión (v2.1.3 → v2.1.4, v2.1.4 → v2.1.5). Los hallazgos diferidos y TD-V2-97 de abajo siguen abiertos.
+> **Política 2026-09-25:** 2.1.x reservado a hotfixes; deuda/features recorridas a 2.2.x (v2.1.4→v2.2.0, v2.1.5→v2.3.0, v2.3→v2.5.0).
 
 #### Hallazgos de Fase-2 diferidos (2026-09-21, prioridad Important — no perdidos)
 
@@ -153,7 +154,7 @@ estimado, riesgo evaluado).
 - **Mitigación actual:** warning no bloqueante emitido por `scripts/check-ts-version.sh`, invocado al inicio de `just check`; siempre `exit 0` y degradación silenciosa si `jq`, `package.json` o el propio `tsc` no se pueden resolver.
 - **Workaround:** copiar `node_modules/@typescript/typescript-linux-x64` a un FS con ejecución (p. ej. `/tmp`) y ejecutar `lib/tsc --noEmit -p tsconfig.json` desde ahí.
 
-### v2.1.4 (Medium Effort — 9 items, 18-24h total)
+### v2.2.0 (Medium Effort — 9 items, 18-24h total)
 
 | ID | Item | Type | Effort | Risk | Description |
 |----|------|------|--------|------|-------------|
@@ -167,7 +168,7 @@ estimado, riesgo evaluado).
 | **TD-V2-81** | Missing integration tests for error paths | Debt | 2h | Low | Some error paths lack integration test coverage. |
 | **TD-V2-92** | Missing JSDoc for some public methods | Debt | 2h | Low | Some public methods in ports/services lack JSDoc. |
 
-### v2.1.5 (Larger Refactoring — 4 items, 12-16h total)
+### v2.3.0 (Larger Refactoring — 4 items, 12-16h total)
 
 | ID | Item | Type | Effort | Risk | Description |
 |----|------|------|--------|------|-------------|
@@ -176,7 +177,7 @@ estimado, riesgo evaluado).
 | **TD-V2-60** | Directory walking is synchronous | Debt | 4-6h | Medium | Convert directoryWalker to async operations. |
 | **TD-V2-80** | Some use cases are hard to test | Debt | 3-4h | Medium | Refactor use cases to accept all dependencies via constructor. |
 
-### v2.3 (3 items, 18-28h total)
+### v2.5.0 (3 items, 18-28h total)
 
 | ID | Item | Type | Effort | Risk | Description |
 |----|------|------|--------|------|-------------|
@@ -196,9 +197,10 @@ estimado, riesgo evaluado).
 | v2.1.1 | ✅ Released — FEV-26+27+28 — 1935 tests |
 | v2.1.2 | ✅ Released (2026-08-28) — docs-update delegation hotfix + debt reorg — 1935 tests |
 | v2.1.3 | ✅ FEV-29+FEV-30 complete (1959 tests, 31/31 E2E, 96.39%) — beta published, stable pending GO/tag — open: 4 hallazgos Fase-2 diferidos (TD-V2-93-f2..96) + TD-V2-97 |
-| v2.1.4 backlog | 9 items (8 debt + 1 feature) — 18-24h |
-| v2.1.5 backlog | 4 items (4 debt) — 12-16h |
-| v2.3 backlog | 3 items (1 debt + 2 features) — 18-28h |
+| v2.1.4 hotfix | ✅ Complete — listo para lanzamiento |
+| v2.2.0 backlog | 9 items (8 debt + 1 feature) — 18-24h |
+| v2.3.0 backlog | 4 items (4 debt) — 12-16h |
+| v2.5.0 backlog | 3 items (1 debt + 2 features) — 18-28h |
 
 ---
 
@@ -224,5 +226,5 @@ estimado, riesgo evaluado).
 ---
 
 *Maintained by Códice team. Update when tech debt items are added or resolved.*
-*Last updated: 2026-09-22*
+*Last updated: 2026-09-25*
 *Next deep audit: after v2.1.3 stable release*
