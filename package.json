@@ -21,8 +21,8 @@
     "access": "public"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.14",
-    "@types/bun": "^1.4.2",
+    "@biomejs/biome": "^2.5.15",
+    "@types/bun": "^1.4.3",
     "@types/semver": "^7.8.0",
     "typescript": "^7.0.2",
     "yaml": "^2.9.1"
