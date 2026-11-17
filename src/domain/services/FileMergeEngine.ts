@@ -48,10 +48,40 @@ export class FileMergeEngine implements IFileMergeEngine {
 			return failure(stagingError("", message));
 		}
 		const { stageDecisions, expandedDirs, total } = plan;
+
+		// Phase 1: Stage all files
+		const staged = await this.stageRules(
+			rules,
+			stageDecisions,
+			expandedDirs,
+			total,
+			selected,
+			isUpdateMode,
+			onProgress,
+		);
+		if (!staged.ok) return staged;
+
+		// Phase 2: Commit staging (atomic rename). Skip when nothing was staged.
+		return await this.commitPhase(onProgress, total);
+	}
+
+	/**
+	 * Stage every rule the plan marked for staging, emitting
+	 * stage_start/stage_skip/stage_complete progress events per file.
+	 * @returns failure (with staging cleaned) on the first staging error.
+	 */
+	private async stageRules(
+		rules: readonly FileRule[],
+		stageDecisions: ReadonlyMap<string, boolean>,
+		expandedDirs: ReadonlyMap<string, readonly string[]>,
+		total: number,
+		selected: ReadonlySet<string>,
+		isUpdateMode: boolean,
+		onProgress: ProgressCallback | undefined,
+	): Promise<Result<void, MergeError>> {
 		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
 		let current = 0;
 
-		// Phase 1: Stage all files
 		for (const rule of rules) {
 			if (rule.noTemplateCopy) {
 				this.safeEmit(onProgress, {
@@ -98,9 +128,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 			);
 			if (!result.ok) return result;
 		}
-
-		// Phase 2: Commit staging (atomic rename). Skip when nothing was staged.
-		return await this.commitPhase(onProgress, total);
+		return success(undefined);
 	}
 
 	/** Avoid crashing on non-Error throws (e.g., string or undefined). */
