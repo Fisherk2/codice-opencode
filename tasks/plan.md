@@ -29,10 +29,11 @@ Este plan ejecuta los **8 pasos de §9 del diagnóstico** completos, más el rea
 | Tests unit + integration | ✅ **1972 pass / 0 fail** (72 files, 19.65s) | `just test` |
 | E2E | ✅ **31 passed / 0 failed** | `just test-e2e` |
 | Typecheck | ✅ **exit 0** | `bun run tsc --noEmit` |
-| Biome (`just check`) | ⚠️ **NO DISPONIBLE** — binario no ejecutable en montaje NTFS | `bunx @biomejs/biome ci src/ tests/` → `error: ... is not executable` |
+| Biome (`just check`) | ⚠️ **NO DISPONIBLE** — binario no ejecutable en montaje fuseblk/NTFS (TD-V2-97) | `bunx @biomejs/biome ci src/ tests/` → `error: ... is not executable` (exit 126) |
+| Biome (workaround) | ✅ **exit 0** — 147 archivos, 2 warnings + 1 info preexistentes | `install -m 755 node_modules/@biomejs/cli-linux-x64/biome /tmp/opencode/biome` + `/tmp/opencode/biome ci src/ tests/` |
 | Working tree | ~200 archivos sin commitear vs `develop` | `git status --short \| wc -l` → 200 |
 
-**Consecuencia operativa:** el gate de lint solo puede validarse en CI. Cada task del plan que toque `src/` o `tests/` debe pasar `bun run tsc --noEmit` localmente y declarar el lint como "verificado en CI".
+**Consecuencia operativa:** `just check` no puede ejecutarse en este mount, pero el lint **sí** se valida localmente con la copia ejecutable en `/tmp/opencode/biome` (`/tmp` es btrfs y conserva el bit `+x`). Cada task que toque `src/` o `tests/` debe pasar `bun run tsc --noEmit` + `/tmp/opencode/biome ci src/ tests/` localmente, y `just check` se declara como revalidado en CI.
 
 ### 2.1 Inventario de referencias stale (verificado con `git ls-files | xargs grep`)
 
@@ -547,7 +548,7 @@ flowchart TD
 
 | # | Riesgo | Impacto | Mitigación |
 |---|--------|---------|------------|
-| **R1** | `just check` no ejecutable (biome en NTFS) | Lint no validado localmente | `tsc --noEmit` sí corre localmente; el lint se valida en CI. Declarado en el commit de T10 y en `docs/TECH_DEBT.md` |
+| **R1** | `just check` no ejecutable (biome en fuseblk/NTFS, exit 126 — TD-V2-97) | `just check` no corre localmente | `tsc --noEmit` sí corre; el lint se valida con `/tmp/opencode/biome ci src/ tests/` (exit 0 verificado) y se revalida en CI. Declarado en el commit de T10 y en `docs/TECH_DEBT.md` |
 | **R2** | El contador cross-skill de `skill-paths.test.ts:74` (=== 13) se rompe al crear el skill VSA | Test rojo en CI | D9: el skill VSA usa solo refs locales; si hay link cross-skill, bumpear el contador en el mismo commit con comentario.delta |
 | **R3** | Con el nuevo límite de 180 el riesgo de cuerpo largo **baja a Medio**: headroom real 77 (agentes, máx. 103) y 71 (comandos, máx. 109); #111/#114/#115/#116 añaden ~30 | Test rojo en T1/T2/T5/T7 solo si se pega prosa sin sintetizar | T0b alinea ambos guards **antes** de escribir; T1/T2 sintetizan la viñeta a 1 línea (buena práctica aunque ya cabe); verificar con `just test` en cada commit |
 | **R4** | T1 y T2 en paralelo → conflicto de escritura en los mismos 6 archivos | Pérdida de trabajo | D6: SECUENCIAL obligatorio. T3 ∥ T4 sí es seguro (archivos disjuntos) |

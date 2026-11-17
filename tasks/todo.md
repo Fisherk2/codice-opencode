@@ -6,22 +6,22 @@
 > **Diagnóstico:** [`docs/diagnosis/fix30-fev31-partial-issue-implementation.md`](../docs/diagnosis/fix30-fev31-partial-issue-implementation.md)
 > **Issues:** #111 · #112 · #113 · #114 · #115 · #116
 >
-> **Baseline congelado (2026-11-17 @ `1619a87`):** `just test` 1972/0 · `just test-e2e` 31/31 · `tsc --noEmit` 0 · `just check` NO ejecutable (biome en NTFS) · `git status --short | wc -l` = 200
+> **Baseline congelado (2026-11-17 @ `7560187`):** `just test` 1972/0 · `just test-e2e` 31/31 · `tsc --noEmit` 0 · `just check` NO ejecutable (biome en NTFS), lint validado con `/tmp/opencode/biome ci src/ tests/` → exit 0 · `git status --short | wc -l` = 200
 >
 > **Commits:** 1 por concern lógico · Conventional Commits · trailer `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
-> **Gate por commit:** `just test` 0 fail + `bun run tsc --noEmit` exit 0 (biome → CI)
+> **Gate por commit:** `just test` 0 fail + `bun run tsc --noEmit` exit 0 + `/tmp/opencode/biome ci src/ tests/` exit 0
 
 ---
 
 ## Fase A — Baseline y presupuesto (T0 → T0b)
 
-- [ ] **T0** Congelar baseline + inventariar referencias stale. Subagent: `codebase-archaeologist`. Skills: `codebase-onboarding`, `codebase-design`. Tools: `codebase-memory-mcp`, `vercel-grep`.
-  - [ ] `just test` → ≥1972 pass / 0 fail
-  - [ ] `just test-e2e` → 31/31
-  - [ ] `bun run tsc --noEmit` → exit 0
-  - [ ] `bunx @biomejs/biome ci src/ tests/` → fallo registrado como **limitación NTFS**, no de código
-  - [ ] `git status --short | wc -l` → 200 · `git log --oneline -1` → `1619a87`
-  - [ ] Inventario de 14 filas copiado a la tabla siguiente
+- [x] **T0** Congelar baseline + inventariar referencias stale. Subagent: `codebase-archaeologist`. Skills: `codebase-onboarding`, `codebase-design`. Tools: `codebase-memory-mcp`, `vercel-grep`.
+  - [x] `just test` → 1972 pass / 0 fail
+  - [x] `just test-e2e` → 31/31
+  - [x] `bun run tsc --noEmit` → exit 0
+  - [x] `bunx @biomejs/biome ci src/ tests/` → fallo registrado como **limitación NTFS**; lint local validado con `/tmp/opencode/biome ci src/ tests/` → 147 archivos, exit 0
+  - [x] `git status --short | wc -l` → 200 · `git log --oneline -1` → `7560187`
+  - [x] Inventario de 14 filas copiado a la tabla siguiente
 
 - [ ] **T0b** Alinear presupuesto de líneas a **180** en agentes y comandos (decisión del usuario 2026-11-17). Subagent: `test-engineer`. Skills: `test-driven-development`, `clean-code`, `documentation-and-adrs`. Tools: shell (`just test`, `tsc --noEmit`). **Antes de T1/T3.**
   - [ ] `specs/spec-agent-format-v2.md:325` (§8 *Line budget*): 100 → **180**, aclarando "body sin frontmatter"
@@ -32,7 +32,7 @@
   - [ ] `just test` → 0 fail · `tsc --noEmit` → exit 0
 
 ### Checkpoint A
-- [ ] Baseline registrado · inventario materializado · 0 archivos tocados al cerrar T0
+- [x] Baseline registrado · inventario materializado · 0 archivos tocados al cerrar T0
 - [ ] Spec 100 → 180 · test de agentes 120 → 180 · **test de comandos creado** con 180 · nota en `CODE_STYLE.md`
 - [ ] `grep -rn "toBeLessThanOrEqual(180)" tests/unit/domain/{agent,command}-frontmatter-validation.test.ts` → 2 matches
 
@@ -222,7 +222,7 @@
 
 ## Notas de ejecución
 
-- **R1** `just check` no ejecutable (binario biome sin permiso de ejecución en montaje NTFS) → `bun run tsc --noEmit` sí corre localmente; el lint se valida en CI.
+- **R1** `just check` no ejecutable (binario biome sin permiso de ejecución en montaje fuseblk/NTFS, exit 126 — TD-V2-97) → lint validado localmente con `install -m 755 node_modules/@biomejs/cli-linux-x64/biome /tmp/opencode/biome` + `/tmp/opencode/biome ci src/ tests/` → **exit 0** (147 archivos). `just check` igualmente se declara en el commit y se revalida en CI.
 - **R2** `tests/unit/skill-paths.test.ts:74` afirma `cross-skill refs === 13` → el skill VSA debe usar solo refs locales; si no, bumpear en el mismo commit.
 - **R3** Presupuesto de cuerpo = **180 líneas** para agentes y comandos (T0b; headroom real 77 y 71) → el riesgo baja a Medio; aun así, sintetizar la viñeta de background a 1 línea, no pegar el bloque del issue.
 - **R3b** Regla transversal: T1, T2, T3, T4, T5 y T7 escriben prompts → deben mantener el body ≤180; verificar en cada checkpoint.
