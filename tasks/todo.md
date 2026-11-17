@@ -1,6 +1,7 @@
 # FEV-31 (v2.1.5) — Issues #111–#116 + reparación de referencias + documentación out-of-scope — Todo
 
-> **Estado:** PLANIFICADO — 0 de 10 tasks ejecutadas. Plan fuente: [`tasks/plan.md`](./plan.md).
+> **Estado:** PLANIFICADO — 0 de 11 tasks ejecutadas. Plan fuente: [`tasks/plan.md`](./plan.md).
+> **Presupuesto (decisión 2026-11-17):** body ≤ **180 líneas** en agentes principales y comandos, sin contar YAML frontmatter (T0b).
 > **Rama:** `hotfix/update-payload` · **Target:** v2.1.5 · **Milestone:** 2.1.x
 > **Diagnóstico:** [`docs/diagnosis/fix30-fev31-partial-issue-implementation.md`](../docs/diagnosis/fix30-fev31-partial-issue-implementation.md)
 > **Issues:** #111 · #112 · #113 · #114 · #115 · #116
@@ -12,7 +13,7 @@
 
 ---
 
-## Fase A — Baseline (T0)
+## Fase A — Baseline y presupuesto (T0 → T0b)
 
 - [ ] **T0** Congelar baseline + inventariar referencias stale. Subagent: `codebase-archaeologist`. Skills: `codebase-onboarding`, `codebase-design`. Tools: `codebase-memory-mcp`, `vercel-grep`.
   - [ ] `just test` → ≥1972 pass / 0 fail
@@ -22,8 +23,18 @@
   - [ ] `git status --short | wc -l` → 200 · `git log --oneline -1` → `1619a87`
   - [ ] Inventario de 14 filas copiado a la tabla siguiente
 
+- [ ] **T0b** Alinear presupuesto de líneas a **180** en agentes y comandos (decisión del usuario 2026-11-17). Subagent: `test-engineer`. Skills: `test-driven-development`, `clean-code`, `documentation-and-adrs`. Tools: shell (`just test`, `tsc --noEmit`). **Antes de T1/T3.**
+  - [ ] `specs/spec-agent-format-v2.md:325` (§8 *Line budget*): 100 → **180**, aclarando "body sin frontmatter"
+  - [ ] `tests/unit/domain/agent-frontmatter-validation.test.ts:249,254`: nombre del test + `toBeLessThanOrEqual(120)` → **180**; comentario stale de la l.243 (100) corregido; comentario FEV-31 de la l.247 ajustado
+  - [ ] `tests/unit/domain/command-frontmatter-validation.test.ts`: **nuevo** describe "Body line budget", mide el body vía `extractFrontmatter` y afirma `toBeLessThanOrEqual(180)` para los 18 comandos (mismo patrón que el test de agentes)
+  - [ ] `docs/CODE_STYLE.md:23`: nota junto a la regla de 200 líneas — "Template Markdown prompts (agentes y comandos): body ≤180 líneas, excluyendo YAML frontmatter"
+  - [ ] 0 matches de `100 lines` / `120 lines` / `toBeLessThanOrEqual(120)` en `tests/`, `specs/`, `docs/` (fuera de `docs/diagnosis/` e históricos)
+  - [ ] `just test` → 0 fail · `tsc --noEmit` → exit 0
+
 ### Checkpoint A
-- [ ] Baseline registrado · inventario materializado · 0 archivos tocados
+- [ ] Baseline registrado · inventario materializado · 0 archivos tocados al cerrar T0
+- [ ] Spec 100 → 180 · test de agentes 120 → 180 · **test de comandos creado** con 180 · nota en `CODE_STYLE.md`
+- [ ] `grep -rn "toBeLessThanOrEqual(180)" tests/unit/domain/{agent,command}-frontmatter-validation.test.ts` → 2 matches
 
 ---
 
@@ -56,7 +67,7 @@
   - [ ] Viñeta de **prohibición de ejecución en background** (`&`, `nohup`, `disown`, `setsid`, huérfanos) — 1 línea — en los 6 agentes
   - [ ] Ítem 4 de "Source of truth" cita `web-search`/`web-fetch`
   - [ ] Prosa en inglés gramaticalmente correcta
-  - [ ] Cuerpo de cada agente ≤ 120 líneas
+  - [ ] Cuerpo de cada agente ≤ **180 líneas** (guard alineado en T0b)
   - [ ] Frontmatter `permissions:` intacto (sin `tools:` / `permission:`)
   - [ ] `just test` → 0 fail · `tsc --noEmit` → 0
 
@@ -65,7 +76,7 @@
   - [ ] Fallback en español claro + **prohíbe la herramienta Glob** para listar subagentes
   - [ ] `/plan` expone la variante `!`-shell con el roster de subagentes
   - [ ] `moctezuma.md` **sin** DELEGATION PROTOCOL
-  - [ ] Cuerpos ≤ 120 líneas
+  - [ ] Cuerpos ≤ **180 líneas** (guard alineado en T0b)
   - [ ] `just test` → 0 fail · `tsc --noEmit` → 0
 
 ### Checkpoint B
@@ -73,7 +84,7 @@
 - [ ] `grep -rn "web-fetch" template/obligatorio/packs/main/` → 6 archivos
 - [ ] `grep -rn "\.opencode/agents" template/obligatorio/packs/main/` → 5 archivos (no moctezuma)
 - [ ] `grep -c "DELEGATION PROTOCOL" template/obligatorio/packs/main/moctezuma.md` → 0
-- [ ] `just test` → 0 fail
+- [ ] `just test` → 0 fail (guards de cuerpo ≤180 para agentes y comandos)
 - [ ] Revisión humana de la prosa en inglés de los 6 agentes
 
 ---
@@ -130,7 +141,7 @@
   - [ ] `references/` con ≥4 archivos (cascada · ágil Scrum/Kanban · VSA · comparativa de decisión)
   - [ ] Refs internas apuntan a archivos que existen
   - [ ] **Sin** links cross-skill `../<skill>/references/*.md` — o bump del contador `tests/unit/skill-paths.test.ts:74` (13 → N) en el mismo commit con comentario.delta
-  - [ ] `SKILL.md` ≤ ~120 líneas (detalle → `references/`)
+  - [ ] `SKILL.md` breve por diseño (el detalle va a `references/`); el presupuesto enforced de 180 líneas aplica a agentes y comandos, no a skills
   - [ ] `just test` → 0 fail
 
 - [ ] **T7** Fases VSA en los 5 comandos. Subagent: `workflow-architect`. Skills: `clean-ddd-hexagonal`, `codebase-design`, `documentation-and-adrs`. Tools: `codebase-memory-mcp`. Recursos: issue #116, skill VSA de T6.
@@ -213,7 +224,8 @@
 
 - **R1** `just check` no ejecutable (binario biome sin permiso de ejecución en montaje NTFS) → `bun run tsc --noEmit` sí corre localmente; el lint se valida en CI.
 - **R2** `tests/unit/skill-paths.test.ts:74` afirma `cross-skill refs === 13` → el skill VSA debe usar solo refs locales; si no, bumpear en el mismo commit.
-- **R3** Presupuesto de cuerpo de agente = 120 líneas (headroom real 17–32) → sintetizar la viñeta de background a 1 línea, no pegar el bloque del issue.
+- **R3** Presupuesto de cuerpo = **180 líneas** para agentes y comandos (T0b; headroom real 77 y 71) → el riesgo baja a Medio; aun así, sintetizar la viñeta de background a 1 línea, no pegar el bloque del issue.
+- **R3b** Regla transversal: T1, T2, T3, T4, T5 y T7 escriben prompts → deben mantener el body ≤180; verificar en cada checkpoint.
 - **R4** T1 y T2 **secuenciales** (mismos 6 archivos). T3 ∥ T4 sí es seguro (archivos disjuntos).
 - **R5** T6 antes de T7 (el skill debe existir antes de referenciarlo).
 - **R6** Prohibido `git checkout --` / `git restore` / `git stash` / `git reset --hard` sobre los ~200 archivos no commiteados del usuario.

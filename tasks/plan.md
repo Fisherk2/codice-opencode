@@ -11,7 +11,7 @@
 
 La rama `hotfix/update-payload` mezcla una **implementación parcial de FEV-31** con una **reestructuración del workspace fuera de alcance**. El commit de estabilización `1941ed3` puso los gates en verde pero **no cerró ningún gap de issue** ni reparó las referencias huérfanas (§4.1 del diagnóstico).
 
-Este plan ejecuta los **8 pasos de §9 del diagnóstico** completos,不胜 reorganizados en 10 tareas con slices verticales: cada tarea deja un resultado verificable por sí mismo, sin capas horizontales (nada de "primero todos los agentes, luego todos los comandos").
+Este plan ejecuta los **8 pasos de §9 del diagnóstico** completos, más el realineamiento del presupuesto de líneas decidido en la revisión del plan, reorganizados en 11 tareas con slices verticales: cada tarea deja un resultado verificable por sí mismo, sin capas horizontales (nada de "primero todos los agentes, luego todos los comandos").
 
 **Resultado esperado:**
 
@@ -61,7 +61,7 @@ Este plan ejecuta los **8 pasos de §9 del diagnóstico** completos,不胜 reorg
 
 | # | Decisión | Racional |
 |---|----------|-----------|
-| **D1** | Planificación en **10 tareas verticales**, no en las 8 líneas de §9 | §9 agrupa tareas de tamaño distinto (una línea = 1 archivo; otra = 20 archivos). Cada tarea necesita criterios de aceptación verificables |
+| **D1** | Planificación en **11 tareas verticales** (T0, T0b, T1…T10), no en las 8 líneas de §9 | §9 agrupa tareas de tamaño distinto (una línea = 1 archivo; otra = 20 archivos). Cada tarea necesita criterios de aceptación verificables |
 | **D2** | El skill `vertical-slice-architecture` va a **`template/obligatorio/core/skills/`** | Confirmado por el usuario. 5 comandos lo referencian; en `opcional/` quedaría una ref colgante en toda instalación sin ese pack |
 | **D3** | No se toca `docs/diagnosis/*` | Confirmado por el usuario: histórico inmutable (fix28/fix29/fix30). Solo se **actualiza** `fix30` con el resultado de la ejecución |
 | **D4** | Cambios out-of-scope documentados en **WORKFLOW + TECH_DEBT + ARCHITECTURE + wiki** | Confirmado por el usuario. `1941ed3` queda registrado como **estabilización INCOMPLETA** en los tres documentos formales |
@@ -70,9 +70,10 @@ Este plan ejecuta los **8 pasos de §9 del diagnóstico** completos,不胜 reorg
 | **D7** | T6 **precede** a T7 | Los 5 comandos referencian el skill VSA; crearlo antes evita refs colgantes en ningún estado intermedio |
 | **D8** | T8 (refs) **precede** a T9 (docs out-of-scope) | T9 documenta el árbol final; documentar antes de reparar registraría un estado que no existió |
 | **D9** | El nuevo skill VSA **no** usa links cross-skill `../<skill>/references/*.md` | `tests/unit/skill-paths.test.ts:74` afirma `total === 13`; cualquier link cross-skill nuevo rompe el test. Si el subagent lo necesita, debe bumpear el contador **en el mismo commit** con un comentario.delta |
-| **D10** | Presupuesto de cuerpo de agente = **120 líneas** (test vigente) | `agent-frontmatter-validation.test.ts:249`. Headroom real: 17–32 líneas por agente → D14 y D21 caben sin comprimir prosa |
+| **D10** | Presupuesto de cuerpo = **180 líneas** para **agentes y comandos**, midiendo **solo el body** (sin YAML frontmatter) | Decisión del usuario 2026-11-17. Sustituye los **100** de `specs/spec-agent-format-v2.md:325` y los **120** de `agent-frontmatter-validation.test.ts:249,254`. Headroom real: agentes 77 (103→180), comandos 71 (109→180). Cubre holgadamente los ~30 líneas que #111/#114/#115/#116 añaden |
 | **D11** | Los 3 manifiestos opcionales nuevos (`Cargo.toml`, `package.json`, `pyproject.toml`) **no** requieren entrada de manifiesto adicional | `1941ed3` ya los añadió a `FileRuleManifestData.ts`; verificado |
 | **D12** | `tests/fixtures/workspace/` se regenera como **verificación**, no como cambio trackeado | Está en `.gitignore` (solo `.gitkeep` trackeado). Es artefacto de `just dev` |
+| **D13** | La regla de comandos no existe hoy: se crea en `tests/unit/domain/command-frontmatter-validation.test.ts` + una nota normativa junto a la regla de 200 líneas de `docs/CODE_STYLE.md:23` | No hay spec de formato de comandos en `specs/` (buscado: 0 resultados). El test es la única fuente normativa vigente para `Suggested Next Step`; el límite se documenta donde ya vive la regla de longitud de archivo |
 
 ---
 
@@ -81,9 +82,10 @@ Este plan ejecuta los **8 pasos de §9 del diagnóstico** completos,不胜 reorg
 ```mermaid
 flowchart TD
     accTitle: Grafo de dependencias de FEV-31
-    accDescr: Diez tareas encadenadas en ocho fases. T1 precede a T2 porque comparten los seis archivos de agente; T6 precede a T7 porque los comandos referencian el skill VSA; T8, T9 y T10 cierran en cadena porque cada una observa el arbol ya reparado.
+    accDescr: Once tareas encadenadas en ocho fases. T0b alinea el presupuesto de 180 lineas antes de que T1 a T7 crezcan los prompts. T1 precede a T2 porque comparten los seis archivos de agente; T6 precede a T7 porque los comandos referencian el skill VSA; T8, T9 y T10 cierran en cadena porque cada una observa el arbol ya reparado.
 
     T0["T0 · Baseline + inventario<br/>(solo lectura)"]
+    T0b["T0b · Presupuesto 180<br/>agentes + comandos"]
 
     subgraph FB["Fase B · Protocolos de agente"]
         T1["T1 · Issue 114<br/>NEVER ASSUMPTION completo"]
@@ -108,7 +110,9 @@ flowchart TD
     T9["T9 · Documentar alcance 8<br/>WORKFLOW/TECH_DEBT/ARCHITECTURE"]
     T10["T10 · Gates + diagnosis<br/>+ commits atomicos"]
 
-    T0 --> T1
+    T0 --> T0b
+    T0b --> T1
+    T0b --> T3
     T1 --> T2
     T3 --> T8
     T4 --> T8
@@ -121,15 +125,17 @@ flowchart TD
 
     classDef gate fill:#e8f4ea,stroke:#3a7d44,color:#14532d
     classDef cierre fill:#fce8e6,stroke:#b3261e,color:#7f1d1d
-    class T0 gate
+    class T0,T0b gate
     class T10 cierre
 ```
 
-**Paralelismo real:** T3 ∥ T4 (archivos disjuntos) · T1 → T2 obligatorio (mismos 6 archivos) · T6 → T7 obligatorio (dependencia de contenido) · T8 → T9 → T10 obligatorio (estado del árbol).
+**Paralelismo real:** T0b → {T1, T3} obligatorio (el presupuesto de 180 debe estar vigente antes de que se escriban prompts) · T3 ∥ T4 (archivos disjuntos) · T1 → T2 obligatorio (mismos 6 archivos) · T6 → T7 obligatorio (dependencia de contenido) · T8 → T9 → T10 obligatorio (estado del árbol).
 
 ---
 
 ## 5. Plan de tareas
+
+> **Regla transversal (T0b):** toda task que escriba en `template/obligatorio/packs/main/` o en `template/obligatorio/core/commands/` (T1, T2, T3, T4, T5, T7) debe mantener el **body ≤ 180 líneas**, sin contar el YAML frontmatter. El guard correspondiente se activa en T0b y se verifica en cada checkpoint.
 
 ---
 
@@ -158,6 +164,35 @@ flowchart TD
 
 ---
 
+### T0b — Alinear el presupuesto de líneas a 180 (agentes + comandos)
+
+**Descripción:** Decisión del usuario (2026-11-17): el límite de cuerpo para system prompts pasa a **180 líneas** y aplica por igual a los 6 agentes primarios y a los 18 comandos del template, midiendo **solo el body** (sin YAML frontmatter). Hoy la fuente normativa dice 100 (`specs/spec-agent-format-v2.md:325`) y el test aplica 120 (`agent-frontmatter-validation.test.ts:249,254`, con un comentario stale "≤100" en la 243), mientras que **los comandos no tienen límite alguno**. Este task alinea spec + tests **antes** de que T1–T7 engrosen los prompts; de lo contrario el guard viejo fallaría a mitad de FEV-31.
+
+**Acceptance criteria:**
+- [ ] `specs/spec-agent-format-v2.md` §8 *Line budget*: 100 → **180**, con nota explícita de que se mide el body (sin frontmatter)
+- [ ] `tests/unit/domain/agent-frontmatter-validation.test.ts:249,254`: nombre del test y `toBeLessThanOrEqual` → **180**; comentario de la línea 243 corregido (100 → 180); comentario FEV-31 de la 247 ajustado al nuevo margen
+- [ ] `tests/unit/domain/command-frontmatter-validation.test.ts`: **nuevo** describe "Body line budget" que mide el body tras `extractFrontmatter` y afirma `toBeLessThanOrEqual(180)` para los 18 comandos (mismo patrón que el test de agentes — DRY, sin helper nuevo)
+- [ ] `docs/CODE_STYLE.md:23`: nota normativa junto a la regla de 200 líneas — "Template Markdown prompts (agentes y comandos): body ≤180 líneas, excluyendo YAML frontmatter"
+- [ ] Ningún otro archivo introduce un número de límite distinto (buscar `100 lines`, `120 lines`, `toBeLessThanOrEqual(120)` en `tests/`, `specs/`, `docs/` → 0 matches fuera de `docs/diagnosis/` e históricos)
+
+**Verification:**
+- [ ] `just test` → 0 fail (los 6 agentes max 103, los 18 comandos max 109 → ambos por debajo de 180)
+- [ ] `bun run tsc --noEmit` → exit 0
+- [ ] `grep -rn "toBeLessThanOrEqual(180)" tests/unit/domain/{agent,command}-frontmatter-validation.test.ts` → 2 matches
+- [ ] `just check` → pendiente de CI (NTFS)
+
+**Dependencies:** T0, T0b · **Files touched:** `specs/spec-agent-format-v2.md`, `tests/unit/domain/agent-frontmatter-validation.test.ts`, `tests/unit/domain/command-frontmatter-validation.test.ts`, `docs/CODE_STYLE.md` · **Scope:** S (4 archivos)
+
+**Asignación:**
+
+| Subagent | Skills | Tools / MCPs | Recursos externos |
+|---|---|---|---|
+| `test-engineer` | `test-driven-development`, `clean-code`, `documentation-and-adrs` | shell (`just test`, `bun run tsc --noEmit`) | `specs/spec-agent-format-v2.md` §8, `docs/CODE_STYLE.md`, decisión del usuario 2026-11-17 |
+
+> **Nota:** este task no estaba en §9 del diagnóstico — es una decisión nueva del usuario tomada durante la revisión del plan. Se añade aquí para que FEV-31 ejecute el cambio con el resto y no quede un guard viejo contradiciendo al nuevo.
+
+---
+
 ### T1 — #114: cerrar NEVER ASSUMPTION PROTOCOL (6 agentes primarios)
 
 **Descripción:** Añadir en los 6 agentes de `template/obligatorio/packs/main/` la viñeta de **prohibición de ejecución en background** (sintetizada a 1 línea, según el "Alternatives Considered" del issue) y corregir el ítem 4 de la fuente de verdad para citar `web-search`/`web-fetch`. El protocolo ya existe en los 6 (líneas 139/108/123/156/110/107); faltan exactamente 2 elementos.
@@ -166,7 +201,7 @@ flowchart TD
 - [ ] Los 6 agentes contienen una viñeta de rules que prohíbe `&`, `nohup`, `disown`, `setsid` y procesos huérfanos (prohibición de ejecución en background), en una sola línea
 - [ ] El ítem 4 de "Source of truth" cita `web-search`/`web-fetch` (no solo `web-search`)
 - [ ] El texto en inglés está gramaticalmente correcto (el issue #111 señala prosa rota)
-- [ ] Cuerpo de cada agente ≤ 120 líneas (`agent-frontmatter-validation.test.ts`)
+- [ ] Cuerpo de cada agente ≤ **180 líneas** (`agent-frontmatter-validation.test.ts`, alineado en T0b)
 - [ ] Frontmatter `permissions:` intacto — no reintroducir `tools:` ni `permission:` (guards legacy)
 
 **Verification:**
@@ -175,7 +210,7 @@ flowchart TD
 - [ ] `grep -rn "web-fetch" template/obligatorio/packs/main/` → 6 archivos
 - [ ] `bun run tsc --noEmit` → exit 0
 
-**Dependencies:** T0 · **Files touched:** `template/obligatorio/packs/main/{huitzilopochtli,mictlantecuhtli,moctezuma,quetzalcoatl,tezcatlipoca,tlaloc}.md` · **Scope:** M (6 archivos)
+**Dependencies:** T0, T0b · **Files touched:** `template/obligatorio/packs/main/{huitzilopochtli,mictlantecuhtli,moctezuma,quetzalcoatl,tezcatlipoca,tlaloc}.md` · **Scope:** M (6 archivos)
 
 **Asignación:**
 
@@ -193,7 +228,7 @@ flowchart TD
 - [ ] El bloque bash de los 5 agentes escanea **ambos** directorios (`agents/` y `.opencode/agents/`) con una sola invocación y salida `nombre :: descripción` por subagente
 - [ ] La instrucción de fallback está en español claro y **prohíbe explícitamente la herramienta Glob** para listar subagentes (es la causa raíz del bug: `.gitignore` → Glob vacío)
 - [ ] El comando `/plan` (`template/obligatorio/core/commands/plan.md`) expone la variante `!`-shell ya verificada y lista los subagentes disponibles
-- [ ] Cuerpos de los 5 agentes ≤ 120 líneas
+- [ ] Cuerpos de los 5 agentes ≤ **180 líneas** (alineado en T0b)
 - [ ] `moctezuma.md` **no** recibe DELEGATION PROTOCOL (exclusión explícita del issue)
 
 **Verification:**
@@ -202,7 +237,7 @@ flowchart TD
 - [ ] `grep -c "DELEGATION PROTOCOL" template/obligatorio/packs/main/moctezuma.md` → 0
 - [ ] `bun run tsc --noEmit` → exit 0
 
-**Dependencies:** T0, **T1 (secuencial — mismos 6 archivos)** · **Files touched:** los 5 agentes delegantes + `template/obligatorio/core/commands/plan.md` · **Scope:** M
+**Dependencies:** T0, T0b, **T1 (secuencial — mismos 6 archivos)** · **Files touched:** los 5 agentes delegantes + `template/obligatorio/core/commands/plan.md` · **Scope:** M
 
 **Asignación:**
 
@@ -231,7 +266,7 @@ flowchart TD
 - [ ] Ninguna fase del archivo con menos de 3 líneas de cuerpo
 - [ ] `bun run tsc --noEmit` → exit 0
 
-**Dependencies:** T0 · **Files touched:** `template/obligatorio/core/commands/hotfix.md` · **Scope:** S (1 archivo)
+**Dependencies:** T0, T0b · **Files touched:** `template/obligatorio/core/commands/hotfix.md` · **Scope:** S (1 archivo)
 
 **Asignación:**
 
@@ -260,7 +295,7 @@ flowchart TD
 - [ ] `grep -c "18 Slash Commands\|60 Engineering Skills" README.md` → 2
 - [ ] `just test` → 0 fail (el README no está en gates, pero el wiki-source sí lo está vía `source-hygiene`)
 
-**Dependencies:** T0 · **Files touched:** `README.md`, `template/obligatorio/core/commands/docs-update.md`, `template/obligatorio/packs/main/quetzalcoatl.md`, `docs/wiki-source/{Agents,Commands,Workspace-Structure}.md` · **Scope:** M (7 archivos)
+**Dependencies:** T0, T0b · **Files touched:** `README.md`, `template/obligatorio/core/commands/docs-update.md`, `template/obligatorio/packs/main/quetzalcoatl.md`, `docs/wiki-source/{Agents,Commands,Workspace-Structure}.md` · **Scope:** M (7 archivos)
 
 **Asignación:**
 
@@ -291,7 +326,7 @@ flowchart TD
 - [ ] `just test` → 0 fail
 - [ ] `bun run tsc --noEmit` → exit 0
 
-**Dependencies:** T0 · **Files touched:** `template/obligatorio/core/commands/{spec,feature,diagnosis,migrate}.md` · **Scope:** M (4 archivos)
+**Dependencies:** T0, T0b · **Files touched:** `template/obligatorio/core/commands/{spec,feature,diagnosis,migrate}.md` · **Scope:** M (4 archivos)
 
 **Asignación:**
 
@@ -311,7 +346,7 @@ flowchart TD
 - [ ] `references/` contiene al menos: waterfall/cascada, agile (Scrum/Kanban), VSA/vertical-slice, y una guía comparativa de decisión — una metodología por archivo
 - [ ] Las referencias internas del skill usan paths que **existen** (guard de `skill-paths.test.ts`)
 - [ ] El skill **no** introduce links cross-skill `../<skill>/references/*.md`; si el subagent los necesita, bumpea el contador de `tests/unit/skill-paths.test.ts:74` de 13 → N **en el mismo commit** con comentario.delta
-- [ ] `SKILL.md` ≤ ~120 líneas (no saturar; el detalle va a `references/`)
+- [ ] `SKILL.md` breve por diseño (el detalle va a `references/`); el presupuesto **enforced** de 180 líneas aplica a agentes y comandos, no a skills
 - [ ] No hay bytes de control crudos (guard `source-hygiene.test.ts` — pero ese escanea `template/obligatorio/packs`, no `core/skills`; se mantiene por higiene)
 
 **Verification:**
@@ -320,7 +355,7 @@ flowchart TD
 - [ ] `just test` → 0 fail (**incluye `tests/unit/skill-paths.test.ts`** — el contador cross-skill debe seguir en 13 salvo bump justificado)
 - [ ] `bun run tsc --noEmit` → exit 0
 
-**Dependencies:** T0 · **Files touched:** `template/obligatorio/core/skills/vertical-slice-architecture/**` (nuevo) · **Scope:** M (nuevo, ~6 archivos)
+**Dependencies:** T0, T0b · **Files touched:** `template/obligatorio/core/skills/vertical-slice-architecture/**` (nuevo) · **Scope:** M (nuevo, ~6 archivos)
 
 **Asignación:**
 
@@ -453,17 +488,19 @@ flowchart TD
 
 ## 6. Checkpoints entre fases
 
-### Checkpoint A — Baseline (tras T0)
+### Checkpoint A — Baseline y presupuesto (tras T0 → T0b)
 - [ ] `just test` ≥1972/0 · `just test-e2e` 31/31 · `tsc --noEmit` 0
 - [ ] Inventario de 14 referencias stale materializado en `tasks/todo.md`
-- [ ] `git status --short | wc -l` == 200 (nada tocado aún)
+- [ ] `git status --short | wc -l` == 200 al cerrar T0 (nada tocado aún)
+- [ ] Spec 100 → 180 · test de agentes 120 → 180 · **test de comandos creado** con 180 · nota en `CODE_STYLE.md`
+- [ ] `grep -rn "toBeLessThanOrEqual(180)" tests/unit/domain/{agent,command}-frontmatter-validation.test.ts` → 2 matches
 
 ### Checkpoint B — Protocolos de agente (tras T1 → T2)
 - [ ] `grep -rn "nohup\|disown\|setsid" template/obligatorio/packs/main/` → 6 archivos
 - [ ] `grep -rn "web-fetch" template/obligatorio/packs/main/` → 6 archivos
 - [ ] `grep -rn "\.opencode/agents" template/obligatorio/packs/main/` → 5 archivos (no moctezuma)
 - [ ] `grep -c "DELEGATION PROTOCOL" template/obligatorio/packs/main/moctezuma.md` → 0
-- [ ] `just test` → 0 fail (guard de cuerpo ≤120 líneas)
+- [ ] `just test` → 0 fail (guard de cuerpo ≤180 líneas — agentes y comandos)
 - [ ] Revisión humana de la prosa en inglés de los 6 agentes
 
 ### Checkpoint C — Comando /hotfix (tras T3 ∥ T4)
@@ -512,7 +549,7 @@ flowchart TD
 |---|--------|---------|------------|
 | **R1** | `just check` no ejecutable (biome en NTFS) | Lint no validado localmente | `tsc --noEmit` sí corre localmente; el lint se valida en CI. Declarado en el commit de T10 y en `docs/TECH_DEBT.md` |
 | **R2** | El contador cross-skill de `skill-paths.test.ts:74` (=== 13) se rompe al crear el skill VSA | Test rojo en CI | D9: el skill VSA usa solo refs locales; si hay link cross-skill, bumpear el contador en el mismo commit con comentario.delta |
-| **R3** | Los 6 agentes rozan el presupuesto de 120 líneas (headroom 17–32) | Test rojo `agent-frontmatter-validation` | T1/T2DEben **sintetizar** (una línea de viñeta), no pegar el bloque largo del issue. Verificar con el test en cada commit |
+| **R3** | Con el nuevo límite de 180 el riesgo de cuerpo largo **baja a Medio**: headroom real 77 (agentes, máx. 103) y 71 (comandos, máx. 109); #111/#114/#115/#116 añaden ~30 | Test rojo en T1/T2/T5/T7 solo si se pega prosa sin sintetizar | T0b alinea ambos guards **antes** de escribir; T1/T2 sintetizan la viñeta a 1 línea (buena práctica aunque ya cabe); verificar con `just test` en cada commit |
 | **R4** | T1 y T2 en paralelo → conflicto de escritura en los mismos 6 archivos | Pérdida de trabajo | D6: SECUENCIAL obligatorio. T3 ∥ T4 sí es seguro (archivos disjuntos) |
 | **R5** | Los comandos quedan referenciando un skill inexistente si T7 corre antes de T6 | Ref colgante en instalaciones | D7: T6 → T7 estrictamente. Verificación: `grep -rln vertical-slice-architecture template/obligatorio/core/skills/` → 1 |
 | **R6** | Sobreescribir los ~200 cambios del usuario (no commiteados) | Pérdida de trabajo no recuperable | T0 congela `git status --short | wc -l` == 200 como baseline; T10 verifica que el diff final solo contiene lo planificado + lo preexistente. **Prohibido `git checkout`/`git stash` sobre archivos no commiteados** |
@@ -528,6 +565,7 @@ flowchart TD
 | Task | Subagent | Skills | Tools / MCPs / Plugins | Recursos externos | Parallel |
 |------|----------|--------|-----------------------|-------------------|----------|
 | T0 | `codebase-archaeologist` | `codebase-onboarding`, `codebase-design` | `codebase-memory-mcp`, `vercel-grep` | fix30 §2.1 | — |
+| T0b | `test-engineer` | `test-driven-development`, `clean-code`, `documentation-and-adrs` | shell (`just test`, `tsc --noEmit`) | spec-agent-format-v2 §8, CODE_STYLE.md, decisión 2026-11-17 | antes de T1/T3 |
 | T1 | `technical-writer` | `clean-code`, `documentation-and-adrs` | `vercel-grep` | #114, opencode.ai/v2/docs/agents | secuencial |
 | T2 | `prompt-engineer` | `clean-code`, `documentation-and-adrs` | shell, `vercel-grep` | #111, opencode.ai/v2/docs/commands/#shell | secuencial |
 | T3 | `workflow-architect` | `incremental-implementation`, `documentation-and-adrs`, `planning-and-task-breakdown`, `test-driven-development` | `codebase-memory-mcp` | #112, opencode.ai/v2/docs/commands | **∥ T4** |
@@ -547,7 +585,7 @@ flowchart TD
 ## 9. Política de commits
 
 - Rama: `hotfix/update-payload` (ya existe; **no** crear rama nueva).
-- **1 commit por concern lógico**, no por archivo (8–12 commits esperados para FEV-31).
+- **1 commit por concern lógico**, no por archivo (9–13 commits esperados para FEV-31, incluye T0b).
 - Conventional Commits: `feat(commands): …`, `feat(skill): …`, `fix(docs): …`, `docs(workflow): …`, `test: …`.
 - Trailer obligatorio en cada commit: `Co-Authored-By: Moctezuma <dev@fisherk2.com>`.
 - Mensaje con contexto del **porqué**; el cuerpo lista los archivos y la verificación ejecutada.
@@ -572,6 +610,7 @@ flowchart TD
 - [ ] 0 referencias colgantes en archivos trackeados (fuera de `CHANGELOG.md` y `docs/diagnosis/`).
 - [ ] Documentación oficial coherente con el árbol real (comandos 18, skills 60, ADRs en `docs/adr/`).
 - [ ] Cambios out-of-scope (§8) registrados en WORKFLOW/TECH_DEBT/ARCHITECTURE + wiki.
+- [ ] Presupuesto de 180 líneas de body vigente en agentes **y** comandos, con spec + 2 tests + nota en `CODE_STYLE.md` alineados (T0b).
 - [ ] Gates: `just test` 0 fail · `just coverage-check` 0 fail · `just test-e2e` 31/31 · `tsc --noEmit` 0 · biome pendiente de CI.
 - [ ] `tasks/todo.md` con todas las casillas marcadas.
 - [ ] Commits atómicos con trailer correcto; PR a `develop` abierto y esperando GO.
