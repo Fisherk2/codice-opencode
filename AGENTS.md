@@ -101,10 +101,4 @@ Este proyecto utiliza **codebase-memory-mcp** para indexado y búsqueda de eleme
 - Grafo persistido en `.codebase-memory/graph.db.zst`
 - Para re-indexar: `codebase-memory-mcp_index_repository` con `persistence=true`.
 
-### 🧾 Fuentes de sesión (FEV-31 / v2.1.5 diagnosis)
-
-- Issues del milestone 2.1.x: [#111](https://github.com/fisherk2/codice-opencode/issues/111)–[#116](https://github.com/fisherk2/codice-opencode/issues/116) (vía `gh issue view`).
-- Catálogo de modelos OpenCode (IDs de `opencode.json` validados `active`): `big-pickle`, `glm-5.3-flash-free`, `nemotron-3.5-super-vl-free`, `deepseek-v4.1-flash-free`, `mimo-v2.6-flash-free`.
-- Diagnóstico completo: `docs/diagnosis/fix30-fev31-partial-issue-implementation.md` (commit `1941ed3` documentado como estabilización INCOMPLETA).
-
 ---
