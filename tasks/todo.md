@@ -210,7 +210,7 @@
   - [x] `docs/diagnosis/fix30-…md` §4.1: `1941ed3` sigue como INCOMPLETO histórico + nota de cierre por FEV-31
   - [x] Commits atómicos (1 por concern), Conventional Commits, trailer `Co-Authored-By: Moctezuma <dev@fisherk2.com>` en los 15 de esta sesión (los 4 previos de la rama conservan el trailer de Tezcatlipoca, su agente de sesión)
   - [x] `git status` limpio; los cambios del payload quedaron en 4 commits `(payload)` en lugar de perderse
-  - [ ] PR a `develop` abierto, **sin mergear** hasta GO del usuario
+  - [x] PR a `develop` abierto, **sin mergear** hasta GO del usuario → [#119](https://github.com/Fisherk2/codice-opencode/pull/119)
 
 ### Checkpoint H — gate de salida de FEV-31
 - [x] `just test` 0 fail (1991) · `just test-e2e` 31/31 · `tsc --noEmit` 0
