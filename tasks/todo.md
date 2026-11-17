@@ -118,13 +118,13 @@
 
 ## Fase D — #115 find-skills (T5)
 
-- [ ] **T5** Paso de setup de skills en `/spec`, `/feature`, `/diagnosis`, `/migrate`. Subagent: `technical-writer`. Skills: `find-skills`, `documentation-and-adrs`, `spec-driven-development`. Tools: `vercel-grep`, web search. Recursos: issue #115, skills.sh/vercel-labs/skills/find-skills, github.com/vercel-labs/skills.
-  - [ ] Fase propia (no viñeta) tras la de intención/análisis, en los 4 comandos
-  - [ ] Invoca `find-skills` + **fallback documentado**: `npx skills use "https://github.com/vercel-labs/skills" --skill "find-skills"`
-  - [ ] Presenta **tabla** de skills candidatas
-  - [ ] Usa `question` tool: todas / solo las más importantes / ninguna
-  - [ ] **NUNCA global** — instalación a nivel de proyecto (texto literal en los 4)
-  - [ ] `just test` → 0 fail · `tsc --noEmit` → 0
+- [x] **T5** Paso de setup de skills en `/spec`, `/feature`, `/diagnosis`, `/migrate`. Subagent: `technical-writer`. Skills: `find-skills`, `documentation-and-adrs`, `spec-driven-development`. Tools: `vercel-grep`, web search. Recursos: issue #115, skills.sh/vercel-labs/skills/find-skills, github.com/vercel-labs/skills.
+  - [x] Fase propia (no viñeta) tras la de intención/análisis, en los 4 comandos
+  - [x] Invoca `find-skills` + **fallback documentado**: `npx skills use "https://github.com/vercel-labs/skills" --skill "find-skills"`
+  - [x] Presenta **tabla** de skills candidatas
+  - [x] Usa `question` tool: todas / solo las más importantes / ninguna
+  - [x] **NUNCA global** — instalación a nivel de proyecto (texto literal en los 4)
+  - [x] `just test` → 0 fail · `tsc --noEmit` → 0
 
 ### Checkpoint D
 - [ ] `grep -rln "find-skills" template/obligatorio/core/commands/{spec,feature,diagnosis,migrate}.md` → 4 archivos
