@@ -1,7 +1,7 @@
 /**
  * Version status helpers for the Update Workspace flow (FEV-21 Phase 4).
  *
- * reportRemoteStatus and notifyIfUpToDate were extracted from
+ * reportRemoteStatus and isAlreadyUpToDate were extracted from
  * UpdateWorkspaceUseCase so the class stays under the 200-line file
  * convention — mirrors the updateFlow.ts extraction pattern. Both are
  * informational; neither can block the update.
@@ -42,8 +42,12 @@ export async function reportRemoteStatus(
 	}
 }
 
-/** True when installed >= bundled; a failed comparison falls through to "not up to date". */
-export async function notifyIfUpToDate(
+/**
+ * True when installed >= bundled; a failed comparison falls through to "not up to date".
+ * Side effect: when up to date, emits the "already up to date" info message
+ * before returning true.
+ */
+export async function isAlreadyUpToDate(
 	deps: UpdateStatusDeps,
 	localVersion: WorkspaceVersion,
 ): Promise<boolean> {

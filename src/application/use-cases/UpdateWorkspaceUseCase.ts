@@ -16,9 +16,13 @@ import {
 	buildUpdateSystemChangedWarning,
 } from "../versionGateMessages";
 import { isPreV2Version, resolveUpdatePacks } from "./updateFlow";
-import { buildPluginRemnantMessage, finishUpdate, maybeConfirmUpdate } from "./updateHelpers";
+import {
+	buildPluginRemnantMessage,
+	confirmUpdateUnlessForced,
+	writeVersionAndReportUpdate,
+} from "./updateHelpers";
 import type { UpdateWorkspaceOptions } from "./updateOptions";
-import { notifyIfUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
+import { isAlreadyUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
 
 /**
  * Mode 3: Update Workspace — update an existing v2.0+ installation.
@@ -78,7 +82,7 @@ export class UpdateWorkspaceUseCase {
 
 		// Ask for confirmation if not forced.
 		if (
-			!(await maybeConfirmUpdate(
+			!(await confirmUpdateUnlessForced(
 				this.fileSystem,
 				this.userPrompt,
 				localVersion,
@@ -94,7 +98,7 @@ export class UpdateWorkspaceUseCase {
 
 		// Compare installed version against bundled template version. Returns
 		// true when no update is needed (installed >= bundled).
-		if (await notifyIfUpToDate(this.statusDeps, localVersion)) {
+		if (await isAlreadyUpToDate(this.statusDeps, localVersion)) {
 			return success(undefined);
 		}
 
@@ -128,7 +132,7 @@ export class UpdateWorkspaceUseCase {
 		if (!versionResult.ok) {
 			return failure(versionResult.error);
 		}
-		const finishResult = await finishUpdate(
+		const finishResult = await writeVersionAndReportUpdate(
 			this.fileSystem,
 			this.userPrompt,
 			versionResult.value,

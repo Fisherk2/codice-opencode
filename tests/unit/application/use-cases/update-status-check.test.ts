@@ -1,7 +1,7 @@
 /**
  * Unit tests for updateStatusCheck.ts helpers (FEV-21 Phase 4).
  *
- * reportRemoteStatus and notifyIfUpToDate were extracted from
+ * reportRemoteStatus and isAlreadyUpToDate were extracted from
  * UpdateWorkspaceUseCase to keep the class under the 200-line convention;
  * these tests pin down the informational status behaviors (no remote tag,
  * remote ahead, up-to-date, comparison failure) in isolation.
@@ -10,7 +10,7 @@
 import { describe, expect, mock as mockFn, test } from "bun:test";
 import type { IGitHubClient } from "../../../../src/application/ports/IGitHubClient";
 import {
-	notifyIfUpToDate,
+	isAlreadyUpToDate,
 	reportRemoteStatus,
 	type UpdateStatusDeps,
 } from "../../../../src/application/use-cases/updateStatusCheck";
@@ -89,10 +89,10 @@ describe("reportRemoteStatus", () => {
 	});
 });
 
-describe("notifyIfUpToDate", () => {
+describe("isAlreadyUpToDate", () => {
 	test("returns true and informs when installed >= bundled", async () => {
 		const deps = makeDeps({ versionComparator: makeComparator("behind") });
-		const upToDate = await notifyIfUpToDate(
+		const upToDate = await isAlreadyUpToDate(
 			deps,
 			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
 		);
@@ -105,7 +105,7 @@ describe("notifyIfUpToDate", () => {
 
 	test("returns false and stays silent when bundled is newer", async () => {
 		const deps = makeDeps({ versionComparator: makeComparator("ahead") });
-		const upToDate = await notifyIfUpToDate(
+		const upToDate = await isAlreadyUpToDate(
 			deps,
 			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
 		);
@@ -126,7 +126,7 @@ describe("notifyIfUpToDate", () => {
 				})),
 			},
 		});
-		const upToDate = await notifyIfUpToDate(
+		const upToDate = await isAlreadyUpToDate(
 			deps,
 			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
 		);

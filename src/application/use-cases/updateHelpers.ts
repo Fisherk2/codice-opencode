@@ -47,8 +47,9 @@ export function buildPluginRemnantMessage(): string {
  * Ask the user for confirmation when the update is not forced.
  * Defaults to Yes so unattended sessions can accept the update
  * with a single keystroke (plan Phase 4).
+ * @returns true = proceed with the update; false = abort.
  */
-export async function maybeConfirmUpdate(
+export async function confirmUpdateUnlessForced(
 	fileSystem: IFileSystem & IStagingSystem,
 	userPrompt: IUserPrompt,
 	localVersion: WorkspaceVersion,
@@ -73,7 +74,7 @@ export async function maybeConfirmUpdate(
  * Updates the .codice-version with the new version and installed packs,
  * then skips optional files (optionalSelections resets per spec §6.1).
  */
-export async function finishUpdate(
+export async function writeVersionAndReportUpdate(
 	fileSystem: IFileSystem & IStagingSystem,
 	userPrompt: IUserPrompt,
 	safeVersion: string,
