@@ -3,8 +3,6 @@ description: Run the pre-launch checklist.
 agent: tezcatlipoca
 ---
 
-**Load** `shipping-and-launch` skill.
-
 ## Phase 0 — Pre-flight: Detect project type
 
 Before spawning subagents, detect whether the project has UI components. Check for files matching:
@@ -24,7 +22,7 @@ Before spawning subagents, detect whether the project has UI components. Check f
 
 The personas operate independently — no shared state, no ordering — which is what makes parallel execution safe and useful here.
 
-Spawn subagents concurrently using the Agent tool. **Issue all Agent tool calls in a single assistant turn so they execute in parallel** — sequential calls defeat the purpose of this command:
+**Load** `shipping-and-launch` skill and spawn subagents concurrently using the Agent tool. **Issue all Agent tool calls in a single assistant turn so they execute in parallel** — sequential calls defeat the purpose of this command:
 
 1. **`code-reviewer`** — Run a five-axis review (correctness, readability, architecture, security, performance) on the staged changes or recent commits. Output the standard review template.
 2. **`security-auditor`** — Run a vulnerability and threat-model pass. Check OWASP Top 10, secrets handling, auth/authz. Output the standard audit report.
@@ -48,12 +46,12 @@ Once all reports are back, the main agent (not a sub-persona) synthesizes them:
 
 ## Phase C — Decision and rollback
 
-Before make output review, use the `question` tool to resolve ambiguities:
+1. Before make output review, use the `question` tool to resolve ambiguities:
 - Flag findings that could be **false positives** — ask the user to confirm
 - Ask if any observation is **intentional** — the user may have a valid reason
 - Let the user dismiss, accept, or modify each disputed finding
 
-1. Produce a single output for user review:
+2. Produce a single output for user review:
 
 ```markdown
 ## Ship Decision: GO | NO-GO
@@ -80,21 +78,34 @@ Before make output review, use the `question` tool to resolve ambiguities:
 - [accessibility-tester report] *(if UI detected)*
 ```
 
-2. Use the `question` tool to ask the user to confirm the reports before proceeding with fixes.
-3. If user confirms, **Delegate** `minimal-change-engineer` subagent and **Load** `incremental-implementation` skill to apply all observations incrementally, **Load** `solid` skill to maintain SOLID principles — run tests after each change, if tests fail after a change, revert that change and reconsider.
-4. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
+3. Use the `question` tool to ask the user to confirm the reports before proceeding with fixes.
 
-If agents are stuck or the corrections process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
+## Phase D: Fixing observations
 
-5. **Stop** when all issues are resolved and the code is ready for deployment.
+1. If user confirms, **Delegate** `minimal-change-engineer` subagent and **Load** `incremental-implementation` skill to apply all observations incrementally, **Load** `solid` skill to maintain SOLID principles.
+2. Run tests after each change, if tests fail after a change, revert that change and reconsider.
+3. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
+
+**Important**: If you/subagents get stuck or the fixing process fails, **STOP** and **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents, always report to the user what is the issue and what you have to do to fix it, ask user for confirmation before proceeding with `question` tool.
+
+4. **Stop** when all issues are resolved and the code is ready for deployment.
 
 ## Rules
 
 - The rollback plan is mandatory before any GO decision.
 - If any persona returns a Critical finding, the default verdict is NO-GO unless the user explicitly accepts the risk.
-- **Skip the fan-out only if all of the following are true:** the change touches 2 files or fewer, the diff is under 50 lines, and it does not touch auth, payments, data access, or config/env. Otherwise, default to fan-out. `/ship` is designed for production-bound changes — when the blast radius is non-trivial, run the parallel review even if the diff looks small.
+- **Skip the fan-out only if all of the following are true:** the change touches 2 files or fewer, the diff is under 50 lines, and it does not touch auth, payments, data access, or config/env. Otherwise, default to fan-out. This workflow is designed for production-bound changes — when the blast radius is non-trivial, run the parallel review even if the diff looks small.
 - **Skip `accessibility-tester`** if Phase 0 detects no UI files. Do not spawn accessibility checks for CLI tools, APIs, libraries, or other non-UI projects.
+- Don't deploy to production, suggest user to run `/deploy` instead.
+- **Do not** modify `CODE_STYLE.md` if it exists, follow the conventions and best practices defined in it.
+- You can stop and ask the user for clarification if you need more information to complete the task.
+- Use the best available tools for the job.
+- Research external resources every time, specially if you are stuck or the fixing process fails.
 
 ## Suggested Next Step
 
-> Ship evaluation and corrections are complete. if you are not ready to launch, run `/ship` again when ready. Run `/deploy` to deploy the changes to production.
+> Ship evaluation and corrections are complete. if you are not ready to launch, run `/ship` again when ready. Run `/deploy` to launch the changes to production.
+
+---
+
+User instructions:

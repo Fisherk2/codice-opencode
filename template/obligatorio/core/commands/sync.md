@@ -66,9 +66,7 @@ For mode **conflict-resolution**:
 2. Fix any discrepancies found during merge before proceeding and run test after each change.
 3. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
-If agents are stuck or the merge process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents. If conflict resolution fails mid-way, leave git in a recoverable state.
-
-**Never `git push --force`** to shared branches. Only force-push to feature branches.
+**Important**: If you/subagents get stuck or the merge process fails, **STOP** and **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents, always report to the user what is the issue and what you have to do to fix it, ask user for confirmation before proceeding with `question` tool.
 
 ## Phase 3: Post-Sync Report
 
@@ -90,6 +88,19 @@ Sync state updated in `docs/.codice-sync-state.json` (mode **incremental-sync** 
 }
 ```
 
+## Rules
+
+- **Never `git push --force`** to shared branches. Only force-push to feature branches.
+- **Never** write to `tasks/` directories.
+- Always follow the rules of the project.
+- You can stop and ask the user for clarification if you need more information to complete the merge process.
+- Use the best available tools for the job.
+- Research external resources every time, specially if you are stuck or the sync is failing. 
+
 ## Suggested Next Step
 
 > Sync complete. Run `/diagnosis` if conflicts revealed underlying issues and `/plan` to create a fixing plan.
+
+---
+
+User instructions:

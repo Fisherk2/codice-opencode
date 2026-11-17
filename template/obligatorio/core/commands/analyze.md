@@ -5,9 +5,9 @@ agent: tezcatlipoca
 
 ## Pre-Flight: Detect Project Type
 
-**Delegate** `codebase-onboarding-engineer` subagent to understand the project:
+**Delegate** `codebase-onboarding-engineer` subagent and **Load** `codebase-onboarding` skill to understand the project:
 
-1. Identify project root and tech stack (read `package.json`, lock files, config files).
+1. Identify project root and tech stack (read metadata/dependency files, lock files, config files, manifests, etc.).
 2. Detect language(s), framework(s), and architecture pattern (monolith, microservices, serverless, etc.).
 3. Count source files, test files, and documentation files.
 4. Estimate codebase size (LOC, file count) to scope analysis depth.
@@ -19,47 +19,47 @@ Use `question` tool to ask: **"What analysis depth do you want?"**:
 - **B) Standard analysis** — All 8 dimensions, medium depth
 - **C) Deep audit** — All 8 dimensions, deep dive
 
-Then, analyze the project across 8 dimensions sequentially. For each dimension, load the relevant skill and delegate to the appropriate subagents:
+Then, **Load** `doubt-driven-development` skill and analyze the project across 8 dimensions sequentially. For each dimension, load the relevant skill and delegate to the appropriate subagents:
 
 ### 1. System Structure
-- **Load:** `clean-ddd-hexagonal` skill
 - **Delegate:** `software-architect` and `backend-architect` subagents in parallel.
-- **Output:** Component hierarchy, module boundaries, architectural pattern adherence
+- **Load:** `clean-ddd-hexagonal` skill
+- **Output:** Component hierarchy, module boundaries, architectural pattern adherence, layer separation
 
 ### 2. Design Patterns
-- **Load:** `design-patterns` skill
 - **Delegate:** `code-reviewer` subagent.
-- **Output:** Pattern usage, anti-patterns, consistency across codebase
+- **Load:** `design-patterns` skill
+- **Output:** Pattern usage, anti-patterns, consistency across codebase, design pattern effectiveness
 
 ### 3. Dependency Architecture
-- **Load:** `dependency-audit` skill
 - **Delegate:** `dependency-manager` subagent.
-- **Output:** Coupling metrics, circular dependencies, DI effectiveness
+- **Load:** `dependency-audit` skill
+- **Output:** Coupling metrics, circular dependencies, DI effectiveness, version conflicts
 
 ### 4. Data Flow
 - **Load:** `observability-and-instrumentation` skill
 - **Delegate:** `platform-engineer` subagent.
-- **Output:** Traceability, state management, persistence strategies
+- **Output:** Traceability, state management, persistence strategies, data flow optimization
 
 ### 5. Scalability and Performance
-- **Load:** `performance-analysis` skill
 - **Delegate:** `performance-benchmarker` and domain-specific subagents in parallel.
-- **Output:** Bottlenecks, caching strategies, resource management
+- **Load:** `performance-analysis` skill
+- **Output:** Bottlenecks, caching strategies, resource management, scalability patterns
 
 ### 6. Security
-- **Load:** `security-and-hardening` skill
 - **Delegate:** `security-auditor`, `ai-generated-code-auditor`, `appsec-engineer`, `senior-secops`, `penetration-tester`, `security-architect` and `security-compliance-auditor` subagents in parallel.
-- **Output:** Trust boundaries, auth/authz patterns, data protection
+- **Load:** `security-and-hardening` and `security-audit` skill 
+- **Output:** Trust boundaries, auth/authz patterns, data protection, vulnerabilities
 
 ### 7. Testability
-- **Load:** `test-driven-development` skill
 - **Delegate:** `test-engineer` subagent.
-- **Output:** Coverage, test quality, untested areas
+- **Load:** `test-driven-development` skill
+- **Output:** Coverage, test quality, untested areas, gaps, test strategy
 
 ### 8. Documentation
-- **Load:** `documentation-and-adrs` skill
 - **Delegate:** `technical-writer` subagent.
-- **Output:** Comment quality, API docs completeness, ADR coverage
+- **Load:** `documentation-and-adrs` skill
+- **Output:** Comment quality, API docs completeness, ADR coverage, mermaid diagrams, missing docs
 
 Before finalizing, use the `question` tool to resolve ambiguities:
 - Flag findings that could be **false positives** — ask the user to confirm
@@ -74,7 +74,7 @@ For each dimension, the subagent returns findings categorized as:
 
 ## Phase 2: Generate `TECH_DEBT.md`
 
-Create or update entries in @docs/TECH_DEBT.md with this content:
+**Delegate** to `docs-writer` subagent and **Load** `tech-debt` skill to create and/or update entries in @docs/TECH_DEBT.md with this requirements:
 
 - TD-XXX identifier
 - Analysis date
@@ -84,6 +84,26 @@ Create or update entries in @docs/TECH_DEBT.md with this content:
 - Detailed findings for each issue
 - Methodology used
 
+## Phase 3: Finalize
+
+1. **Analysis is complete — do NOT touch or implement code files.**
+2. Use the `question` tool to confirm with the user before proceeding.
+3. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
+
+## Rules
+
+- Use the `question` tool to resolve ambiguities with the user
+- Go for each dimension in order
+- If `docs/TECH_DEBT.md` doesn't exist, create it
+- Don't implement or fix anything, just document them.
+- Research external sources and/or oficial documentation to contrast your findings.
+- **Never** write to `tasks/` directories.
+
 ## Suggested Next Step
 
 > Analysis complete. Run `/diagnosis` on critical findings to create diagnostic documents, then `/plan` to create implementation plans for the fixes.
+
+---
+
+User instructions:
+

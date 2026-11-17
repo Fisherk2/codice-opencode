@@ -31,6 +31,8 @@ Explain how to configure and use the Códice workspace:
 - Always explain the project's purpose, current state, and next steps
 - Never mention technical details like file structure or code snippets
 
+**Load** `improve-codebase-architecture` skill if user wants a report on the project's structure.
+
 ### C) What is the next step for this project?
 **Delegate** `codebase-onboarding-engineer` subagent (if exist) to read the user's project and provide a step-by-step recommendation guide:
 - Analyze the current project state (same detection logic as option B)
@@ -50,13 +52,19 @@ Research the [Códice Wiki Agents page](https://github.com/Fisherk2/codice-openc
 
 ## Rules
 
-1. `/help` is read-only — does not modify files or change project state
-2. DO NOT WRITE ANY FILES — only describe, explain, and suggest next steps
-3. Always research the [Códice Wiki](https://github.com/Fisherk2/codice-opencode/wiki) for current information before answering
-4. If the wiki is insufficient, use [OpenCode official documentation](https://opencode.ai/v2/docs/) as the authoritative fallback
-5. If you cannot find the answer in the wiki or official docs, say "I don't know" and suggest the user ask the community
-6. The `question` tool must present EXACTLY the 6 labeled options (A through F) with their full descriptions
+- Always research the [Códice Wiki](https://github.com/Fisherk2/codice-opencode/wiki) for current information before answering
+- If the wiki is insufficient, use [OpenCode official documentation](https://opencode.ai/v2/docs/) as the authoritative fallback
+- If you cannot find the answer in the wiki or official docs, say "I don't know" and suggest the user ask the community
+- The `question` tool must present EXACTLY the 6 labeled options (A through F) with their full descriptions
+- **Load** `teach` skills if user needs to learn something about the project or its tools.
+- You can stop and ask the user for clarification if you need more information to proceed.
+- Use the best available tools for the job.
+- Research external resources every time, specially if you are stuck or unsure about something. 
 
 ## Suggested Next Step
 
 > You have explored the Códice help center, anything else I can help with? If you have a specific question, please ask it.
+
+---
+
+User instructions:

@@ -30,7 +30,7 @@ Use the `question` tool to report findings and ask user whether to:
 
 ## Phase 0: Guardrail Setup
 
-For each missing tool, detect project language from `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml` `src/`, etc. and **Delegate** `tooling-engineer` subagent to research and suggest the best and appropriate tools. Use the `question` tool to confirm before installing.
+For each missing tool, detect project language from metadata/dependencies files, configuration files, codebase, etc. and **Delegate** `tooling-engineer` subagent to research and suggest the best and appropriate tools. Use the `question` tool to confirm before installing.
 
 For each confirmed tool:
 - Install tool (if not already installed)
@@ -38,14 +38,17 @@ For each confirmed tool:
 - Verify the tool works by running it once
 - Update project documentation to include the new tool
 
-## Phase 1: Audit & Analysis
+## Phase 1: Audit & Analize scoped codebase
 
-**Delegate** `test-engineer` subagent and scan recent changes to identify missing test coverage.
+**Delegate** `test-engineer` subagent and scan scoped codebase to identify missing test coverage.
 
 1. Run `git diff` against the integration branch to detect new/modified code.
 2. Cross-reference with existing test files to find gaps.
-3. Classify each gap by **category** (Feature / Bug Fix) and **pyramid level** (Unit / Integration / E2E) in a table.
-4. Use the `question` tool to present the report and confirm which tests to implement in Phase 2.
+3. Count source files, test files, and documentation files to understand the codebase scope and prioritize testing efforts.
+4. Estimate codebase size (LOC, file count) to scope testing gaps.
+5. Output a summary of the files, commits, and/or changes to be tested.
+6. Classify each gap by **category** (Feature / Bug Fix) and **pyramid level** (Unit / Integration / E2E) in a table.
+7. Use the `question` tool to present the report and confirm which tests to implement in next phase.
 
 ## Phase 2: Test-Driven Development
 
@@ -94,6 +97,18 @@ Run ALL quality checks:
 If debugging detects a **production incident** (e.g., users affected, service degradation), escalate to:
 - **Delegate** to `error-coordinator` subagent and **Load** `incident-response` skill — Incident triage, communication, and postmortem workflow 
 
+## Rules
+
+- If `test/` directories does not exist, create it with their respective convention testing subdirectories.
+- Always follow the rules of the project and conventions.
+- You can stop and ask the user for clarification if you need more information to complete the task.
+- Use the best available tools for the job.
+- Research external resources every time, specially if you are stuck or the testing process fails.
+
 ## Suggested Next Step
 
 > All tests pass. Run `/code-simplify` to refactor and simplify the code, or run `/webperf` if you want to optimize web performance.
+
+---
+
+User instructions:
