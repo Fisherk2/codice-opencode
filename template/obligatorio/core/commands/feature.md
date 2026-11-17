@@ -79,8 +79,14 @@ If user confirms the analysis, **Load** `spec-driven-development` skill and proc
 5. For non-trivial decisions, **Load** `doubt-driven-development` skill
 6. If @SPEC.md or @AGENTS.md exceeds **200 lines**, **Load** `agent-md-refactor`skill to modularize into @specs/
 
-## Phase 4: Vertical Slice Architecture - Establish a implementation roadmap
-[Aqui se delega a software-architect para cargar clean-ddd-hexagonal skill, codebase-design skill y vertical-slice-architecture skill para actualizar las fases de implementación y el roadmap de desarrollo en @docs/WORKFLOW.md]
+## Phase 4: Vertical Slice Architecture — Update the implementation roadmap
+
+**Load** `vertical-slice-architecture` skill before deciding how many phases this work has.
+
+1. Use the `question` tool to set the scope and its phase budget: **Prototype** (1-3 phases), **MVP** (4-6 phases), **Enterprise** (7+ phases).
+2. **Delegate** `software-architect` subagent loading `vertical-slice-architecture`, `clean-ddd-hexagonal` and `codebase-design` skills to cut the work into vertical slices and order them by risk and dependency.
+3. Write the roadmap into `docs/WORKFLOW.md`: one phase per user-visible capability, each with its acceptance test, files touched and demoable outcome.
+4. Reject any phase that cannot be demoed on its own, or whose only output is another plan — that is the cascade anti-pattern the skill names.
 
 ## Phase 5: Finalize
 

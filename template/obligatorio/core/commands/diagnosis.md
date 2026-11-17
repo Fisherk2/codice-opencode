@@ -69,8 +69,14 @@ Never invent a skill name: if the search returns nothing, say so and continue wi
 
 Invoke `question` tool to confirm the diagnosis or ask for clarification if needed to make changes before proceeding with plan creation.
 
-## Phase 4: Vertical Slice Architecture - Update implementation roadmap
-[Aqui se delega a software-architect para cargar clean-ddd-hexagonal skill, codebase-design skill y vertical-slice-architecture skill para actualizar las fases de implementación y el roadmap de desarrollo en @docs/WORKFLOW.md, clasificando cada diagnosis en orden de prioridad y dependencias.]
+## Phase 4: Vertical Slice Architecture — Update the implementation roadmap
+
+**Load** `vertical-slice-architecture` skill before deciding how many phases this work has.
+
+1. Use the `question` tool to set the scope and its phase budget: **Prototype** (1-3 phases), **MVP** (4-6 phases), **Enterprise** (7+ phases).
+2. **Delegate** `software-architect` subagent loading `vertical-slice-architecture`, `clean-ddd-hexagonal` and `codebase-design` skills to cut the work into vertical slices and order them by risk and dependency.
+3. Write the roadmap into `docs/WORKFLOW.md`: one phase per user-visible capability, each with its acceptance test, files touched and demoable outcome.
+4. Reject any phase that cannot be demoed on its own, or whose only output is another plan — that is the cascade anti-pattern the skill names.
 
 ## Phase 5: Finalize
 

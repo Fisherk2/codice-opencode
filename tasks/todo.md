@@ -144,17 +144,17 @@
   - [ ] `SKILL.md` breve por diseño (el detalle va a `references/`); el presupuesto enforced de 180 líneas aplica a agentes y comandos, no a skills
   - [ ] `just test` → 0 fail
 
-- [ ] **T7** Fases VSA en los 5 comandos. Subagent: `workflow-architect`. Skills: `clean-ddd-hexagonal`, `codebase-design`, `documentation-and-adrs`. Tools: `codebase-memory-mcp`. Recursos: issue #116, skill VSA de T6.
-  - [ ] `spec`, `feature`, `diagnosis`, `migrate`, `hotfix` con fase VSA real (sin placeholders)
-  - [ ] `question` tool con 3 alcances: Prototipado (1-3) / MVP (4-6) / Empresarial (7+)
-  - [ ] Delegación a `software-architect` **cargando** `vertical-slice-architecture` (+ `clean-ddd-hexagonal`, `codebase-design`)
-  - [ ] Destino del roadmap: `docs/WORKFLOW.md` (establece en `/spec`; actualiza en `/feature`, `/diagnosis`, `/migrate`)
-  - [ ] `grep -rn "\[Aqui se delega" template/obligatorio/core/commands/` → **0**
+- [x] **T7** Fases VSA en los 5 comandos. Subagent: `workflow-architect`. Skills: `clean-ddd-hexagonal`, `codebase-design`, `documentation-and-adrs`. Tools: `codebase-memory-mcp`. Recursos: issue #116, skill VSA de T6.
+  - [x] `spec`, `feature`, `diagnosis`, `migrate`, `hotfix` con fase VSA real (sin placeholders)
+  - [x] `question` tool con 3 alcances: Prototype (1-3) / MVP (4-6) / Enterprise (7+)
+  - [x] Delegación a `software-architect` **cargando** `vertical-slice-architecture` (+ `clean-ddd-hexagonal`, `codebase-design`)
+  - [x] Destino del roadmap: `docs/WORKFLOW.md` (establece en `/spec`; actualiza en `/feature`, `/diagnosis`, `/migrate`)
+  - [x] `grep -rn "\[Aqui se delega" template/obligatorio/core/commands/` → **0**
 
 ### Checkpoint E
 - [ ] Skill VSA en `template/obligatorio/core/skills/` con `references/` (≥4 metodologías)
 - [ ] `grep -rln "vertical-slice-architecture" template/obligatorio/core/commands/` → 5 archivos
-- [ ] `grep -rln "Prototipado\|MVP\|Empresarial" template/obligatorio/core/commands/` → 5 archivos
+- [ ] `grep -rln "Prototype\|MVP\|Enterprise" template/obligatorio/core/commands/` → 5 archivos
 - [ ] `tests/unit/skill-paths.test.ts` verde (contador 13, salvo bump documentado)
 - [ ] `just test` → 0 fail
 

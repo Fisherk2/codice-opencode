@@ -45,6 +45,8 @@ If is a empty project (no documentation, no code, just placeholders), **STOP**, 
 1. Update `docs/WORKFLOW.md` with the fix scope and its status.
 2. Write `tasks/plan.md` and `tasks/todo.md` with per-task acceptance criteria and verification steps, sliced vertically.
 3. Present the plan with the `question` tool and wait for explicit approval before executing it.
+4. **Load** `vertical-slice-architecture` skill and use the `question` tool to set the scope and its phase budget: **Prototype** (1-3 phases), **MVP** (4-6 phases), **Enterprise** (7+ phases).
+5. **Delegate** `software-architect` subagent loading `vertical-slice-architecture` skill to slice the fix vertically and write the phase roadmap into `docs/WORKFLOW.md`.
 
 ## Phase 3: Execute the implementation plan
 
