@@ -59,25 +59,31 @@ export async function checkWritable(
  * @param userPrompt - Adapter for interactive prompts.
  * @param message - Confirmation message shown to the user.
  * @param cancelMessage - Message shown if the user cancels.
- * @param force - If true, skip the prompt. If false or undefined, check isEmpty and prompt.
- * @param defaultYes - Default answer for the confirm prompt. Update mode defaults to
- *   Yes so a single keystroke accepts the update (plan Phase 4); install modes keep No.
+ * @param flags - force: skip the prompt entirely. defaultYes: default answer
+ *   for the confirm prompt — update mode defaults to Yes so a single keystroke
+ *   accepts the update (plan Phase 4); install modes keep No.
  * @returns true if the operation should proceed, false if cancelled.
  */
+export interface ConfirmOverwriteFlags {
+	/** If true, skip the prompt. If false or undefined, check isEmpty and prompt. */
+	readonly force?: boolean;
+	/** Default answer for the confirm prompt. Defaults to false. */
+	readonly defaultYes?: boolean;
+}
+
 export async function confirmOverwrite(
 	fileSystem: IFileSystem,
 	userPrompt: IUserPrompt,
 	message: string,
 	cancelMessage: string,
-	force?: boolean,
-	defaultYes = false,
+	flags: ConfirmOverwriteFlags = {},
 ): Promise<boolean> {
-	if (force) return true;
+	if (flags.force) return true;
 
 	const isEmpty = await fileSystem.isEmpty();
 	if (isEmpty) return true;
 
-	const confirmed = await userPrompt.confirm(message, defaultYes);
+	const confirmed = await userPrompt.confirm(message, flags.defaultYes ?? false);
 	if (!confirmed) {
 		await userPrompt.showCancel(cancelMessage);
 	}

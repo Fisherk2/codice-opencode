@@ -61,8 +61,7 @@ export async function maybeConfirmUpdate(
 			userPrompt,
 			`Update workspace in "${destinationPath}"? Packs: ${localVersion.installedPacks.join(", ") || "(none)"}. Continue?`,
 			"Update cancelled by user.",
-			undefined,
-			true,
+			{ defaultYes: true },
 		);
 		if (!confirmed) return false;
 	}

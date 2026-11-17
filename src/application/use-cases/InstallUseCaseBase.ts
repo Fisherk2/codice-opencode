@@ -73,7 +73,7 @@ export abstract class InstallUseCaseBase {
 			this.userPrompt,
 			this.getConfirmMessage(destinationPath),
 			this.getCancelMessage(),
-			options.force,
+			{ force: options.force },
 		);
 		if (!confirmed) return success(undefined);
 

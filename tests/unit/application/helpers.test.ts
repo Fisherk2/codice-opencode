@@ -34,7 +34,9 @@ describe("confirmOverwrite", () => {
 		const fs = createMockFileSystem({ isEmpty: false });
 		const prompt = createMockPrompt();
 
-		const result = await confirmOverwrite(fs, prompt.stub, "Overwrite?", "Cancelled.", true);
+		const result = await confirmOverwrite(fs, prompt.stub, "Overwrite?", "Cancelled.", {
+			force: true,
+		});
 
 		expect(result).toBe(true);
 		// Prompt should never have been called
@@ -95,8 +97,7 @@ describe("confirmOverwrite", () => {
 			prompt.stub,
 			'Update workspace in "/tmp/project"? Continue?',
 			"Update cancelled by user.",
-			undefined,
-			true,
+			{ defaultYes: true },
 		);
 
 		expect(result).toBe(true);
