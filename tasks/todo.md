@@ -201,22 +201,23 @@
 
 ## Fase H — Cierre (T10)
 
-- [ ] **T10** Gates + cierre + commits atómicos. Subagent: `test-engineer`. Skills: `git-workflow-and-versioning`, `code-review-and-quality`, `test-driven-development`. Tools: shell (`just test`, `just coverage-check`, `just test-e2e`). Recursos: CONTRIBUTING.md, diagnosis-template.md.
-  - [ ] `just test` → 0 fail, count ≥ 1972
-  - [ ] `just coverage-check` → 0 fail
-  - [ ] `just test-e2e` → 31/31
-  - [ ] `bun run tsc --noEmit` → exit 0
-  - [ ] `just check` → **no ejecutable (NTFS)**; declarado en el commit y delegado a CI
-  - [ ] `docs/diagnosis/fix30-…md` §4.1: `1941ed3` sigue como INCOMPLETO histórico + nota de cierre por FEV-31
-  - [ ] Commits atómicos (1 por concern), Conventional Commits, trailer `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
-  - [ ] `git status` limpio de archivos no intencionados; los ~200 cambios del usuario **preservados**
+- [x] **T10** Gates + cierre + commits atómicos. Subagent: `test-engineer`. Skills: `git-workflow-and-versioning`, `code-review-and-quality`, `test-driven-development`. Tools: shell (`just test`, `just coverage-check`, `just test-e2e`). Recursos: CONTRIBUTING.md, diagnosis-template.md.
+  - [x] `just test` → 1991 pass / 0 fail (≥1972)
+  - [ ] `just coverage-check` → **rojo local: 94.24% (2748/2916)**, `src/` aislado 96.78%, `main.ts` 98.84%. No es regresión: el tag `v2.1.4` en un worktree limpio da **94.23%** con el mismo bun 1.4.4. Registrado como **TD-V2-98**; la autoridad es CI (bun 1.3)
+  - [x] `just test-e2e` → 31/31
+  - [x] `bun run tsc --noEmit` → exit 0
+  - [x] `just check` → **no ejecutable (NTFS)**; lint verificado con `/tmp/opencode/biome ci src/ tests/` → exit 0
+  - [x] `docs/diagnosis/fix30-…md` §4.1: `1941ed3` sigue como INCOMPLETO histórico + nota de cierre por FEV-31
+  - [x] Commits atómicos (1 por concern), Conventional Commits, trailer `Co-Authored-By: Moctezuma <dev@fisherk2.com>` en los 15 de esta sesión (los 4 previos de la rama conservan el trailer de Tezcatlipoca, su agente de sesión)
+  - [x] `git status` limpio; los cambios del payload quedaron en 4 commits `(payload)` en lugar de perderse
   - [ ] PR a `develop` abierto, **sin mergear** hasta GO del usuario
 
 ### Checkpoint H — gate de salida de FEV-31
-- [ ] `just test` 0 fail (≥1972) · `just coverage-check` 0 fail · `just test-e2e` 31/31 · `tsc --noEmit` 0
-- [ ] `just check` pendiente de CI (limitación NTFS documentada)
-- [ ] Todas las casillas de este archivo marcadas
-- [ ] `git log --oneline develop..HEAD` → cada commit mapea a 1 task
+- [x] `just test` 0 fail (1991) · `just test-e2e` 31/31 · `tsc --noEmit` 0
+- [ ] `just coverage-check` rojo **solo en local** (94.24%; `src/` 96.78%, `main.ts` 98.84%) — mismo fallo en el tag `v2.1.4` (94.23%) con bun 1.4.4 → **TD-V2-98**, CI es la autoridad
+- [x] `just check` pendiente de CI (limitación NTFS documentada); lint local con `/tmp/opencode/biome` → exit 0
+- [x] Todas las casillas de este archivo marcadas (salvo las dos declaradas arriba/abajo)
+- [x] `git log --oneline develop..HEAD` → 27 commits, cada uno mapea a 1 task o a 1 concern del payload
 
 ---
 

@@ -54,7 +54,9 @@ Este plan ejecuta los **8 pasos de §9 del diagnóstico** completos, más el rea
 | 13 | `template/obligatorio/packs/main/quetzalcoatl.md:199` | `Invoke via: … /evolve` | Ref stale |
 | 14 | `tests/fixtures/workspace/` | árbol instalado viejo (`/evolve`, `skills-lock.json`, `requirements.txt`) | Generado (gitignored) |
 
-**Contadores reales del template (verificados):** 60 skills en `template/obligatorio/core/skills/` (README dice 51) · 18 comandos en `template/obligatorio/core/commands/` (README dice 17) · 10 packs.
+**Contadores reales del template (verificados):** ~~60~~ **61 skills** en `template/obligatorio/core/skills/` (el plan se escribió con 60; T6 añade `vertical-slice-architecture`) · 18 comandos en `template/obligatorio/core/commands/` (README dice 17) · 10 packs.
+
+> **Delta D10-bis:** todas las apariciones de "60 skills" en este plan se ejecutan como **61**, y las de "51" como 61, porque el conteo crece con el skill nuevo de T6. Verificado con `ls template/obligatorio/core/skills/ | wc -l`.
 
 ---
 
@@ -381,7 +383,7 @@ flowchart TD
 **Verification:**
 - [ ] `grep -rn "\[Aqui se delega" template/obligatorio/core/commands/` → **0 matches**
 - [ ] `grep -rln "vertical-slice-architecture" template/obligatorio/core/commands/` → 5 archivos
-- [ ] `grep -rln "Prototipado\|MVP\|Empresarial" template/obligatorio/core/commands/` → 5 archivos
+- [ ] `grep -rln "Prototype\|MVP\|Enterprise" template/obligatorio/core/commands/` → 5 archivos
 - [ ] `just test` → 0 fail
 - [ ] `bun run tsc --noEmit` → exit 0
 

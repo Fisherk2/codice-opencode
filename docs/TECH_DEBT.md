@@ -76,7 +76,7 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
 - Orphan references repaired: 32 ADR links → `docs/adr/` (23 ADRs; `specs/adr/` no longer exists); deleted skills/artifacts removed from specs, writer and wiki
 - Prompt-body budget contradiction (100 agent / 120 test override / none for commands) unified at **180 lines** for agents and commands (spec §8 + 2 guards + CODE_STYLE)
 - 1991 tests / 0 fail, 31/31 E2E, `tsc --noEmit` 0, lint 0 (workaround in TD-V2-97)
-- **Still open:** TD-V2-93-f2…96 (Phase-2 findings) and TD-V2-97. The adjacent out-of-scope payload of `hotfix/update-payload` (6 primary-agent model swaps, 6 plugins, ADR move, skills churn) is **not** FEV-31 work and is registered in `docs/WORKFLOW.md`, not tracked as debt here
+- **Still open:** TD-V2-93-f2…96 (Phase-2 findings), TD-V2-97 and TD-V2-98 (coverage gate counts `tests/`+`scripts/` under bun 1.4.4). The adjacent out-of-scope payload of `hotfix/update-payload` (6 primary-agent model swaps, 6 plugins, ADR move, skills churn) is **not** FEV-31 work and is registered in `docs/WORKFLOW.md`, not tracked as debt here
 
 ---
 
@@ -168,6 +168,18 @@ estimado, riesgo evaluado).
 - **Workaround:** copiar `node_modules/@typescript/typescript-linux-x64` a un FS con ejecución (p. ej. `/tmp`) y ejecutar `lib/tsc --noEmit -p tsconfig.json` desde ahí.
 - **Workaround verificado para biome (2026-11-17, FEV-31):** copiar el binario nativo de Biome a una ruta btrfs y ejecutarlo desde ahí — `/tmp/opencode/biome ci src/ tests/` devuelve **exit 0** sobre el árbol de v2.1.5. `just check` sigue siendo el gate de CI (ext4, donde el bit de ejecución se preserva); el lint local deja de ser un punto ciego y pasa a verificarse con este comando en cada fase.
 
+#### Gate de cobertura rojo en local con bun 1.4.4 (2026-11-17, prioridad Low)
+
+| ID | Item | Type | Effort | Risk | Description |
+|----|------|------|--------|------|-------------|
+| **TD-V2-98** | `just coverage-check` falla en local (94.2%) pero `src/` está al 96.8% | Debt | 1-2h | Low | Con bun 1.4.4 el denominador del reporte incluye `tests/**` y `scripts/**`, así que el global baja de 95 aunque el código de producción cumple. Medido también en el tag `v2.1.4`: **94.23% (2744/2912)** frente a **94.24% (2748/2916)** en `hotfix/update-payload` — no es regresión de FEV-31 (el trabajo del branch no toca `src/` y añade 18 tests). |
+
+- **Síntoma:** `just coverage-check` → `Total line coverage: 94.24% (2748/2916)` · `main.ts coverage: 98.84% (85/86)` · `FAIL: Overall coverage below 95%`, reproducible dos veces. `src/` aislado: **96.78% (2044/2112)**.
+- **Causa:** el reporte cuenta archivos no productivos en el denominador — `tests/` 86.62% (466/538) y `scripts/migrate-v1-to-v2-permissions.ts` 89.47% (238/266) — y arrastra el global desde 96.78% hasta 94.24%.
+- **Verificación de no-regresión:** `git worktree add` sobre `v2.1.4` + `bash scripts/coverage-check.sh` con el mismo bun 1.4.4 → **94.23%**, es decir el tag publicado ya fallaba igual antes de FEV-31.
+- **Impacto:** solo local. La CI fija **bun 1.3** (`package.json`/workflows), donde el reporte no instrumenta esos árboles; la autoridad es la matriz de CI.
+- **Acción pendiente:** o bien acotar el denominador en `scripts/coverage-thresholds.json`/`coverage-check.sh` (ignorar `tests/**` y `scripts/**`) y documentarlo, o fijar bun 1.3 en local. Decidir con la evidencia de CI antes de tocar el umbral.
+
 ### v2.2.0 (Medium Effort — 9 items, 18-24h total)
 
 | ID | Item | Type | Effort | Risk | Description |
@@ -212,7 +224,7 @@ estimado, riesgo evaluado).
 | v2.1.2 | ✅ Released (2026-08-28) — docs-update delegation hotfix + debt reorg — 1935 tests |
 | v2.1.3 | ✅ FEV-29+FEV-30 complete (1959 tests, 31/31 E2E, 96.39%) — beta published, stable pending GO/tag — open: 4 hallazgos Fase-2 diferidos (TD-V2-93-f2..96) + TD-V2-97 |
 | v2.1.4 hotfix | ✅ Complete — listo para lanzamiento |
-| v2.1.5 FEV-31 | ✅ Complete (2026-11-17) — #111/#112/#114/#115/#116 closed, orphan references repaired, prompt budget unified at 180 — 1991 tests, 31/31 E2E — open: TD-V2-93-f2..96 + TD-V2-97 |
+| v2.1.5 FEV-31 | ✅ Complete (2026-11-17) — #111/#112/#114/#115/#116 closed, orphan references repaired, prompt budget unified at 180 — 1991 tests, 31/31 E2E — open: TD-V2-93-f2..96 + TD-V2-97 + TD-V2-98 |
 | v2.2.0 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.3.0 backlog | 4 items (4 debt) — 12-16h |
 | v2.5.0 backlog | 3 items (1 debt + 2 features) — 18-28h |
