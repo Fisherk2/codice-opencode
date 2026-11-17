@@ -35,7 +35,7 @@ Códice is a command-line interface (CLI) tool built with Bun that installs and 
 | [spec-agent-format-v2.md](specs/spec-agent-format-v2.md) | Agent format v2 with YAML frontmatter schema |
 | [spec-template.md](specs/spec-template.md) | Template directory structure and conventions |
 
-Resolved decisions are documented in the respective ADRs (see [specs/adr/](specs/adr/)).
+Resolved decisions are documented in the respective ADRs (see [docs/adr/](docs/adr/)).
 
 ## References
 

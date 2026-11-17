@@ -1,14 +1,14 @@
 # Architecture — [Project Name]
 
 > Executive index of architectural decisions. Each significant choice is recorded
-> as an ADR in `specs/adr/` following the [MADR](https://adr.github.io/) format.
+> as an ADR in `docs/adr/` following the [MADR](https://adr.github.io/) format.
 
 ## Decision Index
 
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
-| [ADR-001](../specs/adr/adr-001-template.md) | [Decision title] | Accepted | YYYY-MM-DD |
-| [ADR-002](../specs/adr/adr-002-template.md) | [Decision title] | Proposed | YYYY-MM-DD |
+| [ADR-001](adr/adr-template.md) | [Decision title] | Accepted | YYYY-MM-DD |
+| [ADR-002](adr/adr-template.md) | [Decision title] | Proposed | YYYY-MM-DD |
 
 ## Architecture Overview
 

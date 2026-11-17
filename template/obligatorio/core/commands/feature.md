@@ -74,7 +74,7 @@ If user confirms the analysis, **Load** `spec-driven-development` skill and proc
 2. **Determine scope** — does this change existing specs or create new ones?
    - New feature → create `specs/spec-<feature>.md`
    - Modify existing → update relevant spec files
-3. **Document architecture impact** — update or add ADRs using @specs/adr/adr-template.md in `specs/adr/` if the change affects architecture
+3. **Document architecture impact** — update or add ADRs using @docs/adr/adr-template.md in `docs/adr/` if the change affects architecture
 4. **Load** `architecture-diagrams` alongside `markdown-mermaid-writing` skill to include updated architecture diagrams 
 5. For non-trivial decisions, **Load** `doubt-driven-development` skill
 6. If @SPEC.md or @AGENTS.md exceeds **200 lines**, **Load** `agent-md-refactor`skill to modularize into @specs/
