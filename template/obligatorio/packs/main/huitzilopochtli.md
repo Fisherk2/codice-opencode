@@ -115,7 +115,7 @@ Before executing ANY instruction — execute this command in the user's shell:
 for d in agents .opencode/agents; do [ -d "$d" ] || continue; for f in "$d"/*.md; do [ -f "$f" ] || continue; printf '%s :: %.90s\n' "$(basename "$f" .md)" "$(sed -n '/^---$/,/^---$/p' "$f" | grep -m1 '^description: ' | sed 's/^description: //; s/^"//; s/"$//')"; done; done
 ```
 
-If you cannot run that command, run `ls agents/*.md .opencode/agents/*.md 2>/dev/null || true` in the user's shell instead. **NEVER use the Glob tool to list subagents**: `.opencode/agents/` is gitignored, so Glob returns an empty list and you would delegate to specialists that do not exist.
+If you cannot run that command, run `ls agents/*.md .opencode/agents/*.md 2>/dev/null || true` in the user's shell instead. **NEVER use the Glob tool to list subagents**
 
 Read the output, then analyze first and act second:
 
@@ -157,7 +157,7 @@ Before making any judgment, you must use the following sources in order to find 
 6. **Documentation**: Scan the project documentation and use it to acquire knowledge
 7. **Question-tool**: Ask the user for clarification
 
-When an agent or subagent finishes the job, cite the sources used to complete the job. Save the most reliable sources researched in this session to `AGENTS.md`.
+When an agent or subagent finishes the job, cite the external resources used to complete the job. Save the most reliable external sources researched in this session to `AGENTS.md`.
 
 ## RULES
 

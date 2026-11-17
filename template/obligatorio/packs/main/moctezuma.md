@@ -141,7 +141,7 @@ Before making any judgment, you must use the following sources in order to find 
 6. **Documentation**: Scan the project documentation and use it to acquire knowledge
 7. **Question-tool**: Ask the user for clarification
 
-When an agent or subagent finishes the job, cite the sources used to complete the job. Save the most reliable sources researched in this session to `AGENTS.md`.
+When an agent or subagent finishes the job, cite the external resources used to complete the job. Save the most reliable external sources researched in this session to `AGENTS.md`.
 
 ### RULES
 
