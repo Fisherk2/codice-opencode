@@ -65,7 +65,7 @@
 
 - [ ] **T1** #114 — NEVER ASSUMPTION completo (6 agentes). Subagent: `technical-writer`. Skills: `clean-code`, `documentation-and-adrs`. Tools: `vercel-grep`. Recursos: issue #114, opencode.ai/v2/docs/agents.
   - [ ] Viñeta de **prohibición de ejecución en background** (`&`, `nohup`, `disown`, `setsid`, huérfanos) — 1 línea — en los 6 agentes
-  - [ ] Ítem 4 de "Source of truth" cita `web-search`/`web-fetch`
+  - [ ] Ítem 4 de "Source of truth" cita `websearch`/`webfetch`
   - [ ] Prosa en inglés gramaticalmente correcta
   - [ ] Cuerpo de cada agente ≤ **180 líneas** (guard alineado en T0b)
   - [ ] Frontmatter `permissions:` intacto (sin `tools:` / `permission:`)
@@ -81,7 +81,7 @@
 
 ### Checkpoint B
 - [ ] `grep -rn "nohup\|disown\|setsid" template/obligatorio/packs/main/` → 6 archivos
-- [ ] `grep -rn "web-fetch" template/obligatorio/packs/main/` → 6 archivos
+- [ ] `grep -rn "webfetch" template/obligatorio/packs/main/` → 6 archivos
 - [ ] `grep -rn "\.opencode/agents" template/obligatorio/packs/main/` → 5 archivos (no moctezuma)
 - [ ] `grep -c "DELEGATION PROTOCOL" template/obligatorio/packs/main/moctezuma.md` → 0
 - [ ] `just test` → 0 fail (guards de cuerpo ≤180 para agentes y comandos)

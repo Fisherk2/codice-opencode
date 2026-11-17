@@ -196,11 +196,11 @@ flowchart TD
 
 ### T1 — #114: cerrar NEVER ASSUMPTION PROTOCOL (6 agentes primarios)
 
-**Descripción:** Añadir en los 6 agentes de `template/obligatorio/packs/main/` la viñeta de **prohibición de ejecución en background** (sintetizada a 1 línea, según el "Alternatives Considered" del issue) y corregir el ítem 4 de la fuente de verdad para citar `web-search`/`web-fetch`. El protocolo ya existe en los 6 (líneas 139/108/123/156/110/107); faltan exactamente 2 elementos.
+**Descripción:** Añadir en los 6 agentes de `template/obligatorio/packs/main/` la viñeta de **prohibición de ejecución en background** (sintetizada a 1 línea, según el "Alternatives Considered" del issue) y corregir el ítem 4 de la fuente de verdad para citar `websearch`/`webfetch` (IDs reales del harness; el issue los escribe con guion). El protocolo ya existe en los 6 (líneas 139/108/123/156/110/107); faltan exactamente 2 elementos.
 
 **Acceptance criteria:**
 - [ ] Los 6 agentes contienen una viñeta de rules que prohíbe `&`, `nohup`, `disown`, `setsid` y procesos huérfanos (prohibición de ejecución en background), en una sola línea
-- [ ] El ítem 4 de "Source of truth" cita `web-search`/`web-fetch` (no solo `web-search`)
+- [ ] El ítem 4 de "Source of truth" cita `websearch`/`webfetch` (IDs reales del harness, sin guion)
 - [ ] El texto en inglés está gramaticalmente correcto (el issue #111 señala prosa rota)
 - [ ] Cuerpo de cada agente ≤ **180 líneas** (`agent-frontmatter-validation.test.ts`, alineado en T0b)
 - [ ] Frontmatter `permissions:` intacto — no reintroducir `tools:` ni `permission:` (guards legacy)
@@ -208,7 +208,7 @@ flowchart TD
 **Verification:**
 - [ ] `just test` → 0 fail (incluye `tests/unit/domain/agent-frontmatter-validation.test.ts`)
 - [ ] `grep -rn "nohup\|disown\|setsid" template/obligatorio/packs/main/` → 6 archivos
-- [ ] `grep -rn "web-fetch" template/obligatorio/packs/main/` → 6 archivos
+- [ ] `grep -rn "webfetch" template/obligatorio/packs/main/` → 6 archivos
 - [ ] `bun run tsc --noEmit` → exit 0
 
 **Dependencies:** T0, T0b · **Files touched:** `template/obligatorio/packs/main/{huitzilopochtli,mictlantecuhtli,moctezuma,quetzalcoatl,tezcatlipoca,tlaloc}.md` · **Scope:** M (6 archivos)
@@ -498,7 +498,7 @@ flowchart TD
 
 ### Checkpoint B — Protocolos de agente (tras T1 → T2)
 - [ ] `grep -rn "nohup\|disown\|setsid" template/obligatorio/packs/main/` → 6 archivos
-- [ ] `grep -rn "web-fetch" template/obligatorio/packs/main/` → 6 archivos
+- [ ] `grep -rn "webfetch" template/obligatorio/packs/main/` → 6 archivos
 - [ ] `grep -rn "\.opencode/agents" template/obligatorio/packs/main/` → 5 archivos (no moctezuma)
 - [ ] `grep -c "DELEGATION PROTOCOL" template/obligatorio/packs/main/moctezuma.md` → 0
 - [ ] `just test` → 0 fail (guard de cuerpo ≤180 líneas — agentes y comandos)
