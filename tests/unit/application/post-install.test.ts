@@ -30,6 +30,7 @@ import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
+import { createMockPrompt as createSharedPrompt } from "../../shared/test-doubles";
 
 // ── Shared test data ──────────────────────────────────────────────
 
@@ -47,40 +48,12 @@ function createMockPrompt(): {
 	successes: string[];
 	progressEvents: string[];
 } {
-	const warnings: string[] = [];
-	const successes: string[] = [];
-	const progressEvents: string[] = [];
+	const prompt = createSharedPrompt();
 	return {
-		warnings,
-		successes,
-		progressEvents,
-		stub: {
-			showWarning: mockFn((msg: string) => {
-				warnings.push(msg);
-			}) as (msg: string) => void,
-			showSuccess: mockFn((msg: string) => {
-				successes.push(msg);
-			}) as (msg: string) => void,
-			showInfo: mockFn(() => {}),
-			confirm: mockFn(() => Promise.resolve(true)),
-			selectOptional: mockFn(() => Promise.resolve([])),
-			showProgressBar: mockFn(() => {}),
-			updateProgress: mockFn(() => {}),
-			completeProgress: mockFn(() => {}),
-			logProgressEvent: mockFn((event: string) => {
-				progressEvents.push(event);
-			}),
-			showIntro: mockFn(() => {}),
-			showCancel: mockFn(() => {}),
-			showError: mockFn(() => {}),
-			promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
-			selectPacks: mockFn(() => Promise.resolve(["software-development"] as const)),
-			showVersionInfo: mockFn(() => {}),
-			selectUpdateOption: mockFn(() =>
-				Promise.resolve<"current" | "add" | "cancel" | null>("current"),
-			),
-			showInstallSummary: mockFn(() => {}),
-		},
+		stub: prompt,
+		warnings: prompt.warnings,
+		successes: prompt.successes,
+		progressEvents: prompt.logEntries,
 	};
 }
 

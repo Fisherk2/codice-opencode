@@ -13,7 +13,6 @@ import { mock as mockFn } from "bun:test";
 import type { IGitHubClient } from "../../../src/application/ports/IGitHubClient";
 import type { IGitignoreCreator } from "../../../src/application/ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../../../src/application/ports/ISymlinkCreator";
-import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
 import { success } from "../../../src/domain/types/Result";
@@ -23,20 +22,22 @@ import type {
 	GitignoreCreatorMock,
 	MockedFileSystem,
 	MockedGitHubClient,
-	PromptMockOptions,
 	SymlinkCreatorMock,
-	UserPromptMock,
 } from "./mock-types";
 
+export type {
+	MockedUserPrompt,
+	PromptMockOptions,
+	UserPromptMock,
+} from "../../shared/test-doubles";
+export { createMockPrompt } from "../../shared/test-doubles";
 export type {
 	FileSystemMockCalls,
 	FileSystemMockOptions,
 	GitignoreCreatorMock,
 	MockedFileSystem,
 	MockedGitHubClient,
-	PromptMockOptions,
 	SymlinkCreatorMock,
-	UserPromptMock,
 } from "./mock-types";
 
 export function createMockFileSystem(options: FileSystemMockOptions = {}): {
@@ -98,41 +99,6 @@ export function createMockFileSystem(options: FileSystemMockOptions = {}): {
 	};
 
 	return { stub, calls };
-}
-
-export function createMockPrompt(options: PromptMockOptions = {}): UserPromptMock {
-	const selectOptionalDefault = options.selectOptionalDefault ?? "none";
-	const allOptionalPaths = "allOptionalPaths" in options ? options.allOptionalPaths : undefined;
-	const logEntries: string[] = [];
-
-	return {
-		showWarning: mockFn<IUserPrompt["showWarning"]>(() => {}),
-		showInfo: mockFn<IUserPrompt["showInfo"]>(() => {}),
-		confirm: mockFn<IUserPrompt["confirm"]>(() => Promise.resolve(true)),
-		selectOptional: mockFn<IUserPrompt["selectOptional"]>(() =>
-			Promise.resolve(selectOptionalDefault === "all" ? [...(allOptionalPaths ?? [])] : []),
-		),
-		showProgressBar: mockFn<IUserPrompt["showProgressBar"]>(() => {}),
-		updateProgress: mockFn<IUserPrompt["updateProgress"]>(() => {}),
-		completeProgress: mockFn<IUserPrompt["completeProgress"]>(() => {}),
-		logProgressEvent: mockFn<IUserPrompt["logProgressEvent"]>((message: string) => {
-			logEntries.push(message);
-		}),
-		showIntro: mockFn<IUserPrompt["showIntro"]>(() => {}),
-		showSuccess: mockFn<IUserPrompt["showSuccess"]>(() => {}),
-		showCancel: mockFn<IUserPrompt["showCancel"]>(() => {}),
-		showError: mockFn<IUserPrompt["showError"]>(() => {}),
-		promptForMode: mockFn<IUserPrompt["promptForMode"]>(() => Promise.resolve(null)),
-		selectPacks: mockFn<IUserPrompt["selectPacks"]>(() =>
-			Promise.resolve(["software-development"]),
-		),
-		showVersionInfo: mockFn<IUserPrompt["showVersionInfo"]>(() => {}),
-		selectUpdateOption: mockFn<IUserPrompt["selectUpdateOption"]>(() => Promise.resolve("current")),
-		showInstallSummary: mockFn<IUserPrompt["showInstallSummary"]>(() => {}),
-		get logEntries() {
-			return logEntries;
-		},
-	};
 }
 
 export function createMockSymlinkCreator(): SymlinkCreatorMock {

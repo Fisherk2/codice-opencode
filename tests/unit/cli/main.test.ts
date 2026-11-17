@@ -8,44 +8,23 @@
  *   - Cancel returns null with appropriate cancellation message
  */
 
-import { describe, expect, mock as mockFn, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import type { IUserPrompt, VersionDisplayInfo } from "../../../src/application/ports/IUserPrompt";
 import { resolveInteractiveMode } from "../../../src/cli/main";
+import { createMockPrompt } from "../../shared/test-doubles";
 
 // -----------------------------------------------------------------------
 // Mock factory
 // -----------------------------------------------------------------------
 
 /**
- * Create a mock IUserPrompt whose promptForMode resolves to the given result.
+ * Create the shared mock IUserPrompt with a given promptForMode result.
  * All methods are wrapped in mockFn() so call-count and argument assertions
  * work out of the box.
  */
-function createMockUserPrompt(
+const createMockUserPrompt = (
 	promptResult: Promise<"clean" | "project" | "update" | null>,
-): IUserPrompt {
-	return {
-		showIntro: mockFn(() => {}),
-		promptForMode: mockFn(() => promptResult),
-		showCancel: mockFn(() => {}),
-		showWarning: mockFn(() => {}),
-		showInfo: mockFn(() => {}),
-		confirm: mockFn(() => Promise.resolve(true)),
-		selectOptional: mockFn(() => Promise.resolve([])),
-		showProgressBar: mockFn(() => {}),
-		updateProgress: mockFn(() => {}),
-		completeProgress: mockFn(() => {}),
-		logProgressEvent: mockFn(() => {}),
-		showSuccess: mockFn(() => {}),
-		showError: mockFn(() => {}),
-		selectPacks: mockFn(() => Promise.resolve(["software-development"] as const)),
-		showVersionInfo: mockFn(() => {}),
-		selectUpdateOption: mockFn(() =>
-			Promise.resolve<"current" | "add" | "cancel" | null>("current"),
-		),
-		showInstallSummary: mockFn(() => {}),
-	};
-}
+): IUserPrompt => createMockPrompt({ promptResult });
 
 /** Version context for an up-to-date installation (update always allowed). */
 const v2Context: VersionDisplayInfo = {

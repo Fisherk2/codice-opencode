@@ -13,9 +13,16 @@ import type { Mock } from "bun:test";
 import type { IGitHubClient } from "../../../src/application/ports/IGitHubClient";
 import type { IGitignoreCreator } from "../../../src/application/ports/IGitignoreCreator";
 import type { ISymlinkCreator } from "../../../src/application/ports/ISymlinkCreator";
-import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
+
+// User-prompt double types are shared with unit tests; re-exported here so
+// existing integration imports keep their import site.
+export type {
+	MockedUserPrompt,
+	PromptMockOptions,
+	UserPromptMock,
+} from "../../shared/test-doubles";
 
 export interface MockedFileSystem extends IFileSystem, IStagingSystem {
 	destinationExists: Mock<IFileSystem["destinationExists"]>;
@@ -28,31 +35,6 @@ export interface MockedFileSystem extends IFileSystem, IStagingSystem {
 	readVersionFile: Mock<IFileSystem["readVersionFile"]>;
 	walkTemplateDirectory: Mock<IFileSystem["walkTemplateDirectory"]>;
 	walkDestinationDirectory: Mock<IFileSystem["walkDestinationDirectory"]>;
-}
-
-export interface MockedUserPrompt extends IUserPrompt {
-	showWarning: Mock<IUserPrompt["showWarning"]>;
-	showInfo: Mock<IUserPrompt["showInfo"]>;
-	confirm: Mock<IUserPrompt["confirm"]>;
-	selectOptional: Mock<IUserPrompt["selectOptional"]>;
-	showProgressBar: Mock<IUserPrompt["showProgressBar"]>;
-	updateProgress: Mock<IUserPrompt["updateProgress"]>;
-	completeProgress: Mock<IUserPrompt["completeProgress"]>;
-	logProgressEvent: Mock<IUserPrompt["logProgressEvent"]>;
-	showIntro: Mock<IUserPrompt["showIntro"]>;
-	showSuccess: Mock<IUserPrompt["showSuccess"]>;
-	showCancel: Mock<IUserPrompt["showCancel"]>;
-	showError: Mock<IUserPrompt["showError"]>;
-	promptForMode: Mock<IUserPrompt["promptForMode"]>;
-	selectPacks: Mock<IUserPrompt["selectPacks"]>;
-	showVersionInfo: Mock<IUserPrompt["showVersionInfo"]>;
-	selectUpdateOption: Mock<IUserPrompt["selectUpdateOption"]>;
-	showInstallSummary: Mock<IUserPrompt["showInstallSummary"]>;
-}
-
-/** User prompt mock that also captures every logProgressEvent message. */
-export interface UserPromptMock extends MockedUserPrompt {
-	readonly logEntries: string[];
 }
 
 /** Symlink creator mock that records each createSymlinks call's arguments. */
@@ -90,10 +72,3 @@ export interface FileSystemMockCalls {
 	writeVersionFile: string[];
 	destinationExists?: string[];
 }
-
-export type PromptMockOptions =
-	| { readonly selectOptionalDefault?: "none" }
-	| {
-			readonly selectOptionalDefault: "all";
-			readonly allOptionalPaths: readonly string[];
-	  };

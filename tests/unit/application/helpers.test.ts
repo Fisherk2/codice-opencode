@@ -2,6 +2,7 @@ import { describe, expect, mock as mockFn, test } from "bun:test";
 import { confirmOverwrite, createProgressCallback } from "../../../src/application/helpers";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
+import { createMockPrompt as createSharedPrompt } from "../../shared/test-doubles";
 
 // ── Mock factories ────────────────────────────────────────────────
 
@@ -22,38 +23,8 @@ function createMockPrompt(opts?: { confirmResult?: boolean }): {
 	confirmCalls: string[];
 	cancelCalls: string[];
 } {
-	const confirmCalls: string[] = [];
-	const cancelCalls: string[] = [];
-	return {
-		confirmCalls,
-		cancelCalls,
-		stub: {
-			showWarning: mockFn(() => {}),
-			showInfo: mockFn(() => {}),
-			confirm: mockFn((msg: string) => {
-				confirmCalls.push(msg);
-				return Promise.resolve(opts?.confirmResult ?? true);
-			}),
-			selectOptional: mockFn(() => Promise.resolve([])),
-			showProgressBar: mockFn(() => {}),
-			updateProgress: mockFn(() => {}),
-			completeProgress: mockFn(() => {}),
-			logProgressEvent: mockFn(() => {}),
-			showIntro: mockFn(() => {}),
-			showSuccess: mockFn(() => {}),
-			showCancel: mockFn((msg: string) => {
-				cancelCalls.push(msg);
-			}),
-			showError: mockFn(() => {}),
-			promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
-			selectPacks: mockFn(() => Promise.resolve(["software-development"] as const)),
-			showVersionInfo: mockFn(() => {}),
-			selectUpdateOption: mockFn(() =>
-				Promise.resolve<"current" | "add" | "cancel" | null>("current"),
-			),
-			showInstallSummary: mockFn(() => {}),
-		},
-	};
+	const prompt = createSharedPrompt({ confirmResult: opts?.confirmResult });
+	return { stub: prompt, confirmCalls: prompt.confirmCalls, cancelCalls: prompt.cancels };
 }
 
 // ── Tests ─────────────────────────────────────────────────────────
