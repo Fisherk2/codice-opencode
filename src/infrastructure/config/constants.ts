@@ -1,5 +1,5 @@
-/** GitHub repository owner */
-export const GITHUB_OWNER = "fisherk2";
+/** GitHub repository owner. Internal-only: consumers use GITHUB_API_DEFAULT. */
+const GITHUB_OWNER = "fisherk2";
 
 /** GitHub repository name */
 export const GITHUB_REPO = "codice-opencode";

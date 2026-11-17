@@ -18,9 +18,9 @@
  * Minimal shape of a platform error carrying an error-code string.
  * Models only the `code` and `message` properties consumed by adapters —
  * enough for error matching and user-facing messages without coupling
- * the domain to Node's platform types.
+ * the domain to Node's platform types. Internal-only: never imported.
  */
-export interface ErrnoLike {
+interface ErrnoLike {
 	readonly code?: string;
 	readonly message: string;
 }
