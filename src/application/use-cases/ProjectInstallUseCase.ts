@@ -26,9 +26,7 @@ import {
 } from "../../domain/entities/FileRuleManifest";
 import { promptForOptionals } from "../helpers";
 import { DEFAULT_PACKS, promptForPackSelection } from "../packOptions";
-import { type BaseInstallOptions, InstallUseCaseBase } from "./InstallUseCaseBase";
-
-export type { BaseInstallOptions };
+import { InstallUseCaseBase } from "./InstallUseCaseBase";
 
 /**
  * Mode 2: Project Install — selective merge into an existing project.
