@@ -11,7 +11,9 @@
  *   Level 3 (LOW):    Content-based keyword matching for orphans
  *
  * Usage:
- *   bun run scripts/analyze-references.ts
+ *   bun run scripts/archive/analyze-references.ts
+ *   (archived one-shot FEV-12 tool — kept for provenance, not part of the
+ *   build or test pipeline)
  *
  * Output:
  *   - Writes docs/diagnosis/fix05-mapping-table.md
