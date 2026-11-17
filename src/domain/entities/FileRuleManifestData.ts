@@ -43,9 +43,9 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// =============================================
 	// OBLIGATORIO (Mandatory) — always copied
 	// =============================================
-	// v2.0 (FEV-17): the 7 standalone mandatory entries (opencode.json,
-	// skills-lock.json, agents, commands, .opencode, skills)
-	// collapsed into 4 SOURCE GROUPINGS. The destination stays flat via
+	// v2.0 (FEV-17): the standalone mandatory entries (opencode.json,
+	// agents, commands, .opencode, skills)
+	// collapsed into SOURCE GROUPINGS. The destination stays flat via
 	// destPath: core/* spreads to root (destPath ""), packs/* merge into
 	// agents/. Symlinks .opencode/{agents,commands,skills} are still generated
 	// post-installation (ADR-008), so they are not staged from source.
@@ -55,7 +55,7 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 		category: "mandatory",
 		isDirectory: true,
 		description:
-			"Core workspace infrastructure — spreads to destination root (opencode.json, commands/, skills/, .opencode/, skills-lock.json)",
+			"Core workspace infrastructure — spreads to destination root (opencode.json, commands/, skills/ with per-skill SKILL.md sets, .opencode/)",
 	},
 	{
 		path: "packs/main",
@@ -133,10 +133,14 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// =============================================
 	// OPCIONAL (Optional) — only if user opts in
 	// =============================================
-	optional(".gitmessage", "Git commit message template; team-specific customization"),
 	optional("Justfile", "Just task runner; not all users need it"),
 	optional("Makefile", "Alternative task runner; mutually exclusive with Justfile for many teams"),
-	optional("requirements.txt", "Python dependencies; only relevant for Python-based workspaces"),
+	optional("Cargo.toml", "Rust project manifest; only relevant for Rust-based workspaces"),
+	optional(
+		"package.json",
+		"Node.js project manifest; only relevant for JavaScript/TypeScript workspaces",
+	),
+	optional("pyproject.toml", "Python project manifest; only relevant for Python-based workspaces"),
 	optional("scripts", "Utility scripts; user may add their own", true),
 	optional("Dockerfile", "Docker container definition; only needed for containerized workflows"),
 	optional("docker-compose.yml", "Docker Compose service definitions"),

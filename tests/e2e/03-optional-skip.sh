@@ -49,7 +49,7 @@ log_info "Verifying obligatorio files exist..."
 
 assert_file_exists "$TEMP_DIR/opencode.json"
 assert_file_exists "$TEMP_DIR/agents/backend-developer.md"
-assert_file_exists "$TEMP_DIR/skills-lock.json"
+assert_file_exists "$TEMP_DIR/commands/hotfix.md"
 
 log_info "Verifying estandar files exist..."
 

@@ -244,13 +244,14 @@ describe("Agent Frontmatter Validation", () => {
 		// (excluding YAML frontmatter). Only the body is enforced: total file
 		// length is frontmatter-dependent and V2 `permissions:` lists push some
 		// primaries (e.g. quetzalcoatl.md) past the retired ≈150-line total.
+		// FEV-31: delegation shell fallback (#111) + never-assumption protocol (#114) added ~30 lines
 		for (const agentName of PRIMARY_AGENTS) {
-			it(`${agentName} body stays within 100 lines`, () => {
+			it(`${agentName} body stays within 120 lines`, () => {
 				const content = readFileSync(join(TEMPLATE_ROOT, "main", `${agentName}.md`), "utf-8");
 				const { bodyStart } = extractFrontmatter(content);
 				const body = content.slice(bodyStart).trim();
 				const lineCount = body === "" ? 0 : body.split("\n").length;
-				expect(lineCount).toBeLessThanOrEqual(100);
+				expect(lineCount).toBeLessThanOrEqual(120);
 			});
 		}
 	});

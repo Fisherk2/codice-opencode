@@ -72,7 +72,7 @@ assert_file_exists "$TEMP_DIR/agents/tlaloc.md"
 assert_file_exists "$TEMP_DIR/commands/build.md"
 assert_file_exists "$TEMP_DIR/skills/architecture-diagrams/references/architecture.md"
 assert_dir_missing "$TEMP_DIR/references/"
-assert_file_exists "$TEMP_DIR/skills-lock.json"
+assert_file_exists "$TEMP_DIR/commands/hotfix.md"
 
 log_info "Verifying FEV-18 pack agents (v2.0 distribution)..."
 # Primary agents (packs/main, mandatory)

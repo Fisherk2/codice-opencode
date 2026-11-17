@@ -61,7 +61,7 @@ log_info "Verifying obligatorio files..."
 assert_file_exists "$TEMP_DIR/opencode.json"
 assert_file_exists "$TEMP_DIR/agents/backend-developer.md"
 assert_file_exists "$TEMP_DIR/commands/build.md"
-assert_file_exists "$TEMP_DIR/skills-lock.json"
+assert_file_exists "$TEMP_DIR/commands/hotfix.md"
 assert_file_exists "$TEMP_DIR/agents/tlaloc.md"
 
 # Verify estandar files exist (standard docs)
