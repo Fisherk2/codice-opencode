@@ -123,34 +123,45 @@ export class AtomicStager {
 			// are reported, not thrown — the residue message is the best-effort
 			// guarantee here. Remove intent marker after handled rollback —
 			// only a hard-kill leaves an orphan marker that blocks the next run.
-			let residueNote = "";
-			if (promoted.size > 0) {
-				this.logger.log(
-					"rollback",
-					`removing ${promoted.size} promoted file(s) after failed commit`,
-				);
-				const residues: string[] = [];
-				for (const destPath of promoted) {
-					try {
-						await fs.unlink(destPath);
-					} catch (unlinkError) {
-						if ((unlinkError as NodeJS.ErrnoException)?.code !== "ENOENT") {
-							residues.push(destPath);
-						}
-					}
-				}
-				if (residues.length > 0) {
-					residueNote = ` WARNING: could not remove ${residues.length} promoted file(s): ${residues.join(", ")}`;
-				}
-			}
-			this.logger.log("rollback", `restoring ${backups.size} backup(s) after failed commit`);
-			await this.restoreBackups(backups);
-			await this.cleanStaging();
-			await fs.unlink(intentPath).catch(() => {});
+			const residueNote = await this.rollbackFailedCommit(promoted, backups, intentPath);
 
 			const message = error instanceof Error ? error.message : String(error);
 			throw new Error(`Failed to commit staged files: ${message}${residueNote}`);
 		}
+	}
+
+	/**
+	 * Best-effort cleanup after a failed commit: unlink rename-promoted
+	 * files, restore backups, clear staging and the intent marker.
+	 * @returns residue note for files that could not be unlinked ("" if none).
+	 */
+	private async rollbackFailedCommit(
+		promoted: Set<string>,
+		backups: Map<string, string>,
+		intentPath: string,
+	): Promise<string> {
+		let residueNote = "";
+		if (promoted.size > 0) {
+			this.logger.log("rollback", `removing ${promoted.size} promoted file(s) after failed commit`);
+			const residues: string[] = [];
+			for (const destPath of promoted) {
+				try {
+					await fs.unlink(destPath);
+				} catch (unlinkError) {
+					if ((unlinkError as NodeJS.ErrnoException)?.code !== "ENOENT") {
+						residues.push(destPath);
+					}
+				}
+			}
+			if (residues.length > 0) {
+				residueNote = ` WARNING: could not remove ${residues.length} promoted file(s): ${residues.join(", ")}`;
+			}
+		}
+		this.logger.log("rollback", `restoring ${backups.size} backup(s) after failed commit`);
+		await this.restoreBackups(backups);
+		await this.cleanStaging();
+		await fs.unlink(intentPath).catch(() => {});
+		return residueNote;
 	}
 
 	/** Remove the staging directory recursively. */
