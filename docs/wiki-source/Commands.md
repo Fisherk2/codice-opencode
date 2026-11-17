@@ -140,7 +140,7 @@ Each flow type is designed for a specific project situation. You can enter at an
 | Flow | Entry Point | Use Case | Key Difference |
 |------|-------------|----------|----------------|
 | **Initial** | `/spec` | MVPs, new projects, greenfield | Starts from scratch — defines specs before building |
-| **Evolutionary** | `/docs-update` | Established projects, feature additions | Syncs docs first, evolves existing specs |
+| **Evolutionary** | `/docs-update` | Established projects, feature additions | Syncs docs first, then updates existing specs |
 | **Issues** | `/analyze` | Bug fixes, security patches, tech debt | Analyzes first, diagnoses, then fixes iteratively |
 | **Migration** | `/migrate` | Tech stack changes, dependency upgrades | Plans migration, then executes and validates |
 

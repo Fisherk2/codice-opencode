@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.5] - 2026-11-17
+
+Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilización **INCOMPLETA** de `1941ed3` cerrando los issues #111–#116 y repara las referencias huérfanas que dejó la reestructuración del template. Métricas finales: 1991 tests / 0 fail, 31/31 e2e, `tsc --noEmit` 0, lint 0.
+
+### Added
+
+- **Skill Obligatorio `vertical-slice-architecture`** (`template/obligatorio/core/skills/vertical-slice-architecture/`): metodología VSA con 4 documentos de referencia; obligatorio para no dejar colgantes las referencias de los comandos (#116).
+- **Fase de setup `find-skills`** en `spec.md`, `feature.md`, `diagnosis.md` y `migrate.md`: tabla de skills disponibles → question-tool → instalación **a nivel de proyecto** (nunca global), con fallback `npx skills` (`vercel-labs/skills`) (#115).
+- **Ciclo ágil documentado** `/docs-update` → `/hotfix` → `/deploy` en el flujo evolutivo (#112).
+
+### Changed
+
+- **`/hotfix` completo** (`template/obligatorio/core/commands/hotfix.md`): fases 1–6 implementadas (diagnóstico → plan → build → test → review → gate GO/NOT-GO), sin despliegue; una sola pasada en vez del loop iterativo (#112).
+- **`/evolve` → `/feature`**: el comando de specs para proyectos maduros pasa a llamarse `feature.md`; el roster queda en 18 comandos y 61 skills (#112).
+- **Fases VSA reales** con selección de alcance por question-tool — Prototipado (1-3), MVP (4-6) y Empresarial (7+) — en 5 comandos del template, con delegación a `software-architect` y salida en `WORKFLOW.md` (#116).
+- **Presupuesto de cuerpo de prompt unificado en 180 líneas** para agentes **y** comandos (`spec-agent-format-v2.md` §8, 2 guards y `docs/CODE_STYLE.md`): elimina la contradicción 100 / 120 / sin límite (T0b).
+- **Protocolo de delegación ampliado** (#111): el scan cubre `agents/` y `.opencode/agents/`, el fallback es legible y prohíbe `Glob`, y `/plan` publica el roster de subagentes delegables.
+- **NEVER ASSUMPTION PROTOCOL completo** (#114): prohibición de ejecución en background y `websearch`/`webfetch` añadidos a la lista de fuentes de verdad, con gramática consistente, en los 6 agentes primarios.
+
+### Fixed
+
+- **Referencias huérfanas de la reestructuración**: 32 enlaces de ADR apuntan a `docs/adr/` (23 ADRs; `specs/adr/` ya no existe), y las menciones a skills y artefactos borrados (`obsidian-*`, `xlsx`, `skills-lock.json`, `.gitmessage`) quedan retiradas de `specs/`, `obsidian-vault-writer.md` y `docs/wiki-source/`.
+- **Payload adyacente fuera de alcance registrado** en `docs/WORKFLOW.md` (FEV-31) y `docs/TECH_DEBT.md`: el traslado de ADRs, el churn de skills (−8 / +17), el borrado de `skills-lock.json`/`.gitmessage`/`requirements.txt`, los manifiestos opcionales `Cargo.toml`/`package.json`/`pyproject.toml`, la reescritura de estilo de 13 comandos y los **6 plugins** de `opencode.json` (#113, previos a FEV-31). Los **swaps de modelo de los 6 agentes primarios** quedan documentados como cambio **adyacente y fuera de alcance** — no son trabajo de FEV-31.
+- **Veredicto de `1941ed3` conservado** como estabilización INCOMPLETA en `docs/diagnosis/fix30-fev31-partial-issue-implementation.md` (§2 y §4.1), con el cierre de FEV-31 anexado: el registro histórico no se reescribe.
+
 ## [2.1.4] - 2026-09-25
 
 Hotfix de rendimiento de comandos: elimina la delegación redundante a `code-reviewer` en 6 comandos del template y reserva la línea 2.1.x a hotfixes (deuda replanificada a 2.2.x/2.3.x/2.5.x).

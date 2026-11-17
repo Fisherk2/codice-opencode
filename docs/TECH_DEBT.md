@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-09-25
-**Status:** v2.1.3 FEV-29 + FEV-30 COMPLETED (2026-09-22) — 1959 tests, 31/31 E2E, coverage 96.39% (global gate 95% + `src/cli/main.ts` sub-gate 95%) · `v2.1.3-beta.1` published (dist-tag `beta`) · stable 2.1.3 on `release/2.1.3` with green gates, pending GO/tag · 4 deferred Phase-2 findings + TD-V2-97 remain open (below) · v2.1.4 HOTFIX COMPLETE (2026-09-25) — 6 commands sin gate duplicado + debt reschedule — listo para GO/tag
-**Current version:** v2.1.3 stable + 2.1.4 stagedReady — listo para GO/tag
+**Last updated:** 2026-11-17
+**Status:** v2.1.5 FEV-31 COMPLETED (2026-11-17) — 1991 tests, 31/31 E2E, `tsc --noEmit` 0, lint 0 · issues #111/#112/#114/#115/#116 closed + orphan references repaired · adjacent out-of-scope payload registered in `docs/WORKFLOW.md` · 4 deferred Phase-2 findings + TD-V2-97 remain open (below)
+**Current version:** v2.1.5 (FEV-31) — en rama `hotfix/update-payload`
 **Next version:** v2.2.0 (Medium Effort — 9 items, 18-24h)
 
 ---
@@ -19,6 +19,7 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
 | **v2.0.0** | Agent pack system (FEV-17/18), permission unification (FEV-19), plugin auto-discovery (FEV-20), installer UX v2 (FEV-21/22), testing closure (FEV-23) |
 | **v2.1.0-beta.1** | 4 slash commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD intent auto-discovery, bilingual intents, agent delegation protocol (FEV-25), CI/CD hardening (SHA-pins, branch protection, PR/issue templates, npm provenance), SPEC.md modularization (ADR-020) |
 | **v2.1.1** | Bug #79 regression test, shell injection fix (TD-V2-70), manifest count corrections (TD-V2-90/91), FileMergeEngine comment refresh (TD-V2-93), injection guard hardening, plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup event (TD-V2-51), CI/CD SHA-pin bumps to Node 24 (TD-V2-7), parsed-semver cache in VersionComparator (TD-V2-61), code review findings resolved |
+| **v2.1.5** | FEV-31: issues #111/#112/#114/#115/#116 closed (delegation scan, `/hotfix` phases, background ban, `find-skills` setup, VSA skill + phases), orphan references repaired (ADR move to `docs/adr/`, `skills-lock.json`/`.gitmessage` mentions), 100/120/none prompt-budget contradiction unified at 180 lines |
 
 **Resolved in v2.0.0 (FEV-17 to FEV-23):**
 - Template directory restructuring → pack-based organization
@@ -64,6 +65,18 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
   - S1: Removed dead `staging_cleanup` variant from ProgressCallback
   - S2: Added staging/backup patterns to `template/estandar/gitignore`
 - 1935 tests / 0 fail, 31/31 E2E, coverage ≥95%
+
+**Resolved in v2.1.5 (FEV-31, 2026-11-17):**
+- Completes the **INCOMPLETE** stabilization of `1941ed3` (green gates, zero issue gaps closed) recorded in `docs/diagnosis/fix30-fev31-partial-issue-implementation.md` §4.1
+- #111: delegation scan covers `agents/` and `.opencode/agents/`; readable fallback that forbids Glob; roster in `/plan`
+- #112: `/hotfix` phases 1–6 complete (GO/NOT-GO, no deploy); `/evolve` → `/feature`; hotfix cycle documented
+- #114: background-execution ban + `websearch`/`webfetch` in the source-of-truth list (6 agents)
+- #115: `find-skills` setup phase in `/spec`, `/feature`, `/diagnosis`, `/migrate` (project-level only)
+- #116: mandatory skill `vertical-slice-architecture` (+4 references) and real VSA phases (Prototype 1-3 / MVP 4-6 / Enterprise 7+) in 5 commands
+- Orphan references repaired: 32 ADR links → `docs/adr/` (23 ADRs; `specs/adr/` no longer exists); deleted skills/artifacts removed from specs, writer and wiki
+- Prompt-body budget contradiction (100 agent / 120 test override / none for commands) unified at **180 lines** for agents and commands (spec §8 + 2 guards + CODE_STYLE)
+- 1991 tests / 0 fail, 31/31 E2E, `tsc --noEmit` 0, lint 0 (workaround in TD-V2-97)
+- **Still open:** TD-V2-93-f2…96 (Phase-2 findings) and TD-V2-97. The adjacent out-of-scope payload of `hotfix/update-payload` (6 primary-agent model swaps, 6 plugins, ADR move, skills churn) is **not** FEV-31 work and is registered in `docs/WORKFLOW.md`, not tracked as debt here
 
 ---
 
@@ -153,6 +166,7 @@ estimado, riesgo evaluado).
 - **Impacto:** solo local. La CI (ext4) preserva el bit de ejecución y `release.yml` ejecuta la matriz de calidad antes de publicar, por lo que el falso verde no alcanza un release.
 - **Mitigación actual:** warning no bloqueante emitido por `scripts/check-ts-version.sh`, invocado al inicio de `just check`; siempre `exit 0` y degradación silenciosa si `jq`, `package.json` o el propio `tsc` no se pueden resolver.
 - **Workaround:** copiar `node_modules/@typescript/typescript-linux-x64` a un FS con ejecución (p. ej. `/tmp`) y ejecutar `lib/tsc --noEmit -p tsconfig.json` desde ahí.
+- **Workaround verificado para biome (2026-11-17, FEV-31):** copiar el binario nativo de Biome a una ruta btrfs y ejecutarlo desde ahí — `/tmp/opencode/biome ci src/ tests/` devuelve **exit 0** sobre el árbol de v2.1.5. `just check` sigue siendo el gate de CI (ext4, donde el bit de ejecución se preserva); el lint local deja de ser un punto ciego y pasa a verificarse con este comando en cada fase.
 
 ### v2.2.0 (Medium Effort — 9 items, 18-24h total)
 
@@ -198,6 +212,7 @@ estimado, riesgo evaluado).
 | v2.1.2 | ✅ Released (2026-08-28) — docs-update delegation hotfix + debt reorg — 1935 tests |
 | v2.1.3 | ✅ FEV-29+FEV-30 complete (1959 tests, 31/31 E2E, 96.39%) — beta published, stable pending GO/tag — open: 4 hallazgos Fase-2 diferidos (TD-V2-93-f2..96) + TD-V2-97 |
 | v2.1.4 hotfix | ✅ Complete — listo para lanzamiento |
+| v2.1.5 FEV-31 | ✅ Complete (2026-11-17) — #111/#112/#114/#115/#116 closed, orphan references repaired, prompt budget unified at 180 — 1991 tests, 31/31 E2E — open: TD-V2-93-f2..96 + TD-V2-97 |
 | v2.2.0 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.3.0 backlog | 4 items (4 debt) — 12-16h |
 | v2.5.0 backlog | 3 items (1 debt + 2 features) — 18-28h |
@@ -226,5 +241,5 @@ estimado, riesgo evaluado).
 ---
 
 *Maintained by Códice team. Update when tech debt items are added or resolved.*
-*Last updated: 2026-09-25*
+*Last updated: 2026-11-17*
 *Next deep audit: after v2.1.3 stable release*

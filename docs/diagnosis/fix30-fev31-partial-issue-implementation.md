@@ -25,14 +25,14 @@ Lo que resta no es una regresión: el diff es una foto de trabajo en curso.
 
 ## 2. Progreso por issue
 
-| Issue | Estado | Evidencia DONE (archivo:línea) | GAP |
-|-------|--------|-------------------------------|-----|
-| [#111](https://github.com/fisherk2/codice-opencode/issues/111) — Protocolo de delegación, fallback shell | **DONE** | Variante `!`-shell en los 5 agentes delegantes de `template/obligatorio/packs/main/` (moctezuma correctamente excluido): `huitzilopochtli.md:110-118`, `mictlantecuhtli.md:79-87`, `quetzalcoatl.md:127-135`, `tezcatlipoca.md:81-89`, `tlaloc.md:78-86`; variante en `plan.md:28` | Menores: el comando de scan ignora `.opencode/agents/`; la prosa del fallback está en inglés roto |
-| [#112](https://github.com/fisherk2/codice-opencode/issues/112) — Comando `/hotfix` | **PARTIAL** | `hotfix.md` existe (esqueleto de 6 fases + cadena de debugger en `hotfix.md:51`); `feature.md` completo; `evolve.md` eliminado | La description del frontmatter estaba vacía (corregida en `1941ed3`); fases 1/3/4/5 vacías; 20+ referencias stale a `/evolve` (fixtures, `docs/opencode`, `wiki-source`); el ciclo ágil `/docs-update`→`/hotfix`→`/deploy` no está documentado |
-| [#113](https://github.com/fisherk2/codice-opencode/issues/113) — Plugins en `opencode.json` | **DONE** | Los 6 plugins en `template/obligatorio/core/opencode.json:104-111` | ⚠️ Adyacente fuera de alcance: los modelos de los 6 agentes primarios fueron intercambiados (validados activos en el catálogo OpenCode: big-pickle, glm-5.3-flash-free ×2, nemotron-3.5-super-vl-free, deepseek-v4.1-flash-free, mimo-v2.6-flash-free) |
-| [#114](https://github.com/fisherk2/codice-opencode/issues/114) — NEVER ASUMPTION PROTOCOL | **PARTIAL** | Protocolo presente en los 6 agentes: `huitzilopochtli.md:139`, `mictlantecuhtli.md:108`, `moctezuma.md:123`, `quetzalcoatl.md:156`, `tezcatlipoca.md:110`, `tlaloc.md:107` | Falta la viñeta de prohibición de ejecución en background y `web-fetch` en el ítem 4 de la fuente; efecto colateral: 3 agentes superaron el presupuesto de 100 líneas (el presupuesto del test subió a 120 en `1941ed3`) |
-| [#115](https://github.com/fisherk2/codice-opencode/issues/115) — find-skills en comandos | **MISSING** | — | Cero referencias a `find-skills` en los comandos del template |
-| [#116](https://github.com/fisherk2/codice-opencode/issues/116) — VSA en comandos | **PARTIAL** (placeholders) | Stubs de fase VSA en `spec.md:79-80`, `feature.md:72`, `migrate.md:83`, `diagnosis.md:62` (+ `hotfix.md:31`) | El skill `vertical-slice-architecture` **no existe**; sin UX de question-tool para Prototipado/MVP/Empresarial; el skill debe ser Obligatorio para no dejar referencias colgantes |
+| Issue | Estado | Evidencia DONE (archivo:línea) | GAP | Estado final (FEV-31) |
+|-------|--------|-------------------------------|-----|------------------------|
+| [#111](https://github.com/fisherk2/codice-opencode/issues/111) — Protocolo de delegación, fallback shell | **DONE** | Variante `!`-shell en los 5 agentes delegantes de `template/obligatorio/packs/main/` (moctezuma correctamente excluido): `huitzilopochtli.md:110-118`, `mictlantecuhtli.md:79-87`, `quetzalcoatl.md:127-135`, `tezcatlipoca.md:81-89`, `tlaloc.md:78-86`; variante en `plan.md:28` | Menores: el comando de scan ignora `.opencode/agents/`; la prosa del fallback está en inglés roto | **DONE in FEV-31** — `61e42fc` (prohibición de background) + `36533e1` (scan de `agents/` y `.opencode/agents/`, fallback legible) |
+| [#112](https://github.com/fisherk2/codice-opencode/issues/112) — Comando `/hotfix` | **PARTIAL** | `hotfix.md` existe (esqueleto de 6 fases + cadena de debugger en `hotfix.md:51`); `feature.md` completo; `evolve.md` eliminado | La description del frontmatter estaba vacía (corregida en `1941ed3`); fases 1/3/4/5 vacías; 20+ referencias stale a `/evolve` (fixtures, `docs/opencode`, `wiki-source`); el ciclo ágil `/docs-update`→`/hotfix`→`/deploy` no está documentado | **DONE in FEV-31** — `e499956` (fases 1–6 de `/hotfix`) + `6112c64` (`/evolve`→`/feature`, ciclo de hotfix documentado) |
+| [#113](https://github.com/fisherk2/codice-opencode/issues/113) — Plugins en `opencode.json` | **DONE** | Los 6 plugins en `template/obligatorio/core/opencode.json:104-111` | ⚠️ Adyacente fuera de alcance: los modelos de los 6 agentes primarios fueron intercambiados (validados activos en el catálogo OpenCode: big-pickle, glm-5.3-flash-free ×2, nemotron-3.5-super-vl-free, deepseek-v4.1-flash-free, mimo-v2.6-flash-free) | **DONE** (previo a FEV-31) — los swaps de modelos adyacentes siguen fuera de alcance y quedan registrados en `aa6a137` (`docs/WORKFLOW.md`) |
+| [#114](https://github.com/fisherk2/codice-opencode/issues/114) — NEVER ASUMPTION PROTOCOL | **PARTIAL** | Protocolo presente en los 6 agentes: `huitzilopochtli.md:139`, `mictlantecuhtli.md:108`, `moctezuma.md:123`, `quetzalcoatl.md:156`, `tezcatlipoca.md:110`, `tlaloc.md:107` | Falta la viñeta de prohibición de ejecución en background y `web-fetch` en el ítem 4 de la fuente; efecto colateral: 3 agentes superaron el presupuesto de 100 líneas (el presupuesto del test subió a 120 en `1941ed3`) | **DONE in FEV-31** — `61e42fc` (background + `websearch`/`webfetch` en la fuente) + `2638432` (presupuesto único de 180 líneas) |
+| [#115](https://github.com/fisherk2/codice-opencode/issues/115) — find-skills en comandos | **MISSING** | — | Cero referencias a `find-skills` en los comandos del template | **DONE in FEV-31** — `febf103` (fase find-skills en `/spec`, `/feature`, `/diagnosis`, `/migrate`; solo a nivel de proyecto) |
+| [#116](https://github.com/fisherk2/codice-opencode/issues/116) — VSA en comandos | **PARTIAL** (placeholders) | Stubs de fase VSA en `spec.md:79-80`, `feature.md:72`, `migrate.md:83`, `diagnosis.md:62` (+ `hotfix.md:31`) | El skill `vertical-slice-architecture` **no existe**; sin UX de question-tool para Prototipado/MVP/Empresarial; el skill debe ser Obligatorio para no dejar referencias colgantes | **DONE in FEV-31** — `d58f1ce` (skill `vertical-slice-architecture` + 4 referencias) + `95d3e4d` (fases VSA reales en 5 comandos) |
 
 ## 3. Síntoma
 
@@ -105,6 +105,15 @@ queda documentado explícitamente como **INCOMPLETO**.
    `docs/WORKFLOW.md` / `docs/TECH_DEBT.md` / `docs/ARCHITECTURE.md`.
 4. **`just check` sin verificar** (biome no ejecutable en este montaje NTFS —
    limitación del entorno, no del código).
+
+**Cierre (FEV-31, 2026-11-17):** FEV-31 completó esta estabilización — commits
+`2638432` (T0b), `61e42fc` (T1/#114), `36533e1` (T2/#111), `e499956` (T3/#112a),
+`febf103` (T5/#115), `d58f1ce` (T6/#116a), `95d3e4d` (T7/#116b), `6112c64`
+(T4/#112b) y `318ce1d`+`aa6a137` (T8) — con `just test` 1991/0,
+`just test-e2e` 31/31, `bun run tsc --noEmit` 0, 0 referencias a `specs/adr/`
+en `template/` y `specs/`, y 0 stubs de fase VSA pendientes en los comandos. El
+veredicto INCOMPLETO de arriba se conserva como registro histórico del estado en
+`1941ed3`.
 
 ## 5. Impacto
 

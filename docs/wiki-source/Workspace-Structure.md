@@ -191,7 +191,7 @@ The template organizes files into three categories that determine how they behav
 |----------|----------|----------|
 | **Obligatorio** | Always present, updated on every install | `opencode.json`, `agents/`, `commands/`, `skills/` |
 | **Estándar** | Created if missing, preserved if present | `README.md`, `CONTRIBUTING.md`, `docs/`, `specs/`, `tasks/` |
-| **Opcional** | Installed only if you choose them | `Dockerfile`, `Justfile`, `.gitmessage` |
+| **Opcional** | Installed only if you choose them | `Dockerfile`, `Justfile`, `package.json`, `pyproject.toml`, `Cargo.toml` |
 
 This means you can customize `README.md` or `docs/ARCHITECTURE.md` without fear of them being overwritten — the installer respects your existing content.
 
@@ -199,7 +199,7 @@ This means you can customize `README.md` or `docs/ARCHITECTURE.md` without fear 
 
 ## Workflow: How Agents and Commands Fit Together
 
-The workspace is designed around a **cycle** that repeats as your project evolves:
+The workspace is designed around a **cycle** that repeats as your project grows:
 
 1. You type a slash command (e.g., `/spec`)
 2. OpenCode routes the command to the target primary agent

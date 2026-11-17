@@ -182,15 +182,15 @@
 
 ## Fase G — Documentación out-of-scope §8 (T9)
 
-- [ ] **T9** Registrar §8 del diagnóstico. Subagent: `docs-writer`. Skills: `documentation-and-adrs`, `crafting-effective-readmes`, `agent-md-refactor`. Tools: `gitmcp`, `vercel-grep`. Recursos: fix30 §8, CONTRIBUTING.md.
-  - [ ] `docs/WORKFLOW.md`: fila **FEV-31** + sección con el snapshot (ADR move, skills +17/-8, `skills-lock.json` y `.gitmessage`/`requirements.txt` eliminados, manifiestos opcionales nuevos, reescritura de estilo de 13 comandos, swap de 6 modelos)
-  - [ ] `docs/TECH_DEBT.md`: entrada con estado (resuelto en FEV-31 / abierto) + limitación `just check` en NTFS
-  - [ ] `docs/ARCHITECTURE.md`: nota del traslado `specs/adr/` → `docs/adr/` (23 archivos) + nota de que `1941ed3` fue **estabilización INCOMPLETA**
-  - [ ] `docs/wiki-source/`: comandos 18, skills 60, ADRs en `docs/adr/`, ciclo `/docs-update` → `/hotfix` → `/deploy`
-  - [ ] Los swaps de modelo de #113 marcados como **adyacentes fuera de alcance**
-  - [ ] `docs/diagnosis/fix30-…md`: §2 y §4.1 actualizados con el estado final (resto del archivo literal)
-  - [ ] `CHANGELOG.md`: entrada `[2.1.5]` si la rama ya se prepara para release
-  - [ ] `just test` → 0 fail
+- [x] **T9** Registrar §8 del diagnóstico. Subagent: `docs-writer`. Skills: `documentation-and-adrs`, `crafting-effective-readmes`, `agent-md-refactor`. Tools: `gitmcp`, `vercel-grep`. Recursos: fix30 §8, CONTRIBUTING.md.
+  - [x] `docs/WORKFLOW.md`: fila **FEV-31** + sección con el snapshot (ADR move, skills +17/-8, `skills-lock.json` y `.gitmessage`/`requirements.txt` eliminados, manifiestos opcionales nuevos, reescritura de estilo de 13 comandos, swap de 6 modelos)
+  - [x] `docs/TECH_DEBT.md`: entrada con estado (resuelto en FEV-31 / abierto) + limitación `just check` en NTFS
+  - [x] `docs/ARCHITECTURE.md`: nota del traslado `specs/adr/` → `docs/adr/` (23 archivos) + nota de que `1941ed3` fue **estabilización INCOMPLETA**
+  - [x] `docs/wiki-source/`: comandos 18, skills 61, ADRs en `docs/adr/`, ciclo `/docs-update` → `/hotfix` → `/deploy`
+  - [x] Los swaps de modelo de #113 marcados como **adyacentes fuera de alcance**
+  - [x] `docs/diagnosis/fix30-…md`: §2 y §4.1 actualizados con el estado final (resto del archivo literal)
+  - [x] `CHANGELOG.md`: entrada `[2.1.5]`
+  - [x] `just test` → 1991/0 · e2e 31/31
 
 ### Checkpoint G
 - [ ] `grep -n "FEV-31" docs/WORKFLOW.md docs/TECH_DEBT.md` → ambos
