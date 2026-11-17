@@ -65,7 +65,9 @@ assert_file_missing "$TEMP_DIR/Makefile"
 assert_file_missing "$TEMP_DIR/scripts/build.sh"
 assert_file_missing "$TEMP_DIR/scripts/test.sh"
 assert_file_missing "$TEMP_DIR/docker-compose.yml"
-assert_file_missing "$TEMP_DIR/requirements.txt"
+assert_file_missing "$TEMP_DIR/pyproject.toml"
+assert_file_missing "$TEMP_DIR/Cargo.toml"
+assert_file_missing "$TEMP_DIR/package.json"
 
 log_info "Verifying version file exists..."
 
