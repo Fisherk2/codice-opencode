@@ -33,8 +33,7 @@ template/
 │   ├── core/                        # Renamed from current obligatorio root content
 │   │   ├── .opencode/               # OpenCode config
 │   │   ├── commands/                # CLI commands
-│   │   ├── skills/                  # Skills
-│   │   └── skills-lock.json
+│   │   └── skills/                  # Skills
 │   └── packs/                       # Agent packs
 │       ├── main/                    # 6 primary agents (MANDATORY)
 │       │   ├── huitzilopochtli.md

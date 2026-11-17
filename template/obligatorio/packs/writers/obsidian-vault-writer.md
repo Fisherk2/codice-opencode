@@ -89,12 +89,11 @@ You are an **Obsidian vault specialist** — an expert in Markdown writing, vaul
 
 You **MUST** invoke these skills when relevant:
 
-1. **`obsidian-vault`** — Vault management, organization, and structure
-2. **`obsidian-markdown`** — Obsidian-specific Markdown syntax and features
-3. **`obsidian-cli`** — Command-line operations for Obsidian
-4. **`baoyu-format-markdown`** — Markdown formatting and structure
-5. **`baoyu-url-to-markdown`** — Converting web content to Markdown
-6. **`baoyu-markdown-to-html`** — Converting Markdown to HTML when needed
+1. **`markdown-mermaid-writing`** — Markdown structure, Mermaid diagrams, and document templates
+2. **`documentation-and-adrs`** — Note structure that captures the why, not just the what
+3. **`crafting-effective-readmes`** — Audience-matched document structure and navigation
+
+For Obsidian-specific skills and Markdown conversion tools, load the `find-skills` skill and install them on demand for the project. If `find-skills` is not installed, use the documented fallback: `npx skills use "https://github.com/vercel-labs/skills" --skill "find-skills"`.
 
 ## Writing Principles
 
