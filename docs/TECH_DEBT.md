@@ -190,9 +190,11 @@ Registered during the FEV-31 payload cleanup sweep: items evaluated and delibera
 | **TD-V2-100** | Naming drift: `updateFlow`/`updateHelpers`, `versionGateMessages`/`versionInfoMessages` | Debt | 1-2h | Low | Confusable sibling names; file renames touch many imports and git blame. Deferred (churn > value). |
 | **TD-V2-101** | 3 files still >200 LOC: `AtomicStager.ts` (273, post Extract Method in commit `14c4d35`), `BunSymlinkCreator.ts` (228), `ClackPromptsAdapter.ts` (204) | Debt | 2-3h | Low | AtomicStager extraction was done (rollbackFailedCommit) without forcing further splits per the ≤200 convention's escape hatch. Remaining splits deferred. |
 | **TD-V2-102** | lcov-vs-test mismatch for `scripts/migrate-v1-to-v2-permissions.ts` | Debt | 0.5h | Low | A test file exists for the migration script, but the lcov report shows `0/266` for it — the script is not instrumented (executed differently from `bun test tests/`), so the gate counts its 266 lines as uncovered. Related to the TD-V2-98 denominator issue. |
+| **TD-V2-103** | `src/cli/validateDestPath.ts` win32-only branches untestable under lcov | Debt | 2-3h | Low | Lines 21-28 (win32 SYSTEM_DIRS) and 71 (drive-root) only execute when `process.platform` is win32 at module load — bun's coverage does not instrument child-process execution, so lcov stays ~71% despite full Linux-branch regression tests (commit `bcfa1bb`). Fix options: inject a path/platform seam into the module, or delete the win32 branch (loses Windows CLI protection). |
 
 - **TD-V2-99 evidence:** grep shows the four symbols are referenced only from `src/application/use-cases/*.ts` exports and their unit tests; no production execution path reaches them.
 - **TD-V2-102 evidence:** `coverage/lcov.info` lists `SF:scripts/migrate-v1-to-v2-permissions.ts` with `LF:266, LH:0` while its test passes under `just test`.
+- **TD-V2-103 evidence:** `tests/unit/cli/validateDestPath.test.ts` covers the Linux branches via a child-process harness, but lcov (`SF:src/cli/validateDestPath.ts`) still reports ~71% because bun instruments only in-process code.
 
 ### v2.2.0 (Medium Effort — 9 items, 18-24h total)
 
