@@ -8,7 +8,7 @@ import type { FileRule } from "./FileRule";
  * duplicating the count in the pack wizard (label already shows it).
  * Validated by pack-agent-counts.test.
  */
-function pack(path: string, description: string, agentCount: number): FileRule {
+function packRule(path: string, description: string, agentCount: number): FileRule {
 	return {
 		path,
 		destPath: "agents",
@@ -20,12 +20,12 @@ function pack(path: string, description: string, agentCount: number): FileRule {
 }
 
 /** Build a standard rule (copied only if missing). */
-function file(path: string, description: string, isDirectory = false): FileRule {
+function standardRule(path: string, description: string, isDirectory = false): FileRule {
 	return { path, category: "standard", isDirectory, description };
 }
 
 /** Build an optional rule (copied only if user opts in). */
-function optional(path: string, description: string, isDirectory = false): FileRule {
+function optionalRule(path: string, description: string, isDirectory = false): FileRule {
 	return { path, category: "optional", isDirectory, description };
 }
 
@@ -77,34 +77,34 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// them as wizard-selectable: the installer asks the user which packs to
 	// install and filters the manifest with filterByPacks() before staging.
 	// They live under obligatorio/ so TemplateResolver can still discover them.
-	pack(
+	packRule(
 		"packs/software-development",
 		"Software development pack (default ON: backend, frontend, mobile, DevOps, databases, AI/ML, security, testing)",
 		144,
 	),
-	pack(
+	packRule(
 		"packs/business",
 		"Business pack (marketing, sales, product, project management, operations)",
 		91,
 	),
-	pack(
+	packRule(
 		"packs/hardware-emerging",
 		"Hardware-emerging pack (IoT, embedded, blockchain, XR/spatial, game development)",
 		36,
 	),
-	pack(
+	packRule(
 		"packs/science-research",
 		"Science-research pack (academic, GIS, healthcare, research, scientific-literature-researcher)",
 		31,
 	),
-	pack(
+	packRule(
 		"packs/operations-support",
 		"Operations-support pack (customer support, IT ops, HR, translation)",
 		18,
 	),
-	pack("packs/finance", "Finance pack (financial analysis, fintech, payments, accounting)", 11),
-	pack("packs/creative", "Creative pack (design, UI/UX, brand, motion)", 10),
-	pack(
+	packRule("packs/finance", "Finance pack (financial analysis, fintech, payments, accounting)", 11),
+	packRule("packs/creative", "Creative pack (design, UI/UX, brand, motion)", 10),
+	packRule(
 		"packs/government-legal",
 		"Government-legal pack (legal, compliance, privacy, regulatory)",
 		8,
@@ -113,38 +113,55 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	// =============================================
 	// ESTANDAR (Standard) — copied only if missing
 	// =============================================
-	file("AGENTS.md", "Project-specific agent instructions; user may customize"),
-	file("CHANGELOG.md", "Project changelog; user owns content"),
-	file("CONTRIBUTING.md", "Contribution guidelines; user may tailor"),
-	file(
+	standardRule("AGENTS.md", "Project-specific agent instructions; user may customize"),
+	standardRule("CHANGELOG.md", "Project changelog; user owns content"),
+	standardRule("CONTRIBUTING.md", "Contribution guidelines; user may tailor"),
+	standardRule(
 		"CODE_OF_CONDUCT.md",
 		"Code of conduct for contributors (placeholder, customize for your project)",
 	),
-	file("LICENSE", "License text; user may replace"),
-	file("README.md", "Project readme; user will overwrite with project content"),
-	file("SPEC.md", "Specification document; user may extend"),
-	file(".env.example", "Environment variable template; user may expand"),
+	standardRule("LICENSE", "License text; user may replace"),
+	standardRule("README.md", "Project readme; user will overwrite with project content"),
+	standardRule("SPEC.md", "Specification document; user may extend"),
+	standardRule(".env.example", "Environment variable template; user may expand"),
 	// NOTE: .gitignore renamed to gitignore (no dot). npm excludes .gitignore
 	// from packages. Generated post-install by BunGitignoreCreator (ADR-009).
-	file("docs", "Documentation directory — standard by default, with optional exceptions", true),
-	file("specs", "Specifications directory — standard by default, with optional exceptions", true),
-	file("tasks", "Task tracking directory; user may extend", true),
+	standardRule(
+		"docs",
+		"Documentation directory — standard by default, with optional exceptions",
+		true,
+	),
+	standardRule(
+		"specs",
+		"Specifications directory — standard by default, with optional exceptions",
+		true,
+	),
+	standardRule("tasks", "Task tracking directory; user may extend", true),
 
 	// =============================================
 	// OPCIONAL (Optional) — only if user opts in
 	// =============================================
-	optional("Justfile", "Just task runner; not all users need it"),
-	optional("Makefile", "Alternative task runner; mutually exclusive with Justfile for many teams"),
-	optional("Cargo.toml", "Rust project manifest; only relevant for Rust-based workspaces"),
-	optional(
+	optionalRule("Justfile", "Just task runner; not all users need it"),
+	optionalRule(
+		"Makefile",
+		"Alternative task runner; mutually exclusive with Justfile for many teams",
+	),
+	optionalRule("Cargo.toml", "Rust project manifest; only relevant for Rust-based workspaces"),
+	optionalRule(
 		"package.json",
 		"Node.js project manifest; only relevant for JavaScript/TypeScript workspaces",
 	),
-	optional("pyproject.toml", "Python project manifest; only relevant for Python-based workspaces"),
-	optional("scripts", "Utility scripts; user may add their own", true),
-	optional("Dockerfile", "Docker container definition; only needed for containerized workflows"),
-	optional("docker-compose.yml", "Docker Compose service definitions"),
-	optional("docs/DESIGN.md", "Design documentation; user may prefer own format"),
-	optional("docs/SCHEMA.md", "Schema reference; user may generate from code"),
-	optional("specs/design", "Design-specific specs; user may manage design elsewhere", true),
+	optionalRule(
+		"pyproject.toml",
+		"Python project manifest; only relevant for Python-based workspaces",
+	),
+	optionalRule("scripts", "Utility scripts; user may add their own", true),
+	optionalRule(
+		"Dockerfile",
+		"Docker container definition; only needed for containerized workflows",
+	),
+	optionalRule("docker-compose.yml", "Docker Compose service definitions"),
+	optionalRule("docs/DESIGN.md", "Design documentation; user may prefer own format"),
+	optionalRule("docs/SCHEMA.md", "Schema reference; user may generate from code"),
+	optionalRule("specs/design", "Design-specific specs; user may manage design elsewhere", true),
 ];
