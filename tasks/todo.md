@@ -23,13 +23,13 @@
   - [x] `git status --short | wc -l` → 200 · `git log --oneline -1` → `7560187`
   - [x] Inventario de 14 filas copiado a la tabla siguiente
 
-- [ ] **T0b** Alinear presupuesto de líneas a **180** en agentes y comandos (decisión del usuario 2026-11-17). Subagent: `test-engineer`. Skills: `test-driven-development`, `clean-code`, `documentation-and-adrs`. Tools: shell (`just test`, `tsc --noEmit`). **Antes de T1/T3.**
-  - [ ] `specs/spec-agent-format-v2.md:325` (§8 *Line budget*): 100 → **180**, aclarando "body sin frontmatter"
-  - [ ] `tests/unit/domain/agent-frontmatter-validation.test.ts:249,254`: nombre del test + `toBeLessThanOrEqual(120)` → **180**; comentario stale de la l.243 (100) corregido; comentario FEV-31 de la l.247 ajustado
-  - [ ] `tests/unit/domain/command-frontmatter-validation.test.ts`: **nuevo** describe "Body line budget", mide el body vía `extractFrontmatter` y afirma `toBeLessThanOrEqual(180)` para los 18 comandos (mismo patrón que el test de agentes)
-  - [ ] `docs/CODE_STYLE.md:23`: nota junto a la regla de 200 líneas — "Template Markdown prompts (agentes y comandos): body ≤180 líneas, excluyendo YAML frontmatter"
-  - [ ] 0 matches de `100 lines` / `120 lines` / `toBeLessThanOrEqual(120)` en `tests/`, `specs/`, `docs/` (fuera de `docs/diagnosis/` e históricos)
-  - [ ] `just test` → 0 fail · `tsc --noEmit` → exit 0
+- [x] **T0b** Alinear presupuesto de líneas a **180** en agentes y comandos (decisión del usuario 2026-11-17). Subagent: `test-engineer`. Skills: `test-driven-development`, `clean-code`, `documentation-and-adrs`. Tools: shell (`just test`, `tsc --noEmit`). **Antes de T1/T3.**
+  - [x] `specs/spec-agent-format-v2.md:325` (§8 *Line budget*): 100 → **180**, aclarando "body sin frontmatter"
+  - [x] `tests/unit/domain/agent-frontmatter-validation.test.ts:249,254`: nombre del test + `toBeLessThanOrEqual(120)` → **180**; comentario stale de la l.243 (100) corregido; comentario FEV-31 de la l.247 ajustado
+  - [x] `tests/unit/domain/command-frontmatter-validation.test.ts`: **nuevo** describe "Body line budget", mide el body vía `extractFrontmatter` y afirma `toBeLessThanOrEqual(180)` para los 18 comandos (mismo patrón que el test de agentes)
+  - [x] `docs/CODE_STYLE.md:23`: nota junto a la regla de 200 líneas — "Template Markdown prompts (agentes y comandos): body ≤180 líneas, excluyendo YAML frontmatter"
+  - [x] 0 matches de `100 lines` / `120 lines` / `toBeLessThanOrEqual(120)` en `tests/`, `specs/`, `docs/` (fuera de `docs/diagnosis/` e históricos)
+  - [x] `just test` → 1990 pass / 0 fail (+18) · `tsc --noEmit` → exit 0 · biome → exit 0
 
 ### Checkpoint A
 - [x] Baseline registrado · inventario materializado · 0 archivos tocados al cerrar T0
@@ -63,13 +63,13 @@
 
 ## Fase B — Protocolos de agente (#114, #111) — **SECUENCIAL**
 
-- [ ] **T1** #114 — NEVER ASSUMPTION completo (6 agentes). Subagent: `technical-writer`. Skills: `clean-code`, `documentation-and-adrs`. Tools: `vercel-grep`. Recursos: issue #114, opencode.ai/v2/docs/agents.
-  - [ ] Viñeta de **prohibición de ejecución en background** (`&`, `nohup`, `disown`, `setsid`, huérfanos) — 1 línea — en los 6 agentes
-  - [ ] Ítem 4 de "Source of truth" cita `websearch`/`webfetch`
-  - [ ] Prosa en inglés gramaticalmente correcta
-  - [ ] Cuerpo de cada agente ≤ **180 líneas** (guard alineado en T0b)
-  - [ ] Frontmatter `permissions:` intacto (sin `tools:` / `permission:`)
-  - [ ] `just test` → 0 fail · `tsc --noEmit` → 0
+- [x] **T1** #114 — NEVER ASSUMPTION completo (6 agentes). Subagent: `technical-writer`. Skills: `clean-code`, `documentation-and-adrs`. Tools: `vercel-grep`. Recursos: issue #114, opencode.ai/v2/docs/agents.
+  - [x] Viñeta de **prohibición de ejecución en background** (`&`, `nohup`, `disown`, `setsid`, huérfanos) — 1 línea — en los 6 agentes
+  - [x] Ítem 4 de "Source of truth" cita `websearch`/`webfetch`
+  - [x] Prosa en inglés gramaticalmente correcta
+  - [x] Cuerpo de cada agente ≤ **180 líneas** (102/104/89/101/104/101)
+  - [x] Frontmatter `permissions:` intacto (sin `tools:` / `permission:`)
+  - [x] `just test` → 1990 pass / 0 fail · `tsc --noEmit` → 0
 
 - [ ] **T2** #111 — DELEGATION PROTOCOL (5 agentes delegantes + `plan.md`). Subagent: `prompt-engineer`. Skills: `clean-code`, `documentation-and-adrs`. Tools: shell, `vercel-grep`. Recursos: issue #111, opencode.ai/v2/docs/commands/#shell.
   - [ ] Bloque bash escanea **`agents/` y `.opencode/agents/`** en una invocación, salida `nombre :: descripción`
@@ -91,15 +91,15 @@
 
 ## Fase C — Comando `/hotfix` (#112) — T3 ∥ T4
 
-- [ ] **T3** #112a — fases 1/3/4/5 de `hotfix.md`. Subagent: `workflow-architect`. Skills: `incremental-implementation`, `documentation-and-adrs`, `planning-and-task-breakdown`, `test-driven-development`. Tools: `codebase-memory-mcp`. Recursos: issue #112, opencode.ai/v2/docs/commands/, comandos del template.
-  - [ ] Fase 1 → `docs/diagnosis/<slug>.md` con `diagnosis-template.md` (+ regla "si hay fix en curso, actualizar ese")
-  - [ ] Fase 2 → `tasks/plan.md` + `tasks/todo.md` con criterios de aceptación
-  - [ ] Fase 3 → TDD explícito ("ningún gap de pruebas queda fuera")
-  - [ ] Fase 4 → `just test` + revisión + corrección de observaciones
-  - [ ] Fase 5 → **GO / not-GO** sin desplegar
-  - [ ] Fase 6 → cierre de ticket + actualización de documentación
-  - [ ] Frontmatter válido: `description` no vacío, `agent: tlaloc`
-  - [ ] `grep -c "^## Phase" hotfix.md` → 6, ninguna vacía
+- [x] **T3** #112a — fases 1/3/4/5 de `hotfix.md`. Subagent: `workflow-architect`. Skills: `incremental-implementation`, `documentation-and-adrs`, `planning-and-task-breakdown`, `test-driven-development`. Tools: `codebase-memory-mcp`. Recursos: issue #112, opencode.ai/v2/docs/commands/, comandos del template.
+  - [x] Fase 1 → `docs/diagnosis/<slug>.md` con `diagnosis-template.md` (+ regla "si hay fix en curso, actualizar ese")
+  - [x] Fase 2 → `tasks/plan.md` + `tasks/todo.md` con criterios de aceptación (completada también: era una nota en español)
+  - [x] Fase 3 → TDD explícito ("ningún gap de pruebas queda fuera")
+  - [x] Fase 4 → `just test` + revisión + corrección de observaciones
+  - [x] Fase 5 → **GO / not-GO** sin desplegar
+  - [x] Fase 6 → cierre de ticket + actualización de documentación (estaba vacía)
+  - [x] Frontmatter válido: `description` no vacío, `agent: tlaloc`
+  - [x] `grep -c "^## Phase" hotfix.md` → 6, ninguna vacía (body 133 líneas)
 
 - [ ] **T4** #112b — `/evolve` → `/feature` + ciclo ágil + contadores. Subagent: `docs-writer`. Skills: `crafting-effective-readmes`, `documentation-and-adrs`, `markdown-mermaid-writing`. Tools: `vercel-grep`. Recursos: issue #112, opencode.ai/v2/docs/commands/.
   - [ ] `README.md`: lista de comandos con `/feature` + `/hotfix`, "**18 Slash Commands**", "**60 Engineering Skills**"
