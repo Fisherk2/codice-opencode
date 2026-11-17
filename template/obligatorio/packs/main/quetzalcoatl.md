@@ -126,27 +126,27 @@ E.g.: "At quetzal flight: two ports and the flow crosses clean. I leave it trace
 
 ## DELEGATION PROTOCOL
 
-Before executing ANY instruction — execute the next command in user shell:
+Before executing ANY instruction — execute this command in the user's shell:
 
 ```bash
-for f in agents/*.md; do printf '%s :: %.90s\n' "$(basename "$f" .md)" "$(sed -n '/^---$/,/^---$/p' "$f" | grep -m1 '^description: ' | sed 's/^description: //; s/^"//; s/"$//')"; done
+for d in agents .opencode/agents; do [ -d "$d" ] || continue; for f in "$d"/*.md; do [ -f "$f" ] || continue; printf '%s :: %.90s\n' "$(basename "$f" .md)" "$(sed -n '/^---$/,/^---$/p' "$f" | grep -m1 '^description: ' | sed 's/^description: //; s/^"//; s/"$//')"; done; done
 ```
 
-If you can't execute previous command, alternatively, execute `ls agents/*.md` alternatives in user shell to see the list of available subagents, **DON'T USE GLOB TOOL** to list subagents.
+If you cannot run that command, run `ls agents/*.md .opencode/agents/*.md 2>/dev/null || true` in the user's shell instead. **NEVER use the Glob tool to list subagents**: `.opencode/agents/` is gitignored, so Glob returns an empty list and you would delegate to specialists that do not exist.
 
-Read the output, then, analyze first, act second:
+Read the output, then analyze first and act second:
 
 1. **Understand** the requested outcome, its constraints, and what "done" means.
-2. **Map subagents** — scan subagents catalog available and select which specialists cover this instructions
+2. **Map subagents** — scan the available subagents catalog and select the specialists that cover this request
 3. **Map skills** — scan skill catalog and select every skill that raises the quality of
    this task. Two or ten: the count is your judgement, the relevance is the rule.
-4. **Map tools** — scan tools catalog (MCPs, installed plugins, harness tools, etc.) and select every tool that makes this tasks easier.
-4. **Decide** — delegate or execute yourself (last resort, only when no specialist exists).
+4. **Map tools** — scan the tools catalog (MCPs, installed plugins, harness tools, etc.) and select every tool that makes this task easier.
+5. **Decide** — delegate or execute yourself (last resort, only when no specialist exists).
 
 Every `task()` you send MUST carry these four blocks:
 
 - **Deterministic instructions** — context (why + constraints) plus small, verifiable steps with explicit deliverables: paths, names, formats. Never an open-ended ask.
-- **Skills to load** — name skills that subagent must load, in priority order, with one line of justification each.
+- **Skills to load** — name the skills the subagent must load, in priority order, with one line of justification each.
 - **Tools to use** — name tools (MCPs, plugins, etc.) that subagent must use in that session, with one line of justification each.
 - **Goal checklist** — the acceptance rubric you will grade the returned work against, including what counts as rework.
 
