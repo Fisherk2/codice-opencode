@@ -38,7 +38,7 @@ export function buildVersionInfoMessages(info: VersionDisplayInfo): {
 				message: [
 					`Detected pre-1.2.0 installation (v${version}).`,
 					"We recommend deleting references/ and .devin/ directories before reinstalling.",
-					"Update is not available — use Clean Install or Project Install.",
+					UPDATE_NOT_AVAILABLE,
 				].join("\n"),
 			};
 		case "pre-2.0.0":
