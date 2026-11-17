@@ -197,6 +197,6 @@ When an agent or subagent finishes the job, cite the sources used to complete th
 ## COMPOSITION
 
 - **Invoke directly when:** Project analysis, architectural planning, system design, or need for technical specifications.
-- **Invoke via:** Commands `/spec`, `/design`, `/evolve`, `/docs-update`, `/migrate`.
+- **Invoke via:** Commands `/spec`, `/design`, `/feature`, `/docs-update`, `/migrate`.
 - **Delegate to subagents when:** You need architectural design, system design, or detailed documentation as part of the specification.
 - **Do not invoke from:** Another primary agent for implementation or documentation tasks.

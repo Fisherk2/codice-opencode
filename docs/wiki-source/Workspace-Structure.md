@@ -19,8 +19,8 @@ workspace/
 ├── opencode.json         # OpenCode configuration
 ├── .env.example          # Environment template
 ├── agents/               # AI agent definitions (359 across 10 packs)
-├── commands/             # Slash command workflows (17 files)
-├── skills/               # Specialized knowledge domains (51 dirs)
+├── commands/             # Slash command workflows (18 files)
+├── skills/               # Specialized knowledge domains (61 dirs)
 ├── docs/                 # Project documentation
 ├── specs/                # Modular specifications + ADRs
 ├── tasks/                # Execution tasks (SDD pipeline)
@@ -74,7 +74,7 @@ permissions:
 
 ### `commands/` — Slash Command Workflows
 
-The **17 slash commands** map to the Spec-Driven Development (SDD) lifecycle. Each is a Markdown file defining a workflow that a primary agent executes when the user types `/command-name`.
+The **18 slash commands** map to the Spec-Driven Development (SDD) lifecycle. Each is a Markdown file defining a workflow that a primary agent executes when the user types `/command-name`.
 
 | Command | Agent | Phase |
 |---------|-------|-------|
@@ -94,13 +94,14 @@ The **17 slash commands** map to the Spec-Driven Development (SDD) lifecycle. Ea
 | `analyze.md` | tezcatlipoca | Multi-dimensional architectural analysis |
 | `docs-update.md` | quetzalcoatl | Synchronize documentation with code |
 | `diagnosis.md` | tezcatlipoca | Suggest fixes and document technical findings |
-| `evolve.md` | quetzalcoatl | Define new specs for mature projects |
+| `feature.md` | quetzalcoatl | Define new specs for mature projects |
+| `hotfix.md` | tlaloc | One-pass diagnosis → build → test → GO/NOT-GO for urgent tickets |
 
 Each command file contains numbered steps, `question` tool prompts at decision points, and skill loading (`**Load** `skill-name` skill`). A YAML frontmatter block specifies the target agent and a verb-driven description.
 
 ### `skills/` — Specialized Knowledge Domains
 
-Skills are the workspace's knowledge base — **51 skill directories**, each containing a `SKILL.md` file that teaches an agent how to perform a specific task domain. 18 of those include a `references/` subdirectory with extended reference material co-located with the skill:
+Skills are the workspace's knowledge base — **61 skill directories**, each containing a `SKILL.md` file that teaches an agent how to perform a specific task domain. 18 of those include a `references/` subdirectory with extended reference material co-located with the skill:
 
 | Skill | Purpose |
 |-------|---------|
@@ -112,7 +113,7 @@ Skills are the workspace's knowledge base — **51 skill directories**, each con
 | `security-and-hardening/references/` | Security checklist |
 | `architecture-diagrams/` | Create Mermaid and C4 diagrams |
 | `architecture-diagrams/references/` | 10 diagram reference documents |
-| ... | *(51 total skills, 18 with references/ subdirectories)* |
+| ... | *(61 total skills, 18 with references/ subdirectories)* |
 
 Skills are loaded by commands and agents with `**Load** `skill-name` skill`. This keeps workflows composable — a single command may invoke multiple skills at different steps. Reference material within `skills/<name>/references/` is exposed through the `references` section in `opencode.json`: described entries are advertised to agents with their alias and resolved path, and the client attaches a reference by its alias.
 
@@ -160,7 +161,7 @@ specs/
 └── spec-cli-commands.md
 ```
 
-This directory grows as your project matures. The `/evolve` command creates new specs here, and each ADR documents a resolved architectural decision with its context, options, and rationale.
+This directory grows as your project matures. The `/feature` command creates new specs here, and each ADR documents a resolved architectural decision with its context, options, and rationale.
 
 ### `tasks/` — Execution Tasks
 
@@ -215,8 +216,8 @@ The workspace is designed around a **cycle** that repeats as your project evolve
 | Directory | Files | Purpose |
 |-----------|-------|---------|
 | `agents/` | 359 | AI agent persona definitions |
-| `commands/` | 17 | Slash command workflows |
-| `skills/` | 51 + 64 refs | Specialized knowledge domains with co-located reference material |
+| `commands/` | 18 | Slash command workflows |
+| `skills/` | 61 + 64 refs | Specialized knowledge domains with co-located reference material |
 | `docs/` | 5+ | Project documentation |
 | `specs/` | 3+ | Modular specs and ADRs |
 

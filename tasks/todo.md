@@ -57,7 +57,7 @@
 | 13 | `template/obligatorio/packs/main/quetzalcoatl.md:199` | `Invoke via: … /evolve` | T4 | [ ] |
 | 14 | `tests/fixtures/workspace/` | `/evolve`, `skills-lock.json`, `requirements.txt` (gitignored → verificación) | T8 | [ ] |
 
-**Contadores reales (verificados):** 60 skills · 18 comandos · 10 packs.
+**Contadores reales (verificados):** ~~60 skills~~ → **61 skills** (T6 añadió `vertical-slice-architecture`; el plan se escribió con 60) · 18 comandos · 10 packs.
 
 ---
 
@@ -101,14 +101,14 @@
   - [x] Frontmatter válido: `description` no vacío, `agent: tlaloc`
   - [x] `grep -c "^## Phase" hotfix.md` → 6, ninguna vacía (body 133 líneas)
 
-- [ ] **T4** #112b — `/evolve` → `/feature` + ciclo ágil + contadores. Subagent: `docs-writer`. Skills: `crafting-effective-readmes`, `documentation-and-adrs`, `markdown-mermaid-writing`. Tools: `vercel-grep`. Recursos: issue #112, opencode.ai/v2/docs/commands/.
-  - [ ] `README.md`: lista de comandos con `/feature` + `/hotfix`, "**18 Slash Commands**", "**60 Engineering Skills**"
-  - [ ] `README.md`: Mermaid "Evolutionary Flow" con `/feature` y ciclo `/docs-update` → `/hotfix` → `/deploy`
-  - [ ] `README.md`: fila "Evolve project" → "Feature project"
-  - [ ] `template/obligatorio/core/commands/docs-update.md:87` → "Run `/feature` to create new specs"
-  - [ ] `template/obligatorio/packs/main/quetzalcoatl.md:199` → `Invoke via: … /feature …`
-  - [ ] `docs/wiki-source/{Agents,Commands,Workspace-Structure}.md` → `/feature` + ciclo ágil + contador
-  - [ ] `git ls-files -z | xargs -0 grep -n "/evolve" | grep -v CHANGELOG.md | grep -v docs/diagnosis/` → **0**
+- [x] **T4** #112b — `/evolve` → `/feature` + ciclo ágil + contadores. Subagent: `docs-writer`. Skills: `crafting-effective-readmes`, `documentation-and-adrs`, `markdown-mermaid-writing`. Tools: `vercel-grep`. Recursos: issue #112, opencode.ai/v2/docs/commands/.
+  - [x] `README.md`: lista de comandos con `/feature` + `/hotfix`, "**18 Slash Commands**", "**61 Engineering Skills**"
+  - [x] `README.md`: Mermaid "Evolutionary Flow" con `/feature` y ciclo `/docs-update` → `/hotfix` → `/deploy`
+  - [x] `README.md`: fila "Evolve project" → "Feature project"
+  - [x] `template/obligatorio/core/commands/docs-update.md:87` → "Run `/feature` to create new specs"
+  - [x] `template/obligatorio/packs/main/quetzalcoatl.md:199` → `Invoke via: … /feature …`
+  - [x] `docs/wiki-source/{Agents,Commands,Workspace-Structure,Getting-Started,Home}.md` → `/feature` + ciclo ágil + contador 18/61
+  - [x] `git ls-files -z | xargs -0 grep -n "/evolve" | grep -v CHANGELOG.md | grep -v docs/diagnosis/` → **0**
 
 ### Checkpoint C
 - [ ] `/hotfix` con 6 fases completas · 0 refs a `/evolve` · README con 18/60

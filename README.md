@@ -23,14 +23,14 @@
 
 **OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
 
-A production-grade workspace integrating 51 engineering skills organized in 10 SDD cycle phases (3 optional) + Extra, slash commands, and specialized agents to accelerate AI-assisted development. Designed for teams and developers who want consistent quality in AI-assisted projects.
+A production-grade workspace integrating 61 engineering skills organized in 10 SDD cycle phases (3 optional) + Extra, slash commands, and specialized agents to accelerate AI-assisted development. Designed for teams and developers who want consistent quality in AI-assisted projects.
 
 ---
 
 ## Features
 
-- **51 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet manipulation, Obsidian vault management, and more, organized in 10 SDD phases (3 optional) + Extra
-- **17 Slash Commands** — `/spec`, `/design`, `/evolve`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`, `/sync`, `/migrate`, `/deploy`, `/analyze`
+- **61 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet analysis, and more, organized in 10 SDD phases (3 optional) + Extra
+- **18 Slash Commands** — `/spec`, `/design`, `/feature`, `/hotfix`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`, `/sync`, `/migrate`, `/deploy`, `/analyze`
 - **6 Main Agents + ~360 Agents in 10 Packs (6 primary + 4 writers + ~350 subagents across 8 selectable packs)** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review & correction), and ~350 subagents organized across 8 selectable packs (2 mandatory packs always installed) specialized in frontend, backend, DevOps, testing, security, and more. Install only the packs you need via `--packs`, or everything with `--packs-all`.
 - **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
 - **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
@@ -272,9 +272,9 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    DU["/docs<br/>-update"] --> EV["/evolve<br/>EVOLVE"]
-    EV --> P["/plan<br/>PLAN"]
-    EV -.->|optional| D["/design<br/>DESIGN"]
+    DU["/docs<br/>-update"] --> FE["/feature<br/>FEATURE"]
+    FE --> P["/plan<br/>PLAN"]
+    FE -.->|optional| D["/design<br/>DESIGN"]
     D -.-> P
     P --> B["/build<br/>BUILD"]
     B --> T["/test<br/>TEST"]
@@ -285,6 +285,8 @@ flowchart LR
     R -->|"🔄 iterate"| P
     R -->|"✅ ship"| SH["/ship<br/>SHIP"]
     SH --> DP["/deploy<br/>DEPLOY"]
+    DU --> HF["/hotfix<br/>HOTFIX"]
+    HF --> DP
     HELP["/help"] -.-> DU
     SYNC["/sync"] -.-> DU
 
@@ -293,6 +295,8 @@ flowchart LR
     style HELP stroke-dasharray: 5 5
     style SYNC stroke-dasharray: 5 5
 ```
+
+Two paths share the same entry point: the **feature path** (`/docs-update` → `/feature` → `/plan` → `/build` → `/test` → `/code-simplify` → `/review` → `/ship` → `/deploy`) for planned work, and the **hotfix path** (`/docs-update` → `/hotfix` → `/deploy`) for tickets resolvable in under 3 hours — `/hotfix` runs diagnosis, plan, build, test, review and the GO/NOT-GO gate in a single pass, so it skips the iterative planning loop.
 
 ### Issues Flow — Bug Fixes & Tech Debt
 
@@ -343,10 +347,11 @@ flowchart LR
 
 | Phase | Command | Agent | What It Does | Main Skills |
 |------|---------|--------|--------------|-------------|
-| Onboarding | `/help` | huitzilopochtli | Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 17 commands, troubleshoot issues | |
+| Onboarding | `/help` | huitzilopochtli | Interactive help menu with 6 options — discover Códice, start a new project, update workspace, learn the SDD cycle, list all 18 commands, troubleshoot issues | |
 | Design (optional) | `/design` | quetzalcoatl | Parallel fan-out: UX research, technical feasibility, accessibility. Merges into design specification in `specs/design/` | ui-ux-design-pro, design-taste-frontend, frontend-ui-engineering |
 | Define project | `/spec` | quetzalcoatl | Detects project state (3 cases), clarifies requirements, generates docs (PRD, TRD, ARCHITECTURE, WORKFLOW) and synthesizes into SPEC.md | spec-driven-development, clean-ddd-hexagonal, architecture-diagrams, idea-refine, interview-me |
-| Evolve project | `/evolve` | quetzalcoatl | Creates new specs or modifies existing ones for mature projects with version history. Redirects to `/spec` for new/immature projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
+| Feature project | `/feature` | quetzalcoatl | Creates new specs or modifies existing ones for mature projects with version history. Redirects to `/spec` for new/immature projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
+| Hotfix | `/hotfix` | tlaloc | One-pass rapid fix for tickets under 3 hours: diagnosis → plan → build → test → review → GO/NOT-GO, then hands off to `/deploy`. Skips the iterative planning loop | debugging-and-error-recovery, test-driven-development, code-review-and-quality |
 | Sync documentation | `/docs-update` | quetzalcoatl | Pre-flight analyzes docs state, question-tool resolves contradictions, then synchronizes docs with current codebase | documentation-and-adrs, agent-md-refactor, architecture-diagrams |
 | Diagnose issues | `/diagnosis` | tezcatlipoca | Suggests fixes for remote/local issues, executes diagnostics, documents root cause in `docs/diagnosis/` with structured template. Documents only — does not implement | interview-me, debugging-and-error-recovery |
 | Plan | `/plan` | moctezuma | Analyzes dependencies, cuts vertically, writes tasks with acceptance criteria in `tasks/plan.md` and `tasks/todo.md` | planning-and-task-breakdown, clean-ddd-hexagonal, architecture-diagrams |

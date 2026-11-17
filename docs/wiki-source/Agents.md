@@ -52,7 +52,7 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 | Agent | Role | Domain | Permission Model | Key Commands |
 |-------|------|--------|-----------------|--------------|
 | **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Delegation-only (edits ask for approval). Delegates via the `subagent` tool (`subagent` `*` → `allow`, then explicit `deny` rules for the 5 other primaries). | `/help` |
-| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to documentation formats (`*.md`, `*.txt`, `*.rst`, `*.adoc`). Cannot write code or tasks. Delegates via the unified `subagent` pattern. | `/spec`, `/design`, `/evolve`, `/docs-update`, `/migrate` |
+| **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to documentation formats (`*.md`, `*.txt`, `*.rst`, `*.adoc`). Cannot write code or tasks. Delegates via the unified `subagent` pattern. | `/spec`, `/design`, `/feature`, `/docs-update`, `/migrate` |
 | **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. Does not delegate (`permissions` rule: `subagent` `*` → `deny`). | `/plan` |
 | **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via the unified `subagent` pattern. | `/build` |
 | **mictlantecuhtli** | Guardian of the Underworld | Security, quality & review | Write + edit allowed. Delegates via the unified `subagent` pattern. | `/test`, `/deploy`, `/sync` |

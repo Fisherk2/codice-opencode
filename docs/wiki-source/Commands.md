@@ -35,13 +35,13 @@ flowchart LR
 
 ### Evolutionary Flow — Established Projects
 
-Use this for projects with existing code and docs. `/docs-update` syncs documentation with the codebase, `/evolve` creates or modifies specs, then enters the iterative loop.
+Use this for projects with existing code and docs. `/docs-update` syncs documentation with the codebase, `/feature` creates or modifies specs, then enters the iterative loop. For tickets resolvable in under 3 hours, `/hotfix` replaces the loop with a single pass straight to `/deploy`.
 
 ```mermaid
 flowchart LR
-    DU[/docs-update/] --> EV[/evolve/]
-    EV --> P[/plan/]
-    EV -.->|optional| D[/design/]
+    DU[/docs-update/] --> FE[/feature/]
+    FE --> P[/plan/]
+    FE -.->|optional| D[/design/]
     D -.-> P
     P --> B[/build/]
     B --> T[/test/]
@@ -52,6 +52,8 @@ flowchart LR
     R -->|"🔄 iterate"| P
     R -->|"✅ ship"| SH[/ship/]
     SH --> DEP[/deploy/]
+    DU --> HF[/hotfix/]
+    HF --> DEP
     H0[/help/] -.-> DU
     SYN[/sync/] -.-> DU
 
@@ -124,7 +126,8 @@ flowchart LR
 | **Performance** | `/webperf` | tezcatlipoca | Run a web performance audit via the web-performance-auditor subagent. Deep mode with Lighthouse or quick mode via source scanning. Applies fixes if confirmed. |
 | **Maintain** | `/docs-update` | quetzalcoatl | Update, migrate, and synchronize documentation with the current codebase state. Creates ADRs for significant decisions. |
 | **Analyze** | `/diagnosis` | tezcatlipoca | Suggest fixes for problems (remote or local), run diagnostics, and document technical findings in `docs/diagnosis/`. Documents diagnosis — does not implement fixes. |
-| **Evolve** | `/evolve` | quetzalcoatl | Create new specs or modify existing ones for mature projects with established versions and documentation. |
+| **Feature** | `/feature` | quetzalcoatl | Create new specs or modify existing ones for mature projects with established versions and documentation. |
+| **Hotfix** | `/hotfix` | tlaloc | One-pass rapid fix for tickets under 3 hours: diagnosis → plan → build → test → review → GO/NOT-GO, then hands off to `/deploy`. Skips the iterative planning loop. |
 | **Sync** | `/sync` | mictlantecuhtli | Bidirectional git sync with 4 modes and 4 conflict resolution strategies. Can be invoked at any SDD phase. |
 | **Migrate** (optional) | `/migrate` | quetzalcoatl | Detects current tech stack, evaluates breaking changes, generates a structured migration plan with phases, steps, and rollback procedures. |
 | **Deploy** | `/deploy` | mictlantecuhtli | Post-`/ship` deployment automation. Pre-flight detects the project's CI/CD state, then offers: **(A)** generate or improve the CI/CD workflow, or **(B)** execute the current workflow. Generates branch protection, PR templates, CI pipelines. |
@@ -142,6 +145,8 @@ Each flow type is designed for a specific project situation. You can enter at an
 | **Migration** | `/migrate` | Tech stack changes, dependency upgrades | Plans migration, then executes and validates |
 
 **All 4 flows converge** at the iterative core: `plan → build → test → webperf [opt] → code-simplify → review`. This loop repeats until the user is satisfied, then exits to `/ship` → `/deploy`.
+
+The **Evolutionary** flow has two paths out of the same entry point: the feature path (`/docs-update` → `/feature` → `/plan` → `/build` → `/test` → `/review` → `/ship` → `/deploy`) and the hotfix path (`/docs-update` → `/hotfix` → `/deploy`). `/hotfix` runs diagnosis, plan, build, test, review and the GO/NOT-GO gate in a single pass for tickets under 3 hours, so it skips the iterative planning loop.
 
 **Wildcard commands:** `/help` (onboarding & help menu) and `/sync` (bidirectional git sync) can be invoked at any point in any flow.
 
