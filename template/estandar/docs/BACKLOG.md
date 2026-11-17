@@ -1,0 +1,1 @@
+Plantilla para recopilar historias de usuario y open cuestions (resueltas o pendientes)
