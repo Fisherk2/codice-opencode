@@ -1,66 +1,225 @@
-# FEV-30 — Remove SDD Plugin + Opencode Legacy Banner — Todo
+# FEV-31 (v2.1.5) — Issues #111–#116 + reparación de referencias + documentación out-of-scope — Todo
 
-> **COMPLETADO 2026-09-22.** FEV-30 cerrado en `hotfix/opencode-v2-migrate` —
-> 20 commits (F1 deletes, F2 CI strip, F3 banner TDD, F4 docs, review 5 ejes + 6 fixes),
-> gates verdes (`just check` 0, `just test` 1865/0, e2e 31/31).
-> Trabajo FEV-30 HEAD `7cdb65d`. Issue #90.
-> Release: v2.1.3-beta.1 lista para lanzarse (sin push; pendiente decisión de release).
-
-> **Plan:** [`tasks/plan.md`](./plan.md)
-> **Branch:** `hotfix/opencode-v2-migrate`
-> **Target:** v2.1.3 (mismo hotfix que FEV-29)
-> **Issue:** [#90](https://github.com/Fisherk2/codice-opencode/issues/90)
+> **Estado:** PLANIFICADO — 0 de 10 tasks ejecutadas. Plan fuente: [`tasks/plan.md`](./plan.md).
+> **Rama:** `hotfix/update-payload` · **Target:** v2.1.5 · **Milestone:** 2.1.x
+> **Diagnóstico:** [`docs/diagnosis/fix30-fev31-partial-issue-implementation.md`](../docs/diagnosis/fix30-fev31-partial-issue-implementation.md)
+> **Issues:** #111 · #112 · #113 · #114 · #115 · #116
 >
-> Quality gate: `just check` 0 errors + `just test` 0 failures antes de cada commit.
-> Atomicity rule: 10 commits, uno por concern (no batching).
+> **Baseline congelado (2026-11-17 @ `1619a87`):** `just test` 1972/0 · `just test-e2e` 31/31 · `tsc --noEmit` 0 · `just check` NO ejecutable (biome en NTFS) · `git status --short | wc -l` = 200
+>
+> **Commits:** 1 por concern lógico · Conventional Commits · trailer `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
+> **Gate por commit:** `just test` 0 fail + `bun run tsc --noEmit` exit 0 (biome → CI)
 
-## Phase 1 — Eliminación de archivos (F1)
+---
 
-- [x] **1.1** Delete `template/obligatorio/core/.opencode/plugins/` (sdd-pipeline.ts + 2 src modules + package.json + README.md + tsconfig.json + .gitignore). Commit `chore(plugin): remove SDD plugin from template (FEV-30)`. Subagents: `backend-developer`, `git-workflow-manager`. Skills: `git-workflow-and-versioning`, `bash-defensive-patterns`.
-- [x] **1.2** Delete `.opencode/plugins/` (dev copy + 16 src modules + __tests__). Commit `chore(plugin): remove dev plugin copy (FEV-30)`. Subagents: `git-workflow-manager`. Skills: `git-workflow-and-versioning`, `bash-defensive-patterns`.
-- [x] **1.3** Delete `tests/plugin/` (integration + e2e + 3 bash scripts) + `tests/types/opencode-plugin.d.ts` + `tests/unit/config/destructive-patterns.test.ts`. Commit `test(plugin): drop plugin test suites (FEV-30)`. Subagents: `qa-automation`, `git-workflow-manager`. Skills: `git-workflow-and-versioning`, `test-driven-development`.
+## Fase A — Baseline (T0)
 
-**Checkpoint F1**
-- [x] `find . -path '*/.opencode/plugins*' -not -path '*/node_modules/*' -not -path '*/fixtures/*'` retorna **0 paths** en `template/` y `.opencode/` raíz.
-- [x] `grep -rln 'sdd-pipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|tests/types/opencode-plugin' src/ scripts/ tests/ template/` retorna **0 matches**.
-- [x] `just check` 0 errores.
+- [ ] **T0** Congelar baseline + inventariar referencias stale. Subagent: `codebase-archaeologist`. Skills: `codebase-onboarding`, `codebase-design`. Tools: `codebase-memory-mcp`, `vercel-grep`.
+  - [ ] `just test` → ≥1972 pass / 0 fail
+  - [ ] `just test-e2e` → 31/31
+  - [ ] `bun run tsc --noEmit` → exit 0
+  - [ ] `bunx @biomejs/biome ci src/ tests/` → fallo registrado como **limitación NTFS**, no de código
+  - [ ] `git status --short | wc -l` → 200 · `git log --oneline -1` → `1619a87`
+  - [ ] Inventario de 14 filas copiado a la tabla siguiente
 
-## Phase 2 — Cleanup de recipes de CI + Biome + Justfile + Manifest (F2)
+### Checkpoint A
+- [ ] Baseline registrado · inventario materializado · 0 archivos tocados
 
-- [x] **2.1** Strip `Justfile` plugin targets (líneas 60-80) + delete `.github/workflows/ci.yml` job `qa-plugin` (líneas 78-112). Commit `chore(ci): remove plugin recipes and CI job (FEV-30)`. Subagents: `devops-engineer`, `code-reviewer`. Skills: `ci-cd-and-automation`, `code-review-and-quality`, `git-workflow-and-versioning`.
+---
 
-**Checkpoint F2**
-- [x] `grep -n 'check-plugin\|test-plugin\|qa-plugin\|tests/plugin' Justfile .github/workflows/ci.yml biome.json` retorna **0 matches**.
-- [x] `just check` 0 errores.
+## Anexo A — Inventario de referencias stale (14 filas, verificado con `git ls-files | xargs grep`)
 
-## Phase 3 — Banner runtime "Opencode Legacy only" (F3)
+| # | Ubicación | Referencia rota | Task | Estado |
+|---|-----------|------------------|------|--------|
+| 1 | `template/obligatorio/packs/writers/obsidian-vault-writer.md:92-102` | 6 skills eliminadas (`obsidian-vault`, `obsidian-markdown`, `obsidian-cli`, `baoyu-format-markdown`, `baoyu-url-to-markdown`, `baoyu-markdown-to-html`) | T8 | [ ] |
+| 2 | `docs/ARCHITECTURE.md:12-37` | 23 enlaces `../specs/adr/` | T8 | [ ] |
+| 3 | `AGENTS.md:67` | `[adr/](specs/adr/)` | T8 | [ ] |
+| 4 | `SPEC.md:38` | `see [specs/adr/](specs/adr/)` | T8 | [ ] |
+| 5 | `docs/MIGRATION.md:253-254` | `[ADR-014](../specs/adr/…)`, `[ADR-015](../specs/adr/…)` | T8 | [ ] |
+| 6 | `template/estandar/SPEC.md`, `template/estandar/docs/ARCHITECTURE.md` | `specs/adr/` | T8 | [ ] |
+| 7 | `specs/spec-agent-packs.md:37` | `skills-lock.json` | T8 | [ ] |
+| 8 | `specs/spec-file-rules.md:35,45` | `skills-lock.json`, `requirements.txt` | T8 | [ ] |
+| 9 | `docs/wiki-source/Skills.md` | `obsidian-*`, `xlsx`, `excel-analysis` | T8 | [ ] |
+| 10 | `docs/wiki-source/{Commands,Agents,Workspace-Structure}.md` | `/evolve` | T4 | [ ] |
+| 11 | `README.md:33,275,349` | `/evolve`, "17 Slash Commands", "51 Engineering Skills" | T4 | [ ] |
+| 12 | `template/obligatorio/core/commands/docs-update.md:87` | `/evolve` | T4 | [ ] |
+| 13 | `template/obligatorio/packs/main/quetzalcoatl.md:199` | `Invoke via: … /evolve` | T4 | [ ] |
+| 14 | `tests/fixtures/workspace/` | `/evolve`, `skills-lock.json`, `requirements.txt` (gitignored → verificación) | T8 | [ ] |
 
-- [x] **3.1** Crear `src/application/helpers/opencodeLegacyBanner.ts`: lee `.codice-version`, compara con 2.1.2, imprime warning si ≤ 2.1.2. Commit `feat(installer): warn on Opencode Legacy installs ≤ 2.1.2 (FEV-30)`. Subagents: `backend-developer`, `test-engineer`. Skills: `test-driven-development`, `clean-code`, `clean-ddd-hexagonal`.
-- [x] **3.2** Wire `maybePrintLegacyBanner()` en `CleanInstallUseCase`, `ProjectInstallUseCase`, `UpdateWorkspaceUseCase` antes del primer prompt. Commit `feat(installer): wire legacy banner into install flows (FEV-30)`. Subagents: `backend-developer`. Skills: `clean-ddd-hexagonal`, `refactoring-patterns`.
-- [x] **3.3** Crear `tests/unit/application/helpers/opencodeLegacyBanner.test.ts` con 5 casos (sin version, ≤ 2.1.2, ≥ 2.1.3, inválida, sin loadVersionFile). Commit `test(installer): add legacy banner unit tests (FEV-30)`. Subagents: `qa-automation`. Skills: `test-driven-development`, `debugging-and-error-recovery`. **Nota:** el test se creó dentro de Task 3.1 vía TDD (commit `0593910`), no como commit separado.
+**Contadores reales (verificados):** 60 skills · 18 comandos · 10 packs.
 
-**Checkpoint F3**
-- [x] `just test` 0 fallos; nuevos tests pasan.
-- [x] `just check` 0 errores.
-- [x] Banner visible en `--verbose` con fixture `.codice-version` = `2.1.2`.
-- [x] Banner NO aparece con `.codice-version` = `2.1.3`.
+---
 
-## Phase 4 — Limpieza documental completa + release (F4)
+## Fase B — Protocolos de agente (#114, #111) — **SECUENCIAL**
 
-- [x] **4.1** Delete `specs/spec-sdd-plugin-decoupling.md`, `specs/adr/adr-013-plugin-auto-discovery.md`, `docs/diagnosis/fix15-plugin-cleanup.md`. Commit `docs(workflow): retire plugin specs and ADRs (FEV-30)`. Subagents: `docs-writer`, `git-workflow-manager`. Skills: `documentation-and-adrs`, `git-workflow-and-versioning`.
-- [x] **4.2** Update `README.md`, `SPEC.md`, `docs/WORKFLOW.md`, `docs/TRD.md`, `docs/ARCHITECTURE.md`, `docs/wiki-source/.wiki/SDD-Pipeline.md` + `Commands.md` + `Configuration.md`: scrub plugin refs + replace "55/55 plugin integration" con métrica actual. Commit `docs(workflow): scrub plugin references from active docs (FEV-30)`. Subagents: `docs-writer`, `technical-writer`. Skills: `documentation-and-adrs`, `crafting-effective-readmes`.
-- [x] **4.3** Update `CHANGELOG.md`: añadir `[2.1.3]` con FEV-30 completo (remoción + banner). Mantener historia inmutable de v2.1.1/v2.1.2. Commit `docs(changelog): FEV-30 release entry v2.1.3 (FEV-30)`. Subagents: `technical-writer`. Skills: `changelog-generate`, `documentation-and-adrs`.
+- [ ] **T1** #114 — NEVER ASSUMPTION completo (6 agentes). Subagent: `technical-writer`. Skills: `clean-code`, `documentation-and-adrs`. Tools: `vercel-grep`. Recursos: issue #114, opencode.ai/v2/docs/agents.
+  - [ ] Viñeta de **prohibición de ejecución en background** (`&`, `nohup`, `disown`, `setsid`, huérfanos) — 1 línea — en los 6 agentes
+  - [ ] Ítem 4 de "Source of truth" cita `web-search`/`web-fetch`
+  - [ ] Prosa en inglés gramaticalmente correcta
+  - [ ] Cuerpo de cada agente ≤ 120 líneas
+  - [ ] Frontmatter `permissions:` intacto (sin `tools:` / `permission:`)
+  - [ ] `just test` → 0 fail · `tsc --noEmit` → 0
 
-**Checkpoint F4 (final)**
-- [x] `grep -rln 'plugin\|sdd-pipeline\|sddPipeline\|DestructiveCommandBlock\|destructivePatterns\|tests/plugin\|qa-plugin' docs/ specs/ wiki-source/ README.md SPEC.md 2>/dev/null` retorna **0 matches** (excepto CHANGELOG history).
-- [x] `docs/ARCHITECTURE.md` tabla ADRs: ADR-013 ausente.
-- [x] `git status --porcelain` limpio.
-- [x] Gates verdes: `just check && just test` + Linux `just coverage-check 95` + `just test-e2e`.
+- [ ] **T2** #111 — DELEGATION PROTOCOL (5 agentes delegantes + `plan.md`). Subagent: `prompt-engineer`. Skills: `clean-code`, `documentation-and-adrs`. Tools: shell, `vercel-grep`. Recursos: issue #111, opencode.ai/v2/docs/commands/#shell.
+  - [ ] Bloque bash escanea **`agents/` y `.opencode/agents/`** en una invocación, salida `nombre :: descripción`
+  - [ ] Fallback en español claro + **prohíbe la herramienta Glob** para listar subagentes
+  - [ ] `/plan` expone la variante `!`-shell con el roster de subagentes
+  - [ ] `moctezuma.md` **sin** DELEGATION PROTOCOL
+  - [ ] Cuerpos ≤ 120 líneas
+  - [ ] `just test` → 0 fail · `tsc --noEmit` → 0
 
-## Notes
+### Checkpoint B
+- [ ] `grep -rn "nohup\|disown\|setsid" template/obligatorio/packs/main/` → 6 archivos
+- [ ] `grep -rn "web-fetch" template/obligatorio/packs/main/` → 6 archivos
+- [ ] `grep -rn "\.opencode/agents" template/obligatorio/packs/main/` → 5 archivos (no moctezuma)
+- [ ] `grep -c "DELEGATION PROTOCOL" template/obligatorio/packs/main/moctezuma.md` → 0
+- [ ] `just test` → 0 fail
+- [ ] Revisión humana de la prosa en inglés de los 6 agentes
 
-- **Defensa en profundidad preservada:** `template/obligatorio/core/opencode.json` mantiene `permission.bash` deny-lists que ya cubren el bloqueo destructivo (FEV-27 + code review). El plugin eliminado era redundante.
-- **Banner runtime es no bloqueante.** Usuarios en ≤ 2.1.2 ven el warning pero pueden continuar.
-- **Historia documental eliminada por completo.** No hay banners "superseded" en specs/ADRs. El CHANGELOG v2.1.1 conserva el registro inmutable del release pasado.
-- **20 commits reales** (conteo `git log --oneline c168586..7cdb65d` + base = 10 planificados F1–F4 + review 5 ejes y 6 fixes) — el plan original preveía 10 atómicos; el review añadió el resto.
-- **Subagent delegation:** solo subagents (`backend-developer`, `git-workflow-manager`, `qa-automation`, `devops-engineer`, `code-reviewer`, `test-engineer`, `docs-writer`, `technical-writer`). Main agents NUNCA.
+---
+
+## Fase C — Comando `/hotfix` (#112) — T3 ∥ T4
+
+- [ ] **T3** #112a — fases 1/3/4/5 de `hotfix.md`. Subagent: `workflow-architect`. Skills: `incremental-implementation`, `documentation-and-adrs`, `planning-and-task-breakdown`, `test-driven-development`. Tools: `codebase-memory-mcp`. Recursos: issue #112, opencode.ai/v2/docs/commands/, comandos del template.
+  - [ ] Fase 1 → `docs/diagnosis/<slug>.md` con `diagnosis-template.md` (+ regla "si hay fix en curso, actualizar ese")
+  - [ ] Fase 2 → `tasks/plan.md` + `tasks/todo.md` con criterios de aceptación
+  - [ ] Fase 3 → TDD explícito ("ningún gap de pruebas queda fuera")
+  - [ ] Fase 4 → `just test` + revisión + corrección de observaciones
+  - [ ] Fase 5 → **GO / not-GO** sin desplegar
+  - [ ] Fase 6 → cierre de ticket + actualización de documentación
+  - [ ] Frontmatter válido: `description` no vacío, `agent: tlaloc`
+  - [ ] `grep -c "^## Phase" hotfix.md` → 6, ninguna vacía
+
+- [ ] **T4** #112b — `/evolve` → `/feature` + ciclo ágil + contadores. Subagent: `docs-writer`. Skills: `crafting-effective-readmes`, `documentation-and-adrs`, `markdown-mermaid-writing`. Tools: `vercel-grep`. Recursos: issue #112, opencode.ai/v2/docs/commands/.
+  - [ ] `README.md`: lista de comandos con `/feature` + `/hotfix`, "**18 Slash Commands**", "**60 Engineering Skills**"
+  - [ ] `README.md`: Mermaid "Evolutionary Flow" con `/feature` y ciclo `/docs-update` → `/hotfix` → `/deploy`
+  - [ ] `README.md`: fila "Evolve project" → "Feature project"
+  - [ ] `template/obligatorio/core/commands/docs-update.md:87` → "Run `/feature` to create new specs"
+  - [ ] `template/obligatorio/packs/main/quetzalcoatl.md:199` → `Invoke via: … /feature …`
+  - [ ] `docs/wiki-source/{Agents,Commands,Workspace-Structure}.md` → `/feature` + ciclo ágil + contador
+  - [ ] `git ls-files -z | xargs -0 grep -n "/evolve" | grep -v CHANGELOG.md | grep -v docs/diagnosis/` → **0**
+
+### Checkpoint C
+- [ ] `/hotfix` con 6 fases completas · 0 refs a `/evolve` · README con 18/60
+- [ ] `just test` → 0 fail
+
+---
+
+## Fase D — #115 find-skills (T5)
+
+- [ ] **T5** Paso de setup de skills en `/spec`, `/feature`, `/diagnosis`, `/migrate`. Subagent: `technical-writer`. Skills: `find-skills`, `documentation-and-adrs`, `spec-driven-development`. Tools: `vercel-grep`, web search. Recursos: issue #115, skills.sh/vercel-labs/skills/find-skills, github.com/vercel-labs/skills.
+  - [ ] Fase propia (no viñeta) tras la de intención/análisis, en los 4 comandos
+  - [ ] Invoca `find-skills` + **fallback documentado**: `npx skills use "https://github.com/vercel-labs/skills" --skill "find-skills"`
+  - [ ] Presenta **tabla** de skills candidatas
+  - [ ] Usa `question` tool: todas / solo las más importantes / ninguna
+  - [ ] **NUNCA global** — instalación a nivel de proyecto (texto literal en los 4)
+  - [ ] `just test` → 0 fail · `tsc --noEmit` → 0
+
+### Checkpoint D
+- [ ] `grep -rln "find-skills" template/obligatorio/core/commands/{spec,feature,diagnosis,migrate}.md` → 4 archivos
+- [ ] `grep -rln "nunca global\|NUNCA global\|never global" template/obligatorio/core/commands/` → 4 archivos
+- [ ] `just test` → 0 fail
+
+---
+
+## Fase E — #116 VSA (T6 → T7)
+
+- [ ] **T6** Crear skill `vertical-slice-architecture` (**obligatorio**). Subagent: `software-architect`. Skills: `skill-creator`, `opencode-skill-creator`, `clean-ddd-hexagonal`, `documentation-and-adrs`. Tools: plugin `opencode-skill-creator` (`skill_*`), web search. Recursos: issue #116, 3× skills.sh VSA, Wikipedia metodologías, nadirbad.dev, opencode.ai/docs/skills.
+  - [ ] `template/obligatorio/core/skills/vertical-slice-architecture/SKILL.md` con frontmatter válido
+  - [ ] Contenido: qué es VSA · decisión waterfall vs ágil · criterio de fases (1-3 / 4-6 / 7+) · **anti-patrones cascada** · algoritmo de corte vertical
+  - [ ] `references/` con ≥4 archivos (cascada · ágil Scrum/Kanban · VSA · comparativa de decisión)
+  - [ ] Refs internas apuntan a archivos que existen
+  - [ ] **Sin** links cross-skill `../<skill>/references/*.md` — o bump del contador `tests/unit/skill-paths.test.ts:74` (13 → N) en el mismo commit con comentario.delta
+  - [ ] `SKILL.md` ≤ ~120 líneas (detalle → `references/`)
+  - [ ] `just test` → 0 fail
+
+- [ ] **T7** Fases VSA en los 5 comandos. Subagent: `workflow-architect`. Skills: `clean-ddd-hexagonal`, `codebase-design`, `documentation-and-adrs`. Tools: `codebase-memory-mcp`. Recursos: issue #116, skill VSA de T6.
+  - [ ] `spec`, `feature`, `diagnosis`, `migrate`, `hotfix` con fase VSA real (sin placeholders)
+  - [ ] `question` tool con 3 alcances: Prototipado (1-3) / MVP (4-6) / Empresarial (7+)
+  - [ ] Delegación a `software-architect` **cargando** `vertical-slice-architecture` (+ `clean-ddd-hexagonal`, `codebase-design`)
+  - [ ] Destino del roadmap: `docs/WORKFLOW.md` (establece en `/spec`; actualiza en `/feature`, `/diagnosis`, `/migrate`)
+  - [ ] `grep -rn "\[Aqui se delega" template/obligatorio/core/commands/` → **0**
+
+### Checkpoint E
+- [ ] Skill VSA en `template/obligatorio/core/skills/` con `references/` (≥4 metodologías)
+- [ ] `grep -rln "vertical-slice-architecture" template/obligatorio/core/commands/` → 5 archivos
+- [ ] `grep -rln "Prototipado\|MVP\|Empresarial" template/obligatorio/core/commands/` → 5 archivos
+- [ ] `tests/unit/skill-paths.test.ts` verde (contador 13, salvo bump documentado)
+- [ ] `just test` → 0 fail
+
+---
+
+## Fase F — Reparación de referencias (T8)
+
+- [ ] **T8** Cerrar filas 1–9 y 14 del Anexo A. Subagent: `codebase-archaeologist`. Skills: `codebase-onboarding`, `codebase-design`, `documentation-and-adrs`. Tools: `codebase-memory-mcp`, `vercel-grep`. Recursos: fix30 §4.1, CONTRIBUTING.md.
+  - [ ] `obsidian-vault-writer.md`: sin skills eliminadas — sustitutos existentes o nota de instalación bajo demanda vía `find-skills`
+  - [ ] `docs/ARCHITECTURE.md`: 23 enlaces → `docs/adr/adr-0NN-*.md` (0 con `../specs/adr/`)
+  - [ ] `AGENTS.md`, `SPEC.md`, `docs/MIGRATION.md`: enlaces ADR corregidos
+  - [ ] `template/estandar/SPEC.md`, `template/estandar/docs/ARCHITECTURE.md`: enlaces ADR corregidos
+  - [ ] `specs/spec-agent-packs.md:37`, `specs/spec-file-rules.md:35,45`: sin `skills-lock.json` / `requirements.txt`
+  - [ ] `docs/wiki-source/Skills.md`: sin `obsidian-*`, `xlsx`, `excel-analysis`; refleja 60 skills
+  - [ ] `tests/fixtures/workspace/` regenerado sin `/evolve`, `skills-lock.json`, `requirements.txt`
+  - [ ] `docs/diagnosis/*` **intacto**
+  - [ ] `just test` → 0 fail · `just test-e2e` → 31/31 · `tsc --noEmit` → 0
+
+### Checkpoint F
+- [ ] `git ls-files -z | xargs -0 grep -n "specs/adr/" | grep -v CHANGELOG.md | grep -v docs/diagnosis/ | grep -v tasks/` → **0**
+- [ ] `grep -rn "obsidian-vault\|baoyu-format-markdown" template/obligatorio/packs/writers/obsidian-vault-writer.md` → **0**
+- [ ] `just test` → 0 fail · `just test-e2e` → 31/31
+
+---
+
+## Fase G — Documentación out-of-scope §8 (T9)
+
+- [ ] **T9** Registrar §8 del diagnóstico. Subagent: `docs-writer`. Skills: `documentation-and-adrs`, `crafting-effective-readmes`, `agent-md-refactor`. Tools: `gitmcp`, `vercel-grep`. Recursos: fix30 §8, CONTRIBUTING.md.
+  - [ ] `docs/WORKFLOW.md`: fila **FEV-31** + sección con el snapshot (ADR move, skills +17/-8, `skills-lock.json` y `.gitmessage`/`requirements.txt` eliminados, manifiestos opcionales nuevos, reescritura de estilo de 13 comandos, swap de 6 modelos)
+  - [ ] `docs/TECH_DEBT.md`: entrada con estado (resuelto en FEV-31 / abierto) + limitación `just check` en NTFS
+  - [ ] `docs/ARCHITECTURE.md`: nota del traslado `specs/adr/` → `docs/adr/` (23 archivos) + nota de que `1941ed3` fue **estabilización INCOMPLETA**
+  - [ ] `docs/wiki-source/`: comandos 18, skills 60, ADRs en `docs/adr/`, ciclo `/docs-update` → `/hotfix` → `/deploy`
+  - [ ] Los swaps de modelo de #113 marcados como **adyacentes fuera de alcance**
+  - [ ] `docs/diagnosis/fix30-…md`: §2 y §4.1 actualizados con el estado final (resto del archivo literal)
+  - [ ] `CHANGELOG.md`: entrada `[2.1.5]` si la rama ya se prepara para release
+  - [ ] `just test` → 0 fail
+
+### Checkpoint G
+- [ ] `grep -n "FEV-31" docs/WORKFLOW.md docs/TECH_DEBT.md` → ambos
+- [ ] `grep -n "docs/adr" docs/ARCHITECTURE.md` → rutas `docs/adr/`
+- [ ] `just test` → 0 fail
+
+---
+
+## Fase H — Cierre (T10)
+
+- [ ] **T10** Gates + cierre + commits atómicos. Subagent: `test-engineer`. Skills: `git-workflow-and-versioning`, `code-review-and-quality`, `test-driven-development`. Tools: shell (`just test`, `just coverage-check`, `just test-e2e`). Recursos: CONTRIBUTING.md, diagnosis-template.md.
+  - [ ] `just test` → 0 fail, count ≥ 1972
+  - [ ] `just coverage-check` → 0 fail
+  - [ ] `just test-e2e` → 31/31
+  - [ ] `bun run tsc --noEmit` → exit 0
+  - [ ] `just check` → **no ejecutable (NTFS)**; declarado en el commit y delegado a CI
+  - [ ] `docs/diagnosis/fix30-…md` §4.1: `1941ed3` sigue como INCOMPLETO histórico + nota de cierre por FEV-31
+  - [ ] Commits atómicos (1 por concern), Conventional Commits, trailer `Co-Authored-By: Moctezuma <dev@fisherk2.com>`
+  - [ ] `git status` limpio de archivos no intencionados; los ~200 cambios del usuario **preservados**
+  - [ ] PR a `develop` abierto, **sin mergear** hasta GO del usuario
+
+### Checkpoint H — gate de salida de FEV-31
+- [ ] `just test` 0 fail (≥1972) · `just coverage-check` 0 fail · `just test-e2e` 31/31 · `tsc --noEmit` 0
+- [ ] `just check` pendiente de CI (limitación NTFS documentada)
+- [ ] Todas las casillas de este archivo marcadas
+- [ ] `git log --oneline develop..HEAD` → cada commit mapea a 1 task
+
+---
+
+## Notas de ejecución
+
+- **R1** `just check` no ejecutable (binario biome sin permiso de ejecución en montaje NTFS) → `bun run tsc --noEmit` sí corre localmente; el lint se valida en CI.
+- **R2** `tests/unit/skill-paths.test.ts:74` afirma `cross-skill refs === 13` → el skill VSA debe usar solo refs locales; si no, bumpear en el mismo commit.
+- **R3** Presupuesto de cuerpo de agente = 120 líneas (headroom real 17–32) → sintetizar la viñeta de background a 1 línea, no pegar el bloque del issue.
+- **R4** T1 y T2 **secuenciales** (mismos 6 archivos). T3 ∥ T4 sí es seguro (archivos disjuntos).
+- **R5** T6 antes de T7 (el skill debe existir antes de referenciarlo).
+- **R6** Prohibido `git checkout --` / `git restore` / `git stash` / `git reset --hard` sobre los ~200 archivos no commiteados del usuario.
+- **R7** `docs/wiki-source/.wiki/` es un **repo git separado** → su push es un paso aparte (ver CONTRIBUTING.md).
+- **R8** `docs/diagnosis/*` es histórico inmutable: solo se actualizan §2 y §4.1 de fix30.
+
+---
+
+_Plan y todo generados por `/plan` (Moctezuma). No implementar sin `/build`._
