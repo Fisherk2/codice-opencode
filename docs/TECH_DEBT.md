@@ -180,6 +180,20 @@ estimado, riesgo evaluado).
 - **Impacto:** solo local. La CI fija **bun 1.3** (`package.json`/workflows), donde el reporte no instrumenta esos árboles; la autoridad es la matriz de CI.
 - **Acción pendiente:** o bien acotar el denominador en `scripts/coverage-thresholds.json`/`coverage-check.sh` (ignorar `tests/**` y `scripts/**`) y documentarlo, o fijar bun 1.3 en local. Decidir con la evidencia de CI antes de tocar el umbral.
 
+#### Deuda de simplificación diferida (2026-11-17, prioridad Low)
+
+Registered during the FEV-31 payload cleanup sweep: items evaluated and deliberately deferred because churn > value.
+
+| ID | Item | Type | Effort | Risk | Description |
+|----|------|------|--------|------|-------------|
+| **TD-V2-99** | Near-dead test-only exports (`createFileRule`, `getMandatoryRules`, `getStandardRules`, `validationError`) | Debt | 1h | Low | Production callers exist but no production path exercises these beyond tests; un-exporting/removing churns 4+ test files for zero readability gain. Deferred. |
+| **TD-V2-100** | Naming drift: `updateFlow`/`updateHelpers`, `versionGateMessages`/`versionInfoMessages` | Debt | 1-2h | Low | Confusable sibling names; file renames touch many imports and git blame. Deferred (churn > value). |
+| **TD-V2-101** | 3 files still >200 LOC: `AtomicStager.ts` (273, post Extract Method in commit `14c4d35`), `BunSymlinkCreator.ts` (228), `ClackPromptsAdapter.ts` (204) | Debt | 2-3h | Low | AtomicStager extraction was done (rollbackFailedCommit) without forcing further splits per the ≤200 convention's escape hatch. Remaining splits deferred. |
+| **TD-V2-102** | lcov-vs-test mismatch for `scripts/migrate-v1-to-v2-permissions.ts` | Debt | 0.5h | Low | A test file exists for the migration script, but the lcov report shows `0/266` for it — the script is not instrumented (executed differently from `bun test tests/`), so the gate counts its 266 lines as uncovered. Related to the TD-V2-98 denominator issue. |
+
+- **TD-V2-99 evidence:** grep shows the four symbols are referenced only from `src/application/use-cases/*.ts` exports and their unit tests; no production execution path reaches them.
+- **TD-V2-102 evidence:** `coverage/lcov.info` lists `SF:scripts/migrate-v1-to-v2-permissions.ts` with `LF:266, LH:0` while its test passes under `just test`.
+
 ### v2.2.0 (Medium Effort — 9 items, 18-24h total)
 
 | ID | Item | Type | Effort | Risk | Description |
