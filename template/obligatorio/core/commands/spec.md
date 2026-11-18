@@ -38,7 +38,7 @@ PROJECT STATE DETECTED:
 2. Use at least 10 or more questions to clarify the user histories, formulate him in parts, ordened by priority and complexity, it means use `question` tool in parts (max 5 questions at once), not all at once (you can use progression status each question is answered like 1/18, 2/18, etc.).
 3. **Delegate** appropriate specialized subagents in parallel to analyze and research the user requirements.
 
-Each user history, resource researched, question and answer registered should be stored in `docs/BACKLOG.md` file, with a clear structure, ordened by priority and complexity.
+Each user history, external resource researched, question and answer registered should be stored in `docs/BACKLOG.md` file, with a clear structure, ordened by priority and complexity.
 
 ## Phase 1: Refine Requirements
 
@@ -50,7 +50,7 @@ Use the `question` tool to clarify interactively:
 3. **Tech stack preferences and constraints** — any existing commitments?
 4. **Boundaries** — what to always do, ask first about, and never do
 
-Each option, alternatives, variations, resource researched, user history, decisions, questions, and answers registered should be stored in @docs/BACKLOG.md file, with a clear structure (in case if backlog file are large, e.g. more than 500 lines, refactor/split `docs/BACKLOG.md` file and create `docs/backlog/` directory to store each backlog in separate files).
+Each option, alternatives, variations, external resource researched, user history, decisions, questions, and answers registered should be stored in @docs/BACKLOG.md file, with a clear structure (in case if backlog file are large, e.g. more than 500 lines, refactor/split `docs/BACKLOG.md` file and create `docs/backlog/` directory to store each backlog in separate files).
 
 **Always use the `question` tool to let the user confirm what specs or requirements they needs include in the project — never decide automatically, even if the specifications or user histories seem clear or trivial.** The user must answer doubts, suggestions, and ambiguities before proceeding.
 

@@ -44,6 +44,8 @@ PROJECT STATE DETECTED:
 - **Modified specs** — Change existing behavior, respond to new requirements or improve existing ones.
 - **Something else** — Let the user describe a different goal (while is not a migration plan)
 
+Each option, alternatives, variations, external resource researched, user history, decisions, questions, and answers registered should be stored in @docs/BACKLOG.md file, with a clear structure (in case if backlog file are large, e.g. more than 500 lines, refactor/split `docs/BACKLOG.md` file and create `docs/backlog/` directory to store each backlog in separate files).
+
 **Always use the `question` tool to let the user confirm what specs or requirements they needs include in the project — never decide automatically, even if the specifications or user histories seem clear or trivial.** The user must answer doubts, suggestions, and ambiguities before proceeding.
 
 ## Phase 1: Analyze user requirements
@@ -111,6 +113,7 @@ Never invent a skill name: if the search returns nothing, say so and continue wi
 - **Never** implement code changes, only documentation.
 - **Never** resolve issues.
 - **Never** proceed if the user intent migrate some technology stack or architecture, suggest running `/migrate` instead.
+- If `docs/BACKLOG.md` file does not exist, create it.
 - You can stop and ask the user for clarification if you need more information to proceed.
 - Use the best available tools for the job.
 - Research external resources every time, specially if you are stuck or unsure about something. 
