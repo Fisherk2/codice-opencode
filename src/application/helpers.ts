@@ -138,6 +138,14 @@ export async function writeVersionFileSafe(
  */
 export function createProgressCallback(userPrompt: IUserPrompt, label: string): ProgressCallback {
 	let barStarted = false;
+	// Spinner redraws are the TUI's hot path: @clack's spinner re-renders
+	// per updateProgress, so redrawing on every file for large packs costs
+	// more than the copies. Redraw on the first file, at least
+	// REDRAW_MIN_FILES apart, at least REDRAW_MIN_MS apart, and always on
+	// the final file so the bar lands exactly on total.
+	const REDRAW_MIN_FILES = 10;
+	const REDRAW_MIN_MS = 100;
+	let lastDraw: { current: number; at: number } | null = null;
 	return (event) => {
 		try {
 			switch (event.type) {
@@ -147,9 +155,18 @@ export function createProgressCallback(userPrompt: IUserPrompt, label: string): 
 						barStarted = true;
 					}
 					break;
-				case "stage_complete":
-					userPrompt.updateProgress(event.current, event.filePath);
+				case "stage_complete": {
+					const now = Date.now();
+					const isLast = event.current >= event.total;
+					const enoughFiles =
+						lastDraw !== null && event.current - lastDraw.current >= REDRAW_MIN_FILES;
+					const enoughTime = lastDraw !== null && now - lastDraw.at >= REDRAW_MIN_MS;
+					if (lastDraw === null || isLast || enoughFiles || enoughTime) {
+						userPrompt.updateProgress(event.current, event.filePath);
+						lastDraw = { current: event.current, at: now };
+					}
 					break;
+				}
 				case "stage_skip":
 					break;
 				case "commit_start":

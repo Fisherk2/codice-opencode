@@ -1,4 +1,4 @@
-import { describe, expect, mock as mockFn, test } from "bun:test";
+import { describe, expect, mock as mockFn, spyOn, test } from "bun:test";
 import { confirmOverwrite, createProgressCallback } from "../../../src/application/helpers";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
@@ -145,6 +145,26 @@ describe("createProgressCallback", () => {
 		expect(prompt.stub.updateProgress).toHaveBeenCalledWith(33, "last-file.md");
 		// No progress bar setup because we never got stage_start
 		expect(prompt.stub.showProgressBar).toHaveBeenCalledTimes(0);
+	});
+
+	test("throttles stage_complete redraws by file count between draws", () => {
+		const prompt = createMockPrompt();
+		const callback = createProgressCallback(prompt.stub, "Clean install...");
+		// Freeze the clock so only the file-count rule decides draws.
+		const nowSpy = spyOn(Date, "now").mockReturnValue(0);
+
+		callback({ type: "stage_start", current: 1, total: 30, filePath: "a" });
+		callback({ type: "stage_complete", current: 1, total: 30, filePath: "a" }); // first → draws
+		for (let i = 2; i <= 29; i++) {
+			callback({ type: "stage_complete", current: i, total: 30, filePath: `f${i}` });
+		}
+		callback({ type: "stage_complete", current: 30, total: 30, filePath: "last" }); // last → draws
+
+		nowSpy.mockRestore();
+		// Draws at 1, 11, 21 (file-count rule), and 30 (isLast) — the
+		// remaining 26 files skip the TUI re-render entirely.
+		expect(prompt.stub.updateProgress).toHaveBeenCalledTimes(4);
+		expect(prompt.stub.updateProgress).toHaveBeenLastCalledWith(30, "last");
 	});
 
 	test("logs commit_start event", () => {
