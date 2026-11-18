@@ -1,5 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { stripControlChars } from "../../domain/services/stripControlChars";
 import { BACKUP_INTENT_FILE, STAGING_DIR_PREFIX } from "../config/constants";
 import { walkDirectory } from "./directoryWalker";
 import { resolveWithinRoot } from "./pathResolver";
@@ -213,7 +214,9 @@ export class AtomicStager {
 			try {
 				await fs.unlink(intentPath);
 			} catch (unlinkError) {
-				const detail = unlinkError instanceof Error ? unlinkError.message : String(unlinkError);
+				const detail = stripControlChars(
+					unlinkError instanceof Error ? unlinkError.message : String(unlinkError),
+				);
 				this.logger.log("intent_cleanup", `WARNING: could not remove intent marker: ${detail}`);
 				residueNote =
 					` WARNING: commit succeeded but the backup intent marker could not be removed ` +
@@ -257,7 +260,7 @@ export class AtomicStager {
 			orphanIntent = await fs.readFile(intentPath, "utf-8");
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException)?.code === "ENOENT") return "";
-			const detail = error instanceof Error ? error.message : String(error);
+			const detail = stripControlChars(error instanceof Error ? error.message : String(error));
 			throw new Error(`Cannot verify backup intent marker '${intentPath}': ${detail}`);
 		}
 
@@ -279,7 +282,7 @@ export class AtomicStager {
 	/** Throw the manual-inspection error for an unrecoverable orphan marker. */
 	private blockOnOrphanIntent(orphanIntent: string): never {
 		throw new Error(
-			`Previous commit was interrupted (intent recorded at ${orphanIntent}). ` +
+			`Previous commit was interrupted (intent recorded at ${stripControlChars(orphanIntent)}). ` +
 				`Inspect .codice-backup manually before retrying. ` +
 				`Remove ${BACKUP_INTENT_FILE} to force a retry.`,
 		);

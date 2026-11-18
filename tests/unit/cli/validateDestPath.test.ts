@@ -81,7 +81,17 @@ describe("validateDestPath (win32 branches)", () => {
 	const CHILD_SCRIPT = `
 		const source = await Bun.file(process.env.MODULE_PATH).text();
 		const copy = process.env.TMP_COPY;
-		await Bun.write(copy, source.replace('from "node:path"', 'from "node:path/win32"'));
+		// The /tmp copy cannot resolve the relative domain import — point it
+		// at the real helper (platform-independent, no imports of its own).
+		await Bun.write(
+			copy,
+			source
+				.replace('from "node:path"', 'from "node:path/win32"')
+				.replace(
+					'from "../domain/services/stripControlChars"',
+					\`from "\${process.env.HELPER_PATH}"\`,
+				),
+		);
 		Object.defineProperty(process, "platform", { value: "win32" });
 		const { validateDestPath } = await import(copy);
 		console.log(JSON.stringify({
@@ -100,6 +110,8 @@ describe("validateDestPath (win32 branches)", () => {
 			env: {
 				...process.env,
 				MODULE_PATH: new URL("../../../src/cli/validateDestPath.ts", import.meta.url).pathname,
+				HELPER_PATH: new URL("../../../src/domain/services/stripControlChars.ts", import.meta.url)
+					.pathname,
 				TMP_COPY: "/tmp/opencode/validateDestPath.win32-copy.ts",
 			},
 		});

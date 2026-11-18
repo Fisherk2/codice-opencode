@@ -389,6 +389,27 @@ describe("AtomicStager", () => {
 		await expect(stager.commitStaging()).rejects.toThrow(/Previous commit was interrupted/);
 	});
 
+	it("strips ANSI escapes from planted .codice-backup-intent content in the block error", async () => {
+		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+		// No PID prefix → unparseable marker → hard-block echoing the content
+		await fs.writeFile(intentPath, "\u001b[31;1;4mEVIL\u001b[0m", "utf-8");
+
+		const src = path.join(templateDir, "ansi-retry.txt");
+		await fs.writeFile(src, "RETRY");
+		await stager.stageFile(src, "ansi-retry.txt");
+
+		try {
+			await stager.commitStaging();
+			throw new Error("expected commitStaging to reject");
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			expect(message).toContain("Previous commit was interrupted");
+			expect(message).toContain("EVIL");
+			// No raw escape bytes may reach the terminal
+			expect(message.includes("\u001b")).toBe(false);
+		}
+	});
+
 	it("never overwrites a destination file whose backup cannot be created", async () => {
 		const destFile = path.join(destDir, "locked.txt");
 		await fs.writeFile(destFile, "PRECIOUS");

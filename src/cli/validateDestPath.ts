@@ -9,6 +9,7 @@
  */
 
 import * as path from "node:path";
+import { stripControlChars } from "../domain/services/stripControlChars";
 
 /**
  * Well-known system directories that are never valid project destinations.
@@ -44,8 +45,7 @@ export function validateDestPath(dest: string): string | null {
 
 	// Control characters (incl. ANSI escapes) in a raw CLI arg must never be
 	// echoed back to the terminal: strip them before checks and messages.
-	// biome-ignore lint/suspicious/noControlCharactersInRegex: stripping them is the point
-	const display = trimmed.replace(/[\u0000-\u001f\u007f]/g, "");
+	const display = stripControlChars(trimmed);
 
 	// Reject path traversal attempts at the CLI level. Per-segment check
 	// (not a bare includes("..")) so legitimate names like "my..project"

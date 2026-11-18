@@ -6,6 +6,7 @@
  */
 
 import type { InstallMode } from "../application/ports/IUserPrompt";
+import { stripControlChars } from "../domain/services/stripControlChars";
 import { validateDestPath } from "./validateDestPath";
 import { validatePackList } from "./validatePackList";
 
@@ -69,16 +70,15 @@ function validateDestPathAndReport(raw: string): string | null {
 		console.error(`[error] ${error}`);
 		return null;
 	}
-	return raw;
+	// Return the stripped value: control chars (incl. ANSI escapes) must not
+	// reach downstream fatal messages (e.g. BunGitignoreCreator/BunSymlinkCreator).
+	return stripControlChars(raw);
 }
 
 /** Validate pack list and report error if invalid. Returns null on error. */
 function validatePackListAndReport(raw: string): string | null {
 	if (validatePackList(raw) === null) {
-		// Control chars (incl. ANSI escapes) in a raw CLI arg are stripped so
-		// they cannot inject terminal sequences into the error output.
-		// biome-ignore lint/suspicious/noControlCharactersInRegex: stripping them is the point
-		const display = raw.replace(/[\u0000-\u001f\u007f]/g, "");
+		const display = stripControlChars(raw);
 		// biome-ignore lint/suspicious/noConsole: CLI user-facing error
 		console.error(`[error] Invalid pack list: "${display}". Use --help to list valid pack IDs.`);
 		return null;
