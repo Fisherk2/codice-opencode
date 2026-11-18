@@ -80,12 +80,12 @@ export const FILE_RULE_MANIFEST: readonly FileRule[] = [
 	packRule(
 		"packs/software-development",
 		"Software development pack (default ON: backend, frontend, mobile, DevOps, databases, AI/ML, security, testing)",
-		144,
+		145,
 	),
 	packRule(
 		"packs/business",
 		"Business pack (marketing, sales, product, project management, operations)",
-		91,
+		90,
 	),
 	packRule(
 		"packs/hardware-emerging",
