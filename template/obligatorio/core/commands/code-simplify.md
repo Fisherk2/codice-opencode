@@ -49,5 +49,5 @@ If user confirms report, **Load** `code-simplification` skill to perform code re
 
 ---
 
-User instructions:
+User context:
 

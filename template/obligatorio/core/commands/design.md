@@ -93,5 +93,5 @@ Also create or update supporting files in @specs/design/
 
 ---
 
-User instructions:
+User context:
 

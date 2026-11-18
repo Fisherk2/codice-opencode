@@ -108,4 +108,5 @@ Once all reports are back, the main agent (not a sub-persona) synthesizes them:
 
 ---
 
-User instructions:
+User context:
+

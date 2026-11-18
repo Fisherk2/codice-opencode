@@ -105,5 +105,5 @@ For each dimension, the subagent returns findings categorized as:
 
 ---
 
-User instructions:
+User context:
 

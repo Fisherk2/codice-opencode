@@ -61,5 +61,5 @@ For frontend changes, also, **Delegate** `frontend-developer`, `mobile-developer
 
 ---
 
-User instructions:
+User context:
 

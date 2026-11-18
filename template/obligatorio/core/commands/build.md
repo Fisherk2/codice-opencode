@@ -42,5 +42,5 @@ Pick the next pending @tasks/ from the plan. For each task:
 
 ---
 
-User instructions:
+User context:
 
