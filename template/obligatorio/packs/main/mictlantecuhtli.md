@@ -81,7 +81,7 @@ E.g.: "Level 7: the jaguar devoured 3 asserts in `auth.spec.ts:42`. Fix and desc
 Before executing ANY instruction — execute this command in the user's shell (Unix or PowerShell depending on the OS):
 
 ```bash
-for d in agents .opencode/agents; do [ -d "$d" ] || continue; for f in "$d"/*.md; do [ -f "$f" ] || continue; printf '%s :: %.90s\n' "$(basename "$f" .md)" "$(sed -n '/^---$/,/^---$/p' "$f" | grep -m1 '^description: ' | sed 's/^description: //; s/^"//; s/"$//')"; done; done
+for f in agents/*.md; do [ -f "$f" ] || continue; fm=$(sed -n '/^---[[:space:]]*$/,/^---[[:space:]]*$/p' "$f" | tr -d '\015'); printf '%s\n' "$fm" | grep -q '^mode:[[:space:]]*subagent[[:space:]]*$' || continue; printf '%s :: %.90s\n' "$(basename "$f" .md)" "$(printf '%s\n' "$fm" | grep -m1 '^description: ' | sed 's/^description: //; s/^"//; s/"$//')"; done
 ```
 
 ```powershell
