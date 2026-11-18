@@ -24,7 +24,7 @@ import {
 	filterByPacks,
 	isRuleSelected,
 } from "../../domain/entities/FileRuleManifest";
-import { promptForOptionals } from "../helpers";
+import { promptForOptionals } from "../optionalsPrompt";
 import { DEFAULT_PACKS, promptForPackSelection } from "../packOptions";
 import { InstallUseCaseBase } from "./InstallUseCaseBase";
 

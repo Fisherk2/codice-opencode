@@ -14,11 +14,11 @@
 import type { IStagedFileSystem } from "../domain/ports/IStagedFileSystem";
 import type { GitignoreError } from "../domain/types/GitignoreError";
 import { type Result, success } from "../domain/types/Result";
-import { writeVersionFileSafe } from "./helpers";
 import type { IGitignoreCreator } from "./ports/IGitignoreCreator";
 import type { IMessageDisplay } from "./ports/IMessageDisplay";
 import type { IProgressReporter } from "./ports/IProgressReporter";
 import type { ISymlinkCreator, SymlinkSpec } from "./ports/ISymlinkCreator";
+import { writeVersionFileSafe } from "./versionFileWrite";
 
 /**
  * Create a .gitignore file from the template, showing a warning on failure.

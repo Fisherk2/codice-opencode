@@ -10,8 +10,9 @@
 import type { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
 import type { IStagedFileSystem } from "../../domain/ports/IStagedFileSystem";
 import type { Result } from "../../domain/types/Result";
-import { confirmOverwrite, writeVersionFileSafe } from "../helpers";
+import { confirmOverwrite } from "../confirmOverwrite";
 import type { IUserPrompt } from "../ports/IUserPrompt";
+import { writeVersionFileSafe } from "../versionFileWrite";
 import type { UpdateWorkspaceOptions } from "./updateOptions";
 
 /**

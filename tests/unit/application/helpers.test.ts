@@ -1,6 +1,7 @@
 import { describe, expect, mock as mockFn, spyOn, test } from "bun:test";
-import { confirmOverwrite, createProgressCallback } from "../../../src/application/helpers";
+import { confirmOverwrite } from "../../../src/application/confirmOverwrite";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
+import { createProgressCallback } from "../../../src/application/progressCallback";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
 import { createMockPrompt as createSharedPrompt } from "../../shared/test-doubles";
 

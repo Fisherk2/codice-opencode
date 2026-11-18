@@ -8,17 +8,15 @@ import { FILE_RULE_MANIFEST, getPackRules } from "../../domain/entities/FileRule
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IStagedFileSystem } from "../../domain/ports/IStagedFileSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
-import {
-	checkWritable,
-	confirmOverwrite,
-	createProgressCallback,
-	wrapMergeError,
-} from "../helpers";
+import { confirmOverwrite } from "../confirmOverwrite";
 import { buildInstallSummary } from "../installSummary";
+import { wrapMergeError } from "../mergeErrors";
 import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { runPostInstallSteps } from "../postInstall";
+import { createProgressCallback } from "../progressCallback";
+import { checkWritable } from "../writableCheck";
 
 /** Options shared by all installation modes. */
 export interface BaseInstallOptions {

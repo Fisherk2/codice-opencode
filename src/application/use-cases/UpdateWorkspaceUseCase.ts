@@ -4,15 +4,17 @@ import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IStagedFileSystem } from "../../domain/ports/IStagedFileSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
-import { checkWritable, createProgressCallback, wrapMergeError } from "../helpers";
 import { isLegacyVersion } from "../legacyBanner";
+import { wrapMergeError } from "../mergeErrors";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
+import { createProgressCallback } from "../progressCallback";
 import { parseVersionData } from "../versionData";
 import {
 	buildNoPreviousInstallWarning,
 	buildUpdateSystemChangedWarning,
 } from "../versionGateMessages";
+import { checkWritable } from "../writableCheck";
 import { isPreV2Version, resolveUpdatePacks } from "./updateFlow";
 import {
 	buildPluginRemnantMessage,

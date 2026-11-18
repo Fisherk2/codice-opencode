@@ -23,7 +23,7 @@ import {
 	getRulesByCategory,
 	isRuleSelected,
 } from "../../domain/entities/FileRuleManifest";
-import { promptForOptionals } from "../helpers";
+import { promptForOptionals } from "../optionalsPrompt";
 import { promptForPackSelection } from "../packOptions";
 import { InstallUseCaseBase } from "./InstallUseCaseBase";
 
