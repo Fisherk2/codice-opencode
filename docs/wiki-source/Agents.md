@@ -31,8 +31,8 @@ Agents are organized by domain in the `template/obligatorio/packs/` directory:
 packs/
 ├── main/                  (6 primary agents — MANDATORY)
 ├── writers/               (4 writer agents — MANDATORY)
-├── software-development/  (144 agents — DEFAULT selected)
-├── business/              (91 agents)
+├── software-development/  (145 agents — DEFAULT selected)
+├── business/              (90 agents)
 ├── science-research/      (31 agents)
 ├── hardware-emerging/     (36 agents)
 ├── operations-support/    (18 agents)

@@ -47,9 +47,9 @@ template/
 │       │   ├── document-generator.md
 │       │   ├── obsidian-vault-writer.md
 │       │   └── technical-writer.md
-│       ├── software-development/    # 144 agents (DEFAULT)
+│       ├── software-development/    # 145 agents (DEFAULT)
 │       ├── creative/                # 10 agents
-│       ├── business/                # 91 agents
+│       ├── business/                # 90 agents
 │       ├── finance/                 # 11 agents
 │       ├── government-legal/        # 8 agents
 │       ├── science-research/        # 31 agents
@@ -103,7 +103,7 @@ the `agentCount` fields in `src/domain/entities/FileRuleManifestData.ts`, pinned
 | **Primary** | 6 | Placed in `packs/main/` (mandatory) |
 | **Writers** | 4 | Placed in `packs/writers/` (mandatory) |
 
-### 3.2 Pack Assignment — software-development (144 agents)
+### 3.2 Pack Assignment — software-development (145 agents)
 
 All computing systems: backend, frontend, mobile, DevOps, databases, APIs, CLI, cloud, AI/ML, security, testing, debugging.
 
@@ -131,7 +131,7 @@ All computing systems: backend, frontend, mobile, DevOps, databases, APIs, CLI, 
 
 designer, ui-designer, ux-designer, ux-researcher, visual-designer, brand-designer, motion-designer, illustrator, icon-designer, typography-specialist, color-theorist, design-systems-architect, figma-developer, sketch-developer, creative-director
 
-### 3.4 Pack Assignment — business (91 agents)
+### 3.4 Pack Assignment — business (90 agents)
 
 product-manager, business-analyst, competitive-analyst, content-marketer, seo-specialist, growth-hacker, marketing-strategist, social-media-manager, email-marketer, copywriter, technical-writer-business, sales-engineer, sales-ops-analyst, account-executive, business-development, partnership-manager, customer-success, retention-specialist, revenue-ops, pricing-strategist, market-researcher, brand-strategist, communications-manager, public-relations, event-planner, community-manager, influencer-manager, affiliate-manager, crm-administrator, hubspot-admin, salesforce-admin, project-manager, scrum-master, agile-coach, product-owner, program-manager, portfolio-manager, strategy-consultant, management-consultant, operations-manager, supply-chain-analyst, logistics-coordinator, procurement-analyst, quality-manager, lean-six-sigma, change-management, executive-coach
 
