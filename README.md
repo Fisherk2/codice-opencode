@@ -30,11 +30,28 @@ A production-grade workspace integrating 61 engineering skills organized in 10 S
 
 ## Features
 
-- **61 Engineering Skills** — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet analysis, and more, organized in 10 SDD phases (3 optional) + Extra
-- **18 Slash Commands** — `/spec`, `/design`, `/feature`, `/hotfix`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`, `/sync`, `/migrate`, `/deploy`, `/analyze`
-- **6 Main Agents + ~360 Agents in 10 Packs (6 primary + 4 writers + ~350 subagents across 8 selectable packs)** — huitzilopochtli (orchestrator), quetzalcoatl (vision), moctezuma (planning), tlaloc (construction), mictlantecuhtli (validation), tezcatlipoca (review & correction), and ~350 subagents organized across 8 selectable packs (2 mandatory packs always installed) specialized in frontend, backend, DevOps, testing, security, and more. Install only the packs you need via `--packs`, or everything with `--packs-all`.
-- **OpenCode Native** — Slash commands, agents, and skills loaded from `.opencode/`
-- **Integrated Technical Documentation** — References for Clean Code, DDD, UI/UX, Testing, Security, and more
+<table width="100%">
+  <tr>
+    <td width="33%" valign="top" align="center">
+      <br>
+      <h3 align="center">🧠&nbsp; Skills</h3>
+      <p align="center">61 skills — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet analysis, and more — organized in 10 SDD phases (3 optional) + Extra.</p>
+      <br>
+    </td>
+    <td width="33%" valign="top" align="center">
+      <br>
+      <h3 align="center">⌨️&nbsp; Commands</h3>
+      <p align="center">18 commands — `/spec`, `/design`, `/feature`, `/hotfix`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`, `/sync`, `/migrate`, `/deploy`, `/analyze`.</p>
+      <br>
+    </td>
+    <td width="33%" valign="top" align="center">
+      <br>
+      <h3 align="center">🤖&nbsp; Agents</h3>
+      <p align="center">6 main agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca) + ~350 subagents across 8 selectable packs (2 mandatory packs always installed); 10 packs total (6 primary + 4 writers). Install only the packs you need via `--packs`, or everything with `--packs-all`.</p>
+      <br>
+    </td>
+  </tr>
+</table>
 
 ---
 
