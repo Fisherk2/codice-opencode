@@ -118,8 +118,8 @@ async function main(): Promise<void> {
 	// Parse mode and options
 	const parsed = parseArgs(args);
 	if (parsed === null) {
-		// biome-ignore lint/suspicious/noConsole: intentional CLI output
-		console.error("Usage error: unrecognized arguments. Use --help for usage information.");
+		// The specific reason (unrecognized args, invalid --dest/--packs) was
+		// already printed by parseArgs or its validators — just exit.
 		process.exit(EXIT_USAGE);
 	}
 

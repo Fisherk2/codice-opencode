@@ -143,7 +143,12 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 		} else if (ALLOWED_FLAGS.has(arg)) {
 			flags.add(arg);
 		} else {
-			// Unrecognized flag or positional argument → reject
+			// Unrecognized flag or positional argument → reject with the
+			// generic usage error. Specific [error] lines (invalid --dest /
+			// --packs) are printed by their validators; this line must not
+			// follow them as a wrong second reason.
+			// biome-ignore lint/suspicious/noConsole: CLI user-facing error
+			console.error("Usage error: unrecognized arguments. Use --help for usage information.");
 			return null;
 		}
 	}
