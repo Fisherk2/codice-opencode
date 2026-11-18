@@ -12,7 +12,9 @@
 #   - required_status_checks contexts use the GitHub Actions format
 #     "<workflow> / <job> (<matrix>)", matching what ci.yml reports.
 #   - enforce_admins: true on main only — admins (incl. CI tokens) must follow
-#     the same rules on the production branch; develop stays flexible.
+#     the same rules on the production branch; develop stays flexible. The
+#     heredoc is UNQUOTED so $enforce_admins expands into the JSON (a quoted
+#     heredoc would have silently posted the literal "false" on main too).
 
 set -euo pipefail
 
@@ -32,7 +34,7 @@ protect_branch() {
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
     "/repos/${REPO}/branches/${branch}/protection" \
-    --input - <<'JSON'
+    --input - <<JSON
 {
   "required_status_checks": {
     "strict": true,
@@ -42,7 +44,7 @@ protect_branch() {
       "CI / quality (windows-latest)"
     ]
   },
-  "enforce_admins": false,
+  "enforce_admins": ${enforce_admins},
   "required_pull_request_reviews": {
     "required_approving_review_count": 0,
     "dismiss_stale_reviews": true,
@@ -58,7 +60,7 @@ protect_branch() {
 JSON
 }
 
-protect_branch "main" false
+protect_branch "main" true
 protect_branch "develop" false
 
 echo "Branch protection configured for main and develop."
