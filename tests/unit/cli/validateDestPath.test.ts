@@ -25,6 +25,16 @@ describe("validateDestPath (posix)", () => {
 		expect(validateDestPath("./../outside")).toContain("contains path traversal segments");
 	});
 
+	test("rejects NUL bytes", () => {
+		expect(validateDestPath("my\0project")).toBe("Destination path contains NUL bytes");
+	});
+
+	test("accepts doubled dots inside a segment name (my..project)", () => {
+		// ".." only matters as a whole path segment, not inside a name.
+		expect(validateDestPath("my..project")).toBeNull();
+		expect(validateDestPath("./my..project")).toBeNull();
+	});
+
 	test("rejects the filesystem root", () => {
 		expect(validateDestPath("/")).toBe('Invalid destination path: "/" is the filesystem root');
 	});

@@ -83,7 +83,10 @@ function validatePackListAndReport(raw: string): string | null {
 }
 
 /**
- * Read and validate the value token following a value-flag.
+ * Read and validate the value token following a value-flag. A token
+ * starting with "-" is almost certainly the next flag, not a value
+ * (e.g. --dest --force) — it is rejected; a preceding bare "--" in the
+ * caller escapes this for values that legitimately start with "-".
  * Returns null when missing or invalid (prints CLI error for --dest).
  */
 function readFlagValue(
@@ -93,6 +96,9 @@ function readFlagValue(
 ): string | null {
 	const raw = args[valueIndex];
 	if (raw === undefined) return null;
+	// A token starting with "-" is the next flag, not a value (e.g.
+	// --dest --force): reject it instead of silently consuming it.
+	if (raw.startsWith("-")) return null;
 	return isDest ? validateDestPathAndReport(raw) : validatePackListAndReport(raw);
 }
 
@@ -121,6 +127,7 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 
 		if (VALUE_FLAGS.has(arg)) {
 			const isDest = arg === "--dest";
+			if (args[i] === "--") i++; // consume the "--" escape for dash-leading values
 			const value = readFlagValue(args, i, isDest);
 			if (value === null) return null;
 			if (isDest) destination = value;
@@ -141,6 +148,11 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 		packsAll: flags.has("--packs-all"),
 		updateAddPacks: splitPackList(values["--update-add-packs"]),
 	};
+
+	// More than one mode flag is ambiguous (e.g. --clean --project): reject
+	// instead of silently letting the first match win.
+	const modeFlags = ["--clean", "--project", "--update"].filter((f) => flags.has(f));
+	if (modeFlags.length > 1) return null;
 
 	if (flags.has("--clean")) return { mode: "clean", options, destination };
 	if (flags.has("--project")) return { mode: "project", options, destination };

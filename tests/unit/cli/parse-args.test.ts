@@ -104,6 +104,24 @@ describe("parseArgs", () => {
 		expect(result!.options.verbose).toBe(true);
 	});
 
+	it("should reject a --dest value that is the next flag", () => {
+		// "--force" would otherwise be silently consumed as the path.
+		expect(parseArgs(["--clean", "--dest", "--force"])).toBeNull();
+	});
+
+	it("should accept a dash-leading --dest value escaped with --", () => {
+		const result = parseArgs(["--clean", "--dest", "--", "./-weird-name"]);
+		expect(result).not.toBeNull();
+		expect(result!.destination).toBe("./-weird-name");
+	});
+
+	it("should reject more than one mode flag", () => {
+		expect(parseArgs(["--clean", "--project"])).toBeNull();
+		expect(parseArgs(["--clean", "--update"])).toBeNull();
+		expect(parseArgs(["--project", "--update"])).toBeNull();
+		expect(parseArgs(["--clean", "--project", "--update"])).toBeNull();
+	});
+
 	// -----------------------------------------------------------------------
 	// --packs / --packs-all / --update-add-packs flag tests
 	// -----------------------------------------------------------------------

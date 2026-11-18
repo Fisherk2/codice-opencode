@@ -37,12 +37,16 @@ const DRIVE_ROOT_RE = /^[A-Z]:\\?$/i;
  * handled by pathResolver.ts at installation time.
  */
 export function validateDestPath(dest: string): string | null {
+	if (dest.includes("\0")) return "Destination path contains NUL bytes";
+
 	const trimmed = dest.trim();
 	if (!trimmed) return "Destination path is empty";
 
-	// Reject path traversal attempts at the CLI level
+	// Reject path traversal attempts at the CLI level. Per-segment check
+	// (not a bare includes("..")) so legitimate names like "my..project"
+	// pass; path.normalize already collapses interior "a/../b" sequences.
 	const normalized = path.normalize(trimmed);
-	if (normalized.includes("..")) {
+	if (normalized.split(path.sep).some((segment) => segment === "..")) {
 		return `Invalid destination path: "${trimmed}" contains path traversal segments`;
 	}
 
