@@ -88,7 +88,9 @@ Once all reports are back, the main agent (not a sub-persona) synthesizes them:
 
 **Important**: If you/subagents get stuck or the fixing process fails, **STOP** and **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents, always report to the user what is the issue and what you have to do to fix it, ask user for confirmation before proceeding with `question` tool.
 
-4. **Stop** when all issues are resolved and the code is ready for deployment.
+4. Add an entry to `CHANGELOG.md` under the unreleased section, **Load** `changelog-generate` skill to follow best practices and conventions, record all changes made since the last release.
+
+5. **Stop** when all issues are resolved and the code is ready for deployment.
 
 ## Rules
 
