@@ -80,6 +80,15 @@ export class UpdateWorkspaceUseCase {
 			this.userPrompt.showWarning(buildPluginRemnantMessage());
 		}
 
+		// Bundled-version comparison BEFORE the confirm prompt: it needs no
+		// network, so an up-to-date workspace exits with the "already up to
+		// date" info instead of prompting and refusing afterwards.
+		if (await isAlreadyUpToDate(this.statusDeps, localVersion)) {
+			// Graceful exit: isAlreadyUpToDate already emitted the
+			// "Workspace is already up to date" info message.
+			return success(undefined);
+		}
+
 		// Ask for confirmation if not forced.
 		if (
 			!(await confirmUpdateUnlessForced(
@@ -97,14 +106,6 @@ export class UpdateWorkspaceUseCase {
 
 		// Informational GitHub check — never blocks the update
 		await reportRemoteStatus(this.statusDeps, localVersion);
-
-		// Compare installed version against bundled template version. Returns
-		// true when no update is needed (installed >= bundled).
-		if (await isAlreadyUpToDate(this.statusDeps, localVersion)) {
-			// Graceful exit: isAlreadyUpToDate already emitted the
-			// "Workspace is already up to date" info message.
-			return success(undefined);
-		}
 
 		// Option A / Option B / non-interactive addPacks → pack scope
 		const finalPacks = await resolveUpdatePacks(
