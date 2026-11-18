@@ -312,6 +312,9 @@ export class AtomicStager {
 		if (destLstat && !destLstat.isSymbolicLink()) {
 			try {
 				await fs.copyFile(destPath, backupPath);
+				// Backups hold the only copy of user content mid-commit —
+				// restrict to owner so other users cannot read it.
+				await fs.chmod(backupPath, 0o600);
 				backups.set(destPath, backupPath);
 			} catch (error) {
 				// A surviving original must never be overwritten without a

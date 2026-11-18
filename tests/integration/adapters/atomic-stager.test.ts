@@ -183,6 +183,52 @@ describe("AtomicStager", () => {
 		await fs.unlink(intentPath).catch(() => {});
 	});
 
+	it("backs up overwritten files with owner-only permissions (0600)", async () => {
+		// A pre-existing destination file with broad permissions must not be
+		// exposed via the backup. After a rollback the restored backup is
+		// swept, so pin the backup on disk: fail the second rename mid-commit
+		// and make the sweep's unlink of the restored backup fail. The
+		// surviving backup's mode must be 0600.
+		const victim = path.join(destDir, "victim.txt");
+		await fs.writeFile(victim, "PRECIOUS");
+		await fs.chmod(victim, 0o666);
+		const src = path.join(templateDir, "victim.txt");
+		await fs.writeFile(src, "NEW");
+		const brokenSrc = path.join(templateDir, "broken.txt");
+		await fs.writeFile(brokenSrc, "X");
+		const blocker = path.join(destDir, "broken");
+		await fs.writeFile(blocker, "I AM A FILE, NOT A DIR");
+		const backupPath = `${victim}.codice-backup`;
+
+		const realRename = fs.rename.bind(fs);
+		const realUnlink = fs.unlink.bind(fs);
+		const renameSpy = spyOn(fs, "rename").mockImplementation(((a: unknown, b: unknown) => {
+			if (String(b).endsWith("broken/inner.txt")) {
+				return Promise.reject(new Error("forced mid-commit failure"));
+			}
+			return realRename(a as string, b as string);
+		}) as unknown as typeof fs.rename);
+		const unlinkSpy = spyOn(fs, "unlink").mockImplementation(((p: unknown) => {
+			if (String(p) === backupPath) {
+				return Promise.reject(new Error("keep the backup for the mode assertion"));
+			}
+			return realUnlink(p as string);
+		}) as unknown as typeof fs.unlink);
+
+		try {
+			await stager.stageFile(src, "victim.txt");
+			await stager.stageFile(brokenSrc, "broken/inner.txt");
+			await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
+
+			const backupStat = await fs.stat(backupPath);
+			expect(backupStat.mode & 0o777).toBe(0o600);
+		} finally {
+			renameSpy.mockRestore();
+			unlinkSpy.mockRestore();
+			await realUnlink(backupPath).catch(() => {});
+		}
+	});
+
 	it("stages a directory recursively while honoring excludeNames", async () => {
 		const srcDir = path.join(templateDir, "pkg");
 		const keepFile = path.join(srcDir, "keep.txt");
