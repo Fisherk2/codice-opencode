@@ -1,5 +1,5 @@
 ---
-description: Rapid hotfix workflow combining diagnosis, plan, build, test, review and ship for tickets resolvable in under 3 hours.
+description: Rapid hotfix one phase workflow for tickets resolvable in under 3 hours.
 agent: tlaloc
 ---
 
@@ -23,99 +23,163 @@ PROJECT STATE DETECTED:
 - STATUS: [BROWNFIELD / GREENFIELD / EMPTY]
 ```
 
-If is a empty project (no documentation, no code, just placeholders), **STOP**, and suggest using `/spec` or `/docs-update` instead.
-
 ## Phase 1: Identify the Problem, analyze and make diagnosis
 
-**Delegate** `debugger` subagent and **Load** `debugging-and-error-recovery` skill to reproduce the defect and reach its root cause, not its first symptom. If the root cause stays hidden after one pass, escalate with the paragraph below the phases.
+1. **Delegate** to analysis subagents based on problem type. **No implementation — analysis only.**
 
-1. Reproduce the defect and capture the exact commands, inputs and output.
-2. Trace it to the file and line where the wrong behavior originates, not where it surfaces.
-3. Measure the blast radius: callers, tests and user-facing paths that depend on the broken behavior.
-4. Write `docs/diagnosis/<slug>.md` following `docs/diagnosis/diagnosis-template.md` with real **Summary**, **Symptoms** (including the reproduction steps), **Root Cause**, **Impact** (the affected scope) and **Proposed Solution** (steps, no code), plus `file:line` references.
-5. If a fix for this problem is already in progress, **update that file instead of creating a new one** — append the new evidence under **Recurrences**.
-6. Use the `question` tool to confirm the diagnosis before planning the fix.
+For problems spanning multiple domains, **Delegate** subagents **in parallel** and **Load** skills **on demand**. Synthesize findings before documenting.
 
-**STOP** if the root cause cannot be stated in one sentence — the fix is not ready to be planned.
+| Problem type | Subagent | Skill |
+|-------------|----------|-------|
+| Error / crash / stack trace | `error-detective` | `debugging-and-error-recovery` |
+| Code quality / logic bug | `code-reviewer` | `code-review-and-quality` |
+| Security vulnerability | `security-auditor` | `security-and-hardening` |
+| Performance issue | `performance-benchmarker` or/and `web-performance-auditor` | `performance-analysis` |
+| Database / query problem | `database-optimizer` | `performance-analysis` |
+| Dependency issue (CVE, license) | `dependency-manager` | `dependency-audit` |
 
-## Phase 2: Update WORKFLOW.md and write a structured incremental plan
+2. Use terminal tools to investigate: check logs, inspect config, test components, run diagnostics.
+3. Analyze all the information gathered, if this diagnosis is better to be solved in 2 or more phases, use the `question` tool, the user may choose continue or not. if the user chooses to continue, **proceed to the next step**, else **STOP** and generate a output with a summary of the diagnosis, then recommend the user to use `/diagnosis` instead with the information gathered.
+4. Use `question` tool to ask clarifying questions if needed before proceeding to document the diagnosis.
 
-**Delegate** `moctezuma` subagent and **Load** `planning-and-task-breakdown` alongside `codebase-design` skill.
+5. **Delegate** to `docs-writer` subagent and create diagnosis in `docs/diagnosis/` using @docs/diagnosis/diagnosis-template.md
 
-1. Update `docs/WORKFLOW.md` with the fix scope and its status.
-2. Write `tasks/plan.md` and `tasks/todo.md` with per-task acceptance criteria and verification steps, sliced vertically.
-3. Present the plan with the `question` tool and wait for explicit approval before executing it.
-4. **Load** `vertical-slice-architecture` skill and use the `question` tool to set the scope and its phase budget: **Prototype** (1-3 phases), **MVP** (4-6 phases), **Enterprise** (7+ phases).
-5. **Delegate** `software-architect` subagent loading `vertical-slice-architecture` skill to slice the fix vertically and write the phase roadmap into `docs/WORKFLOW.md`.
+| Situation | Action |
+|-----------|--------|
+| New symptom | Create `fix01-<short-description>.md` |
+| Known symptom, variation | Update existing file, add "Recurrences" |
+| Workaround only | Banner `⚠️ WORKAROUND` |
+| Pattern ≥3 times | Suggest automation |
+
+**Required sections:** Summary, Symptoms, Root Cause, Impact, Proposed Solution (steps, no code), file:lines, References.
+
+5. Invoke `question` tool to confirm the diagnosis or ask for clarification if needed to make changes before proceeding with plan creation.
+
+## Phase 3: Update the implementation roadmap and write a structured incremental planning
+
+1. **Delegate** `software-architect` subagent and **Load** `vertical-slice-architecture`, `clean-ddd-hexagonal` and `codebase-design` skills to cut the work into vertical slices and order them by risk and dependency, **plan only and exclusively one phase**, it means, the next phase stablished in the roadmap.
+2. Present a brief summary of the VSA plan for human review before saving.
+3. Use the `question` tool to confirm VSA plan with the user before saving to `docs/WORKFLOW.md`
+4. If user approves, **Delegate** to `docs-writer` subagent and update `docs/WORKFLOW.md`: one phase per user-visible capability, each with its acceptance test, files touched and demoable outcome. Reject any phase that cannot be demoed on its own, or whose only output is another plan — that is the cascade anti-pattern the skill names.
+5. **Delegate** `multi-agent-systems-architect` and **Load** `planning-and-task-breakdown` along side `codebase-design` skill, read new phase generated in `docs/WORKFLOW.md` and recopilate all references files, documentation and code of that new phase.
+
+- Enter plan mode — read only, no code changes
+- Identify the dependency graph between components. If the project uses DDD or Clean Architecture, **Load** `clean-ddd-hexagonal` skill for domain-driven module decomposition
+- Slice work vertically (one complete path per task, not horizontal layers)
+
+6. **Delegate** to `docs-writer` subagent and write tasks with acceptance criteria and verification steps. **Load** `design-patterns` skill when planning which GoF or enterprise patterns to apply in each task. **Load** `architecture-diagrams` alongside `markdown-mermaid-writing` skill to draw diagrams and components.
+
+- Suggest what subagents should invoke the main agent to complete each task, analyze and asign the most appropriate subagents and write them to `tasks/` files, can be multiple subagents per task (parallel/sequential) or none, you must explain what tasks should be delegate in parallel or sequentially (only if it's multiple subagents per task) and if it's a sequential delegation, you must explain the order of the subagents delegation. You should use **ONLY** subagents, **NOT** main agents, the available subagents are:
+
+!`for d in agents .opencode/agents; do [ -d "$d" ] || continue; for f in "$d"/*.md; do [ -f "$f" ] || continue; printf '%s :: %.90s\n' "$(basename "$f" .md)" "$(sed -n '/^---$/,/^---$/p' "$f" | grep -m1 '^description: ' | sed 's/^description: //; s/^"//; s/"$//')"; done; done`
+
+- Suggest what skills should load the subagents (or main builder if applicable) to complete each task, analyze and asign the most appropriate skills and write them to `tasks/` files, can be multiple skills per task or none.
+- Detect and scan MCPs/Plugins configured in this workspace, and suggest what tools should use the subagents (or main agent if applicable) to complete each task, analyze and asign the most appropriate MCPs/Plugins and write them to `tasks/` files, can be multiple MCPs/Plugins per task or none.
+- Establish external resources to consult for each task, analyze and asign the most appropriate external resources and write them to `tasks/` files, can be multiple resources to research per task or none.
+
+7. The asignment of subagents, skills, tools and external resources to each task should be in a table format.
+8. Add checkpoints between phases within `tasks/plan.md` and `tasks/todo.md` — quality gates that must pass before moving to the next phase
+9. Present a brief summary of the plan for human review before saving.
 
 ## Phase 3: Execute the implementation plan
 
-**Delegate** `tlaloc` subagent and **Load** `incremental-implementation` alongside `test-driven-development` skill. Every task from the plan lands as its own verifiable increment.
+Pick the next pending `tasks/` from the plan. For each task:
 
-1. Write the failing test that reproduces the defect first — it must fail for the reason the diagnosis states (RED). Do not touch production code before that test is red.
-2. Apply the minimum fix that turns it green (GREEN), **Load** `solid` alongside `clean-code` skill to keep the design intact.
-3. Leave no test gap outside the fix: every behavior the diagnosis identified — each symptom, edge case and error path — gets a test in the same increment.
-4. Run the test suite after each increment; a red suite stops the loop and sends you back to the diagnosis.
-5. Mark the task done in `tasks/todo.md` and record progress in `docs/WORKFLOW.md`, then repeat steps 1-5 for the next task.
-6. Make atomic commits for each meaningful change with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow the project's conventions.
+1. Read the task's acceptance criteria
+2. Load relevant context (existing code, patterns, types)
+3. Understand the task's dependencies and constraints
+4. Use `question` tool to ask for clarification if needed
+
+**Load** `incremental-implementation` skill alongside `test-driven-development` skill. Then **Load** `source-driven-development` skill to ground all implementation.
+
+5. **Delegate** to asigned subagents to implement the task with: task description, acceptance criteria, skills to load, tools to use, resources to consult, and project conventions (`AGENTS.md`, @docs/CODE_STYLE.md or similar documentation).
+6. Subagents **should** write a failing test for the expected behavior (RED). **Load** `solid` skill for SOLID principles and clean test design
+7. Subagents **should** implement the minimum code to pass the test (GREEN), **Always load** `clean-code` skill to follow clean code practices.
+8. Run the full test suite to check for regressions.
+9. Mark the task complete, then proceed to the next task and **repeat steps 5-9** until all tasks are complete.
+10. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 ## Phase 4: Test and review all code changes
 
-Run the project's quality gates in order and do not continue while any of them is red:
+**Delegate** `test-engineer` subagent and scan scoped hotfix phase to identify missing test coverage.
 
-1. `just test` — full suite, 0 failures. A known pre-existing flake is re-run once and reported, never ignored.
-2. `bun run tsc --noEmit` — 0 type errors.
-3. `just test-e2e` when the change touches the CLI or the template; state why it was skipped otherwise.
-4. The project's linter and formatter check (`biome ci src/ tests/` or equivalent) — 0 errors.
+1. Output a summary of the files, commits, and/or changes to be tested.
+2. Classify each gap by **category** (Feature / Bug Fix) and **pyramid level** (Unit / Integration / E2E) in a table.
+3. Use the `question` tool to present the report and confirm which tests to implement.
 
-Then **Delegate** `code-reviewer` subagent and **Load** `code-review-and-quality` skill to review the hotfix diff only, with `file:line` references.
+**Load** `test-driven-development` skill and work on `test/` directories to follow the TDD process.
 
-5. Correct every observation before continuing — Critical, Important and Suggestion. A dismissed observation needs the user's explicit decision via the `question` tool.
-6. Re-run the gates after the last correction: a review fix is a code change like any other.
-7. Record the final gate numbers in the diagnosis file so the ticket shows what was actually verified.
+Write depending of phase 1 report:
+
+**For new features:**
+
+- **Delegate**  `test-engineer` subagent and **Load** `error-handling-patterns` skill to write tests that describe expected behavior (must FAIL).
+- Implement code to make them pass
+- **Load** `refactoring-patterns` skill to refactor while keeping tests green.
+
+**For bug fixes (Prove-It pattern):**
+
+- **Delegate** `chaos-engineer` subagent and write test that reproduces the bug (must FAIL). **Load** `debugging-and-error-recovery` skill if hard to reproduce.
+- Confirm test fails
+- **Delegate** `debugger` subagent to analyze and implement fix, if is hard to debug **Delegate** `error-detective` subagent.
+- Confirm test passes
+- Run full test suite for regressions
+
+4. Run ALL quality checks:
+
+- Run full test suite — must ALL pass (0 failures)
+- Run linter — must have 0 errors (warnings OK but report them)
+- Run formatter CHECK mode — must have 0 unformatted files
+- Run typechecker — must have 0 type errors
+
+**If ANY check fails, revert and reconsider:**
+
+5. Fix any discrepancies found during testing before proceeding, and run the test after each change.
+6. If agents are stuck or the testing process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
+7. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
+
+### Escalation to Incident Response
+
+If debugging detects a **production incident** (e.g., users affected, service degradation), escalate to:
+- **Delegate** to `error-coordinator` subagent and **Load** `incident-response` skill — Incident triage, communication, and postmortem workflow 
 
 ## Phase 5: Validate all changes for deployment
 
-Decide with evidence, not optimism. This phase produces a verdict only — **it does not deploy**; deployment belongs to `/deploy`.
+1. **Load** `shipping-and-launch` skill and spawn subagents concurrently using the Agent tool. **Issue all Agent tool calls in a single assistant turn so they execute in parallel** — sequential calls defeat the purpose of this command:
 
-Check every criterion:
+- **`code-reviewer`** — Run a five-axis review (correctness, readability, architecture, security, performance) on the staged changes or recent commits. Output the standard review template.
+- **`security-auditor`** — Run a vulnerability and threat-model pass. Check OWASP Top 10, secrets handling, auth/authz. Output the standard audit report.
+- **`test-engineer`** — Analyze test coverage for the change. Identify gaps in happy path, edge cases, error paths, and concurrency scenarios. Output the standard coverage analysis.
+- **`dependency-manager`** — Audit dependencies for CVEs, outdated packages, license issues, and unused deps. Output a prioritized remediation list.
+- **`accessibility-tester`** *(only if UI detected in Phase 0)* — Audit UI components for WCAG 2.1 AA/AAA compliance, keyboard navigation, screen reader support, and inclusive design. Output the standard accessibility report.
 
-| Criterion | Required |
-|-----------|----------|
-| `just test` | 0 failures |
-| `bun run tsc --noEmit` | 0 errors |
-| Linter and formatter check | 0 errors |
-| Code review observations | all closed, or explicitly accepted by the user |
-| Files changed | only those the diagnosis scoped — no unrelated files |
-| Diagnosis | `docs/diagnosis/<slug>.md` updated with the fix and the gate numbers |
-| Rollback path | known and written down: how to revert the fix if it misbehaves |
+2. Once all reports are back, the main agent (not a sub-persona) synthesizes them:
 
-Output the verdict:
+- **Code Quality** — Aggregate Critical/Important findings from `code-reviewer` and any failing tests, lint, or build output. Resolve duplicates between reviewers.
+- **Security** — Promote any Critical/High `security-auditor` findings to launch blockers. Cross-reference with `code-reviewer`'s security axis.
+- **Dependencies** — Promote any Critical/High `dependency-manager` findings (CVEs, outdated packages) to launch blockers. Flag license compliance issues.
+- **Performance** — Pull from `code-reviewer`'s performance axis; cross-check Core Web Vitals if applicable.
+- **Accessibility** *(only if `accessibility-tester` was spawned)* — Aggregate findings. Promote Critical WCAG violations to launch blockers.
+- **Infrastructure** — Env vars, migrations, monitoring, feature flags. **Load** `observability-and-instrumentation` skill for logging, metrics, tracing, and alerting. **Load** `bash-defensive-patterns` for robust CI/CD deployment scripts.
+- **Documentation** — README, ADRs, changelog. **Load** `crafting-effective-readmes` skill for README, `architecture-diagrams` skill for architecture diagrams, and `changelog-generate` skill for changelog updates.
 
-```markdown
-## Hotfix Decision: GO | NOT-GO
+3. Before make output review, use the `question` tool to resolve ambiguities:
+- Flag findings that could be **false positives** — ask the user to confirm
+- Ask if any observation is **intentional** — the user may have a valid reason
+- Let the user dismiss, accept, or modify each disputed finding
 
-### Evidence
-- Gates: [commands and final numbers]
-- Review: [observations open / closed]
-- Scope: [files changed vs files scoped]
-- Rollback: [how to revert]
-
-### Blockers (NOT-GO only)
-- [Criterion that failed and why]
-
-### Verdict
-GO — ready for `/deploy`. | NOT-GO — [reason]
-```
-
-Any failing criterion defaults to **NOT-GO**. Report the verdict to the user and ask for confirmation before handing off to `/deploy`.
+4. Use the `question` tool to ask the user to confirm the reports before proceeding with fixes.
+5. If user confirms, **Delegate** `minimal-change-engineer` subagent and **Load** `incremental-implementation` skill to apply all observations incrementally, **Load** `solid` skill to maintain SOLID principles.
+6. Run tests after each change, if tests fail after a change, revert that change and reconsider.
+7. Make atomic commits for each meaningful changes with a descriptive message, **Load** `git-workflow-and-versioning` skill to follow best practices and conventions.
 
 ## Phase 6: Close the ticket and update the documentation
 
 1. Close the ticket referencing `docs/diagnosis/<slug>.md` and the verification numbers recorded there.
-2. Update the documentation the fix invalidated — `README.md`, the affected API docs and `CHANGELOG.md` under the unreleased section.
-3. Mark every task done in `tasks/todo.md` and record the closure status in `docs/WORKFLOW.md`.
-4. Confirm the `## Suggested Next Step` at the end of this command still points to `/deploy`.
+2. Update the project documentation and stablish this hotfix phase are completed — ADRs, the affected API docs, related documents.
+3. Add new entry to `CHANGELOG.md` under the unreleased section.
+4. Record the closure status in `docs/WORKFLOW.md`.
+5. **Stop** when all issues are resolved and the code is ready for deployment.
 
 ## Rules
 
@@ -135,5 +199,5 @@ Any failing criterion defaults to **NOT-GO**. Report the verdict to the user and
 
 ---
 
-User instructions:
+User context:
 
