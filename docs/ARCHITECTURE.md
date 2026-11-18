@@ -38,7 +38,7 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 
 > **Note (register location, FEV-31):** the ADR register moved from `specs/adr/` to `docs/adr/` (23 files). `specs/adr/` no longer exists, so any `specs/adr/…` link is stale — the table above and the links in `../AGENTS.md`, `../SPEC.md` and `MIGRATION.md` point at `docs/adr/`.
 
-> **Note (stabilization history):** commit `1941ed3` was an **INCOMPLETE** stabilization — it fixed the manifest/E2E references and left the gates green (1972 tests, 31/31 e2e) without closing any of the issue gaps. FEV-31 completed it on 2026-11-17 (1991 tests, 31/31 e2e, tsc 0). Verdict and remaining-gap inventory: [`diagnosis/fix30-fev31-partial-issue-implementation.md`](diagnosis/fix30-fev31-partial-issue-implementation.md).
+> **Note (stabilization history):** commit `1941ed3` was an **INCOMPLETE** stabilization — it fixed the manifest/E2E references and left the gates green (1972 tests, 31/31 e2e) without closing any of the issue gaps. FEV-31 completed it on 2026-11-17 (1991 tests, 31/31 e2e, tsc 0); pre-launch review 2026-11-18 raised final gates to 2027/0, 31/31 e2e — ready for the `v2.1.5-beta.1` tag. Verdict and remaining-gap inventory: [`diagnosis/fix30-fev31-partial-issue-implementation.md`](diagnosis/fix30-fev31-partial-issue-implementation.md).
 
 ### SPEC.md Resolved Decisions Coverage
 

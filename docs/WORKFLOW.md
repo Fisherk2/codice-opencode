@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.1.5
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-11-17 (FEV-31 ✅ — v2.1.5, 1991 tests, 31/31 e2e) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-11-18 (revisión pre-launch 5 ejes + remediación ✅ — v2.1.5-beta.1 lista para tag, 2027 tests, 31/31 e2e, tsc 0, lint 0) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -23,7 +23,7 @@
 | FEV-28 | Infrastructure & Performance: CI SHA-pins Node 24 + VersionComparator cache | TD-V2-7, TD-V2-61 | ✅ 2026-08-21 (1935 tests) |
 | FEV-29 | Migración `permission:`/`tools:` → `permissions:` (lista nativa V2) en los packs restantes de agentes (Opencode V2) | #91 | ✅ Completo (2026-09-22) — 349 archivos, 8 commits por pack |
 | FEV-30 | Remoción plugin SDD + banner Legacy + hardening review (5 ejes) | #90 | ✅ Completo (2026-09-22) — 20 commits, 1865 tests, 31/31 e2e |
-| FEV-31 | Issues #111–#116 + reparación de referencias huérfanas + registro del payload fuera de alcance | #111 #112 #113 #114 #115 #116 | ✅ Completo (2026-11-17) — 1991 tests, 31/31 e2e |
+| FEV-31 | Issues #111–#116 + reparación de referencias huérfanas + registro del payload fuera de alcance | #111 #112 #113 #114 #115 #116 | ✅ Completo (2026-11-17) — 2027 tests, 31/31 e2e |
 
 ## 2. Fases Iniciales (F0 – F6.5)
 
@@ -285,6 +285,14 @@ Lo siguiente aterrizó junto a FEV-31 pero **no es trabajo de FEV-31**; se regis
 - **Nuevos manifiestos opcionales:** `Cargo.toml`, `package.json`, `pyproject.toml`.
 - **Reescritura de estilo blanket** en 13 comandos del template.
 
+#### Revisión pre-launch y remediación (2026-11-18) — ESTADO: LISTO PARA DESPLIEGUE
+
+Campaña de revisión de 5 ejes previa al lanzamiento: 4 especialistas, 47 hallazgos previos corregidos y 9 commits de remediación + 3 de alineación (`4ed7edb..196aed3`) — conteos del manifiesto, bump de versión a `2.1.5-beta.1`, sanitización ANSI, reporte de errores CLI, preservación del modo en rollback, hardening de CI y alineación e2e/spec.
+
+**Gates finales (2026-11-18):** `just test` **2027/0** (73 archivos, 4859 expect calls), `just test-e2e` **31/31**, `bun run tsc --noEmit` **0**, `/tmp/opencode/biome ci src/ tests/` **0** (2 warnings + 1 info preexistentes). Equivalentes release-gate: tag == `package.json` `2.1.5-beta.1`, extracción de sección de CHANGELOG no vacía.
+
+**ESTADO: LISTO PARA DESPLIEGUE.** `package.json` (y `src/cli/version.ts`, que deriva `VERSION` de él) en `2.1.5-beta.1`; rama `hotfix/update-payload` lista para cortar el tag con `just release v2.1.5-beta.1` — **GO del usuario pendiente**; dist-tag `beta`, `latest` intacto. PR #119 abierta a `develop` (no mergeada). Rollback: `just rollback v2.1.5-beta.1 <good> beta`, RTO < 15 min. No bloqueantes: 16 casos de coverage-gap (priorizar residue-reporting del rollback antes de GA), campo `engines: bun>=1.3`, aviso E2E SIGINT-mid-install, TD-V2-98 (deriva de cobertura local), sincronía wiki pendiente (10 archivos sucios preexistentes en `docs/wiki-source/.wiki/`).
+
 ## 4. Estrategia de Pruebas por Fase
 
 | Tipo | Alcance | Herramienta | Criterio de Éxito |
@@ -333,3 +341,4 @@ Lo siguiente aterrizó junto a FEV-31 pero **no es trabajo de FEV-31**; se regis
 | v2.1.2 | 1935 | 31/31 | ≥95% | 2026-08-28 |
 | v2.1.3-beta.1 | 1865 | 31/31 | ≥95% | 2026-09-22 |
 | v2.1.3 (estable, pendiente de lanzamiento) | 1959 | 31/31 | 96.39% | 2026-09-22 |
+| v2.1.5-beta.1 (lista para tag) | 2027 | 31/31 | 96.95% (local) | 2026-11-18 |

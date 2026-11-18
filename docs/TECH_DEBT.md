@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-11-17
-**Status:** v2.1.5 FEV-31 COMPLETED (2026-11-17) — 1991 tests, 31/31 E2E, `tsc --noEmit` 0, lint 0 · issues #111/#112/#114/#115/#116 closed + orphan references repaired · adjacent out-of-scope payload registered in `docs/WORKFLOW.md` · 4 deferred Phase-2 findings + TD-V2-97 remain open (below)
-**Current version:** v2.1.5 (FEV-31) — en rama `hotfix/update-payload`
+**Last updated:** 2026-11-18
+**Status:** v2.1.5-beta.1 FEV-31 COMPLETED (2026-11-17) + pre-launch review 2026-11-18 done — 2027 tests, 31/31 E2E, `tsc --noEmit` 0, lint 0 · beta ready for tag (GO pending) · issues #111/#112/#114/#115/#116 closed + orphan references repaired · adjacent out-of-scope payload registered in `docs/WORKFLOW.md` · 4 deferred Phase-2 findings + TD-V2-97 remain open (below)
+**Current version:** v2.1.5-beta.1 (FEV-31) — en rama `hotfix/update-payload`
 **Next version:** v2.2.0 (Medium Effort — 9 items, 18-24h)
 
 ---
@@ -208,6 +208,7 @@ Registered during the two-axis full-project review fix batches. Decisions, FYIs,
 | **TD-V2-107** | `AtomicStager.ts` grew to ~545 LOC across the review hardening | Debt | 3-4h | Low | Symlink guards, interruption recovery, and concurrency control all live in one file by design (one safety story; escape hatch documented in the header comment). A dedicated refactor pass may split prepare/promote/recover into modules — only with fresh integration coverage around the split. |
 | **TD-V2-108** | 5s-timeout flakes in `npm-pack.test.ts` and TUI/validation tests under load | Debt | 1-2h | Low | `npm package — tarball structure / extracted installation` (5,000ms hook timeouts) and `main() — execution path` fail intermittently only when the suite runs >60s under heavy machine load; isolated reruns always pass (verified repeatedly on 2026-11-17, incl. at baseline before any fix commits). Fix: raise the hooks' explicit timeouts to 15s or make them load-tolerant. |
 | **TD-V2-109** | update-gating logic in main.ts is sanctioned | FYI | — | Low | Reviewer flagged `resolveInteractiveMode`'s pre-v2.0 update block living in main.ts rather than a use case; ARCHITECTURE.md assigns mode resolution/version context to the CLI layer (`versionContext.ts`, `resolveInteractiveMode`), so this is the documented placement. FYI only. |
+| **TD-V2-110** | Pre-launch follow-ups (post-beta/GA, non-blocking) | Debt | 2-4h | Low | From the 2026-11-18 review: 16 coverage-gap cases tracked (prioritize rollback residue-reporting before GA); add `engines: bun>=1.3` to `package.json`; SIGINT-mid-install E2E advisory; wiki sync pending (10 pre-existing dirty files in `docs/wiki-source/.wiki/`); TD-V2-98 local coverage drift. None blocks the `2.1.5-beta.1` tag. |
 
 - **TD-V2-106 evidence:** FEV batch-1 item 15 commit body (`d357519`) states the leftover-staging trade-off; the concurrent-marker O_EXCL guard prevents interleaving but cannot authorize deleting another run's staging dir.
 - **TD-V2-107 evidence:** `wc -l src/infrastructure/adapters/AtomicStager.ts` = 545 post batch-2 item 1 (`8083a3a`); header comment documents the escape.
@@ -257,7 +258,7 @@ Registered during the two-axis full-project review fix batches. Decisions, FYIs,
 | v2.1.2 | ✅ Released (2026-08-28) — docs-update delegation hotfix + debt reorg — 1935 tests |
 | v2.1.3 | ✅ FEV-29+FEV-30 complete (1959 tests, 31/31 E2E, 96.39%) — beta published, stable pending GO/tag — open: 4 hallazgos Fase-2 diferidos (TD-V2-93-f2..96) + TD-V2-97 |
 | v2.1.4 hotfix | ✅ Complete — listo para lanzamiento |
-| v2.1.5 FEV-31 | ✅ Complete (2026-11-17) — #111/#112/#114/#115/#116 closed, orphan references repaired, prompt budget unified at 180 — 1991 tests, 31/31 E2E — open: TD-V2-93-f2..96 + TD-V2-97 + TD-V2-98 |
+| v2.1.5-beta.1 FEV-31 | ✅ Complete (2026-11-17) + pre-launch review 2026-11-18 — #111/#112/#114/#115/#116 closed, orphan references repaired, prompt budget unified at 180 — 2027 tests, 31/31 E2E — beta ready for tag (GO pending) — open: TD-V2-93-f2..96 + TD-V2-97 + TD-V2-98 + TD-V2-110 |
 | v2.2.0 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.3.0 backlog | 4 items (4 debt) — 12-16h |
 | v2.5.0 backlog | 3 items (1 debt + 2 features) — 18-28h |
