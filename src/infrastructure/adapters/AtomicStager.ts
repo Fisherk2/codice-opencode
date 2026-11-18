@@ -120,7 +120,7 @@ export class AtomicStager {
 		relativeDestPath: string,
 		excludeSubDirs?: ReadonlySet<string>,
 	): Promise<void> {
-		this.logger.log("stage", `${resolvedTemplatePath} → ${relativeDestPath}`);
+		this.logger.log("stage", () => `${resolvedTemplatePath} → ${relativeDestPath}`);
 		const stat = await fs.stat(resolvedTemplatePath);
 		const stagingRoot = await this.ensureStagingRoot();
 		// Fail-closed: a symlink swapped in for the staging root between
@@ -392,7 +392,7 @@ export class AtomicStager {
 		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
 		// copyFile is cross-device-safe (unlike rename) and avoids loading into RAM.
 		await fs.copyFile(sourcePath, stagingPath);
-		this.logger.log("stage_file", `${sourcePath} → ${stagingPath}`);
+		this.logger.log("stage_file", () => `${sourcePath} → ${stagingPath}`);
 	}
 
 	/**
@@ -430,7 +430,7 @@ export class AtomicStager {
 	): Promise<{ stagingFilePath: string; destPath: string }> {
 		const relativePath = path.relative(stagingDir, stagingFilePath);
 		const destPath = this.resolveDestinationPath(relativePath);
-		this.logger.log("commit_file", `${relativePath} → ${destPath}`);
+		this.logger.log("commit_file", () => `${relativePath} → ${destPath}`);
 
 		// Fail-closed: a symlinked INTERMEDIATE component would redirect the
 		// rename (and mkdir -p) outside the destination root.
