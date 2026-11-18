@@ -13,7 +13,11 @@ import { validatePackList } from "./validatePackList";
 // Types
 // ---------------------------------------------------------------------------
 
-/** Installation modes supported by the CLI */
+/**
+ * CLI dispatch mode: "interactive" launches the TUI menu; the three
+ * InstallMode values select a use-case directly. InstallMode itself stays
+ * the use-case/prompt contract — Mode only names the CLI dispatch union.
+ */
 export type Mode = InstallMode | "interactive";
 
 /** Parsed CLI options: packs/packsAll select packs; updateAddPacks adds packs. */
