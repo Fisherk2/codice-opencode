@@ -24,7 +24,7 @@
 
 **OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
 
-A production-grade workspace integrating 61 engineering skills organized in 10 SDD cycle phases (3 optional) + Extra, slash commands, and specialized agents to accelerate AI-assisted development. Designed for teams and developers who want consistent quality in AI-assisted projects.
+A production-grade workspace integrating engineering skills organized in SDD cycle phases, slash commands, and specialized agents to accelerate AI-assisted development with Human-in-the-Loop (HITL) and Vertical Slicing Architecture (VSA) approaches. Designed for teams and developers who want consistent quality in AI-assisted projects. 
 
 ---
 
@@ -34,20 +34,20 @@ A production-grade workspace integrating 61 engineering skills organized in 10 S
   <tr>
     <td width="33%" valign="top" align="center">
       <br>
-      <h3 align="center">🧠&nbsp; Skills</h3>
-      <p align="center">61 skills — TDD, Spec-Driven Development, Code Review, Security, Performance, UI/UX, DDD/Hexagonal, design patterns, requirements interview, decision stress-testing, observability, spreadsheet analysis, and more — organized in 10 SDD phases (3 optional) + Extra.</p>
+      <h3 align="center"><img src="https://api.iconify.design/boxicons/brain-filled.svg?color=%23ffbcb0" width="18" height="18">&nbsp; Skills</h3>
+      <p align="center">61 Software development specialized skills.</p>
       <br>
     </td>
     <td width="33%" valign="top" align="center">
       <br>
-      <h3 align="center">⌨️&nbsp; Commands</h3>
-      <p align="center">18 commands — `/spec`, `/design`, `/feature`, `/hotfix`, `/docs-update`, `/diagnosis`, `/plan`, `/build`, `/test`, `/webperf`, `/code-simplify`, `/review`, `/ship`, `/help`, `/sync`, `/migrate`, `/deploy`, `/analyze`.</p>
+      <h3 align="center"><img src="https://api.iconify.design/boxicons/terminal-filled.svg?color=%23ffbcb0" width="18" height="18">&nbsp; Commands</h3>
+      <p align="center">17+1 commands to control the SDD cycle.</p>
       <br>
     </td>
     <td width="33%" valign="top" align="center">
       <br>
-      <h3 align="center">🤖&nbsp; Agents</h3>
-      <p align="center">6 main agents (huitzilopochtli, quetzalcoatl, moctezuma, tlaloc, mictlantecuhtli, tezcatlipoca) + ~350 subagents across 8 selectable packs (2 mandatory packs always installed); 10 packs total (6 primary + 4 writers). Install only the packs you need via `--packs`, or everything with `--packs-all`.</p>
+      <h3 align="center"><img src="https://api.iconify.design/boxicons/robot-filled.svg?color=%23ffbcb0" width="18" height="18">&nbsp; Agents</h3>
+      <p align="center">6 main agents + ~350 subagents available to install in packs</p>
       <br>
     </td>
   </tr>
@@ -55,7 +55,16 @@ A production-grade workspace integrating 61 engineering skills organized in 10 S
 
 ---
 
-### Mexican Development Pantheon — Main Agents
+**Contents**
+
+- [🤖 Main Agents](#-main-agents)
+- [Install / Update](#install--update)
+- [Workflow](#workflow)
+- [⌨️ Commands](#-commands)
+- [Troubleshooting](#troubleshooting)
+- [Acknowledgments](#acknowledgments)
+
+## 🤖 Main Agents
 
 Six primary agents orchestrate the SDD cycle, each with a specific role and permissions inspired by Mexican mythology:
 
@@ -361,7 +370,7 @@ flowchart LR
     style SYNC stroke-dasharray: 5 5
 ```
 
-### Full Commands
+## ⌨️ Commands
 
 | Phase | Command | Agent | What It Does | Main Skills |
 |------|---------|--------|--------------|-------------|
