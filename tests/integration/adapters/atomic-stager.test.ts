@@ -156,6 +156,24 @@ describe("AtomicStager", () => {
 		expect(await findBackups(destDir)).toEqual([]);
 	});
 
+	it("fails closed when the intent marker is unreadable", async () => {
+		// Only ENOENT means "absent"; an unreadable marker (EACCES) must
+		// refuse the commit — the marker's state is unknown.
+		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+		await fs.writeFile(intentPath, "2026-01-01T00:00:00.000Z", "utf-8");
+		await fs.chmod(intentPath, 0o000);
+
+		const src = path.join(templateDir, "blocked.txt");
+		await fs.writeFile(src, "X");
+		await stager.stageFile(src, "blocked.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/Cannot verify backup intent marker/);
+
+		// Restore permissions so the marker can be cleaned up.
+		await fs.chmod(intentPath, 0o644);
+		await fs.unlink(intentPath).catch(() => {});
+	});
+
 	it("stages a directory recursively while honoring excludeNames", async () => {
 		const srcDir = path.join(templateDir, "pkg");
 		const keepFile = path.join(srcDir, "keep.txt");

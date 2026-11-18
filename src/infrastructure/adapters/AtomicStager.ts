@@ -121,14 +121,19 @@ export class AtomicStager {
 	/**
 	 * Fail-fast guard: refuse when a previous commit was interrupted by a
 	 * hard-kill and left its intent marker behind. The marker content names
-	 * the staging directory the interrupted run was committing.
+	 * the staging directory the interrupted run was committing. Fail-closed
+	 * policy (mirrors ensureNotSymlink): only ENOENT means "absent" — any
+	 * other read error leaves the marker's state unknown, so the run is
+	 * refused instead of risking a second interleaved commit.
 	 */
 	private async assertNoOrphanIntent(intentPath: string): Promise<void> {
 		let orphanIntent: string | null = null;
 		try {
 			orphanIntent = await fs.readFile(intentPath, "utf-8");
-		} catch {
-			// Marker absent or unreadable — proceed normally.
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException)?.code === "ENOENT") return;
+			const detail = error instanceof Error ? error.message : String(error);
+			throw new Error(`Cannot verify backup intent marker '${intentPath}': ${detail}`);
 		}
 		if (orphanIntent !== null) {
 			throw new Error(
