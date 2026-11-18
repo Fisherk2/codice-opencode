@@ -177,16 +177,6 @@ graph TD
 - Output formatting: output.ts
 - Version constant: version.ts
 
-### v2.1 Components
-
-| Component | Layer | Responsibility | Key Interfaces |
-|-----------|-------|----------------|----------------|
-| `/sync` command | CLI + Skill | Bidirectional git sync with 4 modes and 4 conflict strategies | `git-workflow-and-versioning` skill |
-| `/migrate` command | CLI + Skill | Tech stack migration analysis with phases and rollback | `dependency-audit`, `deprecation-and-migration` skills |
-| `/deploy` command | CLI + Skill | Post-`/ship` deployment automation (3 modes) | `ci-cd-and-automation` skill |
-| `/analyze` command | CLI + Skill | 8-dimension architecture analysis → `TECH_DEBT.md` | `clean-ddd-hexagonal`, `design-patterns` skills |
-| Agent Delegation Protocol | Agent (6 primary) | Analyze → Plan → Execute before `task()` calls | `delegateToSubagent(task)` |
-
 ## Key Patterns
 - **Strategy Pattern**: File merge rules (Obligatorio/Estándar/Opcional)
 - **Dependency Inversion**: Domain depends on ports, not implementations
