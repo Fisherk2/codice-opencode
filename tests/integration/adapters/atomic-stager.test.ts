@@ -229,6 +229,79 @@ describe("AtomicStager", () => {
 		}
 	});
 
+	it("auto-recovers an interrupted commit when backups allow it", async () => {
+		// Simulate a hard-kill mid-commit: victim.txt holds the STAGED
+		// (promoted) content, its .codice-backup holds the original, and the
+		// intent marker names a DEAD writer PID.
+		const proc = Bun.spawnSync({ cmd: ["true"] });
+		const deadPid = proc.pid;
+		expect(deadPid).toBeGreaterThan(0);
+
+		const victim = path.join(destDir, "victim.txt");
+		await fs.writeFile(victim, "STAGED BY KILLED RUN");
+		const backupPath = `${victim}.codice-backup`;
+		await fs.writeFile(backupPath, "ORIGINAL");
+		await fs.writeFile(
+			path.join(destDir, BACKUP_INTENT_FILE),
+			`${deadPid} 2026-01-01T00:00:00.000Z`,
+			"utf-8",
+		);
+
+		// The new commit must recover (restore the original from the backup,
+		// sweep it, remove the marker) and then proceed normally.
+		const src = path.join(templateDir, "victim.txt");
+		await fs.writeFile(src, "NEW");
+		await stager.stageFile(src, "victim.txt");
+		const residueNote = await stager.commitStaging();
+
+		expect(residueNote).toContain("recovered an interrupted commit");
+		// Commit output wins after recovery; backup and marker are gone.
+		expect(await Bun.file(victim).text()).toBe("NEW");
+		expect(await Bun.file(backupPath).exists()).toBe(false);
+		expect(await Bun.file(path.join(destDir, BACKUP_INTENT_FILE)).exists()).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
+	});
+
+	it("hard-blocks when the interrupted commit left no backups", async () => {
+		const proc = Bun.spawnSync({ cmd: ["true"] });
+		await fs.writeFile(
+			path.join(destDir, BACKUP_INTENT_FILE),
+			`${proc.pid} 2026-01-01T00:00:00.000Z`,
+			"utf-8",
+		);
+
+		const src = path.join(templateDir, "blocked2.txt");
+		await fs.writeFile(src, "X");
+		await stager.stageFile(src, "blocked2.txt");
+
+		// Without backups the pre-commit state is not reconstructible — the
+		// marker's own content must never be deleted by a blind recovery.
+		await expect(stager.commitStaging()).rejects.toThrow(/Previous commit was interrupted/);
+	});
+
+	it("does not auto-recover while the marker's writer PID is alive", async () => {
+		// Our own PID is alive: the marker may belong to a live commit.
+		await fs.writeFile(
+			path.join(destDir, BACKUP_INTENT_FILE),
+			`${process.pid} 2026-01-01T00:00:00.000Z`,
+			"utf-8",
+		);
+		const victim = path.join(destDir, "alive-victim.txt");
+		await fs.writeFile(victim, "OLD");
+		await fs.writeFile(`${victim}.codice-backup`, "ORIGINAL");
+
+		const src = path.join(templateDir, "alive.txt");
+		await fs.writeFile(src, "NEW");
+		await stager.stageFile(src, "alive.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/may still be in progress/);
+		// Nothing was touched: the marker and backup stay for the live writer.
+		expect(await Bun.file(`${victim}.codice-backup`).text()).toBe("ORIGINAL");
+		// Clean up so later tests start from a no-marker state.
+		await fs.unlink(path.join(destDir, BACKUP_INTENT_FILE)).catch(() => {});
+		await fs.unlink(`${victim}.codice-backup`).catch(() => {});
+	});
+
 	it("stages a directory recursively while honoring excludeNames", async () => {
 		const srcDir = path.join(templateDir, "pkg");
 		const keepFile = path.join(srcDir, "keep.txt");

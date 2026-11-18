@@ -8,6 +8,14 @@ import { VerboseLogger } from "./VerboseLogger";
 const BACKUP_SUFFIX = ".codice-backup";
 
 /**
+ * Size escape: this file grew beyond the 200-line convention through the
+ * FEV atomic-safety hardening (symlink guards, interruption recovery,
+ * concurrency control). The commit/rollback logic is one safety story —
+ * splitting it would scatter the invariants it protects. Revisit only
+ * with a dedicated refactor pass.
+ */
+
+/**
  * Atomic file staging, commit, and rollback operations.
  *
  * Files are staged to a staging directory, then atomically renamed to the
@@ -96,14 +104,17 @@ export class AtomicStager {
 		const promoted = new Set<string>();
 		const intentPath = path.join(this.destinationRoot, BACKUP_INTENT_FILE);
 
-		// Fail-fast: refuse if previous commit was interrupted (hard-kill left orphan).
-		await this.assertNoOrphanIntent(intentPath);
+		// Fail-fast, or auto-recover a provably-dead interrupted commit.
+		const recoveryNote = await this.resolveOrphanIntent(intentPath);
 
 		try {
 			// O_EXCL create (flag "wx"): only one run can claim the marker, so
 			// a second concurrent commit fails cleanly instead of interleaving.
 			try {
-				await fs.writeFile(intentPath, new Date().toISOString(), { encoding: "utf-8", flag: "wx" });
+				await fs.writeFile(intentPath, `${process.pid} ${new Date().toISOString()}`, {
+					encoding: "utf-8",
+					flag: "wx",
+				});
 			} catch (createError) {
 				if ((createError as NodeJS.ErrnoException)?.code === "EEXIST") {
 					throw new Error(
@@ -152,44 +163,126 @@ export class AtomicStager {
 					` WARNING: commit succeeded but the backup intent marker could not be removed ` +
 					`(${detail}). Inspect ${intentPath} before the next update.`;
 			}
-			return residueNote;
+			return residueNote + recoveryNote;
 		} catch (error) {
 			// Rollback on failure. Rename-promoted files (no backup existed) are
 			// unlinked so they cannot leak as partial results; unlink failures
 			// are reported, not thrown — the residue message is the best-effort
 			// guarantee here. Remove intent marker after handled rollback —
-			// only a hard-kill leaves an orphan marker that blocks the next run.
+			// only a hard-kill leaves an orphan marker, and resolveOrphanIntent
+			// auto-recovers it when backups allow.
 			const residueNote = await this.rollbackFailedCommit(promoted, backups, intentPath);
 
 			const message = error instanceof Error ? error.message : String(error);
-			throw new Error(`Failed to commit staged files: ${message}${residueNote}`);
+			throw new Error(`Failed to commit staged files: ${message}${residueNote}${recoveryNote}`);
 		}
 	}
 
 	/**
-	 * Fail-fast guard: refuse when a previous commit was interrupted by a
-	 * hard-kill and left its intent marker behind. The marker content names
-	 * the staging directory the interrupted run was committing. Fail-closed
-	 * policy (mirrors ensureNotSymlink): only ENOENT means "absent" — any
-	 * other read error leaves the marker's state unknown, so the run is
-	 * refused instead of risking a second interleaved commit.
+	 * Decide what to do with a leftover intent marker from a previous
+	 * commit. Fail-closed policy (mirrors ensureNotSymlink): only ENOENT
+	 * means "absent" — any other read error leaves the marker's state
+	 * unknown, so the run is refused instead of risking a second
+	 * interleaved commit.
+	 *
+	 * Recovery policy for an orphan marker (hard-kill during commit):
+	 * the marker records the writer's PID, so recovery happens ONLY when
+	 * that process is provably dead AND `.codice-backup` files exist to
+	 * restore. Without backups the pre-commit state is not reconstructible
+	 * (promoted-without-backup files are unidentifiable) — hard-block.
+	 * A marker without a parseable PID (older format, hand-edited) cannot
+	 * be liveness-checked — hard-block.
+	 *
+	 * @returns a residue note describing the recovery ("" when none).
 	 */
-	private async assertNoOrphanIntent(intentPath: string): Promise<void> {
+	private async resolveOrphanIntent(intentPath: string): Promise<string> {
 		let orphanIntent: string | null = null;
 		try {
 			orphanIntent = await fs.readFile(intentPath, "utf-8");
 		} catch (error) {
-			if ((error as NodeJS.ErrnoException)?.code === "ENOENT") return;
+			if ((error as NodeJS.ErrnoException)?.code === "ENOENT") return "";
 			const detail = error instanceof Error ? error.message : String(error);
 			throw new Error(`Cannot verify backup intent marker '${intentPath}': ${detail}`);
 		}
-		if (orphanIntent !== null) {
+
+		const pidMatch = /^(\d+) /.exec(orphanIntent);
+		if (pidMatch === null) {
+			// No parseable PID (older format, hand-edited): cannot check
+			// liveness — fail-closed.
+			this.blockOnOrphanIntent(orphanIntent);
+		}
+		if (this.isProcessAlive(Number(pidMatch[1]))) {
 			throw new Error(
-				`Previous commit was interrupted (intent recorded at ${orphanIntent}). ` +
-					`Inspect .codice-backup manually before retrying. ` +
-					`Remove ${BACKUP_INTENT_FILE} to force a retry.`,
+				`Another commit may still be in progress (intent recorded at ${intentPath}). ` +
+					"Inspect .codice-backup manually; remove the marker only when no update is running.",
 			);
 		}
+		return this.recoverInterruptedCommit(intentPath);
+	}
+
+	/** Throw the manual-inspection error for an unrecoverable orphan marker. */
+	private blockOnOrphanIntent(orphanIntent: string): never {
+		throw new Error(
+			`Previous commit was interrupted (intent recorded at ${orphanIntent}). ` +
+				`Inspect .codice-backup manually before retrying. ` +
+				`Remove ${BACKUP_INTENT_FILE} to force a retry.`,
+		);
+	}
+
+	/** true unless the OS says the PID does not exist; unknown states count as alive. */
+	private isProcessAlive(pid: number): boolean {
+		try {
+			process.kill(pid, 0);
+			return true;
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException)?.code === "ESRCH") return false;
+			return true; // EPERM etc. — assume alive (fail-closed)
+		}
+	}
+
+	/**
+	 * Complete the rollback a hard-killed commit never finished: restore
+	 * every on-disk `.codice-backup` to its destination, sweeping only
+	 * successfully-restored backups (never delete the only copy). Called
+	 * only when the marker's writer PID is dead; a leftover staging dir
+	 * from the killed run is left as residue — sweeping it could hit a
+	 * live concurrent run's staging dir.
+	 */
+	private async recoverInterruptedCommit(intentPath: string): Promise<string> {
+		const entries = await walkDirectory(this.destinationRoot).catch(() => [] as string[]);
+		const backupFiles = entries.filter((entryPath) => entryPath.endsWith(BACKUP_SUFFIX));
+		if (backupFiles.length === 0) {
+			this.blockOnOrphanIntent(
+				"no .codice-backup files exist — the pre-commit state is not reconstructible",
+			);
+		}
+
+		let restored = 0;
+		for (const backupPath of backupFiles) {
+			const destPath = backupPath.slice(0, -BACKUP_SUFFIX.length);
+			try {
+				await fs.copyFile(backupPath, destPath);
+			} catch (error) {
+				// Failed restore keeps the backup — it may be the only copy.
+				this.logger.log(
+					"recover",
+					`could not restore backup ${backupPath}: ${error instanceof Error ? error.message : String(error)}`,
+				);
+				continue;
+			}
+			restored++;
+			try {
+				await fs.unlink(backupPath);
+			} catch {
+				// Ignore cleanup errors for backup files
+			}
+		}
+		await fs.unlink(intentPath).catch(() => {});
+		this.logger.log("recover", `restored ${restored} backup(s) from an interrupted commit`);
+		return (
+			` WARNING: recovered an interrupted commit: restored ${restored} .codice-backup file(s). ` +
+			"Files the interrupted run promoted WITHOUT a backup may remain in the destination."
+		);
 	}
 
 	/**
