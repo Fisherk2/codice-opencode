@@ -17,7 +17,7 @@ import { LEGACY_BANNER_MESSAGE } from "../../../src/application/legacyBanner";
 import type { VersionDisplayInfo } from "../../../src/application/ports/IUserPrompt";
 import type { InstallUseCaseBase } from "../../../src/application/use-cases/InstallUseCaseBase";
 import { ProjectInstallUseCase } from "../../../src/application/use-cases/ProjectInstallUseCase";
-import { detectVersionContext } from "../../../src/cli/main";
+import { detectVersionContext } from "../../../src/cli/versionContext";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import { buildVersionInfoMessages } from "../../../src/infrastructure/adapters/versionInfoMessages";
 import { OPENCODE_SYMLINKS } from "../../../src/infrastructure/config/symlinks";

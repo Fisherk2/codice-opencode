@@ -15,11 +15,6 @@ import { type CliOptions, type Mode, parseArgs } from "./parse-args";
 import { handleTerminalFlags, registerSigintHandler } from "./signalHandlers";
 import { detectVersionContext } from "./versionContext";
 
-export { createDependencies, type Dependencies } from "./container";
-export { VERSION } from "./output";
-export { type CliOptions, type Mode, type ParsedArgs, parseArgs } from "./parse-args";
-export { handleTerminalFlags, registerSigintHandler } from "./signalHandlers";
-export { detectVersionContext } from "./versionContext";
 // Export main for dynamic import via bin.js (npm requires .js bin extension)
 export { main };
 
