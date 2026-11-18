@@ -66,6 +66,15 @@ export class WorkspaceVersion {
 	}
 
 	/**
+	 * True when the string parses as valid semver. Single source of
+	 * version-string validation: callers (e.g. UpdateWorkspaceUseCase's
+	 * new-version resolution) must not re-import semver directly.
+	 */
+	static isValidVersion(version: string): boolean {
+		return valid(version) !== null;
+	}
+
+	/**
 	 * Create a WorkspaceVersion from a raw JSON object.
 	 * Accepts both the v2.0 "version" field and the legacy v1.x
 	 * "installedVersion" field for backward compatibility.

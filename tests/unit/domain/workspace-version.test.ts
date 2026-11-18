@@ -172,6 +172,18 @@ describe("WorkspaceVersion comparison", () => {
 	});
 });
 
+describe("WorkspaceVersion.isValidVersion", () => {
+	test("accepts valid semver strings", () => {
+		expect(WorkspaceVersion.isValidVersion("1.0.0")).toBe(true);
+		expect(WorkspaceVersion.isValidVersion("2.1.3-beta.1")).toBe(true);
+	});
+
+	test("rejects non-semver strings", () => {
+		expect(WorkspaceVersion.isValidVersion("not-a-version")).toBe(false);
+		expect(WorkspaceVersion.isValidVersion("")).toBe(false);
+	});
+});
+
 describe("WorkspaceVersion v2.0 format", () => {
 	test("fromJSON accepts v2.0 format with version and installedPacks", () => {
 		const v = WorkspaceVersion.fromJSON({

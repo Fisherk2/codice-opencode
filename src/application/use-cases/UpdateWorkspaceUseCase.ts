@@ -1,6 +1,5 @@
-import { valid } from "semver";
 import { FILE_RULE_MANIFEST, filterByPacks } from "../../domain/entities/FileRuleManifest";
-import type { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
+import { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
 import type { IStagedFileSystem } from "../../domain/ports/IStagedFileSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
@@ -183,7 +182,7 @@ export class UpdateWorkspaceUseCase {
 	 */
 	private resolveNewVersion(options: UpdateWorkspaceOptions | undefined): Result<string, Error> {
 		const resolved = options?.version ?? this.bundledVersion;
-		if (valid(resolved)) {
+		if (WorkspaceVersion.isValidVersion(resolved)) {
 			return success(resolved);
 		}
 		return failure(
