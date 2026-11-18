@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.1.5] - 2026-11-17
+## [2.1.5-beta.1] - 2026-11-18
 
-Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilización **INCOMPLETA** de `1941ed3` cerrando los issues #111–#116 y repara las referencias huérfanas que dejó la reestructuración del template. Métricas finales: 1991 tests / 0 fail, 31/31 e2e, `tsc --noEmit` 0, lint 0.
+Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilización **INCOMPLETA** de `1941ed3` cerrando los issues #111–#116 y repara las referencias huérfanas que dejó la reestructuración del template. Métricas finales: 2027 tests / 0 fail, 31/31 e2e, `tsc --noEmit` 0, lint 0.
 
 ### Added
 
@@ -31,6 +31,7 @@ Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilizaci
 - **Referencias huérfanas de la reestructuración**: 32 enlaces de ADR apuntan a `docs/adr/` (23 ADRs; `specs/adr/` ya no existe), y las menciones a skills y artefactos borrados (`obsidian-*`, `xlsx`, `skills-lock.json`, `.gitmessage`) quedan retiradas de `specs/`, `obsidian-vault-writer.md` y `docs/wiki-source/`.
 - **Payload adyacente fuera de alcance registrado** en `docs/WORKFLOW.md` (FEV-31) y `docs/TECH_DEBT.md`: el traslado de ADRs, el churn de skills (−8 / +17), el borrado de `skills-lock.json`/`.gitmessage`/`requirements.txt`, los manifiestos opcionales `Cargo.toml`/`package.json`/`pyproject.toml`, la reescritura de estilo de 13 comandos y los **6 plugins** de `opencode.json` (#113, previos a FEV-31). Los **swaps de modelo de los 6 agentes primarios** quedan documentados como cambio **adyacente y fuera de alcance** — no son trabajo de FEV-31.
 - **Veredicto de `1941ed3` conservado** como estabilización INCOMPLETA en `docs/diagnosis/fix30-fev31-partial-issue-implementation.md` (§2 y §4.1), con el cierre de FEV-31 anexado: el registro histórico no se reescribe.
+- **Remediación de pre-launch review** (Fase D): saneado de caracteres de control en errores de `.codice-backup-intent`, endurecimiento del reporte de errores del CLI (una sola razón por fallo), escape `--` documentado operativo, preservación del modo de archivo al restaurar backups, y endurecimiento de CI (env sobre interpolación, permisos por defecto, sin credenciales persistidas).
 
 ## [2.1.4] - 2026-09-25
 
