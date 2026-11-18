@@ -1,67 +1,89 @@
-# Waterfall / Cascade Delivery
+# Waterfall
 
-Purpose: describe the sequential model, its gates, and the narrow cases where it beats slicing — plus how it fails when applied to discovery work.
+Purpose: explain the sequential, plan-driven model, its gates, and where it honestly beats slicing.
 
-## The model
+## Definition and origin
 
-Work moves through sequential phases; each phase completes before the next begins and hands over artifacts:
+Work moves through sequential phases — requirements, design, implementation, verification, deployment, maintenance — and each phase completes and signs off before the next begins. **Cascade** is the same shape with formal approval at each gate; the gate, not the sequence, is the defining feature.
 
-```
-Requirements → Design → Implementation → Verification → Deployment → Maintenance
-     │            │            │              │
-   gate         gate         gate           gate
-```
+The model is usually credited to Winston Royce's 1970 paper, but the attribution is ironic. Royce described the linear flow to show why it was "risky and invite[s] failure" when testing happens only at the end, then recommended documentation, doing the job twice, and involving the customer. The flawed diagram became the model; the fixes did not. Both the National Academies and Atlassian note this history.
 
-**Cascade** is the same shape with formal sign-off at each gate: a downstream phase may not start (or may not deploy) until the upstream artifact is approved. The gate is the defining feature, not the sequencing. Sequencing alone is just a plan.
-
-## When it is genuinely the right choice
+## When it fits
 
 | Condition | Why sequential wins |
 |---|---|
-| **Scope is fixed and priced** | Fixed-price contracts, tender responses, regulated deliverables: the buyer needs a frozen baseline before spending |
-| **Requirements are stable and knowable** | Hardware, protocols, interfaces defined by another party — discovery adds nothing |
-| **Gates are external and mandatory** | Certification, safety case, security accreditation, audit evidence — the auditor needs a document to sign at a defined moment |
-| **Change cost is asymmetric** | Safety-critical firmware, destructive data migrations, medical devices: a wrong turn late is unrecoverable |
-| **Many teams share frozen interfaces** | Contract-first integration across organisational boundaries |
-| **Work is genuinely repeatable** | You have built this exact system before and know every requirement |
+| Scope is fixed and priced | Fixed-price contracts and tenders need a frozen baseline before spending |
+| Requirements are stable and knowable | Protocols and interfaces defined by another party leave little to discover |
+| Gates are external and mandatory | Certification, safety cases, accreditation and audits need a signed artifact at a defined moment |
+| Change cost is asymmetric | Safety-critical firmware and destructive migrations make a late wrong turn unrecoverable |
+| Work is genuinely repeatable | The same system has been built before and every requirement is known |
 
-In these cases waterfall is not bureaucratic theatre — it is the cheapest way to make the commit point explicit. Slicing would move the commitment later, which is exactly what the contract forbids.
+When these conditions hold, waterfall makes the commit point explicit. Slicing would move commitment later, which is exactly what the contract forbids.
 
-## Failure modes on discovery work
+## How it works
 
-| Failure | Mechanism | Observable symptom |
+1. **Baseline the requirements** and freeze the parts the gate requires frozen.
+2. **Design against the baseline**, producing the artifacts the next phase consumes.
+3. **Implement and hand over** with traceability from requirement to artifact.
+4. **Verify at the end of the interval**, then deploy and maintain.
+5. **Hybrid when gates and short loops collide**: keep the external gate, plan vertical slices inside the interval, and bring *working behaviour plus tests* to the gate rather than documents alone. Freeze only the interface the gate actually needs.
+
+A gate evidence pack should name, per gate: the artifact, the slice that produced it, the verifier, and the decision recorded. If the verifier can run the test, the evidence is stronger than a report about the test.
+
+```mermaid
+flowchart LR
+    accTitle: Waterfall Phases and Sign-off Gates
+    accDescr: Sequential phases from requirements to maintenance, each closed by an approval that can send the work back for revision.
+
+    requirements[Requirements] --> gate_one{Approved?}
+    gate_one -->|Yes| design[Design]
+    gate_one -->|No| revise[Revise artifacts]
+    revise --> requirements
+    design --> gate_two{Approved?}
+    gate_two -->|Yes| implement[Implementation]
+    gate_two -->|No| revise
+    implement --> verify[Verification]
+    verify --> deploy[Deployment]
+    deploy --> maintain[Maintenance]
+
+    classDef phase fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
+    classDef gate fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
+    class requirements,design,implement,verify,deploy,maintain,revise phase
+    class gate_one,gate_two gate
+```
+
+## Strengths and failure modes
+
+| Strength | Failure mode | Symptom / correction |
 |---|---|---|
-| **Late feedback** | Users first see the system at verification, months after requirements froze | "That is not what we meant" at UAT |
-| **Requirements fiction** | The requirements document asserts knowledge the team does not have | Long requirement sections with no owner or example |
-| **Change resistance** | Any change requires reopening a signed gate, so changes are suppressed rather than priced | Defects logged as "out of scope" instead of re-planned |
-| **Integration cliff** | Components are built against documents, not against each other | The verification phase discovers interface mismatches at full cost |
-| **Documentation as progress** | Completing a phase means producing a document, not a working behaviour | Green status with nothing runnable |
-| **Risk back-loaded** | Unknowns surface at the phase where they are most expensive | The last 20% takes 60% of the schedule |
-| **Test-last** | Verification is a phase, so tests are written after the design is frozen | Tests that assert the implementation, not the need |
+| Explicit, priced commit point | Requirements fiction | Sections assert knowledge nobody has; mark assumptions and schedule the slice that tests them |
+| Clear structure and documentation | Documentation as progress | Green status with nothing runnable; make each phase end in a demoable capability |
+| Good for fixed interfaces across many teams | Integration cliff | Components meet at verification; integrate each slice with what already exists |
+| Predictable cost and schedule when scope is stable | Late feedback | "That is not what we meant" at user acceptance; shorten the loop inside gate intervals |
+| Strong traceability for audits | Risk back-loaded | The last 20% takes 60% of the schedule; schedule the riskiest slice first |
+| Replicable process | Change resistance | Defects logged as "out of scope"; publish a priced change procedure |
 
-The root cause is the same in every row: waterfall assumes the requirements are *known*, and treats *learning* as a phase failure. When the requirement is genuinely unknown, a sequential plan converts ignorance into schedule debt.
+## Mapping to vertical slices
 
-## Hybrid: gates outside, slices inside
-
-The productive compromise for regulated or contracted work:
-
-1. Keep the external gates untouched — they are commitments, not process preferences.
-2. Treat each gate interval as a box. Inside the box, plan vertical slices.
-3. Bring evidence to the gate as *working behaviour plus tests*, not only documents. Auditors accept demonstrable behaviour; it is usually stronger evidence than a design document.
-4. Freeze only the interfaces the gate actually needs frozen. Everything else stays revisable inside the interval.
-
-Aim the slice boundaries at the gates: a gate interval that ends with a demoable capability is far cheaper to defend than one that ends with a design review.
-
-## How this changes the phase plan
-
-- Do **not** name phases after the waterfall stages when the work is discovery-driven. "Design phase" and "implementation phase" are stage names masquerading as plan.
-- Do name phases after capabilities, and record which external gate each phase must satisfy.
-- If a gate cannot be satisfied by a demoable increment (for example, certification requires a complete hazard analysis), make that analysis a task inside the slice it protects, not a standalone phase.
-- Keep a phase count in the Prototype/MVP/Enterprise range from `SKILL.md`; a waterfall plan with eleven stages usually means the stage names were copied from a template rather than derived from the work.
+- A phase becomes a **gate interval**; inside it, plan one or more capability slices. Never name the phase after a waterfall stage.
+- The slice that touches a gated boundary carries the evidence: acceptance test, negative path, and rehearsed rollback.
+- High blast radius raises the quality bar, not the phase count: more verification per slice, smaller slices, explicit down-migration.
+- Where a gate genuinely requires a complete hazard analysis before code, make that analysis a task inside the slice it protects.
+- Record which requirements are frozen and which stay revisable between gates; the frozen set should be minimal.
 
 ## Verification questions
 
-1. Can every phase be traced to a gate or to a capability? If it maps to neither, delete it.
-2. Is any requirement in the baseline actually an assumption? Mark it, and schedule the slice that tests it first.
-3. Does any gate depend on a document that a working slice could not replace? If not, replace it.
-4. If the scope changes after gate one, what is the priced procedure? If the answer is "there is none", agile is the honest choice.
+1. Can every phase be traced to a gate or to a capability? If neither, delete it.
+2. Is any baseline requirement actually an assumption? Which slice tests it first?
+3. Can the verifier reproduce each piece of gate evidence by running a test?
+4. If scope changes after gate one, is there a priced procedure?
+5. Does any gate freeze an internal implementation detail rather than an interface?
+
+## External References
+
+| Source | What to consult it for | URL |
+|--------|------------------------|-----|
+| National Research Council (2010), DoD software acquisition | Origin of the model, documented criticism, preference for iterative-incremental development | https://www.nationalacademies.org/read/12823/chapter/5 |
+| Atlassian — Waterfall methodology | Phases, benefits, limitations and when the sequential model fits | https://www.atlassian.com/agile/project-management/waterfall-methodology |
+| Wikipedia — Waterfall model (index only) | Historical summary, modified waterfall variants, Royce's actual recommendation | https://en.wikipedia.org/wiki/Waterfall_model |
+| Agile Manifesto | Value contrast: responding to change over following a plan | https://agilemanifesto.org/ |

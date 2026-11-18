@@ -1,18 +1,20 @@
 ---
 name: vertical-slice-architecture
-description: Plans implementation phases as vertical slices through every layer instead of horizontal layer-by-layer work. Use when writing or updating an implementation roadmap in docs/WORKFLOW.md, when asked how many phases a project needs, when choosing between waterfall/cascade and agile (Scrum, Kanban) delivery, or when cutting work into feature slices by user-visible capability. Triggers on vertical slice, feature slice, phase count, roadmap, waterfall, cascade, agile, scrum, kanban, sprint, incremental delivery, CQRS slice, prototype, MVP, enterprise scope.
+description: Plan implementation phases as vertical slices — each shipping a user-visible capability across every layer — instead of horizontal layer-by-layer work. Use this skill whenever you write or revise an implementation roadmap, decide how many phases a scope needs, choose among waterfall/cascade, Scrum, Kanban or a hybrid, cut work into feature slices, or size a prototype, MVP or enterprise scope. Trigger on vertical slice, feature slice, phase count, roadmap, waterfall, cascade, agile, scrum, kanban, sprint, incremental delivery, CQRS slice, prototype, MVP, enterprise scope — even when the user never names the skill.
 ---
 
 # Vertical Slice Architecture
 
 A vertical slice is one user-visible capability delivered end to end — input, logic, persistence, output — so every phase ships something a person can use and a test can prove. Plan by capability, not by layer: "user can reset their password" is a slice; "build the database layer" is not.
 
+Read the reference files only for the question at hand: methodology choice, slice mechanics, sequencing, or a concrete example. They hold the detail so this index stays usable in a single glance.
+
 ## When to Use (and When NOT to)
 
 | Use When | Skip When |
 |----------|-----------|
 | Planning implementation phases for a feature, spec, or migration | The work is a single-file change with no roadmap |
-| Writing or revising `docs/WORKFLOW.md` | The roadmap already exists and you are only executing a phase |
+| Writing or revising an implementation roadmap | The roadmap already exists and you are only executing a phase |
 | Choosing between waterfall/cascade and agile delivery | The organisation mandates a process you cannot change |
 | Deciding how many phases a scope needs | The phase count is fixed by an external contract |
 | A roadmap is layer-shaped (DB → API → UI) and keeps slipping | Pure research spikes with no deliverable |
@@ -39,6 +41,29 @@ Three consequences worth stating plainly:
 3. **Mixed is normal.** A safety-critical subsystem can be waterfall (frozen interface, formal verification) while the surrounding product is agile. Record the split and the seam.
 
 If two signals conflict (frozen scope but a one-week feedback loop), prefer **agile** and honour the gate: the gate constrains *when* you may ship, not *how* you build.
+
+```mermaid
+flowchart TB
+    accTitle: Fast Triage for Delivery Method
+    accDescr: Decision tree mapping irreversibility, hypothesis status, requirement change and work arrival to a methodology and phase count.
+
+    irreversible{"Design error irreversible?"}
+    irreversible -->|"Yes + gate"| gated_waterfall["Waterfall for that part<br/>slices inside gates<br/>Enterprise 7+"]
+    irreversible -->|No| hypothesis{"Product still a hypothesis?"}
+    hypothesis -->|Yes| prototype["Prototype<br/>1-3 phases"]
+    hypothesis -->|No| req_change{"Requirements change after use?"}
+    req_change -->|Yes| arrival{"Work arrives how?"}
+    arrival -->|"Orderable backlog"| scrum["Scrum<br/>phase around sprints"]
+    arrival -->|"Interrupts"| kanban["Kanban<br/>phase at releases"]
+    req_change -->|No| honest_waterfall["Honest waterfall<br/>phase equals gate interval"]
+
+    classDef decision fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
+    classDef method fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
+    class irreversible,hypothesis,req_change,arrival decision
+    class gated_waterfall,prototype,scrum,kanban,honest_waterfall method
+```
+
+The full tree and its seven worked scenarios are in [DECISION-GUIDE.md](./references/DECISION-GUIDE.md).
 
 ## Phase Count by Scope
 
@@ -74,6 +99,49 @@ Apply in order. Do not assign phases before step 6.
 5. **Order slices by risk and dependency.** Unknowns and irreversible decisions first; pure prerequisites only when they literally block a slice ("cannot store anything until the schema exists"), and then fold the prerequisite into that slice.
 6. **Assign phases.** Group one or more completed slices into a phase, then check the count against the Prototype/MVP/Enterprise range. Name each phase after its capability, never after a layer.
 
+## Output Format
+
+Deliver the roadmap as one table with these six columns, in phase order. The columns force each phase to state what a user gets, how it is proven, and how it is undone — the three questions a layer-shaped plan cannot answer.
+
+```markdown
+# Implementation roadmap — <scope class> (<N> phases)
+
+| Phase | Capability | Touchpoints | Acceptance test | Rollback | Dependency |
+|-------|------------|-------------|-----------------|----------|------------|
+| 1 | An <actor> can <verb> <object> | <contract / logic / persistence / UI / ops> | `<test-name>` — <observable assertion> | <flag off / revert commit / down-migration> | none |
+| 2 | An <actor> can <verb> <object> | <...> | `<test-name>` — <observable assertion> | <...> | Phase 1 |
+
+Methodology: <waterfall container / Scrum / Kanban / hybrid> — because <the signal that decided it>.
+Deliberately out of scope: <capabilities deferred, with the reason>.
+```
+
+Fill every cell. A blank "Rollback" usually means the phase changes data irreversibly — split that phase, or add a down-migration before scheduling it. See [EXAMPLES.md](./references/EXAMPLES.md) for a filled roadmap and a layer-to-slice rewrite.
+
+## When a Slice Resists the Cut
+
+| Situation | What to do | Why |
+|-----------|-----------|-----|
+| **Slice too large** for one planning unit | Narrow the capability (one actor, one state transition, happy path first); do not extend the unit to fit the slice | A slice that cannot be demoed inside the unit has become a mini-project |
+| **Two slices always ship together** | Merge them, or find the capability that truly separates them | Separate deployments that always co-deploy are one slice with two names |
+| **Slice B depends on slice A** | Keep A as its own phase only if A alone is demoable; otherwise fold the prerequisite into B | A standalone "foundation" phase is a layer in disguise |
+| **Temptation to add a shared abstraction** | Require a second consumer with a different slice; until then duplicate the few lines | Premature sharing couples slices and hides the real axis of change |
+| **Risk discovered mid-cut** | Re-order: bring the uncertain slice forward, even if the sequence feels less tidy | Learning late is the most expensive place to learn |
+
+Narrowing keeps the cut vertical: remove *behaviour*, never a *layer*. Dropping persistence to make a slice smaller produces a demo that cannot survive a restart — that is a stub, not a slice.
+
+## Glossary
+
+| Term | Meaning here |
+|------|--------------|
+| **Slice** | The smallest change delivering a complete, user-observable capability across every layer it needs. |
+| **Capability** | Something an actor can do after the phase ships, phrased as a verb with an object. |
+| **Touchpoint** | A layer or contract the slice must cross (schema, logic, persistence, transport/UI, ops). |
+| **Phase** | One or more slices grouped into a demoable, revertible unit with an acceptance test. |
+| **Walking skeleton** | The thinnest slice that connects all major components; proves the path, not the value. |
+| **Gate** | An external approval point (audit, certification, contract) that fixes *when* you may ship. |
+| **CQRS slice** | A slice where read and write shapes genuinely differ, so command and query are separate slices. |
+| **DoD** | Definition of Done: the shared checklist that decides whether a slice counts as finished. |
+
 ## What a Phase Must Contain
 
 - [ ] **Demoable outcome** — who can do what when the phase ends, in one sentence.
@@ -91,12 +159,69 @@ Apply in order. Do not assign phases before step 6.
 - Acceptance criteria written as "code complete" or "tests pass" with no behaviour named.
 - A roadmap that cannot answer "what can a user do after phase 2?".
 - Phase count outside 1-3 / 4-6 / 7+ without a written justification.
+- A "Rollback" column full of dashes — the plan assumes nothing can go wrong.
 
-## References
+## Final verification
+
+- [ ] Every phase name is a capability, and the first is demoable.
+- [ ] Every phase has all six output columns filled, including rollback.
+- [ ] The phase count matches the scope range, or the exception is written down.
+- [ ] The methodology choice is explained by a signal (feedback loop, gate, blast radius), not by habit.
+- [ ] Mandatory gates appear as boundaries or as tasks inside the slice they protect.
+- [ ] Slices are ordered by risk, with the least-known or most irreversible one early.
+- [ ] No phase exists only to produce a document or a plan.
+- [ ] Each shared component in `shared/` has a second consumer.
+- [ ] You can answer "what can a user do after each phase?" without opening the code.
+
+## Reference index
+
+Read only the file for the question at hand. Methodology files share one seven-section shape; cross-cutting files apply to every methodology.
+
+### Traditional / plan-driven
 
 | File | Purpose |
 |------|---------|
-| [./references/WATERFALL.md](./references/WATERFALL.md) | Sequential/cascade model: gates, when it is right, failure modes |
-| [./references/AGILE.md](./references/AGILE.md) | Scrum and Kanban: iterations vs flow, ceremony cost, effect on phases |
-| [./references/VERTICAL-SLICE.md](./references/VERTICAL-SLICE.md) | VSA in depth: heuristics, CQRS, testing, worked 3-slice roadmap |
-| [./references/DECISION-GUIDE.md](./references/DECISION-GUIDE.md) | One-page matrix and five scenarios mapped to a scope |
+| [WATERFALL.md](./references/WATERFALL.md) | Sequential phases, gates, evidence packs and the hybrid of gates outside with slices inside |
+| [V-MODEL.md](./references/V-MODEL.md) | Pairing each design activity with a test level; verification versus validation |
+| [SPIRAL.md](./references/SPIRAL.md) | Risk-driven cycles, anchor milestones and Boehm's six invariants |
+| [ITERATIVE-INCREMENTAL.md](./references/ITERATIVE-INCREMENTAL.md) | Repeating the process and growing the product; history and failure modes |
+| [PROTOTYPING.md](./references/PROTOTYPING.md) | Throwaway versus evolutionary prototypes, and prototypes versus walking skeletons |
+| [RAD.md](./references/RAD.md) | Rapid Application Development, JAD workshops and time-boxed parallel construction |
+| [STAGE-GATE.md](./references/STAGE-GATE.md) | Investment decision gates, go/no-go criteria and gate evidence |
+| [RUP.md](./references/RUP.md) | Rational Unified Process phases, milestones, disciplines and tailoring |
+
+### Agile and lean
+
+| File | Purpose |
+|------|---------|
+| [AGILE.md](./references/AGILE.md) | Family umbrella: values, principles and when to adopt agile; no framework detail |
+| [SCRUM.md](./references/SCRUM.md) | Sprints, roles, artifacts and the Definition of Done as a phase boundary |
+| [KANBAN.md](./references/KANBAN.md) | Flow, WIP limits, explicit policies and pull criteria |
+| [XP.md](./references/XP.md) | Extreme Programming's engineering practices: TDD, pairing, CI, refactoring |
+| [LEAN.md](./references/LEAN.md) | Waste, flow, late decisions and systems thinking |
+| [FDD.md](./references/FDD.md) | Feature-driven development, the overall model and binary progress |
+| [DSDM.md](./references/DSDM.md) | Fixed time and cost with variable scope, MoSCoW and governance |
+| [ASD.md](./references/ASD.md) | Adaptive Software Development's speculate-collaborate-learn cycle |
+| [SHAPE-UP.md](./references/SHAPE-UP.md) | Shaping, appetites, six-week cycles and the betting table |
+| [SCALED-AGILE.md](./references/SCALED-AGILE.md) | SAFe, LeSS, Nexus and Scrum@Scale compared by scaling problem |
+| [CRYSTAL.md](./references/CRYSTAL.md) | Cockburn's method family sized by team size and criticality |
+| [DEVOPS.md](./references/DEVOPS.md) | Delivery pipeline, shared ownership and production feedback |
+| [AUP.md](./references/AUP.md) | Agile Unified Process: RUP structure with fewer artifacts |
+| [TDD-BDD.md](./references/TDD-BDD.md) | Test-first at unit and acceptance level, with Given/When/Then |
+
+### Cross-cutting
+
+| File | Purpose |
+|------|---------|
+| [VERTICAL-SLICE.md](./references/VERTICAL-SLICE.md) | Slicing heuristics, sizing, CQRS, test strategy by risk and two worked roadmaps |
+| [DECISION-GUIDE.md](./references/DECISION-GUIDE.md) | Signal matrix, seven scenarios, fast triage and decision checklist |
+| [EXAMPLES.md](./references/EXAMPLES.md) | A filled roadmap and a layer-shaped plan rewritten as slices |
+
+## External References
+
+| Source | What to consult it for | URL |
+|--------|------------------------|-----|
+| Agile Manifesto — Principles | Early and frequent delivery; working software as the measure of progress | https://agilemanifesto.org/principles.html |
+| Jimmy Bogard — Vertical Slice Architecture | Origin of the term, coupling along the axis of change, refactoring requirement | https://www.jimmybogard.com/vertical-slice-architecture/ |
+| The Scrum Guide (2020, official HTML) | Official definition of Increment and Definition of Done as a commitment | https://scrumguides.org/scrum-guide.html |
+| National Academies (NRC, 2010) | History of the cascade model and Royce's "do it twice" recommendation | https://www.nationalacademies.org/read/12823/chapter/5 |

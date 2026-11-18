@@ -1,6 +1,6 @@
 # Decision Guide: Methodology and Phase Count
 
-Purpose: one page that turns project signals into a methodology and a phase-count range, with five worked scenarios.
+Purpose: one page that turns project signals into a methodology and a phase-count range, with seven worked scenarios and a decision checklist.
 
 ## The matrix
 
@@ -11,7 +11,7 @@ Purpose: one page that turns project signals into a methodology and a phase-coun
 | **Team size** | Many teams on fixed interfaces, or 1-3 with external review | 3-9 co-located | Any size with a defined flow | More teams → more phases, but one per capability owner, not per layer |
 | **Compliance / contractual gates** | Mandatory external gates | Gates accept per-iteration evidence | Gates as flow checkpoints | Each mandatory gate is a phase boundary |
 | **Blast radius** | Unrecoverable failure (safety, money, data) | Recoverable behind a flag | Recoverable and frequently released | High blast radius → more verification per phase, not more layers |
-| **Scope class** | — | — | — | **Prototype 1-3 · MVP 4-6 · Enterprise 7+** |
+| **Scope class** | — | — | — | **Prototype 1-3 / MVP 4-6 / Enterprise 7+** |
 
 ## Reading the matrix
 
@@ -34,6 +34,8 @@ Conflict rule: **when a gate and a short loop collide, keep the gate as the boun
 | 3 | Multi-team platform with audit requirements and a long life | Multiple teams, shared interfaces, quarterly audit gates, regulated data, 2-week loops | Waterfall as container (gates) + Scrum inside each gate interval | **Enterprise** | **7+** |
 | 4 | On-call platform team absorbing interrupts while the product team ships | Continuous interrupts, unpredictable work, 3-4 people, recoverable | Kanban with WIP limits | **MVP** (flow-shaped) | **4-6**, boundaries only at releases |
 | 5 | Embedded payments or medical dosing logic inside an otherwise agile product | Frozen interface, irrecoverable failure, external certification, 2-week product loop | Waterfall for the safety-critical subsystem; Scrum for the product around it; seam documented | **Enterprise** for the subsystem, **MVP** around it | **7+** subsystem, **4-6** product |
+| 6 | Internal platform team with a mandatory quarterly access review and heavy interrupts | Quarterly gate, continuous requests, 4 people, recoverable behind flags, fixed audit interface | Kanban with WIP limits; gate as a boundary, slices inside the interval | **MVP** | **4-6**, one boundary per review |
+| 7 | Greenfield AI assistant whose output quality is unknown but fully reversible | Unknown behaviour, daily experiments, one team, no external gate, flag-controlled rollout | Prototype flow, no ceremony; riskiest capability first | **Prototype** | **1-3** |
 
 ## Scenario detail
 
@@ -46,6 +48,10 @@ Conflict rule: **when a gate and a short loop collide, keep the gate as the boun
 **4 — Kanban.** Phase boundaries are release boundaries. The plan is a capability list with WIP limits and a lead-time target. The main risk is invisible work: make the board the plan or nothing is planned.
 
 **5 — Mixed.** Decide per subsystem and record the seam. The safety-critical part gets frozen interfaces, formal verification, and a waterfall plan; the surrounding product ships slices against a stable contract. Adapters isolate the two so the frozen part does not freeze the whole product.
+
+**6 — Gated interrupts.** This is the case people often misclassify as waterfall because a gate exists. The gate fixes *when* a capability may be released, not *how* the team works between reviews; Kanban absorbs the interrupts, and the access-review evidence comes from the slices that touch permissions. Keep the fixed interface small (the audit contract), leave everything else revisable.
+
+**7 — Reversible unknown.** Unknown model behaviour would push toward a careful plan, but the blast radius is low and the loop is daily, so ceremony and phase count would only slow learning. Spend the phases on the questions: can it run end to end, is the output good enough, does a person want it. A four-phase "data pipeline / model / evaluation / UI" plan would answer none of them.
 
 ## Fast triage (30 seconds)
 
@@ -62,9 +68,31 @@ Can the design be wrong in a way you cannot undo?
       └─ Yes → Prototype, 1-3 phases, no roadmap beyond that
 ```
 
+## Decision checklist
+
+- [ ] The largest blast radius has been named, and its slice has a rollback and a verification step.
+- [ ] Requirement stability was judged from evidence (contract, user, observed change), not optimism.
+- [ ] Mandatory gates are listed with owner, date, and the evidence each will accept.
+- [ ] The feedback loop is measured in the time it takes a user to react, not in meeting cadence.
+- [ ] Team size and interrupt load determined the ceremony, not the framework's reputation.
+- [ ] The chosen methodology makes being wrong cheaper, and that mechanism can be stated in one sentence.
+- [ ] Scope class was applied last as a sanity check on the phase count.
+- [ ] Where two models meet, the seam and its owning team are written down.
+- [ ] The phase count outside the 1-3 / 4-6 / 7+ range, if any, has a written reason.
+
 ## Verification questions
 
 1. Does the chosen methodology explain how being wrong gets cheap, or only how the calendar is drawn?
 2. Does every mandatory gate appear as a phase boundary or as an explicit task inside a slice?
 3. Is the phase count inside its scope range, and if not, is the reason written down?
 4. Would re-ordering phases be treated as a discovery, or as a failure?
+5. When two signals conflict, did you keep the gate and slice inside it, or let the gate reshape the work into layers?
+
+## External References
+
+| Source | What to consult it for | URL |
+|--------|------------------------|-----|
+| Atlassian — Scrum sprints | Typical duration, sprint goal and usable increment per cycle | https://www.atlassian.com/agile/scrum/sprints |
+| Scrum.org — Definition of Done | Quality standard for the Increment and team accountability | https://www.scrum.org/learning-series/definition-done/ |
+| Atlassian — Agile software development for developers | DoD applied to code, CI, tests and the rollout plan | https://www.atlassian.com/agile/software-development/ |
+| Agile Manifesto — Principles | Criterion for choosing feedback-loop length and phase scope | https://agilemanifesto.org/principles.html |
