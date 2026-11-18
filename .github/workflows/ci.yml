@@ -60,6 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          persist-credentials: false
           # Empty input falls back to the default checkout of the triggering
           # ref; release.yml hands over the release tag on dispatch runs.
           ref: ${{ inputs.ref }}
