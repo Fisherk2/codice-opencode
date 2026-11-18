@@ -6,6 +6,18 @@ import { walkDirectory } from "./directoryWalker";
 import { resolveWithinRoot } from "./pathResolver";
 import { VerboseLogger } from "./VerboseLogger";
 
+/**
+ * A backup of an original destination file: its on-disk path plus the
+ * original permission bits, so a restore (rollback or recovery) can
+ * re-materialize the file with its pre-commit mode instead of the
+ * backup's owner-only 0600.
+ */
+interface BackupEntry {
+	backupPath: string;
+	/** Original destination lstat mode (full stat mode; chmod uses & 0o7777). */
+	mode: number;
+}
+
 const BACKUP_SUFFIX = ".codice-backup";
 
 /**
@@ -151,7 +163,7 @@ export class AtomicStager {
 	 */
 	async commitStaging(): Promise<string> {
 		const stagingDir = this.stagingRoot;
-		const backups = new Map<string, string>();
+		const backups = new Map<string, BackupEntry>();
 		const promoted = new Set<string>();
 		const intentPath = path.join(this.destinationRoot, BACKUP_INTENT_FILE);
 
@@ -193,13 +205,28 @@ export class AtomicStager {
 			const prepared = await mapWithLimit(stagedFiles, MAX_CONCURRENT_COPIES, (stagingFilePath) =>
 				this.prepareStagedFile(stagingFilePath, stagingDir, backups),
 			);
+			// The claimed marker ("pid date") is extended with the captured
+			// original modes so a hard-kill recovery can restore file modes;
+			// a failure here is non-fatal (recovery falls back to no modes).
+			try {
+				const modes = Object.fromEntries(
+					[...backups].map(([destPath, entry]) => [destPath, entry.mode]),
+				);
+				await fs.writeFile(
+					intentPath,
+					`${process.pid} ${new Date().toISOString()} ${JSON.stringify(modes)}`,
+					{ encoding: "utf-8" },
+				);
+			} catch {
+				// Keep going: mode restoration is best-effort.
+			}
 			for (const { stagingFilePath, destPath } of prepared) {
 				await this.promoteStagedFile(stagingFilePath, destPath, promoted);
 			}
 
 			await this.cleanStaging();
 
-			for (const backupPath of backups.values()) {
+			for (const { backupPath } of backups.values()) {
 				try {
 					await fs.unlink(backupPath);
 				} catch {
@@ -276,7 +303,7 @@ export class AtomicStager {
 					"Inspect .codice-backup manually; remove the marker only when no update is running.",
 			);
 		}
-		return this.recoverInterruptedCommit(intentPath);
+		return this.recoverInterruptedCommit(intentPath, orphanIntent);
 	}
 
 	/** Throw the manual-inspection error for an unrecoverable orphan marker. */
@@ -306,14 +333,36 @@ export class AtomicStager {
 	 * only when the marker's writer PID is dead; a leftover staging dir
 	 * from the killed run is left as residue — sweeping it could hit a
 	 * live concurrent run's staging dir.
+	 *
+	 * The marker may carry the captured original destination modes
+	 * ("pid date {json}") — restore them when present (best effort).
 	 */
-	private async recoverInterruptedCommit(intentPath: string): Promise<string> {
+	private async recoverInterruptedCommit(
+		intentPath: string,
+		orphanIntent: string,
+	): Promise<string> {
 		const entries = await walkDirectory(this.destinationRoot).catch(() => [] as string[]);
 		const backupFiles = entries.filter((entryPath) => entryPath.endsWith(BACKUP_SUFFIX));
 		if (backupFiles.length === 0) {
 			this.blockOnOrphanIntent(
 				"no .codice-backup files exist — the pre-commit state is not reconstructible",
 			);
+		}
+
+		// Modes tail is optional (older markers are "pid date" only).
+		let modes: Record<string, number> | null = null;
+		try {
+			const modesStart = orphanIntent.indexOf(" ", orphanIntent.indexOf(" ") + 1) + 1;
+			const parsed: unknown = JSON.parse(orphanIntent.slice(modesStart));
+			if (
+				parsed !== null &&
+				typeof parsed === "object" &&
+				Object.values(parsed).every((v) => typeof v === "number")
+			) {
+				modes = parsed as Record<string, number>;
+			}
+		} catch {
+			// No mode tail — fall back to restoring without chmod.
 		}
 
 		let restored = 0;
@@ -328,6 +377,16 @@ export class AtomicStager {
 					`could not restore backup ${backupPath}: ${error instanceof Error ? error.message : String(error)}`,
 				);
 				continue;
+			}
+			// copyFile propagates the backup's 0600 — reapply the original
+			// mode when the marker recorded it (best effort).
+			const mode = modes?.[destPath];
+			if (mode !== undefined) {
+				try {
+					await fs.chmod(destPath, mode & 0o7777);
+				} catch {
+					// Non-fatal: leave the restored file as-is.
+				}
 			}
 			restored++;
 			try {
@@ -351,7 +410,7 @@ export class AtomicStager {
 	 */
 	private async rollbackFailedCommit(
 		promoted: Set<string>,
-		backups: Map<string, string>,
+		backups: Map<string, BackupEntry>,
 		intentPath: string,
 	): Promise<string> {
 		let residueNote = "";
@@ -429,7 +488,7 @@ export class AtomicStager {
 	private async prepareStagedFile(
 		stagingFilePath: string,
 		stagingDir: string,
-		backups: Map<string, string>,
+		backups: Map<string, BackupEntry>,
 	): Promise<{ stagingFilePath: string; destPath: string }> {
 		const relativePath = path.relative(stagingDir, stagingFilePath);
 		const destPath = this.resolveDestinationPath(relativePath);
@@ -466,7 +525,7 @@ export class AtomicStager {
 				// Backups hold the only copy of user content mid-commit —
 				// restrict to owner so other users cannot read it.
 				await fs.chmod(backupPath, 0o600);
-				backups.set(destPath, backupPath);
+				backups.set(destPath, { backupPath, mode: destLstat.mode });
 			} catch (error) {
 				// A surviving original must never be overwritten without a
 				// usable backup: fail the commit so rollback runs instead.
@@ -524,12 +583,15 @@ export class AtomicStager {
 	 * on individual failure. Sweeps only successfully-restored backups to
 	 * avoid discarding the only copy of original content.
 	 */
-	private async restoreBackups(backups: Map<string, string>): Promise<void> {
+	private async restoreBackups(backups: Map<string, BackupEntry>): Promise<void> {
 		const restored = new Set<string>();
-		for (const [destPath, backupPath] of backups) {
+		for (const [destPath, { backupPath, mode }] of backups) {
 			try {
 				await fs.access(backupPath);
 				await fs.copyFile(backupPath, destPath);
+				// copyFile propagates the backup's 0600 — reapply the original
+				// mode so a restored file is not left owner-only.
+				await fs.chmod(destPath, mode & 0o7777);
 				restored.add(backupPath);
 			} catch {
 				// Continue restoring remaining files

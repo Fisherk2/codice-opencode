@@ -121,6 +121,28 @@ describe("AtomicStager", () => {
 		expect(await findBackups(destDir)).toEqual([]);
 	});
 
+	it("preserves the original file mode when restoring backups on rollback", async () => {
+		const destFile = path.join(destDir, "mode-keeper.txt");
+		await fs.writeFile(destFile, "ORIGINAL_MODE");
+		await fs.chmod(destFile, 0o640);
+		// 0o640 differs from both the backup's 0600 and the default 0644, so
+		// the assertion detects a copyFile-propagated backup mode.
+		const src = path.join(templateDir, "mode-keeper.txt");
+		await fs.writeFile(src, "NEW_MODE");
+		const srcBroken = path.join(templateDir, "mode-zzz", "broken.txt");
+		await fs.mkdir(path.dirname(srcBroken), { recursive: true });
+		await fs.writeFile(srcBroken, "SHOULD NOT LAND");
+		await fs.writeFile(path.join(destDir, "mode-zzz"), "I AM A FILE, NOT A DIR");
+
+		await stager.stageFile(src, "mode-keeper.txt");
+		await stager.stageFile(srcBroken, "mode-zzz/broken.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
+
+		expect((await fs.lstat(destFile)).mode & 0o777).toBe(0o640);
+		expect(await Bun.file(destFile).text()).toBe("ORIGINAL_MODE");
+	});
+
 	it("refuses commit when a destination intermediate component is a symlink", async () => {
 		// dest/sub → outside tmp root: the commit must fail closed and must
 		// not write through the link.
