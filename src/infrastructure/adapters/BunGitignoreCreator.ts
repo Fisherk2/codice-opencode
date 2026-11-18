@@ -46,6 +46,16 @@ export class BunGitignoreCreator implements IGitignoreCreator {
 		this.workspaceRoot = path.resolve(workspaceRoot);
 		this.templatePath = path.resolve(templatePath);
 		this.logger = VerboseLogger.from(verbose);
+
+		// Fail-early policy aligned with BunSymlinkCreator: a nonexistent
+		// workspace root is a caller bug — surface it at construction time
+		// instead of at first createGitignore() call.
+		if (!fs.existsSync(this.workspaceRoot)) {
+			throw new Error(
+				`Workspace root does not exist: ${this.workspaceRoot}. ` +
+					`Provide a valid destination path or create the directory first.`,
+			);
+		}
 	}
 
 	/**
