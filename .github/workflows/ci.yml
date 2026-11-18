@@ -79,8 +79,9 @@ jobs:
             ~/.bun/install/cache
             node_modules
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          # No restore-keys: a stale cache built from a different bun.lock
+          # would otherwise bind to this job; --frozen-lockfile installs are
+          # fast enough that an exact-key miss costs seconds.
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -159,8 +160,9 @@ jobs:
             ~/.bun/install/cache
             node_modules
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          # No restore-keys: a stale cache built from a different bun.lock
+          # would otherwise bind to this job; --frozen-lockfile installs are
+          # fast enough that an exact-key miss costs seconds.
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
