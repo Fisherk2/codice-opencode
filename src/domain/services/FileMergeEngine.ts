@@ -92,8 +92,13 @@ export class FileMergeEngine implements IFileMergeEngine {
 			}
 
 			const shouldStage = stageDecisions.get(rule.path);
-			// Defensive guard: prevents crash if a future rule type skips pre-computation.
-			if (shouldStage === undefined) continue;
+			// A rule missing from the plan means the planner and the engine
+			// disagree — silently dropping the file would hide a partial
+			// install. Fail loudly instead.
+			if (shouldStage === undefined) {
+				await this.fileSystem.cleanStaging();
+				return failure(stagingError(rule.path, `rule not planned by computeStagePlan`));
+			}
 			if (!shouldStage) {
 				this.safeEmit(onProgress, {
 					type: "stage_skip",
