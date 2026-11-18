@@ -1,6 +1,9 @@
 /**
  * migrate-v1-to-v2-permissions — Codemod Fase 2 (V1 -> native OpenCode V2).
  *
+ * Size escape: >200 LOC is intentional per ADR-021 — frozen one-shot
+ * verbatim-emit parser, not split.
+ *
  * Converts agent frontmatter from the legacy map form (`permission:` or
  * `tools:`) to the native V2 `permissions:` list of
  * `{action, resource, effect}` rules.
