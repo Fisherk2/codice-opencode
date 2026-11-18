@@ -75,8 +75,12 @@ function validateDestPathAndReport(raw: string): string | null {
 /** Validate pack list and report error if invalid. Returns null on error. */
 function validatePackListAndReport(raw: string): string | null {
 	if (validatePackList(raw) === null) {
+		// Control chars (incl. ANSI escapes) in a raw CLI arg are stripped so
+		// they cannot inject terminal sequences into the error output.
+		// biome-ignore lint/suspicious/noControlCharactersInRegex: stripping them is the point
+		const display = raw.replace(/[\u0000-\u001f\u007f]/g, "");
 		// biome-ignore lint/suspicious/noConsole: CLI user-facing error
-		console.error(`[error] Invalid pack list: "${raw}". Use --help to list valid pack IDs.`);
+		console.error(`[error] Invalid pack list: "${display}". Use --help to list valid pack IDs.`);
 		return null;
 	}
 	return raw;

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, spyOn } from "bun:test";
 import { parseArgs } from "../../../src/cli/parse-args";
 import { validateDestPath } from "../../../src/cli/validateDestPath";
 
@@ -120,6 +120,19 @@ describe("parseArgs", () => {
 		expect(parseArgs(["--clean", "--update"])).toBeNull();
 		expect(parseArgs(["--project", "--update"])).toBeNull();
 		expect(parseArgs(["--clean", "--project", "--update"])).toBeNull();
+	});
+
+	it("strips control chars when echoing an invalid pack list", () => {
+		const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
+		try {
+			const result = parseArgs(["--clean", "--packs", "\u001b[31mghost-pack"]);
+			expect(result).toBeNull();
+			const messages = consoleSpy.mock.calls.map((args) => String(args[0] ?? ""));
+			expect(messages.some((m) => m.includes("ghost-pack"))).toBe(true);
+			expect(messages.some((m) => m.includes("\u001b"))).toBe(false);
+		} finally {
+			consoleSpy.mockRestore();
+		}
 	});
 
 	// -----------------------------------------------------------------------

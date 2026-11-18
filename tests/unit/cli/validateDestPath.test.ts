@@ -29,6 +29,15 @@ describe("validateDestPath (posix)", () => {
 		expect(validateDestPath("my\0project")).toBe("Destination path contains NUL bytes");
 	});
 
+	test("strips control chars before echoing the arg into error messages", () => {
+		// Raw ANSI escapes must never reach the terminal via the error text.
+		const error = validateDestPath("\u001b[31mabc/../../../etc");
+		expect(error).toContain("contains path traversal segments");
+		expect(error).not.toContain("\u001b");
+		// Printable remainder stays visible for diagnosis.
+		expect(error).toContain("[31mabc/../../../etc");
+	});
+
 	test("accepts doubled dots inside a segment name (my..project)", () => {
 		// ".." only matters as a whole path segment, not inside a name.
 		expect(validateDestPath("my..project")).toBeNull();
