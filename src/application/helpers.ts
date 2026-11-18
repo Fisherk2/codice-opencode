@@ -16,7 +16,7 @@
 
 import { getOptionalRules } from "../domain/entities/FileRuleManifest";
 import type { IFileSystem } from "../domain/ports/IFileSystem";
-import type { IStagingSystem } from "../domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../domain/ports/IStagedFileSystem";
 import type { MergeError } from "../domain/types/MergeError";
 import type { ProgressCallback } from "../domain/types/ProgressEvent";
 import { failure, type Result, success } from "../domain/types/Result";
@@ -96,13 +96,13 @@ export async function confirmOverwrite(
  * If the write fails, the staging directory is cleaned up
  * automatically and a Failure is returned with the error context.
  *
- * @param fileSystem - Filesystem + staging adapter (IFileSystem & IStagingSystem).
+ * @param fileSystem - Filesystem + staging adapter (IStagedFileSystem).
  * @param versionData - Data to serialize as JSON into the version file.
  * @param operationLabel - Human-readable label for rollback message (e.g. "Installation", "Update").
  * @returns Success on write, Failure on error (with staging cleaned).
  */
 export async function writeVersionFileSafe(
-	fileSystem: IFileSystem & IStagingSystem,
+	fileSystem: IStagedFileSystem,
 	versionData: Record<string, unknown>,
 	operationLabel: string,
 ): Promise<Result<void, Error>> {

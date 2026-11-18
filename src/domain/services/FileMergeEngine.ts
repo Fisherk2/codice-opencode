@@ -1,7 +1,6 @@
 import type { FileRule } from "../entities/FileRule";
 import type { IFileMergeEngine, MergeExecuteOptions } from "../ports/IFileMergeEngine";
-import type { IFileSystem } from "../ports/IFileSystem";
-import type { IStagingSystem } from "../ports/IStagingSystem";
+import type { IStagedFileSystem } from "../ports/IStagedFileSystem";
 import type { MergeError } from "../types/MergeError";
 import { commitError, stagingError } from "../types/MergeError";
 import type { ProgressCallback, ProgressEvent } from "../types/ProgressEvent";
@@ -25,7 +24,7 @@ import { computeStagePlan, type StagePlan } from "./stagePlanner";
  * additionally removes promoted-but-unbacked files during commit rollback.
  */
 export class FileMergeEngine implements IFileMergeEngine {
-	constructor(private readonly fileSystem: IFileSystem & IStagingSystem) {}
+	constructor(private readonly fileSystem: IStagedFileSystem) {}
 
 	/** Execute merge rules. @param options.updateMode enables tree-level diff for standard dirs. */
 	async execute(

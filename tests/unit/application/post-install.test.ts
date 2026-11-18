@@ -25,8 +25,7 @@ import {
 	type PostInstallOptions,
 	runPostInstallSteps,
 } from "../../../src/application/postInstall";
-import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../../../src/domain/ports/IStagedFileSystem";
 import type { GitignoreError } from "../../../src/domain/types/GitignoreError";
 import type { Result } from "../../../src/domain/types/Result";
 import type { SymlinkError } from "../../../src/domain/types/SymlinkError";
@@ -103,7 +102,7 @@ function createMockSymlinkCreator(
 	};
 }
 
-function createMockFileSystem(writeVersionShouldFail = false): IFileSystem & IStagingSystem {
+function createMockFileSystem(writeVersionShouldFail = false): IStagedFileSystem {
 	return {
 		destinationExists: mockFn(() => Promise.resolve(false)),
 		stageFile: mockFn(async () => {}),

@@ -10,8 +10,7 @@ import type { IUserPrompt } from "../application/ports/IUserPrompt";
 import { CleanInstallUseCase } from "../application/use-cases/CleanInstallUseCase";
 import { ProjectInstallUseCase } from "../application/use-cases/ProjectInstallUseCase";
 import { UpdateWorkspaceUseCase } from "../application/use-cases/UpdateWorkspaceUseCase";
-import type { IFileSystem } from "../domain/ports/IFileSystem";
-import type { IStagingSystem } from "../domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../domain/ports/IStagedFileSystem";
 import { FileMergeEngine } from "../domain/services/FileMergeEngine";
 import { VersionComparator } from "../domain/services/VersionComparator";
 import { BunFileSystem } from "../infrastructure/adapters/BunFileSystem";
@@ -36,7 +35,7 @@ import { VERSION } from "./version";
  * Principle — consumers depend on abstractions, not implementations.
  */
 export interface Dependencies {
-	readonly fileSystem: IFileSystem & IStagingSystem;
+	readonly fileSystem: IStagedFileSystem;
 	readonly userPrompt: IUserPrompt;
 	readonly cleanInstall: CleanInstallUseCase;
 	readonly projectInstall: ProjectInstallUseCase;

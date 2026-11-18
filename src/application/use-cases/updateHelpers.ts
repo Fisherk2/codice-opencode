@@ -8,8 +8,7 @@
  */
 
 import type { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
-import type { IFileSystem } from "../../domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../../domain/ports/IStagedFileSystem";
 import type { Result } from "../../domain/types/Result";
 import { confirmOverwrite, writeVersionFileSafe } from "../helpers";
 import type { IUserPrompt } from "../ports/IUserPrompt";
@@ -50,7 +49,7 @@ export function buildPluginRemnantMessage(): string {
  * @returns true = proceed with the update; false = abort.
  */
 export async function confirmUpdateUnlessForced(
-	fileSystem: IFileSystem & IStagingSystem,
+	fileSystem: IStagedFileSystem,
 	userPrompt: IUserPrompt,
 	localVersion: WorkspaceVersion,
 	destinationPath: string,
@@ -75,7 +74,7 @@ export async function confirmUpdateUnlessForced(
  * then skips optional files (optionalSelections resets per spec §6.1).
  */
 export async function writeVersionAndReportUpdate(
-	fileSystem: IFileSystem & IStagingSystem,
+	fileSystem: IStagedFileSystem,
 	userPrompt: IUserPrompt,
 	safeVersion: string,
 	finalPacks: readonly string[],

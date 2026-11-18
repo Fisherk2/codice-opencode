@@ -2,8 +2,7 @@ import { valid } from "semver";
 import { FILE_RULE_MANIFEST, filterByPacks } from "../../domain/entities/FileRuleManifest";
 import type { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
-import type { IFileSystem } from "../../domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../../domain/ports/IStagedFileSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
 import { checkWritable, createProgressCallback, wrapMergeError } from "../helpers";
@@ -42,7 +41,7 @@ export class UpdateWorkspaceUseCase {
 	 * @param bundledVersion - The version of the template bundled in the package
 	 */
 	constructor(
-		private readonly fileSystem: IFileSystem & IStagingSystem,
+		private readonly fileSystem: IStagedFileSystem,
 		private readonly mergeEngine: IFileMergeEngine,
 		private readonly userPrompt: IUserPrompt,
 		private readonly gitHubClient: IGitHubClient,

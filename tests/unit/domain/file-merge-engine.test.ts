@@ -10,8 +10,7 @@
 
 import { describe, expect, test } from "bun:test";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
-import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../../../src/domain/ports/IStagedFileSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import type { ProgressEvent } from "../../../src/domain/types/ProgressEvent";
 
@@ -23,12 +22,12 @@ interface CallRecord {
 }
 
 function createMockFs(): {
-	fs: IFileSystem & IStagingSystem;
+	fs: IStagedFileSystem;
 	calls: CallRecord[];
 } {
 	const calls: CallRecord[] = [];
 
-	const mockFs: IFileSystem & IStagingSystem = {
+	const mockFs: IStagedFileSystem = {
 		destinationExists: async (path: string) => {
 			calls.push({ method: "destinationExists", args: [path] });
 			return true; // default: file already exists
