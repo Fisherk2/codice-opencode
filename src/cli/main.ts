@@ -120,14 +120,17 @@ async function main(): Promise<void> {
 	const { mode, options, destination } = parsed;
 	const destinationPath = destination ?? process.cwd();
 
-	// Wire dependencies (needed early for SIGINT cleanup)
-	const deps = createDependencies(destinationPath, options.verbose);
-
-	// SIGINT handler — best-effort staging cleanup before exit. An immediate
-	// exit would leave residual .codice-staging/ after an interrupt mid-commit.
-	const unregisterSigint = registerSigintHandler(() => deps.fileSystem.cleanStaging());
-
+	// Dependency creation lives inside the error boundary: a constructor
+	// throw (e.g. BunSymlinkCreator on a nonexistent --dest) must surface
+	// as the clean Fatal error path, not an uncaught stack trace.
+	let unregisterSigint: (() => void) | null = null;
 	try {
+		const deps = createDependencies(destinationPath, options.verbose);
+
+		// SIGINT handler — best-effort staging cleanup before exit. An immediate
+		// exit would leave residual .codice-staging/ after an interrupt mid-commit.
+		unregisterSigint = registerSigintHandler(() => deps.fileSystem.cleanStaging());
+
 		// Detect local installation state and surface it in the TUI header
 		const versionContext = await detectVersionContext(deps.fileSystem);
 		deps.userPrompt.showVersionInfo(versionContext);
@@ -152,7 +155,7 @@ async function main(): Promise<void> {
 		console.error(`Fatal error: ${message}`);
 		process.exit(EXIT_ERROR);
 	} finally {
-		unregisterSigint();
+		unregisterSigint?.();
 	}
 }
 
