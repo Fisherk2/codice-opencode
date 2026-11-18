@@ -8,6 +8,49 @@ import { VerboseLogger } from "./VerboseLogger";
 const BACKUP_SUFFIX = ".codice-backup";
 
 /**
+ * Max parallel filesystem copies during staging and the commit-phase
+ * backup pass. Bounded so a huge pack cannot exhaust file descriptors or
+ * saturate the disk queue; 16 keeps NVMe/SATA drives busy without thrash.
+ */
+const MAX_CONCURRENT_COPIES = 16;
+
+/**
+ * Run fn over items with bounded parallelism, preserving result order by
+ * index. First error stops new launches, drains in-flight work, then
+ * rethrows — no half-finished state is reported as success.
+ */
+async function mapWithLimit<T, R>(
+	items: readonly T[],
+	limit: number,
+	fn: (item: T) => Promise<R>,
+): Promise<readonly R[]> {
+	const results = new Array<R>(items.length);
+	let next = 0;
+	let failed = false;
+	let firstError: unknown = null;
+	const workerCount = Math.min(limit, items.length);
+	const workers = Array.from({ length: workerCount }, async () => {
+		while (!failed) {
+			const index = next++;
+			const item = items[index];
+			if (item === undefined) return;
+			try {
+				results[index] = await fn(item);
+			} catch (error) {
+				// Stop launching; in-flight work drains before the rethrow.
+				if (!failed) {
+					failed = true;
+					firstError = error;
+				}
+			}
+		}
+	});
+	await Promise.all(workers);
+	if (failed) throw firstError;
+	return results;
+}
+
+/**
  * Size escape: this file grew beyond the 200-line convention through the
  * FEV atomic-safety hardening (symlink guards, interruption recovery,
  * concurrency control). The commit/rollback logic is one safety story —
@@ -70,6 +113,7 @@ export class AtomicStager {
 	/**
 	 * Stage a file or directory by copying to the staging area.
 	 * Directories are walked recursively; excludeSubDirs skips named subdirs.
+	 * Copies run with bounded parallelism (MAX_CONCURRENT_COPIES).
 	 */
 	async stageFile(
 		resolvedTemplatePath: string,
@@ -78,14 +122,20 @@ export class AtomicStager {
 	): Promise<void> {
 		this.logger.log("stage", `${resolvedTemplatePath} → ${relativeDestPath}`);
 		const stat = await fs.stat(resolvedTemplatePath);
+		const stagingRoot = await this.ensureStagingRoot();
+		// Fail-closed: a symlink swapped in for the staging root between
+		// stageFile batches must not redirect staging writes outside the
+		// destination root. Checked once per batch (rule), not per file —
+		// per-file re-lstat added thousands of redundant syscalls per pack.
+		await this.ensureNotSymlink(stagingRoot, "staging directory");
 
 		if (stat.isDirectory()) {
 			const files = await walkDirectory(resolvedTemplatePath, false, excludeSubDirs);
-			for (const filePath of files) {
+			await mapWithLimit(files, MAX_CONCURRENT_COPIES, async (filePath) => {
 				const fileRelative = path.relative(resolvedTemplatePath, filePath);
 				const fullRelative = path.join(relativeDestPath, fileRelative);
 				await this.writeFileToStaging(filePath, fullRelative);
-			}
+			});
 		} else {
 			await this.writeFileToStaging(resolvedTemplatePath, relativeDestPath);
 		}
@@ -136,8 +186,14 @@ export class AtomicStager {
 
 			const stagedFiles = await walkDirectory(stagingDir);
 			this.logger.log("commit", `promoting ${stagedFiles.length} staged file(s)`);
-			for (const stagingFilePath of stagedFiles) {
-				await this.renameStagedFile(stagingFilePath, stagingDir, backups, promoted);
+			// Backup phase (bounded parallel), then ordered promote: rollback
+			// correctness depends on promote order matching the staging walk,
+			// so the renames themselves stay sequential.
+			const prepared = await mapWithLimit(stagedFiles, MAX_CONCURRENT_COPIES, (stagingFilePath) =>
+				this.prepareStagedFile(stagingFilePath, stagingDir, backups),
+			);
+			for (const { stagingFilePath, destPath } of prepared) {
+				await this.promoteStagedFile(stagingFilePath, destPath, promoted);
 			}
 
 			await this.cleanStaging();
@@ -332,11 +388,6 @@ export class AtomicStager {
 
 	/** Copy a source file to the staging directory, creating parent dirs as needed. */
 	private async writeFileToStaging(sourcePath: string, stagingRelativePath: string): Promise<void> {
-		const stagingRoot = await this.ensureStagingRoot();
-		// Fail-closed: a symlink swapped in for the staging root (e.g. by an
-		// attacker racing between mkdtemp and this write) must not redirect
-		// staging writes outside the destination root.
-		await this.ensureNotSymlink(stagingRoot, "staging directory");
 		const stagingPath = this.resolveStagingPath(stagingRelativePath);
 		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
 		// copyFile is cross-device-safe (unlike rename) and avoids loading into RAM.
@@ -366,13 +417,17 @@ export class AtomicStager {
 		}
 	}
 
-	/** Atomically rename a staged file to its destination, backing up the original first. */
-	private async renameStagedFile(
+	/**
+	 * Verify the destination for a staged file and back up an existing
+	 * original. Runs in the bounded-parallel backup phase; the ordered
+	 * promote phase performs the actual rename afterwards.
+	 * @returns the resolved destination path for the promote phase.
+	 */
+	private async prepareStagedFile(
 		stagingFilePath: string,
 		stagingDir: string,
 		backups: Map<string, string>,
-		promoted: Set<string>,
-	): Promise<void> {
+	): Promise<{ stagingFilePath: string; destPath: string }> {
 		const relativePath = path.relative(stagingDir, stagingFilePath);
 		const destPath = this.resolveDestinationPath(relativePath);
 		this.logger.log("commit_file", `${relativePath} → ${destPath}`);
@@ -419,7 +474,15 @@ export class AtomicStager {
 				);
 			}
 		}
+		return { stagingFilePath, destPath };
+	}
 
+	/** Atomically rename one staged file to its prepared destination. */
+	private async promoteStagedFile(
+		stagingFilePath: string,
+		destPath: string,
+		promoted: Set<string>,
+	): Promise<void> {
 		await fs.rename(stagingFilePath, destPath);
 		promoted.add(destPath);
 	}
