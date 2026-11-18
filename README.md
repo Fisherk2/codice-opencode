@@ -19,6 +19,7 @@
   </a>
   <img src="https://img.shields.io/badge/typescript-strict-blue" alt="TypeScript Strict">
   <img src="https://img.shields.io/badge/built%20with-bun-fbf0df" alt="Built with Bun">
+  ![OpenCode](https://img.shields.io/badge/opencode-%23000000.svg?style=for-the-badge&logo=opencode&logoColor=ffffff)
 </p>
 
 **OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
