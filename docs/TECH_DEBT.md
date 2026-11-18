@@ -196,6 +196,23 @@ Registered during the FEV-31 payload cleanup sweep: items evaluated and delibera
 - **TD-V2-102 evidence:** `coverage/lcov.info` lists `SF:scripts/migrate-v1-to-v2-permissions.ts` with `LF:266, LH:0` while its test passes under `just test`.
 - **TD-V2-103 evidence:** `tests/unit/cli/validateDestPath.test.ts` covers the Linux branches via a child-process harness, but lcov (`SF:src/cli/validateDestPath.ts`) still reports ~71% because bun instruments only in-process code.
 
+#### Full-project review outcomes (2026-11-17, batch 2 of PR #119)
+
+Registered during the two-axis full-project review fix batches. Decisions, FYIs, and deferred follow-ups with evidence.
+
+| ID | Item | Type | Effort | Risk | Description |
+|----|------|------|--------|------|-------------|
+| **TD-V2-104** | cwd-template-fallback is INTENTIONAL per ADR-007 | Decision (no action) | — | Low | TemplateResolver's cwd fallback flagged in review as a potential injection path; it is the documented third rung of ADR-007's three-path detection cascade (source → bunx/npm → cwd). User decision 2026-11-17: intentional, no action. |
+| **TD-V2-105** | zero required reviews on `develop` is documented single-contributor policy | FYI | — | Low | `scripts/setup-branch-protection.sh` posts `required_approving_review_count: 0` on both branches. Reviewer flagged as a governance gap; it is the documented single-contributor policy (see script design notes + CONTRIBUTING.md). FYI only. |
+| **TD-V2-106** | hard-killed runs leave unswept `.codice-staging-*` residue | Debt | 2-3h | Low | Since the per-run mkdtemp staging dirs (commit `d357519`), a SIGKILL during staging leaves that run's `.codice-staging-<rand>` dir behind; later runs cannot sweep it safely because it is indistinguishable from a LIVE concurrent run's staging dir. Needs a safe-sweep design (e.g. marker-dir pid liveness per staging dir) before deleting anything. |
+| **TD-V2-107** | `AtomicStager.ts` grew to ~545 LOC across the review hardening | Debt | 3-4h | Low | Symlink guards, interruption recovery, and concurrency control all live in one file by design (one safety story; escape hatch documented in the header comment). A dedicated refactor pass may split prepare/promote/recover into modules — only with fresh integration coverage around the split. |
+| **TD-V2-108** | 5s-timeout flakes in `npm-pack.test.ts` and TUI/validation tests under load | Debt | 1-2h | Low | `npm package — tarball structure / extracted installation` (5,000ms hook timeouts) and `main() — execution path` fail intermittently only when the suite runs >60s under heavy machine load; isolated reruns always pass (verified repeatedly on 2026-11-17, incl. at baseline before any fix commits). Fix: raise the hooks' explicit timeouts to 15s or make them load-tolerant. |
+| **TD-V2-109** | update-gating logic in main.ts is sanctioned | FYI | — | Low | Reviewer flagged `resolveInteractiveMode`'s pre-v2.0 update block living in main.ts rather than a use case; ARCHITECTURE.md assigns mode resolution/version context to the CLI layer (`versionContext.ts`, `resolveInteractiveMode`), so this is the documented placement. FYI only. |
+
+- **TD-V2-106 evidence:** FEV batch-1 item 15 commit body (`d357519`) states the leftover-staging trade-off; the concurrent-marker O_EXCL guard prevents interleaving but cannot authorize deleting another run's staging dir.
+- **TD-V2-107 evidence:** `wc -l src/infrastructure/adapters/AtomicStager.ts` = 545 post batch-2 item 1 (`8083a3a`); header comment documents the escape.
+- **TD-V2-108 evidence:** baseline run at `0826445` (before any batch-1 commit) already showed `1 fail / 1 error` with `npm-pack` timeouts; subsequent isolated `bun test tests/integration/packaging/npm-pack.test.ts` runs passed every time.
+
 ### v2.2.0 (Medium Effort — 9 items, 18-24h total)
 
 | ID | Item | Type | Effort | Risk | Description |
