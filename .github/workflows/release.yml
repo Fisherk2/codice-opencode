@@ -51,6 +51,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate tag format (prevent injection)
+        # Runs BEFORE any git checkout of the tag: a crafted inputs.tag must
+        # never reach `git checkout` (a rev like "--upload-pack=…" or an
+        # option-looking token is rejected here first).
+        run: |
+          set -euo pipefail
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "ERROR: Invalid tag format: $TAG"
+            exit 1
+          fi
+          echo "Tag format validated: $TAG"
+
       - name: Checkout release tag (manual dispatch only)
         # Tag-push runs already have the tag checked out. On dispatch the
         # default checkout is the selected branch, so fetch and switch to the
@@ -67,15 +79,6 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
           bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Validate tag format (prevent injection)
-        run: |
-          set -euo pipefail
-          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
-            echo "ERROR: Invalid tag format: $TAG"
-            exit 1
-          fi
-          echo "Tag format validated: $TAG"
 
       - name: Extract release body from CHANGELOG
         run: |
