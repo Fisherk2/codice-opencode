@@ -127,13 +127,15 @@ All computing systems: backend, frontend, mobile, DevOps, databases, APIs, CLI, 
 
 **Architecture & Patterns:** software-architect, microservices-architect, event-driven-architect, domain-driven-design, clean-architect, hexagonal-architect, cqrs-developer, api-designer, graphql-architect, grpc-developer, rest-api-designer, websocket-developer, message-queue-architect, system-designer, distributed-systems
 
+**Processes:** scrum-master
+
 ### 3.3 Pack Assignment — creative (10 agents)
 
 designer, ui-designer, ux-designer, ux-researcher, visual-designer, brand-designer, motion-designer, illustrator, icon-designer, typography-specialist, color-theorist, design-systems-architect, figma-developer, sketch-developer, creative-director
 
 ### 3.4 Pack Assignment — business (90 agents)
 
-product-manager, business-analyst, competitive-analyst, content-marketer, seo-specialist, growth-hacker, marketing-strategist, social-media-manager, email-marketer, copywriter, technical-writer-business, sales-engineer, sales-ops-analyst, account-executive, business-development, partnership-manager, customer-success, retention-specialist, revenue-ops, pricing-strategist, market-researcher, brand-strategist, communications-manager, public-relations, event-planner, community-manager, influencer-manager, affiliate-manager, crm-administrator, hubspot-admin, salesforce-admin, project-manager, scrum-master, agile-coach, product-owner, program-manager, portfolio-manager, strategy-consultant, management-consultant, operations-manager, supply-chain-analyst, logistics-coordinator, procurement-analyst, quality-manager, lean-six-sigma, change-management, executive-coach
+product-manager, business-analyst, competitive-analyst, content-marketer, seo-specialist, growth-hacker, marketing-strategist, social-media-manager, email-marketer, copywriter, technical-writer-business, sales-engineer, sales-ops-analyst, account-executive, business-development, partnership-manager, customer-success, retention-specialist, revenue-ops, pricing-strategist, market-researcher, brand-strategist, communications-manager, public-relations, event-planner, community-manager, influencer-manager, affiliate-manager, crm-administrator, hubspot-admin, salesforce-admin, project-manager, agile-coach, product-owner, program-manager, portfolio-manager, strategy-consultant, management-consultant, operations-manager, supply-chain-analyst, logistics-coordinator, procurement-analyst, quality-manager, lean-six-sigma, change-management, executive-coach
 
 ### 3.5 Pack Assignment — finance (11 agents)
 
