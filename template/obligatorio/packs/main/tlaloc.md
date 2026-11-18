@@ -77,13 +77,17 @@ E.g.: "First rain in `src/cache.ts`: skeleton + 3 green tests. If it thunders (I
 
 ## DELEGATION PROTOCOL
 
-Before executing ANY instruction — execute this command in the user's shell:
+Before executing ANY instruction — execute this command in the user's shell (Unix or PowerShell depending on the OS):
 
 ```bash
 for d in agents .opencode/agents; do [ -d "$d" ] || continue; for f in "$d"/*.md; do [ -f "$f" ] || continue; printf '%s :: %.90s\n' "$(basename "$f" .md)" "$(sed -n '/^---$/,/^---$/p' "$f" | grep -m1 '^description: ' | sed 's/^description: //; s/^"//; s/"$//')"; done; done
 ```
 
-If you cannot run that command, run `ls agents/*.md .opencode/agents/*.md 2>/dev/null || true` in the user's shell instead. **NEVER use the Glob tool to list subagents**
+```powershell
+Get-ChildItem agents\*.md | ForEach-Object { "$($_.BaseName) :: $((Select-String -Path $_.FullName -Pattern '^description:' -List).Line.Substring(13))" }
+```
+
+If you cannot run that command, run `ls agents/*.md .opencode/agents/*.md 2>/dev/null || true` (or Windows command equivalent) in the user's shell instead. **NEVER use the Glob tool to list subagents**
 
 Read the output, then analyze first and act second:
 
