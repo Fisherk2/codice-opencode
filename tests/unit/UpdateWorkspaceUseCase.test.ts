@@ -44,7 +44,9 @@ class FakeFileSystem implements IFileSystem {
 		_destPath?: string,
 		_excludeSubDirs?: Set<string>,
 	): Promise<void> {}
-	async commitStaging(): Promise<void> {}
+	async commitStaging(): Promise<string> {
+		return "";
+	}
 	async cleanStaging(): Promise<void> {}
 	async isWritable(): Promise<boolean> {
 		return true;

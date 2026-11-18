@@ -159,6 +159,9 @@ export function createProgressCallback(userPrompt: IUserPrompt, label: string): 
 					// commit_complete is only emitted when total > 0 (FileMergeEngine
 					// skips commit when nothing was staged), so the progress bar is
 					// guaranteed to have been started by a prior stage_start.
+					if (event.note) {
+						userPrompt.showWarning(event.note);
+					}
 					userPrompt.logProgressEvent(`commit: ${event.total} files committed`);
 					userPrompt.completeProgress();
 					break;

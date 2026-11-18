@@ -34,8 +34,10 @@ export interface IStagingSystem {
 	 * Before each rename, the original destination file (if it exists) is
 	 * backed up. On failure, all backed-up files are restored to guarantee
 	 * project consistency.
+	 * @returns A residue note ("" when clean) for non-blocking post-commit
+	 * cleanup failures, e.g. an intent marker that could not be unlinked.
 	 */
-	commitStaging(): Promise<void>;
+	commitStaging(): Promise<string>;
 
 	/**
 	 * Remove the staging directory recursively (rollback or cleanup).

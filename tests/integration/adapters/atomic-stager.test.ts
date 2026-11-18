@@ -222,6 +222,33 @@ describe("AtomicStager", () => {
 		expect(await Bun.file(path.join(destDir, "intent.txt")).text()).toBe("INTENT");
 	});
 
+	it("reports intent-marker unlink failure as residue instead of swallowing it", async () => {
+		const src = path.join(templateDir, "residue.txt");
+		await fs.writeFile(src, "RESIDUE");
+
+		const realUnlink = fs.unlink.bind(fs);
+		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+		const unlinkSpy = spyOn(fs, "unlink").mockImplementation(async (p: unknown) => {
+			if (String(p) === intentPath) {
+				// Simulate EACCES on the marker cleanup after a successful commit.
+				throw Object.assign(new Error("EACCES: permission denied"), { code: "EACCES" });
+			}
+			return realUnlink(p as Parameters<typeof realUnlink>[0]);
+		});
+
+		try {
+			await stager.stageFile(src, "residue.txt");
+			const residueNote = await stager.commitStaging();
+			// Commit still succeeds, but the failure is visible in the report.
+			expect(residueNote).toContain("intent marker could not be removed");
+			expect(await Bun.file(path.join(destDir, "residue.txt")).text()).toBe("RESIDUE");
+		} finally {
+			unlinkSpy.mockRestore();
+			// Clean up the marker the mocked unlink refused to remove.
+			await realUnlink(intentPath).catch(() => {});
+		}
+	});
+
 	it("throws when .codice-backup-intent exists from interrupted commit", async () => {
 		// Simulate interrupted commit by creating intent marker
 		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);

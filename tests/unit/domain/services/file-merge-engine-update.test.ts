@@ -34,8 +34,9 @@ function createMockFs(): {
 		stageFile: async (relativePath: string, destPath?: string, excludeSubDirs?: Set<string>) => {
 			calls.push({ method: "stageFile", args: [relativePath, destPath, excludeSubDirs] });
 		},
-		commitStaging: async () => {
+		commitStaging: async (): Promise<string> => {
 			calls.push({ method: "commitStaging", args: [] });
+			return "";
 		},
 		cleanStaging: async () => {
 			calls.push({ method: "cleanStaging", args: [] });

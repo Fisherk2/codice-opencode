@@ -68,7 +68,7 @@ export class AtomicStager {
 	 * promoted file whose unlink fails is listed in the thrown error so
 	 * the residue is visible instead of silent.
 	 */
-	async commitStaging(): Promise<void> {
+	async commitStaging(): Promise<string> {
 		const stagingDir = this.stagingRoot;
 		const backups = new Map<string, string>();
 		const promoted = new Set<string>();
@@ -104,7 +104,20 @@ export class AtomicStager {
 				}
 			}
 
-			await fs.unlink(intentPath).catch(() => {});
+			// The commit has succeeded: an intent-marker cleanup failure is
+			// non-blocking residue — report it, never throw (a throw here
+			// would falsely trigger rollback of a completed commit).
+			let residueNote = "";
+			try {
+				await fs.unlink(intentPath);
+			} catch (unlinkError) {
+				const detail = unlinkError instanceof Error ? unlinkError.message : String(unlinkError);
+				this.logger.log("intent_cleanup", `WARNING: could not remove intent marker: ${detail}`);
+				residueNote =
+					` WARNING: commit succeeded but the backup intent marker could not be removed ` +
+					`(${detail}). Inspect ${intentPath} before the next update.`;
+			}
+			return residueNote;
 		} catch (error) {
 			// Rollback on failure. Rename-promoted files (no backup existed) are
 			// unlinked so they cannot leak as partial results; unlink failures

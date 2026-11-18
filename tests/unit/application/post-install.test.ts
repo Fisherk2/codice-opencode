@@ -106,7 +106,7 @@ function createMockFileSystem(writeVersionShouldFail = false): IStagedFileSystem
 	return {
 		destinationExists: mockFn(() => Promise.resolve(false)),
 		stageFile: mockFn(async () => {}),
-		commitStaging: mockFn(async () => {}),
+		commitStaging: mockFn(async (): Promise<string> => ""),
 		cleanStaging: mockFn(async () => {}),
 		isWritable: mockFn(() => Promise.resolve(true)),
 		isEmpty: mockFn(() => Promise.resolve(true)),

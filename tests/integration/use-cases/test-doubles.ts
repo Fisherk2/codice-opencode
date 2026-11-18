@@ -70,8 +70,9 @@ export function createMockFileSystem(options: FileSystemMockOptions = {}): {
 		stageFile: mockFn<IStagingSystem["stageFile"]>(async (path: string) => {
 			calls.stageFile.push(path);
 		}),
-		commitStaging: mockFn<IStagingSystem["commitStaging"]>(async () => {
+		commitStaging: mockFn<IStagingSystem["commitStaging"]>(async (): Promise<string> => {
 			calls.commitStaging++;
+			return "";
 		}),
 		cleanStaging: mockFn<IStagingSystem["cleanStaging"]>(async () => {
 			calls.cleanStaging++;

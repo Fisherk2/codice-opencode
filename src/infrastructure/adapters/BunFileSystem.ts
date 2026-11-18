@@ -92,8 +92,8 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		await this.atomicStager.stageFile(resolved, destPath ?? relativePath, excludeSubDirs);
 	}
 
-	/** Atomic rename: promote all staged files to the destination. */
-	commitStaging(): Promise<void> {
+	/** Atomic rename: promote all staged files; returns a residue note ("" when clean). */
+	commitStaging(): Promise<string> {
 		return this.atomicStager.commitStaging();
 	}
 

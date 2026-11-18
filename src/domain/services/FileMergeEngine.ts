@@ -151,8 +151,9 @@ export class FileMergeEngine implements IFileMergeEngine {
 		}
 
 		this.safeEmit(onProgress, { type: "commit_start", total });
+		let residueNote = "";
 		try {
-			await this.fileSystem.commitStaging();
+			residueNote = await this.fileSystem.commitStaging();
 		} catch (err) {
 			const message = this.errorMessage(err, "Unknown commit error");
 			this.safeEmit(onProgress, { type: "error", filePath: "", message });
@@ -160,7 +161,14 @@ export class FileMergeEngine implements IFileMergeEngine {
 			return failure(commitError(message));
 		}
 
-		this.safeEmit(onProgress, { type: "commit_complete", total });
+		// Non-blocking residue (e.g. intent-marker cleanup failure) rides on
+		// the success event so the TUI surfaces it with the commit report.
+		this.safeEmit(
+			onProgress,
+			residueNote
+				? { type: "commit_complete", total, note: residueNote }
+				: { type: "commit_complete", total },
+		);
 		return success(undefined);
 	}
 
