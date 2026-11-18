@@ -22,7 +22,11 @@ peer = true
 saveTextLockfile = true
 
 # Don't allow modifications without updating lockfile
-frozenLockfile = false
+# Frozen by default: `bun install` must not drift bun.lock behind
+# package.json. Dependency changes go through `bun add`/`bun remove`,
+# which update the lockfile; a desynced plain install fails loudly
+# instead of silently resolving different versions locally.
+frozenLockfile = true
 
 # Maximum concurrent network requests during install
 concurrentScripts = 16
