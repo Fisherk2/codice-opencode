@@ -8,7 +8,7 @@ import type {
 	VersionDisplayInfo,
 } from "../application/ports/IUserPrompt";
 import { getAllPackIds } from "../domain/entities/FileRuleManifest";
-import type { Result } from "../domain/types/Result";
+import { failure, type Result } from "../domain/types/Result";
 import { createDependencies, type Dependencies } from "./container";
 import { EXIT_ERROR, EXIT_INTERRUPT, EXIT_SUCCESS, EXIT_USAGE, VERSION } from "./output";
 import { type CliOptions, type Mode, parseArgs } from "./parse-args";
@@ -85,6 +85,17 @@ export async function runMode(
 			...execOptions,
 			packs,
 		});
+	}
+	// --packs/--packs-all are meaningless with --update (update scope is
+	// installed packs + --update-add-packs); reject instead of silently
+	// dropping the user's selection.
+	if (options.packs !== undefined || options.packsAll) {
+		return failure(
+			new Error(
+				"--packs/--packs-all cannot be combined with --update. " +
+					"Use --update-add-packs to add packs during an update.",
+			),
+		);
 	}
 	return deps.updateWorkspace.execute(destinationPath, {
 		...execOptions,
