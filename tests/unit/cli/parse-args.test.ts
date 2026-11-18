@@ -110,9 +110,9 @@ describe("parseArgs", () => {
 	});
 
 	it("should accept a dash-leading --dest value escaped with --", () => {
-		const result = parseArgs(["--clean", "--dest", "--", "./-weird-name"]);
+		const result = parseArgs(["--clean", "--dest", "--", "-weird-name"]);
 		expect(result).not.toBeNull();
-		expect(result!.destination).toBe("./-weird-name");
+		expect(result!.destination).toBe("-weird-name");
 	});
 
 	it("should reject more than one mode flag", () => {

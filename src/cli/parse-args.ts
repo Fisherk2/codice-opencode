@@ -97,12 +97,14 @@ function readFlagValue(
 	args: readonly string[],
 	valueIndex: number,
 	isDest: boolean,
+	escaped: boolean,
 ): string | null {
 	const raw = args[valueIndex];
 	if (raw === undefined) return null;
 	// A token starting with "-" is the next flag, not a value (e.g.
-	// --dest --force): reject it instead of silently consuming it.
-	if (raw.startsWith("-")) return null;
+	// --dest --force): reject it instead of silently consuming it —
+	// unless a consumed bare "--" escaped it (documented dash-leading values).
+	if (raw.startsWith("-") && !escaped) return null;
 	return isDest ? validateDestPathAndReport(raw) : validatePackListAndReport(raw);
 }
 
@@ -131,8 +133,9 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 
 		if (VALUE_FLAGS.has(arg)) {
 			const isDest = arg === "--dest";
-			if (args[i] === "--") i++; // consume the "--" escape for dash-leading values
-			const value = readFlagValue(args, i, isDest);
+			const escaped = args[i] === "--"; // bare "--" escapes dash-leading values
+			if (escaped) i++; // consume the "--"
+			const value = readFlagValue(args, i, isDest, escaped);
 			if (value === null) return null;
 			if (isDest) destination = value;
 			else values[arg] = value;
