@@ -23,13 +23,10 @@ agent: moctezuma
 
 4. Write tasks with acceptance criteria and verification steps. **Load** `design-patterns` skill when planning which GoF or enterprise patterns to apply in each task. **Load** `architecture-diagrams` alongside `markdown-mermaid-writing` skill to draw diagrams and components.
 
-- Suggest what subagents should invoke the main agent to complete each task, analyze and asign the most appropriate subagents and write them to `tasks/` files, can be multiple subagents per task (parallel/sequential) or none, you must explain what tasks should be delegate in parallel or sequentially (only if it's multiple subagents per task) and if it's a sequential delegation, you must explain the order of the subagents delegation. You should use **ONLY** subagents, **NOT** main agents, the available subagents are:
-
-!`for d in agents .opencode/agents; do [ -d "$d" ] || continue; for f in "$d"/*.md; do [ -f "$f" ] || continue; printf '%s :: %.90s\n' "$(basename "$f" .md)" "$(sed -n '/^---$/,/^---$/p' "$f" | grep -m1 '^description: ' | sed 's/^description: //; s/^"//; s/"$//')"; done; done`
-
-- Suggest what skills should load the subagents (or main builder if applicable) to complete each task, analyze and asign the most appropriate skills and write them to `tasks/` files, can be multiple skills per task or none.
-- Detect and scan MCPs/Plugins configured in this workspace, and suggest what tools should use the subagents (or main agent if applicable) to complete each task, analyze and asign the most appropriate MCPs/Plugins and write them to `tasks/` files, can be multiple MCPs/Plugins per task or none.
-- Establish external resources to consult for each task, analyze and asign the most appropriate external resources and write them to `tasks/` files, can be multiple resources to research per task or none.
+- Suggest what subagents should invoke the main agent to complete each task, analyze and asign the most appropriate subagents and write them to `tasks/` files, can be multiple subagents per task (parallel/sequential) or none, you must explain what tasks should be delegate in parallel or sequentially (only if it's multiple subagents per task) and if it's a sequential delegation, you must explain the order of the subagents delegation. You should use **ONLY** subagents, **NOT** main agents, don't invent subagents names, verify that exist before asigning.
+- Suggest what skills should load the subagents (or main builder if applicable) to complete each task, analyze and asign the most appropriate skills and write them to `tasks/` files, can be multiple skills per task or none, don't invent skills names, verify that exist before asigning.
+- Detect and scan MCPs/Plugins configured in this workspace, and suggest what tools should use the subagents (or main agent if applicable) to complete each task, analyze and asign the most appropriate MCPs/Plugins and write them to `tasks/` files, can be multiple MCPs/Plugins per task or none, don't invent MCP/Plugin names, verify that exist before asigning.
+- Establish external resources to consult for each task, analyze and asign the most appropriate external resources and write them to `tasks/` files, can be multiple resources to research per task or none, don't invent external resources, verify that exist before asigning.
 
 5. The asignment of subagents, skills, tools and external resources to each task should be in a table format.
 6. Add checkpoints between phases within `tasks/plan.md` and `tasks/todo.md` — quality gates that must pass before moving to the next phase
