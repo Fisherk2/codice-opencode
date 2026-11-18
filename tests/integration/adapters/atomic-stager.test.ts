@@ -112,6 +112,50 @@ describe("AtomicStager", () => {
 		expect(await findBackups(destDir)).toEqual([]);
 	});
 
+	it("refuses commit when a destination intermediate component is a symlink", async () => {
+		// dest/sub → outside tmp root: the commit must fail closed and must
+		// not write through the link.
+		const outsideDir = path.join(tmpDir, "outside");
+		await fs.mkdir(outsideDir, { recursive: true });
+		await fs.symlink(outsideDir, path.join(destDir, "sub"));
+
+		const src = path.join(templateDir, "through-link.txt");
+		await fs.writeFile(src, "SHOULD NOT LAND");
+		await stager.stageFile(src, "sub/through-link.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(
+			/destination component .* is a symbolic link/,
+		);
+
+		// Nothing written outside the destination root through the link.
+		const leaked = await walkDirectory(outsideDir).catch(() => []);
+		expect(leaked).toEqual([]);
+		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		await fs.unlink(path.join(destDir, "sub")).catch(() => {});
+	});
+
+	it("replaces a symlinked destination file without backing it up", async () => {
+		// dest/linked.txt → outside file: commit must NOT dereference the
+		// link for backup; the link entry is replaced by the staged file.
+		const outsideFile = path.join(tmpDir, "linked-target.txt");
+		await fs.writeFile(outsideFile, "OUTSIDE ORIGINAL");
+		await fs.symlink(outsideFile, path.join(destDir, "linked.txt"));
+
+		const src = path.join(templateDir, "linked.txt");
+		await fs.writeFile(src, "NEW");
+		await stager.stageFile(src, "linked.txt");
+		await stager.commitStaging();
+
+		// dest/linked.txt is now a regular file with the staged content;
+		// the outside target file is untouched.
+		expect(await fs.lstat(path.join(destDir, "linked.txt")).then((s) => s.isSymbolicLink())).toBe(
+			false,
+		);
+		expect(await Bun.file(path.join(destDir, "linked.txt")).text()).toBe("NEW");
+		expect(await Bun.file(outsideFile).text()).toBe("OUTSIDE ORIGINAL");
+		expect(await findBackups(destDir)).toEqual([]);
+	});
+
 	it("stages a directory recursively while honoring excludeNames", async () => {
 		const srcDir = path.join(templateDir, "pkg");
 		const keepFile = path.join(srcDir, "keep.txt");

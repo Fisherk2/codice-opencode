@@ -228,17 +228,36 @@ export class AtomicStager {
 		const destPath = this.resolveDestinationPath(relativePath);
 		this.logger.log("commit_file", `${relativePath} → ${destPath}`);
 
+		// Fail-closed: a symlinked INTERMEDIATE component would redirect the
+		// rename (and mkdir -p) outside the destination root.
+		await this.assertNoSymlinkedIntermediate(destPath);
+
 		await fs.mkdir(path.dirname(destPath), { recursive: true });
+
+		// Policy for a symlink at destPath itself: replace WITHOUT backup.
+		// rename() replaces the link entry atomically without following it,
+		// but copyFile(destPath, backup) would have dereferenced the link —
+		// unlinking the link first keeps every operation link-free.
+		let destLstat: Awaited<ReturnType<typeof fs.lstat>> | null = null;
+		try {
+			destLstat = await fs.lstat(destPath);
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException)?.code !== "ENOENT") {
+				const detail = error instanceof Error ? error.message : String(error);
+				throw new Error(`Cannot inspect destination file '${relativePath}': ${detail}`);
+			}
+		}
+		if (destLstat?.isSymbolicLink()) {
+			await fs.unlink(destPath);
+		}
 
 		const backupPath = `${destPath}${BACKUP_SUFFIX}`;
 		await this.ensureNotSymlink(backupPath, "backup file");
-		try {
-			await fs.copyFile(destPath, backupPath);
-			backups.set(destPath, backupPath);
-		} catch (error) {
-			if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
-				// destPath does not exist — nothing to back up (new file).
-			} else {
+		if (destLstat && !destLstat.isSymbolicLink()) {
+			try {
+				await fs.copyFile(destPath, backupPath);
+				backups.set(destPath, backupPath);
+			} catch (error) {
 				// A surviving original must never be overwritten without a
 				// usable backup: fail the commit so rollback runs instead.
 				const detail = error instanceof Error ? error.message : String(error);
@@ -251,6 +270,35 @@ export class AtomicStager {
 
 		await fs.rename(stagingFilePath, destPath);
 		promoted.add(destPath);
+	}
+
+	/**
+	 * Fail-closed guard: walk destPath's intermediate components (relative
+	 * to destinationRoot) and refuse if any EXISTING one is a symbolic
+	 * link — mkdir -p and rename would otherwise follow it and write
+	 * outside the destination root. Missing components are fine (mkdir
+	 * creates them inside the root).
+	 */
+	private async assertNoSymlinkedIntermediate(destPath: string): Promise<void> {
+		const relative = path.relative(this.destinationRoot, destPath);
+		const intermediates = relative.split(path.sep).slice(0, -1);
+		let current = this.destinationRoot;
+		for (const part of intermediates) {
+			current = path.join(current, part);
+			let lstat: Awaited<ReturnType<typeof fs.lstat>>;
+			try {
+				lstat = await fs.lstat(current);
+			} catch (error) {
+				if ((error as NodeJS.ErrnoException)?.code === "ENOENT") continue;
+				const detail = error instanceof Error ? error.message : String(error);
+				throw new Error(`Cannot verify destination component '${current}': ${detail}`);
+			}
+			if (lstat.isSymbolicLink()) {
+				throw new Error(
+					`Refusing to write: destination component '${current}' is a symbolic link.`,
+				);
+			}
+		}
 	}
 
 	/**
