@@ -69,6 +69,8 @@ export class UpdateWorkspaceUseCase {
 		// a v2.0+ installation with pack metadata. Missing, corrupt, or pre-v2.0
 		// files are all treated as "must reinstall" — never update blindly.
 		const localVersion = await this.readInstalledVersion();
+		// Graceful exit: readInstalledVersion already emitted the
+		// "no previous install" or "system changed, reinstall" warning.
 		if (localVersion === null) return success(undefined);
 
 		// Pre-2.1.3 installs carry SDD plugin files the updater cannot
@@ -89,6 +91,8 @@ export class UpdateWorkspaceUseCase {
 				options,
 			))
 		) {
+			// Graceful exit: confirmUpdateUnlessForced already showed
+			// "Update cancelled by user." when declined.
 			return success(undefined);
 		}
 
@@ -98,6 +102,8 @@ export class UpdateWorkspaceUseCase {
 		// Compare installed version against bundled template version. Returns
 		// true when no update is needed (installed >= bundled).
 		if (await isAlreadyUpToDate(this.statusDeps, localVersion)) {
+			// Graceful exit: isAlreadyUpToDate already emitted the
+			// "Workspace is already up to date" info message.
 			return success(undefined);
 		}
 
@@ -107,7 +113,12 @@ export class UpdateWorkspaceUseCase {
 			localVersion.installedPacks,
 			options ?? {},
 		);
-		if (finalPacks === null) return success(undefined);
+		if (finalPacks === null) {
+			// Graceful exit: resolveUpdatePacks already showed "Update
+			// cancelled by user." or "No new packs selected" for its
+			// cancel/no-op paths.
+			return success(undefined);
+		}
 
 		// Non-optional rules, scoped to the resolved packs so agents from
 		// unselected packs are never merged.
