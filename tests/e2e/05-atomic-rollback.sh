@@ -9,6 +9,13 @@
 # This tests the SIGINT handler which calls cleanStaging() and exits.
 # If the CLI completes before SIGINT can be sent (fast execution),
 # the test verifies that the installation completed cleanly instead.
+#
+# ADVISORY: when the CLI finishes before SIGINT lands (the "completed
+# before SIGINT" branch below) the rollback scenario is simply not
+# exercised here — that is a race inherent to fast machines. The
+# authoritative coverage for the rollback path is the AtomicStager unit
+# and integration suite (tests/integration/adapters/atomic-stager.test.ts);
+# this script is a smoke test of the signal wiring, not the oracle.
 #===============================================================================
 
 set -Eeuo pipefail
