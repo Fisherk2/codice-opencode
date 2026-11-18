@@ -41,20 +41,9 @@ For problems spanning multiple domains, **Delegate** subagents **in parallel** a
 
 Use terminal tools to investigate: check logs, inspect config, test components, run diagnostics.
 
-Use `question` tool to ask clarifying questions if needed before proceeding to Phase 3.
+Use `question` tool to ask clarifying questions if needed before proceeding to next phase.
 
-## Phase 2: Install the project skills this work needs
-
-Once the target is clear, find the skills that raise the quality of this work.
-
-1. **Load** the `find-skills` skill and search by the user's purpose and stack (for example: "debugging", "observability", "performance profiling"). If `find-skills` is not installed, use the documented fallback: `npx skills use "https://github.com/vercel-labs/skills" --skill "find-skills"`.
-2. Present the candidate skills in a table: **name** · what it covers · why it fits this task.
-3. Use the `question` tool with three options: install all candidates, install only the most important ones, install none.
-4. Install the chosen skills at project level — **NEVER global**. Project scope keeps the workspace reproducible and leaves the user's machine untouched.
-
-Never invent a skill name: if the search returns nothing, say so and continue without skills.
-
-## Phase 3: Document Diagnosis
+## Phase 2: Document Diagnosis
 
 **Delegate** to `docs-writer` subagent and create diagnosis in `docs/diagnosis/` using @docs/diagnosis/diagnosis-template.md
 
@@ -69,14 +58,31 @@ Never invent a skill name: if the search returns nothing, say so and continue wi
 
 Invoke `question` tool to confirm the diagnosis or ask for clarification if needed to make changes before proceeding with plan creation.
 
-## Phase 4: Vertical Slice Architecture — Update the implementation roadmap
+## Phase 3: Vertical Slice Architecture — Update the implementation roadmap
 
-**Load** `vertical-slice-architecture` skill before deciding how many phases this work has.
+1. Use the `question` tool to set the VSA plan's scope and its phase budget (recommend scope to user depending diagnosis files generated): 
+- **Quickly-ticket** (1 phase): Issues that can be resolved in a single sprint.
+- **Medium-ticket** (2-3 phases): Issues that require multiple sprints but can be resolved within a few development cycles. 
+- **Long-ticket** (4+ phases): Complex issues that require significant effort and multiple development cycles.
 
-1. Use the `question` tool to set the scope and its phase budget: **Prototype** (1-3 phases), **MVP** (4-6 phases), **Enterprise** (7+ phases).
-2. **Delegate** `software-architect` subagent loading `vertical-slice-architecture`, `clean-ddd-hexagonal` and `codebase-design` skills to cut the work into vertical slices and order them by risk and dependency.
-3. Write the roadmap into `docs/WORKFLOW.md`: one phase per user-visible capability, each with its acceptance test, files touched and demoable outcome.
-4. Reject any phase that cannot be demoed on its own, or whose only output is another plan — that is the cascade anti-pattern the skill names.
+2. **Delegate** `software-architect` subagent and **Load** `vertical-slice-architecture`, `clean-ddd-hexagonal` and `codebase-design` skills to cut the work into vertical slices and order them by risk and dependency.
+3. Present a brief summary of the VSA plan for human review before saving.
+4. Use the `question` tool to confirm VSA plan with the user before saving to `docs/WORKFLOW.md`
+5. If user approves, **Delegate** to `docs-writer` subagent and update `docs/WORKFLOW.md`: one phase per user-visible capability, each with its acceptance test, files touched and demoable outcome.
+6. Reject any phase that cannot be demoed on its own, or whose only output is another plan — that is the cascade anti-pattern the skill names.
+
+## Phase 4: Install the project skills (optional)
+
+Use the `question` tool to ask the user if they want to install the skills for this project. if they say no, **skip** this phase.
+
+Once the target is clear, find the skills that raise the quality of this work.
+
+1. **Load** `find-skills` skill and search by the diagnosis purpose and technology stack. If `find-skills` is not installed, use the documented fallback: `npx skills use "https://github.com/vercel-labs/skills" --skill "find-skills"`.
+2. Present the candidate skills in a table: **name** · what it covers · why it fits this task.
+3. Use the `question` tool to ask the user to choose the skills to install (or skip).
+4. Install the chosen skills at project level — **NEVER global**. Project scope keeps the workspace reproducible and leaves the user's machine untouched.
+
+Never invent a skill name: if the search returns nothing, say so and continue without skills.
 
 ## Phase 5: Finalize
 
@@ -102,5 +108,5 @@ Invoke `question` tool to confirm the diagnosis or ask for clarification if need
 
 ---
 
-User instructions:
+User context:
 
