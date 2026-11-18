@@ -59,8 +59,12 @@ export function getGitHubApiUrl(): string {
 /** Timeout for GitHub API requests (milliseconds) */
 export const GITHUB_API_TIMEOUT_MS = 3_000;
 
-/** Name of the staging directory used for atomic writes */
-export const STAGING_DIR_NAME = ".codice-staging";
+/**
+ * Prefix for the per-run staging directory. Each AtomicStager creates a
+ * unique `.codice-staging-<random>` dir (mkdtemp-style) so two concurrent
+ * runs never interleave in a shared staging area.
+ */
+export const STAGING_DIR_PREFIX = ".codice-staging-";
 
 /** Marker file written during commitStaging() to detect interrupted commits. */
 export const BACKUP_INTENT_FILE = ".codice-backup-intent";

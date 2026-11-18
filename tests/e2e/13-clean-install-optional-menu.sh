@@ -110,7 +110,7 @@ fi
 log_pass "optionalSelections present in .codice-version (force auto-selects all)"
 
 # Verify staging directory was cleaned
-if [[ -d "$TEMP_DIR/.codice-staging" ]]; then
+if compgen -G "$TEMP_DIR/.codice-staging-*" > /dev/null; then
     log_fail "Staging directory was not cleaned after successful install"
     exit 1
 fi

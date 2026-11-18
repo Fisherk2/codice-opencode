@@ -78,7 +78,7 @@ assert_dir_exists "$TEMP_DIR/.opencode/skills"
 # Verify staging directory was cleaned after second run
 # ---------------------------------------------------------------------------
 
-if [[ -d "$TEMP_DIR/.codice-staging" ]]; then
+if compgen -G "$TEMP_DIR/.codice-staging-*" > /dev/null; then
     log_fail "Staging directory was not cleaned after second install"
     exit 1
 fi

@@ -62,7 +62,7 @@ if echo "$OUTSIDE_FILES" | grep -v "^$" | head -1 >/dev/null 2>&1; then
 fi
 
 log_info "Verifying no .codice-staging dir was left behind..."
-if [[ -d "$TEMP_DIR/.codice-staging" ]]; then
+if compgen -G "$TEMP_DIR/.codice-staging-*" > /dev/null; then
     log_fail "Staging directory was left behind despite error!"
     exit 1
 fi

@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { BACKUP_INTENT_FILE, STAGING_DIR_NAME } from "../config/constants";
+import { BACKUP_INTENT_FILE, STAGING_DIR_PREFIX } from "../config/constants";
 import { walkDirectory } from "./directoryWalker";
 import { resolveWithinRoot } from "./pathResolver";
 import { VerboseLogger } from "./VerboseLogger";
@@ -17,14 +17,36 @@ const BACKUP_SUFFIX = ".codice-backup";
  */
 export class AtomicStager {
 	private readonly destinationRoot: string;
-	private readonly stagingRoot: string;
+	/** Lazily created unique staging dir (`.codice-staging-<random>`); null until first stage. */
+	private stagingRoot: string | null = null;
 	private readonly logger: VerboseLogger;
 
 	/** @param destinationRoot - Absolute path to the destination directory. */
 	constructor(destinationRoot: string, logger?: VerboseLogger) {
 		this.destinationRoot = destinationRoot;
-		this.stagingRoot = path.join(destinationRoot, STAGING_DIR_NAME);
 		this.logger = VerboseLogger.from(logger);
+	}
+
+	/**
+	 * Create the per-run staging directory once. mkdtemp guarantees a name
+	 * no concurrent run holds, so staging never interleaves across runs.
+	 */
+	private async ensureStagingRoot(): Promise<string> {
+		if (this.stagingRoot === null) {
+			this.stagingRoot = await fs.mkdtemp(path.join(this.destinationRoot, STAGING_DIR_PREFIX));
+			this.logger.log("staging_dir", this.stagingRoot);
+		}
+		return this.stagingRoot;
+	}
+
+	/** The current staging dir; only valid after ensureStagingRoot(). */
+	private stagingRootOrFail(): string {
+		if (this.stagingRoot === null) {
+			throw new Error(
+				"Staging directory not initialized. Call stageFile() before commitStaging().",
+			);
+		}
+		return this.stagingRoot;
 	}
 
 	/** Resolve a relative path against destinationRoot, preventing path traversal. */
@@ -34,7 +56,7 @@ export class AtomicStager {
 
 	/** Compute the staging path for a relative destination path, preventing traversal. */
 	resolveStagingPath(relativePath: string): string {
-		return resolveWithinRoot(this.stagingRoot, relativePath, "staging");
+		return resolveWithinRoot(this.stagingRootOrFail(), relativePath, "staging");
 	}
 
 	/**
@@ -78,10 +100,23 @@ export class AtomicStager {
 		await this.assertNoOrphanIntent(intentPath);
 
 		try {
-			await fs.writeFile(intentPath, new Date().toISOString(), "utf-8");
+			// O_EXCL create (flag "wx"): only one run can claim the marker, so
+			// a second concurrent commit fails cleanly instead of interleaving.
+			try {
+				await fs.writeFile(intentPath, new Date().toISOString(), { encoding: "utf-8", flag: "wx" });
+			} catch (createError) {
+				if ((createError as NodeJS.ErrnoException)?.code === "EEXIST") {
+					throw new Error(
+						`Another commit is in progress or left an intent marker at ${intentPath}. ` +
+							"Inspect .codice-backup manually; remove the marker only when no update is running.",
+					);
+				}
+				throw createError;
+			}
 
 			// fs.access works for dirs; Bun.file does not.
 			try {
+				if (stagingDir === null) throw new Error("not-created");
 				await fs.access(stagingDir);
 			} catch {
 				await fs.unlink(intentPath).catch(() => {});
@@ -191,9 +226,10 @@ export class AtomicStager {
 		return residueNote;
 	}
 
-	/** Remove the staging directory recursively. */
+	/** Remove this run's staging directory recursively. */
 	async cleanStaging(): Promise<void> {
-		this.logger.log("staging_cleanup", this.stagingRoot);
+		this.logger.log("staging_cleanup", this.stagingRoot ?? "(not created)");
+		if (this.stagingRoot === null) return;
 		try {
 			await fs.rm(this.stagingRoot, { recursive: true, force: true });
 		} catch {
@@ -203,9 +239,11 @@ export class AtomicStager {
 
 	/** Copy a source file to the staging directory, creating parent dirs as needed. */
 	private async writeFileToStaging(sourcePath: string, stagingRelativePath: string): Promise<void> {
-		// Fail-closed: a pre-existing symlink at the staging root must not
-		// redirect staging writes outside the destination root.
-		await this.ensureNotSymlink(this.stagingRoot, "staging directory");
+		const stagingRoot = await this.ensureStagingRoot();
+		// Fail-closed: a symlink swapped in for the staging root (e.g. by an
+		// attacker racing between mkdtemp and this write) must not redirect
+		// staging writes outside the destination root.
+		await this.ensureNotSymlink(stagingRoot, "staging directory");
 		const stagingPath = this.resolveStagingPath(stagingRelativePath);
 		await fs.mkdir(path.dirname(stagingPath), { recursive: true });
 		// copyFile is cross-device-safe (unlike rename) and avoids loading into RAM.

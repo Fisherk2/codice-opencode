@@ -5,7 +5,10 @@ import * as path from "node:path";
 import { AtomicStager } from "../../../src/infrastructure/adapters/AtomicStager";
 import { walkDirectory } from "../../../src/infrastructure/adapters/directoryWalker";
 import { VerboseLogger } from "../../../src/infrastructure/adapters/VerboseLogger";
-import { BACKUP_INTENT_FILE, STAGING_DIR_NAME } from "../../../src/infrastructure/config/constants";
+import {
+	BACKUP_INTENT_FILE,
+	STAGING_DIR_PREFIX,
+} from "../../../src/infrastructure/config/constants";
 
 /** fs.access works for dirs; Bun.file().exists() does not. */
 async function dirExists(dirPath: string): Promise<boolean> {
@@ -21,6 +24,12 @@ async function dirExists(dirPath: string): Promise<boolean> {
 async function findBackups(root: string): Promise<string[]> {
 	if (!(await dirExists(root))) return [];
 	return (await walkDirectory(root)).filter((p) => p.endsWith(".codice-backup"));
+}
+
+/** Any per-run staging dir (`.codice-staging-*`) left directly under a root. */
+async function stagingLeftovers(root: string): Promise<string[]> {
+	const entries = await fs.readdir(root).catch(() => [] as string[]);
+	return entries.filter((e) => e.startsWith(STAGING_DIR_PREFIX));
 }
 
 /**
@@ -67,7 +76,7 @@ describe("AtomicStager", () => {
 		await stager.commitStaging();
 
 		expect(await Bun.file(path.join(destDir, "happy.txt")).text()).toBe("HAPPY");
-		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
 		expect(await findBackups(destDir)).toEqual([]);
 	});
 
@@ -82,7 +91,7 @@ describe("AtomicStager", () => {
 
 		expect(await Bun.file(destFile).text()).toBe("NEW");
 		expect(await findBackups(destDir)).toEqual([]);
-		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
 	});
 
 	it("restores backed-up originals when a mid-commit rename fails", async () => {
@@ -108,7 +117,7 @@ describe("AtomicStager", () => {
 
 		// Original content preserved — either restored from backup or untouched
 		expect(await Bun.file(aaaDest).text()).toBe("ORIGINAL_AAA");
-		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
 		expect(await findBackups(destDir)).toEqual([]);
 	});
 
@@ -130,7 +139,7 @@ describe("AtomicStager", () => {
 		// Nothing written outside the destination root through the link.
 		const leaked = await walkDirectory(outsideDir).catch(() => []);
 		expect(leaked).toEqual([]);
-		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
 		await fs.unlink(path.join(destDir, "sub")).catch(() => {});
 	});
 
@@ -277,7 +286,7 @@ describe("AtomicStager", () => {
 			await expect(stager.commitStaging()).rejects.toThrow(/back up existing destination/i);
 
 			expect(await Bun.file(destFile).text()).toBe("PRECIOUS");
-			expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+			expect(await stagingLeftovers(destDir)).toEqual([]);
 		} finally {
 			await fs.rm(backupDir, { recursive: true, force: true });
 		}
@@ -304,24 +313,77 @@ describe("AtomicStager", () => {
 		expect(await Bun.file(path.join(destDir, "aaa_new.txt")).exists()).toBe(false);
 	});
 
-	it("refuses to write into a pre-existing symlinked staging directory", async () => {
-		// Attacker-controlled or corrupted destination: .codice-staging is a
-		// symlink pointing somewhere else (e.g., the home dir or /etc).
+	it("refuses to write into a symlink-swapped staging directory", async () => {
+		// mkdtemp naming means a pre-existing symlinked `.codice-staging` is
+		// irrelevant; the attack vector is a swap AFTER the staging dir is
+		// created — the per-write ensureNotSymlink lstat must catch it.
 		const outsideDir = await fs.mkdtemp(path.join(tmpDir, "outside-"));
 		const evilDestDir = await fs.mkdtemp(path.join(tmpDir, "dest-evil-"));
-		await fs.symlink(outsideDir, path.join(evilDestDir, STAGING_DIR_NAME));
 		const evilStager = new AtomicStager(evilDestDir);
 
 		const src = path.join(templateDir, "symlink.txt");
 		await fs.writeFile(src, "SMUGGLED");
 
-		await expect(evilStager.stageFile(src, "payload.txt")).rejects.toThrow(/symbolic link/i);
+		// First stage creates the unique staging dir.
+		await evilStager.stageFile(src, "payload.txt");
+
+		// Swap it for a symlink before the next write.
+		const entries = await fs.readdir(evilDestDir);
+		const stagingEntry = entries.find((e) => e.startsWith(STAGING_DIR_PREFIX));
+		expect(stagingEntry).toBeDefined();
+		const swappedDir = path.join(evilDestDir, stagingEntry ?? "");
+		await fs.rm(swappedDir, { recursive: true, force: true });
+		await fs.symlink(outsideDir, swappedDir);
+
+		await expect(evilStager.stageFile(src, "payload2.txt")).rejects.toThrow(/symbolic link/i);
 
 		// Nothing was written through the link — outside dir stays empty.
 		const outsideEntries = await fs.readdir(outsideDir);
 		expect(outsideEntries).toEqual([]);
 		await fs.rm(evilDestDir, { recursive: true, force: true });
 		await fs.rm(outsideDir, { recursive: true, force: true });
+	});
+
+	it("gives each stager a unique staging dir and fails a concurrent marker claim cleanly", async () => {
+		const srcA = path.join(templateDir, "run-a.txt");
+		const srcB = path.join(templateDir, "run-b.txt");
+		await fs.writeFile(srcA, "A");
+		await fs.writeFile(srcB, "B");
+
+		// Two concurrent runs stage into separate directories.
+		const runA = new AtomicStager(destDir);
+		const runB = new AtomicStager(destDir);
+		await runA.stageFile(srcA, "run-a.txt");
+		await runB.stageFile(srcB, "run-b.txt");
+		const stagingDirs = (await fs.readdir(destDir)).filter((e) => e.startsWith(STAGING_DIR_PREFIX));
+		expect(stagingDirs.length).toBe(2);
+
+		// O_EXCL intent marker: if the pre-check misses the marker (read
+		// raced before the other run created it), the "wx" create fails
+		// EEXIST and the second run aborts cleanly instead of interleaving.
+		await fs.writeFile(path.join(destDir, BACKUP_INTENT_FILE), "concurrent", "utf-8");
+		const realReadFile = fs.readFile.bind(fs);
+		const enoentError = (): Error => Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		const readFileStub = (p: unknown): Promise<string> => {
+			if (String(p) === path.join(destDir, BACKUP_INTENT_FILE)) {
+				return Promise.reject(enoentError());
+			}
+			// AtomicStager is the only fs.readFile caller (utf-8 marker read).
+			return realReadFile(String(p), "utf-8");
+		};
+		const readFileSpy = spyOn(fs, "readFile").mockImplementation(
+			readFileStub as unknown as typeof fs.readFile,
+		);
+		try {
+			await expect(runB.commitStaging()).rejects.toThrow(/Another commit is in progress/);
+		} finally {
+			readFileSpy.mockRestore();
+		}
+
+		// Run B's rollback removed the marker; run A's staging dir is untouched.
+		expect(await Bun.file(path.join(destDir, BACKUP_INTENT_FILE)).exists()).toBe(false);
+		// Clean up run A's staging dir so later leftover checks stay valid.
+		await runA.cleanStaging();
 	});
 
 	it("refuses to write a backup through a pre-existing symlinked backup path", async () => {
@@ -377,7 +439,7 @@ describe("AtomicStager", () => {
 		// failing file untouched / absent
 		expect(await Bun.file(path.join(destDir, "zzz", "broken.txt")).exists()).toBe(false);
 		// staging dir swept and intent marker removed
-		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
 		expect(await Bun.file(intentPath).exists()).toBe(false);
 		expect(await findBackups(destDir)).toEqual([]);
 	});
