@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -204,6 +204,33 @@ describe("BunFileSystem", () => {
 		it("should return true for writable directory", async () => {
 			const writable = await fsAdapter.isWritable();
 			expect(writable).toBe(true);
+		});
+
+		it("should not leak the write probe", async () => {
+			await fsAdapter.isWritable();
+			const leftovers = (await fs.readdir(destDir)).filter((e) =>
+				e.startsWith(".codice-write-test"),
+			);
+			expect(leftovers).toEqual([]);
+		});
+
+		it("should treat a successful write probe as writable even when cleanup fails", async () => {
+			// A failed probe cleanup must not flip the verdict — the write
+			// already proved writability (old code returned false here).
+			const realUnlink = fs.unlink.bind(fs);
+			const probePath = path.join(destDir, ".codice-write-test");
+			const unlinkSpy = spyOn(fs, "unlink").mockImplementation(((p: unknown) => {
+				if (String(p) === probePath) {
+					return Promise.reject(Object.assign(new Error("EACCES"), { code: "EACCES" }));
+				}
+				return realUnlink(p as string);
+			}) as unknown as typeof fs.unlink);
+			try {
+				expect(await fsAdapter.isWritable()).toBe(true);
+			} finally {
+				unlinkSpy.mockRestore();
+				await realUnlink(probePath).catch(() => {});
+			}
 		});
 	});
 
