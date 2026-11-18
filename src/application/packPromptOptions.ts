@@ -1,4 +1,4 @@
-import type { PackOption } from "../../application/ports/IUserPrompt";
+import type { PackOption } from "./ports/IUserPrompt";
 
 /**
  * Map a PackOption to a @clack/prompts multiselect option.

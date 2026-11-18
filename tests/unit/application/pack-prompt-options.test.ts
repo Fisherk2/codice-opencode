@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { toPackPromptOption } from "../../../src/application/packPromptOptions";
 import type { PackOption } from "../../../src/application/ports/IUserPrompt";
-import { toPackPromptOption } from "../../../src/infrastructure/adapters/packPromptOptions";
 
 describe("toPackPromptOption", () => {
 	test("maps a plain pack to a clack option with agent count in the label", () => {

@@ -1,10 +1,10 @@
-import { isLegacyVersion, LEGACY_BANNER_MESSAGE } from "../../application/legacyBanner";
-import type { VersionDisplayInfo } from "../../application/ports/IUserPrompt";
+import { isLegacyVersion, LEGACY_BANNER_MESSAGE } from "./legacyBanner";
+import type { VersionDisplayInfo } from "./ports/IUserPrompt";
 import {
 	NO_INSTALLATION_FOUND,
 	UPDATE_NOT_AVAILABLE,
 	UPDATE_SYSTEM_CHANGED,
-} from "../../application/versionGateMessages";
+} from "./versionGateMessages";
 
 /** Note titles keyed by detected installation status. */
 const STATUS_TITLES: Record<VersionDisplayInfo["status"], string> = {

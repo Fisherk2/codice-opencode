@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { VersionDisplayInfo } from "../../../src/application/ports/IUserPrompt";
-import { buildVersionInfoMessages } from "../../../src/infrastructure/adapters/versionInfoMessages";
+import { buildVersionInfoMessages } from "../../../src/application/versionInfoMessages";
 
 describe("buildVersionInfoMessages", () => {
 	test("missing status shows no-installation guidance", () => {
