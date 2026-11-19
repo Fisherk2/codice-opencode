@@ -118,7 +118,7 @@ The `agents` section (V2; V1's singular `agent` map is legacy) configures each p
 ```jsonc
 "agents": {
   "huitzilopochtli": {
-    "model": "opencode/mimo-v2.5-free",
+    "model": "opencode/big-pickle",
     "color": "#d3e22b",
     "request": {
       "body": { "temperature": 0.5 }
@@ -126,7 +126,7 @@ The `agents` section (V2; V1's singular `agent` map is legacy) configures each p
     "steps": 50
   },
   "quetzalcoatl": {
-    "model": "opencode/nemotron-3-ultra-free",
+    "model": "opencode/glm-5.3-flash-free",
     "color": "#ffffff",
     "request": {
       "body": { "temperature": 0.2 }
@@ -134,7 +134,7 @@ The `agents` section (V2; V1's singular `agent` map is legacy) configures each p
     "steps": 120
   },
   "moctezuma": {
-    "model": "opencode/big-pickle",
+    "model": "opencode/nemotron-3.5-super-vl-free",
     "color": "#8B4513",
     "request": {
       "body": { "temperature": 0.1 }
@@ -142,7 +142,7 @@ The `agents` section (V2; V1's singular `agent` map is legacy) configures each p
     "steps": 100
   },
   "tlaloc": {
-    "model": "opencode/nemotron-3.5-lightning-free",
+    "model": "opencode/deepseek-v4.1-flash-free",
     "color": "#00ffff",
     "request": {
       "body": { "temperature": 0.2 }
@@ -150,7 +150,7 @@ The `agents` section (V2; V1's singular `agent` map is legacy) configures each p
     "steps": 200
   },
   "mictlantecuhtli": {
-    "model": "opencode/muse-spark-1.3-contributor-free",
+    "model": "opencode/mimo-v2.6-flash-free",
     "color": "#2d2d2d",
     "request": {
       "body": { "temperature": 0.2 }
@@ -158,7 +158,7 @@ The `agents` section (V2; V1's singular `agent` map is legacy) configures each p
     "steps": 150
   },
   "tezcatlipoca": {
-    "model": "opencode/mimo-v2.6-flash-free",
+    "model": "opencode/glm-5.3-flash-free",
     "color": "#ff3134",
     "request": {
       "body": { "temperature": 0.1 }
@@ -171,6 +171,8 @@ The `agents` section (V2; V1's singular `agent` map is legacy) configures each p
   "general": { "disabled": true }
 }
 ```
+
+All six model ids use the `opencode/` prefix — the built-in OpenCode model catalog — so they need no `providers` entry and no extra credentials beyond `/connect`. Agent files inside the packs declare no `model:` field: `opencode.json` is the single source for per-agent model assignment.
 
 ### Agent Settings Reference
 
@@ -188,12 +190,12 @@ Each agent's configuration reflects its role in the SDD pipeline:
 
 | Agent | Model Choice | Temperature | Steps | Color | Rationale |
 |-------|-------------|:-----------:|:-----:|:-----:|-----------|
-| **Huitzilopochtli** | mimo-v2.5-free (balanced) | 0.5 | 50 | 🟡 Yellow | Supreme orchestrator — needs balanced creativity to decide which subagent to invoke. Higher temperature for flexible delegation. Lowest step count because orchestration is quick. |
-| **Quetzalcoatl** | nemotron-3-ultra-free (powerful) | 0.2 | 120 | ⚪ White | Visionary Sage — spec writing and design. Low temperature for precise, structured output. Higher step count for comprehensive documentation generation. |
-| **Moctezuma** | big-pickle (default) | 0.1 | 100 | 🟤 Brown | Strategic Commander — task breakdown. Near-deterministic temperature for structured plan output. The template's default model keeps planning runs simple. |
-| **Tlaloc** | nemotron-3.5-lightning-free (fast) | 0.2 | 200 | 🔵 Cyan | Rain God Builder — code implementation. Low temperature for correct code, highest step limit because building is multi-step (test→code→refactor). |
-| **Mictlantecuhtli** | muse-spark-1.3-contributor-free | 0.2 | 150 | ⚫ Dark | Underworld Judge — testing and validation. Low temperature for thorough verification. High step limit for complex test suites and ship checklist. |
-| **Tezcatlipoca** | mimo-v2.6-flash-free | 0.1 | 100 | 🔴 Red | Smoking Mirror Critic — code review. Near-deterministic for objective analysis. Moderate step count for thorough five-axis review. |
+| **Huitzilopochtli** | big-pickle (the workspace default model) | 0.5 | 50 | 🟡 Yellow | Supreme orchestrator — needs balanced creativity to decide which subagent to invoke. Higher temperature for flexible delegation. Lowest step count because orchestration is quick. |
+| **Quetzalcoatl** | glm-5.3-flash-free | 0.2 | 120 | ⚪ White | Visionary Sage — spec writing and design. Low temperature for precise, structured output. Higher step count for comprehensive documentation generation. |
+| **Moctezuma** | nemotron-3.5-super-vl-free | 0.1 | 100 | 🟤 Brown | Strategic Commander — task breakdown. Near-deterministic temperature for structured plan output. |
+| **Tlaloc** | deepseek-v4.1-flash-free | 0.2 | 200 | 🔵 Cyan | Rain God Builder — code implementation. Low temperature for correct code, highest step limit because building is multi-step (test→code→refactor). |
+| **Mictlantecuhtli** | mimo-v2.6-flash-free | 0.2 | 150 | ⚫ Dark | Underworld Judge — testing and validation. Low temperature for thorough verification. High step limit for complex test suites and ship checklist. |
+| **Tezcatlipoca** | glm-5.3-flash-free (shared with Quetzalcoatl) | 0.1 | 100 | 🔴 Red | Smoking Mirror Critic — code review. Near-deterministic for objective analysis. Moderate step count for thorough five-axis review. |
 
 ---
 
@@ -279,6 +281,30 @@ Or a remote repository:
 ```
 
 > **Official docs:** [opencode.ai/v2/docs/references](https://opencode.ai/v2/docs/references/) — Full reference for the configuration format.
+
+---
+
+## Plugins
+
+The payload declares six third-party OpenCode plugins, all referenced at a floating `@latest` (`template/obligatorio/core/opencode.json`, `plugins`):
+
+```json
+"plugins": [
+  "opencode-rpc@latest",
+  "opencode-navigator@latest",
+  "opencode-skills-collection@latest",
+  "opencode-skill-creator@latest",
+  "opencode-search-plugin@latest",
+  "@dietrichgebert/ponytail@latest"
+]
+```
+
+Two things to know about this section:
+
+- **Códice does not run them.** The installer only copies files, and it is forbidden from executing template code. The **OpenCode host** loads every entry when the workspace starts, so this third-party code does run on your machine.
+- **`@latest` here is an explicit exception** to the pin-everything discipline the rest of the project follows (CI actions are SHA-pinned; the `chrome-devtools` MCP is version-pinned). ADR-025, "Third-Party Plugins Shipped at `@latest` in the Workspace Payload", records it as an accepted risk, keeps `@latest` so the payload inherits plugin fixes without a Códice release, and tracks version pinning as remediation debt (TD-V2-111).
+
+To freeze what runs, replace the tag with a concrete version — `"opencode-rpc@1.2.3"` — or delete an entry you do not want loaded. The host resolves each entry from npm at startup, so a pinned value that no longer exists breaks plugin loading for that entry only.
 
 ---
 

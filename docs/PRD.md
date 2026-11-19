@@ -1,5 +1,5 @@
-# Product Requirements Document – Códice: Opencode Workspace Installer v2.1.3
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-09-22 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Product Requirements Document – Códice: Opencode Workspace Installer v2.1.5
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-11-19 | **Autor:** Fisherk2 | **Estado:** Aprobado — v2.1.5 **lista para despliegue estable, aún no publicada** (`latest` sigue en 2.1.4); `v2.1.5-beta.1` se publicó en dist-tag `beta` (2026-11-18)
 
 ## 0. Descripción General
 Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñada para instalar, configurar y actualizar plantillas de espacios de trabajo de OpenCode (`opencode`). Su objetivo es proporcionar una experiencia de instalación "a prueba de tontos", rápida, segura y con fusión inteligente de archivos, preservando las personalizaciones del usuario.
@@ -20,8 +20,8 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - Gobernanza de agentes: regla de no-assumption (preguntar antes de actuar) y delegación-first para los 6 agentes primarios.
   - Restricciones de comandos destructivos: patrones bash bloqueados vía la configuración de permisos `opencode.json`.
   - 7 MCP servers pre-configurados (3 habilitados por defecto: context7, vercel-grep, gitmcp; el resto con `disabled: true` explícito).
-  - Subagente obsidian-vault-writer + 3 skills de Obsidian para administración de vaults.
-  - ISP split: `IFileSystem` (6 métodos) + `IStagingSystem` (4 métodos) para segregación de interfaces.
+  - Subagente obsidian-vault-writer (pack obligatorio `writers`) para administración de vaults. No hay skills de Obsidian en `template/obligatorio/core/skills/`.
+  - ISP split: `IFileSystem` (7 métodos) + `IStagingSystem` (3 métodos) para segregación de interfaces.
   - Sistema de packs: 8 packs seleccionables + 2 directorios obligatorios (main, writers). 359 agentes distribuidos en 10 packs (6 primary + 4 writers + 349 en los 8 packs seleccionables).
   - Installer UX v2: wizard de selección de packs, resumen pre-instalación con conteos de agentes, actualizaciones version-gated (solo v2.0+).
   - Flags CLI adicionales: `--packs <list>`, `--packs-all`, `--update-add-packs <list>`, `--clean`, `--project`, `--update`.
@@ -33,7 +33,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - **v2.1:** Protocolo de delegación de agentes: los seis agentes primarios analizan antes de actuar, mapean subagentes/skills requeridos, e invocan vía `task()` con instrucciones determinísticas, skills a cargar y checklist de objetivos.
 - **Alcance del MVP (Out):**
   - Instalación de dependencias de terceros fuera del template.
-  - Soporte para múltiples fuentes de plantillas (solo se soporta el template empaquetado en el binario).
+  - Soporte para múltiples fuentes de plantillas (solo se soporta el template empaquetado en el paquete npm — ADR-011 retiró los binarios).
 
 ## 2. Público Objetivo & Personas
 | Persona | Rol | Necesidad Principal | Frecuencia de Uso |
@@ -48,8 +48,8 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | HU-01 | Dev Nuevo | Ejecutar un comando y seleccionar "Instalación Limpia" | Obtener una copia exacta y completa del template en mi directorio actual. | Alta | Se copian todos los archivos. Se crea `.codice-version`. |
 | HU-02 | Dev Experimentado | Ejecutar "Instalación a Proyecto" y ver un checklist de archivos opcionales | Añadir herramientas base sin sobrescribir mis `skills` o `agents` personalizados. | Alta | Archivos "Obligatorios" se sobrescriben. "Estándar/Opcional" se omiten si existen, o se muestran en checklist interactivo. |
 | HU-03 | Dev Experimentado | Ejecutar "Actualizar Workspace" | Saber si hay una nueva versión en GitHub y aplicar solo los cambios necesarios. | Alta | El CLI consulta la API de GitHub. Si hay update, aplica fusión granular. Si no, muestra mensaje de "versión más reciente". |
-| HU-04 | Mantenedor | Ejecutar `just test` o `make test` | Verificar que la lógica de fusión y la TUI funcionen correctamente antes de hacer un release. | Alta | Las pruebas unitarias (Bun/Vitest) y E2E (scripts de shell) pasan con >80% de cobertura. |
-| HU-05 | Cualquiera | Que el instalador falle a mitad de proceso | Que mi proyecto no quede en un estado corrupto o a medias. | Alta | Si falla, el directorio `.codice-staging/` se elimina y el proyecto original queda intacto (Atomicidad). |
+| HU-04 | Mantenedor | Ejecutar `just test` | Verificar que la lógica de fusión y la TUI funcionen correctamente antes de hacer un release. | Alta | Las pruebas unitarias (`bun test`) y E2E (scripts de shell) pasan con ≥95% de cobertura (gate global + sub-gate en `src/cli/main.ts`, `scripts/coverage-thresholds.json`). |
+| HU-05 | Cualquiera | Que el instalador falle a mitad de proceso | Que mi proyecto no quede en un estado corrupto o a medias. | Alta | Si falla, el directorio de staging (`.codice-staging-<sufijo>`, único por corrida) se elimina y el proyecto original queda intacto (Atomicidad). |
 | HU-06 | Dev Experimentado | Seleccionar qué packs de agentes instalar | Tener solo los agentes relevantes para mi tipo de proyecto, sin instalar los 359 agentes. | Media | El instalador presenta un wizard de selección. Se instalan solo los packs elegidos. |
 | HU-07 | Dev Experimentado | Agregar packs en una actualización | Expandir mi workspace con nuevos packs sin reinstalar desde cero. | Baja | Update mode ofrece Option B para agregar packs. Los packs ya instalados quedan bloqueados. |
 | HU-08 | Dev Experimentado | Sincronizar el workspace con git de forma bidireccional (`/sync`) | Mantener el repositorio alineado con el remoto y resolver conflictos de manera controlada. | Media | `/sync` detecta modo (full-sync, incremental-sync, dry-run, conflict-resolution). Aplica estrategias NEWER_WINS, GITHUB_WINS, LOCAL_WINS o INTELLIGENT_MERGE. |
@@ -64,7 +64,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 |--------|-------------|-------------------|--------|--------------------------|
 | RF-01 | Menú Interactivo TUI | Usar `@clack/prompts`. Debe ser intuitivo, con spinners y validación de entrada. | Implementado | HU-01, HU-02, HU-03 |
 | RF-02 | Motor de Fusión de Archivos | Evaluar archivo por archivo. Reglas: Obligatorio (sobrescribir), Estándar (omitir si existe), Opcional (checklist -> omitir si existe). | Implementado | HU-02, HU-05 |
-| RF-03 | Atomicidad de Operaciones | Toda escritura debe ocurrir primero en un directorio temporal (`.codice-staging`). Solo al finalizar con éxito, se mueve a la ubicación final. | Implementado | HU-05 |
+| RF-03 | Atomicidad de Operaciones | Toda escritura debe ocurrir primero en un directorio temporal creado con `fs.mkdtemp` a partir del prefijo `.codice-staging-` (`STAGING_DIR_PREFIX`), único por corrida. Solo al finalizar con éxito, se mueve a la ubicación final. | Implementado | HU-05 |
 | RF-04 | Gestión de Versiones Local | Crear/actualizar `.codice-version` con el tag de la versión instalada (ej: "v1.0.0"). | Implementado | HU-01, HU-03 |
 | RF-05 | Consulta de Versión Remota | Consultar `GET https://api.github.com/repos/{owner}/{repo}/releases/latest`. Comparar con versión local usando semver. | Implementado | HU-03 |
 | RF-06 | Sistema de Packs | Organizar agentes en 10 packs (2 obligatorios + 8 seleccionables). El usuario elige qué packs instalar via wizard interactivo o flags CLI. | Implementado | HU-06, ADR-014 |
@@ -86,7 +86,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 
 ## 6. Métricas de Éxito (KPIs)
 - **Métrica:** Tasa de éxito de instalación E2E. | **Valor Objetivo:** 100% en CI/CD. | **Método:** Pipeline de GitHub Actions.
-- **Métrica:** Cobertura de pruebas (Unitarias + Integración). | **Valor Objetivo:** > 80%. | **Método:** `bun test --coverage`.
+- **Métrica:** Cobertura de pruebas (Unitarias + Integración). | **Valor Objetivo:** ≥ 95% global y ≥ 95% en `src/cli/main.ts` (sub-gate). | **Método:** `just coverage-check`, umbrales en `scripts/coverage-thresholds.json` (medido: 96.39% total / 98.95% en `main.ts` al cierre de v2.1.3).
 
 ## 7. Supuestos, Restricciones y Dependencias
 - **Supuestos:** El usuario tiene permisos de escritura en el directorio de destino. El template está empaquetado dentro del paquete npm (no requiere red para instalar, solo para actualizar).
@@ -104,5 +104,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 | 2.1.1 | 2026-08-25 | Fisherk2 | Sincronizado con v2.1.1: FEV-26+27+28 (bug #79, shell injection, manifest corrections, plugin cleanup #80, external dir permissions #81, backup integrity, staging cleanup, CI SHA-pins Node 24 + VersionComparator cache), code review hardened, 1935 tests, 31/31 E2E, ~360 agents in 10 packs. | ✅ Aprobado |
 | 2.1.2 | 2026-08-28 | Fisherk2 | Sincronizado con v2.1.2: hotfix de delegación en docs-update (referencias explícitas a `docs-writer`/`technical-writer`) + reorganización de deuda técnica (v2.1.2→v2.1.3, v2.1.3→v2.1.4). 1935 tests, 31/31 E2E. | ✅ Aprobado |
 | 2.1.3 | 2026-09-22 | Fisherk2 | Sincronizado con v2.1.3: FEV-29 (migración del template a `permissions:` nativo OpenCode V2 — 349 archivos, #91) y FEV-30 (remoción total del plugin SDD + banner legacy ≤2.1.2 + hardening de 5 ejes, #90); RF-13/RF-14/HU-12 retirados; MCPs con `disabled` explícito (7 servidores, 3 habilitados); flags de modo reales: `--clean`/`--project`/`--update` (no existe flag genérico de modo); 1959 tests, 31/31 E2E, cobertura 96.39%; 359 agentes en 10 packs; ADRs 021-024 (013/017 retirados). | ✅ Aprobado |
+| 2.1.4 | 2026-09-25 | Fisherk2 | Sincronizado con v2.1.4 (hotfix, hoy `latest`): eliminada la delegación redundante a `code-reviewer` en 6 comandos (`build`, `code-simplify`, `review`, `ship`, `test`, `webperf`); `/review` realineado a `minimal-change-engineer`; deuda técnica replanificada fuera de la línea 2.1.x (v2.2.0/v2.3.0/v2.5.0, política 2026-09-25). | ✅ Aprobado |
+| 2.1.5-beta.1 | 2026-11-18 | Fisherk2 | Sincronizado con v2.1.5-beta.1, publicado en dist-tag `beta` (`latest` intacto en 2.1.4): FEV-31 cierra #111–#116 (skill obligatorio `vertical-slice-architecture`, fase `find-skills` en 4 comandos, `/hotfix` completo, `/evolve`→`/feature` con roster de 18 comandos y 61 skills, presupuesto de 180 líneas, NEVER ASSUMPTION PROTOCOL); pre-commit hooks sin dependencias; CI: `paths-ignore` retirado del trigger `pull_request`, job `docs` informativo, `security` como check requerido y `enforce_admins=true` en `main`; registro ADR-025 (plugins `@latest` del payload, deuda TD-V2-111). Gates: 2027 tests / 0 fail, 31/31 E2E, `tsc --noEmit` 0. | ✅ Aprobado (beta) |
 
 ---

@@ -384,10 +384,10 @@ When the user selects **Project Install** or **Update** mode, the TUI presents o
 
 ## 9. Related Specifications
 
-- [Spec: FileMergeEngine](./spec-merge-engine.md) — Algorithmic details of the merge process.
-- [Spec: AtomicFileWriter](./spec-atomic-writer.md) — Staging and atomic promotion mechanics.
-- [Spec: VersionComparator](./spec-version-comparator.md) — Semantic version comparison for Update mode.
-- [Spec: TUI / ClackPromptsAdapter](./spec-tui.md) — Interactive checklist implementation.
+- [Architecture: layers & components](../docs/ARCHITECTURE.md) — FileMergeEngine / AtomicStager placement and the dependency rule.
+- [ADR-003: Atomic staging](../docs/adr/adr-003-atomic-staging.md) — Staging + rename commit mechanics (no standalone atomic-writer spec exists).
+- [Spec: CLI Commands](./spec-cli-commands.md) — §3 update flow, where `VersionComparator` version-gates Update mode.
+- [Spec: Installer UX v2](./spec-installer-ux-v2.md) — Interactive checklist / pack wizard implementation.
 
 ---
 
@@ -396,6 +396,7 @@ When the user selects **Project Install** or **Update** mode, the TUI presents o
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2026-06-13 | Initial specification. Defined 3-category system, complete hierarchy, merge behaviors, edge cases, validation rules, and versioning implications. |
+| 1.0.1 | 2026-11-18 | §9 Related Specifications re-pointed: the four linked sub-specs never existed in `specs/`; replaced with real documents (ARCHITECTURE.md, ADR-003, CLI-commands and Installer-UX specs). |
 
 ---
 

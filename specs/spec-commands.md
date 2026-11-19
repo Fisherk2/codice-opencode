@@ -6,10 +6,10 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 
 | Command | Purpose | Expected Behavior |
 |---------|---------|-------------------|
-| `just setup` | Bootstrap development environment | Install dependencies via `bun install`, verify Bun version >= 1.1.x, create required directories |
+| `just setup` | Install dependencies | Run `bun install` (lockfile frozen via `bunfig.toml`). Directory scaffolding is done by `just dev` |
 | `just dev` | Run CLI in development mode | Execute `src/cli/main.ts` via `bun run`, enable verbose logging |
-| `just lint` | Static analysis | Run Biome (or eslint) across `src/` and `tests/`, fail on warnings, enforce no-explicit-any rule |
-| `just format` | Code formatting | Run Biome format (or prettier) in write mode, fail if unformatted files detected in CI |
+| `just lint` | Static analysis (advisory) | Runs `bunx @biomejs/biome check src/ tests/` — only errors fail; warnings and info pass through (measured: exit 0 with 2 warnings + 1 info). The ban on explicit `any` is **not** a lint gate: Biome sets `noExplicitAny: off` (`biome.json`) and there is no ESLint in the repo; it is a declared policy (`AGENTS.md`, `docs/CODE_STYLE.md`), while `tsconfig` `strict` catches only *implicit* `any`. The CI gate is `just check` (`biome ci` + `tsc --noEmit`) |
+| `just format` | Code formatting | Runs `bunx @biomejs/biome format --write src/ tests/` (Biome is the only formatter — settings pinned by `tests/setup/biome.test.ts`; unformatted files fail CI via `biome ci`, invoked by `just check`/`just format-check`) |
 | `just check` | Pre-flight validation | Run `lint`, `format --check`, and `typecheck` in sequence; gate for commits |
 
 ## Testing Commands
@@ -17,18 +17,20 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 | Command | Purpose | Expected Behavior |
 |---------|---------|-------------------|
 | `just test` | Full test suite | Execute `bun test` across all `*.test.ts` files; unit + integration tests |
-| `just test:unit` | Unit tests only | Run tests matching `tests/unit/**/*.test.ts`; target < 1s execution |
+| `just test-unit` | Unit tests only | Run tests matching `tests/unit/**/*.test.ts`; ~4 s as reported by `bun test` (measured 2026-11-18: 1603 tests across 47 files, `[4.35s]`) — no enforced timing budget exists |
 | `just test-setup` | Setup/config tests only | Run tests matching `tests/setup/**/*.test.ts` (repo Justfile/CI/tooling config validation) |
-| `just test:integration` | Integration tests only | Run tests matching `tests/integration/**/*.test.ts`; mock filesystem and network |
-| `just test:e2e` | End-to-end tests | Execute via `bun run src/cli/main.ts` in isolated temporary directories, validate filesystem state and exit codes |
-| `just test:coverage` | Coverage report | Run `bun test --coverage`, generate HTML and lcov reports, enforce > 80% threshold |
+| `just test-integration` | Integration tests only | Run tests matching `tests/integration/**/*.test.ts`; mock filesystem and network |
+| `just test-e2e` | End-to-end tests | Execute via `bun run src/cli/main.ts` in isolated temporary directories, validate filesystem state and exit codes |
+| `just test-coverage` | Coverage report | Run `bun test --coverage`, generate HTML and lcov reports |
+| `just coverage-check` | Coverage gate | Run `scripts/coverage-check.sh`; enforce 95% global + 95% on `src/cli/main.ts` (thresholds in `scripts/coverage-thresholds.json`) |
 
 ## Build & Release Commands
 
 | Command | Purpose | Expected Behavior |
 |---------|---------|-------------------|
 | `just build` | *Removed in v1.2.0* | Binary compilation removed. Use `bun run src/cli/main.ts` for local development. |
-| `just release` | Draft release | Create GitHub Release, generate release notes from `CHANGELOG.md` |
+| `just tag <version>` | Create release tag | Validate `vX.Y.Z[-beta.N\|-rc.N]` format and create the annotated tag locally (no push) |
+| `just release <version>` | Publish release | Run `just check` + `just test` gates, then push the tag → `.github/workflows/release.yml` publishes to npm with provenance and creates the GitHub Release |
 
 ## CLI Runtime Commands (Package)
 
@@ -51,7 +53,7 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 
 | Command | Target Agent | Purpose |
 |---------|--------------|---------|
-| `/sync` (v2.1) | Quetzalcoatl | Context synchronization, agent discovery, memory graph indexing, doc sync |
-| `/migrate` (v2.1) | Coatlicue | Database schema, data, and framework migrations |
-| `/deploy` (v2.1) | Huitzilopochtli | Release, packaging, container build, and deployment automation |
-| `/analyze` (v2.1) | Tezcatlipoca | Architecture, performance, security, and quality analysis |
+| `/sync` (v2.1) | mictlantecuhtli | Bidirectional git sync with intelligent conflict resolution strategies |
+| `/migrate` (v2.1) | quetzalcoatl | Detect the project technology stack and generate a framework/language/database/architecture migration plan into `docs/MIGRATION.md` |
+| `/deploy` (v2.1) | mictlantecuhtli | Execute git workflow + CI/CD pipelines: release, packaging, container build, and deployment automation |
+| `/analyze` (v2.1) | tezcatlipoca | Multi-dimensional analysis: architecture, performance, security, and quality |

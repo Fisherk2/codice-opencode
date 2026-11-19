@@ -47,6 +47,15 @@ When an agent encounters a task, OpenCode searches its skill sources automatical
 
 This discovery is automatic — no manual registration or index maintenance is required. If the skill exists in a discovered source, the agent can find and use it.
 
+### Skills Not in the Payload
+
+The 61 skills are the complete shipped set. A few workflow steps reference skills that are deliberately **not** bundled and are fetched on demand instead:
+
+- `/spec`, `/feature`, `/migrate`, and `/diagnosis` each open their research phase with **Load** `find-skills` skill, and state the fallback in the same line: `npx skills use "https://github.com/vercel-labs/skills" --skill "find-skills"` (e.g. `template/obligatorio/core/commands/spec.md:98`).
+- `find-docs`, the documentation-lookup helper sometimes mentioned alongside it, is not shipped either. The context7 MCP server (enabled by default) already answers library-documentation queries directly, so no skill wrapper is needed — see [MCP Servers](MCP-Servers#context7--documentation-search).
+
+This is the marketplace pattern: the template stays at 61 skills, and agents pull the extra skill from the public collection when a step actually needs it. If the machine has no network access, that step degrades to the agent's own search tools.
+
 ---
 
 ## Full Skill Catalog

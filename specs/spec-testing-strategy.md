@@ -25,7 +25,7 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 - `VersionComparator` returns `newer`, `older`, `equal`, `incompatible` results.
 
 **Success Criteria:**
-- > 90% code coverage.
+- ≥ 95% global coverage plus ≥ 95% on `src/cli/main.ts` — the gate is enforced once, globally, by `just coverage-check` (`scripts/coverage-thresholds.json`) over all production `src/`; there is no separate per-phase threshold.
 - Execution time < 1 second for the full unit suite.
 - Zero dependencies on Bun runtime APIs or file system.
 
@@ -46,7 +46,7 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 - TUI signal handling: `SIGINT` during a prompt cleans up any active staging directory.
 
 **Success Criteria:**
-- > 70% coverage of infrastructure adapters.
+- No per-phase threshold; adapter coverage feeds the same global `just coverage-check` gate (≥ 95% over all production `src/`).
 - All filesystem tests use isolated temporary paths.
 - All network tests do not hit the real GitHub API.
 
@@ -58,7 +58,7 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 **Patterns:**
 - Each test creates a fresh temporary directory as the "project".
 - The CLI is executed via `bun run src/cli/main.ts` (local development) or `bunx @fisherk2-dev/codice` (published package).
-- Tests invoke the CLI with environment variables to mock GitHub API responses or use `--skip-version-check` flag.
+- Tests mock the GitHub API by pointing `CODICE_GITHUB_API_URL` at a local server (`tests/e2e/mock-server.ts`, started via `tests/e2e/common.sh`, with `CODICE_BYPASS_URL_VALIDATION=true` and `NODE_ENV=test`) — there is no `--skip-version-check` flag.
 - Post-execution assertions verify directory contents, file existence, and absence of corruption.
 
 **Scenarios:**
@@ -67,7 +67,7 @@ Testing is organized in three phases with distinct scopes, tools, and success cr
 3. **Project Install (Optional Skip):** Present optional files, simulate skipping one. Assert skipped file is absent, others are present.
 4. **Update Workspace:** Pre-populate with older version. Run update mode. Assert only obligatorio and estandar files are updated; optional files untouched.
 5. **Atomic Rollback (SIGINT):** Simulate a crash mid-operation. Assert destination directory is in its original state, staging directory is absent or cleaned.
-6. **Path Traversal Rejection:** Attempt to install to a path outside the allowed base using `../` sequences. Assert exit code 1 and no files written outside boundary.
+6. **Path Traversal Rejection:** Attempt to install to a path outside the allowed base using `../` sequences. Assert a non-zero usage error (code 2, `EXIT_USAGE`) and no files written outside boundary.
 7. **Symlinks Clean Install:** Run CLI in empty directory. Assert all 3 symlinks exist and resolve correctly.
 8. **Symlinks Project Install:** Run project install with `--force`. Assert `.opencode/` symlinks exist.
 9. **Symlinks Idempotency:** Run CLI twice in the same directory. Assert symlinks are created only once and remain valid.

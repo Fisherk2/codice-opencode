@@ -109,7 +109,7 @@ SKIP=all git commit -m "..."
 
 ## Git Workflow
 
-This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release), with three distinct flows:
+This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release), with four distinct flows:
 
 ### Branch Naming & Rules
 
@@ -125,7 +125,7 @@ This project follows a **3-stage pipeline**: `develop` (integration) → `main` 
 
 ### Critical Rules
 
-1. **🛑 Never work directly on `develop` or `main`.** All changes go through a branch and PR. Direct commits are forbidden. Branch protection rules block direct pushes and force pushes to both `main` and `develop`.
+1. **🛑 Never work directly on `develop` or `main`.** All changes go through a branch and PR. Direct commits are forbidden. Branch protection blocks direct and force pushes on both branches — but `enforce_admins=true` applies to `main` only (`scripts/setup-branch-protection.sh`): the maintainer may push the documented rule-3 `develop` ← `main` syncs directly to `develop` (as done in `d03191a` and `81a360d`); every other change, by anyone, still goes through a PR.
 2. **✅ Always verify CI on every PR.** Required status checks (`quality (ubuntu-latest)`, `quality (macos-latest)`, `quality (windows-latest)`, `security`) must pass before merging. A failure on any platform blocks the merge — regardless of whether it is a pre-release (`beta`, `rc`) or production release. Fix pre-release CI failures before tagging production; they **will** recur. Every PR runs the workflow (`paths-ignore` applies only to `push`), so required checks always report.
 3. **🔄 Post-release sync `develop` ← `main` is mandatory.** Skipping it causes divergent branches and merge conflicts — even in single-contributor projects. Sync after EVERY merge to `main`:
    ```bash
@@ -192,6 +192,18 @@ tags                                 ● vX.Y.Z
 3. When CI is green: PR `release/X.Y.Z` → `main` → squash merge
 4. Tag for release
 5. Post-release: sync `develop` ← `main`
+
+### Prerelease Flow (`beta` / `rc`)
+
+The stable path is the `release/X.Y.Z` flow above ([ADR-023](docs/adr/adr-023-short-lived-release-branches.md)). A prerelease lands through `develop` first — this is the executed path of `v2.1.5-beta.1` and the pattern for future `beta`/`rc` tags:
+
+1. Work lands on any working branch — `hotfix/update-payload` for `v2.1.5-beta.1`, not a release branch — and is PR'd → squash-merged into `develop` (PR #119 → `3883288`). Cut `release/X.Y.Z` from `develop` first only if the prerelease needs pre-beta stabilization.
+2. Sync `develop` ← `main` before promoting, so `strict: true` required checks can pass against the base branch (`d03191a`, landed ahead of PR #121; its 7 conflicts were resolved on the `develop` side because the #104 fix was already there via #105).
+3. PR `develop` → `main` → squash merge (PR #121 → `c579948`).
+4. Annotated tag `vX.Y.Z-beta.N` (or `-rc.N`) on the `main` tip → CI publishes under dist-tag `beta`/`rc`; `latest` untouched (it stayed at 2.1.4).
+5. Post-release: sync `develop` ← `main`, pushed directly to `develop` (`81a360d`).
+
+Trace this route with `gh pr view 119 121 --json headRefName,mergeCommit`, not with ancestry: a squash merge does not preserve lineage, so `merge-base --is-ancestor` proves nothing here. The local `release/v2.1.5` branch was cut only after the tag (from `81a360d`), was never pushed to `origin` during the beta and is not part of the beta's path; it is now the branch where v2.1.5 is prepared as **ready for stable deployment — not yet published** (`latest` remains at 2.1.4).
 
 ### Why Clean Merges
 
@@ -270,13 +282,18 @@ Códice installs an OpenCode workspace template organized into three file catego
 
 The project Wiki is synced from `docs/wiki-source/`. After adding agents, skills, commands, or MCPs to the template, sync the Wiki so the documentation stays current.
 
+> **⚠️ Data-loss guard:** `docs/wiki-source/.wiki` is a nested git repo, so the `rsync --delete` sync can overwrite uncommitted work there and publish deletions of pages that exist only in the wiki. The live example: `Customization-Guide.md` (361 lines) existed only in the wiki until it was adopted into `docs/wiki-source/` (`c058a0d`, corrected in `c9c8643`) — a page in that state is invisible to the docs flow and at the mercy of `--delete`. Run the two guard commands below first; if `status` shows dirt, commit or stash it before syncing.
+
 ```bash
-# From the project root
+# From the project root — guards first:
+git -C docs/wiki-source/.wiki status --porcelain   # must be empty; anything here can be silently overwritten
+git -C docs/wiki-source/.wiki ls-files             # pages here missing from docs/wiki-source/*.md WILL be deleted by --delete (measured); an -n dry-run does NOT list them in this file-glob layout, so this check is the real guard
+
 rsync -a --delete --exclude='README.md' docs/wiki-source/*.md docs/wiki-source/.wiki/
 
 cd docs/wiki-source/.wiki
 git add .
-git commit -m "Sync wiki v$(node -p "require('../../package.json').version")"
+git commit -m "Sync wiki v$(node -p "require('../../../package.json').version")"
 git push
 ```
 
@@ -294,4 +311,4 @@ See [docs/wiki-source/README.md](docs/wiki-source/README.md) for the full proced
 
 ---
 
-*Last revised: 2026-09-22*
+*Last revised: 2026-11-18*

@@ -4,7 +4,12 @@
   <img src="docs/img/banner.png" alt="Spec-Driven Development Workspace Banner">
 </p>
 
+<h3 align="center">Workspace for AI-assisted development with Spec-Driven Development methodology.</h3>
+
 <p align="center">
+  <a href="https://github.com/Fisherk2/codice-opencode">
+    <img src="https://img.shields.io/github/stars/Fisherk2/codice-opencode?style=social" alt="GitHub Stars">
+  </a>
   <a href="https://github.com/Fisherk2/codice-opencode/actions/workflows/ci.yml">
     <img src="https://github.com/Fisherk2/codice-opencode/workflows/CI/badge.svg" alt="CI">
   </a>
@@ -17,14 +22,35 @@
   <a href="LICENSE">
     <img src="https://img.shields.io/github/license/Fisherk2/codice-opencode" alt="License">
   </a>
-  <img src="https://img.shields.io/badge/typescript-strict-blue" alt="TypeScript Strict">
-  <img src="https://img.shields.io/badge/built%20with-bun-fbf0df" alt="Built with Bun">
-  <img src="https://img.shields.io/badge/opencode-%23000000.svg?style=for-the-badge&logo=opencode&logoColor=ffffff" alt="OpenCode">
 </p>
 
-**OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
+<p align="center">
+  <a href="https://opencode.ai">
+    <img src="https://img.shields.io/badge/OpenCode-%23000000?style=for-the-badge&logo=opencode&logoColor=ffffff" alt="OpenCode">
+  </a>
+  <a href="https://www.typescriptlang.org">
+    <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=ffffff" alt="TypeScript">
+  </a>
+  <a href="https://bun.sh">
+    <img src="https://img.shields.io/badge/Bun-FBF0DF?style=for-the-badge&logo=bun&logoColor=000000" alt="Bun">
+  </a>
+  <a href="https://biomejs.dev">
+    <img src="https://img.shields.io/badge/Biome-60A5FA?style=for-the-badge&logo=biome&logoColor=ffffff" alt="Biome">
+  </a>
+  <a href="https://github.com/Fisherk2/codice-opencode/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=ffffff" alt="GitHub Actions">
+  </a>
+  <a href="https://semver.org">
+    <img src="https://img.shields.io/badge/semver-3F3F3F?style=for-the-badge&logo=semver&logoColor=ffffff" alt="semver">
+  </a>
+  <a href="https://github.com/casey/just">
+    <img src="https://img.shields.io/badge/Just-000000?style=for-the-badge&logo=just&logoColor=ffffff" alt="Just">
+  </a>
+</p>
 
+<p align="center">
 A production-grade workspace integrating engineering skills organized in SDD cycle phases, slash commands, and specialized agents to accelerate AI-assisted development with Human-in-the-Loop (HITL) and Vertical Slicing Architecture (VSA) approaches. Designed for teams and developers who want consistent quality in AI-assisted projects.
+</p>
 
 ---
 
@@ -55,20 +81,23 @@ A production-grade workspace integrating engineering skills organized in SDD cyc
 
 ---
 
-**Contents**
+<details>
+  <h3 align="left">Table of Contents</h3>
+  <ol>
+    <li><a href="#main-agents">Main Agents</a></li>
+    <li><a href="#install--update">Install / Update</a></li>
+    <li><a href="#workflow">Workflow</a></li>
+    <li><a href="#commands">Commands</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
 
-- [🤖 Main Agents](#-main-agents)
-- [Install / Update](#install--update)
-- [Workflow](#workflow)
-- [⌨️ Commands](#️-commands)
-- [Troubleshooting](#troubleshooting)
-- [Acknowledgments](#acknowledgments)
-
-## 🤖 Main Agents
+## Main Agents
 
 Six primary agents orchestrate the SDD cycle, each with a specific role and permissions inspired by Mexican mythology:
 
-> **Model configuration:** The default models below are provided by the OpenCode provider (free tier) as a reference — replace them with your own providers. Run `opencode models` to list your available LLMs, or if you have no providers configured, use the `/connect` command inside the OpenCode TUI to connect them (see [OpenCode Zen providers docs](https://opencode.ai/docs/es/providers/#opencode-zen)).
+> **Model configuration:** The default models below are provided by the OpenCode provider (free tier) as a reference — replace them with your own providers. Run `opencode models` to list your available LLMs, or if you have no providers configured, use the `/connect` command inside the OpenCode TUI to connect them (see [OpenCode providers docs](https://opencode.ai/v2/docs/providers/)).
 
 ### Huitzilopochtli 🏛️ — Supreme Orchestrator
 
@@ -84,7 +113,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Master of orchestration and strategic delegation</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/huitzilopochtli.md"><code>template/obligatorio/packs/main/huitzilopochtli.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/mimo-v2.5-free</code></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/big-pickle</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>MiMo v2.6-Flash</code> <code>Hy3</code> <code>Step 3.7</code> <code>GPT-5.6 Luna</code> <code>Gemini 3.8 Flash</code> <code>Claude Sonnet 5</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> GPT-5.6 Luna as the cost-effective default (1M context). Hy3 or Gemini 3.5 Flash Lite for extreme speed/cost. Claude Sonnet 5 for critical routing with the full agent catalog.</td></tr>
 </table>
@@ -103,7 +132,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>System architect and specification designer</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/quetzalcoatl.md"><code>template/obligatorio/packs/main/quetzalcoatl.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/nemotron-3-ultra-free</code></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/glm-5.3-flash-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Pro</code> <code>Qwen 3.8-Flash</code> <code>Kimi 2.6</code> <code>Claude Opus 5</code> <code>Gemini 3.8 Flash</code> <code>GPT-5.6 Terra</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Pro for long specs/ADRs at low cost. Qwen 3.8-Flash for high-quality specs. Claude Opus 5 for publication-quality architecture/ADRs, Kimi 2.6 for UI/UX specs.</td></tr>
 </table>
@@ -122,7 +151,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Task planner and work breakdown specialist</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/moctezuma.md"><code>template/obligatorio/packs/main/moctezuma.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/big-pickle</code></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/nemotron-3.5-super-vl-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Pro</code> <code>GLM-5.3-Flash</code> <code>MiniMax-M3</code> <code>Claude Sonnet 5</code> <code>GPT-5.6-Luna</code> <code>Gemini 3.8 Flash</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> MiniMax-M3 for creative breakdowns. GLM-5.3-Flash for structured task lists. Claude Sonnet 5 for strict acceptance criteria.</td></tr>
 </table>
@@ -141,7 +170,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Main implementer and feature builder</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/tlaloc.md"><code>template/obligatorio/packs/main/tlaloc.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/nemotron-3.5-lightning-free</code></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/deepseek-v4.1-flash-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4.1 Flash</code> <code>Kimi K2.7 Code</code> <code>MiMo V2.6-Flash</code> <code>GPT-5.6-Luna</code> <code>Claude Sonnet 5</code> <code>Grok Build 0.1</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4.1 Flash as the permanent default. Kimi K2.7 Code for code-intensive tasks. Claude Sonnet 5 / GPT-5.6-Luna for complex tasks.</td></tr>
 </table>
@@ -160,7 +189,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Quality validator and deployment guardian</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/mictlantecuhtli.md"><code>template/obligatorio/packs/main/mictlantecuhtli.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/muse-spark-1.3-contributor-free</code></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/mimo-v2.6-flash-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4.1 Flash</code> <code>MiMo V2.6-Flash</code> <code>GLM-5.3-Flash</code> <code>Claude Haiku 4.5</code> <code>GPT-5.6-Luna</code> <code>Gemini 3.8 Flash</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4.1 Flash / MiMo V2.6 for cheap test+patch loops (100 steps). Claude Haiku 4.5 for the final deployment gate. GLM-5.3-Flash for huge CI/log dumps.</td></tr>
 </table>
@@ -179,12 +208,14 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
   </tr>
   <tr><td colspan="2"><b>Role:</b> <code>Code critic and quality auditor</code></td></tr>
   <tr><td colspan="2"><b>Prompt:</b> <a href="template/obligatorio/packs/main/tezcatlipoca.md"><code>template/obligatorio/packs/main/tezcatlipoca.md</code></a></td></tr>
-  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/mimo-v2.6-flash-free</code></td></tr>
+  <tr><td colspan="2"><b>Default Model:</b> <code>opencode/glm-5.3-flash-free</code></td></tr>
   <tr><td colspan="2"><b>Recommended Models:</b> <code>DeepSeek V4 Pro</code> <code>GLM-5.3</code> <code>Kimi K3</code> <code>Claude Opus 5</code> <code>GPT-5.6 Sol</code> <code>Qwen 3.8 Max</code></td></tr>
   <tr><td colspan="2"><b>Model Guide:</b> DeepSeek V4 Pro for deep 5-axis audit (384k report, <$1/M). Claude Opus 5 for pre-merge/security audit. GPT-5.6 Sol for recurring full-repo audit.</td></tr>
 </table>
 
 Additionally, over **~350 specialized subagents across 8 selectable packs (≈360 total in 10 packs)** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
+
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
 
 ---
 
@@ -264,6 +295,8 @@ bunx @fisherk2-dev/codice --update --update-add-packs creative
 
 **Documentation:** [Getting Started](https://github.com/fisherk2/codice-opencode/wiki/Getting-Started) · [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents) · [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills) · [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) · [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers) · [Configuration](https://github.com/fisherk2/codice-opencode/wiki/Configuration)
 
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
+
 ---
 
 ## Workflow
@@ -299,7 +332,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    DU["/docs<br/>-update"] --> FE["/feature<br/>FEATURE"]
+    DU["/docs-update"] --> FE["/feature<br/>FEATURE"]
     FE --> P["/plan<br/>PLAN"]
     FE -.->|optional| D["/design<br/>DESIGN"]
     D -.-> P
@@ -323,7 +356,17 @@ flowchart LR
     style SYNC stroke-dasharray: 5 5
 ```
 
-Two paths share the same entry point: the **feature path** (`/docs-update` → `/feature` → `/plan` → `/build` → `/test` → `/code-simplify` → `/review` → `/ship` → `/deploy`) for planned work, and the **hotfix path** (`/docs-update` → `/hotfix` → `/deploy`) for tickets resolvable in under 3 hours — `/hotfix` runs diagnosis, plan, build, test, review and the GO/NOT-GO gate in a single pass, so it skips the iterative planning loop.
+### Hotfix Flow — Quick Fixes
+
+```mermaid
+flowchart LR
+    DU["/docs-update"] --> HF["/hotfix<br/>HOTFIX"] --> DP["/deploy<br/>DEPLOY"]
+    HELP["/help"] -.-> DU
+    SYNC["/sync"] -.-> DU
+
+    style HELP stroke-dasharray: 5 5
+    style SYNC stroke-dasharray: 5 5
+```
 
 ### Issues Flow — Bug Fixes & Tech Debt
 
@@ -370,7 +413,11 @@ flowchart LR
     style SYNC stroke-dasharray: 5 5
 ```
 
-## ⌨️ Commands
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
+
+---
+
+## Commands
 
 | Phase | Command | Agent | What It Does | Main Skills |
 |------|---------|--------|--------------|-------------|
@@ -378,7 +425,7 @@ flowchart LR
 | Design (optional) | `/design` | quetzalcoatl | Parallel fan-out: UX research, technical feasibility, accessibility. Merges into design specification in `specs/design/` | ui-ux-design-pro, design-taste-frontend, frontend-ui-engineering |
 | Define project | `/spec` | quetzalcoatl | Detects project state (3 cases), clarifies requirements, generates docs (PRD, TRD, ARCHITECTURE, WORKFLOW) and synthesizes into SPEC.md | spec-driven-development, clean-ddd-hexagonal, architecture-diagrams, idea-refine, interview-me |
 | Feature project | `/feature` | quetzalcoatl | Creates new specs or modifies existing ones for mature projects with version history. Redirects to `/spec` for new/immature projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
-| Hotfix | `/hotfix` | tlaloc | One-pass rapid fix for tickets under 3 hours: diagnosis → plan → build → test → review → GO/NOT-GO, then hands off to `/deploy`. Skips the iterative planning loop | debugging-and-error-recovery, test-driven-development, code-review-and-quality |
+| Hotfix | `/hotfix` | huitzilopochtli | One-pass rapid fix for tickets under 3 hours: diagnosis → plan → build → test → review → GO/NOT-GO, then hands off to `/deploy`. Skips the iterative planning loop | debugging-and-error-recovery, test-driven-development, code-review-and-quality |
 | Sync documentation | `/docs-update` | quetzalcoatl | Pre-flight analyzes docs state, question-tool resolves contradictions, then synchronizes docs with current codebase | documentation-and-adrs, agent-md-refactor, architecture-diagrams |
 | Diagnose issues | `/diagnosis` | tezcatlipoca | Suggests fixes for remote/local issues, executes diagnostics, documents root cause in `docs/diagnosis/` with structured template. Documents only — does not implement | interview-me, debugging-and-error-recovery |
 | Plan | `/plan` | moctezuma | Analyzes dependencies, cuts vertically, writes tasks with acceptance criteria in `tasks/plan.md` and `tasks/todo.md` | planning-and-task-breakdown, clean-ddd-hexagonal, architecture-diagrams |
@@ -393,6 +440,8 @@ flowchart LR
 | Analyze architecture | `/analyze` | tezcatlipoca | 8-dimension analysis (system structure, design patterns, dependency architecture, data flow, scalability, security, testability, documentation). Generates prioritized `docs/TECH_DEBT.md` with Critical/High/Medium/Low findings. Findings feed `/diagnosis` | clean-ddd-hexagonal, design-patterns, dependency-audit, observability-and-instrumentation, performance-analysis, security-and-hardening, test-driven-development, documentation-and-adrs, code-review-and-quality |
 | Deploy | `/deploy` | mictlantecuhtli | Post-`/ship` review. 3 modes: no workflow (generate from scratch), betterable (analyze + optimize), established (execute documented workflow). Generates branch protection, PR templates, CI pipelines, and updates `CONTRIBUTING.md` | ci-cd-and-automation, git-workflow-and-versioning, bash-defensive-patterns, observability-and-instrumentation, interview-me |
 
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
+
 ---
 
 ## Troubleshooting
@@ -404,8 +453,20 @@ flowchart LR
 | `bunx` uses a cached version | Run `bunx --fresh @fisherk2-dev/codice` |
 | GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
-| `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
+| `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 2 |
 | Symlinks not created | If `.opencode/agents` is missing after installation, re-run the installer. Symlinks are created during post-installation and require write permissions in the project directory |
+
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
+
+---
+
+### Top contributors
+
+<a href="https://github.com/fisherk2/codice-opencode/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=fisherk2/codice-opencode" alt="contrib.rocks image" />
+</a>
+
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
 
 ---
 
@@ -414,10 +475,12 @@ flowchart LR
 This project would not exist without the work of:
 
 - **[awesome-opencode](https://github.com/weisser-dev/awesome-opencode)** — Source of inspiration for implementing new skills and OpenCode documentation. Their upstream catalog lists 90+ specialized agents; Códice ships its own agent set as 10 packs under `template/obligatorio/packs/`.
-- **[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)** — Base of this project. This repository is a fork of that work, which laid the foundations of the AI agent skill ecosystem.
+- **[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)** — Conceptual base for this project's skill set. That work laid the foundations of the AI agent skill ecosystem and inspired the skills Códice ships.
 - **[oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim/)** — Direct inspiration for the multi-main-agent architecture and Mexican orchestration system design.
 - **[msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)** — Source of the new subagents added to the pack system. This repository provided the agent definitions that were adapted and integrated into Códice's 10-pack architecture.
 
 Thanks to their authors and contributors for their invaluable contribution to the community.
+
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
 
 ---

@@ -10,7 +10,7 @@
 
 v2.0.0 introduce dos cambios fundamentales respecto a v1.x:
 
-1. **Sistema de packs.** Los ~355 agentes del workspace ya no se instalan "todos a la vez": se organizan en **10 packs** — 2 obligatorios (`main`, `writers`) y 8 seleccionables (software-development, business, hardware-emerging, science-research, operations-support, finance, creative, government-legal). En Clean/Project Install eliges qué packs instalar; el instalador muestra un resumen con conteos de agentes antes de copiar.
+1. **Sistema de packs.** Los 359 agentes del workspace ya no se instalan "todos a la vez": se organizan en **10 packs** — 2 obligatorios (`main`, `writers`) y 8 seleccionables (software-development, business, hardware-emerging, science-research, operations-support, finance, creative, government-legal). En Clean/Project Install eliges qué packs instalar; el instalador muestra un resumen con conteos de agentes antes de copiar.
 2. **Actualizaciones version-gated.** El modo **Update Workspace solo funciona sobre instalaciones v2.0+**. Las instalaciones v1.x (y anteriores) no pueden actualizarse en el lugar: deben reinstalarse con Clean o Project Install.
 
 Si tu instalación ya es v2.0+, no necesitas esta guía. Consulta el [README](../README.md) para el uso normal.
@@ -177,11 +177,11 @@ En Option B los packs ya instalados quedan **bloqueados** (no se pueden quitar, 
 
 ### ¿Cómo elimino un pack?
 
-**Todavía no existe un mecanismo.** Los agentes de un pack instalado persisten en `agents/`. La eliminación de packs está **diferida a v2.3.0** (tracked como TD-V2-6 en [TECH_DEBT.md](./TECH_DEBT.md)). Mientras tanto, puedes eliminar manualmente los archivos de agentes de ese pack (consulta los IDs en `installedPacks` de `.codice-version`).
+**Todavía no existe un mecanismo.** Los agentes de un pack instalado persisten en `agents/`. La eliminación de packs está **diferida a v2.5.0** (tracked como TD-V2-6 en [TECH_DEBT.md](./TECH_DEBT.md), sección "Backlog by Version → v2.5.0"; la replanificación 2026-09-25 movió la deuda de v2.3.0 a v2.5.0). Mientras tanto, puedes eliminar manualmente los archivos de agentes de ese pack (consulta los IDs en `installedPacks` de `.codice-version`).
 
 ### ¿Por qué el tarball npm creció (8MB)?
 
-v2.0.0 distribuye los 8 packs seleccionables dentro del paquete (ADR-014), por eso el tarball supera el target de 5MB. Es una desviación conocida y aceptada — ver §7.2 en [TECH_DEBT.md](./TECH_DEBT.md).
+v2.0.0 distribuye los 8 packs seleccionables dentro del paquete (ADR-014), por eso el tarball supera el target de 5MB. Es una desviación conocida y aceptada — ver "Known Limitations → Tarball Size (8.0MB vs SC-15 <5MB)" en [TECH_DEBT.md](./TECH_DEBT.md).
 
 ### ¿Qué pasa si cancelo a mitad de la migración?
 
@@ -245,7 +245,7 @@ v2.1.0 es una **actualización sin breaking changes** que añade funcionalidad:
 
 ---
 
-## 7. Relacionado
+## 8. Relacionado
 
 - **[SPEC.md](../SPEC.md)** — Especificación central del proyecto (v2.0.0).
 - **[spec-agent-packs.md](../specs/spec-agent-packs.md)** — Sistema de packs: clasificación, permisos, estructura.
