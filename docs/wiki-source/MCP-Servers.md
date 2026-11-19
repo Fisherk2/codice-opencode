@@ -435,6 +435,8 @@ Remote MCP server for scraping, crawling, and extracting content from web pages.
 1. **Install Firecrawl skills and authenticate:**
 
    ```bash
+   # Upstream's install line; prefer pinning the version you verified
+   # (npx -y firecrawl-cli@<version> init ...) like every other MCP command.
    npx -y firecrawl-cli@latest init --all -k YOUR_FIRECRAWL_API_KEY
    ```
 
