@@ -78,8 +78,8 @@ your-project/
 │   ├── commands/ → ../commands/
 │   └── skills/ → ../skills/
 ├── agents/                    # 359 agents: 6 primary + 4 writer + 349 subagents across 8 selectable packs
-├── commands/                  # 17 SDD slash commands
-└── skills/                    # 51 engineering skills
+├── commands/                  # 18 SDD slash commands
+└── skills/                    # 61 engineering skills
 ```
 
 For a detailed breakdown of every file and directory, see [Workspace Structure](Workspace-Structure).
@@ -106,7 +106,7 @@ Open a terminal in your project directory and run `opencode`.
 
 ### 4. Run /help
 
-Run `/help` inside OpenCode to see the 17 available commands.
+Run `/help` inside OpenCode to see the 18 available commands.
 There you will discover what you can do with Códice and where to start.
 
 ## Next Steps
@@ -114,7 +114,7 @@ There you will discover what you can do with Códice and where to start.
 - [Configuration](Configuration) — Models, permissions, agents, and MCP settings
 - [MCP Servers](MCP-Servers) — Activate pre-configured servers and add new ones
 - [Workspace Structure](Workspace-Structure) — Learn what each file and directory does
-- [Commands](Commands) — Detailed reference for all 17 slash commands
+- [Commands](Commands) — Detailed reference for all 18 slash commands
 - [Agents](Agents) — Understand each agent's role, permissions, and recommended models
 - [Configuration](Configuration) — Configure models, agents, permissions, MCP, and more
 

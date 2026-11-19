@@ -7,7 +7,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
 ## 1. Visión y Problema
 - **Problema que resuelve:** La instalación manual de plantillas de IA es propensa a errores, sobrescribe configuraciones personalizadas del usuario y carece de un mecanismo estandarizado para actualizar las herramientas base (skills, agentes, comandos) sin perder el trabajo previo.
 - **Propuesta de valor:** Un instalador/actualizador interactivo, atómico y seguro que gestiona la complejidad del sistema de archivos, permitiendo a los desarrolladores enfocarse en la arquitectura y el código, no en la configuración de herramientas.
-- **Alcance del MVP (In):** 
+- **Alcance del MVP (In):**
   - Menú interactivo TUI (`@clack/prompts`) con 3 modos: Instalación Limpia, Instalación a Proyecto, Actualizar Workspace.
   - Lógica de fusión granular a nivel de archivo (Obligatorio, Estándar, Opcional con checklist).
   - Operaciones atómicas de sistema de archivos (Staging + Rename).
@@ -31,7 +31,7 @@ Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñ
   - ~~**v2.1:** Auto-discovery de intents: detección basada en filesystem de palabras clave de comandos reemplaza el mapa hardcodeado `INTENT_PATTERNS`.~~ Retirado en FEV-30, #90 (plugin SDD eliminado; los comandos se resuelven por archivo markdown).
   - ~~**v2.1:** Soporte bilingüe de intents: palabras clave de comandos funcionan tanto en inglés como en español.~~ Retirado en FEV-30, #90 (plugin SDD eliminado).
   - **v2.1:** Protocolo de delegación de agentes: los seis agentes primarios analizan antes de actuar, mapean subagentes/skills requeridos, e invocan vía `task()` con instrucciones determinísticas, skills a cargar y checklist de objetivos.
-- **Alcance del MVP (Out):** 
+- **Alcance del MVP (Out):**
   - Instalación de dependencias de terceros fuera del template.
   - Soporte para múltiples fuentes de plantillas (solo se soporta el template empaquetado en el binario).
 

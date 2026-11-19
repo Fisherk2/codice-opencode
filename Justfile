@@ -252,3 +252,37 @@ rollback version prev_version dist_tag:
     echo "✔ Rollback steps complete."
     echo "Note: never rely on npm unpublish (>72h restricted); deprecate + dist-tag is the"
     echo "      supported path. See the 'Release' section of CONTRIBUTING.md for the rollback procedure."
+
+# ─── Docs ──────────────────────────────────────────────────────────────────────
+
+# Lint all Markdown files with markdownlint-cli2 (config: .markdownlint-cli2.jsonc).
+# Runs as the informational `docs` job in ci.yml; not a branch-protection context.
+lint-docs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! command -v bunx >/dev/null 2>&1; then
+        echo "ERROR: bunx not found — install Bun >= 1.3 first (see CONTRIBUTING.md)." >&2
+        exit 1
+    fi
+    if bunx markdownlint-cli2; then
+        echo "✔ markdownlint-cli2 passed."
+        exit 0
+    else
+        status=$?
+    fi
+    if [ "$status" -eq 126 ]; then
+        # shortcut: 126 = the package bin is not executable — fuseblk/NTFS
+        # mounts cannot store the exec bit on node_modules. Rerun the same
+        # entry point through bun's runtime (no exec bit needed). Upgrade to
+        # plain `bunx` only if this repo stops living on such a mount.
+        if bun node_modules/markdownlint-cli2/markdownlint-cli2-bin.mjs; then
+            echo "✔ markdownlint-cli2 passed (bun runtime fallback; bin not executable on this mount)."
+            exit 0
+        else
+            status=$?
+            echo "ERROR: markdownlint-cli2 reported findings (exit ${status})." >&2
+            exit "${status}"
+        fi
+    fi
+    echo "ERROR: markdownlint-cli2 failed to run (exit ${status})." >&2
+    exit "${status}"

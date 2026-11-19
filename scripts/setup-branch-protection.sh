@@ -9,10 +9,14 @@
 # Design notes (single-contributor project):
 #   - required_approving_review_count: 0 — PR flow enforced without needing a
 #     second human reviewer (the maintainer is the only contributor).
-#   - required_status_checks contexts use the GitHub Actions format
-#     "<workflow> / <job> (<matrix>)", matching what ci.yml reports.
+#   - required_status_checks contexts are the bare job names GitHub reports
+#     for Actions runs: "quality (<os>)" (the matrix) plus "security" — the
+#     "CI / " workflow-name prefix must NOT be included: checks with that
+#     prefix never report, and requiring them would deadlock every merge.
 #   - enforce_admins: true on main only — admins (incl. CI tokens) must follow
-#     the same rules on the production branch; develop stays flexible.
+#     the same rules on the production branch; develop stays flexible. The
+#     heredoc is UNQUOTED so $enforce_admins expands into the JSON (a quoted
+#     heredoc would have silently posted the literal "false" on main too).
 
 set -euo pipefail
 
@@ -32,17 +36,18 @@ protect_branch() {
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
     "/repos/${REPO}/branches/${branch}/protection" \
-    --input - <<'JSON'
+    --input - <<JSON
 {
   "required_status_checks": {
     "strict": true,
     "contexts": [
-      "CI / quality (ubuntu-latest)",
-      "CI / quality (macos-latest)",
-      "CI / quality (windows-latest)"
+      "quality (ubuntu-latest)",
+      "quality (macos-latest)",
+      "quality (windows-latest)",
+      "security"
     ]
   },
-  "enforce_admins": false,
+  "enforce_admins": ${enforce_admins},
   "required_pull_request_reviews": {
     "required_approving_review_count": 0,
     "dismiss_stale_reviews": true,
@@ -58,7 +63,7 @@ protect_branch() {
 JSON
 }
 
-protect_branch "main" false
+protect_branch "main" true
 protect_branch "develop" false
 
 echo "Branch protection configured for main and develop."

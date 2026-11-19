@@ -3,11 +3,10 @@
 > Coding conventions for the project.
 > Define naming rules, formatting standards, and patterns here.
 > Automated tools (linter, formatter) enforce some of these; document the rest.
+<!-- Delete all HTML comments once the placeholders are filled. -->
 
+<!-- Fill one row per construct with the convention in use and a real example. -->
 ## Naming Conventions
-
-<!-- Describe naming rules for: files, classes, interfaces, functions, constants, variables -->
-<!-- Use a table for quick reference: -->
 
 | Construct | Convention | Example |
 |-----------|------------|---------|
@@ -17,59 +16,45 @@
 | Functions | [Your convention] | [example] |
 | Constants | [Your convention] | [example] |
 
+<!-- List language-specific rules and the reason behind each one. -->
 ## Language Rules
-
-<!-- Document language-specific rules. Examples for TypeScript: -->
-<!-- - Strict mode? No implicit any? -->
-<!-- - Explicit return types on public methods? -->
-<!-- - Readonly preference? -->
-<!-- - Prefer const over let? -->
 
 - [Rule 1 — describe and explain rationale]
 - [Rule 2]
 - [Rule 3]
 
+<!-- State file length, export and import-ordering rules. -->
 ## File Structure
 
-<!-- Max lines per file? One export per file? Import ordering? -->
-<!-- Module organization rules? -->
-
 - [Rule 1]
 - [Rule 2]
 
+<!-- Record indentation, line length and punctuation choices. -->
 ## Formatting
 
-<!-- Indentation (tabs/spaces)? Semicolons? Trailing commas? -->
-<!-- Line length? Bracket style? -->
-
 - [Rule 1]
 - [Rule 2]
 
+<!-- Choose exceptions or Result types and describe error messages. -->
 ## Error Handling
 
-<!-- Exceptions vs Result types? Fail-fast? Error messages? -->
-<!-- Domain-specific error patterns? -->
-
 - [Rule 1]
 - [Rule 2]
 
+<!-- Say when to comment and which public APIs need JSDoc. -->
 ## Comments
 
-<!-- When to comment? JSDoc requirements? -->
-<!-- What counts as obvious? What needs explanation? -->
-
 - [Rule 1]
 - [Rule 2]
 
+<!-- List anti-patterns with the reason each one is avoided. -->
 ## Anti-Patterns
-
-<!-- List patterns to avoid. Be specific about what NOT to do. -->
 
 - [Anti-pattern 1 — explain why and what to do instead]
 - [Anti-pattern 2]
 
+<!-- Add links to style guides, linter configs and external standards. -->
 ## References
 
-<!-- Link to relevant style guides, linter configs, or external standards -->
 - [Link 1 — description]
 - [Link 2]

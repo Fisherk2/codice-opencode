@@ -1,24 +1,28 @@
-import { valid } from "semver";
 import { FILE_RULE_MANIFEST, filterByPacks } from "../../domain/entities/FileRuleManifest";
-import type { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
+import { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
-import type { IFileSystem } from "../../domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../../domain/ports/IStagedFileSystem";
 import type { IVersionComparator } from "../../domain/ports/IVersionComparator";
 import { failure, type Result, success } from "../../domain/types/Result";
-import { checkWritable, createProgressCallback, wrapMergeError } from "../helpers";
 import { isLegacyVersion } from "../legacyBanner";
+import { wrapMergeError } from "../mergeErrors";
 import type { IGitHubClient } from "../ports/IGitHubClient";
 import type { IUserPrompt } from "../ports/IUserPrompt";
+import { createProgressCallback } from "../progressCallback";
 import { parseVersionData } from "../versionData";
 import {
 	buildNoPreviousInstallWarning,
 	buildUpdateSystemChangedWarning,
 } from "../versionGateMessages";
+import { checkWritable } from "../writableCheck";
 import { isPreV2Version, resolveUpdatePacks } from "./updateFlow";
-import { buildPluginRemnantMessage, finishUpdate, maybeConfirmUpdate } from "./updateHelpers";
+import {
+	buildPluginRemnantMessage,
+	confirmUpdateUnlessForced,
+	writeVersionAndReportUpdate,
+} from "./updateHelpers";
 import type { UpdateWorkspaceOptions } from "./updateOptions";
-import { notifyIfUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
+import { isAlreadyUpToDate, reportRemoteStatus, type UpdateStatusDeps } from "./updateStatusCheck";
 
 /**
  * Mode 3: Update Workspace — update an existing v2.0+ installation.
@@ -38,7 +42,7 @@ export class UpdateWorkspaceUseCase {
 	 * @param bundledVersion - The version of the template bundled in the package
 	 */
 	constructor(
-		private readonly fileSystem: IFileSystem & IStagingSystem,
+		private readonly fileSystem: IStagedFileSystem,
 		private readonly mergeEngine: IFileMergeEngine,
 		private readonly userPrompt: IUserPrompt,
 		private readonly gitHubClient: IGitHubClient,
@@ -66,6 +70,8 @@ export class UpdateWorkspaceUseCase {
 		// a v2.0+ installation with pack metadata. Missing, corrupt, or pre-v2.0
 		// files are all treated as "must reinstall" — never update blindly.
 		const localVersion = await this.readInstalledVersion();
+		// Graceful exit: readInstalledVersion already emitted the
+		// "no previous install" or "system changed, reinstall" warning.
 		if (localVersion === null) return success(undefined);
 
 		// Pre-2.1.3 installs carry SDD plugin files the updater cannot
@@ -76,9 +82,18 @@ export class UpdateWorkspaceUseCase {
 			this.userPrompt.showWarning(buildPluginRemnantMessage());
 		}
 
+		// Bundled-version comparison BEFORE the confirm prompt: it needs no
+		// network, so an up-to-date workspace exits with the "already up to
+		// date" info instead of prompting and refusing afterwards.
+		if (await isAlreadyUpToDate(this.statusDeps, localVersion)) {
+			// Graceful exit: isAlreadyUpToDate already emitted the
+			// "Workspace is already up to date" info message.
+			return success(undefined);
+		}
+
 		// Ask for confirmation if not forced.
 		if (
-			!(await maybeConfirmUpdate(
+			!(await confirmUpdateUnlessForced(
 				this.fileSystem,
 				this.userPrompt,
 				localVersion,
@@ -86,17 +101,13 @@ export class UpdateWorkspaceUseCase {
 				options,
 			))
 		) {
+			// Graceful exit: confirmUpdateUnlessForced already showed
+			// "Update cancelled by user." when declined.
 			return success(undefined);
 		}
 
 		// Informational GitHub check — never blocks the update
 		await reportRemoteStatus(this.statusDeps, localVersion);
-
-		// Compare installed version against bundled template version. Returns
-		// true when no update is needed (installed >= bundled).
-		if (await notifyIfUpToDate(this.statusDeps, localVersion)) {
-			return success(undefined);
-		}
 
 		// Option A / Option B / non-interactive addPacks → pack scope
 		const finalPacks = await resolveUpdatePacks(
@@ -104,7 +115,12 @@ export class UpdateWorkspaceUseCase {
 			localVersion.installedPacks,
 			options ?? {},
 		);
-		if (finalPacks === null) return success(undefined);
+		if (finalPacks === null) {
+			// Graceful exit: resolveUpdatePacks already showed "Update
+			// cancelled by user." or "No new packs selected" for its
+			// cancel/no-op paths.
+			return success(undefined);
+		}
 
 		// Non-optional rules, scoped to the resolved packs so agents from
 		// unselected packs are never merged.
@@ -128,7 +144,7 @@ export class UpdateWorkspaceUseCase {
 		if (!versionResult.ok) {
 			return failure(versionResult.error);
 		}
-		const finishResult = await finishUpdate(
+		const finishResult = await writeVersionAndReportUpdate(
 			this.fileSystem,
 			this.userPrompt,
 			versionResult.value,
@@ -169,7 +185,7 @@ export class UpdateWorkspaceUseCase {
 	 */
 	private resolveNewVersion(options: UpdateWorkspaceOptions | undefined): Result<string, Error> {
 		const resolved = options?.version ?? this.bundledVersion;
-		if (valid(resolved)) {
+		if (WorkspaceVersion.isValidVersion(resolved)) {
 			return success(resolved);
 		}
 		return failure(

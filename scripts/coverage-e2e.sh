@@ -20,21 +20,9 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
-IGNORE_PATTERNS="--path-ignore-patterns=template/obligatorio/core/skills/**,skills/**"
 
-log_info() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $*" >&2
-}
-
-log_error() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $*" >&2
-}
-
-cleanup() {
-    log_info "Done."
-}
-
-trap cleanup EXIT
+# Shared log helpers, ignore patterns and EXIT cleanup trap.
+source "$SCRIPT_DIR/lib/coverage-common.sh"
 
 log_info "Installing deps..."
 bun install 2>/dev/null || true

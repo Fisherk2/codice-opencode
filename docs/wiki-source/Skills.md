@@ -1,6 +1,6 @@
 # Skills — Agent Knowledge Base
 
-Skills are the workspace's reusable knowledge base. Each skill is a Markdown file that teaches an agent how to perform a specific task domain — from writing robust Bash scripts to designing professional UI/UX, from running incident response to auditing dependencies. Together they form a library of **51 engineering process guides** that agents load on demand.
+Skills are the workspace's reusable knowledge base. Each skill is a Markdown file that teaches an agent how to perform a specific task domain — from writing robust Bash scripts to designing professional UI/UX, from running incident response to auditing dependencies. Together they form a library of **61 engineering process guides** that agents load on demand.
 
 > For the official OpenCode skills documentation, see [opencode.ai/v2/docs/skills](https://opencode.ai/v2/docs/skills/).
 
@@ -35,10 +35,8 @@ skills/
 ├── test-driven-development/SKILL.md      # RED-GREEN-Refactor workflow
 ├── security-and-hardening/SKILL.md       # OWASP, input validation, least privilege
 ├── ui-ux-design-pro/SKILL.md             # Professional UI/UX design systems
-├── obsidian-vault/SKILL.md              # Vault management and organization
-├── obsidian-markdown/SKILL.md           # Obsidian Flavored Markdown syntax
-├── obsidian-cli/SKILL.md                # Obsidian CLI command reference
-└── ... (51 skill directories total, many with references/ subdirectories)
+├── vertical-slice-architecture/SKILL.md  # Vertical slice planning
+└── ... (61 skill directories total, many with references/ subdirectories)
 ```
 
 ---
@@ -53,21 +51,26 @@ This discovery is automatic — no manual registration or index maintenance is r
 
 ## Full Skill Catalog
 
-The workspace ships with 51 skills covering the full development lifecycle:
+The workspace ships with 61 skills covering the full development lifecycle:
 
 | Phase | Skill | Purpose |
 |-------|-------|---------|
 | **Define** | `interview-me` | Extract what the user actually wants through one-question-at-a-time interviews |
 | | `idea-refine` | Refine vague ideas through divergent and convergent thinking |
+| | `brainstorming` | Explore intent, requirements, and design before building anything |
 | | `spec-driven-development` | Requirements and acceptance criteria before code |
 | | `agent-md-refactor` | Refactor bloated AGENTS.md files using progressive disclosure |
 | | `crafting-effective-readmes` | Audience-matched README writing |
+| | `codebase-onboarding` | Map an unfamiliar codebase into an onboarding guide and starter CLAUDE.md |
 | | `env-setup` | Bootstrap dev environment with prereqs and `.env.example` |
 | | `clean-ddd-hexagonal` | Clean Architecture + DDD + Hexagonal patterns for backend design |
 | | `design-patterns` | GoF and enterprise design patterns for recurring problems |
+| | `codebase-design` | Deep-module vocabulary for interfaces, seams, and testability |
 | | `architecture-diagrams` | Mermaid, PlantUML, C4 model diagrams |
 | | `ui-ux-design-pro` | Professional UI/UX design with design systems and tokens |
 | **Plan** | `planning-and-task-breakdown` | Decompose work into small, verifiable tasks |
+| | `tech-debt` | Identify, categorize, and prioritize technical debt |
+| | `prototype` | Build a throwaway prototype to answer a design question |
 | **Build** | `incremental-implementation` | Thin vertical slices, test each before expanding |
 | | `source-driven-development` | Verify against official docs before implementing |
 | | `doubt-driven-development` | Adversarial review of non-trivial decisions |
@@ -82,17 +85,27 @@ The workspace ships with 51 skills covering the full development lifecycle:
 | | `error-handling-patterns` | Result types, propagation, graceful degradation |
 | | `design-taste-frontend` | Metric-based visual consistency rules |
 | | `bash-defensive-patterns` | Strict mode, error traps, safe variable handling |
+| | `vertical-slice-architecture` | Plan phases as vertical slices through every layer |
+| | `markdown-mermaid-writing` | Markdown documentation and Mermaid diagrams |
+| | `framework-migration-legacy-modernize` | Strangler-fig modernization of legacy systems |
+| | `spreadsheet-analysis` | Analyze and generate spreadsheet files |
+| | `data-plotting` | Statistical, interactive, and publication-ready figures |
+| | `data-analysis` | Bounded EDA and rigorous statistical modeling on local files |
 | **Verify** | `test-driven-development` | Failing test first, then make it pass |
 | | `browser-testing-with-devtools` | Chrome DevTools MCP for runtime verification |
 | | `debugging-and-error-recovery` | Reproduce → localize → fix → guard |
-| | `excel-analysis` | Analyze spreadsheets, create pivot tables and charts |
 | **Review** | `code-review-and-quality` | Five-axis review with quality gates |
 | | `security-and-hardening` | OWASP prevention, input validation, least privilege |
+| | `security-audit` | Security review, vulnerability research, and pen-test workflow |
 | | `performance-optimization` | Measure first, optimize only what matters |
 | | `performance-analysis` | Static analysis for N+1 queries and complexity |
 | | `dependency-audit` | CVE scanning, outdated packages, license issues |
 | | `code-simplification` | Simplify code for clarity without changing behavior |
 | | `refactoring-patterns` | Named refactoring transformations |
+| | `refactor-legacy-code` | Modernize legacy codebases while preserving behavior |
+| | `improve-codebase-architecture` | Scan for deepening opportunities and report them |
+| | `osint-skills` | Investigation and verification workflows across identifiers |
+| | `teach` | Teach a new skill or concept within the workspace |
 | **Ship** | `git-workflow-and-versioning` | Atomic commits, clean history |
 | | `changelog-generate` | Generate CHANGELOG.md from git history |
 | | `ci-cd-and-automation` | Automated quality gates on every change |
@@ -101,12 +114,8 @@ The workspace ships with 51 skills covering the full development lifecycle:
 | | `observability-and-instrumentation` | Logging, metrics, tracing, alerting |
 | | `deprecation-and-migration` | Manage deprecation and migration of old APIs |
 | | `incident-response` | Triage, communicate, write blameless postmortems |
-| **Extra** | `obsidian-vault` | Search, create, and manage notes in the Obsidian vault with wikilinks and index notes |
-| | `obsidian-markdown` | Create and edit Obsidian Flavored Markdown with wikilinks, embeds, callouts, and properties |
-| | `obsidian-cli` | Interact with Obsidian vaults using the Obsidian CLI to read, create, search, and manage notes |
-| | `xlsx` | Create, edit, and manipulate spreadsheet files |
-| | `find-docs` | Retrieve up-to-date documentation for any developer technology |
-| | `skill-creator` | Create, edit, and optimize agent skills |
+| | `setup-pre-commit` | Husky pre-commit hooks with lint-staged, typechecking, tests |
+| | `pr` | Write a pull request body |
 
 ---
 

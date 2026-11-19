@@ -9,6 +9,7 @@
  */
 
 import * as path from "node:path";
+import { stripControlChars } from "../domain/services/stripControlChars";
 
 /**
  * Well-known system directories that are never valid project destinations.
@@ -37,38 +38,46 @@ const DRIVE_ROOT_RE = /^[A-Z]:\\?$/i;
  * handled by pathResolver.ts at installation time.
  */
 export function validateDestPath(dest: string): string | null {
+	if (dest.includes("\0")) return "Destination path contains NUL bytes";
+
 	const trimmed = dest.trim();
 	if (!trimmed) return "Destination path is empty";
 
-	// Reject path traversal attempts at the CLI level
-	const normalized = path.normalize(trimmed);
-	if (normalized.includes("..")) {
-		return `Invalid destination path: "${trimmed}" contains path traversal segments`;
+	// Control characters (incl. ANSI escapes) in a raw CLI arg must never be
+	// echoed back to the terminal: strip them before checks and messages.
+	const display = stripControlChars(trimmed);
+
+	// Reject path traversal attempts at the CLI level. Per-segment check
+	// (not a bare includes("..")) so legitimate names like "my..project"
+	// pass; path.normalize already collapses interior "a/../b" sequences.
+	const normalized = path.normalize(display);
+	if (normalized.split(path.sep).some((segment) => segment === "..")) {
+		return `Invalid destination path: "${display}" contains path traversal segments`;
 	}
 
 	// Relative paths are contained by construction; absolute paths are
 	// checked against system destinations below.
 	if (path.isAbsolute(normalized)) {
-		return absolutePathViolation(normalized, trimmed);
+		return absolutePathViolation(normalized, display);
 	}
 
 	return null; // valid
 }
 
 /** Reject absolute paths targeting the root or a well-known system directory. */
-function absolutePathViolation(normalized: string, trimmed: string): string | null {
+function absolutePathViolation(normalized: string, display: string): string | null {
 	if (normalized === path.sep) {
-		return `Invalid destination path: "${trimmed}" is the filesystem root`;
+		return `Invalid destination path: "${display}" is the filesystem root`;
 	}
 
 	for (const sysDir of SYSTEM_DIRS) {
 		if (normalized === sysDir || normalized.startsWith(`${sysDir}${path.sep}`)) {
-			return `Invalid destination path: "${trimmed}" is inside a system directory "${sysDir}"`;
+			return `Invalid destination path: "${display}" is inside a system directory "${sysDir}"`;
 		}
 	}
 
 	if (DRIVE_ROOT_RE.test(normalized)) {
-		return `Invalid destination path: "${trimmed}" is a drive root`;
+		return `Invalid destination path: "${display}" is a drive root`;
 	}
 
 	return null;

@@ -72,7 +72,7 @@ assert_file_exists "$TEMP_DIR/agents/tlaloc.md"
 assert_file_exists "$TEMP_DIR/commands/build.md"
 assert_file_exists "$TEMP_DIR/skills/architecture-diagrams/references/architecture.md"
 assert_dir_missing "$TEMP_DIR/references/"
-assert_file_exists "$TEMP_DIR/skills-lock.json"
+assert_file_exists "$TEMP_DIR/commands/hotfix.md"
 
 log_info "Verifying FEV-18 pack agents (v2.0 distribution)..."
 # Primary agents (packs/main, mandatory)
@@ -130,7 +130,7 @@ assert_file_exists "$TEMP_DIR/tasks/plan.md"
 # Verify staging directory was cleaned
 # ---------------------------------------------------------------------------
 
-if [[ -d "$TEMP_DIR/.codice-staging" ]]; then
+if compgen -G "$TEMP_DIR/.codice-staging-*" > /dev/null; then
     log_fail "Staging directory was not cleaned after successful install"
     exit 1
 fi

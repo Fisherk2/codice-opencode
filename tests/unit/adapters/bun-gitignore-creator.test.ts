@@ -34,6 +34,17 @@ describe("BunGitignoreCreator — single createGitignore", () => {
 		fs.rmSync(tempDir, { recursive: true, force: true });
 	});
 
+	test("throws fail-early when workspace root does not exist (aligned with BunSymlinkCreator)", async () => {
+		const { BunGitignoreCreator } = await import(modulePath);
+		const templateDir = path.join(tempDir, "template-fail-early", "estandar");
+		fs.mkdirSync(templateDir, { recursive: true });
+
+		const missingRoot = path.join(tempDir, "workspace-does-not-exist");
+		expect(() => new BunGitignoreCreator(missingRoot, templateDir)).toThrow(
+			/Workspace root does not exist/,
+		);
+	});
+
 	test("creates .gitignore file with content from template", async () => {
 		const { BunGitignoreCreator } = await import(modulePath);
 		const templateDir = path.join(tempDir, "template", "estandar");

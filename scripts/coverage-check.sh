@@ -24,18 +24,14 @@ PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 COVERAGE_DIR="$PROJECT_DIR/coverage"
 THRESHOLDS_FILE="$SCRIPT_DIR/coverage-thresholds.json"
 MAIN_FILE_KEY="src/cli/main.ts"
-IGNORE_PATTERNS="--path-ignore-patterns=template/obligatorio/core/skills/**,skills/**"
+
+# Shared log helpers, ignore patterns and EXIT cleanup trap.
+source "$SCRIPT_DIR/lib/coverage-common.sh"
 
 # Accepted threshold range, shared by both jq reads (single definition).
 # `select` also rejects NaN, which `. | numbers` accepts (NaN serializes to
 # null but is internally a number, so `.global | numbers` alone lets it pass).
 JQ_IN_RANGE='def in_range: . >= 0 and . <= 100;'
-
-log_info() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $*" >&2; }
-log_error() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $*" >&2; }
-
-cleanup() { log_info "Done."; }
-trap cleanup EXIT
 
 # ─── Load thresholds (fail-closed) ────────────────────────────────────────────
 

@@ -92,8 +92,8 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 		await this.atomicStager.stageFile(resolved, destPath ?? relativePath, excludeSubDirs);
 	}
 
-	/** Atomic rename: promote all staged files to the destination. */
-	commitStaging(): Promise<void> {
+	/** Atomic rename: promote all staged files; returns a residue note ("" when clean). */
+	commitStaging(): Promise<string> {
 		return this.atomicStager.commitStaging();
 	}
 
@@ -104,17 +104,26 @@ export class BunFileSystem implements IFileSystem, IStagingSystem {
 
 	/**
 	 * Check if the destination directory is writable by attempting
-	 * to create a temporary file and cleaning it up.
+	 * to create a temporary file and cleaning it up. A successful write
+	 * proves writability regardless of the cleanup outcome; the probe is
+	 * removed in its own step so an unlink failure never leaks the file
+	 * silently (it is logged instead).
 	 */
 	async isWritable(): Promise<boolean> {
+		const testFile = path.join(this.destinationRoot, WRITE_TEST_FILE_NAME);
 		try {
-			const testFile = path.join(this.destinationRoot, WRITE_TEST_FILE_NAME);
 			await Bun.write(testFile, "test");
-			await fs.unlink(testFile);
-			return true;
 		} catch {
-			return false;
+			return false; // write failed — not writable
 		}
+		try {
+			await fs.unlink(testFile);
+		} catch (unlinkError) {
+			// Writable regardless; the leftover probe must be diagnosable.
+			const detail = unlinkError instanceof Error ? unlinkError.message : String(unlinkError);
+			this.logger.log("write_test", `WARNING: could not remove ${WRITE_TEST_FILE_NAME}: ${detail}`);
+		}
+		return true;
 	}
 
 	/**

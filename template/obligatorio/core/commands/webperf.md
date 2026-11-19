@@ -58,6 +58,20 @@ Return the full audit report to the user. For remediation of findings, **Load** 
 
 If agents are stuck or the corrections process fails, **Delegate** to `debugger` subagent and **Load** `debugging-and-error-recovery` skill to diagnose and fix issues. If the debugger can't resolve the issue, **Delegate** to `error-detective` subagent and **Load** `observability-and-instrumentation` skill to identify the root cause and implement a fix with appropriate subagents.
 
+## Rules
+
+- **Do not** modify `CODE_STYLE.md` if it exists, follow the conventions and best practices defined in it.
+- If `CODE_STYLE.md` does not exist, use the best practices and conventions of the project and write it in `docs/CODE_STYLE.md`.
+- Always follow the rules of the project and observations report.
+- You can stop and ask the user for clarification if you need more information to complete the web performance corrections.
+- Use the best available tools for the job.
+- Research external resources every time, specially if you are stuck or the web performance corrections process fails.
+
 ## Suggested Next Step
 
 > Performance UI/UX corrections are complete. Run `/review` to review the latest implementations and ensure quality and correctness.
+
+---
+
+User context:
+

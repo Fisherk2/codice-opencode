@@ -17,7 +17,12 @@ export type ProgressEvent =
 			readonly filePath: string;
 	  }
 	| { readonly type: "commit_start"; readonly total: number }
-	| { readonly type: "commit_complete"; readonly total: number }
+	| {
+			readonly type: "commit_complete";
+			readonly total: number;
+			/** Optional non-blocking residue note (e.g. intent-marker cleanup failure). */
+			readonly note?: string;
+	  }
 	| { readonly type: "error"; readonly filePath: string; readonly message: string };
 
 /**

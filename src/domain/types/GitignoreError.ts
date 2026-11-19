@@ -1,7 +1,9 @@
 /**
  * Error codes for gitignore creation operations.
+ * Internal-only: referenced by the exported GitignoreError but never
+ * imported elsewhere.
  */
-export type GitignoreErrorCode = "READ_FAILED" | "WRITE_FAILED" | "TEMPLATE_NOT_FOUND";
+type GitignoreErrorCode = "READ_FAILED" | "WRITE_FAILED" | "TEMPLATE_NOT_FOUND";
 
 /**
  * Structured error type for gitignore generation operations.

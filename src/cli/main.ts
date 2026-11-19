@@ -8,18 +8,13 @@ import type {
 	VersionDisplayInfo,
 } from "../application/ports/IUserPrompt";
 import { getAllPackIds } from "../domain/entities/FileRuleManifest";
-import type { Result } from "../domain/types/Result";
+import { failure, type Result } from "../domain/types/Result";
 import { createDependencies, type Dependencies } from "./container";
 import { EXIT_ERROR, EXIT_INTERRUPT, EXIT_SUCCESS, EXIT_USAGE, VERSION } from "./output";
 import { type CliOptions, type Mode, parseArgs } from "./parse-args";
 import { handleTerminalFlags, registerSigintHandler } from "./signalHandlers";
 import { detectVersionContext } from "./versionContext";
 
-export { createDependencies, type Dependencies } from "./container";
-export { VERSION } from "./output";
-export { type CliOptions, type Mode, type ParsedArgs, parseArgs } from "./parse-args";
-export { handleTerminalFlags, registerSigintHandler } from "./signalHandlers";
-export { detectVersionContext } from "./versionContext";
 // Export main for dynamic import via bin.js (npm requires .js bin extension)
 export { main };
 
@@ -86,6 +81,17 @@ export async function runMode(
 			packs,
 		});
 	}
+	// --packs/--packs-all are meaningless with --update (update scope is
+	// installed packs + --update-add-packs); reject instead of silently
+	// dropping the user's selection.
+	if (options.packs !== undefined || options.packsAll) {
+		return failure(
+			new Error(
+				"--packs/--packs-all cannot be combined with --update. " +
+					"Use --update-add-packs to add packs during an update.",
+			),
+		);
+	}
 	return deps.updateWorkspace.execute(destinationPath, {
 		...execOptions,
 		addPacks: options.updateAddPacks,
@@ -112,22 +118,25 @@ async function main(): Promise<void> {
 	// Parse mode and options
 	const parsed = parseArgs(args);
 	if (parsed === null) {
-		// biome-ignore lint/suspicious/noConsole: intentional CLI output
-		console.error("Usage error: unrecognized arguments. Use --help for usage information.");
+		// The specific reason (unrecognized args, invalid --dest/--packs) was
+		// already printed by parseArgs or its validators — just exit.
 		process.exit(EXIT_USAGE);
 	}
 
 	const { mode, options, destination } = parsed;
 	const destinationPath = destination ?? process.cwd();
 
-	// Wire dependencies (needed early for SIGINT cleanup)
-	const deps = createDependencies(destinationPath, options.verbose);
-
-	// SIGINT handler — best-effort staging cleanup before exit. An immediate
-	// exit would leave residual .codice-staging/ after an interrupt mid-commit.
-	const unregisterSigint = registerSigintHandler(() => deps.fileSystem.cleanStaging());
-
+	// Dependency creation lives inside the error boundary: a constructor
+	// throw (e.g. BunSymlinkCreator on a nonexistent --dest) must surface
+	// as the clean Fatal error path, not an uncaught stack trace.
+	let unregisterSigint: (() => void) | null = null;
 	try {
+		const deps = createDependencies(destinationPath, options.verbose);
+
+		// SIGINT handler — best-effort staging cleanup before exit. An immediate
+		// exit would leave residual .codice-staging/ after an interrupt mid-commit.
+		unregisterSigint = registerSigintHandler(() => deps.fileSystem.cleanStaging());
+
 		// Detect local installation state and surface it in the TUI header
 		const versionContext = await detectVersionContext(deps.fileSystem);
 		deps.userPrompt.showVersionInfo(versionContext);
@@ -152,7 +161,7 @@ async function main(): Promise<void> {
 		console.error(`Fatal error: ${message}`);
 		process.exit(EXIT_ERROR);
 	} finally {
-		unregisterSigint();
+		unregisterSigint?.();
 	}
 }
 

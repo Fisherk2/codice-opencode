@@ -1,7 +1,6 @@
 import type { FileRule } from "../entities/FileRule";
 import type { IFileMergeEngine, MergeExecuteOptions } from "../ports/IFileMergeEngine";
-import type { IFileSystem } from "../ports/IFileSystem";
-import type { IStagingSystem } from "../ports/IStagingSystem";
+import type { IStagedFileSystem } from "../ports/IStagedFileSystem";
 import type { MergeError } from "../types/MergeError";
 import { commitError, stagingError } from "../types/MergeError";
 import type { ProgressCallback, ProgressEvent } from "../types/ProgressEvent";
@@ -25,7 +24,7 @@ import { computeStagePlan, type StagePlan } from "./stagePlanner";
  * additionally removes promoted-but-unbacked files during commit rollback.
  */
 export class FileMergeEngine implements IFileMergeEngine {
-	constructor(private readonly fileSystem: IFileSystem & IStagingSystem) {}
+	constructor(private readonly fileSystem: IStagedFileSystem) {}
 
 	/** Execute merge rules. @param options.updateMode enables tree-level diff for standard dirs. */
 	async execute(
@@ -48,10 +47,40 @@ export class FileMergeEngine implements IFileMergeEngine {
 			return failure(stagingError("", message));
 		}
 		const { stageDecisions, expandedDirs, total } = plan;
+
+		// Phase 1: Stage all files
+		const staged = await this.stageRules(
+			rules,
+			stageDecisions,
+			expandedDirs,
+			total,
+			selected,
+			isUpdateMode,
+			onProgress,
+		);
+		if (!staged.ok) return staged;
+
+		// Phase 2: Commit staging (atomic rename). Skip when nothing was staged.
+		return await this.commitPhase(onProgress, total);
+	}
+
+	/**
+	 * Stage every rule the plan marked for staging, emitting
+	 * stage_start/stage_skip/stage_complete progress events per file.
+	 * @returns failure (with staging cleaned) on the first staging error.
+	 */
+	private async stageRules(
+		rules: readonly FileRule[],
+		stageDecisions: ReadonlyMap<string, boolean>,
+		expandedDirs: ReadonlyMap<string, readonly string[]>,
+		total: number,
+		selected: ReadonlySet<string>,
+		isUpdateMode: boolean,
+		onProgress: ProgressCallback | undefined,
+	): Promise<Result<void, MergeError>> {
 		const optionalPaths = rules.filter((r) => r.category === "optional").map((r) => r.path);
 		let current = 0;
 
-		// Phase 1: Stage all files
 		for (const rule of rules) {
 			if (rule.noTemplateCopy) {
 				this.safeEmit(onProgress, {
@@ -63,8 +92,13 @@ export class FileMergeEngine implements IFileMergeEngine {
 			}
 
 			const shouldStage = stageDecisions.get(rule.path);
-			// Defensive guard: prevents crash if a future rule type skips pre-computation.
-			if (shouldStage === undefined) continue;
+			// A rule missing from the plan means the planner and the engine
+			// disagree — silently dropping the file would hide a partial
+			// install. Fail loudly instead.
+			if (shouldStage === undefined) {
+				await this.fileSystem.cleanStaging();
+				return failure(stagingError(rule.path, `rule not planned by computeStagePlan`));
+			}
 			if (!shouldStage) {
 				this.safeEmit(onProgress, {
 					type: "stage_skip",
@@ -98,9 +132,7 @@ export class FileMergeEngine implements IFileMergeEngine {
 			);
 			if (!result.ok) return result;
 		}
-
-		// Phase 2: Commit staging (atomic rename). Skip when nothing was staged.
-		return await this.commitPhase(onProgress, total);
+		return success(undefined);
 	}
 
 	/** Avoid crashing on non-Error throws (e.g., string or undefined). */
@@ -124,8 +156,9 @@ export class FileMergeEngine implements IFileMergeEngine {
 		}
 
 		this.safeEmit(onProgress, { type: "commit_start", total });
+		let residueNote = "";
 		try {
-			await this.fileSystem.commitStaging();
+			residueNote = await this.fileSystem.commitStaging();
 		} catch (err) {
 			const message = this.errorMessage(err, "Unknown commit error");
 			this.safeEmit(onProgress, { type: "error", filePath: "", message });
@@ -133,7 +166,14 @@ export class FileMergeEngine implements IFileMergeEngine {
 			return failure(commitError(message));
 		}
 
-		this.safeEmit(onProgress, { type: "commit_complete", total });
+		// Non-blocking residue (e.g. intent-marker cleanup failure) rides on
+		// the success event so the TUI surfaces it with the commit report.
+		this.safeEmit(
+			onProgress,
+			residueNote
+				? { type: "commit_complete", total, note: residueNote }
+				: { type: "commit_complete", total },
+		);
 		return success(undefined);
 	}
 

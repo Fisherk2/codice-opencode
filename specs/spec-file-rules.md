@@ -32,7 +32,6 @@ The system partitions the template into **three mutually exclusive categories**:
 | File | Category | Rationale |
 |------|----------|-----------|
 | `opencode.json` | **Obligatorio** | Core workspace configuration; must stay in sync with installer logic. |
-| `skills-lock.json` | **Obligatorio** | Lockfile for reproducible skill resolution; installer manages it. |
 | `AGENTS.md` | **Estandar** | Project-specific agent instructions; user may customize. |
 | `CHANGELOG.md` | **Estandar** | Project history; user owns content. |
 | `CONTRIBUTING.md` | **Estandar** | Contribution guidelines; user may tailor. |
@@ -42,7 +41,6 @@ The system partitions the template into **three mutually exclusive categories**:
 | `.env.example` | **Estandar** | Environment template; user may expand variables. |
 | `Justfile` | **Opcional** | Task runner; not all users need `just`. |
 | `Makefile` | **Opcional** | Alternative task runner; mutually exclusive with `Justfile` for many teams. |
-| `requirements.txt` | **Opcional** | Python dependencies; only relevant for Python-based workspaces. |
 
 ### 2.2 Root-Level Directories
 
@@ -348,12 +346,9 @@ When the user selects **Project Install** or **Update** mode, the TUI presents o
    ◯ Justfile
    ◯ Makefile
 
- ◯ Dependencies
-   ◯ requirements.txt
-
-  ◯ Documentation
-    ◯ docs/DESIGN.md
-    ◯ docs/SCHEMA.md
+ ◯ Documentation
+   ◯ docs/DESIGN.md
+   ◯ docs/SCHEMA.md
 
  ◯ Design Specs
    ◯ specs/design/

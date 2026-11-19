@@ -10,8 +10,7 @@
 
 import { describe, expect, test } from "bun:test";
 import type { FileRule } from "../../../../src/domain/entities/FileRule";
-import type { IFileSystem } from "../../../../src/domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../../../src/domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../../../../src/domain/ports/IStagedFileSystem";
 import { FileMergeEngine } from "../../../../src/domain/services/FileMergeEngine";
 
 // ---- Mock factories ----
@@ -22,12 +21,12 @@ interface CallRecord {
 }
 
 function createMockFs(): {
-	fs: IFileSystem & IStagingSystem;
+	fs: IStagedFileSystem;
 	calls: CallRecord[];
 } {
 	const calls: CallRecord[] = [];
 
-	const mockFs: IFileSystem & IStagingSystem = {
+	const mockFs: IStagedFileSystem = {
 		destinationExists: async (path: string) => {
 			calls.push({ method: "destinationExists", args: [path] });
 			return true; // default: path exists
@@ -35,8 +34,9 @@ function createMockFs(): {
 		stageFile: async (relativePath: string, destPath?: string, excludeSubDirs?: Set<string>) => {
 			calls.push({ method: "stageFile", args: [relativePath, destPath, excludeSubDirs] });
 		},
-		commitStaging: async () => {
+		commitStaging: async (): Promise<string> => {
 			calls.push({ method: "commitStaging", args: [] });
+			return "";
 		},
 		cleanStaging: async () => {
 			calls.push({ method: "cleanStaging", args: [] });

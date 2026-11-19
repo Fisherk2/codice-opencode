@@ -25,9 +25,10 @@ export function isPreV2Version(localVersion: WorkspaceVersion): boolean {
 }
 
 /**
- * Options for resolving the pack scope of an update.
+ * Options for resolving the pack scope of an update. Internal-only:
+ * consumed by resolveUpdatePacks in this module, never imported.
  */
-export interface UpdatePacksOptions {
+interface UpdatePacksOptions {
 	/** Skip interactive prompts (non-interactive mode). */
 	readonly force?: boolean;
 	/** Packs to add during a non-interactive update. */

@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-09-25
-**Status:** v2.1.3 FEV-29 + FEV-30 COMPLETED (2026-09-22) — 1959 tests, 31/31 E2E, coverage 96.39% (global gate 95% + `src/cli/main.ts` sub-gate 95%) · `v2.1.3-beta.1` published (dist-tag `beta`) · stable 2.1.3 on `release/2.1.3` with green gates, pending GO/tag · 4 deferred Phase-2 findings + TD-V2-97 remain open (below) · v2.1.4 HOTFIX COMPLETE (2026-09-25) — 6 commands sin gate duplicado + debt reschedule — listo para GO/tag
-**Current version:** v2.1.3 stable + 2.1.4 stagedReady — listo para GO/tag
+**Last updated:** 2026-11-18
+**Status:** v2.1.5-beta.1 FEV-31 COMPLETED (2026-11-17) + pre-launch review 2026-11-18 done — 2027 tests, 31/31 E2E, `tsc --noEmit` 0, lint 0 · beta ready for tag (GO pending) · issues #111/#112/#114/#115/#116 closed + orphan references repaired · adjacent out-of-scope payload registered in `docs/WORKFLOW.md` · 4 deferred Phase-2 findings + TD-V2-97 remain open (below)
+**Current version:** v2.1.5-beta.1 (FEV-31) — en rama `hotfix/update-payload`
 **Next version:** v2.2.0 (Medium Effort — 9 items, 18-24h)
 
 ---
@@ -19,6 +19,7 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
 | **v2.0.0** | Agent pack system (FEV-17/18), permission unification (FEV-19), plugin auto-discovery (FEV-20), installer UX v2 (FEV-21/22), testing closure (FEV-23) |
 | **v2.1.0-beta.1** | 4 slash commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD intent auto-discovery, bilingual intents, agent delegation protocol (FEV-25), CI/CD hardening (SHA-pins, branch protection, PR/issue templates, npm provenance), SPEC.md modularization (ADR-020) |
 | **v2.1.1** | Bug #79 regression test, shell injection fix (TD-V2-70), manifest count corrections (TD-V2-90/91), FileMergeEngine comment refresh (TD-V2-93), injection guard hardening, plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup event (TD-V2-51), CI/CD SHA-pin bumps to Node 24 (TD-V2-7), parsed-semver cache in VersionComparator (TD-V2-61), code review findings resolved |
+| **v2.1.5** | FEV-31: issues #111/#112/#114/#115/#116 closed (delegation scan, `/hotfix` phases, background ban, `find-skills` setup, VSA skill + phases), orphan references repaired (ADR move to `docs/adr/`, `skills-lock.json`/`.gitmessage` mentions), 100/120/none prompt-budget contradiction unified at 180 lines |
 
 **Resolved in v2.0.0 (FEV-17 to FEV-23):**
 - Template directory restructuring → pack-based organization
@@ -64,6 +65,18 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
   - S1: Removed dead `staging_cleanup` variant from ProgressCallback
   - S2: Added staging/backup patterns to `template/estandar/gitignore`
 - 1935 tests / 0 fail, 31/31 E2E, coverage ≥95%
+
+**Resolved in v2.1.5 (FEV-31, 2026-11-17):**
+- Completes the **INCOMPLETE** stabilization of `1941ed3` (green gates, zero issue gaps closed) recorded in `docs/diagnosis/fix30-fev31-partial-issue-implementation.md` §4.1
+- #111: delegation scan covers `agents/` and `.opencode/agents/`; readable fallback that forbids Glob; roster in `/plan`
+- #112: `/hotfix` phases 1–6 complete (GO/NOT-GO, no deploy); `/evolve` → `/feature`; hotfix cycle documented
+- #114: background-execution ban + `websearch`/`webfetch` in the source-of-truth list (6 agents)
+- #115: `find-skills` setup phase in `/spec`, `/feature`, `/diagnosis`, `/migrate` (project-level only)
+- #116: mandatory skill `vertical-slice-architecture` (+4 references) and real VSA phases (Prototype 1-3 / MVP 4-6 / Enterprise 7+) in 5 commands
+- Orphan references repaired: 32 ADR links → `docs/adr/` (23 ADRs; `specs/adr/` no longer exists); deleted skills/artifacts removed from specs, writer and wiki
+- Prompt-body budget contradiction (100 agent / 120 test override / none for commands) unified at **180 lines** for agents and commands (spec §8 + 2 guards + CODE_STYLE)
+- 1991 tests / 0 fail, 31/31 E2E, `tsc --noEmit` 0, lint 0 (workaround in TD-V2-97)
+- **Still open:** TD-V2-93-f2…96 (Phase-2 findings), TD-V2-97 and TD-V2-98 (coverage gate counts `tests/`+`scripts/` under bun 1.4.4). The adjacent out-of-scope payload of `hotfix/update-payload` (6 primary-agent model swaps, 6 plugins, ADR move, skills churn) is **not** FEV-31 work and is registered in `docs/WORKFLOW.md`, not tracked as debt here
 
 ---
 
@@ -153,6 +166,53 @@ estimado, riesgo evaluado).
 - **Impacto:** solo local. La CI (ext4) preserva el bit de ejecución y `release.yml` ejecuta la matriz de calidad antes de publicar, por lo que el falso verde no alcanza un release.
 - **Mitigación actual:** warning no bloqueante emitido por `scripts/check-ts-version.sh`, invocado al inicio de `just check`; siempre `exit 0` y degradación silenciosa si `jq`, `package.json` o el propio `tsc` no se pueden resolver.
 - **Workaround:** copiar `node_modules/@typescript/typescript-linux-x64` a un FS con ejecución (p. ej. `/tmp`) y ejecutar `lib/tsc --noEmit -p tsconfig.json` desde ahí.
+- **Workaround verificado para biome (2026-11-17, FEV-31):** copiar el binario nativo de Biome a una ruta btrfs y ejecutarlo desde ahí — `/tmp/opencode/biome ci src/ tests/` devuelve **exit 0** sobre el árbol de v2.1.5. `just check` sigue siendo el gate de CI (ext4, donde el bit de ejecución se preserva); el lint local deja de ser un punto ciego y pasa a verificarse con este comando en cada fase.
+
+#### Gate de cobertura rojo en local con bun 1.4.4 (2026-11-17, prioridad Low)
+
+| ID | Item | Type | Effort | Risk | Description |
+|----|------|------|--------|------|-------------|
+| **TD-V2-98** | `just coverage-check` falla en local (94.2%) pero `src/` está al 96.8% | Debt | 1-2h | Low | Con bun 1.4.4 el denominador del reporte incluye `tests/**` y `scripts/**`, así que el global baja de 95 aunque el código de producción cumple. Medido también en el tag `v2.1.4`: **94.23% (2744/2912)** frente a **94.24% (2748/2916)** en `hotfix/update-payload` — no es regresión de FEV-31 (el trabajo del branch no toca `src/` y añade 18 tests). |
+
+- **Síntoma:** `just coverage-check` → `Total line coverage: 94.24% (2748/2916)` · `main.ts coverage: 98.84% (85/86)` · `FAIL: Overall coverage below 95%`, reproducible dos veces. `src/` aislado: **96.78% (2044/2112)**.
+- **Causa:** el reporte cuenta archivos no productivos en el denominador — `tests/` 86.62% (466/538) y `scripts/migrate-v1-to-v2-permissions.ts` 89.47% (238/266) — y arrastra el global desde 96.78% hasta 94.24%.
+- **Verificación de no-regresión:** `git worktree add` sobre `v2.1.4` + `bash scripts/coverage-check.sh` con el mismo bun 1.4.4 → **94.23%**, es decir el tag publicado ya fallaba igual antes de FEV-31.
+- **Impacto:** solo local. La CI fija **bun 1.3** (`package.json`/workflows), donde el reporte no instrumenta esos árboles; la autoridad es la matriz de CI.
+- **Acción pendiente:** o bien acotar el denominador en `scripts/coverage-thresholds.json`/`coverage-check.sh` (ignorar `tests/**` y `scripts/**`) y documentarlo, o fijar bun 1.3 en local. Decidir con la evidencia de CI antes de tocar el umbral.
+
+#### Deuda de simplificación diferida (2026-11-17, prioridad Low)
+
+Registered during the FEV-31 payload cleanup sweep: items evaluated and deliberately deferred because churn > value.
+
+| ID | Item | Type | Effort | Risk | Description |
+|----|------|------|--------|------|-------------|
+| **TD-V2-99** | Near-dead test-only exports (`createFileRule`, `getMandatoryRules`, `getStandardRules`, `validationError`) | Debt | 1h | Low | Production callers exist but no production path exercises these beyond tests; un-exporting/removing churns 4+ test files for zero readability gain. Deferred. |
+| **TD-V2-100** | Naming drift: `updateFlow`/`updateHelpers`, `versionGateMessages`/`versionInfoMessages` | Debt | 1-2h | Low | Confusable sibling names; file renames touch many imports and git blame. Deferred (churn > value). |
+| **TD-V2-101** | 3 files still >200 LOC: `AtomicStager.ts` (273, post Extract Method in commit `14c4d35`), `BunSymlinkCreator.ts` (228), `ClackPromptsAdapter.ts` (204) | Debt | 2-3h | Low | AtomicStager extraction was done (rollbackFailedCommit) without forcing further splits per the ≤200 convention's escape hatch. Remaining splits deferred. |
+| **TD-V2-102** | lcov-vs-test mismatch for `scripts/migrate-v1-to-v2-permissions.ts` | Debt | 0.5h | Low | A test file exists for the migration script, but the lcov report shows `0/266` for it — the script is not instrumented (executed differently from `bun test tests/`), so the gate counts its 266 lines as uncovered. Related to the TD-V2-98 denominator issue. |
+| **TD-V2-103** | `src/cli/validateDestPath.ts` win32-only branches untestable under lcov | Debt | 2-3h | Low | Lines 21-28 (win32 SYSTEM_DIRS) and 71 (drive-root) only execute when `process.platform` is win32 at module load — bun's coverage does not instrument child-process execution, so lcov stays ~71% despite full Linux-branch regression tests (commit `bcfa1bb`). Fix options: inject a path/platform seam into the module, or delete the win32 branch (loses Windows CLI protection). |
+
+- **TD-V2-99 evidence:** grep shows the four symbols are referenced only from `src/application/use-cases/*.ts` exports and their unit tests; no production execution path reaches them.
+- **TD-V2-102 evidence:** `coverage/lcov.info` lists `SF:scripts/migrate-v1-to-v2-permissions.ts` with `LF:266, LH:0` while its test passes under `just test`.
+- **TD-V2-103 evidence:** `tests/unit/cli/validateDestPath.test.ts` covers the Linux branches via a child-process harness, but lcov (`SF:src/cli/validateDestPath.ts`) still reports ~71% because bun instruments only in-process code.
+
+#### Full-project review outcomes (2026-11-17, batch 2 of PR #119)
+
+Registered during the two-axis full-project review fix batches. Decisions, FYIs, and deferred follow-ups with evidence.
+
+| ID | Item | Type | Effort | Risk | Description |
+|----|------|------|--------|------|-------------|
+| **TD-V2-104** | cwd-template-fallback is INTENTIONAL per ADR-007 | Decision (no action) | — | Low | TemplateResolver's cwd fallback flagged in review as a potential injection path; it is the documented third rung of ADR-007's three-path detection cascade (source → bunx/npm → cwd). User decision 2026-11-17: intentional, no action. |
+| **TD-V2-105** | zero required reviews on `develop` is documented single-contributor policy | FYI | — | Low | `scripts/setup-branch-protection.sh` posts `required_approving_review_count: 0` on both branches. Reviewer flagged as a governance gap; it is the documented single-contributor policy (see script design notes + CONTRIBUTING.md). FYI only. |
+| **TD-V2-106** | hard-killed runs leave unswept `.codice-staging-*` residue | Debt | 2-3h | Low | Since the per-run mkdtemp staging dirs (commit `d357519`), a SIGKILL during staging leaves that run's `.codice-staging-<rand>` dir behind; later runs cannot sweep it safely because it is indistinguishable from a LIVE concurrent run's staging dir. Needs a safe-sweep design (e.g. marker-dir pid liveness per staging dir) before deleting anything. |
+| **TD-V2-107** | `AtomicStager.ts` grew to ~545 LOC across the review hardening | Debt | 3-4h | Low | Symlink guards, interruption recovery, and concurrency control all live in one file by design (one safety story; escape hatch documented in the header comment). A dedicated refactor pass may split prepare/promote/recover into modules — only with fresh integration coverage around the split. |
+| **TD-V2-108** | 5s-timeout flakes in `npm-pack.test.ts` and TUI/validation tests under load | Debt | 1-2h | Low | `npm package — tarball structure / extracted installation` (5,000ms hook timeouts) and `main() — execution path` fail intermittently only when the suite runs >60s under heavy machine load; isolated reruns always pass (verified repeatedly on 2026-11-17, incl. at baseline before any fix commits). Fix: raise the hooks' explicit timeouts to 15s or make them load-tolerant. |
+| **TD-V2-109** | update-gating logic in main.ts is sanctioned | FYI | — | Low | Reviewer flagged `resolveInteractiveMode`'s pre-v2.0 update block living in main.ts rather than a use case; ARCHITECTURE.md assigns mode resolution/version context to the CLI layer (`versionContext.ts`, `resolveInteractiveMode`), so this is the documented placement. FYI only. |
+| **TD-V2-110** | Pre-launch follow-ups (post-beta/GA, non-blocking) | Debt | 2-4h | Low | From the 2026-11-18 review: 16 coverage-gap cases tracked (prioritize rollback residue-reporting before GA); add `engines: bun>=1.3` to `package.json`; SIGINT-mid-install E2E advisory; wiki sync pending (10 pre-existing dirty files in `docs/wiki-source/.wiki/`); TD-V2-98 local coverage drift. None blocks the `2.1.5-beta.1` tag. |
+
+- **TD-V2-106 evidence:** FEV batch-1 item 15 commit body (`d357519`) states the leftover-staging trade-off; the concurrent-marker O_EXCL guard prevents interleaving but cannot authorize deleting another run's staging dir.
+- **TD-V2-107 evidence:** `wc -l src/infrastructure/adapters/AtomicStager.ts` = 545 post batch-2 item 1 (`8083a3a`); header comment documents the escape.
+- **TD-V2-108 evidence:** baseline run at `0826445` (before any batch-1 commit) already showed `1 fail / 1 error` with `npm-pack` timeouts; subsequent isolated `bun test tests/integration/packaging/npm-pack.test.ts` runs passed every time.
 
 ### v2.2.0 (Medium Effort — 9 items, 18-24h total)
 
@@ -161,7 +221,7 @@ estimado, riesgo evaluado).
 | — | Pack Update Diff | Feature | 3-4h | Low | Show changelog for user's installed packs during update |
 | **TD-V2-10** | Domain layer imports semver directly | Debt | 2-3h | Medium | WorkspaceVersion entity imports semver directly, violating Clean Architecture. Inject comparison logic or move to VersionComparator. |
 | **TD-V2-11** | Application layer instantiates infrastructure adapters | Debt | 1-2h | Medium | Use cases directly instantiate BunFileSystem, GitHubRestClient. Move to DI container (container.ts). |
-| **TD-V2-21** | GitHubRestClient returns null on all errors | Debt | 1-2h | Medium | getLatestVersion() returns `string | null` instead of `Result`. Cannot distinguish "no release" from "network error". |
+| **TD-V2-21** | GitHubRestClient returns null on all errors | Debt | 1-2h | Medium | getLatestVersion() returns `string \| null` instead of `Result`. Cannot distinguish "no release" from "network error". |
 | **TD-V2-22** | FileMergeEngine uses intersection type | Debt | 1h | Low | Constructor requires `IFileSystem & IStagingSystem`. Accept two separate dependencies for ISP. |
 | **TD-V2-30** | Strategy pattern implementation is implicit | Debt | 2h | Low | File merge rules use if/else instead of explicit Strategy. Extract to Strategy classes. |
 | **TD-V2-50** | No structured error context in progress events | Debt | 2h | Low | ProgressEvent lacks error field. Add `error?: Error` for verbose debugging. |
@@ -198,6 +258,7 @@ estimado, riesgo evaluado).
 | v2.1.2 | ✅ Released (2026-08-28) — docs-update delegation hotfix + debt reorg — 1935 tests |
 | v2.1.3 | ✅ FEV-29+FEV-30 complete (1959 tests, 31/31 E2E, 96.39%) — beta published, stable pending GO/tag — open: 4 hallazgos Fase-2 diferidos (TD-V2-93-f2..96) + TD-V2-97 |
 | v2.1.4 hotfix | ✅ Complete — listo para lanzamiento |
+| v2.1.5-beta.1 FEV-31 | ✅ Complete (2026-11-17) + pre-launch review 2026-11-18 — #111/#112/#114/#115/#116 closed, orphan references repaired, prompt budget unified at 180 — 2027 tests, 31/31 E2E — beta ready for tag (GO pending) — open: TD-V2-93-f2..96 + TD-V2-97 + TD-V2-98 + TD-V2-110 |
 | v2.2.0 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.3.0 backlog | 4 items (4 debt) — 12-16h |
 | v2.5.0 backlog | 3 items (1 debt + 2 features) — 18-28h |
@@ -226,5 +287,5 @@ estimado, riesgo evaluado).
 ---
 
 *Maintained by Códice team. Update when tech debt items are added or resolved.*
-*Last updated: 2026-09-25*
+*Last updated: 2026-11-17*
 *Next deep audit: after v2.1.3 stable release*

@@ -9,6 +9,13 @@
 # This tests the SIGINT handler which calls cleanStaging() and exits.
 # If the CLI completes before SIGINT can be sent (fast execution),
 # the test verifies that the installation completed cleanly instead.
+#
+# ADVISORY: when the CLI finishes before SIGINT lands (the "completed
+# before SIGINT" branch below) the rollback scenario is simply not
+# exercised here — that is a race inherent to fast machines. The
+# authoritative coverage for the rollback path is the AtomicStager unit
+# and integration suite (tests/integration/adapters/atomic-stager.test.ts);
+# this script is a smoke test of the signal wiring, not the oracle.
 #===============================================================================
 
 set -Eeuo pipefail
@@ -64,7 +71,7 @@ while [[ "$POLLED" -lt "$MAX_POLLS" ]]; do
     fi
 
     # Check if staging directory exists (means we're mid-operation)
-    if [[ -d "$TEMP_DIR/.codice-staging" ]]; then
+    if compgen -G "$TEMP_DIR/.codice-staging-*" > /dev/null; then
         log_info "Staging directory found, sending SIGINT to PID $BINARY_PID..."
 
         # Send SIGINT to simulate Ctrl+C
@@ -131,11 +138,11 @@ if [[ -f "$TEMP_DIR/README.md" ]]; then
 fi
 
 # The SIGINT handler now performs a best-effort cleanStaging() before exit,
-# so .codice-staging/ should normally be gone. It may briefly linger if the
-# interrupt lands mid-rename (async cleanup race) — the temp directory is
-# cleaned up by the test harness trap handler either way.
-if [[ -d "$TEMP_DIR/.codice-staging" ]]; then
-    log_warn "Staging directory .codice-staging/ still present after SIGINT (cleanup race — acceptable)"
+# so the per-run .codice-staging-* dir should normally be gone. It may briefly
+# linger if the interrupt lands mid-rename (async cleanup race) — the temp
+# directory is cleaned up by the test harness trap handler either way.
+if compgen -G "$TEMP_DIR/.codice-staging-*" > /dev/null; then
+    log_warn "Staging dir .codice-staging-* still present after SIGINT (cleanup race — acceptable)"
 else
     log_pass "Staging directory cleaned up after SIGINT"
 fi
