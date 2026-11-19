@@ -221,7 +221,7 @@ destination as *mandatory* (overwrite whatever exists).
    pre-selected (`src/application/packOptions.ts — DEFAULT_PACKS`),
    **required: true → minimum 1 pack** (`ClackPromptsAdapter.ts — selectPacks`).
    Cancel → empty selection → install aborts cleanly with exit `0`.
-4. **Optional checklist** — `Select optional files to install:` multiselect over the 10
+4. **Optional checklist** — `Select optional files to install:` multiselect over the 11
    `optional` manifest rules (`src/application/optionalsPrompt.ts — promptForOptionals`); not required (zero
    allowed). With `--force`, **all optional files are auto-selected**
    (`CleanInstallUseCase.ts — selectOptionals`).
@@ -611,9 +611,9 @@ staging decisions in `src/domain/services/stagePlanner.ts — shouldStage`:
 | Category | Examples | Clean | Project | Update |
 |----------|----------|-------|---------|--------|
 | `mandatory` | `core` (→ root), `packs/main` (6 agents), `packs/writers` (4 agents) | Copy + overwrite | Copy + overwrite | Copy + overwrite |
-| `pack` (8 selectable) | `packs/software-development` (144), `packs/business` (91), ... | Copy + overwrite **if selected** | Always copy **if selected** | Copy **if in resolved pack scope** (installed packs locked in) |
+| `pack` (8 selectable) | `packs/software-development` (145), `packs/business` (90), ... | Copy + overwrite **if selected** | Always copy **if selected** | Copy **if in resolved pack scope** (installed packs locked in) |
 | `standard` | `README.md`, `docs/`, `specs/`, `AGENTS.md` | Copy + overwrite | Copy only if missing | Tree diff: only files new in template are added |
-| `optional` | `.gitmessage`, `Justfile`, `Makefile`, `Dockerfile`, ... (10 entries) | Copy + overwrite if checked (force → all) | Copy if checked **and** missing (force → none) | **Never** |
+| `optional` | `Justfile`, `Makefile`, `Dockerfile`, `docs/DESIGN.md`, ... (11 entries) | Copy + overwrite if checked (force → all) | Copy if checked **and** missing (force → none) | **Never** |
 
 Pack resolution per mode: Clean/Project take CLI `--packs(-all)` or wizard output
 (`main.ts — resolvePacks` → use-case `options.packs`); Update starts from
