@@ -68,6 +68,9 @@ export class FileMergeEngine {
    * Execute all merge rules against the destination directory.
    * @param rules - Ordered list of classification rules to apply.
    * @returns Result indicating success or a structured MergeError.
+   * Abbreviated here: the port also takes `options?: MergeExecuteOptions`
+   * (`src/domain/ports/IFileMergeEngine.ts:31-34`), whose `updateMode` switches
+   * standard directories to tree-level diffing (`FileMergeEngine.ts:18`).
    */
   async execute(rules: readonly FileRule[]): Promise<Result<void, MergeError>> {
     for (const rule of rules) {
