@@ -9,6 +9,11 @@
     "docs/wiki-source/**",
     // Local-only installs (gitignored): OpenCode skills, AI-agent dirs, workspace playground.
     "node_modules/**",
+    // bun <= 1.3.14 does not expand `~` in bunfig [install.cache] dir, so CI's
+    // `bun install` (Ubuntu runner, bun 1.3) builds a literal ./~/.bun/install/cache/
+    // tree inside the workspace; those results carry no node_modules/ segment,
+    // hence this separate, HOME-independent pattern.
+    "**/.bun/install/cache/**",
     ".opencode/**",
     ".agents/**",
     "agents/**",
