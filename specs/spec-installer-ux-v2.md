@@ -346,7 +346,7 @@ bunx codice --update --force --update-add-packs creative,finance   # Update + ad
 - [spec-agent-packs.md](./spec-agent-packs.md) — Agent Pack System (pack definitions and classification)
 - [spec-file-rules.md](./spec-file-rules.md) — File classification system
 - [spec-cli-commands.md](./spec-cli-commands.md) — CLI commands and installation modes
-- [ADR-015](./adr/adr-015-installer-ux-v2.md) — Installer UX v2 decision record
+- [ADR-015](../docs/adr/adr-015-installer-ux-v2.md) — Installer UX v2 decision record
 
 ---
 
