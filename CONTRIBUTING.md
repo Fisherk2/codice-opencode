@@ -109,7 +109,7 @@ SKIP=all git commit -m "..."
 
 ## Git Workflow
 
-This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release), with three distinct flows:
+This project follows a **3-stage pipeline**: `develop` (integration) → `main` (production) → `tags` (release), with four distinct flows:
 
 ### Branch Naming & Rules
 
@@ -192,6 +192,16 @@ tags                                 ● vX.Y.Z
 3. When CI is green: PR `release/X.Y.Z` → `main` → squash merge
 4. Tag for release
 5. Post-release: sync `develop` ← `main`
+
+### Prerelease Flow (`beta` / `rc`)
+
+The flow above is [ADR-023](docs/adr/adr-023-short-lived-release-branches.md) for **stable** releases. A prerelease lands through `develop` first — the actual path of `v2.1.5-beta.1`:
+
+1. Branch `release/X.Y.Z` from `develop` (already synced); stabilization as above.
+2. PR `release/X.Y.Z` → `develop` → squash merge (PR #119 → `3883288`).
+3. PR `develop` → `main` → squash merge (`c579948`).
+4. Tag `vX.Y.Z-beta.N` (or `-rc.N`) on the `main` tip → CI publishes under dist-tag `beta`/`rc`; `latest` untouched.
+5. Post-release: sync `develop` ← `main`, pushed directly to `develop` (`81a360d`).
 
 ### Why Clean Merges
 
@@ -299,4 +309,4 @@ See [docs/wiki-source/README.md](docs/wiki-source/README.md) for the full proced
 
 ---
 
-*Last revised: 2026-09-22*
+*Last revised: 2026-11-18*
