@@ -10,6 +10,9 @@
  */
 
 import { describe, expect, test } from "bun:test";
+import * as os from "node:os";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { validateDestPath } from "../../../src/cli/validateDestPath";
 
 describe("validateDestPath (posix)", () => {
@@ -48,15 +51,22 @@ describe("validateDestPath (posix)", () => {
 		expect(validateDestPath("/")).toBe('Invalid destination path: "/" is the filesystem root');
 	});
 
-	test("rejects system directories and their sub-paths", () => {
-		expect(validateDestPath("/etc")).toContain('is inside a system directory "/etc"');
-		expect(validateDestPath("/etc/cron.d")).toContain('is inside a system directory "/etc"');
-		expect(validateDestPath("/usr/local")).toContain('is inside a system directory "/usr"');
-		expect(validateDestPath("/root")).toContain('is inside a system directory "/root"');
-		// Prefix collision is NOT a violation — the separator check requires
-		// an exact dir boundary ("/etcfoo" is a valid project dir name).
-		expect(validateDestPath("/etcfoo")).toBeNull();
-	});
+	// SYSTEM_DIRS is bound to the win32 list at module load when
+	// process.platform === "win32", so the posix system-directory branches
+	// are unreachable on a Windows host — they run on Linux/macOS only
+	// (the win32 list is covered by the child-process describe below).
+	test.skipIf(process.platform === "win32")(
+		"rejects system directories and their sub-paths",
+		() => {
+			expect(validateDestPath("/etc")).toContain('is inside a system directory "/etc"');
+			expect(validateDestPath("/etc/cron.d")).toContain('is inside a system directory "/etc"');
+			expect(validateDestPath("/usr/local")).toContain('is inside a system directory "/usr"');
+			expect(validateDestPath("/root")).toContain('is inside a system directory "/root"');
+			// Prefix collision is NOT a violation — the separator check requires
+			// an exact dir boundary ("/etcfoo" is a valid project dir name).
+			expect(validateDestPath("/etcfoo")).toBeNull();
+		},
+	);
 
 	test("accepts relative and non-system absolute paths", () => {
 		expect(validateDestPath("./my-project")).toBeNull();
@@ -76,13 +86,15 @@ describe("validateDestPath (win32 branches)", () => {
 	 * Child script: platform override must happen before the module import
 	 * (line 20 reads process.platform at evaluation time), and the path
 	 * import is rewritten to the win32 variant so isAbsolute works as on
-	 * a real Windows host. The module copy lives in /tmp/opencode.
+	 * a real Windows host. The module copy lives in os.tmpdir().
 	 */
 	const CHILD_SCRIPT = `
 		const source = await Bun.file(process.env.MODULE_PATH).text();
 		const copy = process.env.TMP_COPY;
-		// The /tmp copy cannot resolve the relative domain import — point it
+		// The tmp copy cannot resolve the relative domain import — point it
 		// at the real helper (platform-independent, no imports of its own).
+		// HELPER_PATH is passed as a file:// URL — the canonical import
+		// specifier form on every platform.
 		await Bun.write(
 			copy,
 			source
@@ -93,7 +105,9 @@ describe("validateDestPath (win32 branches)", () => {
 				),
 		);
 		Object.defineProperty(process, "platform", { value: "win32" });
-		const { validateDestPath } = await import(copy);
+		// pathToFileURL: a raw Windows absolute path is not a valid specifier.
+		const { pathToFileURL } = await import("node:url");
+		const { validateDestPath } = await import(pathToFileURL(copy).href);
 		console.log(JSON.stringify({
 			windows: validateDestPath("C:\\\\Windows"),
 			system32: validateDestPath("C:\\\\Windows\\\\System32"),
@@ -109,10 +123,14 @@ describe("validateDestPath (win32 branches)", () => {
 			cmd: ["bun", "-e", CHILD_SCRIPT],
 			env: {
 				...process.env,
-				MODULE_PATH: new URL("../../../src/cli/validateDestPath.ts", import.meta.url).pathname,
+				// URL.pathname yields "/D:/..." on Windows — not a filesystem
+				// path; fileURLToPath is the cross-platform conversion.
+				MODULE_PATH: fileURLToPath(
+					new URL("../../../src/cli/validateDestPath.ts", import.meta.url),
+				),
 				HELPER_PATH: new URL("../../../src/domain/services/stripControlChars.ts", import.meta.url)
-					.pathname,
-				TMP_COPY: "/tmp/opencode/validateDestPath.win32-copy.ts",
+					.href,
+				TMP_COPY: path.join(os.tmpdir(), "codice-tests", "validateDestPath.win32-copy.ts"),
 			},
 		});
 
