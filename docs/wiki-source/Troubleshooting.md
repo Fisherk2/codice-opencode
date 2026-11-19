@@ -39,19 +39,28 @@ Both commands behave identically once running — the issue is limited to the in
 
 ## 2. "Update Workspace is blocked" or "Pre-1.2.0 Installation Detected"
 
-**Symptom:** When selecting **Update Workspace**, the installer displays one of these messages:
+**Symptom:** When selecting **Update Workspace**, the installer shows one of these notes (verbatim from `src/application/versionInfoMessages.ts` and `versionGateMessages.ts`):
+
+```
+ℹ️  No Installation Detected
+No previous Códice installation found.
+Update is not available — use Clean Install or Project Install.
+```
+
 ```
 ⚠️  Pre-1.2.0 Installation Detected
+Detected pre-1.2.0 installation (v1.1.0).
+We recommend deleting references/ and .devin/ directories before reinstalling.
+Update is not available — use Clean Install or Project Install.
 ```
-or
+
 ```
-⚠️  No .codice-version file found
+⚠️  Pre-2.0.0 Installation Detected
+Detected v1.x installation (v1.5.0).
+The update system has changed in v2.0.0. Please reinstall using Clean Install or Project Install to adopt the new pack system.
 ```
-or
-```
-⚠️  Detected v1.x installation — update system has changed
-```
-The installer exits without copying files.
+
+The update stops without copying files.
 
 **Cause:** Starting with v2.0.0, Update Workspace is **version-gated** — it only runs on v2.0+ installations. The installer reads `.codice-version` on startup and classifies the installation:
 
@@ -61,6 +70,8 @@ The installer exits without copying files.
 | Version < 1.2.0 | Blocked — suggests cleaning up `references/` and `.devin/` before reinstalling |
 | v1.2.0 ≤ version < 2.0.0 | Blocked — guides you to reinstall with Clean/Project Install |
 | v2.0.0+ | Normal — Option A (current packs) or Option B (add packs) |
+| v2.0.0 – 2.1.2 | Normal, but the version note also prints `⚠ Opencode Legacy only — upgrade to ≥ 2.1.3 for native Opencode V2 support` — those installs predate native V2 support (`src/application/legacyBanner.ts:15-18`, ADR-022) |
+| GitHub API unreachable | **Not** a block: the update warns `Could not check for updates via GitHub. Falling back to the bundled template version.` and continues using the template bundled in the package you just ran (`src/infrastructure/adapters/GitHubRestClient.ts:15-17`, `src/application/use-cases/updateStatusCheck.ts:30-34`) |
 
 This is by design, not a bug. The update system was redesigned in v2.0.0 to support the pack system (ADR-014) and cannot operate on legacy v1.x installations.
 
@@ -97,7 +108,7 @@ or the CLI exits with a non-zero code without copying any files.
 
 1. **Use a different destination** — Install into a user-owned directory where you have write permissions:
    ```bash
-   codice --dest ~/projects/my-project
+   bunx @fisherk2-dev/codice --dest ~/projects/my-project
    ```
 
 2. **Use sudo (temporary)** — Only recommended if you understand the security implications:
@@ -108,7 +119,7 @@ or the CLI exits with a non-zero code without copying any files.
 3. **Fix directory permissions** — Make the directory writable by your user:
    ```bash
    sudo chown -R $(whoami) /path/to/destination
-   codice --dest /path/to/destination
+   bunx @fisherk2-dev/codice --dest /path/to/destination
    ```
 
 The installer performs path containment validation and will never write outside the designated destination directory, even when run with elevated privileges.
@@ -309,7 +320,7 @@ ls -la .opencode/agents .opencode/commands .opencode/skills
 - **[GitHub Issues](https://github.com/fisherk2/codice-opencode/issues)** — Report bugs, request features, or search existing issues for solutions
 - **When reporting a bug**, include:
   - Your operating system and version
-  - Códice version (`codice --version`)
+  - Códice version (`bunx @fisherk2-dev/codice --version`)
   - How you ran the installer (bunx or npx)
   - The full output with `--verbose` flag
   - Steps to reproduce the issue
