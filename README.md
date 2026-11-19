@@ -378,7 +378,7 @@ flowchart LR
 | Design (optional) | `/design` | quetzalcoatl | Parallel fan-out: UX research, technical feasibility, accessibility. Merges into design specification in `specs/design/` | ui-ux-design-pro, design-taste-frontend, frontend-ui-engineering |
 | Define project | `/spec` | quetzalcoatl | Detects project state (3 cases), clarifies requirements, generates docs (PRD, TRD, ARCHITECTURE, WORKFLOW) and synthesizes into SPEC.md | spec-driven-development, clean-ddd-hexagonal, architecture-diagrams, idea-refine, interview-me |
 | Feature project | `/feature` | quetzalcoatl | Creates new specs or modifies existing ones for mature projects with version history. Redirects to `/spec` for new/immature projects | spec-driven-development, interview-me, idea-refine, doubt-driven-development, architecture-diagrams |
-| Hotfix | `/hotfix` | tlaloc | One-pass rapid fix for tickets under 3 hours: diagnosis → plan → build → test → review → GO/NOT-GO, then hands off to `/deploy`. Skips the iterative planning loop | debugging-and-error-recovery, test-driven-development, code-review-and-quality |
+| Hotfix | `/hotfix` | huitzilopochtli | One-pass rapid fix for tickets under 3 hours: diagnosis → plan → build → test → review → GO/NOT-GO, then hands off to `/deploy`. Skips the iterative planning loop | debugging-and-error-recovery, test-driven-development, code-review-and-quality |
 | Sync documentation | `/docs-update` | quetzalcoatl | Pre-flight analyzes docs state, question-tool resolves contradictions, then synchronizes docs with current codebase | documentation-and-adrs, agent-md-refactor, architecture-diagrams |
 | Diagnose issues | `/diagnosis` | tezcatlipoca | Suggests fixes for remote/local issues, executes diagnostics, documents root cause in `docs/diagnosis/` with structured template. Documents only — does not implement | interview-me, debugging-and-error-recovery |
 | Plan | `/plan` | moctezuma | Analyzes dependencies, cuts vertically, writes tasks with acceptance criteria in `tasks/plan.md` and `tasks/todo.md` | planning-and-task-breakdown, clean-ddd-hexagonal, architecture-diagrams |
@@ -404,7 +404,7 @@ flowchart LR
 | `bunx` uses a cached version | Run `bunx --fresh @fisherk2-dev/codice` |
 | GitHub API rate limited | Wait 1 hour, or proceed with the bundled local template (Códice continues without remote check) |
 | Installation interrupted (Ctrl+C) | Códice automatically rolls back any partial changes — your project is safe |
-| `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 1 |
+| `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 2 |
 | Symlinks not created | If `.opencode/agents` is missing after installation, re-run the installer. Symlinks are created during post-installation and require write permissions in the project directory |
 
 ---
