@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Docs `/docs-update` (2026-11-18, post-tag):** SPEC/WORKFLOW/TECH_DEBT alinean el estado desplegado real y el camino probado de `v2.1.5-beta.1` (`gh pr view 119/121`; el tag sobre el tip de `main`); la descripción del gate de calidad se corrige donde era falsa — la política "no `any`" quedó registrada sin enforcement como TD-V2-112 (`noExplicitAny` off, ESLint ausente), y el pipe de la medición TD-V2-101 queda escapado en markdown.
+
 ## [2.1.5-beta.1] - 2026-11-18
 
 Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilización **INCOMPLETA** de `1941ed3` cerrando los issues #111–#116 y repara las referencias huérfanas que dejó la reestructuración del template. Métricas finales: 2027 tests / 0 fail, 31/31 e2e, `tsc --noEmit` 0, lint 0.
