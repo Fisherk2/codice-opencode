@@ -173,7 +173,6 @@ Primera release estable de la línea nativa V2. Consolida la migración FEV-29/3
 
 - **Class JSDoc accuracy**: Updated `VersionComparator` class comment from "no side effects" to "memoized; no I/O" to reflect internal cache state.
 
-
 ### Security
 
 - **SDD plugin reduced to minimal destructive-command block** (#80): Plugin now only blocks destructive bash commands (rm -rf, git push --force, DROP TABLE, etc.) via `tool.execute.before` hook. Removed 13 obsolete modules (~1200 lines) that duplicated `opencode.json` permissions.

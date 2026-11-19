@@ -24,7 +24,7 @@
 
 **OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
 
-A production-grade workspace integrating engineering skills organized in SDD cycle phases, slash commands, and specialized agents to accelerate AI-assisted development with Human-in-the-Loop (HITL) and Vertical Slicing Architecture (VSA) approaches. Designed for teams and developers who want consistent quality in AI-assisted projects. 
+A production-grade workspace integrating engineering skills organized in SDD cycle phases, slash commands, and specialized agents to accelerate AI-assisted development with Human-in-the-Loop (HITL) and Vertical Slicing Architecture (VSA) approaches. Designed for teams and developers who want consistent quality in AI-assisted projects.
 
 ---
 
@@ -34,19 +34,19 @@ A production-grade workspace integrating engineering skills organized in SDD cyc
   <tr>
     <td width="33%" valign="top" align="center">
       <br>
-      <h3 align="center"><img src="https://api.iconify.design/boxicons/brain-filled.svg?color=%23ffbcb0" width="18" height="18">&nbsp; Skills</h3>
+      <h3 align="center"><img src="https://api.iconify.design/boxicons/brain-filled.svg?color=%23ffbcb0" alt="" width="18" height="18">&nbsp; Skills</h3>
       <p align="center">61 Software development specialized skills.</p>
       <br>
     </td>
     <td width="33%" valign="top" align="center">
       <br>
-      <h3 align="center"><img src="https://api.iconify.design/boxicons/terminal-filled.svg?color=%23ffbcb0" width="18" height="18">&nbsp; Commands</h3>
+      <h3 align="center"><img src="https://api.iconify.design/boxicons/terminal-filled.svg?color=%23ffbcb0" alt="" width="18" height="18">&nbsp; Commands</h3>
       <p align="center">17+1 commands to control the SDD cycle.</p>
       <br>
     </td>
     <td width="33%" valign="top" align="center">
       <br>
-      <h3 align="center"><img src="https://api.iconify.design/boxicons/robot-filled.svg?color=%23ffbcb0" width="18" height="18">&nbsp; Agents</h3>
+      <h3 align="center"><img src="https://api.iconify.design/boxicons/robot-filled.svg?color=%23ffbcb0" alt="" width="18" height="18">&nbsp; Agents</h3>
       <p align="center">6 main agents + ~350 subagents available to install in packs</p>
       <br>
     </td>
@@ -60,7 +60,7 @@ A production-grade workspace integrating engineering skills organized in SDD cyc
 - [🤖 Main Agents](#-main-agents)
 - [Install / Update](#install--update)
 - [Workflow](#workflow)
-- [⌨️ Commands](#-commands)
+- [⌨️ Commands](#️-commands)
 - [Troubleshooting](#troubleshooting)
 - [Acknowledgments](#acknowledgments)
 
@@ -75,7 +75,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/img/Huitzilopochtli.jpeg" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Huitzilopochtli.jpeg" alt="Huitzilopochtli" width="240" style="border-radius: 10px;">
       <br><sub><i>Forged in the fire of war and sun.</i></sub>
     </td>
     <td width="70%" valign="top">
@@ -94,7 +94,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/img/Quetzalcoatl.png" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Quetzalcoatl.png" alt="Quetzalcoatl" width="240" style="border-radius: 10px;">
       <br><sub><i>Born from wind and infinite wisdom.</i></sub>
     </td>
     <td width="70%" valign="top">
@@ -113,7 +113,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/img/Moctezuma.jpeg" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Moctezuma.jpeg" alt="Moctezuma" width="240" style="border-radius: 10px;">
       <br><sub><i>Architect of empires and battle plans.</i></sub>
     </td>
     <td width="70%" valign="top">
@@ -132,7 +132,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/img/Tlaloc.jpeg" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Tlaloc.jpeg" alt="Tlaloc" width="240" style="border-radius: 10px;">
       <br><sub><i>The rainmaker who fertilizes projects.</i></sub>
     </td>
     <td width="70%" valign="top">
@@ -151,7 +151,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/img/Mictlantecuhtli.jpeg" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Mictlantecuhtli.jpeg" alt="Mictlantecuhtli" width="240" style="border-radius: 10px;">
       <br><sub><i>Lord of the underworld of 9 trials.</i></sub>
     </td>
     <td width="70%" valign="top">
@@ -170,7 +170,7 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
 <table>
   <tr>
     <td width="30%" align="center" valign="top">
-      <img src="docs/img/Tezcatlipoca.png" width="240" style="border-radius: 10px;">
+      <img src="docs/img/Tezcatlipoca.png" alt="Tezcatlipoca" width="240" style="border-radius: 10px;">
       <br><sub><i>The mirror that reveals all hidden truth.</i></sub>
     </td>
     <td width="70%" valign="top">

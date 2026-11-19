@@ -221,7 +221,7 @@ Registered during the two-axis full-project review fix batches. Decisions, FYIs,
 | — | Pack Update Diff | Feature | 3-4h | Low | Show changelog for user's installed packs during update |
 | **TD-V2-10** | Domain layer imports semver directly | Debt | 2-3h | Medium | WorkspaceVersion entity imports semver directly, violating Clean Architecture. Inject comparison logic or move to VersionComparator. |
 | **TD-V2-11** | Application layer instantiates infrastructure adapters | Debt | 1-2h | Medium | Use cases directly instantiate BunFileSystem, GitHubRestClient. Move to DI container (container.ts). |
-| **TD-V2-21** | GitHubRestClient returns null on all errors | Debt | 1-2h | Medium | getLatestVersion() returns `string | null` instead of `Result`. Cannot distinguish "no release" from "network error". |
+| **TD-V2-21** | GitHubRestClient returns null on all errors | Debt | 1-2h | Medium | getLatestVersion() returns `string \| null` instead of `Result`. Cannot distinguish "no release" from "network error". |
 | **TD-V2-22** | FileMergeEngine uses intersection type | Debt | 1h | Low | Constructor requires `IFileSystem & IStagingSystem`. Accept two separate dependencies for ISP. |
 | **TD-V2-30** | Strategy pattern implementation is implicit | Debt | 2h | Low | File merge rules use if/else instead of explicit Strategy. Extract to Strategy classes. |
 | **TD-V2-50** | No structured error context in progress events | Debt | 2h | Low | ProgressEvent lacks error field. Add `error?: Error` for verbose debugging. |
