@@ -154,25 +154,17 @@ bunx @fisherk2-dev/codice --dest my-project --project
 | Classification | Behavior in Update Mode |
 |---------------|------------------------|
 | **Mandatory** (`obligatorio/`) | Always overwritten — core configuration, agents, commands |
-| **Standard** (`estandar/`) | **Only copied if the file does not exist** in the destination. If it already exists, it is preserved as-is. |
-| **Optional** (`opcional/`) | Skipped entirely — never touched during updates |
+| **Standard** (`estandar/`) | Existing **files** are preserved as-is. Existing **directories** (`docs/`, `specs/`, `tasks/`) are diffed file-by-file against the template and only the files your project is missing get copied |
+| **Optional** (`opcional/`) | Skipped entirely — update rules filter optional entries out (`src/application/use-cases/UpdateWorkspaceUseCase.ts:126-128`) |
 
-This means that if you have customized your `README.md` or `AGENTS.md` (both standard files), Update Workspace will **not** overwrite them. The same applies to standard directories like `docs/` and `specs/` — if the directory exists, the entire directory is skipped.
+So a customized `README.md` is never overwritten, and new files a release adds inside a standard directory **do** arrive — whole directories are no longer skipped (`src/domain/services/stagePlanner.ts:33-51`). The skip message you see when a directory genuinely has nothing new is `No new files in directory` (`src/domain/services/mergeRules.ts:18-22`).
 
-**Solution:** Accept this as a data-loss prevention mechanism. If you need new files from a standard directory that were added in a more recent template release, you must copy them manually:
+What update mode will not do is overwrite an existing standard file whose upstream content changed — your copy always wins.
 
-1. Identify which new standard files exist in the latest template release:
-   ```bash
-   # Compare the template repository structure with your project
-   # Files in template/estandar/ that don't exist in your project
-   ```
+**Solution:** Nothing to do for new files inside `docs/` or `specs/` — the update copies them. Two manual cases remain:
 
-2. Copy the new files manually:
-   ```bash
-   cp /path/to/new-template/estandar/new-file.md ./new-file.md
-   ```
-
-3. If you genuinely want the upstream version of a standard file (discarding your changes), delete it first and re-run Update Workspace.
+1. You want the upstream version of a standard file, discarding your edits: delete your copy and re-run Update Workspace. The file is then missing, so it gets copied.
+2. You want to know what changed upstream without deleting anything: diff your file against `template/estandar/` in the repository at the release tag you updated to.
 
 ---
 
@@ -190,17 +182,37 @@ The affected symlinks are:
 | `.opencode/commands` | `../commands` |
 | `.opencode/skills` | `../skills` |
 
-**Solution:** Re-run the installer in force mode to regenerate all symlinks without overwriting your existing template files:
+**Solution:** Recreate the links with **Project Install**, never with Clean Install.
+
+First clear whatever occupies the link path, because the installer deliberately leaves existing content alone:
+
+- A real directory at `.opencode/agents` is **skipped, not replaced**, with `[warn] Skipping symlink creation: … is a real directory. Remove the directory and re-run to create the symlink.` (`src/infrastructure/adapters/BunSymlinkCreator.ts:113-121`).
+- An existing symlink — even a broken one — is skipped idempotently (`BunSymlinkCreator.ts:108-111`), so remove it too if the target moved.
 
 ```bash
-bunx @fisherk2-dev/codice --force --clean
+rmdir .opencode/agents .opencode/commands .opencode/skills   # empty placeholder dirs
+rm .opencode/agents                                          # or a broken symlink, one per path
 ```
 
-The `--force` flag skips confirmation prompts, and `--clean` ensures the full post-installation generation step runs. This will:
+Then re-run Project Install, which performs the post-install step that creates the three links (`src/application/postInstall.ts:145-152`):
 
-1. Re-copy mandatory files (safe — they always match the current template)
-2. Re-generate all symlinks in `.opencode/`
-3. Preserve your existing standard and optional files
+```bash
+bunx @fisherk2-dev/codice --dest . --project
+```
+
+Project Install re-copies the **mandatory** payload (`opencode.json`, `agents/`, `commands/`, `skills/`) and leaves your existing **standard** files alone — a standard rule is staged only when the destination is missing (`src/domain/services/stagePlanner.ts:73-76`). Back up any local edits to `opencode.json` first: it is mandatory, so it is overwritten.
+
+> **⚠️ Do not use `--force --clean` (or plain `--clean`) for this.** Clean Install marks every manifest rule mandatory — "overwrite destination regardless of existing state" — and `--force` auto-selects all 10 packs and all optional files without asking (`src/application/use-cases/CleanInstallUseCase.ts:2-4,40-41,57,66-67`). It overwrites your `README.md`, `AGENTS.md`, `docs/` and `specs/` content. No flag regenerates symlinks on their own.
+
+If you would rather not re-copy any payload file, create the links by hand — they are plain relative symlinks, exactly what the installer writes (`BunSymlinkCreator.ts:187-188`):
+
+```bash
+ln -s ../agents   .opencode/agents
+ln -s ../commands .opencode/commands
+ln -s ../skills   .opencode/skills
+```
+
+On Windows, create them from an elevated or developer-mode terminal with `mklink /D .opencode\agents ..\agents` (same relative target form).
 
 If symlinks are consistently missing after every install, verify that your project directory is writable by the current user (see Issue #3 above).
 
