@@ -5,9 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.6] - 2026-11-19
+
+Hotfix sobre la rama `hotfix/subagents-plan` (basada en `main` @ `14e478c`, tag `v2.1.5`): `/plan` incorpora el comando de descubrimiento del roster de subagentes copiado del protocolo de delegación, la wiki de Commands gana la sección Hotfix Flow con su diagrama Mermaid, y el README corrige la semántica del índice TOC (`<summary>`) y el tamaño de los iconos (18→24). Además se añade `.gitleaks.toml` como configuración compartida del hook pre-commit local. La ruta de publicación en `release.yml` queda idéntica a la de v2.1.5 (ver Security). Sin cambios en código TypeScript.
+
+> Estado: PREPARADA — lista para lanzamiento; aún no publicada (npm latest sigue en 2.1.5).
+
+### Added
+
+- **Comando de descubrimiento de subagentes en `/plan`** (`template/obligatorio/core/commands/plan.md`): se copia el comando shell de roster de subagentes desde el protocolo de delegación, de modo que `/plan` pueda listar los subagentes delegables.
+- **Sección «Hotfix Flow — Quick Fixes» en la wiki de Commands** (`docs/wiki-source/Commands.md`): nuevo flujo de hotfix con diagrama Mermaid que documenta el camino de corrección rápida.
+
+### Fixed
+
+- **Índice TOC del README** (`README.md`): los encabezados `<h3>` del índice pasan a `<summary>` (semántica correcta de desplegable) y los iconos se redimensionan de 18 a 24.
+
+### Security
+
+- **Ruta de publicación sin cambios respecto a v2.1.5** (`.github/workflows/release.yml`): se mantiene la inyección de `secrets.NPM_TOKEN` y la escritura de `.npmrc` en el disco del runner. El cambio a OIDC trusted publishing se intentó y se revirtió tras el fallo `ENEEDAUTH` en la release run `44512251002`: el registro de trusted publisher en npm aún no es utilizable — debe permitir `npm publish`, no solo `npm stage publish`.
+- **`.gitleaks.toml` (raíz del repo)**: nueva configuración compartida para el hook local `gitleaks protect --staged` de `.githooks/pre-commit`. Sin gate de gitleaks en CI (el paso en `ci.yml` se retiró junto con el revert de OIDC).
+
 ## [2.1.5] - 2026-11-19
 
 Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilización **INCOMPLETA** de `1941ed3` cerrando los issues #111–#116, repara las referencias huérfanas que dejó la reestructuración del template y añade la revisión/remediación pre-launch de 5 ejes y la pasada documental posterior al tag. Consolida todo el trabajo desde la última estable v2.1.4. `v2.1.5-beta.1` se publicó bajo dist-tag `beta` el 2026-11-18. Métricas finales: 2027 tests / 0 fail, 31/31 E2E, `tsc --noEmit` 0, lint 0, cobertura 96.95% local (gates verdes).
+
+> Estado: LANZADO — tag v2.1.5 publicado en npm; dist-tag latest vigente.
 
 ### Added
 
@@ -55,7 +77,7 @@ Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilizaci
 
 Hotfix de rendimiento de comandos: elimina la delegación redundante a `code-reviewer` en 6 comandos del template y reserva la línea 2.1.x a hotfixes (deuda replanificada a 2.2.x/2.3.x/2.5.x).
 
-> Estado: LANZADO — tag `v2.1.4` (`ab8897e`, 2026-09-25) publicado en npm el 2026-09-26 (PR #105, squash `55c76cb`); es el dist-tag `latest` vigente.
+> Estado: LANZADO — tag `v2.1.4` (`ab8897e`, 2026-09-25) publicado en npm el 2026-09-26 (PR #105, squash `55c76cb`); fue el dist-tag `latest` hasta v2.1.5.
 
 ### Changed
 
@@ -642,6 +664,7 @@ Pre-release for v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release
 
 - Path traversal prevention; symlink skipping in directory walk; SHA-256 checksums.
 
+[2.1.6]: https://github.com/fisherk2/codice-opencode/compare/v2.1.5...v2.1.6
 [2.1.5]: https://github.com/fisherk2/codice-opencode/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/fisherk2/codice-opencode/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/fisherk2/codice-opencode/compare/v2.1.3-beta.1...v2.1.3

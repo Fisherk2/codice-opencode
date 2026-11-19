@@ -60,19 +60,19 @@ A production-grade workspace integrating engineering skills organized in SDD cyc
   <tr>
     <td width="33%" valign="top" align="center">
       <br>
-      <h3 align="center"><img src="https://api.iconify.design/boxicons/brain-filled.svg?color=%23ffbcb0" alt="" width="18" height="18">&nbsp; Skills</h3>
+      <h3 align="center"><img src="https://api.iconify.design/boxicons/brain-filled.svg?color=%23ffbcb0" alt="" width="24" height="24">&nbsp; Skills</h3>
       <p align="center">61 Software development specialized skills.</p>
       <br>
     </td>
     <td width="33%" valign="top" align="center">
       <br>
-      <h3 align="center"><img src="https://api.iconify.design/boxicons/terminal-filled.svg?color=%23ffbcb0" alt="" width="18" height="18">&nbsp; Commands</h3>
+      <h3 align="center"><img src="https://api.iconify.design/boxicons/terminal-filled.svg?color=%23ffbcb0" alt="" width="24" height="24">&nbsp; Commands</h3>
       <p align="center">17+1 commands to control the SDD cycle.</p>
       <br>
     </td>
     <td width="33%" valign="top" align="center">
       <br>
-      <h3 align="center"><img src="https://api.iconify.design/boxicons/robot-filled.svg?color=%23ffbcb0" alt="" width="18" height="18">&nbsp; Agents</h3>
+      <h3 align="center"><img src="https://api.iconify.design/boxicons/robot-filled.svg?color=%23ffbcb0" alt="" width="24" height="24">&nbsp; Agents</h3>
       <p align="center">6 main agents + ~350 subagents available to install in packs</p>
       <br>
     </td>
@@ -82,7 +82,7 @@ A production-grade workspace integrating engineering skills organized in SDD cyc
 ---
 
 <details>
-  <h3 align="left">Table of Contents</h3>
+  <summary>Table of Contents</summary>
   <ol>
     <li><a href="#main-agents">Main Agents</a></li>
     <li><a href="#install--update">Install / Update</a></li>
