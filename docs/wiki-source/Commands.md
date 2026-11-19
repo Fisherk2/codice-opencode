@@ -184,6 +184,8 @@ The body contains numbered steps that the agent follows. Key patterns:
 
 Adding a new slash command requires creating the command file and updating the orchestration documentation. Follow these steps:
 
+> **`/deploy` already ships** — one of the 18 payload commands. This example therefore *replaces* `commands/deploy.md`, which is mandatory payload and gets re-copied by the next update. Pick a name the template does not use (e.g. `release-notes`) if you want your version to survive.
+
 ### Step 1: Create the Command File
 
 Create `commands/<command-name>.md` with YAML frontmatter and a markdown body. For this guide, we will create a `/deploy` command.
