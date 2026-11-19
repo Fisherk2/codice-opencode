@@ -29,7 +29,7 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 | Command | Purpose | Expected Behavior |
 |---------|---------|-------------------|
 | `just build` | *Removed in v1.2.0* | Binary compilation removed. Use `bun run src/cli/main.ts` for local development. |
-| `just tag <version>` | Create release tag | Validate `vX.Y.Z[-beta.N|-rc.N]` format and create the annotated tag locally (no push) |
+| `just tag <version>` | Create release tag | Validate `vX.Y.Z[-beta.N\|-rc.N]` format and create the annotated tag locally (no push) |
 | `just release <version>` | Publish release | Run `just check` + `just test` gates, then push the tag → `.github/workflows/release.yml` publishes to npm with provenance and creates the GitHub Release |
 
 ## CLI Runtime Commands (Package)
