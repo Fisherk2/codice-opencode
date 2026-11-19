@@ -4,7 +4,15 @@
 
 > **v2.0 Progress:** FEV-17 ✅ + FEV-18 ✅ (2026-08-04) + FEV-19 ✅ + FEV-20 ✅ (2026-08-05) + FEV-21 ✅ (2026-08-06) + FEV-22 ✅ (2026-08-06) + FEV-23 ✅ (2026-08-07) → **v2.0.0 released** (2026-08-07). FEV-23 (v2.0.0 Testing & Integration) is complete: 1920 tests, 30/30 E2E, coverage 95.68% overall / 99.12% production `src/`.
 >
-> **v2.1 Progress:** FEV-24 ✅ (2026-08-11) — 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD plugin intent auto-discovery, bilingual intent support. 2048 tests, 30/30 E2E. FEV-25 ✅ complete (agent delegation protocol). 2052 tests, 31/31 E2E. FEV-26 ✅ (2026-08-20) — Quick Wins: bug fixes + security patches + documentation. FEV-27 ✅ (2026-08-21) — Security & Observability: plugin cleanup, external directory permissions, backup integrity, staging cleanup event. Code review hardened (1 Critical + 4 Important + 3 Suggestions applied). FEV-28 ✅ (2026-08-21) — Infrastructure & Performance: CI SHA-pins Node 24 + VersionComparator cache. 1935 tests, 31/31 E2E. **v2.1.1 Released (2026-08-25).**
+> **v2.1 Progress:** FEV-24 ✅ (2026-08-11) — 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`), SDD plugin intent auto-discovery, bilingual intent support (the plugin-era auto-discovery features were later **retired in FEV-30** — see ADR-022 and the retired ADR-013/ADR-017). FEV-25 ✅ complete (agent delegation protocol). 2052 tests, 31/31 E2E. FEV-26 ✅ (2026-08-20) — Quick Wins: bug fixes + security patches + documentation. FEV-27 ✅ (2026-08-21) — Security & Observability: plugin cleanup, external directory permissions, backup integrity, staging cleanup event. Code review hardened (1 Critical + 4 Important + 3 Suggestions applied). FEV-28 ✅ (2026-08-21) — Infrastructure & Performance: CI SHA-pins Node 24 + VersionComparator cache. 1935 tests, 31/31 E2E. **v2.1.1 Released (2026-08-25).**
+>
+> **v2.1.2** (2026-08-28): Hotfix — explicit docs-writer/technical-writer delegation in the `docs-update` command; tech debt reorganization (v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4).
+>
+> **v2.1.3** (2026-09-22): FEV-29 ✅ + FEV-30 ✅ — template migrated to the native OpenCode V2 `permissions:` format (349 agent files; legacy `tools:` frontmatter rejected); SDD plugin fully removed (destructive-command blocking now lives in the `permissions.bash` deny-lists); runtime "Opencode Legacy" banner (`src/application/legacyBanner.ts`) warns installs ≤ 2.1.2. 1959 tests, 31/31 E2E, coverage 96.39%.
+>
+> **v2.1.4** (2026-09-25): Command-performance hotfix — redundant `code-reviewer` delegation removed from 6 template commands; 2.1.x reserved for hotfixes, debt replanned to 2.2.x/2.3.x/2.5.x. Current npm `latest`.
+>
+> **v2.1.5-beta.1** (2026-11-18): FEV-31 ✅ (issues #111–#116 + orphan references) plus 5-axis pre-launch remediation. Gates: 2027 tests, 31/31 E2E, tsc 0, biome 0. Published under dist-tag `beta` (`latest` intact at 2.1.4).
 
 ---
 
@@ -19,7 +27,7 @@ OpenCode workspace templates evolve over time. Users currently face three painfu
 2. **Existing project:** A user wants to adopt the template without overwriting their existing customizations.
 3. **Update:** A user wants to pull the latest template improvements but fears losing their local modifications.
 
-Códice automates all three scenarios with a single command, zero external dependencies at runtime, and guaranteed atomic operations.
+Códice automates all three scenarios with a single command, a minimal runtime footprint (exactly two bundled dependencies — `@clack/prompts` for the TUI and `semver` for version comparison, per `package.json`), and guaranteed atomic operations.
 
 ### User Stories
 
