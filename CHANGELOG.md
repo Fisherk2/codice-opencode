@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Hotfix sobre la rama `hotfix/subagents-plan` (basada en `main` @ `14e478c`, tag `v2.1.5`): `/plan` incorpora el comando de descubrimiento del roster de subagentes copiado del protocolo de delegación, la wiki de Commands gana la sección Hotfix Flow con su diagrama Mermaid, y el README corrige la semántica del índice TOC (`<summary>`) y el tamaño de los iconos (18→24). Además se añade `.gitleaks.toml` como configuración compartida del hook pre-commit local. La ruta de publicación en `release.yml` queda idéntica a la de v2.1.5 (ver Security). Sin cambios en código TypeScript.
 
-> Estado: PREPARADA — lista para lanzamiento; aún no publicada (npm latest sigue en 2.1.5).
+> Estado: LANZADO — tag `v2.1.6` publicado en npm; dist-tag `latest` vigente (2026-11-19).
 
 ### Added
 
