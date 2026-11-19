@@ -46,6 +46,7 @@ Códice solves this by providing a **versioned, atomic installer** that:
 - [Agents](Agents) — The six primary agents, subagent catalog, and how to add new ones
 - [Commands](Commands) — All 18 SDD slash commands and their workflows
 - [Skills](Skills) — Engineering skills included in the template and how to add new ones
+- [Customization Guide](Customization-Guide) — Recipes for models, providers, permissions, skills, and commands
 - [Configuration](Configuration) — Configure models, agents, permissions, MCP servers, and references
 - [Troubleshooting](Troubleshooting) — Common issues and solutions
 

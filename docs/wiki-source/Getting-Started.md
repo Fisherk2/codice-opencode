@@ -119,6 +119,7 @@ There you will discover what you can do with Códice and where to start.
 - [Workspace Structure](Workspace-Structure) — Learn what each file and directory does
 - [Commands](Commands) — Detailed reference for all 18 slash commands
 - [Agents](Agents) — Understand each agent's role, permissions, and recommended models
+- [Customization Guide](Customization-Guide) — Adapt models, permissions, skills, and commands to your project
 - [Configuration](Configuration) — Configure models, agents, permissions, MCP, and more
 
 For OpenCode-specific questions (agent configuration, permission model, MCP servers), refer to the [official OpenCode V2 documentation](https://opencode.ai/v2/docs/).
