@@ -3,7 +3,7 @@
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v2.1.6 (hotfix) — lista para lanzamiento, aún no publicada; latest sigue en 2.1.5.
+**Current Version:** v2.1.6 (hotfix) — PUBLICADA; dist-tag latest vigente (2.1.6).
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
 > **v2.1.3** (2026-09-22): FEV-29 ✅ + FEV-30 ✅ — template migrated to the native OpenCode V2 `permissions:` format (349 agent files; legacy `tools:` frontmatter rejected) and the SDD plugin fully removed from the template (destructive-command blocking now lives in the `permissions.bash` deny-lists); runtime "Opencode Legacy" banner (`src/application/legacyBanner.ts`) reads `.codice-version` offline and warns installs ≤ 2.1.2. 1959 tests, 31/31 E2E, coverage 96.39% total / 98.95% `src/cli/main.ts`.
@@ -16,7 +16,7 @@
 >
 > **v2.1.5** (2026-11-19): FEV-31 + pasada documental post-beta (39 archivos `.md`). **Estado: PUBLICADA — tag `v2.1.5` publicado en npm; dist-tag `latest` vigente.**
 >
-> **v2.1.6** (2026-11-19): hotfix docs-only sobre la rama `hotfix/subagents-plan` (basada en `main` @ `14e478c`, tag `v2.1.5`): `/plan` incorpora el comando de descubrimiento del roster de subagentes copiado del protocolo de delegación, la wiki de Commands añade Hotfix Flow con diagrama Mermaid y el README corrige el índice TOC (`<summary>`) y el tamaño de los iconos (18→24). Sin cambios en código TypeScript. **Estado: lista para lanzamiento, aún no publicada; `latest` sigue en 2.1.5.**
+> **v2.1.6** (2026-11-19): hotfix sobre la rama `hotfix/subagents-plan` (basada en `main` @ `14e478c`, tag `v2.1.5`): `/plan` incorpora el comando de descubrimiento del roster de subagentes copiado del protocolo de delegación, la wiki de Commands añade Hotfix Flow con diagrama Mermaid, el README corrige el índice TOC (`<summary>`) y el tamaño de los iconos (18→24), y se añade `.gitleaks.toml` (configuración del hook pre-commit local, sin gate de gitleaks en CI). Sin cambios en código TypeScript; la ruta de publicación sigue siendo `NPM_TOKEN` (el intento de OIDC trusted publishing se intentó y se revirtió). **Estado: PUBLICADA — tag `v2.1.6` publicado en npm; dist-tag `latest` vigente (2.1.6).**
 
 ## Objective
 

@@ -1,5 +1,5 @@
 # Implementation Plan – Códice v1.0.0 → v2.1.6
-**Date:** 2026-06-15 | **Last updated:** 2026-11-19 (v2.1.6 **ready for hotfix release — not yet published**, npm `latest` 2.1.5; v2.1.5 published under dist-tag `latest`) | **Methodology:** Iterative TDD
+**Date:** 2026-06-15 | **Last updated:** 2026-11-19 (v2.1.6 **published under dist-tag `latest`**, npm `latest` 2.1.6) | **Methodology:** Iterative TDD
 
 ## 1. Phase Vision
 
@@ -58,7 +58,7 @@ All evolutionary phases, completed and pending. Summary by version:
 | v2.1.2 | Hotfix (no FEV) | docs-update delegation fix + debt reorganization | 1935 tests, 31/31 E2E, ≥95% coverage |
 | v2.1.3-beta.1 | FEV-29–30 | Native V2 `permissions:` migration (349 files), SDD plugin removal + legacy banner | 1865 tests, 31/31 E2E, ≥95% coverage |
 | v2.1.5 | FEV-31 + pre-launch + docs pass | Issues #111–#116, orphan references repaired; **published under dist-tag `latest`** (beta published under `beta` 2026-11-18) | 2027 tests, 31/31 E2E, 96.95% coverage (local) |
-| v2.1.6 | Hotfix (no FEV) | `/plan` subagent roster, Hotfix Flow wiki section, README ToC/icons; **ready for hotfix release, not yet published** (`latest` 2.1.5) | 2027/0 tests, 31/31 E2E, 93.84% gate (src/ 95.87%; denominador lcov incluye tests/ y scripts/); lint pending confirmation on a toolchain-matched machine |
+| v2.1.6 | Hotfix (no FEV) | `/plan` subagent roster, Hotfix Flow wiki section, README ToC/icons, `.gitleaks.toml` (local hook only); **published under dist-tag `latest`** (`latest` 2.1.6) | 2027/0 tests, 31/31 E2E, 93.84% gate (src/ 95.87%; denominador lcov incluye tests/ y scripts/); lint pending confirmation on a toolchain-matched machine |
 
 ## 4. Testing Strategy by Phase
 
@@ -111,4 +111,4 @@ All evolutionary phases, completed and pending. Summary by version:
 | v2.1.4 (hotfix, ex-`latest`) | 1959 | 31/31 | ≥95% | 2026-09-25 |
 | v2.1.5-beta.1 (published, dist-tag `beta`) | 2027 | 31/31 | 96.95% (local) | 2026-11-18 |
 | v2.1.5 (published, npm `latest`) | 2027 | 31/31 | 96.95% (local) | 2026-11-19 |
-| v2.1.6 (hotfix — ready, not yet published, `latest` at 2.1.5) | 2027/0 | 31/31 | 93.84% gate (src/ 95.87%; denominador lcov incluye tests/ y scripts/); lint pending confirmation on a toolchain-matched machine | 2026-11-19 |
+| v2.1.6 (hotfix — published, npm `latest` 2.1.6) | 2027/0 | 31/31 | 93.84% gate (src/ 95.87%; denominador lcov incluye tests/ y scripts/); lint pending confirmation on a toolchain-matched machine | 2026-11-19 |
