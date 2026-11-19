@@ -93,6 +93,8 @@ Local MCP server from the Chrome DevTools team (`ChromeDevTools/chrome-devtools-
 - Google Chrome (stable or newer)
 - No additional dependencies — runs via `npx`
 
+> **The template pins the version.** The shipped entry uses `chrome-devtools-mcp@1.7.0` (`template/obligatorio/core/opencode.json`, `mcp.servers.chrome-devtools.command`), not `@latest`. The floating `@latest` reference used to point at a scoped package that returns 404 on npm, so it was pinned in v2.1.0. Keep the pin if you edit the entry.
+
 #### Quick Start
 
 1. **Open Chrome with remote debugging:**
@@ -101,7 +103,7 @@ Local MCP server from the Chrome DevTools team (`ChromeDevTools/chrome-devtools-
    ```
    Or use `--auto-connect` (Chrome 144+):
    ```bash
-   npx -y chrome-devtools-mcp@latest --auto-connect
+   npx -y chrome-devtools-mcp@1.7.0 --auto-connect
    ```
 
 2. **Enable the MCP server** in `opencode.json`:
@@ -111,7 +113,7 @@ Local MCP server from the Chrome DevTools team (`ChromeDevTools/chrome-devtools-
        "servers": {
          "chrome-devtools": {
            "type": "local",
-           "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+           "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
            "disabled": false
          }
        }
@@ -575,7 +577,7 @@ For example, `chrome-devtools` is useful for agents that run browser tests or pe
     "servers": {
       "chrome-devtools": {
         "type": "local",
-        "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+        "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
         "disabled": false
       }
     }
@@ -656,7 +658,7 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 
 1. **Enable only what you need** — Each active MCP server adds tokens to every conversation. Disable servers you're not actively using.
 2. **Prefer per-agent activation** — Disable tools globally and enable them only for specific agents that need them (see [Per-Agent Control](#per-agent-control)).
-3. **Use `@latest` for Chrome DevTools MCP** — `chrome-devtools-mcp@latest` ensures you always get the newest version without manual updates.
+3. **Pin MCP server versions** — the template ships `chrome-devtools-mcp@1.7.0` rather than `@latest`, so an upstream breaking release or a broken tag cannot change your workspace under your feet. Bump the pin deliberately. The only `@latest` surface in the payload is the six OpenCode plugins in `opencode.json` (`plugins`), an explicit exception recorded in ADR-025; see [Configuration](Configuration#plugins).
 4. **Use environment variables for secrets** — Reference API keys and tokens with `{env:VAR_NAME}` in the config. Never hardcode credentials.
 5. **Configure timeouts for slow servers** — If an MCP server is slow to respond or to start, set its per-server `timeout` object (`startup`, `catalog`, `execution`). V2 defaults: startup 30s, catalog 30s, execution 12h.
 6. **Test new servers incrementally** — Add one server at a time and verify it works before adding the next. This helps isolate configuration issues.

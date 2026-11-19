@@ -244,7 +244,7 @@ If symlinks are consistently missing after every install, verify that your proje
 3. **Test the MCP server directly** — For local servers, run the command in your terminal to verify it starts correctly:
    ```bash
    # Chrome DevTools MCP
-   npx -y chrome-devtools-mcp@latest --auto-connect
+   npx -y chrome-devtools-mcp@1.7.0 --auto-connect
 
    # Excel MCP
    uvx excel-mcp-server stdio
