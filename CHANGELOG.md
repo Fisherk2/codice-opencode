@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.6] - 2026-11-19
 
-Hotfix docs-only sobre la rama `hotfix/subagents-plan` (basada en `main` @ `14e478c`, tag `v2.1.5`): `/plan` incorpora el comando de descubrimiento del roster de subagentes copiado del protocolo de delegación, la wiki de Commands gana la sección Hotfix Flow con su diagrama Mermaid, y el README corrige la semántica del índice TOC (`<summary>`) y el tamaño de los iconos (18→24). Sin cambios en código TypeScript ni en el historial de git.
+Hotfix sobre la rama `hotfix/subagents-plan` (basada en `main` @ `14e478c`, tag `v2.1.5`): `/plan` incorpora el comando de descubrimiento del roster de subagentes copiado del protocolo de delegación, la wiki de Commands gana la sección Hotfix Flow con su diagrama Mermaid, y el README corrige la semántica del índice TOC (`<summary>`) y el tamaño de los iconos (18→24). Además se añade `.gitleaks.toml` como configuración compartida del hook pre-commit local. La ruta de publicación en `release.yml` queda idéntica a la de v2.1.5 (ver Security). Sin cambios en código TypeScript.
 
 > Estado: PREPARADA — lista para lanzamiento; aún no publicada (npm latest sigue en 2.1.5).
 
@@ -22,8 +22,8 @@ Hotfix docs-only sobre la rama `hotfix/subagents-plan` (basada en `main` @ `14e4
 
 ### Security
 
-- **Publicación por OIDC trusted publishing** (`.github/workflows/release.yml`): se retira la inyección de `secrets.NPM_TOKEN` y la escritura de `.npmrc` en el disco del runner (junto con su `trap` de limpieza); la publicación pasa a OIDC con `--provenance` y `npm@latest` para garantizar CLI ≥ 11.5.1. Requisito previo en npmjs.com: registrar el trusted publisher `Fisherk2` / `codice-opencode` / `release.yml`; sin ese registro el publish falla con `ENEEDAUTH` y no hay fallback de token. Referencia: [documentación de trusted publishers](https://docs.npmjs.com/trusted-publishers/).
-- **Gate de secretos en CI** (`.github/workflows/ci.yml` + `.gitleaks.toml`): nuevo paso `gitleaks` en el job `security`, SHA-pinned a `gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e` (v3.0.0; v2 dejó de ejecutarse al retirarse Node 20 de los runners el 2026-09-16), con `fetch-depth: 0` para resolver rangos de commit. La configuración se comparte con el hook local `.githooks/pre-commit` mediante `[extend] useDefault = true` y una allowlist estrecha de fixtures.
+- **Ruta de publicación sin cambios respecto a v2.1.5** (`.github/workflows/release.yml`): se mantiene la inyección de `secrets.NPM_TOKEN` y la escritura de `.npmrc` en el disco del runner. El cambio a OIDC trusted publishing se intentó y se revirtió tras el fallo `ENEEDAUTH` en la release run `44512251002`: el registro de trusted publisher en npm aún no es utilizable — debe permitir `npm publish`, no solo `npm stage publish`.
+- **`.gitleaks.toml` (raíz del repo)**: nueva configuración compartida para el hook local `gitleaks protect --staged` de `.githooks/pre-commit`. Sin gate de gitleaks en CI (el paso en `ci.yml` se retiró junto con el revert de OIDC).
 
 ## [2.1.5] - 2026-11-19
 
