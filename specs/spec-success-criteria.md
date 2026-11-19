@@ -17,8 +17,8 @@
 
 | ID | Criterion | Test Method |
 |----|-----------|-------------|
-| SC-9 | Complete local installation (Clean Install) completes in < 5 seconds on a modern SSD. | E2E timing measurement |
-| SC-10 | GitHub API version query completes in < 3 seconds or times out gracefully. | Integration test with delay injection |
+| SC-9 | Complete local installation (Clean Install) completes in < 5 seconds on a modern SSD. | Mechanism: `just bench` (hyperfine, `--runs 5`, exports `tests/fixtures/bench/clean-install.json`). **Unmeasured as of 2026-11-18** — no bench export on disk and no E2E script times the install. |
+| SC-10 | GitHub API version query completes in < 3 seconds or times out gracefully. | `tests/integration/adapters/github-rest-client.test.ts` — `describe "timeout behavior"` / `it "should return null when request exceeds timeout"` (`:193-194`, AbortSignal fired via a 10 ms client override; suite `TIMEOUT_MS = 3_000` at `:10`), matching production `GITHUB_API_TIMEOUT_MS = 3_000` (`src/infrastructure/config/constants.ts:60`, consumed at `GitHubRestClient.ts:31`). |
 | SC-11 | TUI menu renders and responds to input in < 100 milliseconds. | Manual / E2E perceived latency |
 
 ## Quality Criteria
