@@ -33,11 +33,11 @@ All v1.x and v2.0.0 debt is resolved. Version summary:
 
 ## Pending Debt
 
-> Política 2026-09-25: 2.1.x reservado a hotfixes; deuda/features recorridas a 2.2.x (v2.1.4→v2.2.0, v2.1.5→v2.3.0, v2.3→v2.5.0).
+> Policy 2026-09-25: 2.1.x reserved for hotfixes; debt/features rescheduled to 2.2.x (v2.1.4→v2.2.0, v2.1.5→v2.3.0, v2.3→v2.5.0).
 
-### v2.2.0 — próxima a solucionar
+### v2.2.0 — next version to address
 
-| ID | Item | Tipo | Effort | Descripción breve |
+| ID | Item | Type | Effort | Short description |
 |----|------|------|--------|-------------------|
 | — | Pack Update Diff | Feature | 3-4h | Show changelog for user's installed packs during update |
 | **TD-V2-10** | Domain layer imports semver directly | Debt | 2-3h | WorkspaceVersion imports semver, violating Clean Architecture; inject comparison via VersionComparator |
@@ -59,9 +59,9 @@ All v1.x and v2.0.0 debt is resolved. Version summary:
 | **TD-V2-111** | Pin 6 payload plugin versions | Debt | 1-2h | Plugins ship at `@latest` in `opencode.json`; ADR-025 accepted exception, pin + regression guard |
 | **TD-V2-112** | No-`any` policy has no enforcement gate | Debt | 1h | `noExplicitAny` off, no ESLint, `strict` catches only implicit `any`; enable Biome rule or add guard test |
 
-### v2.3.0 — siguiente versión a solucionar
+### v2.3.0 — following version to address
 
-| ID | Item | Tipo | Effort | Descripción breve |
+| ID | Item | Type | Effort | Short description |
 |----|------|------|--------|-------------------|
 | **TD-V2-20** | IFileSystem port is too large | Debt | 2-3h | Split into IFileReader, IFileWriter, IDirectoryWalker |
 | **TD-V2-31** | Missing Factory pattern for use case creation | Debt | 3h | Extract UseCaseFactory for better extensibility |
@@ -75,16 +75,16 @@ All v1.x and v2.0.0 debt is resolved. Version summary:
 | **TD-V2-106** | Hard-killed runs leave `.codice-staging-*` residue | Debt | 2-3h | Needs safe-sweep design (pid liveness) before deleting another run's dir |
 | **TD-V2-107** | `AtomicStager.ts` grew to 610 LOC | Debt | 3-4h | One safety story by design; split prepare/promote/recover only with fresh integration coverage |
 
-### v2.5.0 — versión posterior a solucionar
+### v2.5.0 — later version to address
 
-| ID | Item | Tipo | Effort | Descripción breve |
+| ID | Item | Type | Effort | Short description |
 |----|------|------|--------|-------------------|
 | **TD-V2-6** | No pack removal mechanism | Debt | 4-6h | `--remove-pack <id>` flag for removing installed packs |
 | [#24](https://github.com/fisherk2/codice-opencode/issues/24) | Alternative Package Managers | Feature | 8-12h | uv, cargo, composer, pnpm, yarn support |
 | [#22](https://github.com/fisherk2/codice-opencode/issues/22) | Internationalization (i18n) | Feature | 6-10h | Language selection (English, Spanish, +3 more) |
-| **TD-V2-104** | cwd-template fallback is intentional (ADR-007) | Decision/FYI — sin acción | — | Documented third rung of the detection cascade; no action |
-| **TD-V2-105** | 0 required reviews on `develop` is policy | Decision/FYI — sin acción | — | Documented single-contributor policy; FYI only |
-| **TD-V2-109** | update-gating logic in main.ts is sanctioned | Decision/FYI — sin acción | — | ARCHITECTURE.md assigns mode resolution to the CLI layer; FYI only |
+| **TD-V2-104** | cwd-template fallback is intentional (ADR-007) | Decision/FYI — no action | — | Documented third rung of the detection cascade; no action |
+| **TD-V2-105** | 0 required reviews on `develop` is policy | Decision/FYI — no action | — | Documented single-contributor policy; FYI only |
+| **TD-V2-109** | update-gating logic in main.ts is sanctioned | Decision/FYI — no action | — | ARCHITECTURE.md assigns mode resolution to the CLI layer; FYI only |
 
 ---
 
