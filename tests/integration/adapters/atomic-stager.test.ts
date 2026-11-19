@@ -121,27 +121,34 @@ describe("AtomicStager", () => {
 		expect(await findBackups(destDir)).toEqual([]);
 	});
 
-	it("preserves the original file mode when restoring backups on rollback", async () => {
-		const destFile = path.join(destDir, "mode-keeper.txt");
-		await fs.writeFile(destFile, "ORIGINAL_MODE");
-		await fs.chmod(destFile, 0o640);
-		// 0o640 differs from both the backup's 0600 and the default 0644, so
-		// the assertion detects a copyFile-propagated backup mode.
-		const src = path.join(templateDir, "mode-keeper.txt");
-		await fs.writeFile(src, "NEW_MODE");
-		const srcBroken = path.join(templateDir, "mode-zzz", "broken.txt");
-		await fs.mkdir(path.dirname(srcBroken), { recursive: true });
-		await fs.writeFile(srcBroken, "SHOULD NOT LAND");
-		await fs.writeFile(path.join(destDir, "mode-zzz"), "I AM A FILE, NOT A DIR");
+	// NTFS cannot store Unix permission modes: Bun synthesizes stat.mode on
+	// Windows (writable files report 0666), so the 0640 assertion is
+	// untestable there. Content preservation on rollback stays covered on
+	// Windows by "restores backed-up originals when a mid-commit rename fails".
+	it.skipIf(process.platform === "win32")(
+		"preserves the original file mode when restoring backups on rollback",
+		async () => {
+			const destFile = path.join(destDir, "mode-keeper.txt");
+			await fs.writeFile(destFile, "ORIGINAL_MODE");
+			await fs.chmod(destFile, 0o640);
+			// 0o640 differs from both the backup's 0600 and the default 0644, so
+			// the assertion detects a copyFile-propagated backup mode.
+			const src = path.join(templateDir, "mode-keeper.txt");
+			await fs.writeFile(src, "NEW_MODE");
+			const srcBroken = path.join(templateDir, "mode-zzz", "broken.txt");
+			await fs.mkdir(path.dirname(srcBroken), { recursive: true });
+			await fs.writeFile(srcBroken, "SHOULD NOT LAND");
+			await fs.writeFile(path.join(destDir, "mode-zzz"), "I AM A FILE, NOT A DIR");
 
-		await stager.stageFile(src, "mode-keeper.txt");
-		await stager.stageFile(srcBroken, "mode-zzz/broken.txt");
+			await stager.stageFile(src, "mode-keeper.txt");
+			await stager.stageFile(srcBroken, "mode-zzz/broken.txt");
 
-		await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
+			await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
 
-		expect((await fs.lstat(destFile)).mode & 0o777).toBe(0o640);
-		expect(await Bun.file(destFile).text()).toBe("ORIGINAL_MODE");
-	});
+			expect((await fs.lstat(destFile)).mode & 0o777).toBe(0o640);
+			expect(await Bun.file(destFile).text()).toBe("ORIGINAL_MODE");
+		},
+	);
 
 	it("refuses commit when a destination intermediate component is a symlink", async () => {
 		// dest/sub → outside tmp root: the commit must fail closed and must
@@ -187,69 +194,81 @@ describe("AtomicStager", () => {
 		expect(await findBackups(destDir)).toEqual([]);
 	});
 
-	it("fails closed when the intent marker is unreadable", async () => {
-		// Only ENOENT means "absent"; an unreadable marker (EACCES) must
-		// refuse the commit — the marker's state is unknown.
-		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
-		await fs.writeFile(intentPath, "2026-01-01T00:00:00.000Z", "utf-8");
-		await fs.chmod(intentPath, 0o000);
+	// chmod 0o000 cannot make a file unreadable to its owner on Windows (no
+	// POSIX permission bits — Bun maps chmod to the read-only attribute,
+	// which does not block reads), so the EACCES precondition is
+	// unrepresentable there; the fail-closed read path runs on Linux/macOS.
+	it.skipIf(process.platform === "win32")(
+		"fails closed when the intent marker is unreadable",
+		async () => {
+			// Only ENOENT means "absent"; an unreadable marker (EACCES) must
+			// refuse the commit — the marker's state is unknown.
+			const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+			await fs.writeFile(intentPath, "2026-01-01T00:00:00.000Z", "utf-8");
+			await fs.chmod(intentPath, 0o000);
 
-		const src = path.join(templateDir, "blocked.txt");
-		await fs.writeFile(src, "X");
-		await stager.stageFile(src, "blocked.txt");
+			const src = path.join(templateDir, "blocked.txt");
+			await fs.writeFile(src, "X");
+			await stager.stageFile(src, "blocked.txt");
 
-		await expect(stager.commitStaging()).rejects.toThrow(/Cannot verify backup intent marker/);
+			await expect(stager.commitStaging()).rejects.toThrow(/Cannot verify backup intent marker/);
 
-		// Restore permissions so the marker can be cleaned up.
-		await fs.chmod(intentPath, 0o644);
-		await fs.unlink(intentPath).catch(() => {});
-	});
+			// Restore permissions so the marker can be cleaned up.
+			await fs.chmod(intentPath, 0o644);
+			await fs.unlink(intentPath).catch(() => {});
+		},
+	);
 
-	it("backs up overwritten files with owner-only permissions (0600)", async () => {
-		// A pre-existing destination file with broad permissions must not be
-		// exposed via the backup. After a rollback the restored backup is
-		// swept, so pin the backup on disk: fail the second rename mid-commit
-		// and make the sweep's unlink of the restored backup fail. The
-		// surviving backup's mode must be 0600.
-		const victim = path.join(destDir, "victim.txt");
-		await fs.writeFile(victim, "PRECIOUS");
-		await fs.chmod(victim, 0o666);
-		const src = path.join(templateDir, "victim.txt");
-		await fs.writeFile(src, "NEW");
-		const brokenSrc = path.join(templateDir, "broken.txt");
-		await fs.writeFile(brokenSrc, "X");
-		const blocker = path.join(destDir, "broken");
-		await fs.writeFile(blocker, "I AM A FILE, NOT A DIR");
-		const backupPath = `${victim}.codice-backup`;
+	// Windows cannot represent 0600: Bun synthesizes stat.mode from NTFS
+	// attributes (writable → 0666), so the owner-only assertion is untestable there.
+	it.skipIf(process.platform === "win32")(
+		"backs up overwritten files with owner-only permissions (0600)",
+		async () => {
+			// A pre-existing destination file with broad permissions must not be
+			// exposed via the backup. After a rollback the restored backup is
+			// swept, so pin the backup on disk: fail the second rename mid-commit
+			// and make the sweep's unlink of the restored backup fail. The
+			// surviving backup's mode must be 0600.
+			const victim = path.join(destDir, "victim.txt");
+			await fs.writeFile(victim, "PRECIOUS");
+			await fs.chmod(victim, 0o666);
+			const src = path.join(templateDir, "victim.txt");
+			await fs.writeFile(src, "NEW");
+			const brokenSrc = path.join(templateDir, "broken.txt");
+			await fs.writeFile(brokenSrc, "X");
+			const blocker = path.join(destDir, "broken");
+			await fs.writeFile(blocker, "I AM A FILE, NOT A DIR");
+			const backupPath = `${victim}.codice-backup`;
 
-		const realRename = fs.rename.bind(fs);
-		const realUnlink = fs.unlink.bind(fs);
-		const renameSpy = spyOn(fs, "rename").mockImplementation(((a: unknown, b: unknown) => {
-			if (String(b).endsWith("broken/inner.txt")) {
-				return Promise.reject(new Error("forced mid-commit failure"));
+			const realRename = fs.rename.bind(fs);
+			const realUnlink = fs.unlink.bind(fs);
+			const renameSpy = spyOn(fs, "rename").mockImplementation(((a: unknown, b: unknown) => {
+				if (String(b).endsWith("broken/inner.txt")) {
+					return Promise.reject(new Error("forced mid-commit failure"));
+				}
+				return realRename(a as string, b as string);
+			}) as unknown as typeof fs.rename);
+			const unlinkSpy = spyOn(fs, "unlink").mockImplementation(((p: unknown) => {
+				if (String(p) === backupPath) {
+					return Promise.reject(new Error("keep the backup for the mode assertion"));
+				}
+				return realUnlink(p as string);
+			}) as unknown as typeof fs.unlink);
+
+			try {
+				await stager.stageFile(src, "victim.txt");
+				await stager.stageFile(brokenSrc, "broken/inner.txt");
+				await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
+
+				const backupStat = await fs.stat(backupPath);
+				expect(backupStat.mode & 0o777).toBe(0o600);
+			} finally {
+				renameSpy.mockRestore();
+				unlinkSpy.mockRestore();
+				await realUnlink(backupPath).catch(() => {});
 			}
-			return realRename(a as string, b as string);
-		}) as unknown as typeof fs.rename);
-		const unlinkSpy = spyOn(fs, "unlink").mockImplementation(((p: unknown) => {
-			if (String(p) === backupPath) {
-				return Promise.reject(new Error("keep the backup for the mode assertion"));
-			}
-			return realUnlink(p as string);
-		}) as unknown as typeof fs.unlink);
-
-		try {
-			await stager.stageFile(src, "victim.txt");
-			await stager.stageFile(brokenSrc, "broken/inner.txt");
-			await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
-
-			const backupStat = await fs.stat(backupPath);
-			expect(backupStat.mode & 0o777).toBe(0o600);
-		} finally {
-			renameSpy.mockRestore();
-			unlinkSpy.mockRestore();
-			await realUnlink(backupPath).catch(() => {});
-		}
-	});
+		},
+	);
 
 	it("auto-recovers an interrupted commit when backups allow it", async () => {
 		// Simulate a hard-kill mid-commit: victim.txt holds the STAGED
