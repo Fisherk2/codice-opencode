@@ -460,13 +460,13 @@ flowchart LR
 
 ---
 
-### Top contributors:
+### Top contributors
 
 <a href="https://github.com/fisherk2/codice-opencode/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=fisherk2/codice-opencode" alt="contrib.rocks image" />
 </a>
 
-<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p> 
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
 
 ---
 
