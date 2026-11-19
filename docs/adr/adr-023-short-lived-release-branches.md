@@ -45,7 +45,7 @@ tags                                 ● vX.Y.Z
 1. **Cut** `release/X.Y.Z` from `develop` (`git checkout -b release/X.Y.Z develop`).
 2. **Stabilization fixes land directly** on the branch (PRs or direct commits — "it is a short-lived, unprotected branch", `CONTRIBUTING.md`). No per-fix PR review is required at this stage.
 3. **Full gates must be green before promotion:** `just check`, `just test`, `just coverage-check`, `just test-e2e` (2.1.3 final record in `docs/WORKFLOW.md` §3: 1941 tests / 4354 expect() / 0 fail, e2e 31/31, coverage 96.30% total / 98.95% `src/cli/main.ts`, madge 0 cycles).
-4. **One PR** `release/X.Y.Z` → `main` (squash merge) carrying the whole stabilization set — the single mandatory human review point; required checks `CI / quality (ubuntu|macos|windows)` gate it (ADR-019). On `workflow_dispatch` runs the quality matrix executes against the **publication tag**, not the dispatch branch (`CHANGELOG.md` [2.1.3] Changed; `release.yml`).
+4. **One PR** `release/X.Y.Z` → `main` (squash merge) carrying the whole stabilization set — the single mandatory human review point; required checks `quality (ubuntu|macos|windows)` + `security` gate it (ADR-019). On `workflow_dispatch` runs the quality matrix executes against the **publication tag**, not the dispatch branch (`CHANGELOG.md` [2.1.3] Changed; `release.yml`).
 5. **Tag `vX.Y.Z` → publish** via `release.yml`: prerelease tags (`-beta.N`/`-rc.N`) publish with their suffix dist-tag and `make_latest=false`; stable tags publish `npm publish --tag latest --provenance`. `latest` is never overwritten by a prerelease.
 6. **Sync `develop` ← `main`** post-release (mandatory, ADR-019 rule 3).
 

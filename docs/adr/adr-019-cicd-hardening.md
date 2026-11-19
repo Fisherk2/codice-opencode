@@ -29,7 +29,7 @@ All workflow steps pin actions to full commit SHAs (e.g., `actions/checkout@11bd
 
 ### 2. Branch Protection (main / develop)
 
-* Require status checks: `CI / quality (ubuntu-latest)`, `CI / quality (macos-latest)`, `CI / quality (windows-latest)` must pass.
+* Require status checks: `quality (ubuntu-latest)`, `quality (macos-latest)`, `quality (windows-latest)`, `security` must pass (contexts corrected 2026-11-18 — see `scripts/setup-branch-protection.sh`).
 * Require pull request reviews before merging.
 * Block force pushes and direct pushes to both branches (enforced via `scripts/setup-branch-protection.sh`).
 
