@@ -195,13 +195,15 @@ tags                                 ● vX.Y.Z
 
 ### Prerelease Flow (`beta` / `rc`)
 
-The flow above is [ADR-023](docs/adr/adr-023-short-lived-release-branches.md) for **stable** releases. A prerelease lands through `develop` first — the actual path of `v2.1.5-beta.1`:
+The stable path is the `release/X.Y.Z` flow above ([ADR-023](docs/adr/adr-023-short-lived-release-branches.md)). A prerelease lands through `develop` first — this is the executed path of `v2.1.5-beta.1` and the pattern for future `beta`/`rc` tags:
 
-1. Branch `release/X.Y.Z` from `develop` (already synced); stabilization as above.
-2. PR `release/X.Y.Z` → `develop` → squash merge (PR #119 → `3883288`).
-3. PR `develop` → `main` → squash merge (`c579948`).
-4. Tag `vX.Y.Z-beta.N` (or `-rc.N`) on the `main` tip → CI publishes under dist-tag `beta`/`rc`; `latest` untouched.
+1. Work lands on any working branch — `hotfix/update-payload` for `v2.1.5-beta.1`, not a release branch — and is PR'd → squash-merged into `develop` (PR #119 → `3883288`). Cut `release/X.Y.Z` from `develop` first only if the prerelease needs pre-beta stabilization.
+2. Sync `develop` ← `main` before promoting, so `strict: true` required checks can pass against the base branch (`d03191a`, landed ahead of PR #121; its 7 conflicts were resolved on the `develop` side because the #104 fix was already there via #105).
+3. PR `develop` → `main` → squash merge (PR #121 → `c579948`).
+4. Annotated tag `vX.Y.Z-beta.N` (or `-rc.N`) on the `main` tip → CI publishes under dist-tag `beta`/`rc`; `latest` untouched (it stayed at 2.1.4).
 5. Post-release: sync `develop` ← `main`, pushed directly to `develop` (`81a360d`).
+
+Trace this route with `gh pr view 119 121 --json headRefName,mergeCommit`, not with ancestry: a squash merge does not preserve lineage, so `merge-base --is-ancestor` proves nothing here. The local `release/v2.1.5` branch was cut only after the tag (from `81a360d`), exists for the upcoming stable promotion, was never pushed to `origin`, and is not part of the beta's path.
 
 ### Why Clean Merges
 
