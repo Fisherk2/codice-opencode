@@ -18,13 +18,14 @@ workspace/
 ├── LICENSE               # Open-source license
 ├── opencode.json         # OpenCode configuration
 ├── .env.example          # Environment template
-├── agents/               # AI agent definitions (359 across 10 packs)
+├── agents/               # AI agent definitions (359 in the payload across 10 packs)
 ├── commands/             # Slash command workflows (18 files)
 ├── skills/               # Specialized knowledge domains (61 dirs)
 ├── docs/                 # Project documentation (ADRs live in docs/adr/)
 ├── specs/                # Modular specification documents
 ├── tasks/                # Execution tasks (SDD pipeline)
 ├── .opencode/            # OpenCode runtime configuration
+├── .codice-version       # Installed version + selected packs (gates every update)
 └── .gitignore            # Standard ignore patterns
 ```
 
@@ -34,7 +35,7 @@ workspace/
 
 ### `agents/` — AI Agent Definitions
 
-This is the largest directory, containing **359 agent files across 10 packs** that define AI personas. Each file is a Markdown document with YAML frontmatter describing an agent's role, permissions, and behavior.
+This is the largest directory. The payload contains **359 agent files across 10 packs**; what lands in your project depends on the packs you select — the wizard pre-selects only `software-development`, so a default install gets **155 agents** (145 from that pack + 6 primary + 4 writers), and 359 only if you select all 8 selectable packs. Each file is a Markdown document with YAML frontmatter describing an agent's role, permissions, and behavior.
 
 **Six primary agents** serve as the main entry points:
 
@@ -101,7 +102,7 @@ Each command file contains numbered steps, `question` tool prompts at decision p
 
 ### `skills/` — Specialized Knowledge Domains
 
-Skills are the workspace's knowledge base — **61 skill directories**, each containing a `SKILL.md` file that teaches an agent how to perform a specific task domain. 18 of those include a `references/` subdirectory with extended reference material co-located with the skill:
+Skills are the workspace's knowledge base — **61 skill directories**, each containing a `SKILL.md` file that teaches an agent how to perform a specific task domain. 20 of those include a `references/` subdirectory with extended reference material co-located with the skill:
 
 | Skill | Purpose |
 |-------|---------|
@@ -113,23 +114,24 @@ Skills are the workspace's knowledge base — **61 skill directories**, each con
 | `security-and-hardening/references/` | Security checklist |
 | `architecture-diagrams/` | Create Mermaid and C4 diagrams |
 | `architecture-diagrams/references/` | 10 diagram reference documents |
-| ... | *(61 total skills, 18 with references/ subdirectories)* |
+| ... | *(61 total skills, 20 with references/ subdirectories)* |
 
 Skills are loaded by commands and agents with `**Load** `skill-name` skill`. This keeps workflows composable — a single command may invoke multiple skills at different steps. Reference material within `skills/<name>/references/` is exposed through the `references` section in `opencode.json`: described entries are advertised to agents with their alias and resolved path, and the client attaches a reference by its alias.
 
 ### Reference Files — Co-located with Skills
 
-The template ships **64 reference documents** covering software engineering best practices. Unlike the original centralized model, references are now **co-located** with their primary skill:
+The template ships **142 reference documents across 20 skills** covering software engineering best practices. Unlike the original centralized model, references are now **co-located** with their primary skill:
 
 | Reference File | Located In |
 |---------------|------------|
-| Architecture diagrams (arch-*.md) | `skills/architecture-diagrams/references/` |
-| DDD tactical, strategic, hexagonal | `skills/clean-ddd-hexagonal/references/` |
-| Clean code, code smells, naming | `skills/clean-code/references/` |
+| Architecture diagrams (arch-*.md) | `skills/architecture-diagrams/references/` (10 files) |
+| DDD tactical, strategic, hexagonal | `skills/clean-ddd-hexagonal/references/` (7 files) |
+| Clean code, code smells, naming | `skills/clean-code/references/` (6 files) |
 | Refactoring techniques (6 files) | `skills/refactoring-patterns/references/` |
 | UI/UX system (13 files) | `skills/ui-ux-design-pro/references/` |
-| SOLID, object design, TDD | `skills/solid/references/` |
-| README standards | `skills/crafting-effective-readmes/references/` |
+| SOLID, object design, TDD | `skills/solid/references/` (3 files) |
+| README standards | `skills/crafting-effective-readmes/references/` (5 files) |
+| Markdown/Mermaid syntax (27 files), plotting (16), data analysis (10), vertical slices (25) | `skills/markdown-mermaid-writing/references/`, `skills/data-plotting/references/`, `skills/data-analysis/references/`, `skills/vertical-slice-architecture/references/` |
 | Security, performance, error handling | Each in its respective skill's `references/` |
 
 This co-location makes skills **self-contained**: installing a skill also installs its reference material. References are exposed via OpenCode's native `references` section in `opencode.json`, advertised by alias, and attached from the client.
@@ -215,13 +217,13 @@ The workspace is designed around a **cycle** that repeats as your project grows:
 
 | Directory | Files | Purpose |
 |-----------|-------|---------|
-| `agents/` | 359 | AI agent persona definitions |
+| `agents/` | 359 payload / 155 default install | AI agent persona definitions |
 | `commands/` | 18 | Slash command workflows |
-| `skills/` | 61 + 64 refs | Specialized knowledge domains with co-located reference material |
+| `skills/` | 61 + 142 refs | Specialized knowledge domains with co-located reference material |
 | `docs/` | 10+ | Project documentation, incl. the `adr/` register |
 | `specs/` | 2+ | Modular specification documents |
 
-Total template footprint: ~500+ files providing a complete AI-assisted development environment.
+The full template payload is 932 files (769 Markdown) across all 10 packs. With the default pack only, an install writes 155 agents, 18 commands, and the 61 skills with their 142 references.
 
 ---
 

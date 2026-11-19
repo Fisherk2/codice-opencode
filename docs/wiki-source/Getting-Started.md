@@ -77,9 +77,10 @@ your-project/
 │   ├── agents/ → ../agents/     # Symlinks recreated post-install
 │   ├── commands/ → ../commands/
 │   └── skills/ → ../skills/
-├── agents/                    # 359 agents: 6 primary + 4 writer + 349 subagents across 8 selectable packs
+├── agents/                    # 155 by default (6 primary + 4 writers + 145 software-development); 359 if you select all 8 packs
 ├── commands/                  # 18 SDD slash commands
-└── skills/                    # 61 engineering skills
+├── skills/                    # 61 engineering skills
+└── .codice-version            # Installed version + selected packs; every update is gated on this file
 ```
 
 For a detailed breakdown of every file and directory, see [Workspace Structure](Workspace-Structure).
