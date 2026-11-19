@@ -3,7 +3,7 @@
 **Status:** Approved  
 **Author:** Fisherk2  
 **Date:** 2026-07-11  
-**Current Version:** v2.1.5-beta.1 (FEV-31 ✅; listo para tag/despliegue — GO pendiente)
+**Current Version:** v2.1.5-beta.1 (FEV-31 ✅; publicado en dist-tag `beta` 2026-11-18 — release run success, `latest` intacto en 2.1.4)
 **Repository:** `https://github.com/fisherk2/codice-opencode`
 
 > **v2.1.3** (2026-09-22): FEV-29 ✅ + FEV-30 ✅ — template migrated to the native OpenCode V2 `permissions:` format (349 agent files; legacy `tools:` frontmatter rejected) and the SDD plugin fully removed from the template (destructive-command blocking now lives in the `permissions.bash` deny-lists); runtime "Opencode Legacy" banner (`src/application/legacyBanner.ts`) reads `.codice-version` offline and warns installs ≤ 2.1.2. 1959 tests, 31/31 E2E, coverage 96.39% total / 98.95% `src/cli/main.ts`.
@@ -12,7 +12,7 @@
 >
 > **Previous: v2.1.1** (2026-08-25): FEV-26 ✅ + FEV-27 ✅ + FEV-28 ✅ — Bug #79, shell injection fix (TD-V2-70), manifest corrections (TD-V2-90/91), FileMergeEngine refresh (TD-V2-93), plugin cleanup (#80), external directory permissions (#81), backup integrity (TD-V2-9), staging cleanup (TD-V2-51), CI SHA-pins Node 24 (TD-V2-7), VersionComparator cache (TD-V2-61). Code review hardened (1 Critical + 4 Important + 3 Suggestions). 1935 tests, 31/31 E2E, coverage ≥95% production src/.
 >
-> **v2.1.5-beta.1** (2026-11-18): FEV-31 ✅ (issues #111–#116 + orphan references, cerrado 2026-11-17) más revisión/remediación pre-launch de 5 ejes — 4 especialistas, 47 hallazgos previos corregidos, 9 commits de remediación + 3 de alineación (`4ed7edb..196aed3`). Gates finales: `just test` **2027/0** (73 archivos, 4859 expect calls), `just test-e2e` **31/31**, `tsc --noEmit` **0**, biome **0** (2 warnings + 1 info preexistentes); release-gate OK (tag == `package.json` `2.1.5-beta.1`, sección CHANGELOG no vacía). **Estado:** listo para tag/despliegue — `just release v2.1.5-beta.1` (GO del usuario; dist-tag `beta`, `latest` intacto), PR #119 abierta a `develop`, rollback `just rollback v2.1.5-beta.1 <good> beta` (RTO < 15 min).
+> **v2.1.5-beta.1** (2026-11-18): FEV-31 ✅ (issues #111–#116 + orphan references, cerrado 2026-11-17) más revisión/remediación pre-launch de 5 ejes — 4 especialistas, 47 hallazgos previos corregidos, 9 commits de remediación + 3 de alineación (`4ed7edb..196aed3`). Gates finales: `just test` **2027/0** (73 archivos, 4859 expect calls), `just test-e2e` **31/31**, `tsc --noEmit` **0**, biome **0** (2 warnings + 1 info preexistentes); release-gate OK (tag == `package.json` `2.1.5-beta.1`, sección CHANGELOG no vacía). **Estado (2026-11-18):** desplegado — PR #119 squash-mergeada a `develop` (`3883288`), camino `release/v2.1.5` → #119 → develop → PR #121 → main (`c579948`) → tag anotado `v2.1.5-beta.1` (`926006f`); release run 44443767080 completed/success: npm publish `--provenance` bajo dist-tag `beta` con `latest` intacto en 2.1.4 + GitHub Release Pre-release; `just verify-release` OK. Contingencia de rollback disponible (no pendiente): `just rollback v2.1.5-beta.1 <good> beta` (RTO < 15 min).
 
 ## Objective
 
