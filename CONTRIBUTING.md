@@ -125,7 +125,7 @@ This project follows a **3-stage pipeline**: `develop` (integration) → `main` 
 
 ### Critical Rules
 
-1. **🛑 Never work directly on `develop` or `main`.** All changes go through a branch and PR. Direct commits are forbidden. Branch protection rules block direct pushes and force pushes to both `main` and `develop`.
+1. **🛑 Never work directly on `develop` or `main`.** All changes go through a branch and PR. Direct commits are forbidden. Branch protection blocks direct and force pushes on both branches — but `enforce_admins=true` applies to `main` only (`scripts/setup-branch-protection.sh`): the maintainer may push the documented rule-3 `develop` ← `main` syncs directly to `develop` (as done in `d03191a` and `81a360d`); every other change, by anyone, still goes through a PR.
 2. **✅ Always verify CI on every PR.** Required status checks (`quality (ubuntu-latest)`, `quality (macos-latest)`, `quality (windows-latest)`, `security`) must pass before merging. A failure on any platform blocks the merge — regardless of whether it is a pre-release (`beta`, `rc`) or production release. Fix pre-release CI failures before tagging production; they **will** recur. Every PR runs the workflow (`paths-ignore` applies only to `push`), so required checks always report.
 3. **🔄 Post-release sync `develop` ← `main` is mandatory.** Skipping it causes divergent branches and merge conflicts — even in single-contributor projects. Sync after EVERY merge to `main`:
    ```bash
