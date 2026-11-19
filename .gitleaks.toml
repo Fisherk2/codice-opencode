@@ -1,0 +1,28 @@
+# Gitleaks configuration — one file, two gates:
+#   * CI:    gitleaks-action step in .github/workflows/ci.yml (security job)
+#   * local: .githooks/pre-commit (`gitleaks protect --staged`)
+# Neither invocation passes --config, so both auto-discover this file through
+# the CLI's documented precedence (verified on gitleaks 8.24.3 — the version
+# the SHA-pinned action runs by default): --config > $GITLEAKS_CONFIG >
+# $GITLEAKS_CONFIG_TOML > <target>/.gitleaks.toml > built-in default.
+
+[extend]
+# WHY: supplying a config file REPLACES the default ruleset unless it extends
+# it — without this line the scan would run with zero rules and the gate could
+# never fail. Allowlists are appended to the defaults (gitleaks README:
+# "Allowlist arrays are appended"), so the built-in lockfile/node_modules/
+# binary filters stay active.
+useDefault = true
+
+[allowlist]
+description = "Test fixtures and placeholder-only files — fake credentials by design"
+paths = [
+    # tests/fixtures/workspace/ is a full fake workspace; the merge/E2E suites
+    # rely on intentionally secret-shaped data evolving over time. Narrow to
+    # the fixture tree: production code, docs and the shipped template/
+    # payload remain fully scanned.
+    '''tests/fixtures/.*''',
+    # .env.example is the conventional placeholder-only env file, allowlisted
+    # by exact filename so a committed real .env (or .npmrc) still fails.
+    '''\.env\.example$''',
+]

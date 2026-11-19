@@ -63,6 +63,20 @@ flowchart LR
     style SYN stroke-dasharray: 5 5
 ```
 
+### Hotfix Flow — Quick Fixes
+
+Use this for urgent fixes that need immediate deployment. The `/hotfix` performs diagnosis -> plan -> build -> test -> ship in a single loop.
+
+```mermaid
+flowchart LR
+    DU["/docs-update"] --> HF["/hotfix<br/>HOTFIX"] --> DP["/deploy<br/>DEPLOY"]
+    HELP["/help"] -.-> DU
+    SYNC["/sync"] -.-> DU
+
+    style HELP stroke-dasharray: 5 5
+    style SYNC stroke-dasharray: 5 5
+```
+
 ### Issues Flow — Bug Fixes & Tech Debt
 
 Use this when addressing bugs, security issues, or tech debt. `/analyze` performs 8-dimension architecture analysis, `/diagnosis` documents root causes, then the iterative loop fixes and validates.
