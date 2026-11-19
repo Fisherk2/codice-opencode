@@ -21,8 +21,8 @@ workspace/
 ├── agents/               # AI agent definitions (359 across 10 packs)
 ├── commands/             # Slash command workflows (18 files)
 ├── skills/               # Specialized knowledge domains (61 dirs)
-├── docs/                 # Project documentation
-├── specs/                # Modular specifications + ADRs
+├── docs/                 # Project documentation (ADRs live in docs/adr/)
+├── specs/                # Modular specification documents
 ├── tasks/                # Execution tasks (SDD pipeline)
 ├── .opencode/            # OpenCode runtime configuration
 └── .gitignore            # Standard ignore patterns
@@ -95,7 +95,7 @@ The **18 slash commands** map to the Spec-Driven Development (SDD) lifecycle. Ea
 | `docs-update.md` | quetzalcoatl | Synchronize documentation with code |
 | `diagnosis.md` | tezcatlipoca | Suggest fixes and document technical findings |
 | `feature.md` | quetzalcoatl | Define new specs for mature projects |
-| `hotfix.md` | tlaloc | One-pass diagnosis → build → test → GO/NOT-GO for urgent tickets |
+| `hotfix.md` | huitzilopochtli | One-pass diagnosis → build → test → GO/NOT-GO for urgent tickets |
 
 Each command file contains numbered steps, `question` tool prompts at decision points, and skill loading (`**Load** `skill-name` skill`). A YAML frontmatter block specifies the target agent and a verb-driven description.
 
@@ -144,24 +144,24 @@ Standard project documentation shipped with the template:
 | `WORKFLOW.md` | Implementation plan and release phases |
 | `CODE_STYLE.md` | Code style conventions |
 | `TECH_DEBT.md` | Known technical debt and improvement priorities |
+| `adr/` | Architecture Decision Records — `adr/adr-template.md` ships as the starting point |
 | `diagnosis/` | Technical diagnoses organized as `fixNN-slug.md` |
 
-This directory is merge-safe (standard classification) — it will only be created if it doesn't already exist in your project, preserving any custom documentation you've written.
+This directory is merge-safe (standard classification): an **update** diffs it file-by-file, so new template files arrive and files you already have are kept as-is. See [Troubleshooting](Troubleshooting) issue 5.
 
 ### `specs/` — Modular Specifications
 
-Contains architecture decision records (ADRs) and modular specification documents:
+Modular specification documents, kept small and referenced from `SPEC.md` at the root:
 
 ```
 specs/
-├── adr/               # Architecture Decision Records
-│   ├── adr-001-xxx.md
-│   └── ...
-├── spec-file-rules.md
-└── spec-cli-commands.md
+├── spec-template.md        # starting point for a new modular spec
+└── design/                 # optional add-on: components.md, style-guide.md, user-flow.md
 ```
 
-This directory grows as your project matures. The `/feature` command creates new specs here, and each ADR documents a resolved architectural decision with its context, options, and rationale.
+`/spec` and `/feature` write `specs/spec-<feature>.md` from that template and modularize long `SPEC.md` or `AGENTS.md` content into `specs/`.
+
+Architecture Decision Records do **not** live here. The register is `docs/adr/`: the workspace ships `docs/adr/adr-template.md`, and `/docs-update` creates new ADRs from it in that directory.
 
 ### `tasks/` — Execution Tasks
 
@@ -218,8 +218,8 @@ The workspace is designed around a **cycle** that repeats as your project grows:
 | `agents/` | 359 | AI agent persona definitions |
 | `commands/` | 18 | Slash command workflows |
 | `skills/` | 61 + 64 refs | Specialized knowledge domains with co-located reference material |
-| `docs/` | 5+ | Project documentation |
-| `specs/` | 3+ | Modular specs and ADRs |
+| `docs/` | 10+ | Project documentation, incl. the `adr/` register |
+| `specs/` | 2+ | Modular specification documents |
 
 Total template footprint: ~500+ files providing a complete AI-assisted development environment.
 

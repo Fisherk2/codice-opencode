@@ -127,7 +127,7 @@ flowchart LR
 | **Maintain** | `/docs-update` | quetzalcoatl | Update, migrate, and synchronize documentation with the current codebase state. Creates ADRs for significant decisions. |
 | **Analyze** | `/diagnosis` | tezcatlipoca | Suggest fixes for problems (remote or local), run diagnostics, and document technical findings in `docs/diagnosis/`. Documents diagnosis — does not implement fixes. |
 | **Feature** | `/feature` | quetzalcoatl | Create new specs or modify existing ones for mature projects with established versions and documentation. |
-| **Hotfix** | `/hotfix` | tlaloc | One-pass rapid fix for tickets under 3 hours: diagnosis → plan → build → test → review → GO/NOT-GO, then hands off to `/deploy`. Skips the iterative planning loop. |
+| **Hotfix** | `/hotfix` | huitzilopochtli | One-pass rapid fix for tickets under 3 hours: diagnosis → plan → build → test → review → GO/NOT-GO, then hands off to `/deploy`. Skips the iterative planning loop. |
 | **Sync** | `/sync` | mictlantecuhtli | Bidirectional git sync with 4 modes and 4 conflict resolution strategies. Can be invoked at any SDD phase. |
 | **Migrate** (optional) | `/migrate` | quetzalcoatl | Detects current tech stack, evaluates breaking changes, generates a structured migration plan with phases, steps, and rollback procedures. |
 | **Deploy** | `/deploy` | mictlantecuhtli | Post-`/ship` deployment automation. Pre-flight detects the project's CI/CD state, then offers: **(A)** generate or improve the CI/CD workflow, or **(B)** execute the current workflow. Generates branch protection, PR templates, CI pipelines. |
@@ -178,6 +178,7 @@ The body contains numbered steps that the agent follows. Key patterns:
 - **Phases**: Complex commands use `## Phase` headings to organize multi-stage workflows.
 - **Rules section**: Commands include a `## Rules` section listing constraints and restrictions.
 - **Suggested Next Step**: Every command ends with a `## Suggested Next Step` block that suggests the next command to run.
+- **Line budget**: the body (everything after the closing `---`) stays ≤ 180 lines — the same budget as primary-agent prompt bodies, enforced by `tests/unit/domain/command-frontmatter-validation.test.ts` ([spec-agent-format-v2.md §8](https://github.com/Fisherk2/codice-opencode/blob/main/specs/spec-agent-format-v2.md)).
 
 ## How to Add a New Command
 

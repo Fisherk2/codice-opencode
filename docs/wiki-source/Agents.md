@@ -51,7 +51,7 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 
 | Agent | Role | Domain | Permission Model | Key Commands |
 |-------|------|--------|-----------------|--------------|
-| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Delegation-only (edits ask for approval). Delegates via the `subagent` tool (`subagent` `*` → `allow`, then explicit `deny` rules for the 5 other primaries). | `/help` |
+| **huitzilopochtli** | Commander-in-Chief | Coordination & delegation | Delegation-only (edits ask for approval). Delegates via the `subagent` tool (`subagent` `*` → `allow`, then explicit `deny` rules for the 5 other primaries). | `/help`, `/hotfix` |
 | **quetzalcoatl** | Visionary Sage | Planning & documentation | Writes only to documentation formats (`*.md`, `*.txt`, `*.rst`, `*.adoc`). Cannot write code or tasks. Delegates via the unified `subagent` pattern. | `/spec`, `/design`, `/feature`, `/docs-update`, `/migrate` |
 | **moctezuma** | Strategic Planner | Task breakdown & execution | Writes only to `tasks/` directory. Everything else read-only. Does not delegate (`permissions` rule: `subagent` `*` → `deny`). | `/plan` |
 | **tlaloc** | Builder and Artisan | Implementation & testing | Full write + edit permissions. Delegates via the unified `subagent` pattern. | `/build` |
@@ -60,7 +60,7 @@ The six primary agents form the backbone of the workspace's SDD (Spec-driven Dev
 
 ### Agent File Pattern
 
-Every agent file follows the same structure: YAML frontmatter, markdown body, and a `## COMPOSITION` block at the end. The complete specification — including field mapping, canonical permission blocks, and transformation rules — is documented in [specs/spec-agent-format-v2.md](../specs/spec-agent-format-v2.md). Primary agents additionally carry a protocol section between `### CAPABILITIES` and `### RULES` — `### DELEGATION PROTOCOL` when they can invoke the `subagent` tool, `### SKILL LOADING PROTOCOL` when they cannot (see §8 of the spec).
+Every agent file follows the same structure: YAML frontmatter, markdown body, and a `## COMPOSITION` block at the end. The complete specification — including field mapping, canonical permission blocks, and transformation rules — is documented in the main repository: [specs/spec-agent-format-v2.md](https://github.com/Fisherk2/codice-opencode/blob/main/specs/spec-agent-format-v2.md). Primary agents additionally carry a protocol section between `### CAPABILITIES` and `### RULES` — `### DELEGATION PROTOCOL` when they can invoke the `subagent` tool, `### SKILL LOADING PROTOCOL` when they cannot (see §8 of the spec).
 
 ## How to Add a New Subagent
 
