@@ -4,7 +4,12 @@
   <img src="docs/img/banner.png" alt="Spec-Driven Development Workspace Banner">
 </p>
 
+<h3 align="center">Workspace for AI-assisted development with Spec-Driven Development methodology.</h3>
+
 <p align="center">
+  <a href="https://github.com/Fisherk2/codice-opencode">
+    <img src="https://img.shields.io/github/stars/Fisherk2/codice-opencode?style=social" alt="GitHub Stars">
+  </a>
   <a href="https://github.com/Fisherk2/codice-opencode/actions/workflows/ci.yml">
     <img src="https://github.com/Fisherk2/codice-opencode/workflows/CI/badge.svg" alt="CI">
   </a>
@@ -17,14 +22,35 @@
   <a href="LICENSE">
     <img src="https://img.shields.io/github/license/Fisherk2/codice-opencode" alt="License">
   </a>
-  <img src="https://img.shields.io/badge/typescript-strict-blue" alt="TypeScript Strict">
-  <img src="https://img.shields.io/badge/built%20with-bun-fbf0df" alt="Built with Bun">
-  <img src="https://img.shields.io/badge/opencode-%23000000.svg?style=for-the-badge&logo=opencode&logoColor=ffffff" alt="OpenCode">
 </p>
 
-**OpenCode Workspace for AI-assisted development with Spec-Driven Development methodology.**
+<p align="center">
+  <a href="https://opencode.ai">
+    <img src="https://img.shields.io/badge/OpenCode-%23000000?style=for-the-badge&logo=opencode&logoColor=ffffff" alt="OpenCode">
+  </a>
+  <a href="https://www.typescriptlang.org">
+    <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=ffffff" alt="TypeScript">
+  </a>
+  <a href="https://bun.sh">
+    <img src="https://img.shields.io/badge/Bun-FBF0DF?style=for-the-badge&logo=bun&logoColor=000000" alt="Bun">
+  </a>
+  <a href="https://biomejs.dev">
+    <img src="https://img.shields.io/badge/Biome-60A5FA?style=for-the-badge&logo=biome&logoColor=ffffff" alt="Biome">
+  </a>
+  <a href="https://github.com/Fisherk2/codice-opencode/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=ffffff" alt="GitHub Actions">
+  </a>
+  <a href="https://semver.org">
+    <img src="https://img.shields.io/badge/semver-3F3F3F?style=for-the-badge&logo=semver&logoColor=ffffff" alt="semver">
+  </a>
+  <a href="https://github.com/casey/just">
+    <img src="https://img.shields.io/badge/Just-000000?style=for-the-badge&logo=just&logoColor=ffffff" alt="Just">
+  </a>
+</p>
 
+<p align="center">
 A production-grade workspace integrating engineering skills organized in SDD cycle phases, slash commands, and specialized agents to accelerate AI-assisted development with Human-in-the-Loop (HITL) and Vertical Slicing Architecture (VSA) approaches. Designed for teams and developers who want consistent quality in AI-assisted projects.
+</p>
 
 ---
 
@@ -55,16 +81,19 @@ A production-grade workspace integrating engineering skills organized in SDD cyc
 
 ---
 
-**Contents**
+<details>
+  <h3 align="left">Table of Contents</h3>
+  <ol>
+    <li><a href="#main-agents">Main Agents</a></li>
+    <li><a href="#install--update">Install / Update</a></li>
+    <li><a href="#workflow">Workflow</a></li>
+    <li><a href="#commands">Commands</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
 
-- [🤖 Main Agents](#-main-agents)
-- [Install / Update](#install--update)
-- [Workflow](#workflow)
-- [⌨️ Commands](#️-commands)
-- [Troubleshooting](#troubleshooting)
-- [Acknowledgments](#acknowledgments)
-
-## 🤖 Main Agents
+## Main Agents
 
 Six primary agents orchestrate the SDD cycle, each with a specific role and permissions inspired by Mexican mythology:
 
@@ -186,6 +215,8 @@ Six primary agents orchestrate the SDD cycle, each with a specific role and perm
 
 Additionally, over **~350 specialized subagents across 8 selectable packs (≈360 total in 10 packs)** are available for specific tasks: code review, security audit, DB optimization, UI/UX design, debugging, and more. Invoked via `task()` from main agents or directly by the user. See the [complete catalog on the Wiki](https://github.com/fisherk2/codice-opencode/wiki/Agents).
 
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
+
 ---
 
 ## Install / Update
@@ -264,6 +295,8 @@ bunx @fisherk2-dev/codice --update --update-add-packs creative
 
 **Documentation:** [Getting Started](https://github.com/fisherk2/codice-opencode/wiki/Getting-Started) · [Agents](https://github.com/fisherk2/codice-opencode/wiki/Agents) · [Skills](https://github.com/fisherk2/codice-opencode/wiki/Skills) · [Commands](https://github.com/fisherk2/codice-opencode/wiki/Commands) · [MCP Servers](https://github.com/fisherk2/codice-opencode/wiki/MCP-Servers) · [Configuration](https://github.com/fisherk2/codice-opencode/wiki/Configuration)
 
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
+
 ---
 
 ## Workflow
@@ -323,7 +356,17 @@ flowchart LR
     style SYNC stroke-dasharray: 5 5
 ```
 
-Two paths share the same entry point: the **feature path** (`/docs-update` → `/feature` → `/plan` → `/build` → `/test` → `/code-simplify` → `/review` → `/ship` → `/deploy`) for planned work, and the **hotfix path** (`/docs-update` → `/hotfix` → `/deploy`) for tickets resolvable in under 3 hours — `/hotfix` runs diagnosis, plan, build, test, review and the GO/NOT-GO gate in a single pass, so it skips the iterative planning loop.
+### Hotfix Flow — Quick Fixes
+
+```mermaid
+flowchart LR
+    DU["/docs-update"] --> HF["/hotfix<br/>HOTFIX"] --> DP["/deploy<br/>DEPLOY"]
+    HELP["/help"] -.-> DU
+    SYNC["/sync"] -.-> DU
+
+    style HELP stroke-dasharray: 5 5
+    style SYNC stroke-dasharray: 5 5
+```
 
 ### Issues Flow — Bug Fixes & Tech Debt
 
@@ -370,7 +413,11 @@ flowchart LR
     style SYNC stroke-dasharray: 5 5
 ```
 
-## ⌨️ Commands
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
+
+---
+
+## Commands
 
 | Phase | Command | Agent | What It Does | Main Skills |
 |------|---------|--------|--------------|-------------|
@@ -393,6 +440,8 @@ flowchart LR
 | Analyze architecture | `/analyze` | tezcatlipoca | 8-dimension analysis (system structure, design patterns, dependency architecture, data flow, scalability, security, testability, documentation). Generates prioritized `docs/TECH_DEBT.md` with Critical/High/Medium/Low findings. Findings feed `/diagnosis` | clean-ddd-hexagonal, design-patterns, dependency-audit, observability-and-instrumentation, performance-analysis, security-and-hardening, test-driven-development, documentation-and-adrs, code-review-and-quality |
 | Deploy | `/deploy` | mictlantecuhtli | Post-`/ship` review. 3 modes: no workflow (generate from scratch), betterable (analyze + optimize), established (execute documented workflow). Generates branch protection, PR templates, CI pipelines, and updates `CONTRIBUTING.md` | ci-cd-and-automation, git-workflow-and-versioning, bash-defensive-patterns, observability-and-instrumentation, interview-me |
 
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
+
 ---
 
 ## Troubleshooting
@@ -407,6 +456,18 @@ flowchart LR
 | `--dest` path outside workspace | Códice rejects path traversal attempts with exit code 2 |
 | Symlinks not created | If `.opencode/agents` is missing after installation, re-run the installer. Symlinks are created during post-installation and require write permissions in the project directory |
 
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
+
+---
+
+### Top contributors:
+
+<a href="https://github.com/fisherk2/codice-opencode/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=fisherk2/codice-opencode" alt="contrib.rocks image" />
+</a>
+
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p> 
+
 ---
 
 ## Acknowledgments
@@ -419,5 +480,7 @@ This project would not exist without the work of:
 - **[msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)** — Source of the new subagents added to the pack system. This repository provided the agent definitions that were adapted and integrated into Códice's 10-pack architecture.
 
 Thanks to their authors and contributors for their invaluable contribution to the community.
+
+<p align="right">(<a href="#códice-spec-driven-development-workspace">back to top</a>)</p>
 
 ---
