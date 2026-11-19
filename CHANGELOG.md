@@ -20,6 +20,11 @@ Hotfix docs-only sobre la rama `hotfix/subagents-plan` (basada en `main` @ `14e4
 
 - **Índice TOC del README** (`README.md`): los encabezados `<h3>` del índice pasan a `<summary>` (semántica correcta de desplegable) y los iconos se redimensionan de 18 a 24.
 
+### Security
+
+- **Publicación por OIDC trusted publishing** (`.github/workflows/release.yml`): se retira la inyección de `secrets.NPM_TOKEN` y la escritura de `.npmrc` en el disco del runner (junto con su `trap` de limpieza); la publicación pasa a OIDC con `--provenance` y `npm@latest` para garantizar CLI ≥ 11.5.1. Requisito previo en npmjs.com: registrar el trusted publisher `Fisherk2` / `codice-opencode` / `release.yml`; sin ese registro el publish falla con `ENEEDAUTH` y no hay fallback de token. Referencia: [documentación de trusted publishers](https://docs.npmjs.com/trusted-publishers/).
+- **Gate de secretos en CI** (`.github/workflows/ci.yml` + `.gitleaks.toml`): nuevo paso `gitleaks` en el job `security`, SHA-pinned a `gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e` (v3.0.0; v2 dejó de ejecutarse al retirarse Node 20 de los runners el 2026-09-16), con `fetch-depth: 0` para resolver rangos de commit. La configuración se comparte con el hook local `.githooks/pre-commit` mediante `[extend] useDefault = true` y una allowlist estrecha de fixtures.
+
 ## [2.1.5] - 2026-11-19
 
 Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilización **INCOMPLETA** de `1941ed3` cerrando los issues #111–#116, repara las referencias huérfanas que dejó la reestructuración del template y añade la revisión/remediación pre-launch de 5 ejes y la pasada documental posterior al tag. Consolida todo el trabajo desde la última estable v2.1.4. `v2.1.5-beta.1` se publicó bajo dist-tag `beta` el 2026-11-18. Métricas finales: 2027 tests / 0 fail, 31/31 E2E, `tsc --noEmit` 0, lint 0, cobertura 96.95% local (gates verdes).
