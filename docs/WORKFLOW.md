@@ -1,5 +1,5 @@
 # Plan de implementación – Códice v1.0.0 → v2.1.5
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-11-18 (revisión pre-launch 5 ejes + remediación ✅ — v2.1.5-beta.1 lista para tag, 2027 tests, 31/31 e2e, tsc 0, lint 0) | **Metodología:** TDD Iterativo
+**Fecha:** 2026-06-15 | **Última actualización:** 2026-11-18 (v2.1.5-beta.1 **publicado** en dist-tag `beta` — release run 44443767080 success, 2027 tests, 31/31 e2e, tsc 0, lint 0; `latest` intacto en 2.1.4) | **Metodología:** TDD Iterativo
 
 ## 1. Visión de Fases
 
@@ -247,9 +247,9 @@ Todas las fases evolutivas completadas y pendientes. Resumen por versión:
 - Review de 5 ejes + 6 commits de fixes (permisos bash endurecidos, validación `installedPacks`, predicado `isOnLegacyLine`, edge tests 5→13).
 - Gates verdes: `just check` 0, `just test` 1865/0, e2e 31/31. Release v2.1.3-beta.1 (`CHANGELOG.md`).
 
-**Estable v2.1.3 — lista pendiente de go-ahead (2026-09-22):** pre-release `v2.1.3-beta.1` publicada y verificada (dist-tag `beta`, `latest` intacto). Review-round post-beta aplicado en `release/2.1.3` (12 commits: hardening de permisos del template — `git bisect`/`gh api`/cookies de sesión X/redirecciones shell/`tar -tf` —, estabilización stager/merge — fail-early en backup, rollback completo, symlinks, `MergeError` en planificación —, eventos postInstall condicionales, quality-on-tag en `release.yml`, split del puerto `IUserPrompt`). Gates finales: 1959 tests / 4734 expect() / 0 fail, e2e 31/31, cobertura 96.39% total / 98.95% `src/cli/main.ts`, madge 0 ciclos. Lanzamiento estable (`v2.1.3` → `latest`, sync a `develop`) pendiente de aprobación del usuario — aún no ejecutado.
+**Estable v2.1.3 — lanzado (2026-09-23):** pre-release `v2.1.3-beta.1` publicada y verificada (dist-tag `beta`). Review-round post-beta aplicado en `release/2.1.3` (12 commits: hardening de permisos del template — `git bisect`/`gh api`/cookies de sesión X/redirecciones shell/`tar -tf` —, estabilización stager/merge — fail-early en backup, rollback completo, symlinks, `MergeError` en planificación —, eventos postInstall condicionales, quality-on-tag en `release.yml`, split del puerto `IUserPrompt`). Gates finales: 1959 tests / 4734 expect() / 0 fail, e2e 31/31, cobertura 96.39% total / 98.95% `src/cli/main.ts`, madge 0 ciclos. Lanzamiento estable ejecutado: tag `v2.1.3` (`cec3b6b`) publicado el 2026-09-23 vía PR #102 (`6039a1a`) con sync a `develop`; en npm quedó como `latest` hasta ser sucedida por 2.1.4.
 
-### v2.1.5 (FEV-31 ✅, 2026-11-17) — rama `hotfix/update-payload`
+### v2.1.5 (FEV-31 ✅, 2026-11-17) — trabajo en `hotfix/update-payload`, tag cortado desde `release/v2.1.5`
 
 > **Origen:** `docs/diagnosis/fix30-fev31-partial-issue-implementation.md` §9. El commit `1941ed3` fue una **estabilización INCOMPLETA**: dejó los gates en verde pero sin cerrar ningún gap de los issues #111–#116. FEV-31 los cerró y registró el payload adyacente que lo acompañaba (§8 del diagnóstico).
 
@@ -278,20 +278,20 @@ Lo siguiente aterrizó junto a FEV-31 pero **no es trabajo de FEV-31**; se regis
 
 - **Intercambio de modelos de los 6 agentes primarios** en `template/obligatorio/core/opencode.json`, validados contra el catálogo de OpenCode. Cambio adyacente; no es entregable de FEV-31 ni de los issues #111–#116.
 - **6 plugins añadidos** a `opencode.json` (#113), ya presentes antes de FEV-31.
-- **Traslado de ADRs** `specs/adr/` → `docs/adr/` (23 archivos); `specs/adr/` ya no existe.
+- **Traslado de ADRs** al registro `docs/adr/` (23 archivos); el antiguo subdirectorio `adr/` bajo `specs/` ya no existe.
 - **Template `estandar`:** nuevos `docs/adr/adr-template.md` y `BACKLOG.md`.
 - **Skills del template:** −8 (`baoyu-format-markdown`, `baoyu-url-to-markdown`, `baoyu-markdown-to-html`, `xlsx`, `excel-analysis`, `obsidian-vault`, `obsidian-markdown`, `obsidian-cli`) y +17 (`brainstorming`, `codebase-design`, `codebase-onboarding`, `data-analysis`, `data-plotting`, `framework-migration-legacy-modernize`, `improve-codebase-architecture`, `markdown-mermaid-writing`, `osint-skills`, `pr`, `prototype`, `refactor-legacy-code`, `security-audit`, `setup-pre-commit`, `spreadsheet-analysis`, `teach`, `tech-debt`); más `vertical-slice-architecture` de FEV-31 → **61 skills**.
 - **`skills-lock.json` eliminado**; `.gitmessage` y el seed opcional `requirements.txt` retirados.
 - **Nuevos manifiestos opcionales:** `Cargo.toml`, `package.json`, `pyproject.toml`.
 - **Reescritura de estilo blanket** en 13 comandos del template.
 
-#### Revisión pre-launch y remediación (2026-11-18) — ESTADO: LISTO PARA DESPLIEGUE
+#### Revisión pre-launch y remediación (2026-11-18) — ESTADO: DESPLEGADO
 
 Campaña de revisión de 5 ejes previa al lanzamiento: 4 especialistas, 47 hallazgos previos corregidos y 9 commits de remediación + 3 de alineación (`4ed7edb..196aed3`) — conteos del manifiesto, bump de versión a `2.1.5-beta.1`, sanitización ANSI, reporte de errores CLI, preservación del modo en rollback, hardening de CI y alineación e2e/spec.
 
 **Gates finales (2026-11-18):** `just test` **2027/0** (73 archivos, 4859 expect calls), `just test-e2e` **31/31**, `bun run tsc --noEmit` **0**, `/tmp/opencode/biome ci src/ tests/` **0** (2 warnings + 1 info preexistentes). Equivalentes release-gate: tag == `package.json` `2.1.5-beta.1`, extracción de sección de CHANGELOG no vacía.
 
-**ESTADO: LISTO PARA DESPLIEGUE.** `package.json` (y `src/cli/version.ts`, que deriva `VERSION` de él) en `2.1.5-beta.1`; rama `hotfix/update-payload` lista para cortar el tag con `just release v2.1.5-beta.1` — **GO del usuario pendiente**; dist-tag `beta`, `latest` intacto. PR #119 abierta a `develop` (no mergeada). Rollback: `just rollback v2.1.5-beta.1 <good> beta`, RTO < 15 min. No bloqueantes: 16 casos de coverage-gap (priorizar residue-reporting del rollback antes de GA), campo `engines: bun>=1.3`, aviso E2E SIGINT-mid-install, TD-V2-98 (deriva de cobertura local), sincronía wiki pendiente (10 archivos sucios preexistentes en `docs/wiki-source/.wiki/`).
+**ESTADO: DESPLEGADO (2026-11-18).** `package.json` (y `src/cli/version.ts`, que deriva `VERSION` de él) en `2.1.5-beta.1`. Camino real del release: `release/v2.1.5` → PR #119 squash-mergeada a `develop` (`3883288`, que absorbió el trabajo de la rama) → PR #121 `develop`→`main` squash (`c579948`, tip de `main`) → tag anotado `v2.1.5-beta.1` (`926006f` → `c579948`). Syncs: pre-PR `d03191a`, post-release `81a360d` (tip de `develop`). Release run **44443767080 completed/success**: npm publish `--provenance` bajo dist-tag `beta`, `latest` intacto en 2.1.4 (`npm view dist-tags` probado), GitHub Release Pre-release; `just verify-release` OK. Rollback disponible como contingencia (no como tarea pendiente): `just rollback v2.1.5-beta.1 <good> beta`, RTO < 15 min. No bloqueantes: 16 casos de coverage-gap (priorizar residue-reporting del rollback antes de GA), campo `engines: bun>=1.3`, aviso E2E SIGINT-mid-install, TD-V2-98 (deriva de cobertura local), sincronía wiki pendiente (10 archivos sucios preexistentes en `docs/wiki-source/.wiki/`).
 
 ## 4. Estrategia de Pruebas por Fase
 
@@ -340,5 +340,6 @@ Campaña de revisión de 5 ejes previa al lanzamiento: 4 especialistas, 47 halla
 | v2.1.1 | 1935 | 31/31 | ≥95% | 2026-08-25 |
 | v2.1.2 | 1935 | 31/31 | ≥95% | 2026-08-28 |
 | v2.1.3-beta.1 | 1865 | 31/31 | ≥95% | 2026-09-22 |
-| v2.1.3 (estable, pendiente de lanzamiento) | 1959 | 31/31 | 96.39% | 2026-09-22 |
-| v2.1.5-beta.1 (lista para tag) | 2027 | 31/31 | 96.95% (local) | 2026-11-18 |
+| v2.1.3 (estable) | 1959 | 31/31 | 96.39% | 2026-09-23 |
+| v2.1.4 (hotfix, npm `latest`) | 1959 | 31/31 | ≥95% | 2026-09-25 |
+| v2.1.5-beta.1 (publicado, dist-tag `beta`) | 2027 | 31/31 | 96.95% (local) | 2026-11-18 |
