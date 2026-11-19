@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.5] - 2026-11-19
 
-Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilización **INCOMPLETA** de `1941ed3` cerrando los issues #111–#116, repara las referencias huérfanas que dejó la reestructuración del template y añade la revisión/remediación pre-launch de 5 ejes y la pasada documental posterior al tag. Consolida todo el trabajo desde la última estable v2.1.4. `v2.1.5-beta.1` se publicó bajo dist-tag `beta` el 2026-11-18; **v2.1.5 está lista para despliegue estable, aún no publicada** (`latest` sigue en 2.1.4). Métricas finales: 2027 tests / 0 fail, 31/31 E2E, `tsc --noEmit` 0, lint 0, cobertura 96.95% local (gates verdes).
+Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilización **INCOMPLETA** de `1941ed3` cerrando los issues #111–#116, repara las referencias huérfanas que dejó la reestructuración del template y añade la revisión/remediación pre-launch de 5 ejes y la pasada documental posterior al tag. Consolida todo el trabajo desde la última estable v2.1.4. `v2.1.5-beta.1` se publicó bajo dist-tag `beta` el 2026-11-18. Métricas finales: 2027 tests / 0 fail, 31/31 E2E, `tsc --noEmit` 0, lint 0, cobertura 96.95% local (gates verdes).
 
 ### Added
 
