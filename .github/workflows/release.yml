@@ -146,14 +146,23 @@ jobs:
           fi
 
       - name: Publish to npm
+        # npm-side prerequisite (one-time, on npmjs.com → package Settings →
+        # Trusted Publisher): register GitHub Actions with owner `Fisherk2`,
+        # repo `codice-opencode` (package.json repository.url), workflow file
+        # `release.yml` (filename only), no environment name, and the allowed
+        # action `npm publish` (configs created after 2026-09-03 default to
+        # stage-publish only). Without it, `npm publish` fails with ENEEDAUTH —
+        # there is no token fallback anymore.
+        # Source: https://docs.npmjs.com/trusted-publishers/
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TAG: ${{ steps.release_type.outputs.npm_tag }}
         shell: bash
         run: |
           set -euo pipefail
-          trap 'rm -f .npmrc' EXIT
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+          # OIDC trusted publishing requires npm >= 11.5.1 (Node >= 22.14.0);
+          # the runner's bundled npm is not guaranteed to meet that.
+          # Source: https://docs.npmjs.com/trusted-publishers/
+          npm install --global npm@latest
           PUBLISH_OUTPUT=$(npm publish --tag "${NPM_TAG}" --provenance 2>&1) && PUBLISH_EXIT=0 || PUBLISH_EXIT=$?
           echo "$PUBLISH_OUTPUT"
           if [ $PUBLISH_EXIT -ne 0 ]; then
