@@ -8,6 +8,8 @@
 
 **Reference:** FEV-24/FEV-25 — CI/CD Improvements | WORKFLOW §5, TECH_DEBT v2.1.0-beta.1
 
+**Amendment:** 2026-11-18 — Phase 0 CI/CD hardening registered below (§Amendment). Original decisions stand unchanged.
+
 ## Context
 
 The v2.0.0 CI pipeline (established in F5/FEV-5) provides quality, test, and release workflows. By v2.1.0 the pipeline needs hardening to meet supply-chain and collaboration standards:
@@ -60,6 +62,15 @@ All workflow steps pin actions to full commit SHAs (e.g., `actions/checkout@11bd
 
 * No application code change — purely CI/CD and repository configuration.
 * Establishes the baseline for future SLSA L3 improvements (hermetic builds, if needed).
+
+## Amendment (2026-11-18): Phase 0 CI/CD Hardening
+
+**Amends:** ADR-019 (this record). The four decisions above stand as written; the following measures shipped in Phase 0 and are registered here so the record matches `.github/workflows/ci.yml` and `scripts/setup-branch-protection.sh`.
+
+* **`paths-ignore` removed from the `pull_request` trigger** (`ci.yml:25-29`) — the four required contexts are enforced with `strict: true`, so a docs-only PR that skipped the workflow would hang forever with pending, unmergeable checks. Every PR now runs the workflow; the `push` trigger keeps its `paths-ignore` for `docs/**` and `CHANGELOG.md` (`ci.yml:21-24`).
+* **`docs` job — informational Markdown gate** (`ci.yml:177-214`) — `just lint-docs` (markdownlint-cli2, config `.markdownlint-cli2.jsonc`) runs on every workflow invocation. It is deliberately *not* a branch-protection context, but because it has no event guard, `release.yml → quality` gates releases on it too (a reusable workflow only succeeds when every job inside it does).
+* **`security` promoted to a required status check** (`scripts/setup-branch-protection.sh:41-47`) — the job (`ci.yml:114`) now runs `bun audit --audit-level=high` (`ci.yml:141`) against `bun.lock` on every PR to `main`/`develop`, failing the merge on high-severity advisories.
+* **`.githooks/pre-commit` — local door** — `bun run tsc --noEmit` (blocking) plus `gitleaks protect --staged --no-banner` (blocking when gitleaks is installed; a one-line notice otherwise), enabled per clone via `git config core.hooksPath .githooks`, with a `SKIP=` escape hatch. CI remains the authoritative gate; this only moves feedback earlier.
 
 ## Related Decisions
 
