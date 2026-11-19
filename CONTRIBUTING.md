@@ -203,7 +203,7 @@ The stable path is the `release/X.Y.Z` flow above ([ADR-023](docs/adr/adr-023-sh
 4. Annotated tag `vX.Y.Z-beta.N` (or `-rc.N`) on the `main` tip → CI publishes under dist-tag `beta`/`rc`; `latest` untouched (it stayed at 2.1.4).
 5. Post-release: sync `develop` ← `main`, pushed directly to `develop` (`81a360d`).
 
-Trace this route with `gh pr view 119 121 --json headRefName,mergeCommit`, not with ancestry: a squash merge does not preserve lineage, so `merge-base --is-ancestor` proves nothing here. The local `release/v2.1.5` branch was cut only after the tag (from `81a360d`), exists for the upcoming stable promotion, was never pushed to `origin`, and is not part of the beta's path.
+Trace this route with `gh pr view 119 121 --json headRefName,mergeCommit`, not with ancestry: a squash merge does not preserve lineage, so `merge-base --is-ancestor` proves nothing here. The local `release/v2.1.5` branch was cut only after the tag (from `81a360d`), was never pushed to `origin` during the beta and is not part of the beta's path; it is now the branch where v2.1.5 is prepared as **ready for stable deployment — not yet published** (`latest` remains at 2.1.4).
 
 ### Why Clean Merges
 

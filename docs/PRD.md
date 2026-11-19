@@ -1,5 +1,5 @@
-# Product Requirements Document – Códice: Opencode Workspace Installer v2.1.5-beta.1
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-11-18 | **Autor:** Fisherk2 | **Estado:** Aprobado — `v2.1.5-beta.1` publicado en dist-tag `beta` (2026-11-18); `latest` sigue en 2.1.4
+# Product Requirements Document – Códice: Opencode Workspace Installer v2.1.5
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-11-19 | **Autor:** Fisherk2 | **Estado:** Aprobado — v2.1.5 **lista para despliegue estable, aún no publicada** (`latest` sigue en 2.1.4); `v2.1.5-beta.1` se publicó en dist-tag `beta` (2026-11-18)
 
 ## 0. Descripción General
 Códice es una herramienta de línea de comandos (CLI) compilada con Bun, diseñada para instalar, configurar y actualizar plantillas de espacios de trabajo de OpenCode (`opencode`). Su objetivo es proporcionar una experiencia de instalación "a prueba de tontos", rápida, segura y con fusión inteligente de archivos, preservando las personalizaciones del usuario.

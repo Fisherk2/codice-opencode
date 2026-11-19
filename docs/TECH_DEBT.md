@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
-**Last updated:** 2026-11-18
-**Status:** v2.1.5-beta.1 FEV-31 COMPLETED (2026-11-17) + pre-launch review 2026-11-18 done — 2027 tests, 31/31 E2E, `tsc --noEmit` 0, lint 0 · beta **published 2026-11-18** (release run 44443767080 success; dist-tag `beta`, `latest` intact at 2.1.4; `just verify-release` OK) · issues #111/#112/#114/#115/#116 closed + orphan references repaired · adjacent out-of-scope payload registered in `docs/WORKFLOW.md` · 4 deferred Phase-2 findings + TD-V2-97 remain open (below)
-**Current version:** v2.1.5-beta.1 (FEV-31) — annotated tag `926006f` on the `main` tip (`c579948`), after PR #119 squash `3883288` (`hotfix/update-payload` → `develop`) + sync `d03191a` + PR #121 squash (`develop` → `main`); route proven via `gh pr view --json headRefName,mergeCommit` (a squash does not preserve lineage — `merge-base --is-ancestor` proves nothing here). The local-only `release/v2.1.5` was cut after the tag from `81a360d` for the stable promotion; never pushed, not part of the beta's path
+**Last updated:** 2026-11-19
+**Status:** v2.1.5 FEV-31 COMPLETED (2026-11-17) + pre-launch review 2026-11-18 + post-beta docs pass done — 2027 tests, 31/31 E2E, `tsc --noEmit` 0, lint 0 · beta.1 **published 2026-11-18** under dist-tag `beta` (release run 44443767080 success; `just verify-release` OK) · stable **v2.1.5 ready for deployment 2026-11-19, not yet published** (`latest` intact at 2.1.4) · issues #111/#112/#114/#115/#116 closed + orphan references repaired · adjacent out-of-scope payload registered in `docs/WORKFLOW.md` · 4 deferred Phase-2 findings + TD-V2-97 remain open (below)
+**Current version:** v2.1.5 — ready for stable deployment, not yet published (`latest` still at 2.1.4). Beta history: annotated tag `926006f` on the `main` tip (`c579948`), after PR #119 squash `3883288` (`hotfix/update-payload` → `develop`) + sync `d03191a` + PR #121 squash (`develop` → `main`); route proven via `gh pr view --json headRefName,mergeCommit` (a squash does not preserve lineage — `merge-base --is-ancestor` proves nothing here). The local-only `release/v2.1.5` was cut after the tag from `81a360d` for the stable promotion — never pushed during the beta; it is now the branch preparing the stable release
 **Next version:** v2.2.0 (Medium Effort — 9 items, 18-24h)
 
 ---

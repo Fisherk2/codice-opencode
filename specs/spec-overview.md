@@ -13,6 +13,8 @@
 > **v2.1.4** (2026-09-25): Command-performance hotfix — redundant `code-reviewer` delegation removed from 6 template commands; 2.1.x reserved for hotfixes, debt replanned to 2.2.x/2.3.x/2.5.x. Current npm `latest`.
 >
 > **v2.1.5-beta.1** (2026-11-18): FEV-31 ✅ (issues #111–#116 + orphan references) plus 5-axis pre-launch remediation. Gates: 2027 tests, 31/31 E2E, tsc 0, biome 0. Published under dist-tag `beta` (`latest` intact at 2.1.4).
+>
+> **v2.1.5** (2026-11-19): post-beta documentation pass (39 `.md` files). **Ready for stable deployment — not yet published; npm `latest` remains at 2.1.4** until the stable release is published.
 
 ---
 

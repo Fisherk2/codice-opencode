@@ -5,15 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.5] - 2026-11-19
 
-### Changed
-
-- **Docs `/docs-update` (2026-11-18, post-tag):** SPEC/WORKFLOW/TECH_DEBT alinean el estado desplegado real y el camino probado de `v2.1.5-beta.1` (`gh pr view 119/121`; el tag sobre el tip de `main`); la descripción del gate de calidad se corrige donde era falsa — la política "no `any`" quedó registrada sin enforcement como TD-V2-112 (`noExplicitAny` off, ESLint ausente), y el pipe de la medición TD-V2-101 queda escapado en markdown.
-
-## [2.1.5-beta.1] - 2026-11-18
-
-Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilización **INCOMPLETA** de `1941ed3` cerrando los issues #111–#116 y repara las referencias huérfanas que dejó la reestructuración del template. Métricas finales: 2027 tests / 0 fail, 31/31 e2e, `tsc --noEmit` 0, lint 0.
+Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilización **INCOMPLETA** de `1941ed3` cerrando los issues #111–#116, repara las referencias huérfanas que dejó la reestructuración del template y añade la revisión/remediación pre-launch de 5 ejes y la pasada documental posterior al tag. Consolida todo el trabajo desde la última estable v2.1.4. `v2.1.5-beta.1` se publicó bajo dist-tag `beta` el 2026-11-18; **v2.1.5 está lista para despliegue estable, aún no publicada** (`latest` sigue en 2.1.4). Métricas finales: 2027 tests / 0 fail, 31/31 E2E, `tsc --noEmit` 0, lint 0, cobertura 96.95% local (gates verdes).
 
 ### Added
 
@@ -22,6 +16,7 @@ Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilizaci
 - **Ciclo ágil documentado** `/docs-update` → `/hotfix` → `/deploy` en el flujo evolutivo (#112).
 - **Pre-commit hooks sin dependencias** (#119): `.githooks/pre-commit` (`8595af3`), activado con `git config core.hooksPath .githooks` — typecheck (`bun run tsc --noEmit`) **bloqueante** + escaneo de secretos con `gitleaks` (bloqueante solo si está instalado; si no, aviso de una línea y el commit continúa), con escape hatch `SKIP=typecheck,gitleaks` / `SKIP=all`. Sin husky ni ciclos npm.
 - **Job `docs` informativo en CI** (#119): `just lint-docs` (markdownlint-cli2, config `.markdownlint-cli2.jsonc`) corre en cada PR como señal, no como check requerido. Nueva devDependency `markdownlint-cli2`.
+- **ADR-025** (`docs/adr/adr-025-plugins-suministrados-en-latest.md`): excepción documentada para los 6 plugins `@latest` del payload frente al pinning de ADR-019 §1 (que sigue vigente en CI); el pinning queda registrado como TD-V2-111.
 
 ### Changed
 
@@ -34,14 +29,27 @@ Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilizaci
 - **CI corre siempre en los PRs** (#119): se retiró `paths-ignore` del trigger `pull_request` de `.github/workflows/ci.yml` (solo el trigger `push` lo conserva), para que los checks requeridos siempre reporten en cada PR. El trabajo de docs-only ya no puede fusionarse con los checks en verde ausente.
 - **`security` promovido a check requerido y contexts corregidos** (#119, `scripts/setup-branch-protection.sh`): los status checks requeridos son ahora los nombres reales `quality (ubuntu|macos|windows-latest)` **sin** el prefijo `CI / ` (los contexts con prefijo nunca coincidían, así que ningún check quedaba realmente protegido) más `security`; y `enforce_admins=true` en `main` — admins y tokens de CI pasan por la protección (en `develop` se mantiene la vía documentada para los syncs).
 - **`.env.*` en `.gitignore`** (#119): las variantes de entorno quedan excluidas por defecto, conservando la excepción `!.env.example`.
+- **Pasada documental masiva** (39 archivos `.md`): corrección de afirmaciones falsas, enlaces huérfanos, conteos de agentes/skills, rutas de release, nombres de recipes y métricas. `WORKFLOW.md` comprimido a resumen por versión y `TECH_DEBT.md` reestructurado en 4 secciones con deudas agrupadas por versión destino; ambos traducidos íntegramente al inglés.
+- **`README.md`**: diagrama Mermaid del flujo Hotfix, badges, anclas "back to top" al H1 y ToC sin emojis.
 
 ### Fixed
 
 - **Referencias huérfanas de la reestructuración**: 32 enlaces de ADR apuntan a `docs/adr/` (23 ADRs; el antiguo subdirectorio `adr/` bajo `specs/` ya no existe), y las menciones a skills y artefactos borrados (`obsidian-*`, `xlsx`, `skills-lock.json`, `.gitmessage`) quedan retiradas de `specs/`, `obsidian-vault-writer.md` y `docs/wiki-source/`.
 - **Payload adyacente fuera de alcance registrado** en `docs/WORKFLOW.md` (FEV-31) y `docs/TECH_DEBT.md`: el traslado de ADRs, el churn de skills (−8 / +17), el borrado de `skills-lock.json`/`.gitmessage`/`requirements.txt`, los manifiestos opcionales `Cargo.toml`/`package.json`/`pyproject.toml`, la reescritura de estilo de 13 comandos y los **6 plugins** de `opencode.json` (#113, previos a FEV-31). Los **swaps de modelo de los 6 agentes primarios** quedan documentados como cambio **adyacente y fuera de alcance** — no son trabajo de FEV-31.
 - **Veredicto de `1941ed3` conservado** como estabilización INCOMPLETA en `docs/diagnosis/fix30-fev31-partial-issue-implementation.md` (§2 y §4.1), con el cierre de FEV-31 anexado: el registro histórico no se reescribe.
-- **Remediación de pre-launch review** (Fase D): saneado de caracteres de control en errores de `.codice-backup-intent`, endurecimiento del reporte de errores del CLI (una sola razón por fallo), escape `--` documentado operativo, preservación del modo de archivo al restaurar backups, y endurecimiento de CI (env sobre interpolación, permisos por defecto, sin credenciales persistidas).
+- **Remediación de pre-launch review** (5 ejes, 47 hallazgos; Fase D): saneado de caracteres de control (ANSI) en errores de `.codice-backup-intent`, endurecimiento del reporte de errores del CLI (una sola razón por fallo), escape `--` documentado operativo, preservación del modo de archivo al restaurar backups, y endurecimiento de CI (env sobre interpolación, permisos por defecto, sin credenciales persistidas).
 - **CI Windows en verde** (#119): los tests con aserciones dependientes de POSIX quedan gateados con `skipIf(process.platform === "win32")` — los 3 de modo de archivo en `atomic-stager.test.ts` (NTFS no persiste permodes Unix; `eaaf6f5`) y el de `SYSTEM_DIRS` posix en `validateDestPath.test.ts` (la lista se bindea según el host; `417522a`) — y las rutas del módulo bajo prueba pasan a portables vía `fileURLToPath`/`os.tmpdir()`. Solo infraestructura de tests; el comportamiento del instalador no cambia.
+- **Correcciones documentales post-tag**: precedente wiki retractado, timeout real citado en lugar de uno estimado, el `prettier` fantasma retirado, la regla de higiene real (Biome) documentada, y conteos y rutas corregidos en specs, wiki y ADRs.
+- **Estado y gate de calidad corregidos** (`/docs-update`): SPEC/WORKFLOW/TECH_DEBT alinean el camino probado de la beta (`gh pr view 119/121`; el tag sobre el tip de `main`) y se retira la afirmación falsa de enforcement — la política "no `any`" queda registrada sin enforcement como TD-V2-112 (`noExplicitAny` off, ESLint ausente) y el pipe de la medición TD-V2-101 queda escapado en markdown.
+
+### Security
+
+- **Phase 0 CI hardening** (#119, ADR-019 enmendado): SHA-pins de acciones, branch protection con contexts reales, `security` como check requerido, `enforce_admins=true` en `main` y door local de pre-commit (typecheck bloqueante + escaneo de secretos).
+- **ADR-025** documenta la excepción de los 6 plugins `@latest` del payload; el pinning de versiones queda pendiente como TD-V2-111.
+
+### Dependencies
+
+- **`markdownlint-cli2@^0.24.1`**: nueva devDependency para el job `docs` (`just lint-docs`).
 
 ## [2.1.4] - 2026-09-25
 
@@ -634,7 +642,7 @@ Pre-release for v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release
 
 - Path traversal prevention; symlink skipping in directory walk; SHA-256 checksums.
 
-[Unreleased]: https://github.com/fisherk2/codice-opencode/compare/v2.1.4...HEAD
+[2.1.5]: https://github.com/fisherk2/codice-opencode/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/fisherk2/codice-opencode/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/fisherk2/codice-opencode/compare/v2.1.3-beta.1...v2.1.3
 [2.1.2]: https://github.com/fisherk2/codice-opencode/compare/v2.1.1...v2.1.2

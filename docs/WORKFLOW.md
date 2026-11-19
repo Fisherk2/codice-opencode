@@ -1,5 +1,5 @@
 # Implementation Plan – Códice v1.0.0 → v2.1.5
-**Date:** 2026-06-15 | **Last updated:** 2026-11-18 (v2.1.5-beta.1 **published** under dist-tag `beta` — release run 44443767080 success, 2027 tests, 31/31 e2e, tsc 0, lint 0; `latest` intact at 2.1.4) | **Methodology:** Iterative TDD
+**Date:** 2026-06-15 | **Last updated:** 2026-11-19 (v2.1.5 **ready for stable deployment — not yet published**, `latest` still at 2.1.4; v2.1.5-beta.1 published under dist-tag `beta` 2026-11-18 — release run 44443767080 success, 2027 tests, 31/31 e2e, tsc 0, lint 0) | **Methodology:** Iterative TDD
 
 ## 1. Phase Vision
 
@@ -57,7 +57,7 @@ All evolutionary phases, completed and pending. Summary by version:
 | v2.1.1 | FEV-26–28 | Bug #79, security patches, plugin cleanup, external permissions, CI Node 24, semver cache | 1935 tests, 31/31 E2E, ≥95% coverage |
 | v2.1.2 | Hotfix (no FEV) | docs-update delegation fix + debt reorganization | 1935 tests, 31/31 E2E, ≥95% coverage |
 | v2.1.3-beta.1 | FEV-29–30 | Native V2 `permissions:` migration (349 files), SDD plugin removal + legacy banner | 1865 tests, 31/31 E2E, ≥95% coverage |
-| v2.1.5 | FEV-31 + pre-launch | Issues #111–#116, orphan references repaired, beta published under dist-tag `beta` | 2027 tests, 31/31 E2E, 96.95% coverage (local) |
+| v2.1.5 | FEV-31 + pre-launch + docs pass | Issues #111–#116, orphan references repaired; beta published under dist-tag `beta`, stable **ready for deployment (not published)** | 2027 tests, 31/31 E2E, 96.95% coverage (local) |
 
 ## 4. Testing Strategy by Phase
 
@@ -109,3 +109,4 @@ All evolutionary phases, completed and pending. Summary by version:
 | v2.1.3 (stable) | 1959 | 31/31 | 96.39% | 2026-09-23 |
 | v2.1.4 (hotfix, npm `latest`) | 1959 | 31/31 | ≥95% | 2026-09-25 |
 | v2.1.5-beta.1 (published, dist-tag `beta`) | 2027 | 31/31 | 96.95% (local) | 2026-11-18 |
+| v2.1.5 (ready — stable not yet published, `latest` at 2.1.4) | 2027 | 31/31 | 96.95% (local) | 2026-11-19 |
