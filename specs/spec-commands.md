@@ -8,7 +8,7 @@ All commands are defined in the `Justfile` and mirrored as `package.json` script
 |---------|---------|-------------------|
 | `just setup` | Install dependencies | Run `bun install` (lockfile frozen via `bunfig.toml`). Directory scaffolding is done by `just dev` |
 | `just dev` | Run CLI in development mode | Execute `src/cli/main.ts` via `bun run`, enable verbose logging |
-| `just lint` | Static analysis | Run Biome (or eslint) across `src/` and `tests/`, fail on warnings, enforce no-explicit-any rule |
+| `just lint` | Static analysis | Run Biome check across `src/` and `tests/`, fail on warnings, enforce no-explicit-any rule |
 | `just format` | Code formatting | Run Biome format (or prettier) in write mode, fail if unformatted files detected in CI |
 | `just check` | Pre-flight validation | Run `lint`, `format --check`, and `typecheck` in sequence; gate for commits |
 
