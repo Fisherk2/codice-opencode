@@ -286,8 +286,8 @@ The project Wiki is synced from `docs/wiki-source/`. After adding agents, skills
 
 ```bash
 # From the project root — guards first:
-git -C docs/wiki-source/.wiki status --porcelain   # must be empty; anything here would be silently overwritten
-git -C docs/wiki-source/.wiki ls-files             # pages listed here but absent from docs/wiki-source/*.md would be deleted
+git -C docs/wiki-source/.wiki status --porcelain   # must be empty; anything here can be silently overwritten
+git -C docs/wiki-source/.wiki ls-files             # pages here missing from docs/wiki-source/*.md WILL be deleted by --delete (measured); an -n dry-run does NOT list them in this file-glob layout, so this check is the real guard
 
 rsync -a --delete --exclude='README.md' docs/wiki-source/*.md docs/wiki-source/.wiki/
 
