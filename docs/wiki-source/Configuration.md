@@ -284,6 +284,30 @@ Or a remote repository:
 
 ---
 
+## Plugins
+
+The payload declares six third-party OpenCode plugins, all referenced at a floating `@latest` (`template/obligatorio/core/opencode.json`, `plugins`):
+
+```json
+"plugins": [
+  "opencode-rpc@latest",
+  "opencode-navigator@latest",
+  "opencode-skills-collection@latest",
+  "opencode-skill-creator@latest",
+  "opencode-search-plugin@latest",
+  "@dietrichgebert/ponytail@latest"
+]
+```
+
+Two things to know about this section:
+
+- **Códice does not run them.** The installer only copies files, and it is forbidden from executing template code. The **OpenCode host** loads every entry when the workspace starts, so this third-party code does run on your machine.
+- **`@latest` here is an explicit exception** to the pin-everything discipline the rest of the project follows (CI actions are SHA-pinned; the `chrome-devtools` MCP is version-pinned). ADR-025, "Third-Party Plugins Shipped at `@latest` in the Workspace Payload", records it as an accepted risk, keeps `@latest` so the payload inherits plugin fixes without a Códice release, and tracks version pinning as remediation debt (TD-V2-111).
+
+To freeze what runs, replace the tag with a concrete version — `"opencode-rpc@1.2.3"` — or delete an entry you do not want loaded. The host resolves each entry from npm at startup, so a pinned value that no longer exists breaks plugin loading for that entry only.
+
+---
+
 ## Permissions — Security Boundaries
 
 The `permissions` section controls what agents can do. In OpenCode V2 it is one **ordered array of rules** — each `{ "action": ..., "resource": ..., "effect": ... }` — and **the last matching rule wins** (so broad rules go first and exceptions follow). If no rule matches, OpenCode uses `ask`. The template pairs a generous read-only baseline with a strict posture on execution, delegation, external paths, and secrets.

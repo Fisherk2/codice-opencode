@@ -14,7 +14,7 @@ The template ships with **7 MCP servers** pre-configured in `opencode.json`. Thr
 
 | Server | Type | Default | Template Feature |
 |--------|------|---------|------------------|
-| `context7` | Remote | ✅ Enabled | Documentation queries (`find-docs` skill) |
+| `context7` | Remote | ✅ Enabled | Up-to-date library/framework documentation |
 | `chrome-devtools` | Local | ❌ Disabled | `/webperf` Deep mode, browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`spreadsheet-analysis` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
@@ -40,7 +40,7 @@ Each server requires different prerequisites. Follow the steps below for the ser
 
 ### Context7 — Documentation Search
 
-Remote MCP server that provides up-to-date library documentation. Used by the `find-docs` skill.
+Remote MCP server that provides up-to-date library documentation. Agents call it directly as an MCP tool — the `find-docs` helper people expect here is **not** one of the 61 shipped skills; it is a marketplace skill you fetch on demand (see [Skills](Skills#skills-not-in-the-payload)).
 
 **Pre-configured as:** `"disabled": false` (connected) — no setup needed.
 
@@ -273,7 +273,7 @@ For lightweight sessions without a full Jupyter server:
 
 ### Codebase Memory MCP — Knowledge Graph for Code Intelligence
 
-Local MCP server that indexes your codebase into a persistent knowledge graph. Provides structural search, call tracing, architecture analysis, dead code detection, and 15 other tools. Supports 158 languages via tree-sitter. Ships as a single static binary — zero dependencies, no API keys required.
+Local MCP server that indexes your codebase into a persistent knowledge graph, exposing 14 tools for structural search, call tracing, architecture analysis, diff impact, and graph queries. Supports 158 languages via tree-sitter. Ships as a single static binary — zero dependencies, no API keys required.
 
 **Pre-configured as:** `"disabled": true` — requires global installation on the user's machine.
 
@@ -344,7 +344,7 @@ If you prefer not to use the install command, add to `opencode.json`:
 }
 ```
 
-#### Available Tools (15 total)
+#### Available Tools (14 total)
 
 | Tool | Purpose |
 |------|---------|
@@ -362,7 +362,6 @@ If you prefer not to use the install command, add to `opencode.json`:
 | `index_status` | Check indexing status |
 | `list_projects` | List all indexed projects |
 | `delete_project` | Remove a project from the index |
-| `context7_query-docs` | Query Context7 documentation (built-in) |
 
 > **Repository:** [github.com/DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | **License:** MIT | **Stars:** 36K+
 
