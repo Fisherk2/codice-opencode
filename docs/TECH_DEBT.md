@@ -1,8 +1,8 @@
 # Technical Debt — Códice
 
 **Last updated:** 2026-11-18
-**Status:** v2.1.5-beta.1 FEV-31 COMPLETED (2026-11-17) + pre-launch review 2026-11-18 done — 2027 tests, 31/31 E2E, `tsc --noEmit` 0, lint 0 · beta ready for tag (GO pending) · issues #111/#112/#114/#115/#116 closed + orphan references repaired · adjacent out-of-scope payload registered in `docs/WORKFLOW.md` · 4 deferred Phase-2 findings + TD-V2-97 remain open (below)
-**Current version:** v2.1.5-beta.1 (FEV-31) — en rama `hotfix/update-payload`
+**Status:** v2.1.5-beta.1 FEV-31 COMPLETED (2026-11-17) + pre-launch review 2026-11-18 done — 2027 tests, 31/31 E2E, `tsc --noEmit` 0, lint 0 · beta **published 2026-11-18** (release run 44443767080 success; dist-tag `beta`, `latest` intact at 2.1.4; `just verify-release` OK) · issues #111/#112/#114/#115/#116 closed + orphan references repaired · adjacent out-of-scope payload registered in `docs/WORKFLOW.md` · 4 deferred Phase-2 findings + TD-V2-97 remain open (below)
+**Current version:** v2.1.5-beta.1 (FEV-31) — tag cut from `release/v2.1.5` (FEV-31 work landed via PR #119 squash `3883288` into `develop`, PR #121 squash `c579948` into `main`, annotated tag `926006f`)
 **Next version:** v2.2.0 (Medium Effort — 9 items, 18-24h)
 
 ---
@@ -73,7 +73,7 @@ All technical debt from v1.x and v2.0.0 development has been resolved. For histo
 - #114: background-execution ban + `websearch`/`webfetch` in the source-of-truth list (6 agents)
 - #115: `find-skills` setup phase in `/spec`, `/feature`, `/diagnosis`, `/migrate` (project-level only)
 - #116: mandatory skill `vertical-slice-architecture` (+4 references) and real VSA phases (Prototype 1-3 / MVP 4-6 / Enterprise 7+) in 5 commands
-- Orphan references repaired: 32 ADR links → `docs/adr/` (23 ADRs; `specs/adr/` no longer exists); deleted skills/artifacts removed from specs, writer and wiki
+- Orphan references repaired: 32 ADR links → `docs/adr/` (23 ADRs); deleted skills/artifacts removed from specs, writer and wiki. **Residual (second-wave `/docs-update`, not this sweep's claim):** 3 dead references to the old register location survive outside the repaired set — `specs/spec-agent-packs.md:277` and `specs/spec-installer-ux-v2.md:349` (relative `./adr/adr-014…`/`./adr/adr-015…` links) and `specs/spec-project-structure.md:99` (directory tree still lists an `adr/` folder under `specs/`)
 - Prompt-body budget contradiction (100 agent / 120 test override / none for commands) unified at **180 lines** for agents and commands (spec §8 + 2 guards + CODE_STYLE)
 - 1991 tests / 0 fail, 31/31 E2E, `tsc --noEmit` 0, lint 0 (workaround in TD-V2-97)
 - **Still open:** TD-V2-93-f2…96 (Phase-2 findings), TD-V2-97 and TD-V2-98 (coverage gate counts `tests/`+`scripts/` under bun 1.4.4). The adjacent out-of-scope payload of `hotfix/update-payload` (6 primary-agent model swaps, 6 plugins, ADR move, skills churn) is **not** FEV-31 work and is registered in `docs/WORKFLOW.md`, not tracked as debt here
@@ -137,7 +137,7 @@ npm excludes `.gitignore` files at any depth. Files like `template/obligatorio/c
 
 **Metrics:** 1935 tests, 31/31 E2E.
 
-### v2.1.3 ✅ FEV-29 + FEV-30 completados (2026-09-22) — estable pendiente de GO/tag
+### v2.1.3 ✅ FEV-29 + FEV-30 completados (2026-09-22) — estable lanzado (tag `v2.1.3`, npm 2026-09-23)
 
 > **Alcance (ejecutado):** FEV-29 (#91) migró el template completo al formato nativo OpenCode V2 `permissions:` (349 archivos) y FEV-30 (#90) removió el plugin SDD + añadió el banner legacy y el hardening del review de 5 ejes — completados en `hotfix/opencode-v2-migrate` y consolidados en `v2.1.3-beta.1`; el trabajo post-beta quedó en `release/2.1.3`. La deuda 2.1.x previamente planificada se recorrió una versión (v2.1.3 → v2.1.4, v2.1.4 → v2.1.5). Los hallazgos diferidos y TD-V2-97 de abajo siguen abiertos.
 > **Política 2026-09-25:** 2.1.x reservado a hotfixes; deuda/features recorridas a 2.2.x (v2.1.4→v2.2.0, v2.1.5→v2.3.0, v2.3→v2.5.0).
@@ -188,7 +188,7 @@ Registered during the FEV-31 payload cleanup sweep: items evaluated and delibera
 |----|------|------|--------|------|-------------|
 | **TD-V2-99** | Near-dead test-only exports (`createFileRule`, `getMandatoryRules`, `getStandardRules`, `validationError`) | Debt | 1h | Low | Production callers exist but no production path exercises these beyond tests; un-exporting/removing churns 4+ test files for zero readability gain. Deferred. |
 | **TD-V2-100** | Naming drift: `updateFlow`/`updateHelpers`, `versionGateMessages`/`versionInfoMessages` | Debt | 1-2h | Low | Confusable sibling names; file renames touch many imports and git blame. Deferred (churn > value). |
-| **TD-V2-101** | 3 files still >200 LOC: `AtomicStager.ts` (273, post Extract Method in commit `14c4d35`), `BunSymlinkCreator.ts` (228), `ClackPromptsAdapter.ts` (204) | Debt | 2-3h | Low | AtomicStager extraction was done (rollbackFailedCommit) without forcing further splits per the ≤200 convention's escape hatch. Remaining splits deferred. |
+| **TD-V2-101** | 5 files still >200 LOC (measured `find src -name '*.ts' | xargs wc -l`, 2026-11-18): `AtomicStager.ts` (610), `FileMergeEngine.ts` (233), `BunSymlinkCreator.ts` (228), `BunFileSystem.ts` (206), `ClackPromptsAdapter.ts` (204) | Debt | 2-3h | Low | AtomicStager extraction was done (rollbackFailedCommit) without forcing further splits per the ≤200 convention's escape hatch. Remaining splits deferred. Supersedes the earlier "3 files / 273 LOC" note — AtomicStager grew back past the limit with the review hardening (see TD-V2-107). |
 | **TD-V2-102** | lcov-vs-test mismatch for `scripts/migrate-v1-to-v2-permissions.ts` | Debt | 0.5h | Low | A test file exists for the migration script, but the lcov report shows `0/266` for it — the script is not instrumented (executed differently from `bun test tests/`), so the gate counts its 266 lines as uncovered. Related to the TD-V2-98 denominator issue. |
 | **TD-V2-103** | `src/cli/validateDestPath.ts` win32-only branches untestable under lcov | Debt | 2-3h | Low | Lines 21-28 (win32 SYSTEM_DIRS) and 71 (drive-root) only execute when `process.platform` is win32 at module load — bun's coverage does not instrument child-process execution, so lcov stays ~71% despite full Linux-branch regression tests (commit `bcfa1bb`). Fix options: inject a path/platform seam into the module, or delete the win32 branch (loses Windows CLI protection). |
 
@@ -205,13 +205,14 @@ Registered during the two-axis full-project review fix batches. Decisions, FYIs,
 | **TD-V2-104** | cwd-template-fallback is INTENTIONAL per ADR-007 | Decision (no action) | — | Low | TemplateResolver's cwd fallback flagged in review as a potential injection path; it is the documented third rung of ADR-007's three-path detection cascade (source → bunx/npm → cwd). User decision 2026-11-17: intentional, no action. |
 | **TD-V2-105** | zero required reviews on `develop` is documented single-contributor policy | FYI | — | Low | `scripts/setup-branch-protection.sh` posts `required_approving_review_count: 0` on both branches. Reviewer flagged as a governance gap; it is the documented single-contributor policy (see script design notes + CONTRIBUTING.md). FYI only. |
 | **TD-V2-106** | hard-killed runs leave unswept `.codice-staging-*` residue | Debt | 2-3h | Low | Since the per-run mkdtemp staging dirs (commit `d357519`), a SIGKILL during staging leaves that run's `.codice-staging-<rand>` dir behind; later runs cannot sweep it safely because it is indistinguishable from a LIVE concurrent run's staging dir. Needs a safe-sweep design (e.g. marker-dir pid liveness per staging dir) before deleting anything. |
-| **TD-V2-107** | `AtomicStager.ts` grew to ~545 LOC across the review hardening | Debt | 3-4h | Low | Symlink guards, interruption recovery, and concurrency control all live in one file by design (one safety story; escape hatch documented in the header comment). A dedicated refactor pass may split prepare/promote/recover into modules — only with fresh integration coverage around the split. |
+| **TD-V2-107** | `AtomicStager.ts` grew to 610 LOC across the review hardening (measured 2026-11-18; consistent with TD-V2-101) | Debt | 3-4h | Low | Symlink guards, interruption recovery, and concurrency control all live in one file by design (one safety story; escape hatch documented in the header comment). A dedicated refactor pass may split prepare/promote/recover into modules — only with fresh integration coverage around the split. |
 | **TD-V2-108** | 5s-timeout flakes in `npm-pack.test.ts` and TUI/validation tests under load | Debt | 1-2h | Low | `npm package — tarball structure / extracted installation` (5,000ms hook timeouts) and `main() — execution path` fail intermittently only when the suite runs >60s under heavy machine load; isolated reruns always pass (verified repeatedly on 2026-11-17, incl. at baseline before any fix commits). Fix: raise the hooks' explicit timeouts to 15s or make them load-tolerant. |
 | **TD-V2-109** | update-gating logic in main.ts is sanctioned | FYI | — | Low | Reviewer flagged `resolveInteractiveMode`'s pre-v2.0 update block living in main.ts rather than a use case; ARCHITECTURE.md assigns mode resolution/version context to the CLI layer (`versionContext.ts`, `resolveInteractiveMode`), so this is the documented placement. FYI only. |
 | **TD-V2-110** | Pre-launch follow-ups (post-beta/GA, non-blocking) | Debt | 2-4h | Low | From the 2026-11-18 review: 16 coverage-gap cases tracked (prioritize rollback residue-reporting before GA); add `engines: bun>=1.3` to `package.json`; SIGINT-mid-install E2E advisory; wiki sync pending (10 pre-existing dirty files in `docs/wiki-source/.wiki/`); TD-V2-98 local coverage drift. None blocks the `2.1.5-beta.1` tag. |
+| **TD-V2-111** | Fix the 6 payload plugin versions (all shipped `@latest`) | Debt | 1-2h | Medium | `template/obligatorio/core/opencode.json` `plugins` (lines 104–110) ships `opencode-rpc`, `opencode-navigator`, `opencode-skills-collection`, `opencode-skill-creator`, `opencode-search-plugin` and `@dietrichgebert/ponytail` at floating `@latest`. Códice never executes them (AGENTS.md forbids it), but the OpenCode host loads every entry at workspace start — unpinned third-party code runs on the user's machine. Pin exact versions + payload regression guard. Decision record: `docs/adr/adr-025-plugins-suministrados-en-latest.md` (ADR-025, Accepted 2026-11-18). |
 
 - **TD-V2-106 evidence:** FEV batch-1 item 15 commit body (`d357519`) states the leftover-staging trade-off; the concurrent-marker O_EXCL guard prevents interleaving but cannot authorize deleting another run's staging dir.
-- **TD-V2-107 evidence:** `wc -l src/infrastructure/adapters/AtomicStager.ts` = 545 post batch-2 item 1 (`8083a3a`); header comment documents the escape.
+- **TD-V2-107 evidence:** `wc -l src/infrastructure/adapters/AtomicStager.ts` = **610** measured 2026-11-18 (545 at batch-2 item 1 `8083a3a`, plus the pre-launch review hardening since); header comment documents the escape.
 - **TD-V2-108 evidence:** baseline run at `0826445` (before any batch-1 commit) already showed `1 fail / 1 error` with `npm-pack` timeouts; subsequent isolated `bun test tests/integration/packaging/npm-pack.test.ts` runs passed every time.
 
 ### v2.2.0 (Medium Effort — 9 items, 18-24h total)
@@ -257,8 +258,8 @@ Registered during the two-axis full-project review fix batches. Decisions, FYIs,
 | v2.1.1 | ✅ Released — FEV-26+27+28 — 1935 tests |
 | v2.1.2 | ✅ Released (2026-08-28) — docs-update delegation hotfix + debt reorg — 1935 tests |
 | v2.1.3 | ✅ FEV-29+FEV-30 complete (1959 tests, 31/31 E2E, 96.39%) — beta published, stable pending GO/tag — open: 4 hallazgos Fase-2 diferidos (TD-V2-93-f2..96) + TD-V2-97 |
-| v2.1.4 hotfix | ✅ Complete — listo para lanzamiento |
-| v2.1.5-beta.1 FEV-31 | ✅ Complete (2026-11-17) + pre-launch review 2026-11-18 — #111/#112/#114/#115/#116 closed, orphan references repaired, prompt budget unified at 180 — 2027 tests, 31/31 E2E — beta ready for tag (GO pending) — open: TD-V2-93-f2..96 + TD-V2-97 + TD-V2-98 + TD-V2-110 |
+| v2.1.4 hotfix | ✅ Released (2026-09-25) — #104/#105, redundant `code-reviewer` delegation removed in 6 template commands + debt reschedule — npm `latest` today (`latest` = 2.1.4; `beta` = 2.1.5-beta.1) |
+| v2.1.5-beta.1 FEV-31 | ✅ Deployed (2026-11-18) — FEV-31 complete 2026-11-17 + pre-launch review 2026-11-18; #111/#112/#114/#115/#116 closed, orphan references repaired (3 `specs/` dead links deferred to second wave — see FEV-31 section), prompt budget unified at 180 — 2027 tests, 31/31 E2E; tag `926006f` published under dist-tag `beta`, `latest` intact at 2.1.4 — open: TD-V2-93-f2..96 + TD-V2-97 + TD-V2-98 + TD-V2-110 + TD-V2-111 |
 | v2.2.0 backlog | 9 items (8 debt + 1 feature) — 18-24h |
 | v2.3.0 backlog | 4 items (4 debt) — 12-16h |
 | v2.5.0 backlog | 3 items (1 debt + 2 features) — 18-28h |
@@ -287,5 +288,5 @@ Registered during the two-axis full-project review fix batches. Decisions, FYIs,
 ---
 
 *Maintained by Códice team. Update when tech debt items are added or resolved.*
-*Last updated: 2026-11-17*
-*Next deep audit: after v2.1.3 stable release*
+*Last updated: 2026-11-18 (post-deploy alignment of `v2.1.5-beta.1`; TD-V2-111 added; >200-LOC claims re-measured)*
+*Next deep audit: after v2.1.5 GA*
