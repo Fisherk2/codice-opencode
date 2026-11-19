@@ -8,40 +8,39 @@ Each recipe follows the same structure: **Problem** → **Solution** → **Step-
 
 ## Recipe 1: "I want to use a different AI model"
 
-**Problem:** The workspace ships with a default AI model (`nvidia/stepfun-ai/step-3.7-flash`), but you prefer a different provider — Claude Sonnet for complex reasoning, GPT-5 for general tasks, or DeepSeek for cost-sensitive work.
+**Problem:** The workspace ships one default AI model (`opencode/big-pickle`), but you prefer a different provider — Claude Sonnet for complex reasoning, GPT-5 for general tasks, or DeepSeek for cost-sensitive work.
 
-**Solution:** Change the `model` and `small_model` fields in `opencode.json`. The template ships with 7 pre-configured providers, so switching is typically a one-field change.
+**Solution:** Change the `model` field in `opencode.json`. The template ships **no `providers` block**, so a provider that is not in OpenCode's built-in catalog needs one added first (Recipe 6).
 
 **Step-by-step:**
 
 1. Open `opencode.json` at the project root.
 2. Locate the `model` field near the top of the file:
    ```json
-   "model": "nvidia/stepfun-ai/step-3.7-flash",
+   "model": "opencode/big-pickle",
    ```
 3. Replace it with your preferred model reference. For example, to use Claude Sonnet 4 via OpenRouter:
    ```json
    "model": "openrouter/anthropic/claude-sonnet-4",
    ```
-4. Optionally update the `small_model` for lightweight operations:
-   ```json
-   "small_model": "openrouter/anthropic/claude-haiku-4-5",
-   ```
-5. If the provider is already configured in the `provider` section (all 7 are), no further changes are needed. The template includes configurations for Anthropic, DeepSeek, Google, OpenAI, MiniMax, Moonshot, and Z-AI.
+4. There is no `small_model` field to update: V1's `small_model` has no native V2 equivalent — OpenCode maps it to the built-in `title` agent's model (`agents.title.model`), and the template ships neither field.
+5. If your model comes from OpenCode's built-in catalog, no further changes are needed — credentials connect via `/connect`. The template pre-configures no provider of its own, so an `openrouter/…` or enterprise endpoint requires the `providers` entry described in Recipe 6.
 
-**Per-agent overrides:** You can use different models for specific agents:
+**Per-agent overrides:** You can use different models for specific agents. The key is `agents` (plural in V2), and `temperature` lives under `request.body`:
 ```json
-"agent": {
+"agents": {
   "tlaloc": {
     "model": "openrouter/anthropic/claude-sonnet-4",
-    "temperature": 0.2
+    "request": { "body": { "temperature": 0.2 } }
   },
   "moctezuma": {
     "model": "openrouter/deepseek/deepseek-v4-flash",
-    "temperature": 0.1
+    "request": { "body": { "temperature": 0.1 } }
   }
 }
 ```
+
+The shipped assignments — the ones you are overriding — are in `agents` of `opencode.json`: `huitzilopochtli` `opencode/big-pickle`, `quetzalcoatl` and `tezcatlipoca` `opencode/glm-5.3-flash-free`, `moctezuma` `opencode/nemotron-3.5-super-vl-free`, `tlaloc` `opencode/deepseek-v4.1-flash-free`, `mictlantecuhtli` `opencode/mimo-v2.6-flash-free`. See [Configuration](Configuration#agent-settings-reference).
 
 **Verification:** Run any slash command (e.g., `/help`). The agent's response should reflect the new model's style and reasoning capabilities. Check the model identifier in the agent's response header in the OpenCode UI.
 
@@ -49,7 +48,7 @@ Each recipe follows the same structure: **Problem** → **Solution** → **Step-
 
 ## Recipe 2: "I don't need certain skills"
 
-**Problem:** The workspace includes 46 skills, but your team doesn't use UI/UX design, mobile development, or data analysis. These skills clutter the discovery tree and waste context when the agent scans the `skills/` directory.
+**Problem:** The workspace includes 61 skills, but your team doesn't use UI/UX design, mobile development, or data analysis. These skills clutter the discovery tree and waste context when the agent scans the `skills/` directory.
 
 **Solution:** Remove or rename skill directories you do not need. The agent discovers skills by scanning the filesystem — if the directory is gone or renamed, the skill won't be found.
 
@@ -61,14 +60,14 @@ Each recipe follows the same structure: **Problem** → **Solution** → **Step-
    ```
 2. Remove unwanted skills:
    ```bash
-   rm -rf skills/ui-ux-design-pro skills/design-taste-frontend skills/xlsx
+   rm -rf skills/ui-ux-design-pro skills/design-taste-frontend skills/spreadsheet-analysis
    ```
 3. Alternatively, archive them instead of deleting — rename the directory with a leading underscore or `.bak` suffix:
    ```bash
    mv skills/ui-ux-design-pro skills/_ui-ux-design-pro
    ```
    The agent will not find `@skills/_ui-ux-design-pro/SKILL.md` and will skip it.
-4. Update `skills/using-agent-skills/SKILL.md` to remove the deleted skills from the discovery tree and Quick Reference table. This prevents the meta-skill from suggesting skills that no longer exist.
+4. Nothing to register: V2 rebuilds the advertised skill list at every model step from the discovered sources, so a removed or renamed directory simply stops appearing. No skill index file ships that needs editing. If a **command** loads the skill by name, that step now degrades — check it (see the Caution below).
 
 **Verification:** Ask an agent a question in the removed skill's domain (e.g., "Create a professional color palette for my app"). The agent should not reference the removed skill and should handle the request using general knowledge instead.
 
@@ -78,7 +77,7 @@ Each recipe follows the same structure: **Problem** → **Solution** → **Step-
 
 ## Recipe 3: "I want to add a custom command"
 
-**Problem:** The workspace has 12 SDD commands, but your workflow needs a custom phase — for example, a `/deploy` command that handles deployment to your specific infrastructure.
+**Problem:** The workspace has 18 SDD commands, but your workflow needs a custom phase — for example, your own `/deploy` that handles deployment to your specific infrastructure.
 
 **Solution:** Create a new command file in `commands/`. OpenCode discovers command files automatically — no registration step is required.
 
@@ -113,7 +112,7 @@ Each recipe follows the same structure: **Problem** → **Solution** → **Step-
    > Deployment complete. Run `/diagnosis` to monitor for issues.
    ```
 
-2. Restart your OpenCode session.
+2. Save the file. OpenCode reloads command files as you edit them, so the command is available without restarting the session (see [Commands](Commands#step-3-its-live)). `/deploy` ships in the payload, so this override is re-copied by the next update — pick a name the template does not use (for example `commands/release-notes.md`) if you want your version to survive.
 
 **Verification:** Type `/deploy` in OpenCode. The command should load and the target agent (tlaloc, in this example) should follow the workflow steps you defined.
 
@@ -143,12 +142,9 @@ Each recipe follows the same structure: **Problem** → **Solution** → **Step-
    }
    ```
 
-3. **Update `opencode.json`** — The workspace name is referenced in the configuration. Update any `name`-related fields or file paths that include the old project name:
-   ```json
-   {
-     "name": "Your Project",
-     ...
-   }
+3. **Update `opencode.json`** — the shipped configuration has **no** `name` field (its top-level keys are `$schema`, `formatter`, `compaction`, `model`, `default_agent`, `agents`, `instructions`, `references`, `plugins`, `mcp`, `permissions`), so there is nothing to rename here. Only touch it if you added project-specific fields yourself:
+   ```jsonc
+   // no name field in the template payload — skip unless you added one
    ```
 
 4. **Update workspace name in agent context** — If you have agent files that reference the project by name, update those too. Agent files in `agents/` may mention the project in their role descriptions or rules:
@@ -168,48 +164,55 @@ Each recipe follows the same structure: **Problem** → **Solution** → **Step-
 
 **Step-by-step:**
 
-1. Open `opencode.json` and locate the `permission` section (around line 403).
+1. Open `opencode.json` and locate the `permissions` **array** — one ordered list of `{ "action": …, "resource": …, "effect": … }` rules, where the **last matching rule wins** (V1's singular `permission` map, keyed by tool with `allow`/`ask`/`deny` values, is legacy).
 
-2. **Add new deny patterns for file reads** — Prevent agents from reading files you consider sensitive:
+2. **Add new deny patterns for file reads** — Prevent agents from reading files you consider sensitive. Append the denies **after** the broad allow, and use whole-value wildcards: V2 has no `**` recursion syntax, and `*` already crosses `/`:
    ```json
-   "read": {
-     "*": "allow",
-     "*.env": "deny",
-     ".npmrc": "deny",
-     "*.pem": "deny",
-     "secrets/**": "deny",
-     "deployment-keys/*": "deny"
-   }
+   [
+     { "action": "read", "resource": "*", "effect": "allow" },
+     { "action": "read", "resource": "*.env", "effect": "deny" },
+     { "action": "read", "resource": ".npmrc", "effect": "deny" },
+     { "action": "read", "resource": "*.pem", "effect": "deny" },
+     { "action": "read", "resource": "secrets/*", "effect": "deny" },
+     { "action": "read", "resource": "deployment-keys/*", "effect": "deny" }
+   ]
+   ```
+   The template already denies most of these — see [Credential Protection](Configuration#credential-protection) before duplicating a rule.
+
+3. **Restrict shell commands** — V2 renamed the V1 `bash` action to `shell`. Append rules to the same array:
+
+   ```json
+   [
+     { "action": "shell", "resource": "*", "effect": "ask" },
+     { "action": "shell", "resource": "ls", "effect": "allow" },
+     { "action": "shell", "resource": "cat *", "effect": "allow" },
+     { "action": "shell", "resource": "docker exec *", "effect": "deny" },
+     { "action": "shell", "resource": "kubectl exec *", "effect": "deny" },
+     { "action": "shell", "resource": "sudo *", "effect": "deny" }
+   ]
    ```
 
-3. **Restrict bash commands** — Add patterns to block commands your team considers unsafe:
+4. **Allow specific commands** — If your agents frequently need `npm install` or `go build`, append them as `allow` after the broad rule so they stop prompting:
+
    ```json
-   "bash": {
-     "*": "ask",
-     "ls": "allow",
-     "cat *": "allow",
-     "docker exec *": "deny",
-     "kubectl exec *": "deny",
-     "sudo *": "deny",
-     ...
-   }
+   [
+     { "action": "shell", "resource": "npm install", "effect": "allow" },
+     { "action": "shell", "resource": "npm install *", "effect": "allow" },
+     { "action": "shell", "resource": "go build *", "effect": "allow" }
+   ]
    ```
 
-4. **Allow specific commands** — If your agents frequently need `npm install` or `go build`, add them as `allow` to reduce friction:
+5. **Control delegation** — V1's `task` action is now `subagent`. Deny everything, then allow the specialists you trust:
+
    ```json
-   "npm install": "allow",
-   "npm install *": "allow",
-   "go build *": "allow"
+   [
+     { "action": "subagent", "resource": "*", "effect": "deny" },
+     { "action": "subagent", "resource": "code-reviewer", "effect": "allow" },
+     { "action": "subagent", "resource": "docs-writer", "effect": "allow" }
+   ]
    ```
 
-5. **Control task delegation** — Restrict which subagents a primary agent can invoke:
-   ```json
-   "task": {
-     "*": "deny",
-     "code-reviewer": "allow",
-     "docs-writer": "allow"
-   }
-   ```
+   Global rules sit **before** agent-file rules, and an agent's own `permissions` are appended after them — that is how the six primaries keep their deny-lists. See [Configuration](Configuration#subagent-rules--subagent-delegation).
 
 **Verification:** Ask an agent to run a blocked command (e.g., `sudo apt update`). It should either ask for permission or refuse. Then ask it to run an allowed command (e.g., `ls`). It should execute without prompting.
 
@@ -217,40 +220,34 @@ Each recipe follows the same structure: **Problem** → **Solution** → **Step-
 
 ## Recipe 6: "I want to add a new provider"
 
-**Problem:** The workspace ships with 7 providers (Anthropic, DeepSeek, Google, OpenAI, MiniMax, Moonshot, Z-AI), but you want to use a provider not on that list — for example, a custom enterprise endpoint or a less common AI service.
+**Problem:** The workspace ships **no providers at all** — `opencode.json` has no `providers` key — so the models that work out of the box come from OpenCode's built-in catalog with credentials via `/connect`. You want a provider that catalog does not cover: a custom enterprise endpoint or a less common AI service.
 
-**Solution:** Add a new entry in the `provider` section of `opencode.json` following the existing provider format.
+**Solution:** Add a `providers` section (plural in V2; the singular `provider` map is the legacy V1 name) with your endpoint and its models.
 
 **Step-by-step:**
 
-1. Open `opencode.json` and locate the `provider` section (around line 13).
+1. Open `opencode.json`. There is no provider section to locate — you are adding one, for example next to the `model` field.
 
-2. Add a new provider entry. Follow the pattern of existing providers. At minimum, you need a provider name, a model key, and options:
-   ```json
-   "provider": {
+2. Add your provider entry with the model key and its settings/variants (variants are an **array** of `{ id, settings }`, selected with `#variant`):
+   ```jsonc
+   "providers": {
      "my-enterprise": {
        "models": {
          "my-custom-model": {
-           "options": {
+           "settings": {
              "temperature": 0.3,
              "maxTokens": 4096
            },
-           "variants": {
-             "deep-think": {
-               "temperature": 0.1,
-               "maxTokens": 8192
-             },
-             "economy": {
-               "temperature": 0.5,
-               "maxTokens": 2048
-             }
-           }
+           "variants": [
+             { "id": "deep-think", "settings": { "temperature": 0.1, "maxTokens": 8192 } },
+             { "id": "economy", "settings": { "temperature": 0.5, "maxTokens": 2048 } }
+           ]
          }
        }
-     },
-     // ... existing providers remain ...
+     }
    }
    ```
+   See [Configuration](Configuration#per-model-options) for the full shape.
 
 3. Set the model as your default (or use it for specific agents):
    ```json
@@ -277,9 +274,9 @@ Each recipe follows the same structure: **Problem** → **Solution** → **Step-
 
 **Step-by-step (option B — hide the command):**
 
-1. Open `commands/review.md`.
-2. Add `hidden: true` to the YAML frontmatter so the command no longer appears in suggestions.
-3. Restart OpenCode. The `/review` command will no longer be suggested.
+1. Command frontmatter in the payload carries only `description` and `agent` (validated by `tests/unit/domain/command-frontmatter-validation.test.ts`); nothing ships a hidden command. Check the current V2 command reference before adding a `hidden:` key — if your build ignores it, the command stays in the picker.
+2. To be sure it disappears, move the file out of `commands/` (e.g. `mv commands/review.md commands/_review.md.disabled`).
+3. OpenCode reloads command files as you save them, so no session restart is needed.
 
 **Verification:** Type `/ship` after a build without running `/review` first. The ship command should proceed normally. If you removed the command, typing `/review` should produce a "command not found" response.
 
@@ -310,10 +307,9 @@ Each recipe follows the same structure: **Problem** → **Solution** → **Step-
    - `documentation-and-adrs` — Decision records for any domain
    - `git-workflow-and-versioning` — Version control for any content
    - `incident-response` — Incident management regardless of domain
-   - `excel-analysis` — Data analysis for spreadsheets
+   - `spreadsheet-analysis` — Data analysis for spreadsheets
 
-6. **Disable code-specific commands** — If you do not write code, consider hiding commands that are code-specific by adding `hidden: true` to their frontmatter in `commands/` (e.g. `/build`, `/test`, `/code-simplify`, `/review`).
-   Or simply ignore them — they will not interfere if you do not call them.
+6. **Disable code-specific commands** — Commands that are code-specific (`/build`, `/test`, `/code-simplify`, `/review`) do nothing unless you call them, so the simplest route is to ignore them. To take them out of the picker entirely, move their files out of `commands/` (Recipe 7, option B).
 
 **Verification:** Run through the SDD cycle for a non-coding deliverable. For example, run `/spec` with "I want to create a technical documentation site for a REST API." The agent should produce a `SPEC.md` with sections for audience analysis, content structure, style guide, and delivery timeline — without assuming code implementation.
 
@@ -341,7 +337,7 @@ These files are marked as **estándar** — they are created once and never over
 | `CONTRIBUTING.md` | Your team's contribution guidelines |
 | `SPEC.md` | Your project specification |
 | `docs/*.md` | Your project documentation |
-| `specs/*.md` | Your modular specs and ADRs |
+| `specs/*.md` | Your modular specs (ADRs go in `docs/adr/`) |
 
 ### Preserving Customizations During Updates
 
