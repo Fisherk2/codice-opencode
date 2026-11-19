@@ -68,7 +68,7 @@ A production-grade workspace integrating engineering skills organized in SDD cyc
 
 Six primary agents orchestrate the SDD cycle, each with a specific role and permissions inspired by Mexican mythology:
 
-> **Model configuration:** The default models below are provided by the OpenCode provider (free tier) as a reference — replace them with your own providers. Run `opencode models` to list your available LLMs, or if you have no providers configured, use the `/connect` command inside the OpenCode TUI to connect them (see [OpenCode Zen providers docs](https://opencode.ai/docs/es/providers/#opencode-zen)).
+> **Model configuration:** The default models below are provided by the OpenCode provider (free tier) as a reference — replace them with your own providers. Run `opencode models` to list your available LLMs, or if you have no providers configured, use the `/connect` command inside the OpenCode TUI to connect them (see [OpenCode providers docs](https://opencode.ai/v2/docs/providers/)).
 
 ### Huitzilopochtli 🏛️ — Supreme Orchestrator
 
@@ -299,7 +299,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    DU["/docs<br/>-update"] --> FE["/feature<br/>FEATURE"]
+    DU["/docs-update"] --> FE["/feature<br/>FEATURE"]
     FE --> P["/plan<br/>PLAN"]
     FE -.->|optional| D["/design<br/>DESIGN"]
     D -.-> P
@@ -414,7 +414,7 @@ flowchart LR
 This project would not exist without the work of:
 
 - **[awesome-opencode](https://github.com/weisser-dev/awesome-opencode)** — Source of inspiration for implementing new skills and OpenCode documentation. Their upstream catalog lists 90+ specialized agents; Códice ships its own agent set as 10 packs under `template/obligatorio/packs/`.
-- **[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)** — Base of this project. This repository is a fork of that work, which laid the foundations of the AI agent skill ecosystem.
+- **[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)** — Conceptual base for this project's skill set. That work laid the foundations of the AI agent skill ecosystem and inspired the skills Códice ships.
 - **[oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim/)** — Direct inspiration for the multi-main-agent architecture and Mexican orchestration system design.
 - **[msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)** — Source of the new subagents added to the pack system. This repository provided the agent definitions that were adapted and integrated into Códice's 10-pack architecture.
 
