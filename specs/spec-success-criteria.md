@@ -26,12 +26,12 @@
 | ID | Criterion | Test Method |
 |----|-----------|-------------|
 | SC-12 | Unit test coverage exceeds 90% for domain layer. | `bun test --coverage` report |
-| SC-13 | Overall test coverage exceeds 80%. | `bun test --coverage` report |
+| SC-13 | Overall test coverage meets the applied gate: ≥ 95% global **and** ≥ 95% on `src/cli/main.ts`, measured over all production `src/` (thresholds: `scripts/coverage-thresholds.json`; enforced by `just coverage-check` → `scripts/coverage-check.sh`). | `just coverage-check` |
 | SC-14 | All E2E tests pass in CI on Ubuntu latest runner. | GitHub Actions workflow execution |
-| SC-15 | The npm package (tarball) size is < 5MB. | `npm pack --dry-run` size verification |
+| SC-15 | The npm package (tarball) size is < 5MB. **Accepted deviation:** the pack system (ADR-014) ships all 8 selectable packs, bringing the tarball to 8.0MB (797 files) — deviation accepted 2026-08-04, tracked in `docs/TECH_DEBT.md` § Tarball Size. | `npm pack --dry-run` size verification |
 | SC-16 | The README contains copy-paste installation commands that a non-technical user can execute without modification. | Peer review by non-technical stakeholder |
 | SC-17 | No `any` types exist in the production source code. | `tsc --noEmit` strict check |
-| SC-18 | Path traversal attempts (e.g., destination containing `../../`) are rejected with exit code 1. | E2E security test |
+| SC-18 | Path traversal attempts (e.g., destination containing `../../`) are rejected at parse time with exit code **2** (`EXIT_USAGE`, `src/cli/output.ts`; `validateDestPath.ts` → `parseArgs` returns `null` in `main.ts`). | E2E security test |
 
 ## Documentation Criteria
 
