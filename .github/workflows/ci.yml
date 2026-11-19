@@ -10,9 +10,10 @@ name: CI
 #                 release.yml). release.yml → quality is now the single
 #                 validation path for a tag.
 #
-# Branch protection (scripts/setup-branch-protection.sh) requires the three
-# `quality (<os>)` matrix contexts emitted below — do NOT rename the job or
-# change the matrix OS values, or protection breaks.
+# Branch protection (scripts/setup-branch-protection.sh) requires the four
+# contexts emitted below — the three `quality (<os>)` matrix contexts plus
+# `security`. Do NOT rename those jobs or change the matrix OS values, or
+# protection breaks.
 on:
   push:
     branches: [main, develop]
@@ -21,9 +22,11 @@ on:
       - 'CHANGELOG.md'
   pull_request:
     branches: [main, develop]
-    paths-ignore:
-      - 'docs/**'
-      - 'CHANGELOG.md'
+    # Deliberately NO paths-ignore on pull_request (unlike push above): the
+    # quality/security contexts are REQUIRED by branch protection, so a
+    # docs-only PR that skipped this workflow would never report them —
+    # GitHub would leave the checks pending forever and unmergeable once
+    # enforce_admins=true. Every PR must run the workflow.
   workflow_call:
     inputs:
       # Explicit ref (a release tag) handed over by release.yml so the quality
@@ -105,9 +108,9 @@ jobs:
         run: just coverage-check
         timeout-minutes: 15
 
-  # Dependency CVE gate. Not part of branch protection (only the three
-  # `quality (<os>)` contexts are required); it fails the run on high/critical
-  # advisories only.
+  # Dependency CVE gate. Required by branch protection alongside the three
+  # `quality (<os>)` contexts (see scripts/setup-branch-protection.sh); it
+  # fails the run on high/critical advisories only.
   security:
     runs-on: ubuntu-latest
     permissions:
@@ -170,3 +173,42 @@ jobs:
 
       - name: Run packaging tests
         run: just test-packaging
+
+  # Markdown lint gate (markdownlint-cli2, config: .markdownlint-cli2.jsonc).
+  # Informational — NOT a branch-protection context — but it runs
+  # unconditionally (no event guard) so release.yml → workflow_call gates
+  # releases on it too: the release job `needs: quality`, and a reusable
+  # workflow only reports success once every job inside it succeeds.
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          # Empty input falls back to the default checkout of the triggering
+          # ref; release.yml hands over the release tag on dispatch runs.
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+
+      - name: Cache dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint Markdown (markdownlint-cli2)
+        run: just lint-docs
