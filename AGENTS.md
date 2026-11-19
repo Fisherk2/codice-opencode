@@ -42,7 +42,7 @@
 ### Pre-Commit
 - [ ] `just check` — 0 errores (biome ci + tsc --noEmit).
 - [ ] `just test` — 0 fallos.
-- [ ] `just coverage-check` — 0 fallos (umbral en `scripts/coverage-thresholds.json`; detecta código muerto como la ruta legacy `tools:` en FEV-29).
+- [ ] `just coverage-check` — 0 fallos (umbrales en `scripts/coverage-thresholds.json`: 95% global + 95% en `src/cli/main.ts`; el script falla en cerrado si el config falta o el sub-gate no aparece en el reporte).
 - [ ] Sin tipos `any` en código de producción.
 - [ ] Documentación actualizada si cambió API pública.
 
@@ -64,7 +64,7 @@
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Guía de contribución, CI/CD, releases |
 | [spec-file-rules.md](specs/spec-file-rules.md) | Reglas de clasificación de archivos |
 | [spec-cli-commands.md](specs/spec-cli-commands.md) | Especificación de modos y comandos CLI |
-| [adr/](docs/adr/) | Architecture Decision Records (ADR-001 al ADR-024; 013/017 retirados en FEV-30) |
+| [adr/](docs/adr/) | Architecture Decision Records (ADR-001 al ADR-025 — 23 registros; 013/017 retirados en FEV-30) |
 | [MIGRATION.md](docs/MIGRATION.md) | Guía de migración v1.x → v2.0.0 |
 | [spec-agent-packs.md](specs/spec-agent-packs.md) | Sistema de packs de agentes |
 | [spec-installer-ux-v2.md](specs/spec-installer-ux-v2.md) | UX del instalador v2 |
