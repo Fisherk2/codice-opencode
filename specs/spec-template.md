@@ -1,91 +1,86 @@
-# Spec: [Feature Name]
+# Spec: Template
 
-* **Status:** [Draft | In Review | Approved | Superseded by Spec-XXX]
-* **Date:** [YYYY-MM-DD]
-* **Author:** [Name or role]
-* **Reviewers:** [People who reviewed this spec]
-* **Traceability:** [Links to ADRs, GitHub Issues, PRD, etc.]
+**Scope:** the OpenCode workspace template shipped inside the npm package (`template/`). This spec fixes the payload's directory structure and naming conventions. File *classification semantics* (Obligatorio/Estándar/Opcional copy behavior) are normative in [spec-file-rules.md](./spec-file-rules.md) — not duplicated here.
 
-## Summary
+## 1. Payload Structure
 
-[1-2 paragraph high-level description of what this feature/proposal does and why it matters.]
-
-## Problem / Motivation
-
-[What user problem does this solve? What pain point or opportunity motivated this spec? Use concrete scenarios or user stories.]
-
-> As a [persona], I want [capability] so that [benefit].
-
-## Goals and Non-Goals
-
-### Goals
-
-* [Goal 1 — what this spec explicitly aims to achieve]
-* [Goal 2]
-* [Goal 3]
-
-### Non-Goals
-
-* [Non-Goal 1 — what this spec explicitly does NOT address]
-* [Non-Goal 2]
-
-## Proposed Solution
-
-[High-level approach. Describe the solution in 1-2 paragraphs. Use a diagram or code example if it clarifies the concept.]
-
-```typescript
-// Basic example showing the feature in action
+```
+template/
+├── obligatorio/                     # Always copied; overwrites existing (Obligatorio category)
+│   ├── core/
+│   │   ├── opencode.json            # Single workspace config (V2 schema)
+│   │   ├── commands/                # 18 slash commands, one <name>.md each
+│   │   ├── skills/                  # 61 skills: skills/<skill-name>/SKILL.md
+│   │   │   └── */references/        # Extended refs co-located with the skill (ADR-012)
+│   │   └── .opencode/               # NOT shipped: agents/commands/skills symlinks are
+│   │                                # generated post-install by BunSymlinkCreator (ADR-008)
+│   └── packs/                       # Agent packs (mandatory main + writers, 8 selectable)
+│       ├── main/                    # 6 primary agents (huitzilopochtli, mictlantecuhtli,
+│       │                            #   moctezuma, quetzalcoatl, tezcatlipoca, tlaloc)
+│       ├── writers/                 # 4 writer agents (docs-writer, document-generator,
+│       │                            #   obsidian-vault-writer, technical-writer)
+│       └── <pack-id>/              # One directory per selectable pack (see §2)
+├── estandar/                        # Copied only if missing in destination
+│   ├── AGENTS.md · CHANGELOG.md · CODE_OF_CONDUCT.md · CONTRIBUTING.md · LICENSE
+│   ├── README.md · SPEC.md · .env.example
+│   ├── gitignore                    # Stored WITHOUT the dot: npm strips .gitignore from
+│   │                                #   tarballs; BunGitignoreCreator generates the real
+│   │                                #   .gitignore post-install (ADR-009)
+│   └── docs/ · specs/ · tasks/      # Scaffold directories (docs/adr/ includes ADR-template)
+└── opcional/                        # Checklist; copied only if selected AND missing
+    ├── Justfile · Makefile · Dockerfile · docker-compose.yml
+    ├── package.json · pyproject.toml · Cargo.toml
+    └── scripts/ · docs/DESIGN.md · docs/SCHEMA.md · specs/design/
 ```
 
-## Detailed Design
+Agent totals: 6 main + 4 writers + 349 selectable = **359** `.md` files under `packs/`.
 
-[Full technical specification. Cover API surface, data models, component interactions, edge cases, and error handling.]
+## 2. Pack Directories
 
-### API / Interface Design
+Pack directory names are the canonical pack IDs (`kebab-case`) and must match the manifest
+`packRule()` paths `packs/<id>` in `src/domain/entities/FileRuleManifestData.ts` verbatim.
+Counts (145/90/36/31/18/11/10/8 for the 8 selectable packs) are pinned by
+`tests/unit/domain/pack-agent-counts.test.ts`, which compares each manifest `agentCount`
+against the filesystem **exactly** — a drifting count fails the build. Pack definitions and
+selection UX: [spec-agent-packs.md](./spec-agent-packs.md).
 
-[Contracts, types, schemas, method signatures]
+## 3. opencode.json
 
-### Data Model
+`template/obligatorio/core/opencode.json` is the single workspace config installed at the
+destination root. Its top-level schema (V2): `$schema`, `agents`, `compaction`,
+`default_agent`, `formatter`, `instructions`, `mcp`, `model`, `permissions`, `plugins`,
+`references`. Enforcement of destructive commands lives exclusively in the
+`permissions.bash` deny-lists — plugin-era enforcement was removed in FEV-30 (ADR-022).
+`references` exposes the co-located `skills/*/references/` material (ADR-012);
+`mcp.servers` uses the explicit-`disabled` schema with 3 active servers by default (ADR-024).
 
-[New entities, migrations, storage changes — if applicable]
+## 4. Naming Conventions
 
-### Component Interactions
+- **Agents:** `packs/<pack-id>/<agent-name>.md`; the filename must equal the frontmatter
+  `name:` value. Format v2 (frontmatter schema, `permissions:` block):
+  [spec-agent-format-v2.md](./spec-agent-format-v2.md).
+- **Commands:** `core/commands/<verb>.md`; frontmatter carries `description:` and the
+  `agent:` target — the real `agent:` values are the source of truth for the command table
+  in [spec-commands.md](./spec-commands.md).
+- **Skills:** `core/skills/<skill-name>/SKILL.md`, optional `references/*.md` alongside.
+- **Line budget:** primary-agent and command **bodies** ≤ 180 lines (frontmatter excluded),
+  per spec-agent-format-v2.md §8; guarded by
+  `tests/unit/domain/{agent,command}-frontmatter-validation.test.ts`.
 
-[How existing components change or new components interact]
+## 5. Adding Content to the Template
 
-## Alternatives Considered
+Follow CONTRIBUTING.md § Workspace Template (agent → `packs/<pack>/`, skill →
+`core/skills/<name>/SKILL.md`, command → `core/commands/<name>.md`, MCP →
+`core/opencode.json`). Every addition must keep the manifest
+(`FileRuleManifestData.ts`), the count guards above, and the GitHub Wiki in sync;
+classification of any new file follows spec-file-rules.md.
 
-[What else was considered and why it was rejected. Demonstrates critical thinking.]
+## 6. E2E Contract
 
-* **Alternative A:** [Description] — *Reason for rejection:* [...]
-* **Alternative B:** [Description] — *Reason for rejection:* [...]
-
-## Trade-offs
-
-* ✅ **Pros:** [Benefits of the chosen approach]
-* ⚠️ **Cons / Risks:** [Drawbacks, known limitations, new risks]
-* ⚖️ **Neutral:** [Paradigm shifts, team practice changes]
-
-## Testing Strategy
-
-[How will this be verified? Unit, integration, e2e coverage expectations.]
-
-## Security Considerations
-
-[Threat model, authentication, authorization, data handling, input validation — if applicable.]
-
-## Rollback / Monitoring
-
-[How to roll back if something goes wrong. What to monitor in production.]
-
-## Open Questions
-
-* [Question 1 — unresolved design decision or dependency]
-* [Question 2]
-
-## References
-
-* [Links to prior art, inspiration, related specs, documentation]
+The payload as installed is pinned by `tests/e2e/` (31 scenarios), including
+`31-commands-v210-installed.sh` (all v2.1 commands reachable via the generated
+`.opencode/commands` symlink) and `07/08/09` (symlink generation, idempotency).
 
 ---
-*Template based on [React RFC format](https://github.com/reactjs/rfcs), [IETF RFC structure](https://www.rfc-editor.org/), and [Technical Design Document practices](https://www.industrialempathy.com/posts/design-docs-at-google/).*
+
+*End of Spec: Template*
