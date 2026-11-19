@@ -16,6 +16,8 @@ Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilizaci
 - **Skill Obligatorio `vertical-slice-architecture`** (`template/obligatorio/core/skills/vertical-slice-architecture/`): metodología VSA con 4 documentos de referencia; obligatorio para no dejar colgantes las referencias de los comandos (#116).
 - **Fase de setup `find-skills`** en `spec.md`, `feature.md`, `diagnosis.md` y `migrate.md`: tabla de skills disponibles → question-tool → instalación **a nivel de proyecto** (nunca global), con fallback `npx skills` (`vercel-labs/skills`) (#115).
 - **Ciclo ágil documentado** `/docs-update` → `/hotfix` → `/deploy` en el flujo evolutivo (#112).
+- **Pre-commit hooks sin dependencias** (#119): `.githooks/pre-commit` (`8595af3`), activado con `git config core.hooksPath .githooks` — typecheck (`bun run tsc --noEmit`) **bloqueante** + escaneo de secretos con `gitleaks` (bloqueante solo si está instalado; si no, aviso de una línea y el commit continúa), con escape hatch `SKIP=typecheck,gitleaks` / `SKIP=all`. Sin husky ni ciclos npm.
+- **Job `docs` informativo en CI** (#119): `just lint-docs` (markdownlint-cli2, config `.markdownlint-cli2.jsonc`) corre en cada PR como señal, no como check requerido. Nueva devDependency `markdownlint-cli2`.
 
 ### Changed
 
@@ -25,19 +27,23 @@ Cierre de FEV-31 sobre la rama `hotfix/update-payload`: completa la estabilizaci
 - **Presupuesto de cuerpo de prompt unificado en 180 líneas** para agentes **y** comandos (`spec-agent-format-v2.md` §8, 2 guards y `docs/CODE_STYLE.md`): elimina la contradicción 100 / 120 / sin límite (T0b).
 - **Protocolo de delegación ampliado** (#111): el scan cubre `agents/` y `.opencode/agents/`, el fallback es legible y prohíbe `Glob`, y `/plan` publica el roster de subagentes delegables.
 - **NEVER ASSUMPTION PROTOCOL completo** (#114): prohibición de ejecución en background y `websearch`/`webfetch` añadidos a la lista de fuentes de verdad, con gramática consistente, en los 6 agentes primarios.
+- **CI corre siempre en los PRs** (#119): se retiró `paths-ignore` del trigger `pull_request` de `.github/workflows/ci.yml` (solo el trigger `push` lo conserva), para que los checks requeridos siempre reporten en cada PR. El trabajo de docs-only ya no puede fusionarse con los checks en verde ausente.
+- **`security` promovido a check requerido y contexts corregidos** (#119, `scripts/setup-branch-protection.sh`): los status checks requeridos son ahora los nombres reales `quality (ubuntu|macos|windows-latest)` **sin** el prefijo `CI / ` (los contexts con prefijo nunca coincidían, así que ningún check quedaba realmente protegido) más `security`; y `enforce_admins=true` en `main` — admins y tokens de CI pasan por la protección (en `develop` se mantiene la vía documentada para los syncs).
+- **`.env.*` en `.gitignore`** (#119): las variantes de entorno quedan excluidas por defecto, conservando la excepción `!.env.example`.
 
 ### Fixed
 
-- **Referencias huérfanas de la reestructuración**: 32 enlaces de ADR apuntan a `docs/adr/` (23 ADRs; `specs/adr/` ya no existe), y las menciones a skills y artefactos borrados (`obsidian-*`, `xlsx`, `skills-lock.json`, `.gitmessage`) quedan retiradas de `specs/`, `obsidian-vault-writer.md` y `docs/wiki-source/`.
+- **Referencias huérfanas de la reestructuración**: 32 enlaces de ADR apuntan a `docs/adr/` (23 ADRs; el antiguo subdirectorio `adr/` bajo `specs/` ya no existe), y las menciones a skills y artefactos borrados (`obsidian-*`, `xlsx`, `skills-lock.json`, `.gitmessage`) quedan retiradas de `specs/`, `obsidian-vault-writer.md` y `docs/wiki-source/`.
 - **Payload adyacente fuera de alcance registrado** en `docs/WORKFLOW.md` (FEV-31) y `docs/TECH_DEBT.md`: el traslado de ADRs, el churn de skills (−8 / +17), el borrado de `skills-lock.json`/`.gitmessage`/`requirements.txt`, los manifiestos opcionales `Cargo.toml`/`package.json`/`pyproject.toml`, la reescritura de estilo de 13 comandos y los **6 plugins** de `opencode.json` (#113, previos a FEV-31). Los **swaps de modelo de los 6 agentes primarios** quedan documentados como cambio **adyacente y fuera de alcance** — no son trabajo de FEV-31.
 - **Veredicto de `1941ed3` conservado** como estabilización INCOMPLETA en `docs/diagnosis/fix30-fev31-partial-issue-implementation.md` (§2 y §4.1), con el cierre de FEV-31 anexado: el registro histórico no se reescribe.
 - **Remediación de pre-launch review** (Fase D): saneado de caracteres de control en errores de `.codice-backup-intent`, endurecimiento del reporte de errores del CLI (una sola razón por fallo), escape `--` documentado operativo, preservación del modo de archivo al restaurar backups, y endurecimiento de CI (env sobre interpolación, permisos por defecto, sin credenciales persistidas).
+- **CI Windows en verde** (#119): los tests con aserciones dependientes de POSIX quedan gateados con `skipIf(process.platform === "win32")` — los 3 de modo de archivo en `atomic-stager.test.ts` (NTFS no persiste permodes Unix; `eaaf6f5`) y el de `SYSTEM_DIRS` posix en `validateDestPath.test.ts` (la lista se bindea según el host; `417522a`) — y las rutas del módulo bajo prueba pasan a portables vía `fileURLToPath`/`os.tmpdir()`. Solo infraestructura de tests; el comportamiento del instalador no cambia.
 
 ## [2.1.4] - 2026-09-25
 
 Hotfix de rendimiento de comandos: elimina la delegación redundante a `code-reviewer` en 6 comandos del template y reserva la línea 2.1.x a hotfixes (deuda replanificada a 2.2.x/2.3.x/2.5.x).
 
-> Estado: COMPLETADO — listo para lanzamiento (GO/tag pendiente).
+> Estado: LANZADO — tag `v2.1.4` (`ab8897e`, 2026-09-25) publicado en npm el 2026-09-26 (PR #105, squash `55c76cb`); es el dist-tag `latest` vigente.
 
 ### Changed
 
@@ -54,7 +60,7 @@ Primera release estable de la línea nativa V2. Consolida la migración FEV-29/3
 
 ### Added
 
-- **ADR-021** (`specs/adr/adr-021-codemod-parser-and-placement.md`): el validador es el lector normativo del esquema V2; el parser del codemod queda congelado como herramienta one-shot de emisión verbatim; el trigger de promoción a `src/domain/services/` queda documentado y las constantes de esquema permanecen exportadas en el helper del validador.
+- **ADR-021** (`docs/adr/adr-021-codemod-parser-and-placement.md`): el validador es el lector normativo del esquema V2; el parser del codemod queda congelado como herramienta one-shot de emisión verbatim; el trigger de promoción a `src/domain/services/` queda documentado y las constantes de esquema permanecen exportadas en el helper del validador.
 - **Guard de higiene de código fuente**: `tests/unit/quality/source-hygiene.test.ts` falla ante cualquier byte de control crudo (C0 menos TAB/LF/CR, más DEL) en las superficies de texto rastreadas (`src`, `tests`, `scripts`, `template/obligatorio/packs`).
 - **Aviso de remanentes del plugin SDD en update**: al actualizar desde una instalación `< 2.1.3` el flujo muestra la lista exacta de ficheros del plugin retirado que sobreviven como no gestionados (`.opencode/plugins/sdd-pipeline.ts`, `.opencode/plugins/src/destructivePatterns.ts`, `.opencode/plugins/src/normalizeBash.ts`, `.opencode/plugins/README.md`, `.opencode/plugins/tsconfig.json`) y advierte de no borrar `plugins/` (puede contener plugins de terceros). Cubre Option A, Option B y no interactivo.
 - **Banner de deprecación runtime "Opencode Legacy" (FEV-30, #90)**: helper `src/application/legacyBanner.ts` que lee `.codice-version` e imprime `⚠ Opencode Legacy only — upgrade to ≥ 2.1.3 for native Opencode V2 support` para instalaciones ≤ 2.1.2. No bloqueante: archivo ausente o corrupto degrada a no-op silencioso.
@@ -131,7 +137,7 @@ Primera release estable de la línea nativa V2. Consolida la migración FEV-29/3
 
 ### Added
 
-- **ADR-021** (`specs/adr/adr-021-codemod-parser-and-placement.md`): validator is the normative V2 schema reader; codemod parser is frozen verbatim-emit one-shot tooling; promotion trigger to `src/domain/services/` documented; schema constants stay exported in the validator helper.
+- **ADR-021** (`docs/adr/adr-021-codemod-parser-and-placement.md`): validator is the normative V2 schema reader; codemod parser is frozen verbatim-emit one-shot tooling; promotion trigger to `src/domain/services/` documented; schema constants stay exported in the validator helper.
 - **CI Linux suite dedup**: `just test` in `.github/workflows/ci.yml` is now gated to non-Linux runners, removing the duplicated Linux suite execution.
 - **Source-hygiene raw-control-byte guard**: New `tests/unit/quality/source-hygiene.test.ts` fails on any raw control byte (C0 minus TAB/LF/CR, plus DEL) across the tracked text surfaces (`src`, `tests`, `scripts`, `template/obligatorio/packs`).
 - **Banner de deprecación runtime "Opencode Legacy" (FEV-30, #90)**: nuevo helper `src/application/legacyBanner.ts` lee `.codice-version` y, si la instalación es ≤ 2.1.2, imprime `⚠ Opencode Legacy only — upgrade to ≥ 2.1.4 for native Opencode V2 support`. No bloqueante — archivo ausente o corrupto degrada a no-op silencioso. Cableado en `CleanInstallUseCase`, `ProjectInstallUseCase` y `UpdateWorkspaceUseCase`, antes del primer prompt interactivo de cada flujo.
@@ -332,7 +338,7 @@ Pre-release for v2.0.0. Package: `@fisherk2-dev/codice`. Previous stable release
 
 ### Changed
 
-- **BREAKING: Binary compilation removed.** npm/bunx is the sole distribution method. Compiled binaries are no longer produced. See [ADR-011](specs/adr/adr-011-binary-removal.md) for migration details.
+- **BREAKING: Binary compilation removed.** npm/bunx is the sole distribution method. Compiled binaries are no longer produced. See [ADR-011](docs/adr/adr-011-binary-removal.md) for migration details.
 - **Template resolver extracted** to dedicated `TemplateResolver` class (was inline in `BunFileSystem`).
 - **AtomicStager extracted** from `BunFileSystem` — separate class for staging, commit, and rollback operations.
 - **`parse-args.ts` split** — `validateDestPath` extracted to its own module.
