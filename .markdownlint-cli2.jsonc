@@ -1,0 +1,62 @@
+// markdownlint-cli2 configuration — run via `just lint-docs` (or `bunx markdownlint-cli2`).
+// CI job: `.github/workflows/ci.yml` → `docs` (informational, not a required check).
+{
+  "globs": ["**/*.md"],
+  "ignores": [
+    // Product content shipped to end users by the installer — never rewritten by our lint.
+    "template/**",
+    // User's dirty nested wiki repo — NEVER touch (synced separately, see docs/wiki-source/README.md).
+    "docs/wiki-source/**",
+    // Local-only installs (gitignored): OpenCode skills, AI-agent dirs, workspace playground.
+    "node_modules/**",
+    ".opencode/**",
+    ".agents/**",
+    "agents/**",
+    "skills/**",
+    "commands/**",
+    "references/**",
+    "tests/fixtures/workspace/**",
+    // Archive/working documents: historical diagnosis reports, FEV audit
+    // snapshots and the plan/todo boards — kept verbatim as records; linting
+    // them would mean rewriting hundreds of lines of frozen history.
+    "docs/diagnosis/**",
+    "docs/audit/**",
+    "tasks/**"
+  ],
+  "config": {
+    // ── Disabled rules ──────────────────────────────────────────────────────
+    // MD013 line-length: prose wraps are not enforced; tables/badges legitimately exceed 80 cols.
+    "MD013": false,
+    // MD033 inline HTML: README.md uses HTML tables and badge markup on purpose.
+    "MD033": false,
+    // MD022/MD031/MD032/MD058 blanks-around-X: the docs predate blank-line
+    // separation between headings/fences/lists/tables; consistent adoption
+    // would mean rewriting hundreds of lines across docs/ and specs/.
+    "MD022": false,
+    "MD031": false,
+    "MD032": false,
+    "MD058": false,
+    // MD024 duplicate headings: CHANGELOG.md repeats section names (Added,
+    // Fixed, Security…) once per release — that is the Keep a Changelog format.
+    "MD024": false,
+    // MD028 blank line inside blockquote: multi-paragraph blockquotes in
+    // README/ARCHITECTURE/specs intentionally separate paragraphs.
+    "MD028": false,
+    // MD029 ordered-list prefix: specs and ADRs deliberately continue list
+    // numbering across prose (e.g. E2E scenario 16…31, ADR lists starting at 4).
+    "MD029": false,
+    // MD036 no-emphasis-as-heading: repo convention ends specs with bold
+    // "End of Spec: …" / "Last revised: …" closers, not real headings.
+    "MD036": false,
+    // MD038 no-space-in-code: code spans like `✅ ` document prefixes that
+    // literally include a trailing space — the space IS the content.
+    "MD038": false,
+    // MD040 fenced-code-language: many fences are plain transcripts without a
+    // meaningful language; CONTRIBUTING.md (owned by the docs writer) also
+    // reports it, so the rule cannot go green repo-wide yet.
+    "MD040": false,
+    // MD060 table-column-style: table pipe spacing/alignment style varies
+    // (compact vs aligned) across ~40 files; pure cosmetics.
+    "MD060": false
+  }
+}
