@@ -46,12 +46,14 @@ For non-interactive use (scripts, CI), the installer supports these flags:
 | `--project` | Run Project Install (merge into existing project), skip menu |
 | `--update` | Run Update Workspace (refresh mandatory files), skip menu |
 | `--packs <ids>` | Comma-separated pack ids; skips the pack selection wizard |
-| `--packs-all` | Select all 8 agent packs non-interactively |
+| `--packs-all` | Select all 8 selectable agent packs non-interactively |
 | `--update-add-packs <ids>` | Update mode: add new packs to an existing installation |
-| `--force` | Skip confirmations and include all optional files |
+| `--force` | Skip confirmations. In Clean Install it also auto-selects **every** pack and **every** optional file (`CleanInstallUseCase.ts:40-41,66-67`); in Project Install it selects only the default pack and **no** optional files (`ProjectInstallUseCase.ts:42-43,69-70`) |
 | `--verbose` | Show detailed logs of every operation |
-| `--version` | Print the installed version and exit |
-| `--help` | Show usage instructions |
+| `--version`, `-V` | Print the installed version and exit |
+| `--help`, `-h` | Show usage instructions |
+
+Combining two mode flags (`--clean --project`, for example) is rejected as ambiguous rather than resolved by precedence: the CLI prints a usage error and exits with code `2` (`src/cli/parse-args.ts:164-167`, `src/cli/output.ts:24`). The same exit code covers a rejected `--dest` path, so path-traversal attempts fail with `2` too.
 
 Example — clean install in a specific directory without interactive prompts:
 
@@ -77,9 +79,10 @@ your-project/
 │   ├── agents/ → ../agents/     # Symlinks recreated post-install
 │   ├── commands/ → ../commands/
 │   └── skills/ → ../skills/
-├── agents/                    # 359 agents: 6 primary + 4 writer + 349 subagents across 8 selectable packs
+├── agents/                    # 155 by default (6 primary + 4 writers + 145 software-development); 359 if you select all 8 packs
 ├── commands/                  # 18 SDD slash commands
-└── skills/                    # 61 engineering skills
+├── skills/                    # 61 engineering skills
+└── .codice-version            # Installed version + selected packs; every update is gated on this file
 ```
 
 For a detailed breakdown of every file and directory, see [Workspace Structure](Workspace-Structure).
@@ -116,6 +119,7 @@ There you will discover what you can do with Códice and where to start.
 - [Workspace Structure](Workspace-Structure) — Learn what each file and directory does
 - [Commands](Commands) — Detailed reference for all 18 slash commands
 - [Agents](Agents) — Understand each agent's role, permissions, and recommended models
+- [Customization Guide](Customization-Guide) — Adapt models, permissions, skills, and commands to your project
 - [Configuration](Configuration) — Configure models, agents, permissions, MCP, and more
 
 For OpenCode-specific questions (agent configuration, permission model, MCP servers), refer to the [official OpenCode V2 documentation](https://opencode.ai/v2/docs/).

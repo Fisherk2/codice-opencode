@@ -16,7 +16,7 @@ rsync -a --delete --exclude='README.md' docs/wiki-source/*.md docs/wiki-source/.
 
 cd docs/wiki-source/.wiki
 git add .
-git commit -m "Sync wiki v$(node -p "require('../../package.json').version")"
+git commit -m "Sync wiki v$(node -p "require('../../../package.json').version")"
 git push
 ```
 

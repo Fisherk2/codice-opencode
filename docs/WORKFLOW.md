@@ -1,334 +1,100 @@
-# Plan de implementación – Códice v1.0.0 → v2.1.5
-**Fecha:** 2026-06-15 | **Última actualización:** 2026-11-18 (revisión pre-launch 5 ejes + remediación ✅ — v2.1.5-beta.1 lista para tag, 2027 tests, 31/31 e2e, tsc 0, lint 0) | **Metodología:** TDD Iterativo
+# Implementation Plan – Códice v1.0.0 → v2.1.5
+**Date:** 2026-06-15 | **Last updated:** 2026-11-19 (v2.1.5 **ready for stable deployment — not yet published**, `latest` still at 2.1.4; v2.1.5-beta.1 published under dist-tag `beta` 2026-11-18 — release run 44443767080 success, 2027 tests, 31/31 e2e, tsc 0, lint 0) | **Methodology:** Iterative TDD
 
-## 1. Visión de Fases
+## 1. Phase Vision
 
-| Fase | Objetivo | Entregables | Estado |
+| Phase | Goal | Deliverables | Status |
 |------|----------|-------------|--------|
-| F0 | Preparación | entorno, convenciones, CI/CD | ✅ Completo |
-| F1 | Infraestructura | BunFileSystem, GitHubRestClient, ClackPromptsAdapter | ✅ Completo |
-| F2 | Núcleo/Dominio | FileMergeEngine, VersionComparator, Result type | ✅ Completo |
-| F3 | Interfaces | CLI, DI, Use Cases, tests integración | ✅ Completo |
-| F4 | Pruebas | E2E (6 escenarios), CI integration, coverage gaps | ✅ Completo |
-| F4.5 | Workspace seguro | `--dest` flag, `tests/fixtures/workspace/`, `just dev` protegido | ✅ Completo |
-| F5 | CI/CD + Cross-platform | Builds multi-plataforma, release automation | ✅ Completo |
-| F5.5 | Publicación npm + bunx | Paquete npm @fisherk2-dev/codice, instalación vía bunx | ✅ Completo |
-| F6 | Documentación | README, CHANGELOG, ADRs finales | ✅ Completo |
-| F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth, TECH_DEBT.md | ✅ Completo |
-| FEV-1 a FEV-23 | Ver sección 3 | Issues críticos, SDD refactor, CI/CD, docs, agent packs, installer UX | ✅ Completo |
-| FEV-24 | Nuevos comandos v2.1: `/sync`, `/migrate`, `/deploy`, `/analyze` + SDD plugin refactor | #68, #67, #64, #57 | ✅ Completo (2026-08-11) |
-| FEV-25 | Reglas de delegación en agentes principales | #69 | ✅ Completo (2026-08-11) |
-| FEV-26 | Quick Wins: Bug fixes + Security patches + Documentation | #79, TD-V2-70, TD-V2-90, TD-V2-91, TD-V2-93 | ✅ Completo (2026-08-20) |
-| FEV-27 | Security & Observability: Plugin cleanup + Permissions + Backup safety | #80, #81, TD-V2-9, TD-V2-51 | ✅ Completo (2026-08-20) |
+| F0 | Preparation | environment, conventions, CI/CD | ✅ Complete |
+| F1 | Infrastructure | BunFileSystem, GitHubRestClient, ClackPromptsAdapter | ✅ Complete |
+| F2 | Core/Domain | FileMergeEngine, VersionComparator, Result type | ✅ Complete |
+| F3 | Interfaces | CLI, DI, Use Cases, integration tests | ✅ Complete |
+| F4 | Testing | E2E (6 scenarios), CI integration, coverage gaps | ✅ Complete |
+| F4.5 | Secure workspace | `--dest` flag, `tests/fixtures/workspace/`, `just dev` protected | ✅ Complete |
+| F5 | CI/CD + Cross-platform | Multi-platform builds, release automation | ✅ Complete |
+| F5.5 | npm + bunx publishing | npm package @fisherk2-dev/codice, installation via bunx | ✅ Complete |
+| F6 | Documentation | README, CHANGELOG, final ADRs | ✅ Complete |
+| F6.5 | Tech Debt + Coverage Gap Closure | VersionComparator refactor, pathResolver defense-in-depth, TECH_DEBT.md | ✅ Complete |
+| FEV-1 to FEV-23 | See section 3 | Critical issues, SDD refactor, CI/CD, docs, agent packs, installer UX | ✅ Complete |
+| FEV-24 | New v2.1 commands: `/sync`, `/migrate`, `/deploy`, `/analyze` + SDD plugin refactor | #68, #67, #64, #57 | ✅ Complete (2026-08-11) |
+| FEV-25 | Delegation rules in primary agents | #69 | ✅ Complete (2026-08-11) |
+| FEV-26 | Quick Wins: Bug fixes + Security patches + Documentation | #79, TD-V2-70, TD-V2-90, TD-V2-91, TD-V2-93 | ✅ Complete (2026-08-20) |
+| FEV-27 | Security & Observability: Plugin cleanup + Permissions + Backup safety | #80, #81, TD-V2-9, TD-V2-51 | ✅ Complete (2026-08-20) |
 | FEV-28 | Infrastructure & Performance: CI SHA-pins Node 24 + VersionComparator cache | TD-V2-7, TD-V2-61 | ✅ 2026-08-21 (1935 tests) |
-| FEV-29 | Migración `permission:`/`tools:` → `permissions:` (lista nativa V2) en los packs restantes de agentes (Opencode V2) | #91 | ✅ Completo (2026-09-22) — 349 archivos, 8 commits por pack |
-| FEV-30 | Remoción plugin SDD + banner Legacy + hardening review (5 ejes) | #90 | ✅ Completo (2026-09-22) — 20 commits, 1865 tests, 31/31 e2e |
-| FEV-31 | Issues #111–#116 + reparación de referencias huérfanas + registro del payload fuera de alcance | #111 #112 #113 #114 #115 #116 | ✅ Completo (2026-11-17) — 2027 tests, 31/31 e2e |
+| FEV-29 | Migration `permission:`/`tools:` → `permissions:` (native V2 list) in the remaining agent packs (Opencode V2) | #91 | ✅ Complete (2026-09-22) — 349 files, 8 commits per pack |
+| FEV-30 | SDD plugin removal + Legacy banner + hardening review (5 axes) | #90 | ✅ Complete (2026-09-22) — 20 commits, 1865 tests, 31/31 e2e |
+| FEV-31 | Issues #111–#116 + repair of orphan references + payload registration out of scope | #111 #112 #113 #114 #115 #116 | ✅ Complete (2026-11-17) — 2027 tests, 31/31 e2e |
 
-## 2. Fases Iniciales (F0 – F6.5)
+## 2. Initial Phases (F0 – F6.5)
 
-| Fase | Descripción | Resultados Clave | Fecha |
+| Phase | Description | Key Results | Date |
 |------|-------------|------------------|-------|
-| **F0** | Preparación del entorno | TypeScript strict, Biome, Just, CI/CD matrix | 2026-06-15 |
-| **F1** | Infraestructura base | BunFileSystem, GitHubRestClient, ClackPromptsAdapter | 2026-06-16 |
-| **F2** | Dominio y servicios | FileMergeEngine, VersionComparator, Result type | 2026-06-16 |
-| **F3** | CLI y use cases | main.ts, DI container, 3 modes, parse-args | 2026-06-16 |
-| **F4** | E2E + CI | 6 escenarios, CI matrix, coverage ~89% | 2026-06-17 |
-| **F4.5** | Workspace seguro | `--dest` flag, fixtures, ADR-005 | 2026-06-17 |
-| **F4.6** | Code review post-F4 | TemplateResolver + AtomicStager extraídos, bugs críticos | 2026-06-17 |
-| **F5** | CI/CD completo | Multi-platform builds, release automation | 2026-06-25 |
-| **F5.5** | Publicación npm | @fisherk2-dev/codice, bunx support | 2026-06-25 |
-| **F6** | Documentación | README, CHANGELOG, CONTRIBUTING, ARCHITECTURE | 2026-06-26 |
-| **F6.5** | Tech debt closure | Coverage gaps cerrados, benchmarks, TECH_DEBT.md | 2026-06-26 |
-
-**Métricas F0-F6.5:** 284 tests, 0 fail, 593 expects, coverage ~89%, 15/15 E2E
-
-## 3. Fases Evolutivas (FEV-1 al presente)
-
-Todas las fases evolutivas completadas y pendientes. Resumen por versión:
-
-### v1.0.x (FEV-1 a FEV-5) Completado
-
-| FEV | Objetivo | Issues | Resultado |
-|-----|----------|--------|-----------|
-| **FEV-1** | Issues críticos v1.0.5 | #6, #2, #3, #4, #5 | 382 tests, 6/6 E2E, ADR-007 |
-| **FEV-2** | bunx template resolution | #8 | 382 tests, 6/6 E2E |
-| **FEV-2-B** | Symlink post-install | #8 (root cause) | 419 tests, 8/8 E2E, ADR-008 |
-| **FEV-2-C** | Gitignore post-install | #11 | 465 tests, 12/12 E2E, ADR-009 |
-| **FEV-2-D** | Directory support + UX | .devin + optional menu | 472 tests, 14/14 E2E, ADR-010 |
-| **FEV-3** | Update fix + GitHub API | standard overwrite, repo name | 476 tests, 15/15 E2E |
-| **FEV-4** | SDD refactor + governance | #15 | 481 tests, 12 SDD commands |
-| **FEV-5** | CI/CD + Wiki | #23, #25 | 487 tests, 98.13% coverage |
-
-### v1.1.x (FEV-6 a FEV-10) Completado
-
-| FEV | Objetivo | Issues | Resultado |
-|-----|----------|--------|-----------|
-| **FEV-6** | Quick config + docs | #27, #28 | 502 tests, 15/15 E2E |
-| **FEV-7** | Agent governance + security | #26, #30 | 563 tests, 50+ restricted commands |
-| **FEV-8** | Obsidian subagent | #21 | obsidian-vault-writer + 6 skills |
-| **FEV-9** | MCP integration | #29 | 9 MCP servers, KNOWLEDGE chain |
-| **FEV-10** | Code quality + deps | TD-1.1, 2.1, 3.1, 3.2, 5.3 | 581 tests, TS 6.x |
-
-### v1.2.0 (FEV-11 a FEV-16) Completado
-
-| FEV | Objetivo | Issues | Resultado |
-|-----|----------|--------|-----------|
-| **FEV-11** | Binary removal | #46 | npm-only distribution |
-| **FEV-12** | References restructuring | #54, #52 | configurable references |
-| **FEV-13** | Documentation overhaul | #51, #53 | SDD plugin auto-discovery |
-| **FEV-14** | UX enhancements | #47, #56 | progress bar + /help |
-| **FEV-15** | Community standards | #55 | Code of Conduct |
-| **FEV-16** | Tech debt closure | TD-1.1, 2.1, 5.1, 5.2, 6.2 | 844 tests, 98.1% coverage |
-
-### v2.0.0 (FEV-17 a FEV-23) Completado
-
-| FEV | Objetivo | Resultado |
-|-----|----------|-----------|
-| **FEV-17** | Template restructuring | core/ + packs/ structure |
-| **FEV-18** | Agent classification | 355 agents, 10 packs |
-| **FEV-19** | Permission unification | 106 allow entries removed |
-| **FEV-20** | Plugin cleanup | VALID_SUBAGENTS removed |
-| **FEV-21** | Pack selection wizard | version gating, .codice-version v2.0 |
-| **FEV-22** | Install summary screen | agent counts, pre-merge summary |
-| **FEV-23** | Testing closure | 1920 tests, 30/30 E2E, v2.0.0 released |
-
-**Métricas v2.0.0:** ~41h implementación, ~9h overhead (code reviews, wiki sync, release)
-
-### v2.1.0 (FEV-24 y FEV-25 completos)
-
-| FEV | Objetivo | Issues | Estado |
-|-----|----------|--------|--------|
-| **FEV-24** | Nuevos comandos: `/sync`, `/migrate` (opcional), `/deploy`, `/analyze` | #68, #67, #64, #57 | ✅ Completo (2026-08-07) |
-| **FEV-25** | Reglas de delegación en agentes principales | #69 | ✅ Completo (2026-08-11) |
-
-**Diagnósticos:** `docs/diagnosis/fix09` a `fix13`
-
-**FEV-24 sub-fases:**
-- **FEV-24-A /sync** — Bidirectional git sync (tlaloc) | Issue #68 | ✅ 2026-08-07
-- **FEV-24-B /migrate** — Stack migration planner (quetzalcoatl, optional) | Issue #67 | ✅ 2026-08-07
-- **FEV-24-C /deploy** — Git workflow + CI/CD (mictlantecuhtli) | Issue #64 | ✅ 2026-08-07
-- **FEV-24-D /analyze** — Architectural analysis (quetzalcoatl) | Issue #57 | ✅ 2026-08-07
-- **FEV-24 Docs** — CHANGELOG v2.1.0 + WORKFLOW + Wiki sync | — | ✅ 2026-08-07
-- **FEV-24 Plugin** — COMMAND_PHASE_MAP + OQ-3 removal + SDD pipeline refactor | — | ✅ 2026-08-08
-- **FEV-24 Integration** — Intent auto-discovery, command reference fixes, test consolidation | — | ✅ 2026-08-10
-- **FEV-24 Review** — Bilingual intents (SPANISH_INTENT_KEYWORDS), stopwords extraction, spec update | — | ✅ 2026-08-11
-
-**FEV-24 métricas finales:** 4 comandos nuevos, 17→17 commands, SDD plugin simplificado (INTENT_PATTERNS eliminado, auto-discovery), 2052 tests / 0 fail, 31/31 E2E, just check 0 errores
-
----
-
-### v2.1.1
-
-#### FEV-26: Quick Wins — Bug fixes + Security patches + Documentation
-
-**Objetivo:** Resolver el bug crítico #79, parches de seguridad, y correcciones de metadata.
-**Effort total:** 4-6h | **Riesgo:** Bajo | **Estado:** ✅ Completo (2026-08-20)
-
-| ID | Item | Effort | Risk | Diagnóstico |
-|----|------|--------|------|-------------|
-| **#79** | `.codice-version` no escrito tras Clean Install | 2-3h | High | `fix14-clean-install-version-file.md` |
-| **TD-V2-70** | Shell injection via `github.ref_name` | 0.5h | Medium | `fix17-shell-injection-github-ref-name.md` |
-| **TD-V2-90** | Business pack agent count mismatch (92→91) | 0.5h | Low | `fix25-business-pack-agent-count.md` |
-| **TD-V2-91** | Writers pack agent count mismatch (2→4) | 0.5h | Low | `fix07-writers-pack-agent-count.md` |
-| **TD-V2-93** | Outdated comments in FileMergeEngine | 1h | Low | `fix10-outdated-comments-file-merge-engine.md` |
-
-**Criterios de éxito:**
-- Bug #79 resuelto: Clean Install escribe `.codice-version` con versión correcta
-- Shell injection corregido: `release.yml` usa `$GITHUB_REF_NAME` en lugar de `${{ github.ref_name }}`
-- Manifest actualizado: business pack (91 agentes), writers pack (4 agentes)
-- Comentarios actualizados en `FileMergeEngine.ts`
-- Tests: 2052+ pasando, coverage ≥95%
-
-**Diagnósticos:** `fix14`, `fix17`, `fix20`, `fix24`, `fix23`
-
----
-
-#### FEV-27: Security & Observability — Plugin cleanup + Permissions + Backup safety
-
-**Objetivo:** Simplificar plugin SDD, gobernanza de directorios externos, mejorar seguridad de backups.
-**Effort total:** 6-8h + code review | **Riesgo:** Medio | **Estado:** ✅ Completo (2026-08-21, code review hardened)
-
-| ID | Item | Effort | Risk | Diagnóstico |
-|----|------|--------|------|-------------|
-| **#81** | Permisos directorios externos (deny-by-default) | 1-2h | Medium | `fix16-external-directory-permissions.md` |
-| **TD-V2-9** | SIGINT mid-commit backup overwrite | 2-3h | Low | `fix05-sigint-backup-overwrite.md` |
-| **TD-V2-51** | Missing staging_cleanup event | 1h | Low | `fix09-missing-staging-cleanup-event.md` |
-
-**Criterios de éxito:**
-- Plugin simplificado: solo bloquea comandos destructivos
-- `opencode.json` incluye `external_directory` con deny-by-default
-- Backup safety: `AtomicStager` persiste rollback intent o documenta limitación
-- Evento `staging_cleanup` emitido y visible en verbose mode
-- Code review hardening: 1 Critical + 4 Important + 3 Suggestions aplicados
-- Tests: 1935 tests, 31/31 E2E, just check 0 errors
-
-##### Resultados de code review (commit `a2964fd`)
-
-| ID | Severidad | Hallazgo | Resolución |
-|----|-----------|----------|------------|
-| C1 | Critical | Plugin gate no leía `output.args.command` correctamente | `extractBashCommand` ahora lee `output.args.command` |
-| I1 | Important | Tests no invocaban el hook real del plugin | 5 integration tests nuevos con `output.args.command` correcto |
-| I2 | Important | Marker de backup no se limpiaba en fallo manejado | `AtomicStager` remueve marker en fallo manejado |
-| I3 | Important | Patrones `rm -r -f` y `rm -f -r` no cubiertos | Añadidos a la lista de patrones destructivos |
-| I4 | Important | Detección de huérfanos frágil (string matching) | Flag-based guard reemplaza string matching |
-| S1 | Suggestion | Variante `staging_cleanup` muerta en ProgressCallback | Eliminada (evento se emite via VerboseLogger, no ProgressCallback) |
-| S2 | Suggestion | Faltaban patrones staging/backup en gitignore | Añadidos a `template/estandar/gitignore` |
-
-**Diagnósticos:** `fix16`, `fix19`, `fix21`
-
----
-
-#### FEV-28: Infrastructure & Performance — CI/CD updates + Caching
-
-**Objetivo:** Actualizar SHA-pins de GitHub Actions para Node 24, optimizar comparación de versiones.
-**Effort total:** 2-3h | **Riesgo:** Bajo | **Estado:** ✅ Completo (2026-08-21)
-
-| ID | Item | Effort | Risk | Diagnóstico |
-|----|------|--------|------|-------------|
-| **TD-V2-7** | Action SHA-pins force Node 24 (deprecated) | 1-2h | Low | `fix10-action-sha-pins-node24.md` |
-| **TD-V2-61** | No caching for version comparison | 1h | Low | `fix09-no-caching-version-comparison.md` |
-
-**Dependencias:** Ninguna — inicio limpio tras FEV-27 completo.
-
-**Criterios de éxito:**
-- CI/CD: SHA-pins actualizados a últimas versiones compatibles con Node 24
-- `VersionComparator` cachea parsed semver objects
-- Tests: 1935 tests, 31/31 E2E, just check 0 errors
-- CI matrix (Linux, macOS, Windows) sin warnings de Node 24 deprecation
-
-**Diagnósticos:** `fix23`, `fix22`
-
----
-
-#### Resumen de Fases v2.1.1
-
-| Fase | Items | Effort Total | Risk | Prioridad |
-|------|-------|--------------|------|-----------|
-| FEV-26 | 5 items (1 bug + 4 TD) | 4-6h | Bajo | ✅ Completo |
-| FEV-27 | 4 items (2 issues + 2 TD) + code review | 6-8h | Medio | ✅ Completo (code review hardened) |
-| FEV-28 | 2 items (2 TD) | 2-3h | Bajo | ✅ Completo (2026-08-21) |
-| **Total** | **11 items** | **12-17h** | — | — |
-
-**Estrategia:** FEV-26 ✅ + FEV-27 ✅ (code review hardened) + FEV-28 ✅ completados. v2.1.1 released 2026-08-25 (1935 tests, 31/31 E2E).
-
-**Release v2.1.1:** Todas las fases completadas. Publish con dist-tag `latest` → `@fisherk2-dev/codice@2.1.1`.
-
-#### Resumen v2.1.2 — Hotfix ✅ (2026-08-28)
-
-| Item | Type | Description |
-|------|------|-------------|
-| docs-update delegation fix | Fix | Explicit `docs-writer` and `technical-writer` subagent references |
-| Tech debt reorg | Chore | v2.1.2 debt → v2.1.3, v2.1.3 → v2.1.4 |
-
-**Release v2.1.2:** Hotfix released 2026-08-28. Publish con dist-tag `latest` → `@fisherk2-dev/codice@2.1.2`.
-
-### v2.1.3-beta.1 (Hotfix Opencode V2 — FEV-29 ✅ + FEV-30 ✅, 2026-09-22)
-
-> Deuda 2.1.x previamente planificada para v2.1.3 se recorre a v2.1.4 (ver TECH_DEBT.md). Alcance reservado para issues surgidas con Opencode V2.
-
-| Item | Type | Issue | Description |
-|------|------|-------|-------------|
-| **FEV-29** | Fix | #91 | Migración completa `permission:`/`tools:` → `permissions:` (lista nativa V2) de los 349 archivos de agentes pendientes de `template/obligatorio/packs/` (8 packs, un commit por pack; main/ y writers/ ya eran nativos V2). Codemods `scripts/migrate-v1-to-v2-permissions.ts` + `scripts/migrate-all-packs.ts`, spec `spec-agent-format-v2.md` + tests de frontmatter + guard `tests/unit/quality/source-hygiene.test.ts`. Diagnósticos: `docs/diagnosis/fix28-subagent-delegation-kill-switch.md`, `docs/diagnosis/fix29-fase2-tools-key-and-nul-audit.md` |
-| **FEV-30** | Removal | #90 | ✅ Completo (2026-09-22) — remoción completa del plugin SDD (template, `.opencode/plugins/`, tests, specs/ADRs — no se migró a V2) + banner runtime `src/application/legacyBanner.ts` (versiones ≤ 2.1.2 solo Opencode Legacy) + hardening del review de 5 ejes (6 commits de fixes). Diagnóstico: `docs/diagnosis/fix27-sdd-plugin-removal-v2-incompatibility.md` |
-
-**Dependencias:** FEV-29 y FEV-30 son independientes entre sí. Ambos completados 2026-09-22 en `hotfix/opencode-v2-migrate`: FEV-29 (migración a la lista nativa `permissions:` — 349 archivos — + reasignación de comandos), FEV-30 (remoción plugin + banner + hardening review — 20 commits).
-
-**FEV-29 — Entregado (2026-09-22):**
-- Codemod V1→V2 (`scripts/migrate-v1-to-v2-permissions.ts`) + bulk runner `scripts/migrate-all-packs.ts` (retirado tras completar los 8 packs).
-- Auditoría `tools:`/NUL + claves `system:`/`disabled:` aceptadas; retiro del productor legacy `reformat-agent`.
-- Simplificación (filtros de pack resueltos una vez, ramas muertas eliminadas, duplicados colapsados, freno `subagent "*": deny` dentro de la lista).
-- Review-round: freno dentro de la lista, quote/validación action-effect, depth fail-loud, exit 2 en dry-run con errores, dedup CI (`just test` solo non-Linux).
-- Gates verdes: salida migrada verificada limpia.
-
-**FEV-30 — Entregado (2026-09-22):**
-- Remoción total del plugin SDD (template `.opencode/plugins/`, copia dev, suites `tests/plugin/`, recipes CI `qa-plugin`, specs/ADRs `spec-sdd-plugin-decoupling` + `adr-013`/`adr-017`).
-- Banner runtime `src/application/legacyBanner.ts` cableado en los 3 use cases de instalación (no bloqueante, fail-open).
-- Review de 5 ejes + 6 commits de fixes (permisos bash endurecidos, validación `installedPacks`, predicado `isOnLegacyLine`, edge tests 5→13).
-- Gates verdes: `just check` 0, `just test` 1865/0, e2e 31/31. Release v2.1.3-beta.1 (`CHANGELOG.md`).
-
-**Estable v2.1.3 — lista pendiente de go-ahead (2026-09-22):** pre-release `v2.1.3-beta.1` publicada y verificada (dist-tag `beta`, `latest` intacto). Review-round post-beta aplicado en `release/2.1.3` (12 commits: hardening de permisos del template — `git bisect`/`gh api`/cookies de sesión X/redirecciones shell/`tar -tf` —, estabilización stager/merge — fail-early en backup, rollback completo, symlinks, `MergeError` en planificación —, eventos postInstall condicionales, quality-on-tag en `release.yml`, split del puerto `IUserPrompt`). Gates finales: 1959 tests / 4734 expect() / 0 fail, e2e 31/31, cobertura 96.39% total / 98.95% `src/cli/main.ts`, madge 0 ciclos. Lanzamiento estable (`v2.1.3` → `latest`, sync a `develop`) pendiente de aprobación del usuario — aún no ejecutado.
-
-### v2.1.5 (FEV-31 ✅, 2026-11-17) — rama `hotfix/update-payload`
-
-> **Origen:** `docs/diagnosis/fix30-fev31-partial-issue-implementation.md` §9. El commit `1941ed3` fue una **estabilización INCOMPLETA**: dejó los gates en verde pero sin cerrar ningún gap de los issues #111–#116. FEV-31 los cerró y registró el payload adyacente que lo acompañaba (§8 del diagnóstico).
-
-| Commit | Tarea | Resultado |
-|--------|-------|-----------|
-| `4f27bea` | T0 | baseline congelada: 1972 tests, 31/31 e2e, tsc 0 |
-| `2638432` | T0b | presupuesto de cuerpo de prompt de 180 líneas para agentes **y** comandos (spec + 2 guards + CODE_STYLE) |
-| `61e42fc` | T1 (#114) | prohibición de ejecución en background + `websearch`/`webfetch` en la lista fuente + gramática, 6 agentes |
-| `36533e1` | T2 (#111) | scan de delegación cubre `agents/` y `.opencode/agents/`, fallback legible sin Glob, roster en `/plan` |
-| `e499956` | T3 (#112a) | `/hotfix` con fases 1, 2, 3, 4, 5 y 6 completas (GO/NOT-GO, sin despliegue) |
-| `febf103` | T5 (#115) | fase de setup `find-skills` en `/spec`, `/feature`, `/diagnosis`, `/migrate`; solo a nivel de proyecto |
-| `d58f1ce` | T6 (#116a) | nuevo skill Obligatorio `vertical-slice-architecture` (+4 referencias) |
-| `95d3e4d` | T7 (#116b) | fases VSA reales con Prototipado 1-3 / MVP 4-6 / Empresarial 7+ en 5 comandos |
-| `6112c64` | T4 (#112b) | `/evolve` → `/feature`; 18 comandos, 61 skills, ciclo de hotfix documentado |
-| `318ce1d`, `aa6a137` | T8 | 32 enlaces de ADR → `docs/adr/`; skills/artefactos borrados retirados de specs, writers y wiki |
-
-**Gates finales (2026-11-17):** `just test` **1991/0**, `just test-e2e` **31/31**, `bun run tsc --noEmit` **0**, lint vía `/tmp/opencode/biome ci src/ tests/` **0**.
-
-#### Payload fuera de alcance registrado en esta fase
-
-Lo siguiente aterrizó junto a FEV-31 pero **no es trabajo de FEV-31**; se registra aquí para que la documentación oficial describa el árbol real (inventario: diagnóstico fix30 §8).
-
-**Dentro del alcance FEV-31:** issues #111, #112, #114, #115, #116 (cerrados arriba) y #113 ya estaba resuelto; reparación de las referencias huérfanas que dejó la reestructuración (enlaces de ADR, `skills-lock.json`, `.gitmessage`, skills borradas) y el propio registro de este inventario.
-
-**Adyacente, fuera de alcance — no forma parte de FEV-31:**
-
-- **Intercambio de modelos de los 6 agentes primarios** en `template/obligatorio/core/opencode.json`, validados contra el catálogo de OpenCode. Cambio adyacente; no es entregable de FEV-31 ni de los issues #111–#116.
-- **6 plugins añadidos** a `opencode.json` (#113), ya presentes antes de FEV-31.
-- **Traslado de ADRs** `specs/adr/` → `docs/adr/` (23 archivos); `specs/adr/` ya no existe.
-- **Template `estandar`:** nuevos `docs/adr/adr-template.md` y `BACKLOG.md`.
-- **Skills del template:** −8 (`baoyu-format-markdown`, `baoyu-url-to-markdown`, `baoyu-markdown-to-html`, `xlsx`, `excel-analysis`, `obsidian-vault`, `obsidian-markdown`, `obsidian-cli`) y +17 (`brainstorming`, `codebase-design`, `codebase-onboarding`, `data-analysis`, `data-plotting`, `framework-migration-legacy-modernize`, `improve-codebase-architecture`, `markdown-mermaid-writing`, `osint-skills`, `pr`, `prototype`, `refactor-legacy-code`, `security-audit`, `setup-pre-commit`, `spreadsheet-analysis`, `teach`, `tech-debt`); más `vertical-slice-architecture` de FEV-31 → **61 skills**.
-- **`skills-lock.json` eliminado**; `.gitmessage` y el seed opcional `requirements.txt` retirados.
-- **Nuevos manifiestos opcionales:** `Cargo.toml`, `package.json`, `pyproject.toml`.
-- **Reescritura de estilo blanket** en 13 comandos del template.
-
-#### Revisión pre-launch y remediación (2026-11-18) — ESTADO: LISTO PARA DESPLIEGUE
-
-Campaña de revisión de 5 ejes previa al lanzamiento: 4 especialistas, 47 hallazgos previos corregidos y 9 commits de remediación + 3 de alineación (`4ed7edb..196aed3`) — conteos del manifiesto, bump de versión a `2.1.5-beta.1`, sanitización ANSI, reporte de errores CLI, preservación del modo en rollback, hardening de CI y alineación e2e/spec.
-
-**Gates finales (2026-11-18):** `just test` **2027/0** (73 archivos, 4859 expect calls), `just test-e2e` **31/31**, `bun run tsc --noEmit` **0**, `/tmp/opencode/biome ci src/ tests/` **0** (2 warnings + 1 info preexistentes). Equivalentes release-gate: tag == `package.json` `2.1.5-beta.1`, extracción de sección de CHANGELOG no vacía.
-
-**ESTADO: LISTO PARA DESPLIEGUE.** `package.json` (y `src/cli/version.ts`, que deriva `VERSION` de él) en `2.1.5-beta.1`; rama `hotfix/update-payload` lista para cortar el tag con `just release v2.1.5-beta.1` — **GO del usuario pendiente**; dist-tag `beta`, `latest` intacto. PR #119 abierta a `develop` (no mergeada). Rollback: `just rollback v2.1.5-beta.1 <good> beta`, RTO < 15 min. No bloqueantes: 16 casos de coverage-gap (priorizar residue-reporting del rollback antes de GA), campo `engines: bun>=1.3`, aviso E2E SIGINT-mid-install, TD-V2-98 (deriva de cobertura local), sincronía wiki pendiente (10 archivos sucios preexistentes en `docs/wiki-source/.wiki/`).
-
-## 4. Estrategia de Pruebas por Fase
-
-| Tipo | Alcance | Herramienta | Criterio de Éxito |
+| **F0** | Environment setup | TypeScript strict, Biome, Just, CI/CD matrix | 2026-06-15 |
+| **F1** | Base infrastructure | BunFileSystem, GitHubRestClient, ClackPromptsAdapter | 2026-06-16 |
+| **F2** | Domain and services | FileMergeEngine, VersionComparator, Result type | 2026-06-16 |
+| **F3** | CLI and use cases | main.ts, DI container, 3 modes, parse-args | 2026-06-16 |
+| **F4** | E2E + CI | 6 scenarios, CI matrix, coverage ~89% | 2026-06-17 |
+| **F4.5** | Secure workspace | `--dest` flag, fixtures, ADR-005 | 2026-06-17 |
+| **F4.6** | Code review post-F4 | TemplateResolver + AtomicStager extracted, critical bugs | 2026-06-17 |
+| **F5** | Complete CI/CD | Multi-platform builds, release automation | 2026-06-25 |
+| **F5.5** | npm publishing | @fisherk2-dev/codice, bunx support | 2026-06-25 |
+| **F6** | Documentation | README, CHANGELOG, CONTRIBUTING, ARCHITECTURE | 2026-06-26 |
+| **F6.5** | Tech debt closure | Coverage gaps closed, benchmarks, TECH_DEBT.md | 2026-06-26 |
+
+**F0–F6.5 metrics:** 284 tests, 0 fail, 593 expects, coverage ~89%, 15/15 E2E
+
+## 3. Evolutionary Phases (FEV-1 to present)
+
+All evolutionary phases, completed and pending. Summary by version:
+
+| Version | FEVs | Key deliverable | Result |
+|---------|------|------------------|-----------|
+| v1.0.x | FEV-1–5 | Critical issues, bunx resolution, post-install symlink/gitignore, SDD refactor, CI/CD | 487 tests, 15/15 E2E, 98.13% coverage |
+| v1.1.x | FEV-6–10 | Quick config, agent governance, Obsidian subagent, MCP, TypeScript 6.x | 581 tests, 15/15 E2E, 98.13% coverage |
+| v1.2.0 | FEV-11–16 | Binary removal (npm-only), references, UX, community standards, debt closure | 844 tests, 15/15 E2E, 98.1% coverage |
+| v2.0.0 | FEV-17–23 | Template packs, agent classification, permission unification, pack wizard, install summary | 1920 tests, 30/30 E2E, 95.68% overall / 99.12% src |
+| v2.1.0 | FEV-24–25 | `/sync`, `/migrate`, `/deploy`, `/analyze` + agent delegation protocol | 2052 tests, 31/31 E2E, ≥95% coverage |
+| v2.1.1 | FEV-26–28 | Bug #79, security patches, plugin cleanup, external permissions, CI Node 24, semver cache | 1935 tests, 31/31 E2E, ≥95% coverage |
+| v2.1.2 | Hotfix (no FEV) | docs-update delegation fix + debt reorganization | 1935 tests, 31/31 E2E, ≥95% coverage |
+| v2.1.3-beta.1 | FEV-29–30 | Native V2 `permissions:` migration (349 files), SDD plugin removal + legacy banner | 1865 tests, 31/31 E2E, ≥95% coverage |
+| v2.1.5 | FEV-31 + pre-launch + docs pass | Issues #111–#116, orphan references repaired; beta published under dist-tag `beta`, stable **ready for deployment (not published)** | 2027 tests, 31/31 E2E, 96.95% coverage (local) |
+
+## 4. Testing Strategy by Phase
+
+| Type | Scope | Tool | Success Criteria |
 |------|---------|-------------|-------------------|
-| Unitarias | Dominio (entities, services, types) | Bun test | 100% func lines |
-| Integración | Adaptadores, Use Cases, CLI | Bun test | > 95% func/lines |
-| E2E | 31 escenarios CLI en directorios aislados | bash + fixtures | 31/31 pasando |
-| Packaging | Estructura del tarball npm | Bun test | 5/5 escenarios |
-| Coverage | Cobertura general | bun test --coverage | ≥95% lines, ≥95% funcs |
+| Unit | Domain (entities, services, types) | Bun test | 100% func lines |
+| Integration | Adapters, Use Cases, CLI | Bun test | > 95% func/lines |
+| E2E | 31 CLI scenarios in isolated directories | bash + fixtures | 31/31 passing |
+| Packaging | npm tarball structure | Bun test | 5/5 scenarios |
+| Coverage | Overall coverage | bun test --coverage | ≥95% lines, ≥95% funcs |
 
-## 5. Métricas de Progreso
+## 5. Progress Metrics
 
-### v2.0.0 (release final — 2026-08-07)
+### v2.0.0 (final release — 2026-08-07)
 
-- **Tests totales:** 1920 tests, 0 fail
-- **Tests E2E:** 30/30 pasando
+- **Total tests:** 1920 tests, 0 fail
+- **E2E tests:** 30/30 passing
 - **Coverage:** 95.68% overall / 99.12% production `src/`
-- **`just check`:** 0 errores
-- **FEV-17 a FEV-23:** Todos completos
-- **Esfuerzo total v2.0.0:** ~41h implementación + ~9h overhead (code reviews, wiki sync, release)
+- **`just check`:** 0 errors
+- **FEV-17 to FEV-23:** All complete
+- **Total v2.0.0 effort:** ~41h implementation + ~9h overhead (code reviews, wiki sync, release)
 
-### v2.1.0 (FEV-24 y FEV-25 completos — 2026-08-12)
+### v2.1.0 (FEV-24 and FEV-25 complete — 2026-08-12)
 
-- **Tests totales:** 2052 tests, 0 fail
-- **Tests E2E:** 31/31 pasando (v2.1 añadió escenario 31)
-- **`just check`:** 0 errores (146 archivos)
+- **Total tests:** 2052 tests, 0 fail
+- **E2E tests:** 31/31 passing (v2.1 added scenario 31)
+- **`just check`:** 0 errors (146 files)
 - **Coverage:** ≥95% lines, ≥95% funcs (production `src/`)
-- **FEV-24:** Completo (8 sub-fases: 4 commands + docs + plugin + integration + review)
-- **FEV-25:** Completo — delegation protocol en 6 agentes principales (Issue #69)
-- **SDD plugin:** INTENT_PATTERNS eliminado → auto-discovery + SPANISH_INTENT_KEYWORDS overlay
-- **CI/CD:** Branch protection real (main/develop), SHA-pinned actions, PR/issue templates, npm provenance SLSA v1
-- **Release:** v2.1.0-beta.1 publicado a npm (dist-tag beta), tag v2.1.0-beta.1
+- **FEV-24:** Complete (8 sub-phases: 4 commands + docs + plugin + integration + review)
+- **FEV-25:** Complete — delegation protocol in 6 primary agents (Issue #69)
+- **SDD plugin:** INTENT_PATTERNS removed → auto-discovery + SPANISH_INTENT_KEYWORDS overlay
+- **CI/CD:** Real branch protection (main/develop), SHA-pinned actions, PR/issue templates, npm provenance SLSA v1
+- **Release:** v2.1.0-beta.1 published to npm (dist-tag beta), tag v2.1.0-beta.1
 
-### Histórico de releases
+### Release history
 
-| Release | Tests | E2E | Coverage | Fecha |
+| Release | Tests | E2E | Coverage | Date |
 |---------|-------|-----|----------|-------|
 | v1.0.3 | 343 | 6/6 | ~89% | 2026-06-16 |
 | v1.0.11 | 476 | 15/15 | ~89% | 2026-06-26 |
@@ -340,5 +106,7 @@ Campaña de revisión de 5 ejes previa al lanzamiento: 4 especialistas, 47 halla
 | v2.1.1 | 1935 | 31/31 | ≥95% | 2026-08-25 |
 | v2.1.2 | 1935 | 31/31 | ≥95% | 2026-08-28 |
 | v2.1.3-beta.1 | 1865 | 31/31 | ≥95% | 2026-09-22 |
-| v2.1.3 (estable, pendiente de lanzamiento) | 1959 | 31/31 | 96.39% | 2026-09-22 |
-| v2.1.5-beta.1 (lista para tag) | 2027 | 31/31 | 96.95% (local) | 2026-11-18 |
+| v2.1.3 (stable) | 1959 | 31/31 | 96.39% | 2026-09-23 |
+| v2.1.4 (hotfix, npm `latest`) | 1959 | 31/31 | ≥95% | 2026-09-25 |
+| v2.1.5-beta.1 (published, dist-tag `beta`) | 2027 | 31/31 | 96.95% (local) | 2026-11-18 |
+| v2.1.5 (ready — stable not yet published, `latest` at 2.1.4) | 2027 | 31/31 | 96.95% (local) | 2026-11-19 |

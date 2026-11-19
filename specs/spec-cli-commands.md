@@ -23,7 +23,7 @@ The Códice CLI is designed around three core principles:
 | Principle | Description | Implementation |
 |-----------|-------------|----------------|
 | **Fool-proof** | The user cannot accidentally destroy their work. Destructive actions require explicit confirmation; the update flow is version-gated. | Confirmation prompts before merge; staging directory + atomic commit; `.codice-backup` files kept for pre-update content. |
-| **Atomic** | Operations either complete fully or leave zero trace. No partial states. | Files are staged under `.codice-staging/` (`src/infrastructure/config/constants.ts — STAGING_DIR_NAME`) and committed in one pass by the merge engine; a failed commit restores `.codice-backup` files and cleans staging (`src/infrastructure/adapters/AtomicStager.ts — commitStaging` rollback path). |
+| **Atomic** | Operations either complete fully or leave zero trace. No partial states. | Files are staged under a per-run `.codice-staging-<random>` dir (`STAGING_DIR_PREFIX` in `src/infrastructure/config/constants.ts` + `mkdtemp` in `src/infrastructure/adapters/AtomicStager.ts`, so concurrent runs never share staging) and committed in one pass by the merge engine; a failed commit restores `.codice-backup` files and cleans staging (`AtomicStager.ts — commitStaging` rollback path). |
 | **Safe** | Graceful degradation at every boundary (network, disk, permissions). | GitHub API timeout + fail-soft (`src/infrastructure/adapters/GitHubRestClient.ts`), actionable error messages (`Result<T, Error>` everywhere), SIGINT staging cleanup (`src/cli/signalHandlers.ts — registerSigintHandler`). |
 
 Two interaction models exist, and they are **orthogonal to mode selection**:
@@ -132,18 +132,21 @@ Execution order in `src/cli/main.ts — main`:
    value validation returns `null` from `parseArgs` →
    `Usage error: unrecognized arguments. Use --help for usage information.` (stderr) →
    exit `2`.
-3. **Mode resolution:** flags are *not* mutually exclusive. If several mode flags are
-   given, precedence is `--clean` > `--project` > `--update`
-   (`src/cli/parse-args.ts — parseArgs`, final if-chain). With **no** mode flag the CLI
-   is interactive (`mode: "interactive"`).
+3. **Mode resolution:** the mode flags are *mutually exclusive*. Combining two or more
+   of `--clean`/`--project`/`--update` is ambiguous, so `parseArgs` returns `null` →
+   generic usage error, exit `2` (`src/cli/parse-args.ts`, pinned by
+   `tests/unit/cli/parse-args.test.ts` "should reject more than one mode flag"). With
+   **no** mode flag the CLI is interactive (`mode: "interactive"`).
 4. **Version detection** (`src/cli/versionContext.ts — detectVersionContext`) → shown as
    a note in **every** mode, interactive or not (see §3.0).
 5. **Menu (interactive only)** → **mode execution** (§3).
 
 > ⚠ v1.0.0 documented an `Error: Only one mode flag allowed` message and a rule that
-> non-interactive mode flags require `--force`. **Neither exists in the code.** Multiple
-> mode flags resolve by precedence; omitting `--force` simply keeps the prompts (which
-> will fail or hang without a TTY — hence §8: CI must pass `--force`).
+> non-interactive mode flags require `--force`. **Neither message/rule exists verbatim in
+> the code.** Multiple mode flags are rejected — with the *generic* usage error and exit
+> `2` since FEV-31 (before that they resolved by precedence) — while omitting `--force`
+> simply keeps the prompts (which will fail or hang without a TTY — hence §8: CI must
+> pass `--force`).
 
 ---
 
@@ -153,7 +156,7 @@ Execution order in `src/cli/main.ts — main`:
 
 Before any mode logic, the CLI prints the detected installation state as a `clack.note`
 (`src/infrastructure/adapters/ClackPromptsAdapter.ts — showVersionInfo`, copy from
-`src/infrastructure/adapters/versionInfoMessages.ts — buildVersionInfoMessages`):
+`src/application/versionInfoMessages.ts — buildVersionInfoMessages`):
 
 | Status (`versionContext.ts`) | Note title | Note body (first line / behavior) |
 |------------------------------|------------|-----------------------------------|
@@ -203,12 +206,12 @@ destination as *mandatory* (overwrite whatever exists).
 **Behavior** (`src/application/use-cases/CleanInstallUseCase.ts`, flow in
 `InstallUseCaseBase.ts — execute`):
 
-1. `checkWritable` (`src/application/helpers.ts`): probes by writing/removing a test
+1. `checkWritable` (`src/application/writableCheck.ts`): probes by writing/removing a test
    file; failure → `Permission denied at "<dest>". Check directory permissions or run
    with elevated access.` → exit `1`.
 2. Overwrite confirmation — **skipped** when `--force` or the directory is effectively
    empty (only `.git`/`.codice-version` present; `BunFileSystem.ts — isEmpty`,
-   `helpers.ts — confirmOverwrite`):
+   `src/application/confirmOverwrite.ts — confirmOverwrite`):
    `The destination directory "<dest>" is not empty. All existing files may be
    overwritten. Continue?` — default **No**. "No" → `Clean installation cancelled by
    user.` → exit `0`.
@@ -218,8 +221,8 @@ destination as *mandatory* (overwrite whatever exists).
    pre-selected (`src/application/packOptions.ts — DEFAULT_PACKS`),
    **required: true → minimum 1 pack** (`ClackPromptsAdapter.ts — selectPacks`).
    Cancel → empty selection → install aborts cleanly with exit `0`.
-4. **Optional checklist** — `Select optional files to install:` multiselect over the 10
-   `optional` manifest rules (`helpers.ts — promptForOptionals`); not required (zero
+4. **Optional checklist** — `Select optional files to install:` multiselect over the 11
+   `optional` manifest rules (`src/application/optionalsPrompt.ts — promptForOptionals`); not required (zero
    allowed). With `--force`, **all optional files are auto-selected**
    (`CleanInstallUseCase.ts — selectOptionals`).
 5. **Installation summary** note (`📋 Installation Summary`) — informational only, no
@@ -307,7 +310,8 @@ information only; the merge always uses the local `template/` shipped inside
    `sdd-workflow-test.md`, and `Do NOT delete the plugins/ directory itself`. Shown
    **before** the confirm prompt so every path (A/B/non-interactive) sees it.
 4. **Confirmation** (skipped by `--force`): `Update workspace in "<dest>"? Packs: <list>.
-   Continue?` — default **Yes** (`maybeConfirmUpdate`, `helpers.ts — confirmOverwrite`).
+   Continue?` — default **Yes** (`src/application/use-cases/updateHelpers.ts —
+   confirmUpdateUnlessForced`, which calls `confirmOverwrite` with `defaultYes: true`).
    "No" → `Update cancelled by user.` → exit `0`.
 5. **GitHub info check** — never blocks (`src/application/use-cases/updateStatusCheck.ts
    — reportRemoteStatus`): `GET .../repos/fisherk2/codice-opencode/releases/latest`,
@@ -329,7 +333,7 @@ information only; the merge always uses the local `template/` shipped inside
      `Cancel` → `Update cancelled by user.` → exit `0`.
      Option B opens the pack multiselect with installed packs **locked** — labeled
      `[INSTALLED, LOCKED]`, hint `Already installed — cannot be removed`
-     (`src/infrastructure/adapters/packPromptOptions.ts`). If nothing new is chosen →
+     (`src/application/packPromptOptions.ts`). If nothing new is chosen →
      info `No new packs selected. Update cancelled.` → exit `0`.
 8. **Merge** of non-optional rules scoped to the resolved packs
    (`filterByPacks(FILE_RULE_MANIFEST.filter(r => r.category !== "optional"), packs)`):
@@ -355,8 +359,9 @@ bunx @fisherk2-dev/codice --update --force --update-add-packs finance,creative
 > **v1 corrections in this mode:** no changelog display, no "Downloading template..."
 > step, and no `.codice-version`-missing fallback-proceed (all three were in v1.0.0;
 > none exist in `src/`). Update also performs **no** post-install generation — no
-> `.gitignore` rewrite, no symlink creation (`src/application/helpers.ts` module
-> docstring; pinned by `tests/e2e/10-update-no-symlinks.sh`).
+> `.gitignore` rewrite, no symlink creation — `src/application/postInstall.ts` is
+> documented as shared post-installation steps for Clean Install and Project Install
+> only; pinned by `tests/e2e/10-update-no-symlinks.sh`).
 
 ---
 
@@ -466,7 +471,7 @@ Messages below are quoted from source (v1.0.0's paraphrases were inaccurate or f
 | Unrecognized flag / positional arg / missing flag value | `Usage error: unrecognized arguments. Use --help for usage information.` | `2` | `main.ts`, `parse-args.ts` |
 | Invalid `--packs` / `--update-add-packs` ID | `[error] Invalid pack list: "<raw>". Use --help to list valid pack IDs.` + usage line | `2` | `parse-args.ts`, `validatePackList.ts` |
 | Unsafe `--dest` (traversal, root, system dir, drive root, empty) | `[error] Invalid destination path: "<dest>" <reason>` + usage line | `2` | `validateDestPath.ts` |
-| Destination not writable | `❌ Permission denied at "<dest>". Check directory permissions or run with elevated access.` | `1` | `helpers.ts — checkWritable`, `main.ts — showError` |
+| Destination not writable | `❌ Permission denied at "<dest>". Check directory permissions or run with elevated access.` | `1` | `writableCheck.ts — checkWritable`, `main.ts — showError` |
 | `.codice-version` missing/corrupt during update | warning `No previous Códice installation found. Update is not available — use Clean Install or Project Install.` (no merge) | `0` | `versionGateMessages.ts — buildNoPreviousInstallWarning`, `UpdateWorkspaceUseCase.ts — readInstalledVersion` |
 | Pre-v2.0 install during update | warning `Detected v<ver> installation. The update system has changed in v2.0.0. ...` (no merge) | `0` | `versionGateMessages.ts — buildUpdateSystemChangedWarning` |
 | Update from ≤ 2.1.2 (SDD remnants) | warning with the 5 plugin paths to delete manually | update continues | `updateHelpers.ts — buildPluginRemnantMessage` |
@@ -474,9 +479,9 @@ Messages below are quoted from source (v1.0.0's paraphrases were inaccurate or f
 | Remote release newer than installed | info `A newer version (...) is available on GitHub. The bundled template (...) will be used for this update.` → proceed | `0` | `updateStatusCheck.ts` |
 | Installed ≥ bundled template | info `Workspace is already up to date at version <ver>. No update needed.` (no merge) | `0` | `updateStatusCheck.ts — notifyIfUpToDate` |
 | Merge planning failure | `❌ <error.message> during staging` (no path — plan computed before any write); residual staging cleaned | `1` | `FileMergeEngine.ts — execute` catch, `stagingError()` |
-| Per-file staging failure | `❌ <error.message> during staging of <path>` (destination untouched) | `1` | `FileMergeEngine.ts`, `helpers.ts — wrapMergeError` |
+| Per-file staging failure | `❌ <error.message> during staging of <path>` (destination untouched) | `1` | `FileMergeEngine.ts`, `mergeErrors.ts — wrapMergeError` |
 | Commit (atomic promote) failure | `❌ Failed to commit staged files: <cause> during commit`; backups restored, staging cleaned | `1` | `AtomicStager.ts — commitStaging` rollback, `commitError()` |
-| Version-file write failure post-merge | `❌ Failed to write version file: <cause>. Installation rolled back.` / `... Update rolled back.`; staging cleaned | `1` | `helpers.ts — writeVersionFileSafe` |
+| Version-file write failure post-merge | `❌ Failed to write version file: <cause>. Installation rolled back.` / `... Update rolled back.`; staging cleaned | `1` | `versionFileWrite.ts — writeVersionFileSafe` |
 | `.gitignore` generation fails post-install | warning `Could not generate .gitignore: <cause>. The workspace was installed successfully. ...` — install still succeeds | `0` | `postInstall.ts — createGitignoreSafe` |
 | Symlink creation partially fails | warning `Some .opencode/ symlinks could not be created (N failures). The workspace was installed successfully.` (+ `Re-run the installer...` hint on Clean only) | `0` | `postInstall.ts — createSymlinksWithWarning` |
 | Non-semver resolved version at end of update | `❌ Cannot resolve version: neither explicit flag (...) nor bundled template (...) is valid semver.` | `1` | `UpdateWorkspaceUseCase.ts — resolveNewVersion` |
@@ -534,7 +539,7 @@ Implemented exclusively in `src/infrastructure/adapters/ClackPromptsAdapter.ts`
 4. Destructive install confirmations default to No; the update confirmation defaults to
    Yes for single-keystroke acceptance in unattended-adjacent sessions.
 5. The progress bar is stopped (`completeProgress`) on every terminal event —
-   success, merge error, or listener exception (`helpers.ts — createProgressCallback`).
+   success, merge error, or listener exception (`progressCallback.ts — createProgressCallback`).
 
 ---
 
@@ -606,9 +611,9 @@ staging decisions in `src/domain/services/stagePlanner.ts — shouldStage`:
 | Category | Examples | Clean | Project | Update |
 |----------|----------|-------|---------|--------|
 | `mandatory` | `core` (→ root), `packs/main` (6 agents), `packs/writers` (4 agents) | Copy + overwrite | Copy + overwrite | Copy + overwrite |
-| `pack` (8 selectable) | `packs/software-development` (144), `packs/business` (91), ... | Copy + overwrite **if selected** | Always copy **if selected** | Copy **if in resolved pack scope** (installed packs locked in) |
+| `pack` (8 selectable) | `packs/software-development` (145), `packs/business` (90), ... | Copy + overwrite **if selected** | Always copy **if selected** | Copy **if in resolved pack scope** (installed packs locked in) |
 | `standard` | `README.md`, `docs/`, `specs/`, `AGENTS.md` | Copy + overwrite | Copy only if missing | Tree diff: only files new in template are added |
-| `optional` | `.gitmessage`, `Justfile`, `Makefile`, `Dockerfile`, ... (10 entries) | Copy + overwrite if checked (force → all) | Copy if checked **and** missing (force → none) | **Never** |
+| `optional` | `Justfile`, `Makefile`, `Dockerfile`, `docs/DESIGN.md`, ... (11 entries) | Copy + overwrite if checked (force → all) | Copy if checked **and** missing (force → none) | **Never** |
 
 Pack resolution per mode: Clean/Project take CLI `--packs(-all)` or wizard output
 (`main.ts — resolvePacks` → use-case `options.packs`); Update starts from
@@ -698,6 +703,7 @@ Verified by the E2E suite (`tests/e2e/`, 31 scenarios) and unit/integration test
 |---------|------|---------|
 | 1.0.0 | 2026-06-13 | Initial spec: CLI commands, 3 installation modes, TUI flows, error matrix, exit codes, CI mode |
 | 2.0.0 | 2026-09-22 | Full rewrite reverse-verified against v2.1.3 source. Fixes inverted/absent behavior: unscoped `bunx` invocations replaced by the real package name `@fisherk2-dev/codice` (bin `codice` is global-install only); missing/corrupt `.codice-version` now documented as **blocking** update (was "proceed with unknown"); the never-shipped bulk flag v1 promised as "future" is replaced by the real `--packs-all`; `-f`/`-v` shorthands removed (only `-V`/`-h` exist); multiple mode flags resolve by precedence instead of erroring; `--force` is not a precondition of mode flags; adds: interactive 3-mode menu, pre-menu version note + Opencode Legacy banner (≤2.1.2), SDD plugin-remnant notice for updates from ≤2.1.2, pack wizard (8 selectable + main/writers mandatory, min 1, `[INSTALLED, LOCKED]` in Option B), optional-file checklist semantics per mode, 📋 Installation Summary, bundled-template update model (no downloads), real exit-code semantics (flow cancels = 0, menu cancels/SIGINT = 130), non-JSON `--verbose` format, complete flag table, test env overrides. |
+| 2.1.0 | 2026-11-18 | Re-verified against v2.1.5 source (FEV-31, `3883288`; stable 2.1.5 ready for deployment, not yet published — beta.1 was published under dist-tag `beta` on 2026-11-18): multiple mode flags now **rejected** with the generic usage error and exit `2` (supersedes the precedence rule above; `parse-args.ts`, `parse-args.test.ts`); the legacy shared-helpers application module was split into `confirmOverwrite.ts`/`writableCheck.ts`/`versionFileWrite.ts`/`mergeErrors.ts`/`optionalsPrompt.ts`/`progressCallback.ts` — all citations re-pointed; staging dir is now a per-run `.codice-staging-<random>` via `mkdtemp` (`STAGING_DIR_PREFIX`, replacing the old fixed-name constant); update confirmation lives in `updateHelpers.ts — confirmUpdateUnlessForced` (the previously cited `maybeConfirmUpdate` never existed under that name). |
 
 ---
 

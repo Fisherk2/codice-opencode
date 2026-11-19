@@ -91,23 +91,23 @@ graph TD
 ## 4. Flujos Alternativos y Errores
 - **Auth/Permiso Fallido (EACCES):** Si el CLI no puede escribir en el directorio de staging o destino, la TUI debe mostrar un error rojo claro: *"Error: Permiso denegado. Intente ejecutar con privilegios elevados o verifique los permisos de la carpeta."* y abortar limpiamente (código de salida 1).
 - **Red Inestable (Timeout en GitHub API):** Si la petición a GitHub tarda > 3 segundos, el spinner se detiene y muestra: *"Advertencia: No se pudo conectar a GitHub. Se procederá con la versión empaquetada."* y continúa como una instalación normal.
-- **Interrupción del Usuario (SIGINT / Ctrl+C):** El CLI debe capturar la señal `SIGINT`, mostrar un mensaje de *"Cancelado por el usuario"*, eliminar el directorio `.codice-staging/` si existe, y salir con código 130. **Nunca** dejar el directorio de staging a medias.
+- **Interrupción del Usuario (SIGINT / Ctrl+C):** El CLI captura la señal en `registerSigintHandler()` (`src/cli/signalHandlers.ts`), imprime *"Interrupted by user."*, hace limpieza best-effort del directorio de staging (`.codice-staging-<sufijo>`, único por corrida) y sale con `EXIT_INTERRUPT`. **Nunca** deja el staging a medias; los `.codice-backup` no se tocan (son la única copia del contenido previo).
 - **Datos Inválidos:** Si el archivo `.codice-version` está corrupto, la TUI debe tratar el proyecto como "no versionado" y sugerir una "Instalación a Proyecto" en lugar de "Actualizar".
 
 ## 5. Gestión de Estado de Navegación
 - **Estado Local vs. Global:** El estado de la TUI (opciones seleccionadas en el checklist) se mantiene en memoria durante la ejecución del proceso de Node/Bun. No se persiste en disco hasta que la operación atómica es exitosa.
 - **Persistencia:** La única persistencia es la escritura final del archivo `.codice-version` y los archivos del template en el directorio destino, realizados en una única operación de movimiento atómico (`fs.rename`).
-- **Rutas Protegidas:** Antes del menú el CLI solo valida la forma del destino `--dest` en tiempo de parseo (`validateDestPath.ts` — early-fail guard contra traversal y directorios de sistema; la contención real la aplica `pathResolver.ts` al escribir). La **escritibilidad** del destino no se comprueba antes del menú: `checkWritable` corre dentro del use case del modo seleccionado (`InstallUseCaseBase.ts:67`, `UpdateWorkspaceUseCase.ts:62`), es decir, post-selección de modo y antes de cualquier prompt destructivo.
+- **Rutas Protegidas:** Antes del menú el CLI solo valida la forma del destino `--dest` en tiempo de parseo (`validateDestPath.ts` — early-fail guard contra traversal y directorios de sistema; la contención real la aplica `pathResolver.ts` al escribir). La **escritibilidad** del destino no se comprueba antes del menú: `checkWritable` (src/application/writableCheck.ts) corre dentro del use case del modo seleccionado (`InstallUseCaseBase.ts:64`, `UpdateWorkspaceUseCase.ts:66`), es decir, post-selección de modo y antes de cualquier prompt destructivo.
 
 ## 6. Trazabilidad
 | Flow-ID | PRD REQ-ID | Vista TUI | Componente Técnico (TRD) |
 |---------|------------|-----------|--------------------------|
-| F-01 | HU-01, RF-01 | Menú Principal | `ClackPromptsAdapter.select()` |
-| F-02 | HU-02, RF-02 | Checklist Opcionales | `ClackPromptsAdapter.multiselect()` |
-| F-03 | HU-03, RF-05 | Consulta Remota | `GitHubRestClient.getLatestRelease()` |
-| F-04 | HU-05, RF-03 | Ejecución Atómica | `AtomicFileWriter.execute()` |
-| F-05 | RF-05 (Seguridad) | Manejo de SIGINT | `process.on('SIGINT', cleanupHandler)` |
-| F-06 | HU-01, RF-01 | Checklist Opcionales (Clean) | `ClackPromptsAdapter.multiselect()` |
+| F-01 | HU-01, RF-01 | Menú Principal | `ClackPromptsAdapter.promptForMode()` |
+| F-02 | HU-02, RF-02 | Checklist Opcionales | `ClackPromptsAdapter.selectOptional()` |
+| F-03 | HU-03, RF-05 | Consulta Remota | `GitHubRestClient.getLatestReleaseTag()` |
+| F-04 | HU-05, RF-03 | Ejecución Atómica | `AtomicStager.stageFile()` + `AtomicStager.commitStaging()` (orquestados por `FileMergeEngine.execute()`) |
+| F-05 | RF-05 (Seguridad) | Manejo de SIGINT | `registerSigintHandler()` (`src/cli/signalHandlers.ts`) |
+| F-06 | HU-01, RF-01 | Checklist Opcionales (Clean) | `ClackPromptsAdapter.selectOptional()` |
 | F-07 | RF-03 | Generación Symlinks Post-Install | `BunSymlinkCreator.createSymlinks()` |
 | F-08 | RF-03 | Generación Gitignore Post-Install | `BunGitignoreCreator.createGitignore()` |
 
@@ -162,7 +162,7 @@ graph TD
     C -- Start new project --> E[Guía de instalación]
     C -- Update workspace --> F[Guía de actualización]
     C -- Learn SDD cycle --> G[Explicar fases SDD]
-    C -- List commands --> H[Listar 17 comandos]
+    C -- List commands --> H[Listar 18 comandos]
     C -- Troubleshoot --> I[Tabla de problemas comunes]
 ```
 

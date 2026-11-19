@@ -4,11 +4,11 @@
 
 | Construct | Convention | Examples |
 |-----------|------------|----------|
-| **Files** | PascalCase for classes, camelCase for utilities | `FileMergeEngine.ts`, `versionComparator.ts` |
+| **Files** | PascalCase for classes, camelCase for utilities | `FileMergeEngine.ts`, `VersionComparator.ts` (classes); `stagePlanner.ts`, `mergeRules.ts` (utilities) |
 | **Classes** | Descriptive nouns | `FileMergeEngine` (not `Merger`), `VersionComparator` (not `VersionCheck`) |
 | **Interfaces** | Prefixed with `I` | `IFileSystem`, `IGitHubClient`, `IUserPrompt` |
-| **Functions** | Verb or verb-phrase | `compareVersions`, `stageFileAtomic`, `promptForMode` |
-| **Constants** | `SCREAMING_SNAKE_CASE` | `GITHUB_API_TIMEOUT_MS`, `STAGING_DIR_NAME` |
+| **Functions** | Verb or verb-phrase | `computeStagePlan`, `checkWritable`, `promptForMode` |
+| **Constants** | `SCREAMING_SNAKE_CASE` | `GITHUB_API_TIMEOUT_MS`, `STAGING_DIR_PREFIX` |
 
 ## TypeScript Rules
 
@@ -21,6 +21,7 @@
 ## File Structure
 
 - **Maximum 200 lines per file.** If a file grows beyond this limit, extract responsibilities into new modules.
+- **Known exceptions (measured 2026-11-18):** 5 production files are over the limit — `AtomicStager.ts` (610), `FileMergeEngine.ts` (233), `BunSymlinkCreator.ts` (228), `BunFileSystem.ts` (206), `ClackPromptsAdapter.ts` (204); tracked as TD-V2-101 in [TECH_DEBT.md](TECH_DEBT.md).
 - **Template Markdown prompts (primary agents and commands): body ≤ 180 lines**, excluding YAML frontmatter. Enforced by `tests/unit/domain/{agent,command}-frontmatter-validation.test.ts`.
 - **One primary export per file.** Secondary utilities may be co-exported if tightly coupled to the primary export.
 - **Import grouping** (top to bottom):
@@ -49,38 +50,40 @@
 ### Good
 
 ```typescript
-// FileMergeEngine.ts
-import { IFileSystem } from "../application/ports/IFileSystem";
-import { FileRule } from "../domain/entities/FileRule";
-import { Result, MergeError } from "../domain/types/Result";
+// src/domain/services/FileMergeEngine.ts
+import type { FileRule } from "../entities/FileRule";
+import type { IStagedFileSystem } from "../ports/IStagedFileSystem";
+import { type MergeError, stagingError } from "../types/MergeError";
+import { failure, success, type Result } from "../types/Result";
 
 /**
  * Orchestrates file merging according to classification rules.
- * Guarantees atomic writes via the injected IFileSystem.
+ * Atomicity comes from the injected port: writes land in the per-run staging
+ * directory and are promoted with a single rename.
  */
 export class FileMergeEngine {
-  constructor(private readonly fileSystem: IFileSystem) {}
+  constructor(private readonly fileSystem: IStagedFileSystem) {}
 
   /**
    * Execute all merge rules against the destination directory.
    * @param rules - Ordered list of classification rules to apply.
    * @returns Result indicating success or a structured MergeError.
+   * Abbreviated here: the port also takes `options?: MergeExecuteOptions`
+   * (`src/domain/ports/IFileMergeEngine.ts:31-34`), whose `updateMode` switches
+   * standard directories to tree-level diffing (`FileMergeEngine.ts:18`).
    */
   async execute(rules: readonly FileRule[]): Promise<Result<void, MergeError>> {
     for (const rule of rules) {
-      const result = await this.applyRule(rule);
-      if (result.isErr()) {
-        return result;
+      try {
+        await this.fileSystem.stageFile(rule.path, rule.destPath);
+      } catch (err) {
+        // A failed stage must not leave a partial staging directory behind.
+        await this.fileSystem.cleanStaging();
+        return failure(stagingError(rule.path, String(err)));
       }
     }
-    return Result.ok();
-  }
-
-  private async applyRule(rule: FileRule): Promise<Result<void, MergeError>> {
-    // Staging path ensures atomicity even if the process crashes mid-write.
-    const stagingPath = this.fileSystem.getStagingPath(rule.targetPath);
-    // ...
-    return Result.ok();
+    await this.fileSystem.commitStaging();
+    return success(undefined);
   }
 }
 ```
@@ -110,11 +113,11 @@ export class Merger {           // ❌ Too vague
 Before every commit, verify the following:
 
 - [ ] `just check` passes with zero errors (biome ci + tsc --noEmit).
-- [ ] `just test` passes with 0 failures (1935 tests; use `just test-unit` / `just test-integration` for subsets).
+- [ ] `just test` passes with 0 failures (2027 tests; use `just test-unit` / `just test-integration` for subsets).
 - [ ] No `any` types introduced in production code.
 - [ ] Names are descriptive and follow the convention.
 - [ ] Documentation updated if a public API changed.
 
 ---
 
-*Last updated: 2026-08-25*
+*Last updated: 2026-11-18*

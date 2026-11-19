@@ -1,5 +1,5 @@
-# Technical Requirements Document – Códice: Opencode Workspace Installer v2.1.3
-**Fecha:** 2026-06-13 | **Última actualización:** 2026-09-22 | **Autor:** Fisherk2 | **Estado:** Aprobado
+# Technical Requirements Document – Códice: Opencode Workspace Installer v2.1.5
+**Fecha:** 2026-06-13 | **Última actualización:** 2026-11-19 | **Autor:** Fisherk2 | **Estado:** Aprobado — v2.1.5 **lista para despliegue estable, aún no publicada** (`latest` sigue en 2.1.4); `v2.1.5-beta.1` se publicó en dist-tag `beta` (2026-11-18)
 
 ## 1. Arquitectura de Referencia
 Se aplicará **Clean Architecture** adaptada a una aplicación de línea de comandos (CLI). Esto garantiza que la lógica de negocio (reglas de fusión, comparación de versiones) esté completamente desacoplada de los detalles de implementación (sistema de archivos, red, librería de TUI).
@@ -32,8 +32,6 @@ graph TD
         UC3[Use Case: Actualizar Workspace]
         ISP[Port: ISymlinkCreator]
         IGC[Port: IGitignoreCreator]
-        IST[Port: IStagingSystem]
-        HLP[helpers.ts<br/>Shared guard logic]
         PI[postInstall.ts<br/>Post-install orchestration]
         ISUM[installSummary.ts<br/>Install summary computation]
         PO[packOptions.ts<br/>Pack selection definitions]
@@ -43,6 +41,7 @@ graph TD
     end
 
     subgraph "Domain Layer (Reglas de Negocio - Core)"
+        DPT["Ports: IFileSystem, IStagingSystem, IFileMergeEngine, IStagedFileSystem, IVersionComparator"]
         ENT1[Entity: FileRule<br/>Obligatorio/Estándar/Opcional]
         ENT2[Entity: WorkspaceVersion]
         ENT3[Entity: FileRuleManifest<br/>Rule aggregation]
@@ -136,11 +135,13 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
   2. `setup-bun` (SHA-pined) + `setup-just` (SHA-pined)
   3. `bun install`
   4. **Matrix job `quality`** (Ubuntu, macOS, Windows): `just check` (lint+format+typecheck) → `just test` (unit+integration) → `just test-e2e` (Linux only) → `just coverage-check` (Linux only; thresholds read from `scripts/coverage-thresholds.json`).
-  5. **Job `packaging`** (Ubuntu): `just test-packaging` para validar estructura del tarball npm.
-  6. **Branch Protection** (rama `main` y `develop`): required status checks strict = true; contexts = `quality (ubuntu-latest)`, `quality (macos-latest)`, `quality (windows-latest)`; required approving reviews = 0 (single-contributor); dismiss stale reviews = true; enforce admins = false; allow force pushes = false; allow deletions = false; required conversation resolution = true. Aplicado vía `scripts/setup-branch-protection.sh` (idempotente, JSON body via `--input`).
-  7. **Release workflow** (tag `v*`): reusable `quality` job (`uses: ./.github/workflows/ci.yml`) → validación de tag format (`^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$`) → extracción de CHANGELOG section → validación de version match con `package.json` → detección de tipo (prerelease vs release) → `npm publish --provenance` (requiere `repository.url` en package.json) → `softprops/action-gh-release` con `make_latest` y `prerelease` flags.
-  8. **PR templates + Issue templates**: `bug_report.md`, `feature_request.md` en `.github/ISSUE_TEMPLATE/`; `PULL_REQUEST_TEMPLATE.md` en `.github/`.
-  9. **Permissions**: CI `contents: read`; release `contents: write + id-token: write` (para npm provenance OIDC).
+  5. **Job `packaging`** (Ubuntu, solo en PR — `if: github.event_name == 'pull_request'`, `ci.yml:143-147`): `just test-packaging` para validar estructura del tarball npm.
+  6. **Job `security`** (Ubuntu, `ci.yml:114`): `bun audit --audit-level=high` sobre `bun.lock` (CVEs de dependencias). Es un required status check.
+  7. **Job `docs`** (Ubuntu, `ci.yml:182`): `just lint-docs` (markdownlint-cli2 con `.markdownlint-cli2.jsonc`). Informativo — no está entre los contexts de branch protection, pero corre en toda invocación del workflow, incluyendo `release.yml → quality`.
+  8. **Branch Protection** (rama `main` y `develop`): required status checks strict = true; contexts = `quality (ubuntu-latest)`, `quality (macos-latest)`, `quality (windows-latest)`, `security`; required approving reviews = 0 (single-contributor); dismiss stale reviews = true; enforce admins = **true en `main`** y **false en `develop`** (los syncs post-release `develop` ← `main` se empujaron siempre directo a `develop`); allow force pushes = false; allow deletions = false; required conversation resolution = true. Aplicado vía `scripts/setup-branch-protection.sh:43-50,71-72` (idempotente, JSON body via `--input`).
+  9. **Release workflow** (tag `v*`): reusable `quality` job (`uses: ./.github/workflows/ci.yml`) → validación de tag format (`^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$`) → extracción de CHANGELOG section → validación de version match con `package.json` → detección de tipo (prerelease vs release) → `npm publish --provenance` (requiere `repository.url` en package.json) → `softprops/action-gh-release` con `make_latest` y `prerelease` flags.
+  10. **PR templates + Issue templates**: `bug_report.md`, `feature_request.md` en `.github/ISSUE_TEMPLATE/`; `PULL_REQUEST_TEMPLATE.md` en `.github/`.
+  11. **Permissions**: CI `contents: read`; release `contents: write + id-token: write` (para npm provenance OIDC).
 - **Rollback**: Al ser un cliente, el "rollback" es que el usuario use la release anterior con bunx/npx. La atomicidad local protege contra rollbacks de instalación fallida.
 - **paths-ignore** (push only, nunca en PR): `docs/**`, `CHANGELOG.md` — los cambios de documentación no rompen el CI.
 - **npm provenance**: SLSA v1 generado automáticamente por npm al publicar con `--provenance`. Verificable en <https://www.npmjs.com/package/@fisherk2-dev/codice>.
@@ -175,11 +176,13 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 | **ADR-017** | ~~SDD Intent Auto-Discovery & Bilingual~~ | Retirado en FEV-30, #90 (el plugin SDD fue eliminado; los comandos se resuelven por archivo markdown, sin detección de keywords) | — | — |
 | **ADR-018** | Agent Delegation Protocol | Protocolo Analyze → Plan → Execute para agentes primarios; `task()` con instrucciones determinísticas, skills a cargar y checklist de aceptación | Trazabilidad y calidad consistente en delegaciones; verificado por 2052 tests y 31 E2E scenarios | Free-form task() sin estructura (resultados inconsistentes entre agentes) |
 | **ADR-019** | CI/CD Hardening | SHA-pins en actions, branch protection real, PR/issue templates, npm provenance OIDC, workflow_call reuse | Pipeline seguro y reproducible; ataques de supply chain mitigados por pinning | Tags movibles (vulnerable a tag hijacking), sin protection (cualquiera pushea a main) |
-| **ADR-020** | SPEC Modularization | SPEC.md monolítico (441 líneas) dividido en 8 sub-specs + índice reducido (44 líneas) | Cumple CODE_STYLE.md (max 200 líneas); carga selectiva por agente via skills/progressive disclosure | Mantener SPEC.md monolítico (excede límite, carga todo en cada sesión) |
+| **ADR-020** | SPEC Modularization | SPEC.md monolítico (441 líneas) dividido en un índice + sub-specs en `specs/` (registrado como 44 líneas + 8 sub-specs; medido 2026-11-18: 50 líneas y 14 archivos) | Cumple CODE_STYLE.md (max 200 líneas); carga selectiva por agente via skills/progressive disclosure | Mantener SPEC.md monolítico (excede límite, carga todo en cada sesión) |
 | **ADR-021** | Lectores del esquema V2 | El validador de agentes es el lector normativo del esquema `permissions:` V2; el parser del codemod queda congelado como herramienta one-shot de emisión verbatim | Sin drift entre validador y codemod; gatillo de promoción a `src/domain/services/` documentado; constantes de esquema exportadas en el helper del validador | Unificar ambos lectores bajo `yaml` (rompe byte-fidelity del emisión verbatim), mover el parser a domain sin necesidad (complejidad no incitada) |
 | **ADR-022** | Plugin SDD y detección legacy | Remoción total del plugin SDD (fallaba en cada startup en hosts Opencode V2; FEV-30, #90); enforcement 100% en las deny-lists `permission.bash` de `opencode.json`; banner legacy offline single-source (`legacyBanner.ts`, ≤ 2.1.2) antes del menú, sin round-trip de red | Única superficie de enforcement; no se shippea código roto; remanentes notificados en update desde < 2.1.3; supera como registro al ADR-013/017 retirados | Portar el plugin a la API V2 con enforcement dual (plugin + `permissions:`) — mantenimiento de un shim muerto. |
 | **ADR-023** | Flujo de releases estables | Ramas cortas `release/X.Y.Z` desde `develop` para la estabilización post-beta (commits directos permitidos en rama efímera), revisión humana consolidada única antes del tag, y una PR fusionada a `main`; quality gates sobre el tag de publicación (enmienda ADR-019, no lo reemplaza) | `2.1.3` cortada en `release/2.1.3`; el gate valida exactamente el árbol publicado; `latest` intocable para prereleases (dist-tag `beta`); rollback documentado | PR estricta por cada fix a `develop` (fatiga de review durante semanas de estabilización), release train de larga vida (superficie de integración permanente). |
 | **ADR-024** | Estado de servidores MCP | Esquema V2 `mcp.servers` con `disabled` explícito por servidor (7 configurados); solo context7, gitmcp y vercel-grep conectan por defecto (remotos, sin prerequisitos locales); tavily/firecrawl eliminados (cubiertos nativamente por V2/websearch) | Sin ambigüedad por omisión (clave `enabled` es ignorada por V2); economía de contexto del modelo; invariantes pinneados por `tests/setup/opencode-config.test.ts` | Confiar en los defaults de V2 sin toggle explícito (un flag ausente es una decisión que nadie escribió). |
+
+| **ADR-025** | Plugins de terceros en el payload | Los 6 plugins declarados en `template/obligatorio/core/opencode.json:104-110` se shippean referenciados a `@latest` como excepción documentada al pinning de ADR-019 §1 (que sigue vigente para CI) | Superficie de supply-chain documentada en `docs/SECURITY.md`; el pinning de versiones queda como deuda TD-V2-111 | Pinpear las 6 versiones hoy (rompe la actualización automática del payload), no shippear plugins (descabeza skills/orquestación del template) |
 
 > **Nota:** ADR-013 y ADR-017 fueron retirados en FEV-30 (#90) junto con el plugin SDD; el ADR-022 queda como registro del enforcement de la era-plugin.
 

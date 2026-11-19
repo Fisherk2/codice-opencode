@@ -70,9 +70,9 @@ template/
 
 | Pack ID | Description | Default | Agent Count |
 |---------|-------------|---------|-------------|
-| `software-development` | Backend, frontend, mobile, DevOps, databases, APIs, CLI, cloud, AI/ML, security, testing, debugging | ✅ Selected | 144 |
+| `software-development` | Backend, frontend, mobile, DevOps, databases, APIs, CLI, cloud, AI/ML, security, testing, debugging | ✅ Selected | 145 |
 | `creative` | Design, UI/UX, visual arts, frontend aesthetics, design systems | ❌ | 10 |
-| `business` | Marketing, sales, product management, competitive analysis, content strategy, project management | ❌ | 91 |
+| `business` | Marketing, sales, product management, competitive analysis, content strategy, project management | ❌ | 90 |
 | `finance` | Financial analysis, trading, accounting, fintech, bookkeeping, tax, investment | ❌ | 11 |
 | `government-legal` | Legal tech, compliance, government, regulatory, ESG/sustainability | ❌ | 8 |
 | `science-research` | Academic research, scientific literature, data science, GIS, healthcare research | ❌ | 31 |
@@ -274,7 +274,7 @@ Four primary agents (quetzalcoatl, tlaloc, mictlantecuhtli, huitzilopochtli) use
 
 - [spec-file-rules.md](./spec-file-rules.md) — File classification system (Obligatorio/Estándar/Opcional)
 - [spec-cli-commands.md](./spec-cli-commands.md) — CLI commands and installation modes
-- [ADR-014](./adr/adr-014-agent-pack-system.md) — Agent Pack System decision record
+- [ADR-014](../docs/adr/adr-014-agent-pack-system.md) — Agent Pack System decision record
 
 ---
 
@@ -283,7 +283,7 @@ Four primary agents (quetzalcoatl, tlaloc, mictlantecuhtli, huitzilopochtli) use
 | Version | Date | Changes |
 |---------|------|---------|
 | 2.0.0 | 2026-08-04 | Initial specification. Pack-based agent system, permission unification, subagent table removal, plugin changes. |
-| 2.0.1 | 2026-09-22 | Count corrections verified live against `template/obligatorio/packs/`: Writers 3 → 4 (`docs-writer`, `document-generator`, `obsidian-vault-writer`, `technical-writer` — resolves the §3.1/§6 contradiction; `scientific-literature-researcher` belongs to `science-research`) and removed from the writers tree listing; per-pack counts refreshed to exact `FileRuleManifestData` values (144/91/36/31/18/11/10/8 = 349 selectable, +6 main +4 writers = 359). |
+| 2.0.1 | 2026-09-22 | Count corrections verified live against `template/obligatorio/packs/`: Writers 3 → 4 (`docs-writer`, `document-generator`, `obsidian-vault-writer`, `technical-writer` — resolves the §3.1/§6 contradiction; `scientific-literature-researcher` belongs to `science-research`) and removed from the writers tree listing; per-pack counts refreshed to exact `FileRuleManifestData` values (145/90/36/31/18/11/10/8 = 349 selectable, +6 main +4 writers = 359). |
 
 ---
 

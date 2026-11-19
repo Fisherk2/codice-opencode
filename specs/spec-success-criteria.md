@@ -17,8 +17,8 @@
 
 | ID | Criterion | Test Method |
 |----|-----------|-------------|
-| SC-9 | Complete local installation (Clean Install) completes in < 5 seconds on a modern SSD. | E2E timing measurement |
-| SC-10 | GitHub API version query completes in < 3 seconds or times out gracefully. | Integration test with delay injection |
+| SC-9 | Complete local installation (Clean Install) completes in < 5 seconds on a modern SSD. | Mechanism: `just bench` (hyperfine, `--runs 5`, exports `tests/fixtures/bench/clean-install.json`). **Unmeasured as of 2026-11-18** — no bench export on disk and no E2E script times the install. |
+| SC-10 | GitHub API version query completes in < 3 seconds or times out gracefully. | `tests/integration/adapters/github-rest-client.test.ts` — `describe "timeout behavior"` / `it "should return null when request exceeds timeout"` (`:193-194`, AbortSignal fired via a 10 ms client override; suite `TIMEOUT_MS = 3_000` at `:10`), matching production `GITHUB_API_TIMEOUT_MS = 3_000` (`src/infrastructure/config/constants.ts:60`, consumed at `GitHubRestClient.ts:31`). |
 | SC-11 | TUI menu renders and responds to input in < 100 milliseconds. | Manual / E2E perceived latency |
 
 ## Quality Criteria
@@ -26,12 +26,12 @@
 | ID | Criterion | Test Method |
 |----|-----------|-------------|
 | SC-12 | Unit test coverage exceeds 90% for domain layer. | `bun test --coverage` report |
-| SC-13 | Overall test coverage exceeds 80%. | `bun test --coverage` report |
+| SC-13 | Overall test coverage meets the applied gate: ≥ 95% global **and** ≥ 95% on `src/cli/main.ts`, measured over all production `src/` (thresholds: `scripts/coverage-thresholds.json`; enforced by `just coverage-check` → `scripts/coverage-check.sh`). | `just coverage-check` |
 | SC-14 | All E2E tests pass in CI on Ubuntu latest runner. | GitHub Actions workflow execution |
-| SC-15 | The npm package (tarball) size is < 5MB. | `npm pack --dry-run` size verification |
+| SC-15 | The npm package (tarball) size is < 5MB. **Accepted deviation:** the pack system (ADR-014) ships all 8 selectable packs, bringing the tarball to 8.0MB (797 files) — deviation accepted 2026-08-04, tracked in `docs/TECH_DEBT.md` § Tarball Size. | `npm pack --dry-run` size verification |
 | SC-16 | The README contains copy-paste installation commands that a non-technical user can execute without modification. | Peer review by non-technical stakeholder |
 | SC-17 | No `any` types exist in the production source code. | `tsc --noEmit` strict check |
-| SC-18 | Path traversal attempts (e.g., destination containing `../../`) are rejected with exit code 1. | E2E security test |
+| SC-18 | Path traversal attempts (e.g., destination containing `../../`) are rejected at parse time with exit code **2** (`EXIT_USAGE`, `src/cli/output.ts`; `validateDestPath.ts` → `parseArgs` returns `null` in `main.ts`). | E2E security test |
 
 ## Documentation Criteria
 

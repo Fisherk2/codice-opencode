@@ -14,7 +14,7 @@ The template ships with **7 MCP servers** pre-configured in `opencode.json`. Thr
 
 | Server | Type | Default | Template Feature |
 |--------|------|---------|------------------|
-| `context7` | Remote | ✅ Enabled | Documentation queries (`find-docs` skill) |
+| `context7` | Remote | ✅ Enabled | Up-to-date library/framework documentation |
 | `chrome-devtools` | Local | ❌ Disabled | `/webperf` Deep mode, browser debugging |
 | `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`spreadsheet-analysis` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
@@ -40,7 +40,7 @@ Each server requires different prerequisites. Follow the steps below for the ser
 
 ### Context7 — Documentation Search
 
-Remote MCP server that provides up-to-date library documentation. Used by the `find-docs` skill.
+Remote MCP server that provides up-to-date library documentation. Agents call it directly as an MCP tool — the `find-docs` helper people expect here is **not** one of the 61 shipped skills; it is a marketplace skill you fetch on demand (see [Skills](Skills#skills-not-in-the-payload)).
 
 **Pre-configured as:** `"disabled": false` (connected) — no setup needed.
 
@@ -93,6 +93,8 @@ Local MCP server from the Chrome DevTools team (`ChromeDevTools/chrome-devtools-
 - Google Chrome (stable or newer)
 - No additional dependencies — runs via `npx`
 
+> **The template pins the version.** The shipped entry uses `chrome-devtools-mcp@1.7.0` (`template/obligatorio/core/opencode.json`, `mcp.servers.chrome-devtools.command`), not `@latest`. The floating `@latest` reference used to point at a scoped package that returns 404 on npm, so it was pinned in v2.1.0. Keep the pin if you edit the entry.
+
 #### Quick Start
 
 1. **Open Chrome with remote debugging:**
@@ -101,7 +103,7 @@ Local MCP server from the Chrome DevTools team (`ChromeDevTools/chrome-devtools-
    ```
    Or use `--auto-connect` (Chrome 144+):
    ```bash
-   npx -y chrome-devtools-mcp@latest --auto-connect
+   npx -y chrome-devtools-mcp@1.7.0 --auto-connect
    ```
 
 2. **Enable the MCP server** in `opencode.json`:
@@ -111,7 +113,7 @@ Local MCP server from the Chrome DevTools team (`ChromeDevTools/chrome-devtools-
        "servers": {
          "chrome-devtools": {
            "type": "local",
-           "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+           "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
            "disabled": false
          }
        }
@@ -271,7 +273,7 @@ For lightweight sessions without a full Jupyter server:
 
 ### Codebase Memory MCP — Knowledge Graph for Code Intelligence
 
-Local MCP server that indexes your codebase into a persistent knowledge graph. Provides structural search, call tracing, architecture analysis, dead code detection, and 15 other tools. Supports 158 languages via tree-sitter. Ships as a single static binary — zero dependencies, no API keys required.
+Local MCP server that indexes your codebase into a persistent knowledge graph, exposing 14 tools for structural search, call tracing, architecture analysis, diff impact, and graph queries. Supports 158 languages via tree-sitter. Ships as a single static binary — zero dependencies, no API keys required.
 
 **Pre-configured as:** `"disabled": true` — requires global installation on the user's machine.
 
@@ -342,7 +344,7 @@ If you prefer not to use the install command, add to `opencode.json`:
 }
 ```
 
-#### Available Tools (15 total)
+#### Available Tools (14 total)
 
 | Tool | Purpose |
 |------|---------|
@@ -360,7 +362,6 @@ If you prefer not to use the install command, add to `opencode.json`:
 | `index_status` | Check indexing status |
 | `list_projects` | List all indexed projects |
 | `delete_project` | Remove a project from the index |
-| `context7_query-docs` | Query Context7 documentation (built-in) |
 
 > **Repository:** [github.com/DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | **License:** MIT | **Stars:** 36K+
 
@@ -434,6 +435,8 @@ Remote MCP server for scraping, crawling, and extracting content from web pages.
 1. **Install Firecrawl skills and authenticate:**
 
    ```bash
+   # Upstream's install line; prefer pinning the version you verified
+   # (npx -y firecrawl-cli@<version> init ...) like every other MCP command.
    npx -y firecrawl-cli@latest init --all -k YOUR_FIRECRAWL_API_KEY
    ```
 
@@ -575,7 +578,7 @@ For example, `chrome-devtools` is useful for agents that run browser tests or pe
     "servers": {
       "chrome-devtools": {
         "type": "local",
-        "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+        "command": ["npx", "-y", "chrome-devtools-mcp@1.7.0"],
         "disabled": false
       }
     }
@@ -656,7 +659,7 @@ Beyond the pre-configured servers, you can add any MCP server available in the e
 
 1. **Enable only what you need** — Each active MCP server adds tokens to every conversation. Disable servers you're not actively using.
 2. **Prefer per-agent activation** — Disable tools globally and enable them only for specific agents that need them (see [Per-Agent Control](#per-agent-control)).
-3. **Use `@latest` for Chrome DevTools MCP** — `chrome-devtools-mcp@latest` ensures you always get the newest version without manual updates.
+3. **Pin MCP server versions** — the template ships `chrome-devtools-mcp@1.7.0` rather than `@latest`, so an upstream breaking release or a broken tag cannot change your workspace under your feet. Bump the pin deliberately. The only `@latest` surface in the payload is the six OpenCode plugins in `opencode.json` (`plugins`), an explicit exception recorded in ADR-025; see [Configuration](Configuration#plugins).
 4. **Use environment variables for secrets** — Reference API keys and tokens with `{env:VAR_NAME}` in the config. Never hardcode credentials.
 5. **Configure timeouts for slow servers** — If an MCP server is slow to respond or to start, set its per-server `timeout` object (`startup`, `catalog`, `execution`). V2 defaults: startup 30s, catalog 30s, execution 12h.
 6. **Test new servers incrementally** — Add one server at a time and verify it works before adding the next. This helps isolate configuration issues.
