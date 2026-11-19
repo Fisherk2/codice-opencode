@@ -8,44 +8,79 @@
  *   - Cancel returns null with appropriate cancellation message
  */
 
-import { describe, expect, mock as mockFn, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import type { IUserPrompt, VersionDisplayInfo } from "../../../src/application/ports/IUserPrompt";
-import { resolveInteractiveMode } from "../../../src/cli/main";
+import type { Dependencies } from "../../../src/cli/container";
+import { resolveInteractiveMode, runMode } from "../../../src/cli/main";
+import type { CliOptions } from "../../../src/cli/parse-args";
+import { createMockPrompt } from "../../shared/test-doubles";
+
+// -----------------------------------------------------------------------
+// runMode — --packs with --update rejection
+// -----------------------------------------------------------------------
+
+describe("runMode — update mode pack flags", () => {
+	const neverExecute = (): never => {
+		throw new Error("execute must not be called");
+	};
+	const deps = {
+		fileSystem: {},
+		userPrompt: {},
+		cleanInstall: { execute: neverExecute },
+		projectInstall: { execute: neverExecute },
+		updateWorkspace: { execute: neverExecute },
+	} as unknown as Dependencies;
+
+	test("returns a usage failure when --packs is combined with --update", async () => {
+		const options: CliOptions = { force: true, verbose: false, packs: ["business"] };
+		const result = await runMode("update", deps, "/tmp/x", options);
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain(
+				"--packs/--packs-all cannot be combined with --update",
+			);
+		}
+	});
+
+	test("returns a usage failure when --packs-all is combined with --update", async () => {
+		const options: CliOptions = { force: true, verbose: false, packsAll: true };
+		const result = await runMode("update", deps, "/tmp/x", options);
+		expect(result.ok).toBe(false);
+	});
+
+	test("proceeds when no pack-selection flag is given with --update", async () => {
+		let called = false;
+		const okDeps = {
+			fileSystem: {},
+			userPrompt: {},
+			cleanInstall: { execute: neverExecute },
+			projectInstall: { execute: neverExecute },
+			updateWorkspace: {
+				execute: (): { ok: true } => {
+					called = true;
+					return { ok: true };
+				},
+			},
+		} as unknown as Dependencies;
+		const options: CliOptions = { force: true, verbose: false };
+		const result = await runMode("update", okDeps, "/tmp/x", options);
+		expect(result.ok).toBe(true);
+		expect(called).toBe(true);
+	});
+});
 
 // -----------------------------------------------------------------------
 // Mock factory
 // -----------------------------------------------------------------------
 
 /**
- * Create a mock IUserPrompt whose promptForMode resolves to the given result.
+ * Create the shared mock IUserPrompt with a given promptForMode result.
  * All methods are wrapped in mockFn() so call-count and argument assertions
  * work out of the box.
  */
-function createMockUserPrompt(
+const createMockUserPrompt = (
 	promptResult: Promise<"clean" | "project" | "update" | null>,
-): IUserPrompt {
-	return {
-		showIntro: mockFn(() => {}),
-		promptForMode: mockFn(() => promptResult),
-		showCancel: mockFn(() => {}),
-		showWarning: mockFn(() => {}),
-		showInfo: mockFn(() => {}),
-		confirm: mockFn(() => Promise.resolve(true)),
-		selectOptional: mockFn(() => Promise.resolve([])),
-		showProgressBar: mockFn(() => {}),
-		updateProgress: mockFn(() => {}),
-		completeProgress: mockFn(() => {}),
-		logProgressEvent: mockFn(() => {}),
-		showSuccess: mockFn(() => {}),
-		showError: mockFn(() => {}),
-		selectPacks: mockFn(() => Promise.resolve(["software-development"] as const)),
-		showVersionInfo: mockFn(() => {}),
-		selectUpdateOption: mockFn(() =>
-			Promise.resolve<"current" | "add" | "cancel" | null>("current"),
-		),
-		showInstallSummary: mockFn(() => {}),
-	};
-}
+): IUserPrompt => createMockPrompt({ promptResult });
 
 /** Version context for an up-to-date installation (update always allowed). */
 const v2Context: VersionDisplayInfo = {

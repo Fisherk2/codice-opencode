@@ -124,7 +124,7 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
 ## 5. Requisitos Técnicos No Funcionales
 - **Escalabilidad**: El CLI debe ser autocontenido. No escala horizontalmente (es una herramienta de cliente), pero debe escalar en tamaño de template sin degradar el rendimiento de memoria (streaming de archivos si el template crece >50MB).
 - **Latencia/Throughput**: La operación de fusión local debe procesar >100 archivos/segundo. La consulta a GitHub debe tener un timeout de 3 segundos.
-- **Seguridad**: 
+- **Seguridad**:
   - Validación estricta de rutas (prevenir *Path Traversal* usando `path.resolve` y verificando que el destino esté dentro del directorio de trabajo permitido).
   - No ejecutar scripts descargados o del template sin consentimiento explícito.
 - **Observabilidad**: Logs de error estructurados (JSON) en modo `--verbose`, salidas limpias en modo normal.
@@ -143,7 +143,7 @@ npm excluye archivos `.gitignore` del paquete y resuelve symlinks durante el emp
   9. **Permissions**: CI `contents: read`; release `contents: write + id-token: write` (para npm provenance OIDC).
 - **Rollback**: Al ser un cliente, el "rollback" es que el usuario use la release anterior con bunx/npx. La atomicidad local protege contra rollbacks de instalación fallida.
 - **paths-ignore** (push only, nunca en PR): `docs/**`, `CHANGELOG.md` — los cambios de documentación no rompen el CI.
-- **npm provenance**: SLSA v1 generado automáticamente por npm al publicar con `--provenance`. Verificable en https://www.npmjs.com/package/@fisherk2-dev/codice.
+- **npm provenance**: SLSA v1 generado automáticamente por npm al publicar con `--provenance`. Verificable en <https://www.npmjs.com/package/@fisherk2-dev/codice>.
 
 ## 7. Matriz de Trazabilidad
 | PRD REQ-ID | TRD Componente | API/DB | Estado |

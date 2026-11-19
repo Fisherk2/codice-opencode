@@ -61,7 +61,7 @@ log_info "Verifying obligatorio files..."
 assert_file_exists "$TEMP_DIR/opencode.json"
 assert_file_exists "$TEMP_DIR/agents/backend-developer.md"
 assert_file_exists "$TEMP_DIR/commands/build.md"
-assert_file_exists "$TEMP_DIR/skills-lock.json"
+assert_file_exists "$TEMP_DIR/commands/hotfix.md"
 assert_file_exists "$TEMP_DIR/agents/tlaloc.md"
 
 # Verify estandar files exist (standard docs)
@@ -110,7 +110,7 @@ fi
 log_pass "optionalSelections present in .codice-version (force auto-selects all)"
 
 # Verify staging directory was cleaned
-if [[ -d "$TEMP_DIR/.codice-staging" ]]; then
+if compgen -G "$TEMP_DIR/.codice-staging-*" > /dev/null; then
     log_fail "Staging directory was not cleaned after successful install"
     exit 1
 fi

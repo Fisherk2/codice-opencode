@@ -8,11 +8,11 @@
  */
 
 import type { WorkspaceVersion } from "../../domain/entities/WorkspaceVersion";
-import type { IFileSystem } from "../../domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../../domain/ports/IStagedFileSystem";
 import type { Result } from "../../domain/types/Result";
-import { confirmOverwrite, writeVersionFileSafe } from "../helpers";
+import { confirmOverwrite } from "../confirmOverwrite";
 import type { IUserPrompt } from "../ports/IUserPrompt";
+import { writeVersionFileSafe } from "../versionFileWrite";
 import type { UpdateWorkspaceOptions } from "./updateOptions";
 
 /**
@@ -47,9 +47,10 @@ export function buildPluginRemnantMessage(): string {
  * Ask the user for confirmation when the update is not forced.
  * Defaults to Yes so unattended sessions can accept the update
  * with a single keystroke (plan Phase 4).
+ * @returns true = proceed with the update; false = abort.
  */
-export async function maybeConfirmUpdate(
-	fileSystem: IFileSystem & IStagingSystem,
+export async function confirmUpdateUnlessForced(
+	fileSystem: IStagedFileSystem,
 	userPrompt: IUserPrompt,
 	localVersion: WorkspaceVersion,
 	destinationPath: string,
@@ -61,8 +62,7 @@ export async function maybeConfirmUpdate(
 			userPrompt,
 			`Update workspace in "${destinationPath}"? Packs: ${localVersion.installedPacks.join(", ") || "(none)"}. Continue?`,
 			"Update cancelled by user.",
-			undefined,
-			true,
+			{ defaultYes: true },
 		);
 		if (!confirmed) return false;
 	}
@@ -74,8 +74,8 @@ export async function maybeConfirmUpdate(
  * Updates the .codice-version with the new version and installed packs,
  * then skips optional files (optionalSelections resets per spec §6.1).
  */
-export async function finishUpdate(
-	fileSystem: IFileSystem & IStagingSystem,
+export async function writeVersionAndReportUpdate(
+	fileSystem: IStagedFileSystem,
 	userPrompt: IUserPrompt,
 	safeVersion: string,
 	finalPacks: readonly string[],

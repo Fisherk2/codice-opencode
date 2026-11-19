@@ -1,7 +1,9 @@
-import { describe, expect, mock as mockFn, test } from "bun:test";
-import { confirmOverwrite, createProgressCallback } from "../../../src/application/helpers";
+import { describe, expect, mock as mockFn, spyOn, test } from "bun:test";
+import { confirmOverwrite } from "../../../src/application/confirmOverwrite";
 import type { IUserPrompt } from "../../../src/application/ports/IUserPrompt";
+import { createProgressCallback } from "../../../src/application/progressCallback";
 import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
+import { createMockPrompt as createSharedPrompt } from "../../shared/test-doubles";
 
 // ── Mock factories ────────────────────────────────────────────────
 
@@ -22,38 +24,8 @@ function createMockPrompt(opts?: { confirmResult?: boolean }): {
 	confirmCalls: string[];
 	cancelCalls: string[];
 } {
-	const confirmCalls: string[] = [];
-	const cancelCalls: string[] = [];
-	return {
-		confirmCalls,
-		cancelCalls,
-		stub: {
-			showWarning: mockFn(() => {}),
-			showInfo: mockFn(() => {}),
-			confirm: mockFn((msg: string) => {
-				confirmCalls.push(msg);
-				return Promise.resolve(opts?.confirmResult ?? true);
-			}),
-			selectOptional: mockFn(() => Promise.resolve([])),
-			showProgressBar: mockFn(() => {}),
-			updateProgress: mockFn(() => {}),
-			completeProgress: mockFn(() => {}),
-			logProgressEvent: mockFn(() => {}),
-			showIntro: mockFn(() => {}),
-			showSuccess: mockFn(() => {}),
-			showCancel: mockFn((msg: string) => {
-				cancelCalls.push(msg);
-			}),
-			showError: mockFn(() => {}),
-			promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
-			selectPacks: mockFn(() => Promise.resolve(["software-development"] as const)),
-			showVersionInfo: mockFn(() => {}),
-			selectUpdateOption: mockFn(() =>
-				Promise.resolve<"current" | "add" | "cancel" | null>("current"),
-			),
-			showInstallSummary: mockFn(() => {}),
-		},
-	};
+	const prompt = createSharedPrompt({ confirmResult: opts?.confirmResult });
+	return { stub: prompt, confirmCalls: prompt.confirmCalls, cancelCalls: prompt.cancels };
 }
 
 // ── Tests ─────────────────────────────────────────────────────────
@@ -63,7 +35,9 @@ describe("confirmOverwrite", () => {
 		const fs = createMockFileSystem({ isEmpty: false });
 		const prompt = createMockPrompt();
 
-		const result = await confirmOverwrite(fs, prompt.stub, "Overwrite?", "Cancelled.", true);
+		const result = await confirmOverwrite(fs, prompt.stub, "Overwrite?", "Cancelled.", {
+			force: true,
+		});
 
 		expect(result).toBe(true);
 		// Prompt should never have been called
@@ -124,8 +98,7 @@ describe("confirmOverwrite", () => {
 			prompt.stub,
 			'Update workspace in "/tmp/project"? Continue?',
 			"Update cancelled by user.",
-			undefined,
-			true,
+			{ defaultYes: true },
 		);
 
 		expect(result).toBe(true);
@@ -173,6 +146,26 @@ describe("createProgressCallback", () => {
 		expect(prompt.stub.updateProgress).toHaveBeenCalledWith(33, "last-file.md");
 		// No progress bar setup because we never got stage_start
 		expect(prompt.stub.showProgressBar).toHaveBeenCalledTimes(0);
+	});
+
+	test("throttles stage_complete redraws by file count between draws", () => {
+		const prompt = createMockPrompt();
+		const callback = createProgressCallback(prompt.stub, "Clean install...");
+		// Freeze the clock so only the file-count rule decides draws.
+		const nowSpy = spyOn(Date, "now").mockReturnValue(0);
+
+		callback({ type: "stage_start", current: 1, total: 30, filePath: "a" });
+		callback({ type: "stage_complete", current: 1, total: 30, filePath: "a" }); // first → draws
+		for (let i = 2; i <= 29; i++) {
+			callback({ type: "stage_complete", current: i, total: 30, filePath: `f${i}` });
+		}
+		callback({ type: "stage_complete", current: 30, total: 30, filePath: "last" }); // last → draws
+
+		nowSpy.mockRestore();
+		// Draws at 1, 11, 21 (file-count rule), and 30 (isLast) — the
+		// remaining 26 files skip the TUI re-render entirely.
+		expect(prompt.stub.updateProgress).toHaveBeenCalledTimes(4);
+		expect(prompt.stub.updateProgress).toHaveBeenLastCalledWith(30, "last");
 	});
 
 	test("logs commit_start event", () => {

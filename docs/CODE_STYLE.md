@@ -21,6 +21,7 @@
 ## File Structure
 
 - **Maximum 200 lines per file.** If a file grows beyond this limit, extract responsibilities into new modules.
+- **Template Markdown prompts (primary agents and commands): body ≤ 180 lines**, excluding YAML frontmatter. Enforced by `tests/unit/domain/{agent,command}-frontmatter-validation.test.ts`.
 - **One primary export per file.** Secondary utilities may be co-exported if tightly coupled to the primary export.
 - **Import grouping** (top to bottom):
   1. External libraries (`@clack/prompts`, `semver`)

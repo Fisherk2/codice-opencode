@@ -39,13 +39,16 @@ export class VerboseLogger {
 	 *
 	 * @param operation - Operation/decision name (e.g. "stage", "commit", "github").
 	 * @param detail - Optional human-readable detail appended after a colon.
+	 *   A function form is evaluated only when verbose is enabled, so hot
+	 *   per-file call sites skip template-literal allocation when disabled.
 	 */
-	log(operation: string, detail?: string): void {
+	log(operation: string, detail?: string | (() => string)): void {
 		if (!this.enabled) return;
+		const resolved = typeof detail === "function" ? detail() : detail;
 		const line =
-			detail === undefined
+			resolved === undefined
 				? `[${new Date().toISOString()}] ${operation}`
-				: `[${new Date().toISOString()}] ${operation}: ${detail}`;
+				: `[${new Date().toISOString()}] ${operation}: ${resolved}`;
 		// biome-ignore lint/suspicious/noConsole: verbose diagnostic output
 		console.warn(line);
 	}

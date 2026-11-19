@@ -198,4 +198,52 @@ describe("main() — catch block", () => {
 		expect(fatalMessages.length).toBeGreaterThanOrEqual(1);
 		expect(fatalMessages[0]).toContain("string error value");
 	});
+
+	test("handles createDependencies failure via the same clean error boundary", async () => {
+		// Restore the real container: BunSymlinkCreator's constructor throws
+		// for a nonexistent --dest. Before createDependencies moved inside
+		// main()'s try, this surfaced as an uncaught stack trace.
+		restoreContainerModule();
+
+		const origArgv = process.argv;
+		const origExit = process.exit;
+		let exitCode = -1;
+
+		process.exit = ((code: number) => {
+			exitCode = code;
+		}) as unknown as typeof process.exit;
+
+		const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
+
+		process.argv = [
+			"bun",
+			"main.ts",
+			"--clean",
+			"--force",
+			"--dest",
+			"/tmp/test-main-catch-nonexistent-does-not-exist",
+		];
+
+		let fatalMessages: string[] = [];
+
+		try {
+			await main();
+		} catch {
+			// main() may or may not throw depending on how the mock resolves
+		} finally {
+			fatalMessages = consoleSpy.mock.calls
+				.map((args: unknown[]) => String(args[0] ?? ""))
+				.filter((message: string) => message.includes("Fatal error"));
+			consoleSpy.mockRestore();
+			process.exit = origExit;
+			process.argv = origArgv;
+		}
+
+		expect(exitCode).toBe(EXIT_ERROR);
+		expect(fatalMessages.length).toBeGreaterThanOrEqual(1);
+		expect(fatalMessages[0]).toContain("Workspace root does not exist");
+		// Clean error boundary, not an uncaught stack trace: the message is
+		// a single Fatal error line with no "at " stack frames.
+		expect(fatalMessages[0]).not.toMatch(/\bat \S+/);
+	});
 });

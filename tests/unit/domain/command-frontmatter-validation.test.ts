@@ -211,4 +211,18 @@ describe("Command Frontmatter Validation", () => {
 			});
 		}
 	});
+
+	describe("Body line budget", () => {
+		// ≤180 body lines (frontmatter excluded) — normative in specs/spec-agent-format-v2.md §8 and docs/CODE_STYLE.md.
+		for (const filePath of commandFiles) {
+			const relPath = relative(TEMPLATE_ROOT, filePath);
+			it(`${relPath} body stays within 180 lines`, () => {
+				const content = readFileSync(filePath, "utf-8");
+				const { bodyStart } = extractFrontmatter(content);
+				const body = content.slice(bodyStart).trim();
+				const lineCount = body === "" ? 0 : body.split("\n").length;
+				expect(lineCount).toBeLessThanOrEqual(180);
+			});
+		}
+	});
 });

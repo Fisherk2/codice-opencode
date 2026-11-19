@@ -18,6 +18,7 @@ cd codice-opencode
 just setup        # Install dependencies
 just check        # Lint + format + typecheck
 just test         # All unit + integration tests
+just lint-docs    # Markdown lint (markdownlint-cli2)
 ```
 
 - **Prerequisites:** [Bun](https://bun.sh) >= 1.3 (CI pins 1.3 — use it to reproduce CI locally), [Just](https://github.com/casey/just)
@@ -42,6 +43,7 @@ just test         # All unit + integration tests
    just test             # unit + integration — 0 failures
    just coverage-check   # 95% global + src/cli/main.ts gates
    just test-e2e         # CLI E2E suite — 31/31 scenarios
+   just lint-docs        # markdownlint-cli2 — informational CI docs job
    ```
 5. **Commit** using [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `style:`, `perf:`).
 6. **Push and open a PR** against `develop` with a descriptive title referencing related issues.
@@ -52,7 +54,7 @@ just test         # All unit + integration tests
 
 Every commit authored by an AI agent ends with a `Co-Authored-By` trailer naming the **primary agent** that ran the session — attribution lives in the trailer, never in the subject line:
 
-```
+```text
 Co-Authored-By: Huitzilopochtli <dev@fisherk2.com>
 ```
 
@@ -68,12 +70,40 @@ just test-packaging # npm tarball structure validation (5 scenarios)
 just test-e2e       # CLI against isolated directories (31 scenarios)
 just test-watch     # Watch mode for development
 just test-coverage  # With coverage report
+just lint-docs      # markdownlint-cli2 (config .markdownlint-cli2.jsonc)
 ```
 
+- **Docs lint gate:** `just lint-docs` runs on every PR as the CI `docs` job (ubuntu) — informational, not a required check.
 - **Coverage gate:** `just coverage-check` enforces **95% global** plus a **95% sub-gate on `src/cli/main.ts`** (single source: `scripts/coverage-thresholds.json`; measured 96.39% at v2.1.3). The gate covers all production `src/`, not just the domain layer.
 - **Integration tests:** Adapters with real temp dirs. No live network calls.
 - **E2E tests:** `bun run src/cli/main.ts`, isolated dirs, 31 scenarios. Bash scripts (Linux CI only).
 - **Pack flags:** `--packs <list>` (comma-separated), `--packs-all` (all 8 selectable), `--update-add-packs <list>` (add packs during update).
+
+---
+
+## Pre-commit Hooks
+
+The repo ships a dependency-free pre-commit hook in `.githooks/pre-commit` (enabled via
+`git config core.hooksPath .githooks` — no husky, no npm lifecycle scripts).
+
+| Check | Command | Behavior |
+|-------|---------|----------|
+| Typecheck | `bun run tsc --noEmit` | **Blocking** — commit rejected on type errors |
+| Secret scan | `gitleaks protect --staged --no-banner` | **Blocking when gitleaks installed**; otherwise a one-line notice and the commit continues |
+
+```bash
+# setup (fresh clone)
+git config core.hooksPath .githooks
+
+# install gitleaks (optional but recommended)
+brew install gitleaks   # or: apt-get install gitleaks — or binary from github.com/gitleaks/gitleaks
+
+# skip a check
+SKIP=typecheck git commit -m "..."
+SKIP=all git commit -m "..."
+```
+
+> **NTFS/Windows-WSL checkout:** mounts without the `permissions` option can't store the executable bit, so git skips the hook. Run it manually: `bash .githooks/pre-commit`.
 
 ---
 
@@ -96,7 +126,7 @@ This project follows a **3-stage pipeline**: `develop` (integration) → `main` 
 ### Critical Rules
 
 1. **🛑 Never work directly on `develop` or `main`.** All changes go through a branch and PR. Direct commits are forbidden. Branch protection rules block direct pushes and force pushes to both `main` and `develop`.
-2. **✅ Always verify CI on every PR.** Required status checks (`CI / quality (ubuntu-latest)`, `CI / quality (macos-latest)`, `CI / quality (windows-latest)`) must pass before merging. A failure on any platform blocks the merge — regardless of whether it is a pre-release (`beta`, `rc`) or production release. Fix pre-release CI failures before tagging production; they **will** recur.
+2. **✅ Always verify CI on every PR.** Required status checks (`quality (ubuntu-latest)`, `quality (macos-latest)`, `quality (windows-latest)`, `security`) must pass before merging. A failure on any platform blocks the merge — regardless of whether it is a pre-release (`beta`, `rc`) or production release. Fix pre-release CI failures before tagging production; they **will** recur. Every PR runs the workflow (`paths-ignore` applies only to `push`), so required checks always report.
 3. **🔄 Post-release sync `develop` ← `main` is mandatory.** Skipping it causes divergent branches and merge conflicts — even in single-contributor projects. Sync after EVERY merge to `main`:
    ```bash
    git checkout develop && git merge main && git push origin develop
@@ -108,7 +138,7 @@ This project follows a **3-stage pipeline**: `develop` (integration) → `main` 
 
 ### Normal Flow (`feat/` · `fix/` · `chore/` · `docs/` · `refactor/`)
 
-```
+```text
 develop ──●─────────●─────────●──  (integration)
            ╲       ╱         ╱
             ●─────●  ← PRs → develop (squash merge)
@@ -128,7 +158,7 @@ tags                                ● vX.Y.Z
 
 ### Hotfix Flow (`hotfix/`)
 
-```
+```text
 main ────●─────────●──────────  (production)
           ╲       ╱
            ●─────●  ← PRs → main (squash merge)
@@ -145,7 +175,7 @@ develop ──●──────────────●────  (syn
 
 ### Release Flow (`release/`)
 
-```
+```text
 develop ──●───────────────●──  (integration)
            ╲             ╱
             ●─────●─────●  ← stabilization → release/X.Y.Z

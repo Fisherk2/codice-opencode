@@ -7,13 +7,16 @@
  * cancel paths) without mocking the whole use case.
  */
 
-import { describe, expect, mock as mockFn, test } from "bun:test";
-import type { IUserPrompt } from "../../../../src/application/ports/IUserPrompt";
+import { describe, expect, type mock as mockFn, test } from "bun:test";
 import {
 	isPreV2Version,
 	resolveUpdatePacks,
 } from "../../../../src/application/use-cases/updateFlow";
 import { parseVersionData } from "../../../../src/application/versionData";
+import {
+	createMockPrompt as createSharedPrompt,
+	type UserPromptMock,
+} from "../../../shared/test-doubles";
 
 const V2_VERSION_FILE = JSON.stringify({
 	version: "2.0.0",
@@ -21,50 +24,8 @@ const V2_VERSION_FILE = JSON.stringify({
 	installedAt: "2026-01-01T00:00:00.000Z",
 });
 
-function createMockPrompt(): IUserPrompt & {
-	warnings: string[];
-	infos: string[];
-	cancels: string[];
-} {
-	const warnings: string[] = [];
-	const infos: string[] = [];
-	const cancels: string[] = [];
-	return {
-		showWarning: mockFn((msg: string) => {
-			warnings.push(msg);
-		}),
-		showInfo: mockFn((msg: string) => {
-			infos.push(msg);
-		}),
-		showCancel: mockFn((msg: string) => {
-			cancels.push(msg);
-		}),
-		confirm: mockFn(() => Promise.resolve(true)),
-		selectOptional: mockFn(() => Promise.resolve([])),
-		showProgressBar: mockFn(() => {}),
-		updateProgress: mockFn(() => {}),
-		completeProgress: mockFn(() => {}),
-		logProgressEvent: mockFn(() => {}),
-		showIntro: mockFn(() => {}),
-		showSuccess: mockFn(() => {}),
-		showError: mockFn(() => {}),
-		promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
-		selectPacks: mockFn(() => Promise.resolve(["software-development"] as const)),
-		showVersionInfo: mockFn(() => {}),
-		selectUpdateOption: mockFn(() =>
-			Promise.resolve<"current" | "add" | "cancel" | null>("current"),
-		),
-		showInstallSummary: mockFn(() => {}),
-		get warnings() {
-			return warnings;
-		},
-		get infos() {
-			return infos;
-		},
-		get cancels() {
-			return cancels;
-		},
-	};
+function createMockPrompt(): UserPromptMock {
+	return createSharedPrompt();
 }
 
 describe("isPreV2Version", () => {

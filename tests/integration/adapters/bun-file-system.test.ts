@@ -1,11 +1,14 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import { BunFileSystem } from "../../../src/infrastructure/adapters/BunFileSystem";
-import { STAGING_DIR_NAME, VERSION_FILE_NAME } from "../../../src/infrastructure/config/constants";
+import {
+	STAGING_DIR_PREFIX,
+	VERSION_FILE_NAME,
+} from "../../../src/infrastructure/config/constants";
 
 /**
  * Check if a directory exists (fs.access works for dirs; Bun.file().exists() does not).
@@ -133,9 +136,10 @@ describe("BunFileSystem", () => {
 	});
 
 	describe("stageFile and commitStaging", () => {
-		it("should stage a file to staging directory", async () => {
+		it("should stage a file to a unique staging directory", async () => {
 			await fsAdapter.stageFile("config.json");
-			const stagingPath = path.join(destDir, STAGING_DIR_NAME, "config.json");
+			const stagingDir = (await fs.readdir(destDir)).find((e) => e.startsWith(STAGING_DIR_PREFIX));
+			const stagingPath = path.join(destDir, stagingDir ?? "", "config.json");
 			const exists = await Bun.file(stagingPath).exists();
 			expect(exists).toBe(true);
 
@@ -156,9 +160,9 @@ describe("BunFileSystem", () => {
 			const content = await Bun.file(destPath).text();
 			expect(content).toBe("# Test Project");
 
-			// Staging directory should be removed after commit
-			const stagingExists = await dirExists(path.join(destDir, STAGING_DIR_NAME));
-			expect(stagingExists).toBe(false);
+			// Staging directories should be removed after commit
+			const leftovers = (await fs.readdir(destDir)).filter((e) => e.startsWith(STAGING_DIR_PREFIX));
+			expect(leftovers).toEqual([]);
 		});
 
 		it("should stage and commit nested files", async () => {
@@ -178,15 +182,16 @@ describe("BunFileSystem", () => {
 		it("should remove staging directory", async () => {
 			// Stage a file first
 			await fsAdapter.stageFile("config.json");
-			const stagingDir = path.join(destDir, STAGING_DIR_NAME);
-			let stagingExists = await dirExists(stagingDir);
+			const stagingDir = (await fs.readdir(destDir)).find((e) => e.startsWith(STAGING_DIR_PREFIX));
+			expect(stagingDir).toBeDefined();
+			const stagingExists = await dirExists(path.join(destDir, stagingDir ?? ""));
 			expect(stagingExists).toBe(true);
 
 			// Clean
 			await fsAdapter.cleanStaging();
 
-			stagingExists = await dirExists(stagingDir);
-			expect(stagingExists).toBe(false);
+			const leftovers = (await fs.readdir(destDir)).filter((e) => e.startsWith(STAGING_DIR_PREFIX));
+			expect(leftovers).toEqual([]);
 		});
 
 		it("should not throw if staging does not exist", async () => {
@@ -199,6 +204,33 @@ describe("BunFileSystem", () => {
 		it("should return true for writable directory", async () => {
 			const writable = await fsAdapter.isWritable();
 			expect(writable).toBe(true);
+		});
+
+		it("should not leak the write probe", async () => {
+			await fsAdapter.isWritable();
+			const leftovers = (await fs.readdir(destDir)).filter((e) =>
+				e.startsWith(".codice-write-test"),
+			);
+			expect(leftovers).toEqual([]);
+		});
+
+		it("should treat a successful write probe as writable even when cleanup fails", async () => {
+			// A failed probe cleanup must not flip the verdict — the write
+			// already proved writability (old code returned false here).
+			const realUnlink = fs.unlink.bind(fs);
+			const probePath = path.join(destDir, ".codice-write-test");
+			const unlinkSpy = spyOn(fs, "unlink").mockImplementation(((p: unknown) => {
+				if (String(p) === probePath) {
+					return Promise.reject(Object.assign(new Error("EACCES"), { code: "EACCES" }));
+				}
+				return realUnlink(p as string);
+			}) as unknown as typeof fs.unlink);
+			try {
+				expect(await fsAdapter.isWritable()).toBe(true);
+			} finally {
+				unlinkSpy.mockRestore();
+				await realUnlink(probePath).catch(() => {});
+			}
 		});
 	});
 
@@ -315,9 +347,9 @@ describe("BunFileSystem", () => {
 			const contentB = await Bun.file(path.join(subdir, "rollback-b.txt")).text();
 			expect(contentB).toBe("ORIGINAL_B");
 
-			// Staging directory should be cleaned up
-			const stagingExists = await dirExists(path.join(destDir, STAGING_DIR_NAME));
-			expect(stagingExists).toBe(false);
+			// Staging directories should be cleaned up
+			const leftovers = (await fs.readdir(destDir)).filter((e) => e.startsWith(STAGING_DIR_PREFIX));
+			expect(leftovers).toEqual([]);
 
 			// No .codice-backup files should remain
 			const allEntries = await fs.readdir(destDir, { recursive: true });
@@ -390,7 +422,10 @@ describe("BunFileSystem — FEV-17 destPath (core/packs → flat destination)", 
 	it("stages core/ content to staging root when destPath is empty string", async () => {
 		await fsAdapter.stageFile("core", "");
 
-		const stagingRoot = path.join(destDir, STAGING_DIR_NAME);
+		const stagingRoot = path.join(
+			destDir,
+			(await fs.readdir(destDir)).find((e) => e.startsWith(STAGING_DIR_PREFIX)) ?? "",
+		);
 		expect(await Bun.file(path.join(stagingRoot, "opencode.json")).exists()).toBe(true);
 		expect(await Bun.file(path.join(stagingRoot, "skills-lock.json")).exists()).toBe(true);
 		expect(await Bun.file(path.join(stagingRoot, "commands", "build.md")).exists()).toBe(true);
@@ -406,7 +441,10 @@ describe("BunFileSystem — FEV-17 destPath (core/packs → flat destination)", 
 	it("stages packs/main to staging agents/ when destPath is 'agents'", async () => {
 		await fsAdapter.stageFile("packs/main", "agents");
 
-		const stagingRoot = path.join(destDir, STAGING_DIR_NAME);
+		const stagingRoot = path.join(
+			destDir,
+			(await fs.readdir(destDir)).find((e) => e.startsWith(STAGING_DIR_PREFIX)) ?? "",
+		);
 		expect(await Bun.file(path.join(stagingRoot, "agents", "huitzilopochtli.md")).exists()).toBe(
 			true,
 		);

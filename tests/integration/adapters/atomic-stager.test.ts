@@ -5,7 +5,10 @@ import * as path from "node:path";
 import { AtomicStager } from "../../../src/infrastructure/adapters/AtomicStager";
 import { walkDirectory } from "../../../src/infrastructure/adapters/directoryWalker";
 import { VerboseLogger } from "../../../src/infrastructure/adapters/VerboseLogger";
-import { BACKUP_INTENT_FILE, STAGING_DIR_NAME } from "../../../src/infrastructure/config/constants";
+import {
+	BACKUP_INTENT_FILE,
+	STAGING_DIR_PREFIX,
+} from "../../../src/infrastructure/config/constants";
 
 /** fs.access works for dirs; Bun.file().exists() does not. */
 async function dirExists(dirPath: string): Promise<boolean> {
@@ -21,6 +24,12 @@ async function dirExists(dirPath: string): Promise<boolean> {
 async function findBackups(root: string): Promise<string[]> {
 	if (!(await dirExists(root))) return [];
 	return (await walkDirectory(root)).filter((p) => p.endsWith(".codice-backup"));
+}
+
+/** Any per-run staging dir (`.codice-staging-*`) left directly under a root. */
+async function stagingLeftovers(root: string): Promise<string[]> {
+	const entries = await fs.readdir(root).catch(() => [] as string[]);
+	return entries.filter((e) => e.startsWith(STAGING_DIR_PREFIX));
 }
 
 /**
@@ -67,7 +76,7 @@ describe("AtomicStager", () => {
 		await stager.commitStaging();
 
 		expect(await Bun.file(path.join(destDir, "happy.txt")).text()).toBe("HAPPY");
-		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
 		expect(await findBackups(destDir)).toEqual([]);
 	});
 
@@ -82,7 +91,7 @@ describe("AtomicStager", () => {
 
 		expect(await Bun.file(destFile).text()).toBe("NEW");
 		expect(await findBackups(destDir)).toEqual([]);
-		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
 	});
 
 	it("restores backed-up originals when a mid-commit rename fails", async () => {
@@ -108,8 +117,230 @@ describe("AtomicStager", () => {
 
 		// Original content preserved — either restored from backup or untouched
 		expect(await Bun.file(aaaDest).text()).toBe("ORIGINAL_AAA");
-		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
 		expect(await findBackups(destDir)).toEqual([]);
+	});
+
+	// NTFS cannot store Unix permission modes: Bun synthesizes stat.mode on
+	// Windows (writable files report 0666), so the 0640 assertion is
+	// untestable there. Content preservation on rollback stays covered on
+	// Windows by "restores backed-up originals when a mid-commit rename fails".
+	it.skipIf(process.platform === "win32")(
+		"preserves the original file mode when restoring backups on rollback",
+		async () => {
+			const destFile = path.join(destDir, "mode-keeper.txt");
+			await fs.writeFile(destFile, "ORIGINAL_MODE");
+			await fs.chmod(destFile, 0o640);
+			// 0o640 differs from both the backup's 0600 and the default 0644, so
+			// the assertion detects a copyFile-propagated backup mode.
+			const src = path.join(templateDir, "mode-keeper.txt");
+			await fs.writeFile(src, "NEW_MODE");
+			const srcBroken = path.join(templateDir, "mode-zzz", "broken.txt");
+			await fs.mkdir(path.dirname(srcBroken), { recursive: true });
+			await fs.writeFile(srcBroken, "SHOULD NOT LAND");
+			await fs.writeFile(path.join(destDir, "mode-zzz"), "I AM A FILE, NOT A DIR");
+
+			await stager.stageFile(src, "mode-keeper.txt");
+			await stager.stageFile(srcBroken, "mode-zzz/broken.txt");
+
+			await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
+
+			expect((await fs.lstat(destFile)).mode & 0o777).toBe(0o640);
+			expect(await Bun.file(destFile).text()).toBe("ORIGINAL_MODE");
+		},
+	);
+
+	it("refuses commit when a destination intermediate component is a symlink", async () => {
+		// dest/sub → outside tmp root: the commit must fail closed and must
+		// not write through the link.
+		const outsideDir = path.join(tmpDir, "outside");
+		await fs.mkdir(outsideDir, { recursive: true });
+		await fs.symlink(outsideDir, path.join(destDir, "sub"));
+
+		const src = path.join(templateDir, "through-link.txt");
+		await fs.writeFile(src, "SHOULD NOT LAND");
+		await stager.stageFile(src, "sub/through-link.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(
+			/destination component .* is a symbolic link/,
+		);
+
+		// Nothing written outside the destination root through the link.
+		const leaked = await walkDirectory(outsideDir).catch(() => []);
+		expect(leaked).toEqual([]);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
+		await fs.unlink(path.join(destDir, "sub")).catch(() => {});
+	});
+
+	it("replaces a symlinked destination file without backing it up", async () => {
+		// dest/linked.txt → outside file: commit must NOT dereference the
+		// link for backup; the link entry is replaced by the staged file.
+		const outsideFile = path.join(tmpDir, "linked-target.txt");
+		await fs.writeFile(outsideFile, "OUTSIDE ORIGINAL");
+		await fs.symlink(outsideFile, path.join(destDir, "linked.txt"));
+
+		const src = path.join(templateDir, "linked.txt");
+		await fs.writeFile(src, "NEW");
+		await stager.stageFile(src, "linked.txt");
+		await stager.commitStaging();
+
+		// dest/linked.txt is now a regular file with the staged content;
+		// the outside target file is untouched.
+		expect(await fs.lstat(path.join(destDir, "linked.txt")).then((s) => s.isSymbolicLink())).toBe(
+			false,
+		);
+		expect(await Bun.file(path.join(destDir, "linked.txt")).text()).toBe("NEW");
+		expect(await Bun.file(outsideFile).text()).toBe("OUTSIDE ORIGINAL");
+		expect(await findBackups(destDir)).toEqual([]);
+	});
+
+	// chmod 0o000 cannot make a file unreadable to its owner on Windows (no
+	// POSIX permission bits — Bun maps chmod to the read-only attribute,
+	// which does not block reads), so the EACCES precondition is
+	// unrepresentable there; the fail-closed read path runs on Linux/macOS.
+	it.skipIf(process.platform === "win32")(
+		"fails closed when the intent marker is unreadable",
+		async () => {
+			// Only ENOENT means "absent"; an unreadable marker (EACCES) must
+			// refuse the commit — the marker's state is unknown.
+			const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+			await fs.writeFile(intentPath, "2026-01-01T00:00:00.000Z", "utf-8");
+			await fs.chmod(intentPath, 0o000);
+
+			const src = path.join(templateDir, "blocked.txt");
+			await fs.writeFile(src, "X");
+			await stager.stageFile(src, "blocked.txt");
+
+			await expect(stager.commitStaging()).rejects.toThrow(/Cannot verify backup intent marker/);
+
+			// Restore permissions so the marker can be cleaned up.
+			await fs.chmod(intentPath, 0o644);
+			await fs.unlink(intentPath).catch(() => {});
+		},
+	);
+
+	// Windows cannot represent 0600: Bun synthesizes stat.mode from NTFS
+	// attributes (writable → 0666), so the owner-only assertion is untestable there.
+	it.skipIf(process.platform === "win32")(
+		"backs up overwritten files with owner-only permissions (0600)",
+		async () => {
+			// A pre-existing destination file with broad permissions must not be
+			// exposed via the backup. After a rollback the restored backup is
+			// swept, so pin the backup on disk: fail the second rename mid-commit
+			// and make the sweep's unlink of the restored backup fail. The
+			// surviving backup's mode must be 0600.
+			const victim = path.join(destDir, "victim.txt");
+			await fs.writeFile(victim, "PRECIOUS");
+			await fs.chmod(victim, 0o666);
+			const src = path.join(templateDir, "victim.txt");
+			await fs.writeFile(src, "NEW");
+			const brokenSrc = path.join(templateDir, "broken.txt");
+			await fs.writeFile(brokenSrc, "X");
+			const blocker = path.join(destDir, "broken");
+			await fs.writeFile(blocker, "I AM A FILE, NOT A DIR");
+			const backupPath = `${victim}.codice-backup`;
+
+			const realRename = fs.rename.bind(fs);
+			const realUnlink = fs.unlink.bind(fs);
+			const renameSpy = spyOn(fs, "rename").mockImplementation(((a: unknown, b: unknown) => {
+				if (String(b).endsWith("broken/inner.txt")) {
+					return Promise.reject(new Error("forced mid-commit failure"));
+				}
+				return realRename(a as string, b as string);
+			}) as unknown as typeof fs.rename);
+			const unlinkSpy = spyOn(fs, "unlink").mockImplementation(((p: unknown) => {
+				if (String(p) === backupPath) {
+					return Promise.reject(new Error("keep the backup for the mode assertion"));
+				}
+				return realUnlink(p as string);
+			}) as unknown as typeof fs.unlink);
+
+			try {
+				await stager.stageFile(src, "victim.txt");
+				await stager.stageFile(brokenSrc, "broken/inner.txt");
+				await expect(stager.commitStaging()).rejects.toThrow(/Failed to commit staged files/);
+
+				const backupStat = await fs.stat(backupPath);
+				expect(backupStat.mode & 0o777).toBe(0o600);
+			} finally {
+				renameSpy.mockRestore();
+				unlinkSpy.mockRestore();
+				await realUnlink(backupPath).catch(() => {});
+			}
+		},
+	);
+
+	it("auto-recovers an interrupted commit when backups allow it", async () => {
+		// Simulate a hard-kill mid-commit: victim.txt holds the STAGED
+		// (promoted) content, its .codice-backup holds the original, and the
+		// intent marker names a DEAD writer PID.
+		const proc = Bun.spawnSync({ cmd: ["true"] });
+		const deadPid = proc.pid;
+		expect(deadPid).toBeGreaterThan(0);
+
+		const victim = path.join(destDir, "victim.txt");
+		await fs.writeFile(victim, "STAGED BY KILLED RUN");
+		const backupPath = `${victim}.codice-backup`;
+		await fs.writeFile(backupPath, "ORIGINAL");
+		await fs.writeFile(
+			path.join(destDir, BACKUP_INTENT_FILE),
+			`${deadPid} 2026-01-01T00:00:00.000Z`,
+			"utf-8",
+		);
+
+		// The new commit must recover (restore the original from the backup,
+		// sweep it, remove the marker) and then proceed normally.
+		const src = path.join(templateDir, "victim.txt");
+		await fs.writeFile(src, "NEW");
+		await stager.stageFile(src, "victim.txt");
+		const residueNote = await stager.commitStaging();
+
+		expect(residueNote).toContain("recovered an interrupted commit");
+		// Commit output wins after recovery; backup and marker are gone.
+		expect(await Bun.file(victim).text()).toBe("NEW");
+		expect(await Bun.file(backupPath).exists()).toBe(false);
+		expect(await Bun.file(path.join(destDir, BACKUP_INTENT_FILE)).exists()).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
+	});
+
+	it("hard-blocks when the interrupted commit left no backups", async () => {
+		const proc = Bun.spawnSync({ cmd: ["true"] });
+		await fs.writeFile(
+			path.join(destDir, BACKUP_INTENT_FILE),
+			`${proc.pid} 2026-01-01T00:00:00.000Z`,
+			"utf-8",
+		);
+
+		const src = path.join(templateDir, "blocked2.txt");
+		await fs.writeFile(src, "X");
+		await stager.stageFile(src, "blocked2.txt");
+
+		// Without backups the pre-commit state is not reconstructible — the
+		// marker's own content must never be deleted by a blind recovery.
+		await expect(stager.commitStaging()).rejects.toThrow(/Previous commit was interrupted/);
+	});
+
+	it("does not auto-recover while the marker's writer PID is alive", async () => {
+		// Our own PID is alive: the marker may belong to a live commit.
+		await fs.writeFile(
+			path.join(destDir, BACKUP_INTENT_FILE),
+			`${process.pid} 2026-01-01T00:00:00.000Z`,
+			"utf-8",
+		);
+		const victim = path.join(destDir, "alive-victim.txt");
+		await fs.writeFile(victim, "OLD");
+		await fs.writeFile(`${victim}.codice-backup`, "ORIGINAL");
+
+		const src = path.join(templateDir, "alive.txt");
+		await fs.writeFile(src, "NEW");
+		await stager.stageFile(src, "alive.txt");
+
+		await expect(stager.commitStaging()).rejects.toThrow(/may still be in progress/);
+		// Nothing was touched: the marker and backup stay for the live writer.
+		expect(await Bun.file(`${victim}.codice-backup`).text()).toBe("ORIGINAL");
+		// Clean up so later tests start from a no-marker state.
+		await fs.unlink(path.join(destDir, BACKUP_INTENT_FILE)).catch(() => {});
+		await fs.unlink(`${victim}.codice-backup`).catch(() => {});
 	});
 
 	it("stages a directory recursively while honoring excludeNames", async () => {
@@ -160,6 +391,33 @@ describe("AtomicStager", () => {
 		expect(await Bun.file(path.join(destDir, "intent.txt")).text()).toBe("INTENT");
 	});
 
+	it("reports intent-marker unlink failure as residue instead of swallowing it", async () => {
+		const src = path.join(templateDir, "residue.txt");
+		await fs.writeFile(src, "RESIDUE");
+
+		const realUnlink = fs.unlink.bind(fs);
+		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+		const unlinkSpy = spyOn(fs, "unlink").mockImplementation(async (p: unknown) => {
+			if (String(p) === intentPath) {
+				// Simulate EACCES on the marker cleanup after a successful commit.
+				throw Object.assign(new Error("EACCES: permission denied"), { code: "EACCES" });
+			}
+			return realUnlink(p as Parameters<typeof realUnlink>[0]);
+		});
+
+		try {
+			await stager.stageFile(src, "residue.txt");
+			const residueNote = await stager.commitStaging();
+			// Commit still succeeds, but the failure is visible in the report.
+			expect(residueNote).toContain("intent marker could not be removed");
+			expect(await Bun.file(path.join(destDir, "residue.txt")).text()).toBe("RESIDUE");
+		} finally {
+			unlinkSpy.mockRestore();
+			// Clean up the marker the mocked unlink refused to remove.
+			await realUnlink(intentPath).catch(() => {});
+		}
+	});
+
 	it("throws when .codice-backup-intent exists from interrupted commit", async () => {
 		// Simulate interrupted commit by creating intent marker
 		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
@@ -170,6 +428,27 @@ describe("AtomicStager", () => {
 		await stager.stageFile(src, "retry.txt");
 
 		await expect(stager.commitStaging()).rejects.toThrow(/Previous commit was interrupted/);
+	});
+
+	it("strips ANSI escapes from planted .codice-backup-intent content in the block error", async () => {
+		const intentPath = path.join(destDir, BACKUP_INTENT_FILE);
+		// No PID prefix → unparseable marker → hard-block echoing the content
+		await fs.writeFile(intentPath, "\u001b[31;1;4mEVIL\u001b[0m", "utf-8");
+
+		const src = path.join(templateDir, "ansi-retry.txt");
+		await fs.writeFile(src, "RETRY");
+		await stager.stageFile(src, "ansi-retry.txt");
+
+		try {
+			await stager.commitStaging();
+			throw new Error("expected commitStaging to reject");
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			expect(message).toContain("Previous commit was interrupted");
+			expect(message).toContain("EVIL");
+			// No raw escape bytes may reach the terminal
+			expect(message.includes("\u001b")).toBe(false);
+		}
 	});
 
 	it("never overwrites a destination file whose backup cannot be created", async () => {
@@ -188,7 +467,7 @@ describe("AtomicStager", () => {
 			await expect(stager.commitStaging()).rejects.toThrow(/back up existing destination/i);
 
 			expect(await Bun.file(destFile).text()).toBe("PRECIOUS");
-			expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+			expect(await stagingLeftovers(destDir)).toEqual([]);
 		} finally {
 			await fs.rm(backupDir, { recursive: true, force: true });
 		}
@@ -215,24 +494,77 @@ describe("AtomicStager", () => {
 		expect(await Bun.file(path.join(destDir, "aaa_new.txt")).exists()).toBe(false);
 	});
 
-	it("refuses to write into a pre-existing symlinked staging directory", async () => {
-		// Attacker-controlled or corrupted destination: .codice-staging is a
-		// symlink pointing somewhere else (e.g., the home dir or /etc).
+	it("refuses to write into a symlink-swapped staging directory", async () => {
+		// mkdtemp naming means a pre-existing symlinked `.codice-staging` is
+		// irrelevant; the attack vector is a swap AFTER the staging dir is
+		// created — the per-write ensureNotSymlink lstat must catch it.
 		const outsideDir = await fs.mkdtemp(path.join(tmpDir, "outside-"));
 		const evilDestDir = await fs.mkdtemp(path.join(tmpDir, "dest-evil-"));
-		await fs.symlink(outsideDir, path.join(evilDestDir, STAGING_DIR_NAME));
 		const evilStager = new AtomicStager(evilDestDir);
 
 		const src = path.join(templateDir, "symlink.txt");
 		await fs.writeFile(src, "SMUGGLED");
 
-		await expect(evilStager.stageFile(src, "payload.txt")).rejects.toThrow(/symbolic link/i);
+		// First stage creates the unique staging dir.
+		await evilStager.stageFile(src, "payload.txt");
+
+		// Swap it for a symlink before the next write.
+		const entries = await fs.readdir(evilDestDir);
+		const stagingEntry = entries.find((e) => e.startsWith(STAGING_DIR_PREFIX));
+		expect(stagingEntry).toBeDefined();
+		const swappedDir = path.join(evilDestDir, stagingEntry ?? "");
+		await fs.rm(swappedDir, { recursive: true, force: true });
+		await fs.symlink(outsideDir, swappedDir);
+
+		await expect(evilStager.stageFile(src, "payload2.txt")).rejects.toThrow(/symbolic link/i);
 
 		// Nothing was written through the link — outside dir stays empty.
 		const outsideEntries = await fs.readdir(outsideDir);
 		expect(outsideEntries).toEqual([]);
 		await fs.rm(evilDestDir, { recursive: true, force: true });
 		await fs.rm(outsideDir, { recursive: true, force: true });
+	});
+
+	it("gives each stager a unique staging dir and fails a concurrent marker claim cleanly", async () => {
+		const srcA = path.join(templateDir, "run-a.txt");
+		const srcB = path.join(templateDir, "run-b.txt");
+		await fs.writeFile(srcA, "A");
+		await fs.writeFile(srcB, "B");
+
+		// Two concurrent runs stage into separate directories.
+		const runA = new AtomicStager(destDir);
+		const runB = new AtomicStager(destDir);
+		await runA.stageFile(srcA, "run-a.txt");
+		await runB.stageFile(srcB, "run-b.txt");
+		const stagingDirs = (await fs.readdir(destDir)).filter((e) => e.startsWith(STAGING_DIR_PREFIX));
+		expect(stagingDirs.length).toBe(2);
+
+		// O_EXCL intent marker: if the pre-check misses the marker (read
+		// raced before the other run created it), the "wx" create fails
+		// EEXIST and the second run aborts cleanly instead of interleaving.
+		await fs.writeFile(path.join(destDir, BACKUP_INTENT_FILE), "concurrent", "utf-8");
+		const realReadFile = fs.readFile.bind(fs);
+		const enoentError = (): Error => Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		const readFileStub = (p: unknown): Promise<string> => {
+			if (String(p) === path.join(destDir, BACKUP_INTENT_FILE)) {
+				return Promise.reject(enoentError());
+			}
+			// AtomicStager is the only fs.readFile caller (utf-8 marker read).
+			return realReadFile(String(p), "utf-8");
+		};
+		const readFileSpy = spyOn(fs, "readFile").mockImplementation(
+			readFileStub as unknown as typeof fs.readFile,
+		);
+		try {
+			await expect(runB.commitStaging()).rejects.toThrow(/Another commit is in progress/);
+		} finally {
+			readFileSpy.mockRestore();
+		}
+
+		// Run B's rollback removed the marker; run A's staging dir is untouched.
+		expect(await Bun.file(path.join(destDir, BACKUP_INTENT_FILE)).exists()).toBe(false);
+		// Clean up run A's staging dir so later leftover checks stay valid.
+		await runA.cleanStaging();
 	});
 
 	it("refuses to write a backup through a pre-existing symlinked backup path", async () => {
@@ -288,7 +620,7 @@ describe("AtomicStager", () => {
 		// failing file untouched / absent
 		expect(await Bun.file(path.join(destDir, "zzz", "broken.txt")).exists()).toBe(false);
 		// staging dir swept and intent marker removed
-		expect(await dirExists(path.join(destDir, STAGING_DIR_NAME))).toBe(false);
+		expect(await stagingLeftovers(destDir)).toEqual([]);
 		expect(await Bun.file(intentPath).exists()).toBe(false);
 		expect(await findBackups(destDir)).toEqual([]);
 	});

@@ -13,7 +13,6 @@
 import { describe, expect, test } from "bun:test";
 import { compare as semverCompare, valid } from "semver";
 import type { IGitHubClient } from "../../src/application/ports/IGitHubClient";
-import type { IUserPrompt } from "../../src/application/ports/IUserPrompt";
 import { UpdateWorkspaceUseCase } from "../../src/application/use-cases/UpdateWorkspaceUseCase";
 import type { FileRule } from "../../src/domain/entities/FileRule";
 import type { IFileMergeEngine } from "../../src/domain/ports/IFileMergeEngine";
@@ -23,6 +22,7 @@ import type { MergeError } from "../../src/domain/types/MergeError";
 import type { ProgressCallback } from "../../src/domain/types/ProgressEvent";
 import { failure, type Result, success } from "../../src/domain/types/Result";
 import type { RemoteVersionStatus } from "../../src/domain/types/version";
+import { createMockPrompt, type UserPromptMock } from "../shared/test-doubles";
 
 /**
  * Bundled template version used in the tests. Must be NEWER than the seeded
@@ -44,7 +44,9 @@ class FakeFileSystem implements IFileSystem {
 		_destPath?: string,
 		_excludeSubDirs?: Set<string>,
 	): Promise<void> {}
-	async commitStaging(): Promise<void> {}
+	async commitStaging(): Promise<string> {
+		return "";
+	}
 	async cleanStaging(): Promise<void> {}
 	async isWritable(): Promise<boolean> {
 		return true;
@@ -100,47 +102,8 @@ class FakeGitHubClientBadTag implements IGitHubClient {
 	}
 }
 
-class FakeUserPrompt implements IUserPrompt {
-	warnings: string[] = [];
-	showWarning(message: string): void {
-		this.warnings.push(message);
-	}
-	showInfo(_message: string): void {}
-	async confirm(_message: string, _default?: boolean): Promise<boolean> {
-		return true;
-	}
-	async selectOptional(_options: readonly FileRule[]): Promise<string[]> {
-		return [];
-	}
-	showProgressBar(_total: number, _label?: string): void {}
-	updateProgress(_current: number, _filePath: string): void {}
-	completeProgress(): void {}
-	logProgressEvent(_message: string): void {}
-	showIntro(_title: string): void {}
-	showSuccess(_message: string): void {}
-	showCancel(_message: string): void {}
-	showError(_message: string): void {}
-	async promptForMode(): Promise<"clean" | "project" | "update" | null> {
-		return null;
-	}
-	async selectPacks(
-		_options: readonly import("../../src/application/ports/IUserPrompt").PackOption[],
-		_preSelected: readonly string[],
-	): Promise<readonly string[]> {
-		return ["software-development"];
-	}
-	showVersionInfo(
-		_info: import("../../src/application/ports/IUserPrompt").VersionDisplayInfo,
-	): void {}
-	async selectUpdateOption(
-		_options: readonly import("../../src/application/ports/IUserPrompt").UpdateOptionChoice[],
-	): Promise<"current" | "add" | "cancel" | null> {
-		return "current";
-	}
-	showInstallSummary(
-		_info: import("../../src/application/ports/IUserPrompt").InstallSummaryInfo,
-	): void {}
-}
+/** Shared IUserPrompt double; warnings are read via prompt.warnings. */
+const FakeUserPrompt = (): UserPromptMock => createMockPrompt();
 
 class FakeVersionComparator implements IVersionComparator {
 	compare(installed: string, remote: string): Result<RemoteVersionStatus, Error> {
@@ -175,7 +138,7 @@ function makeUseCase(
 	return new UpdateWorkspaceUseCase(
 		fileSystem ?? new FakeFileSystem(),
 		mergeEngine,
-		new FakeUserPrompt(),
+		FakeUserPrompt(),
 		gitHub ?? new FakeGitHubClient(),
 		versionComparator ?? new FakeVersionComparator(),
 		bundledVersion,
@@ -254,7 +217,7 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 		const mergeEngine = new CaptureMergeEngine();
 		const fs = new FakeFileSystem();
 		fs.versionFileContent = null;
-		const prompt = new FakeUserPrompt();
+		const prompt = FakeUserPrompt();
 		const useCase = new UpdateWorkspaceUseCase(
 			fs,
 			mergeEngine,
@@ -278,7 +241,7 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 			version: "1.8.0",
 			installedAt: "2026-01-01T00:00:00.000Z",
 		});
-		const prompt = new FakeUserPrompt();
+		const prompt = FakeUserPrompt();
 		const useCase = new UpdateWorkspaceUseCase(
 			fs,
 			mergeEngine,
@@ -303,7 +266,7 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 			installedPacks: ["software-development"],
 			installedAt: "2026-01-01T00:00:00.000Z",
 		});
-		const prompt = new FakeUserPrompt();
+		const prompt = FakeUserPrompt();
 		const useCase = new UpdateWorkspaceUseCase(
 			fs,
 			mergeEngine,
@@ -329,7 +292,7 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 				installedPacks: ["software-development"],
 				installedAt: "2026-01-01T00:00:00.000Z",
 			});
-			const prompt = new FakeUserPrompt();
+			const prompt = FakeUserPrompt();
 			const useCase = new UpdateWorkspaceUseCase(
 				fs,
 				mergeEngine,
@@ -366,7 +329,7 @@ describe("UpdateWorkspaceUseCase — Issue #2 (standard overwrite)", () => {
 			installedPacks: ["software-development"],
 			installedAt: "2026-01-01T00:00:00.000Z",
 		});
-		const prompt = new FakeUserPrompt();
+		const prompt = FakeUserPrompt();
 		const useCase = new UpdateWorkspaceUseCase(
 			fs,
 			mergeEngine,

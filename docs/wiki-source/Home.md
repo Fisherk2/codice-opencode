@@ -10,8 +10,8 @@ The template includes:
 
 - **6 primary agents** — specialist personas that orchestrate the SDD cycle (spec writing, planning, building, testing, reviewing, shipping)
 - **359 agents in 10 packs** — 6 primary agents + 4 writer agents + 349 subagents across 8 selectable packs
-- **17 slash commands** — `/spec`, `/plan`, `/build`, `/test`, `/review`, `/ship`, `/sync`, `/migrate`, `/deploy`, `/analyze`, and more — each wired to the right agent with a defined workflow
-- **51 engineering skills** — reusable workflow instructions for TDD, code review, security hardening, performance optimization, UI/UX design, and more
+- **18 slash commands** — `/spec`, `/plan`, `/feature`, `/hotfix`, `/build`, `/test`, `/review`, `/ship`, `/sync`, `/migrate`, `/deploy`, `/analyze`, and more — each wired to the right agent with a defined workflow
+- **61 engineering skills** — reusable workflow instructions for TDD, code review, security hardening, performance optimization, UI/UX design, and more
 - **Pre-configured permissions** — ordered V2 rules (`shell`, `read`, `subagent`, `external_directory` actions with `allow`/`ask`/`deny` effects) tuned for safe AI-assisted development
 - **Opinionated model defaults** — a working default model (`opencode/big-pickle`) plus per-agent model, step, and color overrides for the six primary agents; provider configuration (`providers`) is intentionally left for you to add
 
@@ -44,7 +44,7 @@ Códice solves this by providing a **versioned, atomic installer** that:
 - [Configuration](Configuration) — Understanding `opencode.json` and agent settings
 - [MCP Servers](MCP-Servers) — Pre-configured servers, activation, and per-agent control
 - [Agents](Agents) — The six primary agents, subagent catalog, and how to add new ones
-- [Commands](Commands) — All 17 SDD slash commands and their workflows
+- [Commands](Commands) — All 18 SDD slash commands and their workflows
 - [Skills](Skills) — Engineering skills included in the template and how to add new ones
 - [Configuration](Configuration) — Configure models, agents, permissions, MCP servers, and references
 - [Troubleshooting](Troubleshooting) — Common issues and solutions

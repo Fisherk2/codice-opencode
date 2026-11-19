@@ -18,14 +18,14 @@
 
 ## Decision Log
 
-<!-- Link to ADRs in specs/adr/ for architectural decisions. -->
-<!-- Use relative file paths: specs/adr/adr-NNNN-title.md -->
+<!-- Link to ADRs in docs/adr/ for architectural decisions. -->
+<!-- Use relative file paths: docs/adr/adr-NNNN-title.md -->
 <!-- ADR status options: Proposed | Accepted | Deprecated | Superseded -->
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-001](specs/adr/adr-001-template.md) | [Decision title] | [Accepted] |
-| [ADR-002](specs/adr/adr-002-template.md) | [Decision title] | [Proposed] |
+| [ADR-001](docs/adr/adr-template.md) | [Decision title] | [Accepted] |
+| [ADR-002](docs/adr/adr-template.md) | [Decision title] | [Proposed] |
 
 ## References
 

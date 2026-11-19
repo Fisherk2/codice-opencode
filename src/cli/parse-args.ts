@@ -6,6 +6,7 @@
  */
 
 import type { InstallMode } from "../application/ports/IUserPrompt";
+import { stripControlChars } from "../domain/services/stripControlChars";
 import { validateDestPath } from "./validateDestPath";
 import { validatePackList } from "./validatePackList";
 
@@ -13,7 +14,11 @@ import { validatePackList } from "./validatePackList";
 // Types
 // ---------------------------------------------------------------------------
 
-/** Installation modes supported by the CLI */
+/**
+ * CLI dispatch mode: "interactive" launches the TUI menu; the three
+ * InstallMode values select a use-case directly. InstallMode itself stays
+ * the use-case/prompt contract — Mode only names the CLI dispatch union.
+ */
 export type Mode = InstallMode | "interactive";
 
 /** Parsed CLI options: packs/packsAll select packs; updateAddPacks adds packs. */
@@ -65,30 +70,41 @@ function validateDestPathAndReport(raw: string): string | null {
 		console.error(`[error] ${error}`);
 		return null;
 	}
-	return raw;
+	// Return the stripped value: control chars (incl. ANSI escapes) must not
+	// reach downstream fatal messages (e.g. BunGitignoreCreator/BunSymlinkCreator).
+	return stripControlChars(raw);
 }
 
 /** Validate pack list and report error if invalid. Returns null on error. */
 function validatePackListAndReport(raw: string): string | null {
 	if (validatePackList(raw) === null) {
+		const display = stripControlChars(raw);
 		// biome-ignore lint/suspicious/noConsole: CLI user-facing error
-		console.error(`[error] Invalid pack list: "${raw}". Use --help to list valid pack IDs.`);
+		console.error(`[error] Invalid pack list: "${display}". Use --help to list valid pack IDs.`);
 		return null;
 	}
 	return raw;
 }
 
 /**
- * Read and validate the value token following a value-flag.
+ * Read and validate the value token following a value-flag. A token
+ * starting with "-" is almost certainly the next flag, not a value
+ * (e.g. --dest --force) — it is rejected; a preceding bare "--" in the
+ * caller escapes this for values that legitimately start with "-".
  * Returns null when missing or invalid (prints CLI error for --dest).
  */
 function readFlagValue(
 	args: readonly string[],
 	valueIndex: number,
 	isDest: boolean,
+	escaped: boolean,
 ): string | null {
 	const raw = args[valueIndex];
 	if (raw === undefined) return null;
+	// A token starting with "-" is the next flag, not a value (e.g.
+	// --dest --force): reject it instead of silently consuming it —
+	// unless a consumed bare "--" escaped it (documented dash-leading values).
+	if (raw.startsWith("-") && !escaped) return null;
 	return isDest ? validateDestPathAndReport(raw) : validatePackListAndReport(raw);
 }
 
@@ -117,7 +133,9 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 
 		if (VALUE_FLAGS.has(arg)) {
 			const isDest = arg === "--dest";
-			const value = readFlagValue(args, i, isDest);
+			const escaped = args[i] === "--"; // bare "--" escapes dash-leading values
+			if (escaped) i++; // consume the "--"
+			const value = readFlagValue(args, i, isDest, escaped);
 			if (value === null) return null;
 			if (isDest) destination = value;
 			else values[arg] = value;
@@ -125,7 +143,12 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 		} else if (ALLOWED_FLAGS.has(arg)) {
 			flags.add(arg);
 		} else {
-			// Unrecognized flag or positional argument → reject
+			// Unrecognized flag or positional argument → reject with the
+			// generic usage error. Specific [error] lines (invalid --dest /
+			// --packs) are printed by their validators; this line must not
+			// follow them as a wrong second reason.
+			// biome-ignore lint/suspicious/noConsole: CLI user-facing error
+			console.error("Usage error: unrecognized arguments. Use --help for usage information.");
 			return null;
 		}
 	}
@@ -137,6 +160,11 @@ export function parseArgs(args: readonly string[]): ParsedArgs | null {
 		packsAll: flags.has("--packs-all"),
 		updateAddPacks: splitPackList(values["--update-add-packs"]),
 	};
+
+	// More than one mode flag is ambiguous (e.g. --clean --project): reject
+	// instead of silently letting the first match win.
+	const modeFlags = ["--clean", "--project", "--update"].filter((f) => flags.has(f));
+	if (modeFlags.length > 1) return null;
 
 	if (flags.has("--clean")) return { mode: "clean", options, destination };
 	if (flags.has("--project")) return { mode: "project", options, destination };

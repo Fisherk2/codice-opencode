@@ -1,5 +1,7 @@
 # Architecture – Códice: Opencode Workspace Installer
 
+[![Architecture diagram of fisherk2/codice-opencode](https://gitdiagram.com/fisherk2/codice-opencode/diagram.png)](https://gitdiagram.com/fisherk2/codice-opencode?utm_source=readme&utm_medium=picture)
+
 ## Overview
 Códice follows Clean Architecture with strict layer boundaries. Dependencies point inward: Infrastructure → Application → Domain.
 
@@ -7,32 +9,36 @@ Códice follows Clean Architecture with strict layer boundaries. Dependencies po
 
 | ADR | Title | Status | Key Decision |
 |-----|-------|--------|--------------|
-| [ADR-001](../specs/adr/adr-001-clean-architecture.md) | Clean Architecture | Accepted | 4-layer structure with dependency rule |
-| [ADR-002](../specs/adr/adr-002-bun-compilation.md) | Bun as Runtime/Compiler | Accepted | Bun as runtime and compiler |
-| [ADR-003](../specs/adr/adr-003-atomic-staging.md) | Atomic File Operations | Accepted | Staging + rename pattern |
-| [ADR-004](../specs/adr/adr-004-clack-prompts.md) | TUI with @clack/prompts | Accepted | Lightweight interactive prompts |
-| [ADR-005](../specs/adr/adr-005-dest-flag-and-workspace.md) | `--dest` Flag and Workspace Directory | Accepted | Safe dev playground via `--dest` + `tests/fixtures/workspace/` |
-| [ADR-006](../specs/adr/adr-006-npm-publication.md) | npm Publication as Primary Distribution | Accepted | `bunx @fisherk2-dev/codice` as primary distribution method |
-| [ADR-007](../specs/adr/adr-007-template-resolver-source-mode.md) | Template Resolution for bunx/npm Mode | Accepted | Three-path detection cascade (source, bunx/npm, cwd) |
-| [ADR-008](../specs/adr/adr-008-symlink-post-install.md) | Post-Installation Symlink Generation | Accepted | ISymlinkCreator port + BunSymlinkCreator adapter for npm-compatible symlinks |
-| [ADR-009](../specs/adr/adr-009-gitignore-post-install.md) | Post-Installation Gitignore Generation | Accepted | IGitignoreCreator port + BunGitignoreCreator adapter for npm-compatible gitignore generation |
-| [ADR-010](../specs/adr/adr-010-no-template-copy-flag.md) | noTemplateCopy Flag for Virtual Manifest Entries | Accepted | `noTemplateCopy?` field on FileRule for entries whose content is generated post-installation (e.g., `.devin/` symlinks) |
-| [ADR-011](../specs/adr/adr-011-binary-removal.md) | Binary Removal | Accepted | npm/bunx as sole distribution; binary compilation removed |
-| [ADR-012](../specs/adr/adr-012-references-co-location.md) | References Co-location | Accepted | References co-located with skills, exposed via `references` section |
-| [ADR-014](../specs/adr/adr-014-agent-pack-system.md) | Agent Pack System | Accepted | Pack-based agent classification with 8 selectable packs + 2 mandatory |
-| [ADR-015](../specs/adr/adr-015-installer-ux-v2.md) | Installer UX v2 | Accepted | Metadata-driven installer with pack selection and version-gated updates |
-| [ADR-016](../specs/adr/adr-016-new-commands.md) | Slash Commands v2.1 | Accepted | 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`) with skill delegation |
-| [ADR-018](../specs/adr/adr-018-agent-delegation.md) | Agent Delegation Protocol | Accepted | Analyze → Plan → Execute protocol for primary agents via `task()` |
-| [ADR-019](../specs/adr/adr-019-cicd-hardening.md) | CI/CD Hardening | Accepted | SHA-pinned actions, branch protection, PR/issue templates, npm provenance |
-| [ADR-020](../specs/adr/adr-020-spec-modularization.md) | SPEC Modularization | Accepted | 441-line SPEC.md → 44-line index + 8 sub-specs |
-| [ADR-021](../specs/adr/adr-021-codemod-parser-and-placement.md) | Codemod Parser and Placement | Accepted | The validator is the normative V2 schema reader; the codemod parser stays frozen as one-shot verbatim-emit tooling |
-| [ADR-022](../specs/adr/adr-022-sdd-plugin-removal-legacy-banner.md) | SDD Plugin Removal and Offline Legacy Deprecation Banner | Accepted | Plugin fully removed (FEV-30, crashes on V2 hosts); enforcement lives solely in `permissions:` deny-lists; offline legacy banner (`legacyBanner.ts`) warns ≤ 2.1.2 before the mode menu |
-| [ADR-023](../specs/adr/adr-023-short-lived-release-branches.md) | Short-Lived `release/X.Y.Z` Branches for Stable Promotion | Accepted (amends ADR-019) | Stabilization commits land on a short-lived `release/X.Y.Z` branch; quality gates run on the publication tag; stable tag requires explicit human go-ahead |
-| [ADR-024](../specs/adr/adr-024-mcp-explicit-disabled-schema.md) | Explicit `disabled` MCP Schema and 3-Server Active Default | Accepted | V2 schema `mcp.servers` + explicit `disabled` per server (7 servers); only context7, gitmcp and vercel-grep connect by default; tavily/firecrawl removed |
+| [ADR-001](adr/adr-001-clean-architecture.md) | Clean Architecture | Accepted | 4-layer structure with dependency rule |
+| [ADR-002](adr/adr-002-bun-compilation.md) | Bun as Runtime/Compiler | Accepted | Bun as runtime and compiler |
+| [ADR-003](adr/adr-003-atomic-staging.md) | Atomic File Operations | Accepted | Staging + rename pattern |
+| [ADR-004](adr/adr-004-clack-prompts.md) | TUI with @clack/prompts | Accepted | Lightweight interactive prompts |
+| [ADR-005](adr/adr-005-dest-flag-and-workspace.md) | `--dest` Flag and Workspace Directory | Accepted | Safe dev playground via `--dest` + `tests/fixtures/workspace/` |
+| [ADR-006](adr/adr-006-npm-publication.md) | npm Publication as Primary Distribution | Accepted | `bunx @fisherk2-dev/codice` as primary distribution method |
+| [ADR-007](adr/adr-007-template-resolver-source-mode.md) | Template Resolution for bunx/npm Mode | Accepted | Three-path detection cascade (source, bunx/npm, cwd) |
+| [ADR-008](adr/adr-008-symlink-post-install.md) | Post-Installation Symlink Generation | Accepted | ISymlinkCreator port + BunSymlinkCreator adapter for npm-compatible symlinks |
+| [ADR-009](adr/adr-009-gitignore-post-install.md) | Post-Installation Gitignore Generation | Accepted | IGitignoreCreator port + BunGitignoreCreator adapter for npm-compatible gitignore generation |
+| [ADR-010](adr/adr-010-no-template-copy-flag.md) | noTemplateCopy Flag for Virtual Manifest Entries | Accepted | `noTemplateCopy?` field on FileRule for entries whose content is generated post-installation (e.g., `.devin/` symlinks) |
+| [ADR-011](adr/adr-011-binary-removal.md) | Binary Removal | Accepted | npm/bunx as sole distribution; binary compilation removed |
+| [ADR-012](adr/adr-012-references-co-location.md) | References Co-location | Accepted | References co-located with skills, exposed via `references` section |
+| [ADR-014](adr/adr-014-agent-pack-system.md) | Agent Pack System | Accepted | Pack-based agent classification with 8 selectable packs + 2 mandatory |
+| [ADR-015](adr/adr-015-installer-ux-v2.md) | Installer UX v2 | Accepted | Metadata-driven installer with pack selection and version-gated updates |
+| [ADR-016](adr/adr-016-new-commands.md) | Slash Commands v2.1 | Accepted | 4 new commands (`/sync`, `/migrate`, `/deploy`, `/analyze`) with skill delegation |
+| [ADR-018](adr/adr-018-agent-delegation.md) | Agent Delegation Protocol | Accepted | Analyze → Plan → Execute protocol for primary agents via `task()` |
+| [ADR-019](adr/adr-019-cicd-hardening.md) | CI/CD Hardening | Accepted | SHA-pinned actions, branch protection, PR/issue templates, npm provenance |
+| [ADR-020](adr/adr-020-spec-modularization.md) | SPEC Modularization | Accepted | 441-line SPEC.md → 44-line index + 8 sub-specs |
+| [ADR-021](adr/adr-021-codemod-parser-and-placement.md) | Codemod Parser and Placement | Accepted | The validator is the normative V2 schema reader; the codemod parser stays frozen as one-shot verbatim-emit tooling |
+| [ADR-022](adr/adr-022-sdd-plugin-removal-legacy-banner.md) | SDD Plugin Removal and Offline Legacy Deprecation Banner | Accepted | Plugin fully removed (FEV-30, crashes on V2 hosts); enforcement lives solely in `permissions:` deny-lists; offline legacy banner (`legacyBanner.ts`) warns ≤ 2.1.2 before the mode menu |
+| [ADR-023](adr/adr-023-short-lived-release-branches.md) | Short-Lived `release/X.Y.Z` Branches for Stable Promotion | Accepted (amends ADR-019) | Stabilization commits land on a short-lived `release/X.Y.Z` branch; quality gates run on the publication tag; stable tag requires explicit human go-ahead |
+| [ADR-024](adr/adr-024-mcp-explicit-disabled-schema.md) | Explicit `disabled` MCP Schema and 3-Server Active Default | Accepted | V2 schema `mcp.servers` + explicit `disabled` per server (7 servers); only context7, gitmcp and vercel-grep connect by default; tavily/firecrawl removed |
 
-> **Note:** ADR-013 (plugin auto-discovery) and ADR-017 (intent auto-discovery) were **retired in FEV-30** (#90) together with the SDD plugin — that is why they are missing from the numbering. [ADR-022](../specs/adr/adr-022-sdd-plugin-removal-legacy-banner.md) supersedes both as the register entry for plugin-era enforcement.
+> **Note:** ADR-013 (plugin auto-discovery) and ADR-017 (intent auto-discovery) were **retired in FEV-30** (#90) together with the SDD plugin — that is why they are missing from the numbering. [ADR-022](adr/adr-022-sdd-plugin-removal-legacy-banner.md) supersedes both as the register entry for plugin-era enforcement.
 
 > **Note:** `TemplateResolver` and `AtomicStager` are extracted classes (not full ADRs). They are SRP-based refactorings of `BunFileSystem` that follow the existing ADR-003 (atomic staging) pattern.
+
+> **Note (register location, FEV-31):** the ADR register moved from `specs/adr/` to `docs/adr/` (23 files). `specs/adr/` no longer exists, so any `specs/adr/…` link is stale — the table above and the links in `../AGENTS.md`, `../SPEC.md` and `MIGRATION.md` point at `docs/adr/`.
+
+> **Note (stabilization history):** commit `1941ed3` was an **INCOMPLETE** stabilization — it fixed the manifest/E2E references and left the gates green (1972 tests, 31/31 e2e) without closing any of the issue gaps. FEV-31 completed it on 2026-11-17 (1991 tests, 31/31 e2e, tsc 0); pre-launch review 2026-11-18 raised final gates to 2027/0, 31/31 e2e — ready for the `v2.1.5-beta.1` tag. Verdict and remaining-gap inventory: [`diagnosis/fix30-fev31-partial-issue-implementation.md`](diagnosis/fix30-fev31-partial-issue-implementation.md).
 
 ### SPEC.md Resolved Decisions Coverage
 
@@ -170,16 +176,6 @@ graph TD
 - Version context: versionContext.ts (update gating classification)
 - Output formatting: output.ts
 - Version constant: version.ts
-
-### v2.1 Components
-
-| Component | Layer | Responsibility | Key Interfaces |
-|-----------|-------|----------------|----------------|
-| `/sync` command | CLI + Skill | Bidirectional git sync with 4 modes and 4 conflict strategies | `git-workflow-and-versioning` skill |
-| `/migrate` command | CLI + Skill | Tech stack migration analysis with phases and rollback | `dependency-audit`, `deprecation-and-migration` skills |
-| `/deploy` command | CLI + Skill | Post-`/ship` deployment automation (3 modes) | `ci-cd-and-automation` skill |
-| `/analyze` command | CLI + Skill | 8-dimension architecture analysis → `TECH_DEBT.md` | `clean-ddd-hexagonal`, `design-patterns` skills |
-| Agent Delegation Protocol | Agent (6 primary) | Analyze → Plan → Execute before `task()` calls | `delegateToSubagent(task)` |
 
 ## Key Patterns
 - **Strategy Pattern**: File merge rules (Obligatorio/Estándar/Opcional)

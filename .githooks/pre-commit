@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pre-commit gate: typecheck (blocking) + gitleaks secret scan (blocking when installed).
+# Escape hatch: SKIP=typecheck,gitleaks (or SKIP=all) before `git commit`.
+
+skipped() {
+  # Match "all" or the exact check name inside the comma-separated SKIP list.
+  [[ ",${SKIP:-}," == *",all,"* || ",${SKIP:-}," == *",$1,"* ]]
+}
+
+if ! skipped typecheck; then
+  echo "pre-commit: typecheck (bun run tsc --noEmit)..."
+  # Project-local TS via bun: a system tsc may be a different version and report false errors.
+  if ! typecheck_out=$(bun run tsc --noEmit 2>&1); then
+    printf '%s\n' "$typecheck_out"
+    echo "pre-commit: typecheck FAILED — fix the TypeScript errors above, or bypass with SKIP=typecheck git commit ..." >&2
+    exit 1
+  fi
+fi
+
+if ! skipped gitleaks; then
+  if command -v gitleaks >/dev/null 2>&1; then
+    echo "pre-commit: gitleaks secret scan (staged files)..."
+    if ! gitleaks_out=$(gitleaks protect --staged --no-banner 2>&1); then
+      printf '%s\n' "$gitleaks_out"
+      echo "pre-commit: possible secret in staged files — remove it or rotate the credential, or bypass with SKIP=gitleaks git commit ..." >&2
+      exit 1
+    fi
+  else
+    # Notice instead of failure: a missing tool must not brick every commit on machines
+    # without gitleaks (CI runs its own secret scanning separately).
+    echo "pre-commit: notice — gitleaks not installed, secret scan skipped. Install: https://github.com/gitleaks/gitleaks#install"
+  fi
+fi

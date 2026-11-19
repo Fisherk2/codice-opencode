@@ -6,20 +6,17 @@
 import type { FileRule } from "../../domain/entities/FileRule";
 import { FILE_RULE_MANIFEST, getPackRules } from "../../domain/entities/FileRuleManifest";
 import type { IFileMergeEngine } from "../../domain/ports/IFileMergeEngine";
-import type { IFileSystem } from "../../domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../../domain/ports/IStagedFileSystem";
 import { failure, type Result, success } from "../../domain/types/Result";
-import {
-	checkWritable,
-	confirmOverwrite,
-	createProgressCallback,
-	wrapMergeError,
-} from "../helpers";
+import { confirmOverwrite } from "../confirmOverwrite";
 import { buildInstallSummary } from "../installSummary";
+import { wrapMergeError } from "../mergeErrors";
 import type { IGitignoreCreator } from "../ports/IGitignoreCreator";
 import type { ISymlinkCreator, SymlinkSpec } from "../ports/ISymlinkCreator";
 import type { IUserPrompt } from "../ports/IUserPrompt";
 import { runPostInstallSteps } from "../postInstall";
+import { createProgressCallback } from "../progressCallback";
+import { checkWritable } from "../writableCheck";
 
 /** Options shared by all installation modes. */
 export interface BaseInstallOptions {
@@ -45,7 +42,7 @@ export abstract class InstallUseCaseBase {
 	 * @param gitignoreCreator - Adapter for post-installation .gitignore generation
 	 */
 	constructor(
-		protected readonly fileSystem: IFileSystem & IStagingSystem,
+		protected readonly fileSystem: IStagedFileSystem,
 		protected readonly mergeEngine: IFileMergeEngine,
 		protected readonly userPrompt: IUserPrompt,
 		protected readonly symlinkCreator: ISymlinkCreator,
@@ -73,7 +70,7 @@ export abstract class InstallUseCaseBase {
 			this.userPrompt,
 			this.getConfirmMessage(destinationPath),
 			this.getCancelMessage(),
-			options.force,
+			{ force: options.force },
 		);
 		if (!confirmed) return success(undefined);
 

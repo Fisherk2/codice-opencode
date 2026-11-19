@@ -11,15 +11,14 @@
  * a "Re-run the installer" hint (Clean Install sets retryHint=true).
  */
 
-import type { IFileSystem } from "../domain/ports/IFileSystem";
-import type { IStagingSystem } from "../domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../domain/ports/IStagedFileSystem";
 import type { GitignoreError } from "../domain/types/GitignoreError";
 import { type Result, success } from "../domain/types/Result";
-import { writeVersionFileSafe } from "./helpers";
 import type { IGitignoreCreator } from "./ports/IGitignoreCreator";
 import type { IMessageDisplay } from "./ports/IMessageDisplay";
 import type { IProgressReporter } from "./ports/IProgressReporter";
 import type { ISymlinkCreator, SymlinkSpec } from "./ports/ISymlinkCreator";
+import { writeVersionFileSafe } from "./versionFileWrite";
 
 /**
  * Create a .gitignore file from the template, showing a warning on failure.
@@ -89,7 +88,7 @@ export async function createSymlinksWithWarning(
  * Options for {@link runPostInstallSteps}.
  */
 export interface PostInstallOptions {
-	readonly fileSystem: IFileSystem & IStagingSystem;
+	readonly fileSystem: IStagedFileSystem;
 	readonly gitignoreCreator: IGitignoreCreator;
 	readonly symlinkCreator: ISymlinkCreator;
 	/** Narrow prompt port: post-install steps only report progress and messages. */

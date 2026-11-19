@@ -8,12 +8,30 @@
  *   - optional: stages only if user selected AND destination does NOT exist
  */
 
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import type { FileRule } from "../../../src/domain/entities/FileRule";
-import type { IFileSystem } from "../../../src/domain/ports/IFileSystem";
-import type { IStagingSystem } from "../../../src/domain/ports/IStagingSystem";
+import type { IStagedFileSystem } from "../../../src/domain/ports/IStagedFileSystem";
 import { FileMergeEngine } from "../../../src/domain/services/FileMergeEngine";
 import type { ProgressEvent } from "../../../src/domain/types/ProgressEvent";
+
+const STAGE_PLANNER_PATH = "../../../src/domain/services/stagePlanner";
+const realComputeStagePlan = (await import(STAGE_PLANNER_PATH)).computeStagePlan as (
+	fs: IStagedFileSystem,
+	rules: readonly FileRule[],
+	selected: ReadonlySet<string>,
+	isUpdateMode: boolean,
+) => Promise<{
+	stageDecisions: Map<string, boolean>;
+	expandedDirs: Map<string, readonly string[]>;
+	total: number;
+}>;
+
+beforeEach(() => {
+	mock.module(STAGE_PLANNER_PATH, () => ({ computeStagePlan: realComputeStagePlan }));
+});
+afterEach(() => {
+	mock.module(STAGE_PLANNER_PATH, () => ({ computeStagePlan: realComputeStagePlan }));
+});
 
 // ---- Mock IFileSystem + IStagingSystem ----
 
@@ -23,12 +41,12 @@ interface CallRecord {
 }
 
 function createMockFs(): {
-	fs: IFileSystem & IStagingSystem;
+	fs: IStagedFileSystem;
 	calls: CallRecord[];
 } {
 	const calls: CallRecord[] = [];
 
-	const mockFs: IFileSystem & IStagingSystem = {
+	const mockFs: IStagedFileSystem = {
 		destinationExists: async (path: string) => {
 			calls.push({ method: "destinationExists", args: [path] });
 			return true; // default: file already exists
@@ -36,8 +54,9 @@ function createMockFs(): {
 		stageFile: async (relativePath: string, destPath?: string, excludeSubDirs?: Set<string>) => {
 			calls.push({ method: "stageFile", args: [relativePath, destPath, excludeSubDirs] });
 		},
-		commitStaging: async () => {
+		commitStaging: async (): Promise<string> => {
 			calls.push({ method: "commitStaging", args: [] });
+			return "";
 		},
 		cleanStaging: async () => {
 			calls.push({ method: "cleanStaging", args: [] });
@@ -934,5 +953,33 @@ describe("FileMergeEngine — Progress events", () => {
 		// stage_skip should have been emitted for .devin
 		const skips = events.filter((e) => e.type === "stage_skip");
 		expect(skips.length).toBe(1);
+	});
+});
+
+describe("FileMergeEngine — unplanned rule", () => {
+	test("fails with a staging error instead of silently dropping a rule missing from the plan", async () => {
+		// The planner is stubbed to "lose" the rule, simulating a planner/
+		// engine disagreement. The engine must fail loudly — the old
+		// defensive `continue` silently produced a partial install.
+		mock.module(STAGE_PLANNER_PATH, () => ({
+			computeStagePlan: async () => ({
+				stageDecisions: new Map<string, boolean>(),
+				expandedDirs: new Map<string, readonly string[]>(),
+				total: 0,
+			}),
+		}));
+
+		const { fs, calls } = createMockFs();
+		const engine = new FileMergeEngine(fs);
+		const result = await engine.execute([rule("opencode.json", "mandatory")]);
+
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.phase).toBe("staging");
+			expect(result.error.path).toBe("opencode.json");
+			expect(result.error.message).toContain("rule not planned");
+		}
+		// Staging is cleaned so no artifacts leak from the aborted run.
+		expect(calls.filter((c) => c.method === "cleanStaging").length).toBe(1);
 	});
 });

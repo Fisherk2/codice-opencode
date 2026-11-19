@@ -322,8 +322,12 @@ the `### RULES` bullet "**NEVER** delegate to subagents" — not by prose in the
 
 ### Line budget
 
-Primary agent **bodies** must stay ≤100 lines (excluding YAML frontmatter). This is the
-enforced invariant (unit test: `tests/unit/domain/agent-frontmatter-validation.test.ts`).
+Primary agent **bodies** must stay ≤180 lines, and the same 180-line body budget applies to
+the 18 commands in `template/obligatorio/core/commands/`. The budget measures the **body
+only** — the markdown after the closing `---` of the YAML frontmatter, trimmed. Frontmatter
+bytes never count against it. Enforced invariants:
+`tests/unit/domain/agent-frontmatter-validation.test.ts` (primary agents) and
+`tests/unit/domain/command-frontmatter-validation.test.ts` (commands).
 Total file length is frontmatter-dependent — V2 `permissions:` lists push some primaries
 past the old ≈150-line total (e.g. `quetzalcoatl.md`) — so no total budget is enforced.
 Block A ≈ 18 lines, Block B ≈ 9 lines — both fit within the body budget.

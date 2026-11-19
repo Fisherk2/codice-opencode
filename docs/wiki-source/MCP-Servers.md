@@ -16,7 +16,7 @@ The template ships with **7 MCP servers** pre-configured in `opencode.json`. Thr
 |--------|------|---------|------------------|
 | `context7` | Remote | ✅ Enabled | Documentation queries (`find-docs` skill) |
 | `chrome-devtools` | Local | ❌ Disabled | `/webperf` Deep mode, browser debugging |
-| `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`xlsx` skill) |
+| `excel` | Local | ❌ Disabled | Spreadsheet manipulation (`spreadsheet-analysis` skill) |
 | `jupyter` | Local | ❌ Disabled | AI-powered notebook automation |
 | `vercel-grep` | Remote | ✅ Enabled | GitHub code search across 1M+ repos |
 | `gitmcp` | Remote | ✅ Enabled | GitHub repository documentation |
@@ -145,7 +145,7 @@ Local MCP server from the Chrome DevTools team (`ChromeDevTools/chrome-devtools-
 
 ### Excel MCP Server — Spreadsheet Manipulation
 
-Local MCP server for reading, writing, and manipulating Excel files (.xlsx) directly from OpenCode agents. Supports workbooks, worksheets, ranges, formulas, charts, pivot tables, formatting, and more. Used by the `xlsx` skill.
+Local MCP server for reading, writing, and manipulating Excel files (.xlsx) directly from OpenCode agents. Supports workbooks, worksheets, ranges, formulas, charts, pivot tables, formatting, and more. Used by the `spreadsheet-analysis` skill.
 
 #### Prerequisites
 

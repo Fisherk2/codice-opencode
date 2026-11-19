@@ -1,5 +1,6 @@
 import * as clack from "@clack/prompts";
 import { formatInstallSummary } from "../../application/installSummary";
+import { toPackPromptOption } from "../../application/packPromptOptions";
 import type { IMessageDisplay } from "../../application/ports/IMessageDisplay";
 import type { IProgressReporter } from "../../application/ports/IProgressReporter";
 import type {
@@ -11,9 +12,8 @@ import type {
 	UpdateOptionChoice,
 	VersionDisplayInfo,
 } from "../../application/ports/IUserPrompt";
+import { buildVersionInfoMessages } from "../../application/versionInfoMessages";
 import type { FileRule } from "../../domain/entities/FileRule";
-import { toPackPromptOption } from "./packPromptOptions";
-import { buildVersionInfoMessages } from "./versionInfoMessages";
 
 /** @clack/prompts adapter implementing IUserPrompt. */
 

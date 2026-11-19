@@ -1,7 +1,7 @@
 /**
  * Unit tests for updateStatusCheck.ts helpers (FEV-21 Phase 4).
  *
- * reportRemoteStatus and notifyIfUpToDate were extracted from
+ * reportRemoteStatus and isAlreadyUpToDate were extracted from
  * UpdateWorkspaceUseCase to keep the class under the 200-line convention;
  * these tests pin down the informational status behaviors (no remote tag,
  * remote ahead, up-to-date, comparison failure) in isolation.
@@ -9,13 +9,13 @@
 
 import { describe, expect, mock as mockFn, test } from "bun:test";
 import type { IGitHubClient } from "../../../../src/application/ports/IGitHubClient";
-import type { IUserPrompt } from "../../../../src/application/ports/IUserPrompt";
 import {
-	notifyIfUpToDate,
+	isAlreadyUpToDate,
 	reportRemoteStatus,
 	type UpdateStatusDeps,
 } from "../../../../src/application/use-cases/updateStatusCheck";
 import { WorkspaceVersion } from "../../../../src/domain/entities/WorkspaceVersion";
+import { createMockPrompt, type UserPromptMock } from "../../../shared/test-doubles";
 
 /** VersionComparator stub: returns a canned result for every compare() call. */
 function makeComparator(result: "ahead" | "behind" | "equal") {
@@ -24,40 +24,8 @@ function makeComparator(result: "ahead" | "behind" | "equal") {
 	};
 }
 
-function makePrompt(): IUserPrompt & { warnings: string[]; infos: string[] } {
-	const warnings: string[] = [];
-	const infos: string[] = [];
-	return {
-		showWarning: mockFn((msg: string) => {
-			warnings.push(msg);
-		}),
-		showInfo: mockFn((msg: string) => {
-			infos.push(msg);
-		}),
-		confirm: mockFn(() => Promise.resolve(true)),
-		selectOptional: mockFn(() => Promise.resolve([])),
-		showProgressBar: mockFn(() => {}),
-		updateProgress: mockFn(() => {}),
-		completeProgress: mockFn(() => {}),
-		logProgressEvent: mockFn(() => {}),
-		showIntro: mockFn(() => {}),
-		showSuccess: mockFn(() => {}),
-		showError: mockFn(() => {}),
-		promptForMode: mockFn(() => Promise.resolve<"clean" | "project" | "update" | null>(null)),
-		selectPacks: mockFn(() => Promise.resolve(["software-development"] as const)),
-		showVersionInfo: mockFn(() => {}),
-		selectUpdateOption: mockFn(() =>
-			Promise.resolve<"current" | "add" | "cancel" | null>("current"),
-		),
-		showInstallSummary: mockFn(() => {}),
-		showCancel: mockFn(() => {}),
-		get warnings() {
-			return warnings;
-		},
-		get infos() {
-			return infos;
-		},
-	};
+function makePrompt(): UserPromptMock {
+	return createMockPrompt();
 }
 
 function makeDeps(overrides: Partial<UpdateStatusDeps> = {}): UpdateStatusDeps {
@@ -121,10 +89,10 @@ describe("reportRemoteStatus", () => {
 	});
 });
 
-describe("notifyIfUpToDate", () => {
+describe("isAlreadyUpToDate", () => {
 	test("returns true and informs when installed >= bundled", async () => {
 		const deps = makeDeps({ versionComparator: makeComparator("behind") });
-		const upToDate = await notifyIfUpToDate(
+		const upToDate = await isAlreadyUpToDate(
 			deps,
 			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
 		);
@@ -137,7 +105,7 @@ describe("notifyIfUpToDate", () => {
 
 	test("returns false and stays silent when bundled is newer", async () => {
 		const deps = makeDeps({ versionComparator: makeComparator("ahead") });
-		const upToDate = await notifyIfUpToDate(
+		const upToDate = await isAlreadyUpToDate(
 			deps,
 			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
 		);
@@ -158,7 +126,7 @@ describe("notifyIfUpToDate", () => {
 				})),
 			},
 		});
-		const upToDate = await notifyIfUpToDate(
+		const upToDate = await isAlreadyUpToDate(
 			deps,
 			WorkspaceVersion.fromJSON({ version: "2.0.0", installedAt: "2026-01-01T00:00:00.000Z" })!,
 		);

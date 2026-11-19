@@ -18,12 +18,13 @@ import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
+	readdirSync,
 	rmSync,
 	symlinkSync,
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, delimiter, join } from "node:path";
+import { basename, delimiter, dirname, join } from "node:path";
 
 export const REPO_ROOT = join(import.meta.dir, "..", "..", "..");
 
@@ -85,6 +86,18 @@ export function createScriptFixture(options: FixtureOptions): ScriptFixture {
 
 	const script = join(scriptsDir, basename(realScript));
 	copyFileSync(realScript, script);
+
+	// Scripts may source shared helpers from scripts/lib/ (e.g.
+	// coverage-common.sh); the copy must include them or `set -e` kills
+	// the script at the source line before any phase runs.
+	const libSrc = join(dirname(realScript), "lib");
+	if (existsSync(libSrc)) {
+		const libDst = join(scriptsDir, "lib");
+		mkdirSync(libDst, { recursive: true });
+		for (const file of readdirSync(libSrc)) {
+			copyFileSync(join(libSrc, file), join(libDst, file));
+		}
+	}
 
 	// The marker is written before anything else so a test can tell "the
 	// script reached the stubbed phase" from "it short-circuited earlier",
