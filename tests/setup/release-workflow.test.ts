@@ -113,23 +113,17 @@ describe("Release Workflow Configuration", () => {
 		expect(releaseYaml).toContain("Publish to npm");
 	});
 
-	test("npm publish authenticates via OIDC trusted publishing", () => {
-		// OIDC trusted publishing: id-token: write lets npm mint a short-lived
-		// token from the workflow identity, so no long-lived secret exists.
-		expect(releaseYaml).toContain("id-token: write");
-		expect(releaseYaml).toContain("--provenance");
-		// OIDC publishing requires npm >= 11.5.1; upgrade before publishing.
-		expect(releaseYaml).toContain("npm install --global npm@latest");
-	});
-
-	test("npm publish never writes a token to disk", () => {
-		expect(releaseYaml).not.toContain("//registry.npmjs.org/:_authToken=");
+	test("npm publish uses NPM_TOKEN from secrets", () => {
 		// biome-ignore lint/suspicious/noTemplateCurlyInString: This is a GitHub Actions expression, not a JS template string
-		expect(releaseYaml).not.toContain("NPM_TOKEN: ${{ secrets.NPM_TOKEN }}");
+		expect(releaseYaml).toContain("NPM_TOKEN: ${{ secrets.NPM_TOKEN }}");
 	});
 
-	test("npm publish needs no .npmrc cleanup trap (nothing is written)", () => {
-		expect(releaseYaml).not.toContain("trap 'rm -f .npmrc' EXIT");
+	test("npm publish creates .npmrc with auth token", () => {
+		expect(releaseYaml).toContain("//registry.npmjs.org/:_authToken=");
+	});
+
+	test("npm publish cleans up .npmrc on exit via trap", () => {
+		expect(releaseYaml).toContain("trap 'rm -f .npmrc' EXIT");
 	});
 
 	test("npm publish distinguishes 'already published' from real failures", () => {

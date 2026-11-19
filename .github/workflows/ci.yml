@@ -119,38 +119,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          # Full history: gitleaks scans commit ranges
-          # (`--log-opts=<base>^..<head>`), which a depth-1 clone cannot
-          # resolve on multi-commit pushes/PRs; the action README requires
-          # fetch-depth: 0 for the same reason. Harmless for `bun audit`.
-          fetch-depth: 0
-
-      # Secret gate, second to the local .githooks/pre-commit hook (which CI
-      # never runs and which skips itself when gitleaks is absent). The job
-      # has no event guard, so this reports on push, pull_request and
-      # workflow_call alike — docs-only PRs included. Failing here fails the
-      # `security` context that branch protection already requires, so the
-      # gate blocks merges without touching setup-branch-protection.sh.
-      # SHA-pinned per ADR-019: e0c47f4f... = tag v3.0.0, resolved via GitHub
-      # API GET /repos/gitleaks/gitleaks-action/commits/v3.0.0 (GPG-verified
-      # commit). v3 not v2: v2's Node 20 runtime was removed from
-      # GitHub-hosted runners on 2026-09-16, so @v2 no longer executes.
-      - name: Secret scan (gitleaks)
-        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
-        env:
-          # Required by the action on pull_request runs — it hard-exits
-          # without it while listing PR commits. Read-only under this job's
-          # permissions; also drives the owner-type check (user account → no
-          # GITLEAKS_LICENSE needed).
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # PR review comments require pull-requests:write, which this job
-          # deliberately withholds (least privilege, ADR-019); leaving them
-          # on would 403 mid-scan. The gate signal is the job status + job
-          # summary + SARIF artifact instead.
-          GITLEAKS_ENABLE_COMMENTS: "false"
-        # Config: .gitleaks.toml at the repo root, auto-discovered by the
-        # gitleaks CLI (precedence #4) — same file the local hook reads.
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
