@@ -156,7 +156,7 @@ Execution order in `src/cli/main.ts — main`:
 
 Before any mode logic, the CLI prints the detected installation state as a `clack.note`
 (`src/infrastructure/adapters/ClackPromptsAdapter.ts — showVersionInfo`, copy from
-`src/infrastructure/adapters/versionInfoMessages.ts — buildVersionInfoMessages`):
+`src/application/versionInfoMessages.ts — buildVersionInfoMessages`):
 
 | Status (`versionContext.ts`) | Note title | Note body (first line / behavior) |
 |------------------------------|------------|-----------------------------------|
@@ -333,7 +333,7 @@ information only; the merge always uses the local `template/` shipped inside
      `Cancel` → `Update cancelled by user.` → exit `0`.
      Option B opens the pack multiselect with installed packs **locked** — labeled
      `[INSTALLED, LOCKED]`, hint `Already installed — cannot be removed`
-     (`src/infrastructure/adapters/packPromptOptions.ts`). If nothing new is chosen →
+     (`src/application/packPromptOptions.ts`). If nothing new is chosen →
      info `No new packs selected. Update cancelled.` → exit `0`.
 8. **Merge** of non-optional rules scoped to the resolved packs
    (`filterByPacks(FILE_RULE_MANIFEST.filter(r => r.category !== "optional"), packs)`):
