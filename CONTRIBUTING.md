@@ -282,7 +282,7 @@ Códice installs an OpenCode workspace template organized into three file catego
 
 The project Wiki is synced from `docs/wiki-source/`. After adding agents, skills, commands, or MCPs to the template, sync the Wiki so the documentation stays current.
 
-> **⚠️ Data-loss guard:** `docs/wiki-source/.wiki` is a nested git repo and `rsync --delete` publishes deletions — a wiki-only page was already lost this way (`Customization-Guide.md`, 361 lines). Run the two guard commands below first; if `status` shows dirt, commit or stash it before syncing.
+> **⚠️ Data-loss guard:** `docs/wiki-source/.wiki` is a nested git repo, so the `rsync --delete` sync can overwrite uncommitted work there and publish deletions of pages that exist only in the wiki. The live example: `Customization-Guide.md` (361 lines) existed only in the wiki until it was adopted into `docs/wiki-source/` (`c058a0d`, corrected in `c9c8643`) — a page in that state is invisible to the docs flow and at the mercy of `--delete`. Run the two guard commands below first; if `status` shows dirt, commit or stash it before syncing.
 
 ```bash
 # From the project root — guards first:
